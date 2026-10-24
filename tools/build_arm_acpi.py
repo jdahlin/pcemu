@@ -76,6 +76,9 @@ def build():
     gtdt = bytearray(104 - 36)
     struct.pack_into('<Q', gtdt, 0, 0xffffffffffffffff)  # no MMIO counter control
     struct.pack_into('<IIII', gtdt, 56 - 36, 30, 4, 27, 4)  # level-high, always-on
+    # EL2 timer fields stay zero: HVF does not provide that timer with EL2 off.
+    # Linux 6.12 still attempts to map GSI0; inventing PPI 26 would hide a real
+    # capability mismatch. EL1 virtual/physical timers remain available.
     struct.pack_into('<Q', gtdt, 80 - 36, 0xffffffffffffffff)  # no MMIO counter read
 
     mcfg = bytes(8) + struct.pack('<QHBBI', 0x3f000000, 0, 0, 0, 0)

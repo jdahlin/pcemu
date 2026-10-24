@@ -25,7 +25,8 @@
     psci { compatible = "arm,psci-0.2", "arm,psci"; method = "hvc"; };
     timer {
         compatible = "arm,armv8-timer";
-        interrupts = <1 13 4>, <1 14 4>, <1 11 4>, <1 10 4>;
+        // No EL2 timer: HVF exposes it only with nested virtualization enabled.
+        interrupts = <1 13 4>, <1 14 4>, <1 11 4>;
         always-on;
     };
     gic: interrupt-controller@8000000 {

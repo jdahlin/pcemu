@@ -80,6 +80,8 @@ class ArmAcpi(unittest.TestCase):
         self.assertEqual(struct.unpack_from('<Q', madt, 44 + 80 + 8)[0], 0x08000000)
         self.assertEqual(struct.unpack_from('<QI', madt, 44 + 80 + 24 + 4), (0x080a0000, 0x20000))
         self.assertEqual(struct.unpack_from('<IIII', tables[b'GTDT'], 56), (30, 4, 27, 4))
+        self.assertEqual(struct.unpack_from('<II', tables[b'GTDT'], 72), (0, 0))
+        self.assertEqual(struct.unpack_from('<II', tables[b'GTDT'], 96), (0, 0))
         self.assertEqual(struct.unpack_from('<QHBB', tables[b'MCFG'], 44), (0x3f000000, 0, 0, 0))
         self.assertEqual(tables[b'SPCR'][36], 3)
         self.assertEqual(tables[b'SPCR'][52], 8)

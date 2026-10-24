@@ -26,12 +26,25 @@ firmware and Linux entropy: a real boot reports `KASLR enabled`, CRNG ready at
 time zero, and `virtio_rng.0` selected. The original findings below are retained
 as the audit baseline.
 
+## Timer capability clarification
+
+The initial GSI0 warning was classified too strongly as a firmware defect.
+Apple's HVF SDK explicitly provides the EL2 timer interrupt only when nested
+virtualization is enabled. This profile disables EL2, so GTDT leaves the EL2
+fields zero and the firmware device tree now omits the EL2 timer interrupt.
+Linux 6.12 nevertheless attempts to map the zero entry and prints the warning.
+It remains visible; assigning an unavailable PPI merely to hide it would be
+incorrect. Working EL1 timer delivery and clocksource selection were verified.
+
+The installed guest deliberately uses the RTC without an additional NTP service.
+Host sleep/resume correction and precise PTP integration remain unverified.
+
 ## Recommended order
 
 | Priority | Work | Evidence and acceptance criteria |
 | --- | --- | --- |
 | P0 | RTC and wall-clock synchronization | Guest UTC was April 13 while host date was October 24. No RTC and no active NTP service; systemd falls back to its build epoch and journals report backward jumps. Implement a host-backed RTC (PL031 fits the existing firmware library), expose it in firmware/platform descriptions, and enable guest time synchronization. Verify cold boot time, host sleep/resume, monotonic continuity and TLS/package operations. |
-| P0 | Correct GTDT timer description | `GICv3: [Firmware Bug]: Illegal GSI0 translation request`. The generated GTDT leaves the non-secure EL2 timer GSI at zero; Linux maps that entry even when running at EL1. Reconcile the table with actual supported timer interrupts; do not advertise an unsupported interrupt merely to suppress a warning. Verify timer delivery, idle wakeup and absence of GSI0 warnings. |
+| P2 | Review GTDT/Linux absent-EL2 compatibility | `Illegal GSI0 translation request` comes from Linux mapping the absent EL2 timer. HVF provides that interrupt only with nested virtualization. Keep EL2 fields zero and omit its device-tree interrupt; verify working EL1 timers. A warning-free solution needs a compatible guest-kernel/platform approach, not an invented PPI. |
 | P1 | Host entropy through virtio-rng | EFI reports `EFI_RNG_PROTOCOL unavailable`; Linux reports `KASLR disabled due to lack of seed`. Firmware already includes VirtioRngDxe and Linux supports virtio RNG as a module. Verify firmware discovers it, KASLR receives an early seed, and Linux selects the device. `random: crng init done` does occur, so the running guest is not without a functioning CRNG. |
 | P1 | SMP, PSCI and CPU/cache topology | Only one vCPU runs; `No PPTT table found` and `Unable to detect cache hierarchy`. Implement secondary-vCPU lifecycle, correct PSCI discovery/calls and matching MADT/PPTT descriptions. Verify concurrent load, CPU start/stop and idle. Do not invent physical host cache topology for a virtual CPU. |
 | P1 | Guest integration channel and lifecycle | No vsock or virtio ports. Add virtio-vsock or virtio-serial with a narrowly scoped guest agent for readiness, heartbeat, clean shutdown/reboot and filesystem freeze/thaw. Reboot currently exits the runner; support an actual restart lifecycle. Verify disconnect/reconnect, agent failure and clean disk recovery. |
