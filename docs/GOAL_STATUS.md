@@ -459,3 +459,24 @@ An initial run's Start menu overlay led to explicit host-input suppression for
 GUI automation, verified in both rebuilt comparison engines. Normal interactive
 input remains enabled. Native-display startup and broad Rosetta performance
 remain unfinished. See docs/startup-profiling.md and build/short-compare-validation.json.
+
+## Current automated Win95 cold boot and restart
+
+`tools/smoke_win95.py --restart` now creates a private compressed COW child of
+`media/rtts-win95.img`, cold-boots through guest BIOS/VGA ROM execution, dismisses
+known startup dialogs (including the DHCP failure notice), verifies unobscured
+Explorer, requests Restart through the guest keyboard, and verifies exactly one
+firmware reset followed by Explorer again. `--disk media/win95-fresh-installed.pcd`
+runs the same check against the completed local OSR2 installation. No saved RAM
+state or native virtualization backend is used in these runs.
+
+Both sources passed independently with the current x86 interpreter/ARM64 JIT:
+
+- rtts: `build/win95-smoke-msfls7t5/result.json`, with resets 0 -> 1.
+- Installed OSR2: `build/win95-smoke-3u2s5byf/result.json`, with resets 0 -> 1.
+
+Both runs removed their private compressed disk after success and retained
+framebuffer/log/JSON evidence. These checks assert cold boot, reset delivery and
+visible desktops; they do not assert file persistence, rerun the installer, or
+establish Rosetta-level application performance. The optional `make smoke-win95`
+target performs the shorter cold-boot-only variant using the original rtts disk.

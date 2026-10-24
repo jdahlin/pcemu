@@ -68,6 +68,10 @@ firmware:
 smoke-guest-perf: build/guest-bench build/disk-tool
 	python3 tools/smoke_guest_perf.py
 
+.PHONY: smoke-win95
+smoke-win95: build/pcemu build/disk-tool
+	python3 tools/smoke_win95.py
+
 # Optional, separate ARM64 hypervisor runner. No GUI, x86 core or guest disks.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
 .PHONY: test-hvf

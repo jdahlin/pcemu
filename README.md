@@ -73,10 +73,19 @@ make bench
 ./build/pcemu --benchmark-memory # checked flat/paged load-add-store loops
 make smoke-win311 # installed disk + tesseract required; private clone, file readback
 make smoke-reset  # DOS requests warm, 8042 and fast resets; verifies second boot
+make smoke-win95  # original rtts disk + tesseract; private compressed overlay
 ./build/pcemu --headless --disk media/dos.raw --steps 30000000 \
   --type $'cd windows\nwin /s\n' --frame build/desktop.ppm
 sips -s format png build/desktop.ppm --out build/desktop.png
 ```
+
+For a cold boot followed by a guest-requested restart, run
+`python3 tools/smoke_win95.py --restart`. Use
+`--disk media/win95-fresh-installed.pcd` to verify the locally installed OSR2 disk.
+The test handles known startup dialogs, checks an unobscured Explorer desktop,
+and verifies exactly one firmware reset when restart is requested. Successful
+runs remove their private disk; failures retain their owned guest and diagnostics
+under `build/win95-smoke-*`. These are compatibility tests, not performance scores.
 
 The tests include exhaustive 8-bit ADC/SBB flags, randomized interpreter/JIT
 comparisons with paging, remapping and code invalidation, VM86 transitions,

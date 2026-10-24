@@ -84,6 +84,8 @@ def desktop(timeout):
             action = 'mouse warning'
         elif 'networkadapter' in text and 'notworkingproperly' in text:
             action = 'network warning'
+        elif 'dhcp' in text and 'server' in text and ('unable' in text or 'future' in text):
+            action = 'DHCP warning'
         elif 'daylightsaving' in text and ('clock' in text or 'clack' in text):
             action = 'clock warning'
         elif 'datetimeproperties' in text:
@@ -105,6 +107,10 @@ def desktop(timeout):
             handled = action
             attempts = 0
         attempts += 1
+        if action == 'DHCP warning':
+            # No suppresses repeated failure notices on this private test disk.
+            send('key 0f09', 'key 1c0d', settle=.8)
+            continue
         if action == 'clock warning' and attempts == 3:
             send('scan 38', settle=.15)
             send('key 0f09', settle=.2)
