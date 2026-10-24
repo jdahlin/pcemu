@@ -1157,3 +1157,23 @@ Successful private compressed disks are removed. [The committed measurement
 record](measurements/native-memory-alu-2026-10-25.json) retains interval counters,
 source hashes and compatibility results. Fresh installation and broad
 Rosetta-level performance are not established by these checks.
+
+
+### Controlled memory-source ALU host timing
+
+Five alternating pairs of uninstrumented DOS CoreMark trials, 10,000 iterations
+per run, measure the new register-destination memory-source ALU lowering.
+The baseline changes only its decoder's admission condition; sources, emitter,
+IR layout and compiler options are shared. All ten runs pass canonical CRCs,
+upstream minimum-duration validation and DOS return, with identical COM hash
+and 3,975,092,643 guest instructions. No competing runner build or validation
+was launched during timed trials.
+
+Baseline/candidate time ratios are 1.08557, 1.07582, 1.09833, 1.10367 and
+1.09590: median paired throughput improves **9.59%**. Median intervals are
+13.6779 s and 12.5611 s. This is incremental over native NEG, on one Apple M4,
+without a confidence interval; gains across separate experiments are not
+multiplied. It measures flat integer execution, not Windows MMU, GUI startup
+or Rosetta equivalence. [All samples and provenance](measurements/native-memory-alu-timing-2026-10-25.json)
+are committed. Successful compressed overlays, the temporary baseline decoder,
+binary and debug symbols were removed.

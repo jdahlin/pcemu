@@ -541,3 +541,12 @@ checks, DOS CRC/microbenchmark diagnostics, Win3.11 file-save and both Win95
 cold-boot/restart checks. CoreMark interpreted attempts fall 186,285 -> 151,824
 at identical guest work. This coverage result is not a host timing claim;
 see [the detailed record](measurements/native-memory-alu-2026-10-25.json).
+
+
+The memory-source ALU change now also has five matched, alternating host-timed
+CoreMark pairs: median paired throughput improves 9.59%, with median intervals
+13.6779 -> 12.5611 seconds. All ten 10,000-iteration runs pass canonical CRCs,
+upstream minimum-duration validation and DOS return, with identical guest work.
+This is incremental over NEG, not a Windows/Rosetta claim. [Complete timings
+and provenance](measurements/native-memory-alu-timing-2026-10-25.json) are committed;
+private overlays and temporary baseline/debug files were removed.
