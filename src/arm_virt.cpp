@@ -51,6 +51,10 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         }
         if (c.virtioTransport != "pci" && c.virtioTransport != "mmio")
             throw std::runtime_error("Virtio transport must be pci or mmio");
+        if (c.diskController != "virtio" && c.diskController != "nvme")
+            throw std::runtime_error("Disk controller must be virtio or nvme");
+        if (c.diskController == "nvme" && c.virtioTransport != "pci")
+            throw std::runtime_error("NVMe requires PCI transport");
         if (!c.disk.empty()) {
             const auto parent = fs::canonical(c.disk).string();
             std::ifstream probe(parent, std::ios::binary);
@@ -68,10 +72,15 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             disk = std::make_unique<Disk>(overlay);
             if (!direct && (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent))
                 throw std::runtime_error("Virtio disk overlay belongs to a different parent");
-            block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
-                                                 [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
-            if (c.virtioTransport == "pci")
-                pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+            if (c.diskController == "nvme") {
+                nvme = std::make_unique<Nvme>(*disk, vm.ram(), HvfMachine::ramBase,
+                                            [this](bool level) { vm.setSPI(48, level); });
+            } else {
+                block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
+                                                     [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
+                if (c.virtioTransport == "pci")
+                    pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+            }
         } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
@@ -165,6 +174,7 @@ std::string ArmVirtMachine::cpuState() const {
         uint64_t address = 0;
         if (input >> std::hex >> address) dump("reported", address);
     }
+    if (nvme) output << ' ' << nvme->diagnostics();
     return output.str();
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
@@ -212,15 +222,21 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
             return;
         }
         if ((exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000) ||
-            (pci && pci->contains(exit.physicalAddress, width))) {
+            (pci && pci->contains(exit.physicalAddress, width)) ||
+            (nvme && nvme->contains(exit.physicalAddress, width))) {
             bool ecam = exit.physicalAddress >= 0x3f000000;
             if (write) {
-                if (pci) {
+                if (nvme) {
+                    if (ecam) nvme->configWrite(exit.physicalAddress - 0x3f000000, reg < 31 ? vm.reg(reg) : 0, width);
+                    else nvme->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
+                } else if (pci) {
                     if (ecam) pci->configWrite(exit.physicalAddress - 0x3f000000, reg < 31 ? vm.reg(reg) : 0, width);
                     else pci->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
                 }
             } else {
-                uint64_t value = pci ? (ecam ? pci->configRead(exit.physicalAddress - 0x3f000000, width)
+                uint64_t value = nvme ? (ecam ? nvme->configRead(exit.physicalAddress - 0x3f000000, width)
+                                                   : nvme->read(exit.physicalAddress, width))
+                    : pci ? (ecam ? pci->configRead(exit.physicalAddress - 0x3f000000, width)
                                                   : pci->read(exit.physicalAddress, width)) : UINT64_MAX;
                 value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
                 if (reg < 31) vm.setReg(reg, value);

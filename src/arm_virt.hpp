@@ -4,6 +4,7 @@
 #include "hvf_machine.hpp"
 #include "virtio_blk.hpp"
 #include "virtio_pci.hpp"
+#include "nvme.hpp"
 #include <string>
 namespace pc {
 // Concrete ARM firmware platform. Keep x86 CPU/device internals out of this path.
@@ -14,6 +15,7 @@ class ArmVirtMachine {
         std::string firmware, dtb, variableTemplate, variables;
         std::string disk, diskOverlay;
         std::string virtioTransport = "pci";
+        std::string diskController = "virtio";
         std::string acpiDirectory = "build/arm64-fw/acpi";
     };
     explicit ArmVirtMachine(const Config &config);
@@ -25,7 +27,7 @@ class ArmVirtMachine {
     const std::string &output() const { return uart.output(); }
     void saveVariables();
     std::string diskPath() const { return disk ? disk->path : std::string{}; }
-    uint64_t diskRequests() const { return block ? block->requests : 0; }
+    uint64_t diskRequests() const { return nvme ? nvme->requests : block ? block->requests : 0; }
     uint64_t exits() const { return vm.exits(); }
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
@@ -45,6 +47,7 @@ class ArmVirtMachine {
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;
     std::unique_ptr<VirtioPciBlock> pci;
+    std::unique_ptr<Nvme> nvme;
     int variableLock = -1, diskLock = -1;
 };
 } // namespace pc

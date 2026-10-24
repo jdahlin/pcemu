@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """UEFI writes to a VHDX directly, then a new VM reads the persisted file."""
+import argparse
 import json
 from pathlib import Path
 import subprocess
@@ -11,7 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
-    directory = Path(tempfile.mkdtemp(prefix='vhdx-smoke-', dir=ROOT / 'build'))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--disk-controller', choices=('virtio', 'nvme'), default='virtio')
+    args = parser.parse_args()
+    directory = Path(tempfile.mkdtemp(prefix=args.disk_controller + '-vhdx-smoke-', dir=ROOT / 'build'))
     raw = directory / 'fixture.raw'
     disk = directory / 'disk.vhdx'
     raw_disk(raw)
@@ -23,7 +27,7 @@ def main():
         with (directory / (name + '.serial.log')).open('wb') as serial, \
                 (directory / (name + '.host.log')).open('wb') as host:
             result = subprocess.run([str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
-                '--vars', str(directory / 'vars.bin'), '--disk', str(disk),
+                '--disk-controller', args.disk_controller, '--vars', str(directory / 'vars.bin'), '--disk', str(disk),
                 '--shell-command', command, '--until-text', expected, '--timeout-ms', '20000'],
                 cwd=ROOT, stdout=serial, stderr=host, timeout=30)
         if result.returncode or expected.encode() not in (directory / (name + '.serial.log')).read_bytes():
@@ -31,7 +35,7 @@ def main():
         host_log = (directory / (name + '.host.log')).read_text()
         if f'disk={disk}' not in host_log or list(directory.glob('*.pcd')):
             raise RuntimeError('VHDX was not attached directly')
-    summary = {'passed': True, 'directReadWrite': True, 'cowFilesCreated': 0,
+    summary = {'passed': True, 'diskController': args.disk_controller, 'directReadWrite': True, 'cowFilesCreated': 0,
                'logicalDiskBytes': 64 * 1024 * 1024, 'containerBytes': disk.stat().st_size,
                'allocatedBytes': disk.stat().st_blocks * 512}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

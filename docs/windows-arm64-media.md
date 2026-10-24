@@ -14,13 +14,12 @@ Files are in ignored `media/validation-os-arm64/`:
 - `download.json`: original ISO URL/size, local SHA-256 hashes and WIM image
   metadata including verified ARM64 architecture and build.
 
-The original ISO is 2,587,389,952 bytes. Only the selected files are retained;
-HTTP byte-range extraction avoids storing the ISO, its approximately 1 GB VHDX,
-and its optional packages. No installed disk or extra copy of the WIM is created.
-The payload is not yet a bootable VM. The HVF backend now reaches an EDK II
-UEFI Shell and supports virtio block I/O, but still needs Windows boot media
-and the Windows platform
-interfaces described in
+The original ISO is 2,587,389,952 bytes. The WIM-only extraction retains the
+selected files without storing the ISO, its VHDX or optional packages. A separate
+VHDX download is now used for the verified boot described below. The WIM is
+not expanded or duplicated.
+The WIM payload alone is not a bootable VM. The original VHDX now
+[boots to the administrator command prompt using NVMe](nvme.md). The HVF backend supplies the UEFI and platform interfaces described in
 [Hypervisor backend](hypervisor.md). Do not pass the WIM to `--kernel`: that
 option currently expects raw ARM64 instructions, not a Windows image.
 
@@ -69,9 +68,9 @@ which was discovered by inspecting the complete root directory.
 Read-only HTTP-range inspection of that VHDX found a 32 GiB dynamic virtual disk
 with GPT, an EFI system partition at LBAs 264192–342015, and a FAT32 filesystem
 containing `\EFI\BOOT\BOOTAA64.EFI` (3,120,648 bytes). The original VHDX is thus
-the preferred next input for booting the preinstalled system without rebuilding
-boot media or modifying Windows. Its kernel boot has not been tested; the current
-disk backend now supports [direct VHDX read/write](vhdx.md). No full ISO or VHDX
+the input used for booting the preinstalled system without rebuilding
+boot media or modifying Windows. Its kernel boots to the Validation OS command
+prompt through [NVMe](nvme.md); the disk backend supports [direct VHDX read/write](vhdx.md). No full ISO or VHDX
 was downloaded during this inspection, and the original WIM has not been modified.
 
 
@@ -119,3 +118,19 @@ virtio driver needed after the firmware handoff. This identifies the next
 storage milestone: expose a controller supported by an inbox ARM64 driver,
 such as NVMe (`stornvme.sys`), or prepare separately licensed driver media.
 The screenshot is `console.png` in that ignored observation directory.
+
+
+### NVMe boot verified
+
+Adding the original NVMe controller allowed the unchanged VHDX to boot through
+its inbox `stornvme.sys` to an administrator command prompt. The 60-second GOP
+capture in `build/validation-os-boot-qsn2t9ig/console.png` visibly shows
+`Microsoft Windows [Version 10.0.26100.9549]` and `C:\Windows\System32>`.
+This supersedes the earlier virtio-only 0x7B limitation. It does not establish
+interactive keyboard input or clean Windows shutdown/restart support.
+
+```sh
+python3 tools/observe_validation_os.py --disk-controller nvme
+```
+
+See [NVMe implementation and validation](nvme.md) for details.

@@ -132,3 +132,10 @@ References:
 - [EDK II modern virtio-PCI](https://github.com/tianocore/edk2/blob/edk2-stable202502/OvmfPkg/Virtio10Dxe/Virtio10.c)
 - [Virtio-win ARM64 packaging](https://github.com/virtio-win/kvm-guest-drivers-windows/blob/master/win11_arm64.ddf)
 - [Virtio-win viostor PCI interface](https://github.com/virtio-win/kvm-guest-drivers-windows/blob/master/viostor/virtio_stor.h)
+
+
+The original Validation OS VHDX reaches Windows' `INACCESSIBLE_BOOT_DEVICE`
+stop screen on the virtio endpoint. This particular image has no installed
+VirtIO storage driver; Windows supports VirtIO when suitable drivers are
+installed. The same unchanged disk now boots to its command prompt through
+our [NVMe controller](nvme.md), using the inbox `stornvme.sys` driver.

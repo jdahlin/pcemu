@@ -179,6 +179,7 @@ int main(int argc, char **argv) {
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--disk-controller") { uefi.diskController = value(); uefiOptions = true; }
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
             else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); uefiOptions = true; }
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
@@ -205,10 +206,10 @@ int main(int argc, char **argv) {
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
-                             "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --virtio-transport pci|mmio]\n"
+                             "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
-                             "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
+                             "Run make firmware-arm64 first; Windows Validation OS supports --disk-controller nvme.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
         }

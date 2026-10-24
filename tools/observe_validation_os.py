@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disk', type=Path,
                         default=ROOT / 'media/validation-os-arm64-vhdx/ValidationOS.vhdx')
+    parser.add_argument('--disk-controller', choices=('virtio', 'nvme'), default='virtio')
     parser.add_argument('--timeout-ms', type=int, default=60000)
     args = parser.parse_args()
     if not 1 <= args.timeout_ms <= 60000:
@@ -28,11 +29,11 @@ def main():
     with (directory / 'serial.log').open('wb') as serial, (directory / 'host.log').open('wb') as host:
         result = subprocess.run([
             str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
-            '--disk', str(disk), '--vars', str(directory / 'vars.bin'),
+            '--disk', str(disk), '--disk-controller', args.disk_controller, '--vars', str(directory / 'vars.bin'),
             '--cpu-state', '--framebuffer-ppm', str(directory / 'console.ppm'),
             '--timeout-ms', str(args.timeout_ms),
         ], cwd=ROOT, stdout=serial, stderr=host, timeout=args.timeout_ms / 1000 + 15)
-    summary = {'disk': str(disk), 'diskWritable': True, 'returncode': result.returncode,
+    summary = {'disk': str(disk), 'diskController': args.disk_controller, 'diskWritable': True, 'returncode': result.returncode,
                'wallSeconds': time.monotonic() - started,
                'windowsOsBootVerified': False,
                'note': 'Inspect serial.log, host.log and console.ppm; exit 0 only means the observation ended.'}
