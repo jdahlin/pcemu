@@ -299,3 +299,16 @@ Notepad contents (`build/event-deadline-win311.log`). Updated rtts and installed
 OSR2 cold boots/restarts pass at `build/win95-smoke-35fw89x7/result.json` and
 `build/win95-smoke-422r2bqj/result.json`. Word/Excel pixel-task results are in
 `build/event-deadline-{word,excel}/`. Passing runs removed their private disks.
+
+Interpreter dispatch guards now omit native-only RAM pointer, code bitmap,
+write-watch and stack-width validation for negative and warming cache entries.
+Those paths execute the interpreter against current CPU state; translation
+captures the current native assumptions when warmup completes. Code generation,
+execution epoch, segment/mode and mapping validation remain immediate, including
+for negative entries, so replacing unsupported bytes with supported code does
+not wait for a periodic retry. The read-JIT regression exercises that transition.
+This is a reduction in dispatcher checks, with no measured speedup claimed yet.
+Validation: `make test` (`build/dispatcher-guards-tests.log`) and
+`make smoke-guest-perf` (`build/dispatcher-guards-smoke.log`) pass, including
+CoreMark CRCs, all 56 JIT/interpreter micro intervals, matching instruction
+counts, return to DOS and intentional wrong-result rejection.

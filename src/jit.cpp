@@ -145,9 +145,16 @@ uint32_t Jit::run() {
         cached->page >= cpu.generation.size() ||
         cached->generation != cpu.generation[cached->page] || cached->cr0 != cpu.cr[0] ||
         cached->cr3 != cpu.cr[3] || cached->csBase != cpu.s[CS].base || cached->a20 != cpu.a20 ||
-        cached->vm != bool(cpu.flags & 0x20000) || cached->watched != bool(cpu.watchWrite) ||
-        (cached->usesStack && cached->stack32 != cpu.s[SS].big) || cached->ram != cpu.mem.data() ||
-        cached->ramSize != cpu.mem.size() || cached->codeBits != cpu.codeUsed.data() ||
+        cached->vm != bool(cpu.flags & 0x20000) ||
+        // These guards protect addresses and assumptions embedded in native
+        // code. Negative and warming entries execute CPU::step(), which reads
+        // the current buffers, watch callback and stack mode itself. Keep code
+        // identity checks above immediate so changed code can be translated.
+        (cached->fn &&
+         (cached->watched != bool(cpu.watchWrite) ||
+          (cached->usesStack && cached->stack32 != cpu.s[SS].big) ||
+          cached->ram != cpu.mem.data() || cached->ramSize != cpu.mem.size() ||
+          cached->codeBits != cpu.codeUsed.data())) ||
         (checkedPage && cached->page != currentPage)) {
         try {
             profile::event(profile::MetadataRebuild);

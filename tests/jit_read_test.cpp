@@ -373,6 +373,27 @@ int main() {
                 check(hot.nativeInstructions > 0 && hot.cacheHits > 0 && c.ip == 0,
                       "production warmup compiles hot memory comparison/branch pairs");
             }
+        {
+            CPU c(65536);
+            c.mem[0] = 0xfc; // CLD remains an interpreted negative-cache entry.
+            Jit hot(c, true, 0);
+            for (unsigned n = 0; n < 12; ++n) {
+                c.ip = 0;
+                c.flags |= DF;
+                hot.run();
+                check(!(c.flags & DF) && c.ip == 1,
+                      "negative cache executes current interpreter state");
+            }
+            // A formerly unsupported address must become native immediately
+            // when its code changes, without a periodic negative-cache retry.
+            const uint8_t replacement[] = {0xb8, 7, 0, 0x40, 0xeb, 0xfa};
+            for (unsigned n = 0; n < sizeof(replacement); ++n)
+                c.write(n, replacement[n], 1);
+            c.ip = 0;
+            hot.run();
+            check(hot.nativeInstructions > 0 && c.r[AX] == 8 && c.ip == 0,
+                  "negative cache immediately translates changed instruction bytes");
+        }
         check(jit.cacheRecycles > 0, "memory comparison arena recycling exercised");
         std::cout << "Passed " << checks << " read JIT checks\n";
     } catch (const std::exception &e) {
