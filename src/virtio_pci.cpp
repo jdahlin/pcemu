@@ -12,13 +12,18 @@ void access(unsigned offset, unsigned width, unsigned size) {
         throw std::runtime_error("Invalid virtio PCI access");
 }
 }
-VirtioPciBlock::VirtioPciBlock(VirtioBlock &b, std::function<void(bool)> irq)
-    : block(b), interrupt(std::move(irq)) {
-    block.write(0x38, block.read(0x34));
-    put(config, 0, 0x10421af4, 4);
+VirtioPciDevice::VirtioPciDevice(VirtioBlock &b, std::function<void(bool)> irq)
+    : VirtioPciDevice([&b](unsigned o, unsigned w) { return b.read(o, w); },
+                     [&b](unsigned o, uint64_t v, unsigned w) { b.write(o, v, w); },
+                     2, 0x01000001, 1, std::move(irq)) {}
+VirtioPciDevice::VirtioPciDevice(Reader read, Writer write, uint16_t deviceId,
+                               uint32_t classCode, uint16_t queues, std::function<void(bool)> irq)
+    : reader(std::move(read)), writer(std::move(write)), queueCount(queues), interrupt(std::move(irq)) {
+    writeReg(0x38, readReg(0x34));
+    put(config, 0, (uint32_t(0x1040 + deviceId) << 16) | 0x1af4, 4);
     put(config, 6, 0x10, 2); // capabilities list
-    put(config, 8, 0x01000001, 4); // mass storage/SCSI, revision 1
-    put(config, 0x2c, 0x00421af4, 4);
+    put(config, 8, classCode, 4); // mass storage/SCSI, revision 1
+    put(config, 0x2c, (uint32_t(0x40 + deviceId) << 16) | 0x1af4, 4);
     config[0x34] = 0x40;
     config[0x3c] = 0xff; config[0x3d] = 1;
     for (unsigned i = 0; i < 4; ++i) {
@@ -33,7 +38,7 @@ VirtioPciBlock::VirtioPciBlock(VirtioBlock &b, std::function<void(bool)> irq)
         if (i == 1) put(config, o + 16, 4, 4); // notify_off_multiplier
     }
 }
-uint64_t VirtioPciBlock::configRead(uint64_t offset, unsigned width) const {
+uint64_t VirtioPciDevice::configRead(uint64_t offset, unsigned width) const {
     access(offset & 0xfff, width, 4096);
     if (offset >= 256) return mask(width); // only function 00:00.0, standard config space
     auto bytes = config;
@@ -44,7 +49,7 @@ uint64_t VirtioPciBlock::configRead(uint64_t offset, unsigned width) const {
     for (unsigned i = 0; i < width; ++i) value |= uint64_t(bytes[offset + i]) << (8 * i);
     return value;
 }
-void VirtioPciBlock::configWrite(uint64_t offset, uint64_t value, unsigned width) {
+void VirtioPciDevice::configWrite(uint64_t offset, uint64_t value, unsigned width) {
     access(offset & 0xfff, width, 4096);
     if (offset >= 256) return;
     if (offset == 0x10 && width == 4) {
@@ -61,64 +66,65 @@ void VirtioPciBlock::configWrite(uint64_t offset, uint64_t value, unsigned width
     }
     updateIRQ();
 }
-bool VirtioPciBlock::contains(uint64_t address, unsigned width) const {
+bool VirtioPciDevice::contains(uint64_t address, unsigned width) const {
     return (command & 2) && bar >= 0x10000000 && bar < 0x3f000000 &&
            address >= bar && address - bar < 0x4000 && width <= 0x4000 - (address - bar);
 }
-void VirtioPciBlock::irq(bool level) { irqLevel = level; updateIRQ(); }
-void VirtioPciBlock::updateIRQ() { interrupt(irqLevel && !(command & 0x400)); }
-uint64_t VirtioPciBlock::commonRead(unsigned offset, unsigned width) const {
+void VirtioPciDevice::irq(bool level) { irqLevel = level; updateIRQ(); }
+void VirtioPciDevice::updateIRQ() { interrupt(irqLevel && !(command & 0x400)); }
+uint64_t VirtioPciDevice::commonRead(unsigned offset, unsigned width) const {
     access(offset, width, 56);
     std::array<uint8_t, 256> common{};
-    put(common, 0, block.read(0x14), 4); put(common, 4, block.read(0x10), 4);
-    put(common, 8, block.read(0x24), 4); put(common, 12, block.read(0x20), 4);
-    put(common, 16, 0xffff, 2); put(common, 18, 1, 2);
-    put(common, 20, block.read(0x70), 1); put(common, 22, block.read(0x30), 2);
-    put(common, 24, block.read(0x38), 2);
-    put(common, 26, 0xffff, 2); put(common, 28, block.read(0x44), 2);
+    put(common, 0, readReg(0x14), 4); put(common, 4, readReg(0x10), 4);
+    put(common, 8, readReg(0x24), 4); put(common, 12, readReg(0x20), 4);
+    put(common, 16, 0xffff, 2); put(common, 18, queueCount, 2);
+    put(common, 20, readReg(0x70), 1); put(common, 22, readReg(0x30), 2);
+    put(common, 24, readReg(0x38), 2);
+    put(common, 26, 0xffff, 2); put(common, 28, readReg(0x44), 2);
+    put(common, 30, readReg(0x30), 2);
     for (unsigned n = 0; n < 3; ++n) {
         unsigned reg = 0x80 + n * 0x10;
-        put(common, 32 + n * 8, block.read(reg) | (block.read(reg + 4) << 32), 8);
+        put(common, 32 + n * 8, readReg(reg) | (readReg(reg + 4) << 32), 8);
     }
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i) value |= uint64_t(common[offset + i]) << (i * 8);
     return value;
 }
-void VirtioPciBlock::commonWrite(unsigned offset, uint64_t value, unsigned width) {
+void VirtioPciDevice::commonWrite(unsigned offset, uint64_t value, unsigned width) {
     access(offset, width, 56);
-    if (offset == 0 && width == 4) block.write(0x14, value);
-    else if (offset == 8 && width == 4) block.write(0x24, value);
-    else if (offset == 12 && width == 4) block.write(0x20, value);
+    if (offset == 0 && width == 4) writeReg(0x14, value);
+    else if (offset == 8 && width == 4) writeReg(0x24, value);
+    else if (offset == 12 && width == 4) writeReg(0x20, value);
     else if (offset == 20 && width == 1) {
-        block.write(0x70, value);
-        if (value == 0) block.write(0x38, block.read(0x34));
+        writeReg(0x70, value);
+        if (value == 0) writeReg(0x38, readReg(0x34));
     }
-    else if (offset == 22 && width == 2) block.write(0x30, value);
-    else if (offset == 24 && width == 2) block.write(0x38, value);
-    else if (offset == 28 && width == 2) block.write(0x44, value);
+    else if (offset == 22 && width == 2) writeReg(0x30, value);
+    else if (offset == 24 && width == 2) writeReg(0x38, value);
+    else if (offset == 28 && width == 2) writeReg(0x44, value);
     else if (offset >= 32 && offset < 56 && (width == 4 || width == 8)) {
         unsigned reg = 0x80 + ((offset - 32) / 8) * 0x10 + ((offset - 32) % 8);
-        block.write(reg, uint32_t(value));
-        if (width == 8) block.write(reg + 4, value >> 32);
+        writeReg(reg, uint32_t(value));
+        if (width == 8) writeReg(reg + 4, value >> 32);
     }
 }
-uint64_t VirtioPciBlock::read(uint64_t address, unsigned width) {
+uint64_t VirtioPciDevice::read(uint64_t address, unsigned width) {
     if (!contains(address, width)) throw std::runtime_error("Virtio PCI BAR is not enabled/mapped");
     unsigned offset = address - bar;
     access(offset, width, 0x4000);
     if (offset < 56) return commonRead(offset, width);
     if (offset == 0x2000 && width == 1) {
-        uint64_t value = block.read(0x60); block.write(0x64, value); return value;
+        uint64_t value = readReg(0x60); writeReg(0x64, value); return value;
     }
-    if (offset >= 0x3000 && offset < 0x3040) return block.read(0x100 + offset - 0x3000, width);
+    if (offset >= 0x3000 && offset < 0x3040) return readReg(0x100 + offset - 0x3000, width);
     return 0;
 }
-void VirtioPciBlock::write(uint64_t address, uint64_t value, unsigned width) {
+void VirtioPciDevice::write(uint64_t address, uint64_t value, unsigned width) {
     if (!contains(address, width)) throw std::runtime_error("Virtio PCI BAR is not enabled/mapped");
     unsigned offset = address - bar;
     access(offset, width, 0x4000);
     if (offset < 56) commonWrite(offset, value, width);
-    else if (offset == 0x1000 && (width == 2 || width == 4) && (command & 4))
-        block.write(0x50, value & 0xffff);
+    else if (offset >= 0x1000 && offset < 0x1000 + queueCount * 4u && (width == 2 || width == 4) && (command & 4))
+        writeReg(0x50, value & 0xffff);
 }
 } // namespace pc

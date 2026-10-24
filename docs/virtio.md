@@ -66,7 +66,10 @@ is now usable without an x86 CPU or device implementation. Its existing
 CPU-transfer bridge lives in `disk_cpu.cpp`; the COW format and legacy API are
 unchanged. The hypervisor runner links this shared storage and zstd, not the
 x86 execution core. `src/virtio_blk.cpp` owns queues/block requests and
-`src/virtio_pci.cpp` adapts the same device to PCI.
+`src/virtio_pci.cpp` adapts the same device to PCI. Its `VirtioPciDevice`
+transport accepts register callbacks, a device identity and a queue count,
+so network and block devices can share modern PCI capability/INTx handling.
+Each queue has its own notification offset (multiplier 4).
 
 ## End-to-end checks and space use
 

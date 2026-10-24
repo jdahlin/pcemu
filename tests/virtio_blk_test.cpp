@@ -192,6 +192,22 @@ int main() {
             check(pci.read(bar + 0x3000, 8) == 16);
             f.irqObserver = {};
         }
+        {
+            std::array<uint64_t, 0x140> regs{};
+            regs[0x34] = 256;
+            VirtioPciDevice net([&](unsigned offset, unsigned) { return regs.at(offset); },
+                [&](unsigned offset, uint64_t value, unsigned) { regs.at(offset) = value; },
+                1, 0x02000001, 2, [](bool) {});
+            check(net.configRead(0, 4) == 0x10411af4);
+            check(net.configRead(8, 4) == 0x02000001);
+            net.configWrite(0x10, 0x10004000, 4); net.configWrite(4, 6, 2);
+            constexpr uint64_t bar = 0x10004000;
+            check(net.read(bar + 18, 2) == 2);
+            net.write(bar + 22, 1, 2);
+            check(net.read(bar + 30, 2) == 1);
+            net.write(bar + 0x1004, 1, 2);
+            check(regs[0x50] == 1);
+        }
         fs::remove_all(directory);
         std::cout << checks << " virtio checks passed\n";
     } catch (...) { fs::remove_all(directory); throw; }
