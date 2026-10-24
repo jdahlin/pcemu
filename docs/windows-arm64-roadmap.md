@@ -93,3 +93,60 @@ partial plus its metadata. The server copy remains authoritative; mount the
 `srv` share before using that symlink. Transfer progress is recorded locally in
 ignored `build/win11-download/transfer.log`, with the final result in the
 server-side `download.json`. File presence with a `.part` suffix is not completion.
+
+## Windows PE/Setup boot verified
+
+The full ISO's ARM64 Windows PE/Setup now boots through the original NVMe
+controller to the **Windows 11 Setup** graphical window. The captured page is
+**Install driver to show hardware**. This verifies a live WinPE/Setup userspace,
+not an installed Windows 11 desktop or a completed installation.
+
+The initial direct ISO attachment exposed its El Torito EFI filesystem but
+returned to the UEFI shell after the DVD boot timeout. For the verified boot,
+`tools/prepare_win11_boot.py` stages four unmodified ISO payloads on a private
+1 GiB sparse FAT16 boot disk:
+
+- `/efi/boot/bootaa64.efi` → `EFI/BOOT/BOOTAA64.EFI` (EFI application).
+- `/efi/microsoft/boot/bcd` → `EFI/MICROSOFT/BOOT/BCD`.
+- `/boot/boot.sdi` → `BOOT/BOOT.SDI`.
+- `/sources/boot.wim` → `SOURCES/BOOT.WIM` (630,231,583 bytes).
+
+The ISO's root `bootmgr.efi` is a Windows boot application and cannot replace
+the EFI application. The builder validates ARM64 and the EFI subsystem before
+creating media, streams the WIM without expanding it, hashes every payload,
+and emits the `MICROSOFT` VFAT long directory name with its short-name checksum.
+The CLI publishes its derived boot disk only after staging completes and
+refuses an existing output. Five synthetic tests cover file/BCD/WIM round trips,
+long directory names, PE architecture/subsystem, truncated streams and overwrite
+protection; no proprietary image is needed for those tests.
+
+```sh
+python3 tools/prepare_win11_boot.py
+mkdir -p build/windows11-setup-efi
+build/pcemu-hvf --machine arm64-uefi --disk-controller nvme \
+  --disk build/windows11-media/setup-efi-boot.raw \
+  --vars build/windows11-setup-efi/vars.bin --timeout-ms 60000 --cpu-state \
+  --framebuffer-ppm build/windows11-setup-efi/console.ppm \
+  > build/windows11-setup-efi/serial.log 2> build/windows11-setup-efi/host.log
+python3 -m unittest discover -s tests -p test_win11_boot_media.py
+```
+
+The verified observation is `build/windows11-setup-efi/console.png`, accompanied
+by `host.log`, `serial.log` and `verified-boot.json`. The measured run reported
+5,050 NVMe commands, two controller initializations and no controller fatal
+status. Unsupported feature-query errors are recorded separately; the process
+exit code alone is not the boot success criterion.
+
+The boot disk (`setup-efi-boot.raw`) and its private writable COW
+(`build/windows11-setup-efi/vars.bin.pcd`) are **local on the Mac's internal SSD**.
+Only the source ISO is on caixapreta. CPU execution uses Hypervisor.framework;
+NVMe/PCI/platform devices are implemented by this project. Windows PE runs its
+system from the WIM-backed RAM disk. No installed Windows system disk has been
+created or installed in this step.
+
+Only boot payloads were staged: the 7.6 GB `install.wim` remains in the original
+ISO. The current disk is therefore not complete installation media, and Setup's
+media/driver page is not evidence that installation-source access works. The
+next storage milestone is to expose the full installation source and a separate
+local destination disk to WinPE, followed by installer input and network driver
+provisioning. Existing guest disks and the server ISO were not modified.
