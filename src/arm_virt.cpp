@@ -73,6 +73,33 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             if (c.virtioTransport == "pci")
                 pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
         } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
+        if (!c.extraDisk.empty()) {
+            auto parent = fs::canonical(c.extraDisk).string();
+            auto overlay = c.extraDiskOverlay.empty() ? config.variables + ".extra.pcd" : fs::absolute(c.extraDiskOverlay).string();
+            fs::create_directories(fs::path(overlay).parent_path());
+            if (fs::exists(overlay) && fs::equivalent(parent, overlay))
+                throw std::runtime_error("Extra disk overlay must differ from immutable parent");
+            extraDiskLock = open((overlay + ".lock").c_str(), O_CREAT | O_RDWR, 0600);
+            if (extraDiskLock < 0 || flock(extraDiskLock, LOCK_EX | LOCK_NB))
+                throw std::runtime_error("Extra disk is already in use or cannot be locked");
+            if (!fs::exists(overlay)) Disk::createOverlay(overlay, parent);
+            extraDisk = std::make_unique<Disk>(overlay);
+            if (!extraDisk->isOverlay() || fs::canonical(extraDisk->backingPath()).string() != parent)
+                throw std::runtime_error("Extra disk overlay belongs to a different parent");
+            extraBlock = std::make_unique<VirtioBlock>(*extraDisk, vm.ram(), HvfMachine::ramBase,
+                [this](bool level) { if (extraPci) extraPci->irq(level); });
+            extraPci = std::make_unique<VirtioPciDevice>(*extraBlock, [this](bool level) { vm.setSPI(49, level); });
+        } else if (!c.extraDiskOverlay.empty()) throw std::runtime_error("--extra-disk-overlay requires --extra-disk");
+        if (c.network) {
+            net = std::make_unique<VirtioNet>(vm.ram(), HvfMachine::ramBase,
+                [this](bool level) { if (netPci) netPci->irq(level); });
+            netPci = std::make_unique<VirtioPciDevice>(
+                [this](unsigned o, unsigned w) { return net->read(o, w); },
+                [this](unsigned o, uint64_t v, unsigned w) { net->write(o, v, w); },
+                1, 0x02000001, 2, [this](bool level) { vm.setSPI(50, level); });
+            gateway = std::make_unique<Network>(c.networkCapture);
+            if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
+        } else if (c.sshPort || !c.networkCapture.empty()) throw std::runtime_error("SSH forwarding/capture requires --network user");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
         if (dtb.size() < 40 || dtb[0] != 0xd0 || dtb[1] != 0x0d || dtb[2] != 0xfe || dtb[3] != 0xed)
@@ -85,15 +112,18 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     } catch (...) {
         close(variableLock); variableLock = -1;
         if (diskLock >= 0) { close(diskLock); diskLock = -1; }
+        if (extraDiskLock >= 0) { close(extraDiskLock); extraDiskLock = -1; }
         throw;
     }
 }
 ArmVirtMachine::~ArmVirtMachine() {
     if (variableLock >= 0) close(variableLock);
     if (diskLock >= 0) close(diskLock);
+    if (extraDiskLock >= 0) close(extraDiskLock);
 }
 void ArmVirtMachine::saveVariables() {
     if (disk) disk->flush();
+    if (extraDisk) extraDisk->flush();
     auto target = fs::path(config.variables);
     auto temporary = fs::path(target.string() + ".tmp-" + std::to_string(getpid()));
     try {
@@ -169,6 +199,11 @@ std::string ArmVirtMachine::cpuState() const {
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
+    if (gateway) {
+        gateway->pump(net->outgoing, [this](const uint8_t *data, size_t size) { net->receive(data, size); }, 0, net->resetCount);
+        if (!net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
+        slice = std::min(slice, std::chrono::milliseconds(2));
+    }
     auto exit = vm.run(slice);
     if (exit.reason == HvfMachine::ExitReason::Canceled) return;
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x18) {
@@ -211,21 +246,32 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
             vm.setPC(exit.pc + 4);
             return;
         }
-        if ((exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000) ||
-            (pci && pci->contains(exit.physicalAddress, width))) {
-            bool ecam = exit.physicalAddress >= 0x3f000000;
+        const bool ecam = exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000;
+        VirtioPciDevice *endpoint = nullptr;
+        uint64_t offset = exit.physicalAddress - 0x3f000000;
+        if (ecam && !(offset & 0x7000)) {
+            auto slot = offset >> 15;
+            endpoint = slot == 0 ? pci.get() : slot == 1 ? extraPci.get() : slot == 2 ? netPci.get() : nullptr;
+            offset &= 0xfff;
+        } else if (!ecam) {
+            for (auto *candidate : {pci.get(), extraPci.get(), netPci.get()})
+                if (candidate && candidate->contains(exit.physicalAddress, width)) endpoint = candidate;
+        }
+        if (ecam || endpoint) {
             if (write) {
-                if (pci) {
-                    if (ecam) pci->configWrite(exit.physicalAddress - 0x3f000000, reg < 31 ? vm.reg(reg) : 0, width);
-                    else pci->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
+                if (endpoint) {
+                    if (ecam) endpoint->configWrite(offset, reg < 31 ? vm.reg(reg) : 0, width);
+                    else endpoint->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
                 }
             } else {
-                uint64_t value = pci ? (ecam ? pci->configRead(exit.physicalAddress - 0x3f000000, width)
-                                                  : pci->read(exit.physicalAddress, width)) : UINT64_MAX;
+                uint64_t value = endpoint ? (ecam ? endpoint->configRead(offset, width)
+                    : endpoint->read(exit.physicalAddress, width)) : UINT64_MAX;
                 value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
                 if (reg < 31) vm.setReg(reg, value);
             }
-            if (block && !block->error().empty()) throw std::runtime_error("Virtio device requires reset: " + block->error());
+            for (auto *device : {block.get(), extraBlock.get()})
+                if (device && !device->error().empty()) throw std::runtime_error("Virtio device requires reset: " + device->error());
+            if (net && !net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
             vm.setPC(exit.pc + 4); return;
         }
         if (exit.physicalAddress >= 0x0a000000 && exit.physicalAddress < 0x0a000200) {

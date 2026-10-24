@@ -101,6 +101,7 @@ void VirtioNet::write(unsigned offset, uint64_t value64, unsigned width) {
         throw std::runtime_error("Invalid virtio-net register write");
     uint32_t value = value64;
     if (offset == 0x70 && !value) {
+        ++resetCount;
         queues = {};
         featureSelect = driverSelect = queueSelect = status = isr = 0;
         driverFeatures = 0;

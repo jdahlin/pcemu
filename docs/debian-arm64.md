@@ -3,8 +3,9 @@
 The existing `arm64-uefi` machine boots the Debian trixie ARM64 netboot installer
 through modern virtio-blk PCI and reaches its language-selection screen on the
 PL011 serial console. The verified kernel is `6.12.107+deb13-arm64`.
-Installation to a system disk, virtio-net, installed-system reboot and SSH login
-remain work in progress.
+Virtio-net PCI is connected to the socket gateway and the installer configures
+its `enp0s2` interface through DHCP. Installation to a system disk, installed-system
+reboot and SSH login remain work in progress.
 
 ```sh
 make build/pcemu-hvf firmware-arm64
@@ -39,8 +40,20 @@ build/pcemu-hvf --machine arm64-uefi \
 
 The media builder and checksum cache stay under ignored `build/`. Do not attach
 this installer as the target system disk or modify a parent while a VM uses it.
-The current serial runner is bounded; an interactive input/control path and
-long-running network service are still needed for installation and SSH testing.
+`--serial-stdio` connects stdin to the PL011 console; Ctrl-] exits and saves
+private state. `--run-forever` keeps the guest running until power-off, reset or a
+host SIGINT/SIGTERM. A finite observation timeout remains the default.
+
+Use `--extra-disk EMPTY_RAW --extra-disk-overlay PRIVATE_COW` to attach a separate
+virtio installation target. The boot disk is PCI slot 0 (SPI 48), target slot 1
+(SPI 49), and virtio-net slot 2 (SPI 50); ACPI and device-tree interrupt maps agree.
+Each disk retains an immutable parent and independently locked writable delta.
+`--network user --ssh-port 2222` enables DHCP, DNS and socket networking plus a
+loopback-only `127.0.0.1:2222` forward to guest port 22. The network uses
+`10.0.2.15/24`, gateway `10.0.2.2`, DNS `10.0.2.3`. A `--network-capture FILE`
+option records Ethernet traffic for diagnosis. No privileged network service is
+required. The vCPU observation slice is capped at 2 ms with networking enabled,
+so host socket input can wake an otherwise idle guest.
 
 ## Network device under construction
 
@@ -55,13 +68,12 @@ CPU-overhead comparison has been established.
 The model validates every descriptor and DMA range before packet access and
 bounds pending outgoing frames. Portable checks cover scatter/gather receive,
 checksum completion, event suppression, 16-bit ring wrapping, malformed queues
-and reset. To run them before platform integration:
+and reset. Run the portable model checks with:
 
 ```sh
-clang++ -Isrc -std=c++20 -O2 src/virtio_net.cpp tests/virtio_net_test.cpp \
-  -o build/virtio-net-tests
-build/virtio-net-tests
+make test-virtio-net
 ```
 
-Connecting this device to the ARM machine and host socket gateway is still
-required; these model checks do not prove guest networking or SSH access.
+The real Debian installer has enumerated both virtio disks and configured DHCP
+through this device. Installer completion and an authenticated SSH session remain
+separate required checks.

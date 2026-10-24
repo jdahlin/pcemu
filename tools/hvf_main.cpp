@@ -12,8 +12,26 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <csignal>
+#include <poll.h>
+#include <termios.h>
+#include <unistd.h>
 using pc::HvfMachine;
 namespace {
+volatile std::sig_atomic_t interrupted = 0;
+void interrupt(int) { interrupted = 1; }
+class SerialTerminal {
+    termios previous{};
+    bool changed = false;
+  public:
+    explicit SerialTerminal(bool enable) {
+        if (enable && isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &previous) == 0) {
+            auto raw = previous; cfmakeraw(&raw);
+            changed = tcsetattr(STDIN_FILENO, TCSANOW, &raw) == 0;
+        }
+    }
+    ~SerialTerminal() { if (changed) tcsetattr(STDIN_FILENO, TCSANOW, &previous); }
+};
 unsigned checks = 0;
 void require(bool condition, const char *message) {
     ++checks;
@@ -153,9 +171,12 @@ void selfTest() {
 }
 int main(int argc, char **argv) {
     try {
-        bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false;
-        pc::ArmVirtMachine::Config uefi{"roms/edk2-arm64.bin", "build/arm64-fw/pcemu-virt.dtb",
-                                        "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin", {}, {}, "pci"};
+        bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
+        pc::ArmVirtMachine::Config uefi;
+        uefi.firmware = "roms/edk2-arm64.bin";
+        uefi.dtb = "build/arm64-fw/pcemu-virt.dtb";
+        uefi.variableTemplate = "roms/edk2-arm64-vars.bin";
+        uefi.variables = "build/arm64-uefi/vars.bin";
         std::string untilText, shellCommand, framebufferPath;
         std::string kernel, machine = "arm64-test", backend = "auto";
         unsigned timeout = 1000;
@@ -178,6 +199,21 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
+            else if (arg == "--extra-disk") { uefi.extraDisk = value(); uefiOptions = true; }
+            else if (arg == "--extra-disk-overlay") { uefi.extraDiskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--network") {
+                auto mode = value();
+                if (mode != "user" && mode != "none") throw std::runtime_error("Network must be user or none");
+                uefi.network = mode == "user"; uefiOptions = true;
+            }
+            else if (arg == "--ssh-port") {
+                auto text = value(); size_t consumed = 0; auto port = std::stoul(text, &consumed);
+                if (consumed != text.size() || port < 1 || port > 65535) throw std::runtime_error("SSH port must be 1..65535");
+                uefi.sshPort = uint16_t(port); uefiOptions = true;
+            }
+            else if (arg == "--network-capture") { uefi.networkCapture = value(); uefiOptions = true; }
+            else if (arg == "--serial-stdio") { serialStdio = true; uefiOptions = true; }
+            else if (arg == "--run-forever") { runForever = true; uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
             else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); uefiOptions = true; }
@@ -208,7 +244,10 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
-                             "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
+                             "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
+                             "      [--network user|none --ssh-port PORT --network-capture PCAP]\n"
+                             "      [--serial-stdio --run-forever] (Ctrl-] exits serial mode)\n"
+                             "Run make firmware-arm64 first; Debian installer boot is supported.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
         }
@@ -222,11 +261,27 @@ int main(int argc, char **argv) {
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
+            SerialTerminal terminal(serialStdio);
+            std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
             pc::ArmVirtMachine vm(uefi);
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
             size_t printed = 0, matchStart = 0;
             bool commandSent = shellCommand.empty(), matched = untilText.empty();
-            while (!vm.stopped() && std::chrono::steady_clock::now() < deadline) {
+            bool stdinOpen = serialStdio;
+            while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
+                if (stdinOpen) {
+                    pollfd input{STDIN_FILENO, POLLIN, 0};
+                    if (poll(&input, 1, 0) > 0) {
+                        std::array<char, 1024> bytes{};
+                        auto count = read(STDIN_FILENO, bytes.data(), bytes.size());
+                        if (count > 0) {
+                            std::string text(bytes.data(), size_t(count));
+                            auto escape = text.find(char(0x1d));
+                            if (escape != std::string::npos) { text.resize(escape); interrupted = 1; }
+                            vm.input(text);
+                        } else stdinOpen = false;
+                    }
+                }
                 vm.run(std::chrono::milliseconds(100));
                 const auto &output = vm.output();
                 if (output.size() > printed) {
@@ -246,6 +301,8 @@ int main(int argc, char **argv) {
             if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
             std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
                       << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
+                      << " extraDiskRequests=" << vm.extraDiskRequests()
+                      << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()
                       << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';
             return matched ? 0 : 1;
         }

@@ -45,7 +45,9 @@ class HvfCLI(unittest.TestCase):
                  ('--self-test', '--kernel', 'any'),
                  ('--machine', 'arm64-uefi', '--self-test'),
                  ('--machine', 'arm64-uefi', '--kernel', 'any'),
-                 ('--vars', 'any', '--self-test')]
+                 ('--vars', 'any', '--self-test'),
+                 ('--network', 'broken'), ('--ssh-port', '65536'),
+                 ('--ssh-port', '22oops'), ('--run-forever', '--self-test')]
         for args in cases:
             with self.subTest(args=args):
                 result = self.invoke(*args)
@@ -101,6 +103,46 @@ class HvfCLI(unittest.TestCase):
                 result = self.invoke(*args, '--disk', str(first))
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn('already in use', result.stderr)
+
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
+    def test_extra_disk_isolated_and_locked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = root / 'blank.raw'; base.write_bytes(bytes(8192))
+            variables = root / 'vars.bin'
+            args = ['--machine', 'arm64-uefi', '--vars', str(variables), '--timeout-ms', '1']
+            result = self.invoke(*args, '--disk', str(base), '--extra-disk', str(base))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(base.read_bytes(), bytes(8192))
+            self.assertTrue(Path(str(variables) + '.pcd').exists())
+            overlay = Path(str(variables) + '.extra.pcd')
+            self.assertTrue(overlay.exists())
+            result = self.invoke(*args, '--extra-disk', str(base), '--extra-disk-overlay', str(base))
+            self.assertIn('immutable parent', result.stderr)
+            with Path(str(overlay) + '.lock').open('wb') as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                result = self.invoke(*args, '--extra-disk', str(base))
+                self.assertIn('already in use', result.stderr)
+
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
+    def test_forever_sigterm_flushes(self):
+        import signal
+        import time
+        with tempfile.TemporaryDirectory() as tmp:
+            variables = Path(tmp) / 'vars.bin'
+            process = subprocess.Popen([str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
+                '--run-forever', '--timeout-ms', '1', '--vars', str(variables)],
+                cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                time.sleep(0.2)
+                self.assertIsNone(process.poll())
+                process.send_signal(signal.SIGTERM)
+                _, errors = process.communicate(timeout=5)
+                self.assertEqual(process.returncode, 0, errors)
+                self.assertEqual(variables.stat().st_size, 768 * 1024)
+            finally:
+                if process.poll() is None:
+                    process.kill(); process.communicate()
 
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):

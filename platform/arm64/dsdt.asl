@@ -24,8 +24,12 @@ DefinitionBlock ("", "DSDT", 2, "PCEMU ", "ARMVIRT ", 1)
                     NonCacheable, ReadWrite, 0, 0x10000000, 0x3EFFFFFF,
                     0, 0x2F000000)
             })
-            // Only function 00:00.0 exists; INTA is level-high GIC SPI 48.
-            Name (_PRT, Package () { Package () { 0xFFFF, Zero, Zero, 48 } })
+            // Separate level-high INTx for boot disk, target disk and network.
+            Name (_PRT, Package () {
+                Package () { 0xFFFF, Zero, Zero, 48 },
+                Package () { 0x1FFFF, Zero, Zero, 49 },
+                Package () { 0x2FFFF, Zero, Zero, 50 }
+            })
         }
         Device (COM0)
         {

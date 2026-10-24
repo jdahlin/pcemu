@@ -16,7 +16,7 @@ class VirtioNet {
     void write(unsigned offset, uint64_t value, unsigned width = 4);
     void receive(const uint8_t *data, size_t length);
     std::deque<Bytes> outgoing;
-    uint64_t transmitted = 0, received = 0, dropped = 0;
+    uint64_t transmitted = 0, received = 0, dropped = 0, resetCount = 0;
     const std::string &error() const {
         return failure;
     }

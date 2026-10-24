@@ -4,6 +4,8 @@
 #include "hvf_machine.hpp"
 #include "virtio_blk.hpp"
 #include "virtio_pci.hpp"
+#include "virtio_net.hpp"
+#include "network.hpp"
 #include <string>
 namespace pc {
 // Concrete ARM firmware platform. Keep x86 CPU/device internals out of this path.
@@ -13,6 +15,10 @@ class ArmVirtMachine {
     struct Config {
         std::string firmware, dtb, variableTemplate, variables;
         std::string disk, diskOverlay;
+        std::string extraDisk, extraDiskOverlay;
+        bool network = false;
+        uint16_t sshPort = 0;
+        std::string networkCapture;
         std::string virtioTransport = "pci";
         std::string acpiDirectory = "build/arm64-fw/acpi";
     };
@@ -26,6 +32,9 @@ class ArmVirtMachine {
     void saveVariables();
     std::string diskPath() const { return disk ? disk->path : std::string{}; }
     uint64_t diskRequests() const { return block ? block->requests : 0; }
+    uint64_t networkTransmitted() const { return net ? net->transmitted : 0; }
+    uint64_t networkReceived() const { return net ? net->received : 0; }
+    uint64_t extraDiskRequests() const { return extraBlock ? extraBlock->requests : 0; }
     uint64_t exits() const { return vm.exits(); }
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
@@ -45,6 +54,11 @@ class ArmVirtMachine {
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;
     std::unique_ptr<VirtioPciBlock> pci;
-    int variableLock = -1, diskLock = -1;
+    std::unique_ptr<Disk> extraDisk;
+    std::unique_ptr<VirtioBlock> extraBlock;
+    std::unique_ptr<VirtioPciDevice> extraPci, netPci;
+    std::unique_ptr<VirtioNet> net;
+    std::unique_ptr<Network> gateway;
+    int variableLock = -1, diskLock = -1, extraDiskLock = -1;
 };
 } // namespace pc
