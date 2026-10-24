@@ -1,5 +1,13 @@
 # Office 97 on Windows 95
 
+Current local availability (2026-10-25): cleanup removed the installed Office
+checkpoints and the installer ISO. The retained `media/office97-base/disk.raw`
+is a pre-Office Win95 baseline; it boots Explorer but does not contain Word or
+Excel. The historical installation and measurements below do not establish
+that Office is currently runnable. The user requested disk-light testing, so
+current work uses RAM-only benchmarks and existing OS images rather than
+recreating the Office installation or large startup fixtures.
+
 The supplied Office 97 Professional SR-1 media installs through Microsoft's
 normal Setup in the independent Windows 95 OSR2 installation. Word edits and
 saves `C:\WORD97.DOC`; Excel calculates `=2+2` as 4 and saves
