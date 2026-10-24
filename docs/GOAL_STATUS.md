@@ -592,3 +592,18 @@ interpreter cost. This does not measure full Explorer readiness or establish
 Rosetta speed. [Complete evidence](measurements/lazy-page-permissions-2026-10-25.json)
 preserves samples and states; successful small compressed overlays and temporary
 baseline files were removed.
+
+
+## 25 October: current Win95 application and persistence proof
+
+`tools/smoke_win95.py --applications` now exercises Calculator 2+2, copies its
+result through the guest clipboard into Notepad, adds a fresh marker, saves a
+unique file and requests a Windows restart. After exactly one reset and a
+second unobscured Explorer desktop, stopped-guest compressed-FAT readback
+matches all 38 expected bytes. Both retained rtts and installed OSR2 images
+pass unattended on the current emulator; a profiled rtts application/restart
+run and the default cold-boot regression pass too. No saved RAM state is used.
+[Records, hashes and screenshots](measurements/win95-applications-2026-10-25.json)
+are committed. Successful compressed disks and enlarged OCR scratch are removed.
+This proves more than desktop readiness, while fresh installation and broad
+Rosetta-level speed remain outside this check's evidence.

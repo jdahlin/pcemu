@@ -13,12 +13,16 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
+from cow_file import CowFile
+from prepare_media import FAT
 
 root = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--disk', type=Path, default=root / 'media/rtts-win95.img')
 parser.add_argument('--timeout', type=float, default=240,
                     help='seconds per desktop/reset wait')
+parser.add_argument('--applications', action='store_true',
+                    help='verify Calculator/Notepad and exact saved contents after a guest restart')
 parser.add_argument('--sample', action='store_true',
                     help='collect macOS host stacks through desktop verification; timings include profiling/OCR overhead')
 parser.add_argument('--restart', action='store_true', help='also verify a guest-requested restart')
@@ -26,6 +30,8 @@ jump_mode = parser.add_mutually_exclusive_group()
 jump_mode.add_argument('--jit-follow-jumps', action='store_true')
 jump_mode.add_argument('--jit-traces', action='store_true')
 args = parser.parse_args()
+if args.applications:
+    args.restart = True
 if args.timeout <= 0:
     parser.error('timeout must be positive')
 if args.sample and not shutil.which('sample'):
@@ -58,7 +64,8 @@ elif args.jit_follow_jumps:
 with (work / 'guest.log').open('w') as log:
     guest = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
     metadata = {'pid': guest.pid, 'command': command, 'sourceDisk': str(source),
-                'scope': 'cold boot and guest restart' if args.restart else 'cold boot only',
+                'scope': ('cold boot, applications and guest restart' if args.applications else
+                          'cold boot and guest restart' if args.restart else 'cold boot only'),
                 'emulatorSha256': emulator_hash,
                 'profiled': args.sample,
                 'gitCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root,
@@ -82,11 +89,13 @@ with (work / 'guest.log').open('w') as log:
             # barrier is queued only after the sampler confirms attachment.
             with control.open('a') as output:
                 output.write('profile-wait 3000\n')
-        subprocess.run(['python3', str(root / 'tools/check_win95_restart.py'), str(control),
-                        str(frame), str(state), str(disk), '--pid', str(guest.pid),
-                        '--output', str(work / 'verification'), '--timeout', str(args.timeout),
-                        '--restart-only' if args.restart else '--desktop-only'],
-                       cwd=root, check=True)
+        checker = ['python3', str(root / 'tools/check_win95_restart.py'), str(control),
+                   str(frame), str(state), str(disk), '--pid', str(guest.pid),
+                   '--output', str(work / 'verification'), '--timeout', str(args.timeout),
+                   '--restart-only' if args.restart else '--desktop-only']
+        if args.applications:
+            checker.append('--applications')
+        subprocess.run(checker, cwd=root, check=True)
         if sampler and sampler.poll() is not None:
             raise RuntimeError('Host sampler ended before desktop verification completed')
         with control.open('a') as output:
@@ -96,6 +105,19 @@ with (work / 'guest.log').open('w') as log:
             raise RuntimeError(f'Guest exited with status {guest.returncode}')
         if hashlib.sha256((root / 'build/pcemu').read_bytes()).hexdigest() != emulator_hash:
             raise RuntimeError('Emulator binary changed during verification')
+        metadata['verification'] = json.loads((work / 'verification/result.json').read_text())
+        if args.applications:
+            app = metadata['verification']['applications']
+            with CowFile(disk) as handle:
+                fat = FAT(handle)
+                entry = next(e for e in fat.entries() if e[1] == app['fatName'])
+                actual = fat.read_file(entry[2], entry[3])
+            if actual != app['expectedContents'].encode('ascii'):
+                raise RuntimeError(f'Calculator/Notepad file mismatch after restart: {actual!r}')
+            app['scope'] = 'Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart'
+            app['verifiedBytes'] = len(actual)
+            app['verifiedSha256'] = hashlib.sha256(actual).hexdigest()
+            metadata['verification']['scope'] = 'applications, restart, desktop and exact file persistence'
         if sampler:
             sampler.wait(timeout=30)
             sampler_log.close()
@@ -124,9 +146,12 @@ with (work / 'guest.log').open('w') as log:
             sampler.wait(timeout=5)
         if sampler_log and not sampler_log.closed:
             sampler_log.close()
+# Enlarged application OCR is scratch; retain screenshots and original frame.
+if args.applications:
+    (work / 'verification/ocr-interior-5.ppm').unlink(missing_ok=True)
+    metadata['applicationOcrScratchRemoved'] = True
 # This path was created by this invocation, never supplied by the caller.
 disk.unlink()
 metadata['privateDiskRemoved'] = True
-metadata['verification'] = json.loads((work / 'verification/result.json').read_text())
 (work / 'result.json').write_text(json.dumps(metadata, indent=2)+'\n')
 print(f'PASS: Win95 verified; private compressed disk removed; evidence: {work}', flush=True)

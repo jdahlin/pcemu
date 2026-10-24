@@ -41,3 +41,33 @@ generate or supply a product key. Microsoft's [Resource Kit sample](https://tech
 describes the batch sections. Microsoft [KB263281](https://ftp.zx.net.nz/pub/Patches/ftp.microsoft.com/MISC/KB/en-us/263/281.HTM)
 notes that OEM Windows 95 can still require manual re-entry of the key even
 when it appears in MSBATCH.INF. Keep any key-bearing batch input out of Git.
+
+
+## Validate the retained installations
+
+```sh
+python3 tools/smoke_win95.py --applications
+python3 tools/smoke_win95.py --applications --disk media/win95-fresh-installed.pcd
+```
+
+Both run headless and use a private compressed COW child. `--applications`
+implies a guest-requested restart. After Explorer is unobscured, the test opens
+Calculator, evaluates 2+2, copies the result to the guest clipboard, pastes it
+into Notepad and appends a new random marker. It saves a unique 8.3 filename,
+closes the applications, restarts Windows through its shutdown dialog, and
+verifies exactly one firmware reset and another unobscured desktop. Only after
+the emulator exits and flushes the disk does the parent read the FAT file through
+`CowFile`, without expanding a raw disk. All bytes must match the Calculator
+result plus marker; the digit 4 is never typed into Notepad by the harness.
+Classic Calculator supplies a leading sign-space for positive 4, retained in
+the exact 38-byte expected file. The bundled Notepad uses File -> Save.
+
+Both retained images pass with the current emulator. A separate rtts run also
+passes with `--sample`, and the ordinary cold-boot-only path still passes.
+Successful private disks and enlarged application OCR scratch are removed;
+PNG screenshots and manifests remain. [Committed verification records](measurements/win95-applications-2026-10-25.json)
+retain source/emulator hashes, per-file content hashes and screenshots from
+both images, plus a compressed raw host call tree for the profiling combination.
+These checks establish application/clipboard/keyboard/file-persistence behavior
+for the installed images, not a fresh installer run, high-resolution display
+driver validation or application startup performance.

@@ -102,6 +102,17 @@ restart when requested). Named attachment waits are excluded from the summary;
 OCR/dialog handling remains in the workload. `host-profile.json` and raw
 `host-profile/run-1/sample.txt` are diagnostics, not isolated boot-time scores.
 
+For application and file-persistence validation, run:
+
+```sh
+python3 tools/smoke_win95.py --applications
+python3 tools/smoke_win95.py --applications --disk media/win95-fresh-installed.pcd
+```
+
+This implies restart, calculates 2+2, copies Calculator's result into a fresh
+Notepad file, and verifies every saved byte directly from the compressed disk
+after restart and guest exit. `--sample` can be combined with this check.
+
 The tests include exhaustive 8-bit ADC/SBB flags, randomized interpreter/JIT
 comparisons with paging, remapping and code invalidation, VM86 transitions,
 interrupt shadows, segment-fault restart, page permissions, ATA, PIC, PIT,

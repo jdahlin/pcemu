@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import re
+import secrets
 import subprocess
 import time
 from pathlib import Path
@@ -21,9 +22,14 @@ p.add_argument('disk', type=Path)
 p.add_argument('--pid', type=int, required=True)
 p.add_argument('--output', type=Path, required=True)
 p.add_argument('--timeout', type=float, default=600)
+p.add_argument('--applications', action='store_true', help='calculate 2+2, copy result into a fresh Notepad file and restart; caller verifies file after guest exit')
 p.add_argument('--desktop-only', action='store_true', help='bootstrap desktop only; no restart or file assertion')
 p.add_argument('--restart-only', action='store_true', help='verify restart and desktop without the raw-FAT marker check (supports COW disks)')
 a = p.parse_args()
+if a.applications:
+    if a.desktop_only:
+        p.error('--applications requires restart verification')
+    a.restart_only = True
 root = Path(__file__).resolve().parent.parent
 a.output.mkdir(parents=True, exist_ok=True)
 (a.output / 'result.json').unlink(missing_ok=True)
@@ -37,7 +43,7 @@ def send(*commands, settle=.25):
 def normalize(text):
     return re.sub('[^a-z0-9]', '', text.lower())
 
-def observe():
+def observe(application=False):
     send(settle=0)
     state = json.loads(Path(str(a.memory) + '.json').read_text())
     result = subprocess.run(['tesseract', str(a.frame), 'stdout', '--psm', '11'],
@@ -49,9 +55,11 @@ def observe():
     # Tesseract's sparse-layout pass rejects text inside some bordered Win95
     # modals. Read their interiors separately in this fixed VGA fixture.
     if (width, height) == (640, 480):
-        for index, (x0, y0, x1, y1) in enumerate([
-                (180, 228, 505, 275), (40, 265, 402, 415), (180, 170, 480, 270),
-                (55, 80, 375, 140), (25, 26, 410, 50)]):
+        regions = [(180, 228, 505, 275), (40, 265, 402, 415), (180, 170, 480, 270),
+                   (55, 80, 375, 140), (25, 26, 410, 50)]
+        if application:
+            regions.append((0, 0, width, height))
+        for index, (x0, y0, x1, y1) in enumerate(regions):
             body = bytearray()
             for y in range(y0, y1):
                 row = pixels[(y*width+x0)*3:(y*width+x1)*3]
@@ -119,10 +127,63 @@ def desktop(timeout):
              else 'key 011b', settle=.8)
     raise RuntimeError('Desktop not verified before timeout; live guest left intact')
 
+def wait_text(*tokens, absent=(), timeout=30):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        _, text = observe(application=True)
+        if all(normalize(token) in text for token in tokens) and not any(
+                normalize(token) in text for token in absent):
+            return
+        time.sleep(.2)
+    screenshot('application-failure.png')
+    raise RuntimeError('Application text not verified: ' + repr(tokens))
+
+def shortcut(modifier, scan):
+    send(f'scan {modifier:02x}', settle=.15)
+    send(f'scan {scan:02x}', settle=.2)
+    send(f'scan {scan | 0x80:02x}', f'scan {modifier | 0x80:02x}', settle=.3)
+
+def launch(program):
+    shortcut(0x1d, 0x01)  # Ctrl+Escape opens Start; R invokes Run.
+    send('text r', settle=.3)
+    wait_text('type the name', 'windows will open it')
+    send('text ' + program, 'key 1c0d', settle=.8)
+
+def applications():
+    token = secrets.token_hex(4).upper()
+    stem = 'P' + token[:7]
+    # Classic Calculator's clipboard text reserves a leading sign-space.
+    expected = ' 4\r\nPCEMU Win95 applications ' + token + '.'
+    print('Checking Calculator and clipboard transfer', flush=True)
+    launch('calc.exe')
+    wait_text('calculator')
+    send('key 011b', 'text 2+2', 'key 1c0d', settle=.6)
+    screenshot('calculator.png')
+    shortcut(0x1d, 0x2e)  # Ctrl+C: result must come from Calculator.
+    shortcut(0x38, 0x3e)
+    desktop(a.timeout)
+    print('Saving a fresh Notepad file', flush=True)
+    launch('notepad.exe')
+    wait_text('notepad')
+    shortcut(0x1d, 0x2f)  # Ctrl+V: later exact FAT readback verifies arithmetic.
+    send('key 1c0d', 'text PCEMU Win95 applications ' + token + '.', settle=.4)
+    shortcut(0x38, 0x21)  # File menu; this Win95 Notepad lacks Ctrl+S.
+    send('text s', settle=.3)
+    wait_text('save', 'name')
+    send('text C:\\' + stem + '.TXT', 'key 1c0d', settle=.6)
+    wait_text('notepad', absent=('saveas', 'filename'))
+    screenshot('notepad-saved.png')
+    shortcut(0x38, 0x3e)
+    desktop(a.timeout)
+    return {'file': 'C:\\' + stem + '.TXT', 'fatName': stem + 'TXT',
+            'expectedContents': expected,
+            'scope': 'Calculator 2+2 copied through clipboard into a newly saved Notepad file; offline readback pending'}
+
 first = desktop(a.timeout)
 baseline = first['resets']
 screenshot('before-restart.png')
 print(f'Explorer ready; initial reset count {baseline}', flush=True)
+apps = applications() if a.applications else None
 if a.desktop_only:
     (a.output / 'result.json').write_text(json.dumps({
         'scope': 'desktop bootstrap only', 'instructions': first['instructions'],
@@ -172,10 +233,13 @@ if last['resets'] != baseline + 1:
     raise RuntimeError('Unexpected reset count')
 screenshot('after-restart.png')
 if a.restart_only:
-    (a.output / 'result.json').write_text(json.dumps({
-        'scope': 'guest restart and desktop; no file assertion',
-        'beforeInstructions': first['instructions'], 'afterInstructions': last['instructions'],
-        'beforeResets': baseline, 'afterResets': last['resets']}, indent=2) + '\n')
+    result = {'scope': 'guest restart and desktop; no file assertion',
+              'beforeInstructions': first['instructions'], 'afterInstructions': last['instructions'],
+              'beforeResets': baseline, 'afterResets': last['resets']}
+    if apps:
+        result['scope'] = 'applications and guest restart; offline file readback pending'
+        result['applications'] = apps
+    (a.output / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(f'PASS: Explorer returned after guest restart. Evidence: {a.output}', flush=True)
     raise SystemExit(0)
 fat = FAT(a.disk)
