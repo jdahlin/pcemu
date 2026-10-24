@@ -2,6 +2,7 @@
 #include "ata.hpp"
 #include "cpu.hpp"
 #include "disk.hpp"
+#include "io_port_space.hpp"
 #include "mouse.hpp"
 #include "ne2000.hpp"
 #include "pci.hpp"
@@ -14,6 +15,8 @@
 #include <unordered_map>
 namespace pc {
 struct Machine {
+    // Runtime wiring only; bindDevices rebuilds callbacks after snapshot moves.
+    IoPortSpace ioPorts;
     CPU cpu;
     VGA vga;
     ATA ata;

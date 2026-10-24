@@ -21,6 +21,22 @@ Machine::Machine(const std::string &hd, const std::string &fd, size_t ram) : cpu
 }
 void Machine::bindDevices() {
     ata.disk = disk.get();
+    ioPorts.clear();
+    auto ataRead = [this](uint16_t p, int w) {
+        auto value = ata.in(p, w);
+        if (p == 0x1f7)
+            ataLine = false;
+        return value;
+    };
+    auto ataWrite = [this](uint16_t p, uint32_t v, int w) { ata.out(p, v, w); };
+    ioPorts.map("ata-primary", 0x1f0, 8, ataRead, ataWrite);
+    ioPorts.map("ata-control", 0x3f6, 1, ataRead, ataWrite);
+    ioPorts.map("ne2000", NE2000::base, 32,
+                [this](uint16_t p, int w) { return nic.in(p, w); },
+                [this](uint16_t p, uint32_t v, int w) {
+                    nic.out(p, v, w);
+                    if (!nic.irq()) nicLine = false;
+                });
     cpu.videoRead = [this](uint32_t a) { return vga.read(a); };
     cpu.videoWrite = [this](uint32_t a, uint8_t v) { vga.write(a, v); };
     cpu.bios = [this](uint8_t n) { return bios(n); };
@@ -548,15 +564,9 @@ void Machine::timer() {
     poll();
 }
 uint32_t Machine::in(uint16_t p, int w) {
-    if (p >= NE2000::base && p < NE2000::base + 32) return nic.in(p, w);
+    if (auto value = ioPorts.read(p, w)) return *value;
     if (p >= 0x40 && p <= 0x42)
         return pit.read(p - 0x40, cpu.instructions / 4);
-    if ((p >= 0x1f0 && p <= 0x1f7) || p == 0x3f6) {
-        auto value = ata.in(p, w);
-        if (p == 0x1f7)
-            ataLine = false;
-        return value;
-    }
     if (p == 0x20 || p == 0xa0)
         return pic[p == 0xa0].read();
     if (p == 0x21 || p == 0xa1)
@@ -649,11 +659,7 @@ uint32_t Machine::in(uint16_t p, int w) {
     return ports[p];
 }
 void Machine::out(uint16_t p, uint32_t v, int w) {
-    if (p >= NE2000::base && p < NE2000::base + 32) {
-        nic.out(p, v, w);
-        if (!nic.irq()) nicLine = false;
-        return;
-    }
+    if (ioPorts.write(p, v, w)) return;
     if (p >= 0xcf8 && p <= 0xcff) {
         pci.out(p, v, w);
         return;
@@ -672,10 +678,6 @@ void Machine::out(uint16_t p, uint32_t v, int w) {
     }
     if (p == 0x61)
         pit.counters[2].setGate(v & 1, cpu.instructions / 4);
-    if ((p >= 0x1f0 && p <= 0x1f7) || p == 0x3f6) {
-        ata.out(p, v, w);
-        return;
-    }
     if (w > 1) {
         for (int i = 0; i < w; i++)
             out(p + i, v >> (i * 8), 1);

@@ -18,6 +18,53 @@ int main() {
         std::filesystem::temp_directory_path() / ("pcemu-input-video-" + std::to_string(getpid()));
     try {
         {
+            std::filesystem::create_directories(point);
+            auto diskPath = point / "ports.raw";
+            {
+                std::ofstream disk(diskPath, std::ios::binary);
+                std::array<char, 512> sector{};
+                sector[510] = 0x55;
+                sector[511] = char(0xaa);
+                disk.write(sector.data(), sector.size());
+            }
+            Machine machine(diskPath.string(), "", 2 * 1024 * 1024);
+            machine.ata.irq = true;
+            machine.ataLine = true;
+            machine.cpu.input(0x3f6, 1);
+            check(machine.ata.irq && machine.ataLine,
+                  "routed ATA alternate status preserves IRQ state");
+            machine.cpu.input(0x1f7, 1);
+            check(!machine.ata.irq && !machine.ataLine,
+                  "routed ATA status acknowledges device IRQ and machine latch");
+            machine.cpu.output(0x1f2, 0x23, 2);
+            check(machine.cpu.input(0x1f2, 1) == 0x23 && machine.cpu.input(0x1f3, 1) == 1,
+                  "wide ATA register output remains one device transaction");
+            machine.nic.remote = 0x4000;
+            machine.nic.remoteCount = 4;
+            machine.nic.command = 0x12;
+            machine.cpu.output(0x310, 0x12345678, 4);
+            check(machine.nic.memory[0x4000] == 0x78 && machine.nic.memory[0x4003] == 0x12 &&
+                      machine.nic.remoteCount == 0,
+                  "routed NE2000 dword output preserves remote DMA width");
+            machine.nicLine = true;
+            machine.nic.imr = 0;
+            machine.cpu.output(0x307, 0xff, 1);
+            check(!machine.nicLine, "routed NE2000 writes lower the machine IRQ latch");
+            machine.out(0x1234, 0x12345678, 4);
+            check(machine.in(0x1234, 1) == 0x78 && machine.in(0x1237, 1) == 0x12,
+                  "unmapped wide output retains consecutive byte fallback");
+            machine.bindDevices();
+            machine.bindDevices();
+            machine.cpu.output(0x1f2, 0x45, 1);
+            check(machine.cpu.input(0x1f2, 1) == 0x45,
+                  "repeated binding replaces port regions without overlaps");
+            machine.restart();
+            machine.cpu.output(0x1f2, 0x67, 1);
+            check(machine.cpu.input(0x1f2, 1) == 0x67,
+                  "port callbacks retain the current ATA after reset");
+        }
+        std::filesystem::remove_all(point);
+        {
             std::deque<uint8_t> stream;
             HostKeyboard keyboard(stream);
             auto tap = [&](uint16_t key) {

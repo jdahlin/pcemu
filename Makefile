@@ -42,7 +42,11 @@ build/jit-read-tests: $(CORE) $(HEADERS) tests/jit_read_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_read_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tests/frontend_test.cpp
 	$(CXX) -Isrc $(SDL_CFLAGS) $(CXXFLAGS) src/frontend_sdl.cpp tests/frontend_test.cpp $(SDL_LIBS) -o $@
-test: build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
+test: build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+	./build/io-port-space-tests
 	./build/frontend-tests
 	./build/jit-read-tests
 	./build/network-tests

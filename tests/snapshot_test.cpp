@@ -194,7 +194,9 @@ int main() {
                   std::equal(first.begin(), first.end() - 16, second.begin()),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
         for (unsigned n = 73; n < 512; n++)
-            check(m.ata.in(0x1f0, 2) == 0, "pending two-sector PIO read resumes at the saved word");
+            check(m.cpu.input(0x1f0, 2) == 0, "routed pending PIO read resumes after snapshot rebinding");
+        m.cpu.output(0x1f2, 7, 1);
+        check(m.ata.in(0x1f2, 1) == 7, "restored ATA port writes bind the destination machine");
         m.cpu.output(0x70, 9, 1);
         check(m.cmosIndex == 9, "restored I/O callbacks bind the destination machine");
         command(m.ata, 0x30, 10);

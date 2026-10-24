@@ -81,6 +81,28 @@ unchanged. Evidence and media remain ignored under `build/` and `media/`.
 The baseline includes any pre-existing workspace changes; it is not automatically
 equivalent to HEAD. Record failures before editing and do not count them as passes.
 
+## First extraction (2026-10-24)
+
+ATA and NE2000 now register named port regions in `Machine::bindDevices()`.
+`IoPortSpace` rejects empty, out-of-range and overlapping registrations, forwards
+the original port/value/width, and reports misses to the existing machine fallback.
+It intentionally leaves width/alignment policy with each device. Other device
+ports, CPU/JIT callbacks, snapshot encoding and CLI/platform names are unchanged.
+
+Validation passed before and after extraction: the full `make test` suite,
+Windows 3.11 Notepad file verification, and Windows 95 cold boot plus restart.
+After extraction, machine-profile tests and all three DOS reset paths also passed.
+The existing Win95 Calculator snapshot produced the expected pixels on three
+independent JIT restores and one interpreter restore. Those task timings are
+validation evidence only; no before/after performance conclusion is claimed.
+
+Local evidence: `build/pc-at-baseline.log`, `build/pc-at-after.log`,
+`build/pc-at-win311-{before,after}.log`, `build/pc-at-win95-{before,after}.log`,
+`build/pc-at-reset-after.log`, `build/pc-at-profiles-after.log`, and
+`build/pc-at-calculator-{verified,interpreter}/result.json`.
+The calculator used a fixed executable copy at `build/pc-at-validation` because
+concurrent workspace builds can replace `build/pcemu` during a measurement.
+
 ## QEMU references
 
 - [Memory and I/O regions](https://www.qemu.org/docs/master/devel/memory.html)
