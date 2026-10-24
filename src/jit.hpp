@@ -8,7 +8,7 @@ struct NativeMemoryMove {
     uint32_t displacement = 0, begin = 0, end = 0;
     bool address32 = false, store = false;
 };
-// ARM64 baseline recompiler. Register arithmetic, direct branches and guarded
+// ARM64 baseline recompiler. Register arithmetic, direct/counter branches and guarded
 // 8/16/32-bit RAM moves, register stack operations and near CALL/RET run in native blocks;
 // instructions outside the supported lowering set use the reference interpreter.
 class Jit {

@@ -110,6 +110,13 @@ micro32:
     loop .checksum
     mov eax,ebx
     MICRO_REPORT32 36
+    MICRO_START32 37
+    xor eax,eax
+.loop_counter:
+    add eax,3
+    loop .loop_counter
+    MICRO_END32
+    MICRO_REPORT32 37
     pop ebp
     pop edi
     pop esi

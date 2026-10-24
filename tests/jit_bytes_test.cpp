@@ -171,6 +171,43 @@ int main() {
                       alias.mem[0x6005] == 0x60 && alias.nativeMemoryCalls == 0,
                   "AH loads use the old EAX address and later byte accesses use its updated value");
         }
+        for (bool code32 : {false, true})
+            for (bool operandOverride : {false, true})
+                for (bool addressOverride : {false, true})
+                    for (unsigned opcode : {0xe2u, 0xe3u})
+                        for (uint32_t origin : {0u, 0xfff0u})
+                            for (unsigned displacement : {0u, 127u, 128u, 255u})
+                                for (uint32_t count : {0u, 1u, 2u, 0xffffu, 0x10000u,
+                                                       0x10001u, 0xffffffffu})
+                                    for (unsigned flags : {2u, 0x8d7u}) {
+                                        CPU ref(1024 * 1024), native(1024 * 1024);
+                                        std::vector<uint8_t> code = {0x83, 0xc3, 1};
+                                        if (operandOverride)
+                                            code.push_back(0x66);
+                                        if (addressOverride)
+                                            code.push_back(0x67);
+                                        code.push_back(opcode);
+                                        code.push_back(displacement);
+                                        for (auto c : {&ref, &native}) {
+                                            c->s[CS].big = code32;
+                                            c->ip = origin;
+                                            c->r[CX] = count;
+                                            c->r[BX] = 0x7fffffff;
+                                            c->flags = flags;
+                                            std::copy(code.begin(), code.end(), c->mem.begin() + origin);
+                                        }
+                                        ref.step();
+                                        ref.step();
+                                        Jit loop(native, true, 0);
+                                        check(loop.run() == 2 && loop.nativeInstructions == 2,
+                                              "LOOP/JCXZ execute as native block terminators");
+                                        check(native.ip == ref.ip && native.flags == ref.flags &&
+                                                  native.instructions == ref.instructions,
+                                              "LOOP/JCXZ preserve arithmetic flags and branch IP width");
+                                        for (unsigned reg = 0; reg < 8; ++reg)
+                                            check(native.r[reg] == ref.r[reg],
+                                                  "LOOP/JCXZ preserve independent CX/ECX counter width");
+                                    }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
     } catch (const std::exception &error) {

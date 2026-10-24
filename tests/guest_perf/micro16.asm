@@ -37,6 +37,13 @@ micro16:
     pushad
     push es
     push ds
+    MICRO_START16 21
+    xor eax,eax
+.loop_counter:
+    add ax,3
+    a32 loop .loop_counter
+    MICRO_END16
+    MICRO_REPORT16 21
     pop es
     cld
     MICRO_START16 16

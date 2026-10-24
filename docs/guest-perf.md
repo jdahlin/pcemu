@@ -107,8 +107,8 @@ python3 tools/bench_guest_perf.py --suite micro --loops 17 --output build/micro-
 make smoke-guest-perf
 ```
 
-There are five kernels in real mode with 16-bit operands, then the corresponding
-five kernels in flat 32-bit protected mode. Both use the original DOS COM loader
+There are six kernels in real mode with 16-bit operands, then the corresponding
+six kernels in flat 32-bit protected mode. Both use the original DOS COM loader
 and return through DOS. The real-mode version uses 386 32-bit outer counters;
 it is not an 8086-compatible benchmark. `--loops` defaults to one million and
 accepts 1..10 million without rebuilding the COM image.
@@ -120,6 +120,7 @@ accepts 1..10 million without rebuilding the COM image.
 | 18 / 34 | Alternating odd/even conditional branch | loops iterations |
 | 19 / 35 | Four genuine near CALL/RET pairs | 4 × loops calls |
 | 20 / 36 | REP MOVSW/MOVSD of 64 elements | max(1, loops/64) × 128/256 bytes |
+| 21 / 37 | One addition and a backward LOOP using ECX | loops iterations |
 
 Each kernel runs twice at the same guest addresses. The first pass explicitly
 clears the JIT after the current dispatch returns; the second retains the code
@@ -131,7 +132,7 @@ outside the measured intervals. Fixed bookkeeping around the loop remains timed.
 
 Every pass reports a checksum through E5. The host calculates the expected value
 independently from the loop count, operand width and data pattern. Missing or
-wrong results fail the run. The runner requires all twenty intervals, the
+wrong results fail the run. The runner requires all twenty-four intervals, the
 expected cold/warm ordering, and identical guest instruction counts for each
 pair. JSON reports work units/host-second, mode, checksum, JIT/native counts and
 translation counts. Do not average different units into an overall score.
@@ -184,3 +185,31 @@ snapshot task runs for the Win95 calculator, Word 97 and Excel 97 reach their
 recorded framebuffer states. These are compatibility checks, not startup
 performance comparisons. Evidence is in `build/native-return-{tests,smoke,win311}.log`
 and `build/native-return-{win95-calc,word,excel}/result.json`.
+
+## Counter branches after native returns
+
+Fresh host-stack and opcode profiles after CALL/RET lowering are retained at
+`build/post-return-{word,excel}-profile/run-0/`. Both tasks reached their expected
+pixels. The profiles counted 368,294 interpreted LOOP instructions in Word and
+144,596 in Excel. Instrumented timings include profiling overhead and are not
+performance comparisons. Interpreted dispatch remains substantial; these counts
+do not establish that LOOP is the dominant whole-application cost.
+
+Native LOOP and JCXZ/JECXZ now terminate translated blocks while preserving
+flags. Address size chooses CX versus ECX independently of the operand size
+used for the branch destination. Differential tests include zero/one counters,
+16-bit wrap, nonzero upper ECX bits, forward/backward jumps, and branch targets
+that wrap past 64 KiB. LOOPE and LOOPNE remain interpreted.
+
+Microkernel IDs 21/37 exercise the native LOOP path with a checksum of
+`3 * loops` modulo the accumulator width. Both use ECX, including an address-size
+prefix in the real-mode kernel, so the default million-iteration run does not
+silently truncate the count to 16 bits. The complete suite now has 24 intervals.
+
+Validation evidence: `build/guest-micro-native-loop{,-ref}/result.json` uses the
+same COM bytes across both engines, with all 24 checksums and architectural
+instruction counts matching. `build/native-loop-{tests,smoke,win311}.log` records
+the unit suite, odd-count DOS matrix/CRC rejection checks and exact Win3.11 file
+save. Win95 calculator and Office compatibility task results are retained under
+`build/native-loop-{win95-calc,word,excel}/`; their timings are not used to claim
+an application performance improvement.

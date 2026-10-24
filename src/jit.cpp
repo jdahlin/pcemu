@@ -471,6 +471,16 @@ Jit::Block Jit::compile(bool translate) {
                     i.memory = memoryOperand(m, address32, overrideSegment);
                 }
                 i.imm = immediate(i.w);
+            } else if (op == 0xe2 || op == 0xe3) {
+                auto displacement = int8_t(byte());
+                i.kind = 7;
+                i.dst = CX;
+                i.immediate = true;
+                i.op = op;
+                i.imm = (pos + displacement) & (w == 4 ? UINT32_MAX : 65535u);
+                // Address size selects CX/ECX; operand size selects the target
+                // IP mask. Neither LOOP nor JCXZ changes guest flags.
+                i.w = address32 ? 4 : 2;
             } else if (op == 0x90) {
                 i.kind = 3;
             } else if (op == 0xeb || op == 0xe9 || (op >= 0x70 && op <= 0x7f) || op == 0x0f) {
@@ -513,7 +523,7 @@ Jit::Block Jit::compile(bool translate) {
                 i.memory.end = i.nearCall ? i.target : pos;
             }
             ir.push_back(i);
-            if (i.kind == 4 || i.nearCall || i.nearReturn)
+            if (i.kind == 4 || i.kind == 7 || i.nearCall || i.nearReturn)
                 break;
         } catch (int) {
             pos = begin;
@@ -530,8 +540,8 @@ Jit::Block Jit::compile(bool translate) {
     const bool shortComparison =
         ir.size() == 2 && ir[1].kind == 4 && ir[1].dst >= 0 &&
         (ir[0].compareMemory || ir[0].kind == 2 || (ir[0].kind == 1 && ir[0].op == 7));
-    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && !ir.back().nearCall &&
-                      !ir.back().nearReturn))
+    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && ir.back().kind != 7 &&
+                      !ir.back().nearCall && !ir.back().nearReturn))
         return block;
     std::vector<uint32_t> code;
     auto emit = [&](uint32_t x) { code.push_back(x); };
@@ -673,6 +683,22 @@ Jit::Block Jit::compile(bool translate) {
         auto i = ir[n];
         if (i.kind == 3 || i.kind == 4)
             continue;
+        if (i.kind == 7) {
+            extract(11, 20 + CX, i.w, 0);
+            if (i.op == 0xe2) {
+                emit(0x5100056bu); // sub w11,w11,#1, without changing NZCV
+                insert(20 + CX, 11, i.w, 0);
+                dirtyRegisters |= 1u << CX;
+            }
+            imm(9, pos);
+            store(9, 19, offsetof(CPU, ip));
+            auto fallthrough = code.size();
+            emit(i.op == 0xe2 ? 0x3400000bu : 0x3500000bu); // cbz/cbnz w11
+            imm(9, i.imm);
+            store(9, 19, offsetof(CPU, ip));
+            code[fallthrough] |= uint32_t(code.size() - fallthrough) << 5;
+            continue;
+        }
         if (i.kind == 6) {
             imm(10, i.memory.displacement);
             if (i.memory.base >= 0)
@@ -936,7 +962,7 @@ Jit::Block Jit::compile(bool translate) {
     }
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == 4;
-    if (!ir.back().nearReturn) {
+    if (!ir.back().nearReturn && ir.back().kind != 7) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch && ir.back().dst < 0 ? ir.back().imm : pos);
         store(9, 19, offsetof(CPU, ip));
