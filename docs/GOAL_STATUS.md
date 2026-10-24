@@ -480,3 +480,33 @@ framebuffer/log/JSON evidence. These checks assert cold boot, reset delivery and
 visible desktops; they do not assert file persistence, rerun the installer, or
 establish Rosetta-level application performance. The optional `make smoke-win95`
 target performs the shorter cold-boot-only variant using the original rtts disk.
+
+
+## Fresh OSR2 installer with bounded joined blocks (24 October)
+
+The current JIT's opt-in `--jit-follow-jumps` mode now passes a fresh full OSR2
+installation from the original supplied DOS VHD, rather than an installed disk
+or restored RAM state. `tools/prepare_win95.py` stages the extracted CD into a
+compressed COW child, validates every source file by readback, and rejects
+Windows-containing working parents. The untouched VHD converts to an 8.6 MiB
+allocated sparse backing; initial compressed installer staging is about 80 MiB.
+See [repeatable preparation](win95-setup.md).
+
+The same emulator process completes file copying and its first Setup-requested
+firmware reset (0 -> 1 at 28,815,782,943 guest instructions), then phase-two
+configuration and its second requested reset. Unobscured Explorer is verified
+at reset count 2 and 31,514,958,282 instructions. Calculator displays 4 for
+2+2. Notepad saves C:\PCEMU95.TXT; after another guest restart (2 -> 3), stopped-
+guest FAT readback matches all 45 expected bytes, including CRLF. A separate
+private child cold-boots to Explorer and passes another guest restart (0 -> 1),
+with no Setup launch command or RAM checkpoint.
+
+Evidence: `build/win95-joined-installer/result.json`, `first-reboot/result.json`,
+`desktop/result.json`, `restart/result.json`, `calculator.png`,
+`notepad-saved.png` and `file-verification.json` within that directory;
+`build/win95-smoke-qsm7rud0/result.json` records the independent cold boot.
+The evidence records the emulator hash and preparation/source hashes. Passing
+runs remove their temporary COW children and sparse DOS backing; original
+archives and the existing installed system/checkpoints remain available.
+No experiment guest remains running. This is installer correctness evidence,
+not an installer performance comparison or proof of Rosetta-level speed.
