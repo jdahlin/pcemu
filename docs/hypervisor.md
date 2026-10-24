@@ -67,6 +67,10 @@ callers may resume it, subject to their overall task deadline.
 - Load a separate tiny raw guest returning 42; verify CLI timeout, invalid input,
   incompatible machine/backend choices and help/catalog output.
 
+The minimal Windows ARM64 payload is documented in
+[Windows ARM64 test media](windows-arm64-media.md). It is downloaded separately
+and cannot be booted by this raw-code runner yet.
+
 ## Next platform work
 
 Choose and version the ARM guest hardware contract before adding an OS image:
