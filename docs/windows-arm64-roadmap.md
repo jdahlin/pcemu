@@ -348,3 +348,31 @@ account's first-logon marker. Account-generation tests cover escaping, preserved
 specialize settings, one logon, private/exclusive writes and invalid account
 names. Actual account provisioning, desktop rendering and CNG behavior still
 require the first installed-system run; they are not implied by those tests.
+
+## Installed Windows boot checkpoint (2026-10-25)
+
+The installed system has now booted without installation media attached, using
+the local SSD's `media/windows11-arm64/system-base.raw` and writable
+`system.pcd` overlay. The specialize report
+`build/windows11-install/reports/report-1792879433890354000.log` has SHA256
+`11d6a3df07b48e6f827b2e8c312ecf93b2c23478da1a322bc170f08095cc7882`.
+It records Windows 10.0.26300.9457, C: as both the system and BCD OS partition,
+and the EFI Windows loader. VirtIO block, NetKVM and RNG PCI devices are Started.
+The explicit QEMU VirtIO RNG CNG provider returned 128 bytes successfully;
+DHCP and the HTTP probe also succeeded from installed Windows. The earlier
+WinPE CNG failure therefore does not recur in the installed system.
+
+This proves installed kernel boot and actual I/O through all three currently
+exposed VirtIO models. The additional staged balloon, input, SCSI and serial
+packages do not establish device use: their models are not exposed by this VM.
+The first local-user logon and desktop capture are still pending. Running the
+boot-report verifier on the report above rejects only the missing local-user
+logon marker; the overall completion gate remains unsatisfied.
+
+The running instance has one vCPU and 2 GiB guest RAM. It has requested two
+resets and continues executing guest code and issuing disk requests. These
+observations do not identify the current Windows setup stage or prove that
+user provisioning will finish. Framebuffer files are captured at reset/exit,
+so their black reset image is not a live desktop observation. Generated media
+containing the private answer file, writable system overlay and variable store
+are restricted to mode 0600; the private staging directory is mode 0700.
