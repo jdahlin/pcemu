@@ -22,7 +22,7 @@ struct Fixture {
     Disk disk;
     VirtioBlock device;
     uint16_t next = 0;
-    Fixture(const fs::path &path) : disk(path.string()), device(disk, ram, base, [&](bool v) { irq = v; if (irqObserver) irqObserver(v); }) {}
+    Fixture(const fs::path &path, size_t bytes = 1024 * 1024) : ram(bytes), disk(path.string()), device(disk, ram, base, [&](bool v) { irq = v; if (irqObserver) irqObserver(v); }) {}
     void put(unsigned offset, uint64_t value, unsigned width) {
         for (unsigned n = 0; n < width; ++n) ram.at(offset + n) = value >> (n * 8);
     }
@@ -64,6 +64,34 @@ int main() {
     try {
         auto parent = directory / "base.raw", child = directory / "delta.pcd";
         { std::ofstream out(parent, std::ios::binary); std::array<char, 8192> zeros{}; out.write(zeros.data(), zeros.size()); }
+        // Firmware may submit an EFI image larger than 16 MiB as one DMA
+        // buffer when it has not negotiated SIZE_MAX. Exercise both directions.
+        auto large = directory / "large.raw";
+        constexpr unsigned imageBytes = 18 * 1024 * 1024;
+        { std::ofstream out(large, std::ios::binary); out.seekp(32 * 1024 * 1024 - 1); out.put(0); }
+        {
+            Fixture f(large, imageBytes + 0x20000);
+            f.configure();
+            constexpr unsigned data = 0x10000, status = data + imageBytes;
+            auto submit = [&](unsigned type) {
+                f.put(0x4000, type, 4); f.put(0x4008, 0, 8);
+                f.descriptor(0, Fixture::base + 0x4000, 16, 1, 1);
+                f.descriptor(1, Fixture::base + data, imageBytes, type ? 1 : 3, 2);
+                f.descriptor(2, Fixture::base + status, 1, 2);
+                f.ram[status] = 0xa5;
+                f.notify();
+                check(f.ram[status] == 0 && f.device.error().empty());
+            };
+            for (unsigned i = 0; i < imageBytes; ++i) f.ram[data + i] = uint8_t(i ^ (i >> 17));
+            submit(1);
+            std::fill_n(f.ram.begin() + data, imageBytes, 0);
+            submit(0);
+            bool matches = true;
+            for (unsigned i = 0; i < imageBytes; ++i)
+                matches &= f.ram[data + i] == uint8_t(i ^ (i >> 17));
+            check(matches && f.device.bytesRead == imageBytes && f.device.bytesWritten == imageBytes);
+            check(f.get(0x3010, 4) == imageBytes + 1);
+        }
         Disk::createOverlay(child.string(), parent.string());
         {
             Fixture f(child);

@@ -41,8 +41,9 @@ RAM and the disk queue implementation are shared.
 - Validate queue size/alignment, every descriptor index, cycles, flags, ordering
   and every DMA range before disk/data access. DMA is limited to mapped guest RAM.
   Malformed chains request device reset; the current runner reports a failure.
-  Out-of-range disk requests and transfers over the bounded 16 MiB host request
-  budget return IOERR without a large host allocation.
+  Out-of-range disk requests and transfers over 1 GiB return IOERR. Valid
+  transfers stream through a host buffer of at most 128 KiB. This also supports
+  EDK II loading large EFI images without negotiating SIZE_MAX.
 - Completion is synchronous while the single vCPU is stopped. No host syscall
   occurs per guest instruction or per descriptor. Disk I/O uses the
   shared synchronous storage backend; async I/O and multiple vCPUs are future work.

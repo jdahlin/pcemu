@@ -6,7 +6,10 @@
 #include <stdexcept>
 namespace pc {
 namespace {
-constexpr uint64_t maxRequest = 16 * 1024 * 1024;
+// EDK II does not negotiate SIZE_MAX and submits whole EFI images in one
+// descriptor. Bound aggregate I/O, but stream it through a small host buffer.
+constexpr uint64_t maxRequest = 1024ull * 1024 * 1024;
+constexpr size_t transferChunk = 128 * 1024;
 uint64_t little(const uint8_t *p, unsigned width) {
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i) value |= uint64_t(p[i]) << (i * 8);
@@ -187,15 +190,21 @@ uint32_t VirtioBlock::request(uint16_t head) {
         if (length > maxRequest || length % 512 || sector > disk.sectors || length / 512 > disk.sectors - sector)
             result = 1; // IOERR
         else {
-            std::vector<uint8_t> data(length);
-            bool success;
-            if (type == 0) {
-                success = disk.read(sector, unsigned(length / 512), data.data());
-                if (success) { copy(buffers, true, 0, data, true); bytesRead += length; usedLength += length; }
-            } else {
-                copy(buffers, false, 16, data, false);
-                success = disk.write(sector, unsigned(length / 512), data.data());
-                if (success) bytesWritten += length;
+            std::vector<uint8_t> data(std::min(length, transferChunk));
+            bool success = true;
+            for (size_t offset = 0; offset < length && success; offset += transferChunk) {
+                auto part = std::span<uint8_t>(data).first(std::min(transferChunk, length - offset));
+                if (type == 0) {
+                    success = disk.read(sector + offset / 512, unsigned(part.size() / 512), part.data());
+                    if (success) copy(buffers, true, offset, part, true);
+                } else {
+                    copy(buffers, false, 16 + offset, part, false);
+                    success = disk.write(sector + offset / 512, unsigned(part.size() / 512), part.data());
+                }
+            }
+            if (success) {
+                if (type == 0) { bytesRead += length; usedLength += length; }
+                else bytesWritten += length;
             }
             result = success ? 0 : 1;
         }
