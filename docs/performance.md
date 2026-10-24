@@ -312,3 +312,16 @@ Validation: `make test` (`build/dispatcher-guards-tests.log`) and
 `make smoke-guest-perf` (`build/dispatcher-guards-smoke.log`) pass, including
 CoreMark CRCs, all 56 JIT/interpreter micro intervals, matching instruction
 counts, return to DOS and intentional wrong-result rejection.
+
+A subsequent frozen-source comparison (`build/dispatcher-controlled/build.json`
+and `result.json`) changes only `jit.cpp`, comparing the parent of `2d8670a`
+with that commit's dispatcher guards. Three alternating CoreMark pairs all
+validate canonical CRCs, run for at least ten seconds and return to DOS. Each
+run executes 1,590,037,601 guest instructions, including 1,262,986,108 native
+instructions. Median rates are 318.523 baseline and 320.164 candidate iterations
+per host second; paired candidate/baseline ratios are 1.00244, 1.01671 and
+1.00257. The median paired gain is only 0.26%, too small to distinguish reliably
+from host variation with this sample. This does not establish a meaningful
+whole-workload improvement; native block boundaries and flag/helper overhead
+remain higher-priority optimization work. All six private disk children were
+removed after validation.
