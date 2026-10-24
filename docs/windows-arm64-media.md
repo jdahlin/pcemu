@@ -111,3 +111,11 @@ virtual addresses alone do not establish a usable Windows system.
 
 Register definitions follow the Arm ARM's OSLAR_EL1/OSLSR_EL1 definitions
 ([Arm architecture register reference](https://developer.arm.com/documentation/ddi0487/latest/)).
+
+The 60-second observation (`build/validation-os-boot-isy8fc3z`) reached the
+Windows kernel's stop screen: **INACCESSIBLE_BOOT_DEVICE (0x7B)**. EFI storage
+access succeeds (512 virtio requests), but the unchanged image lacks the
+virtio driver needed after the firmware handoff. This identifies the next
+storage milestone: expose a controller supported by an inbox ARM64 driver,
+such as NVMe (`stornvme.sys`), or prepare separately licensed driver media.
+The screenshot is `console.png` in that ignored observation directory.
