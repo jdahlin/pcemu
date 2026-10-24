@@ -1,0 +1,76 @@
+# Full Windows 11 ARM64 bring-up
+
+The next guest is the full Windows 11 ARM64 installation ISO, replacing
+Validation OS as the primary Windows bring-up target. Keep the verified
+Validation OS/NVMe boot as a small regression fixture.
+
+The official English (United States) download selected on 2026-10-24 is
+Windows 11 26H2 build 26300.9457:
+
+- Filename: `Windows11_Client_arm64_en-us_26300_9457.iso`
+- Bytes: 8,528,523,264.
+- Microsoft-published SHA-256:
+  `8992f2d2cfd2fa647e579e9eb31fc21f34da8333c29b6170fde17d2ed6623e9c`.
+- Requested archive destination on caixapreta: `/srv/apps/pc/os`, mounted on
+  this Mac at `/Volumes/srv/apps/pc/os`.
+
+The download tool accepts a fresh official URL in an ignored JSON request file,
+checks available space, uses ETag-protected exact HTTP ranges, resumes a
+validated partial prefix, and checks the full ISO against the published hash.
+Signed query parameters stay out of tracked documentation and manifests.
+
+```sh
+python3 tools/fetch_win11_arm64.py --request build/win11-download/request.json \
+  --destination /Volumes/srv/apps/pc/os
+python3 tools/inspect_win11_iso.py \
+  /Volumes/srv/apps/pc/os/Windows11_Client_arm64_en-us_26300_9457.iso
+```
+
+Inspection checks the real EFI boot catalog, ARM64 EFI loader and architecture /
+version metadata in both boot.wim and install.wim without expanding the images.
+Metadata inspection is not a successful Windows Setup boot or installation.
+The ISO has a 630,231,583-byte boot.wim containing ARM64 Windows PE/Setup and
+7,612,941,295-byte install.wim containing Home, Home Single Language and Pro.
+The PE/Setup images report base build 26100; installed editions report 26300.
+
+## First milestones
+
+1. Boot Windows PE/Setup from the ISO through suitable boot-media presentation.
+   The existing guest hardware is a single CPU, 2 GiB RAM and an NVMe disk;
+   full Windows installation requirements, installer input, TPM/Secure Boot
+   support and boot-media presentation still need implementation/validation.
+2. Use the full Windows servicing tools to install the staged ARM64 NetKVM
+   package into a private image. Preserve the original ISO.
+3. Attach virtio-net alongside NVMe, connect the host network gateway, and
+   prove DHCP, reachability, DNS and a TCP exchange from Windows.
+
+## Hyper-V compatibility after boot and networking
+
+The user requested relevant Hyper-V extensions once the preceding milestones
+work. This is a future implementation stage, not a claim of current support.
+Use the ARM64 TLFS ABI and the capabilities actually useful to this guest.
+
+| Area | Implementation decision / verification |
+|---|---|
+| Discovery and ABI | ARM64 SMCCC discovery, hypercall conventions and synthetic feature/version registers. Preserve PSCI dispatch. Require probe coverage and Windows discovery evidence. |
+| Guest/VP identity | Guest OS identity and VP identity/register operations needed by the advertised interface. Record accepted guest writes/queries. |
+| Time and interrupts | Evaluate reference-time, synthetic timers and interrupt requirements against the existing framework GIC/timer backend. Advertise only complete semantics; test monotonic time, wakeups and delivered interrupts. |
+| Scheduling and memory | Evaluate yield, VP scheduling and TLB-flush facilities as SMP/guest demand justifies them. Check real invocation counters and precise state effects. |
+| Crash diagnostics | If exposed, capture guest crash notifications and parameters; test intentional synthetic notifications independently of a healthy boot. |
+| VMBus and synthetic I/O | Treat VMBus, netvsc and storvsc as separate device protocols. Implement only if desired beyond working NVMe/VirtIO; discovery alone does not provide those devices. |
+
+For every feature distinguish **implemented**, **advertised**, **invoked by
+Windows**, and **effective**. Add per-operation counters/last errors and a
+reproducible guest observation report. Unsupported calls must fail truthfully.
+Compare enabled/disabled runs for correctness and any performance benefit.
+Do not substitute a synthetic probe for proof that Windows uses a feature.
+
+ARM64 uses synthetic register queries and HVC conventions, rather than x86
+CPUID/MSR discovery. x86-only APIC, TSC, VMX/SVM and nested-virtualization flags
+are not automatically relevant to this platform. A complete Hyper-V host or
+nested Hyper-V is not implied by guest enlightenment support.
+
+References: [Microsoft ARM64 ISO download](https://www.microsoft.com/en-us/software-download/windows11arm64),
+[ARM64 discovery](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/feature-discovery),
+[Hypercall ABI](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercall-interface),
+[Virtual interrupts](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/virtual-interrupts).

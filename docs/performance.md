@@ -682,3 +682,15 @@ This does not rerun either Windows installer. Evidence and source hashes are
 listed in `build/joined-jumps-validation.json`; successful private disks were
 removed. `smoke_win311.py`, `smoke_win95.py` and `bench_snapshot_task.py` accept
 `--jit-follow-jumps` to reproduce these checks.
+
+
+### Fresh joined-block OSR2 installer verification (2026-10-24)
+
+The opt-in mode subsequently completes a fresh DOS-to-Windows 95 OSR2 install,
+including two Setup-requested firmware resets in one process, Calculator 2+2=4,
+exact Notepad file persistence across another restart, and an independent cold
+boot/restart. `build/win95-joined-installer/result.json` and
+`build/win95-smoke-qsm7rud0/result.json` contain the evidence; the status document
+records its scope. All temporary disks were removed after success. This is a
+correctness check, with no before/after installer timing claim. A short host
+sample from hardware detection is retained as diagnostic evidence only.
