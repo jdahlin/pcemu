@@ -27,6 +27,18 @@ class I8042Device {
     struct Effects { bool reset = false; std::optional<bool> a20; };
     struct Read { uint8_t value; Irqs irqs; bool full; };
     void reset() { state_ = State{}; }
+    // Conservative board-side gate: false means poll cannot change state or
+    // raise an IRQ. Read live state so I/O, input and restore need no cache.
+    bool pollDue(uint64_t now) const {
+        if (state_.mouse.packetDue(now))
+            return true;
+        if (state_.keyboardFull)
+            return state_.keyboardAux ? (state_.keyboardCommandByte & 2) && !state_.mouseLine
+                                      : (state_.keyboardCommandByte & 1) && !state_.keyLine;
+        return now >= state_.keyboardNextAt &&
+               (!state_.keyboardReplies.empty() || !state_.mouse.replies.empty() ||
+                !state_.scanCodes.empty() || !state_.mouse.packets.empty());
+    }
     Irqs poll(uint64_t now, IrqState inputs);
     Read readStatus(uint64_t now, IrqState inputs);
     Read readData(uint64_t now, IrqState inputs);

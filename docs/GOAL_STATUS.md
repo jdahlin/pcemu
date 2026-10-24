@@ -562,3 +562,18 @@ isolated boot speed. `tools/smoke_win95.py --sample` reproduces collection;
 see [the full host evidence](measurements/win95-host-startup-2026-10-25.json)
 and [scope/method](startup-profiling.md). Both profiled cold boots, profiled
 rtts restart and unprofiled OSR2 restart pass and remove private compressed disks.
+
+
+## 25 October: live-state gate for idle PS/2 polling
+
+The board now avoids controller/PIC-input polling when a live-state predicate
+proves it cannot change state or raise an IRQ. 65,564 controller checks include
+32,768 differential IRQ/state cases against unconditional polling; core,
+snapshot/COW and input/video integration checks pass. Win3.11 exact save and
+both Win95 boot/restart checks pass headless with successful compressed overlays
+removed. Five matched, alternating DOS CoreMark pairs show a 5.16% median paired
+throughput gain with identical guest/native work and validated CRCs/durations.
+A fresh Win95 host profile remains dominated by interpreter/MMU and dispatch;
+this does not establish broad Windows/Rosetta gains. [Complete evidence](measurements/ps2-poll-2026-10-25.json)
+retains all samples, checks and a compressed raw call tree. No large VM fixture
+was created.

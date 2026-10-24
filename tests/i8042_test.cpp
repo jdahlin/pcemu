@@ -1,14 +1,64 @@
 #include "i8042.hpp"
 #include "pc_input.hpp"
 #include <iostream>
+#include <random>
+#include <tuple>
 #include <stdexcept>
 using namespace pc;
+namespace pc {
+class Ps2TestAccess {
+  public:
+    static I8042Device::State &state(I8042Device &controller) { return controller.state_; }
+};
+}
+static auto image(const I8042Device &controller) {
+    const auto &s = controller.state();
+    const auto &m = s.mouse;
+    return std::tuple{s.keyLine, s.mouseLine, s.keyboardAux, s.keyboardFull,
+                      s.keyboardData, s.keyboardNextAt, s.keyboardCommandByte,
+                      s.keyboardControllerPending, s.keyboardParameter, s.keyboardLEDs,
+                      s.keyboardScanSet, s.keyboardOutputPort, s.keyboardEnabled,
+                      s.keyboardLastCommand, s.keyboardReplies, s.scanCodes,
+                      m.enabled, m.remote, m.wrap, m.scaling2, m.resolution, m.rate,
+                      m.id, m.parameter, m.buttons, m.reportedButtons, m.lastSent,
+                      m.rates, m.dx, m.dy, m.wheel, m.nextAt, m.replies, m.packets};
+}
 static unsigned checks;
 static void check(bool condition) {
     ++checks;
     if (!condition) throw std::runtime_error("i8042 device check " + std::to_string(checks));
 }
 int main() {
+    std::mt19937 rng(0x8042);
+    for (unsigned trial = 0; trial < 1024; ++trial) {
+        I8042Device seed;
+        auto &s = Ps2TestAccess::state(seed);
+        s.keyLine = rng() & 1; s.mouseLine = rng() & 1;
+        s.keyboardAux = rng() & 1; s.keyboardFull = rng() & 1;
+        s.keyboardCommandByte = rng(); s.keyboardEnabled = rng() & 1;
+        s.keyboardParameter = rng() & 1; s.keyboardData = rng();
+        s.keyboardNextAt = 4000;
+        s.mouse.enabled = rng() & 1; s.mouse.remote = rng() & 1;
+        s.mouse.wrap = rng() & 1; s.mouse.nextAt = 4000;
+        s.mouse.dx = rng() & 1; s.mouse.dy = rng() & 1;
+        s.mouse.wheel = rng() & 1; s.mouse.buttons = rng() & 1;
+        s.mouse.reportedButtons = rng() & 1;
+        if (rng() & 1) s.keyboardReplies.push_back(0xfa);
+        if (rng() & 1) s.scanCodes.push_back(0x1e);
+        if (rng() & 1) s.mouse.replies.push_back(0xfa);
+        if (rng() & 1) s.mouse.packets.push_back(8);
+        for (unsigned gates = 0; gates < 16; ++gates)
+            for (uint64_t now : {3999u, 4000u}) {
+                auto reference = seed, gated = seed;
+                I8042Device::IrqState irq{bool(gates & 1), bool(gates & 2),
+                                         bool(gates & 4), bool(gates & 8)};
+                auto expected = reference.poll(now, irq);
+                I8042Device::Irqs actual;
+                if (gated.pollDue(now)) actual = gated.poll(now, irq);
+                check(actual.keyboard == expected.keyboard && actual.mouse == expected.mouse);
+                check(image(gated) == image(reference));
+            }
+    }
     const I8042Device::IrqState ready{false, false, false, false};
     I8042Device controller;
     controller.enqueueScan(0x1e); controller.enqueueScan(0x9e);

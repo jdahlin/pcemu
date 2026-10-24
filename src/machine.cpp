@@ -105,7 +105,8 @@ void Machine::poll() {
     }
     if (pit.tick(cpu.instructions / 4))
         pic[0].raise(0);
-    pollPs2();
+    if (ps2.pollDue(cpu.instructions))
+        pollPs2();
     if (ata.interruptLevel() && !ataLine) {
         pic[1].raise(6);
         ataLine = true;

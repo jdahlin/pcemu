@@ -1207,3 +1207,41 @@ are retained, including the initial pilot separately from the paired summary.
 No disk image was opened; the temporary frozen source tree, baseline binary
 and debug symbols were removed. Future MMU work must retain flat-memory controls
 rather than assuming that inlining improves the whole interpreter.
+
+
+## Gate idle PS/2 board polling (25 October)
+
+Win95 host profiles put 5–7% of main-thread self samples in the controller's
+poll function. The board now asks a conservative inline `pollDue` predicate
+before building PIC gating inputs and calling the controller. It skips only
+when polling cannot change state or raise an IRQ: mouse packet deadlines,
+queued replies/scans/packets, full output buffers and unasserted enabled IRQs
+remain observable. The predicate reads live state, so guest I/O, host input,
+reset and snapshot restore need no cached-deadline invalidation. Direct port
+reads still use the existing controller poll path.
+
+65,564 standalone checks pass, including 32,768 differential state/IRQ cases
+against unconditional polling at both sides of deadlines and all PIC gating
+combinations. The 343,354 core checks, 2,896 snapshot/COW checks and 106 input/
+video integration checks pass. Win3.11 saves exact Notepad text and exits to
+DOS; both retained Win95 disks cold-boot and guest-restart to Explorer.
+
+Five alternating matched DOS CoreMark pairs execute 10,000 iterations each,
+with identical COM hash, 3,975,092,643 guest instructions and 3,833,382,323 native
+instructions. Every run passes canonical CRCs, upstream minimum-duration
+validation and DOS return. Baseline/candidate time ratios are 1.03996, 1.08115,
+1.05157, 1.04848 and 1.07492: median paired throughput improves **5.16%**.
+Median intervals are 12.5721 s and 11.8448 s. Only the board polling gate differs
+between runners, and no competing build/validation was launched during timing.
+This measures flat integer work with real Machine/device polling on one Apple
+M4, without a confidence interval; it does not establish Windows/Rosetta gains.
+
+A fresh rtts boot host profile also reaches unobscured Explorer, with 7,626
+main-thread samples after attachment waits are excluded. Device polling is
+11.0%, interpreter work 51.6% and dispatch 19.4%. This includes OCR/dialog
+observation and is not a matched boot-speed comparison. [All timing samples,
+checks, host summary and source hashes](measurements/ps2-poll-2026-10-25.json)
+and a [compressed raw call tree](measurements/ps2-poll-win95-2026-10-25.sample.txt.zst)
+are committed. Successful compressed overlays and the temporary baseline runner,
+source and debug symbols were removed; no new installer or Office fixture was
+created.

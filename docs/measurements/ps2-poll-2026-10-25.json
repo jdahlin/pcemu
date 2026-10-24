@@ -1,0 +1,2892 @@
+{
+  "scope": "Five alternating headless DOS CoreMark pairs, 10000 iterations each; PS2 idle polling gate only",
+  "runnerSha256": {
+    "baseline": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+    "candidate": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae"
+  },
+  "signature": [
+    "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb",
+    3975092643,
+    10000
+  ],
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.039958790176581,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 12.442723917,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.34228515625,
+              2.1357421875,
+              2.353515625
+            ],
+            "loadAverageAfter": [
+              2.25927734375,
+              2.1279296875,
+              2.34619140625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 803.6825430432798,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 11.964631709,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.25927734375,
+              2.1279296875,
+              2.34619140625
+            ],
+            "loadAverageAfter": [
+              2.21875,
+              2.123046875,
+              2.34130859375
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 835.7967251493274,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.081146849693981,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 11.686834875,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.21875,
+              2.123046875,
+              2.34130859375
+            ],
+            "loadAverageAfter": [
+              2.111328125,
+              2.10205078125,
+              2.3310546875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 855.6636683035191,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 12.635184708,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.10205078125,
+              2.10009765625,
+              2.3291015625
+            ],
+            "loadAverageAfter": [
+              1.93212890625,
+              2.0634765625,
+              2.3134765625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 791.4407451177563,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0515718557196263,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 12.572074375,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              1.93212890625,
+              2.0634765625,
+              2.3134765625
+            ],
+            "loadAverageAfter": [
+              2.02099609375,
+              2.07568359375,
+              2.3134765625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 795.4136844660529,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 11.955506708,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.02099609375,
+              2.07568359375,
+              2.3134765625
+            ],
+            "loadAverageAfter": [
+              2.1708984375,
+              2.10546875,
+              2.3212890625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 836.4346442387526,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0484760334196634,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 11.844762958,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.1708984375,
+              2.10546875,
+              2.3212890625
+            ],
+            "loadAverageAfter": [
+              2.27978515625,
+              2.13232421875,
+              2.3271484375
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 844.2549703576769,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 12.418950083,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.27978515625,
+              2.13232421875,
+              2.3271484375
+            ],
+            "loadAverageAfter": [
+              2.236328125,
+              2.12744140625,
+              2.3232421875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 805.221047928098,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0749198340698098,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 12.576282042,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "3b177836e8d8c15f7c3c0fe3a940c5c6a96a0ea5aa1fd0596172a83c5ec575f8",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.236328125,
+              2.12744140625,
+              2.3232421875
+            ],
+            "loadAverageAfter": [
+              2.69970703125,
+              2.23486328125,
+              2.35791015625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 795.1475616246361,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 11.6997395,
+              "guestInstructions": 3975092643,
+              "nativeInstructions": 3833382323,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "30366372504e46e2df0754202c9afa0564d764f391cda0e1050a1ffb96a8e7ae",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.69970703125,
+              2.23486328125,
+              2.35791015625
+            ],
+            "loadAverageAfter": [
+              2.671875,
+              2.24365234375,
+              2.35888671875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=10000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 10000,
+            "comBytes": 11992,
+            "comSha256": "719b0b6085e66032e97c7ed2348a80375ff4f1a40fd71c58a9382c615fcebedb"
+          },
+          "iterations": 10000,
+          "iterationsPerHostSecond": 854.7198850025678,
+          "publishedScoreEligible": true
+        }
+      }
+    }
+  ],
+  "medianPairedRatio": 1.0515718557196263,
+  "build": {
+    "scope": "Shared sources and compiler options; only baseline removes the board-side ps2.pollDue gate",
+    "baselineCommand": [
+      "clang++",
+      "-Isrc",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "src/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline-machine.cpp",
+      "src/pc_at_io.cpp",
+      "src/pc_firmware.cpp",
+      "src/pc_bios.cpp",
+      "src/pc_bios_video.cpp",
+      "src/i8042.cpp",
+      "src/pc_input.cpp",
+      "src/cmos_rtc.cpp",
+      "src/disk.cpp",
+      "src/pc_bios_disk.cpp",
+      "src/ata.cpp",
+      "src/pic.cpp",
+      "src/i8259_pair.cpp",
+      "src/pit.cpp",
+      "src/vga.cpp",
+      "src/jit.cpp",
+      "src/jit_decode.cpp",
+      "src/jit_flags.cpp",
+      "src/jit_runtime.cpp",
+      "src/jit_arm64.cpp",
+      "src/snapshot.cpp",
+      "src/mouse.cpp",
+      "src/pci.cpp",
+      "src/vga_pci.cpp",
+      "src/host_keyboard.cpp",
+      "src/ne2000.cpp",
+      "tools/guest_bench.cpp",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/ps2-poll-comparison/baseline"
+    ],
+    "baselineMachineSha256": "7396b98b641a8f13b2cbae61ad57b8042a10ecfa33fc3cc4f2a58c021802da23",
+    "commonSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a",
+      "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+      "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "e39b9e46ab7750d42c9ab5cb53a11e09f6805801fc9f516b2ca0cfe9d44a2478",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    }
+  },
+  "date": "2026-10-25",
+  "checks": {
+    "i8042": 65564,
+    "core": 343354,
+    "snapshotCow": 2896,
+    "inputVideoIntegration": 106
+  },
+  "compatibility": {
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "558e973cd1a998170851bdf0366e76f376d70f501a65ca431684e20d8a5c731c",
+      "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5670,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rttsRestart": {
+      "pid": 64890,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-vv5j54ac/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-vv5j54ac/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-vv5j54ac/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-vv5j54ac/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "558e973cd1a998170851bdf0366e76f376d70f501a65ca431684e20d8a5c731c",
+      "profiled": false,
+      "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 427523172,
+        "afterInstructions": 834125135,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "osr2Restart": {
+      "pid": 64886,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-h8fm222e/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-h8fm222e/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-h8fm222e/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-h8fm222e/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "558e973cd1a998170851bdf0366e76f376d70f501a65ca431684e20d8a5c731c",
+      "profiled": false,
+      "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 279984956,
+        "afterInstructions": 664081811,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "rttsHostProfile": {
+      "pid": 65246,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot only",
+      "emulatorSha256": "558e973cd1a998170851bdf0366e76f376d70f501a65ca431684e20d8a5c731c",
+      "profiled": true,
+      "gitCommit": "799e894ff1185bee9e16e68b1f16d03dc64ef8fa",
+      "hostProfile": {
+        "summary": "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/host-profile.json",
+        "sample": "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/host-profile/run-1/sample.txt",
+        "sampleSha256": "230623b49eb8f9611af27e940a2d7108db6d1993a70c98e3608972976f04679d",
+        "scope": "Host attachment after initial dispatch batch through guest exit after desktop verification; includes OCR/dialog handling and control captures; not an isolated boot-time benchmark",
+        "attachmentBarrierMs": 6000
+      },
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "desktop bootstrap only",
+        "instructions": 452430004,
+        "resets": 0
+      }
+    }
+  },
+  "hostProfileSummary": {
+    "files": [
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-4l_x_cg5/host-profile/run-1/sample.txt"
+    ],
+    "samples": 7626,
+    "attachmentBarrierSamplesExcluded": 4384,
+    "workerThreads": {},
+    "scope": "main-thread wall-stack samples; attachment barrier excluded; worker blocking stacks reported separately; small attachment/exit margins remain; profiled timings are not benchmarks",
+    "categories": [
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 3938,
+        "percent": 51.63912929451875
+      },
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 1478,
+        "percent": 19.38106477838972
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 836,
+        "percent": 10.962496721741411
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 633,
+        "percent": 8.300550747442959
+      },
+      {
+        "name": "Generated code and native helpers",
+        "samples": 553,
+        "percent": 7.251507998950958
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 147,
+        "percent": 1.927616050354052
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 28,
+        "percent": 0.3671649619722004
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 13,
+        "percent": 0.17046944662995017
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 1198,
+        "percent": 15.709415158667715
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 1043,
+        "percent": 13.676894833464464
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 963,
+        "percent": 12.627852084972462
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 732,
+        "percent": 9.59874114870181
+      },
+      {
+        "name": "???",
+        "samples": 707,
+        "percent": 9.27091528979806
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 410,
+        "percent": 5.376344086021505
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 313,
+        "percent": 4.104379753474954
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 241,
+        "percent": 3.160241279832153
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 221,
+        "percent": 2.897980592709153
+      },
+      {
+        "name": "main",
+        "samples": 193,
+        "percent": 2.5308156307369525
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 167,
+        "percent": 2.1898767374770522
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 146,
+        "percent": 1.914503015997902
+      },
+      {
+        "name": "pc::I8259PairDevice::nextVector(bool)",
+        "samples": 142,
+        "percent": 1.8620508785733019
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 105,
+        "percent": 1.3768686073957515
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 85,
+        "percent": 1.114607920272751
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 74,
+        "percent": 0.970364542355101
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 57,
+        "percent": 0.7474429583005507
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 52,
+        "percent": 0.6818777865198007
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 48,
+        "percent": 0.6294256490952006
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 47,
+        "percent": 0.6163126147390506
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 47,
+        "percent": 0.6163126147390506
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 43,
+        "percent": 0.5638604773144505
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 32,
+        "percent": 0.4196170993968004
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 29,
+        "percent": 0.38027799632835035
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 26,
+        "percent": 0.34093889325990034
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 25,
+        "percent": 0.3278258589037503
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 18,
+        "percent": 0.23603461841070023
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 15,
+        "percent": 0.1966955153422502
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 15,
+        "percent": 0.1966955153422502
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 14,
+        "percent": 0.1835824809861002
+      },
+      {
+        "name": "__lseek",
+        "samples": 13,
+        "percent": 0.17046944662995017
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "pc::Disk::readBlock(unsigned long long, std::array<unsigned char, 4096ul>&)",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 8,
+        "percent": 0.1049042748492001
+      },
+      {
+        "name": "pc::VGA::pixel(unsigned int, unsigned int) const",
+        "samples": 8,
+        "percent": 0.1049042748492001
+      },
+      {
+        "name": "dyld4::APIs::_dyld_find_unwind_sections(void*, dyld_unwind_sections*)",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::getSlide() const",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "unwind_phase2",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "HUF_readDTableX1_wksp",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "Diagnostics::clearError()",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "_Block_object_dispose",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_14::operator()(int, int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "DyldSharedCache::forEachCache(void (DyldSharedCache const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "mach_o::Error::~Error()",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "invocation function for block in DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::CPU::get(int, int) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "_free",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "__bzero",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_8::operator()(int, unsigned long) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::Machine::text() const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "Diagnostics::Diagnostics()",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "DyldSharedCache::forEachRegion(void (void const*, unsigned long long, unsigned long long, unsigned int, unsigned int, unsigned long long, unsigned long long, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "DYLD-STUB$$_dyld_find_unwind_sections",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::Disk::write(unsigned long long, unsigned int, unsigned char const*)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "HUF_decompress4X1_usingDTable_internal",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_fseeko",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::VGA::read(unsigned int)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::PIT8254::write(unsigned int, unsigned char, unsigned long long)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_2::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()(unsigned int) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "Diagnostics::assertNoError() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "dyld4::RuntimeState::inPermanentRange(unsigned long, unsigned long, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DyldSharedCache::mappedSize() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_Unwind_GetLanguageSpecificData",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "unw_getcontext",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__cxa_throw",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::get_terminate()",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_xzm_memalign",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxxabiv1::set_registers(_Unwind_Exception*, _Unwind_Context*, __cxxabiv1::(anonymous namespace)::scan_results const&)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setReg(int, unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$_Unwind_GetLanguageSpecificData",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::Machine::service(unsigned char, bool)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "FSE_readNCount_bmi2",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_buildFSETable",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "HUF_buildCTable_wksp",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_Unwind_GetGR",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindDevices()::$_3, unsigned int (unsigned short, int)>::operator()(unsigned short&&, int&&)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxa_begin_catch",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxa_decrement_exception_refcount",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::validReg(int)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "flockfile",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__error",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::basic_string<char>::append(char const*, unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::Jit::~Jit()",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__cxa_uncaught_exceptions",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      }
+    ],
+    "inclusiveFunctions": [
+      {
+        "name": "Thread_7849225   DispatchQueue_1: com.apple.main-thread  (serial)",
+        "samples": 7626,
+        "percent": 100.0
+      },
+      {
+        "name": "start",
+        "samples": 7626,
+        "percent": 100.0
+      },
+      {
+        "name": "main",
+        "samples": 7536,
+        "percent": 98.81982690794649
+      },
+      {
+        "name": "pc::Jit::run()",
+        "samples": 6143,
+        "percent": 80.55337004982952
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 3966,
+        "percent": 52.00629425649095
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 3511,
+        "percent": 46.039863624442695
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 1048,
+        "percent": 13.742460005245213
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 836,
+        "percent": 10.962496721741411
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 734,
+        "percent": 9.62496721741411
+      },
+      {
+        "name": "???",
+        "samples": 726,
+        "percent": 9.520062942564909
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 535,
+        "percent": 7.015473380540257
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 517,
+        "percent": 6.779438762129557
+      },
+      {
+        "name": "dyld4::APIs::_dyld_find_unwind_sections(void*, dyld_unwind_sections*)",
+        "samples": 469,
+        "percent": 6.1500131130343565
+      },
+      {
+        "name": "__cxa_throw",
+        "samples": 468,
+        "percent": 6.136900078678206
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 467,
+        "percent": 6.123787044322056
+      },
+      {
+        "name": "unwind_phase2",
+        "samples": 449,
+        "percent": 5.887752425911356
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 441,
+        "percent": 5.782848151062156
+      },
+      {
+        "name": "dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 351,
+        "percent": 4.6026750590086545
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 343,
+        "percent": 4.497770784159455
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 342,
+        "percent": 4.484657749803304
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 321,
+        "percent": 4.209284028324154
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 285,
+        "percent": 3.737214791502754
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 279,
+        "percent": 3.658536585365854
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 266,
+        "percent": 3.4880671387359037
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 241,
+        "percent": 3.160241279832153
+      },
+      {
+        "name": "_Unwind_Resume",
+        "samples": 212,
+        "percent": 2.7799632835038026
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 175,
+        "percent": 2.2947810123262524
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 147,
+        "percent": 1.927616050354052
+      },
+      {
+        "name": "pc::I8259PairDevice::nextVector(bool)",
+        "samples": 142,
+        "percent": 1.8620508785733019
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 118,
+        "percent": 1.5473380540257016
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 114,
+        "percent": 1.4948859166011015
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 101,
+        "percent": 1.3244164699711514
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 100,
+        "percent": 1.3113034356150013
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 92,
+        "percent": 1.2063991607658011
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 89,
+        "percent": 1.167060057697351
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 85,
+        "percent": 1.114607920272751
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 77,
+        "percent": 1.009703645423551
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 68,
+        "percent": 0.8916863362182009
+      },
+      {
+        "name": "pc::Machine::service(unsigned char, bool)",
+        "samples": 63,
+        "percent": 0.8261211644374509
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 58,
+        "percent": 0.7605559926567007
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 57,
+        "percent": 0.7474429583005507
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 56,
+        "percent": 0.7343299239444008
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 48,
+        "percent": 0.6294256490952006
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 47,
+        "percent": 0.6163126147390506
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 37,
+        "percent": 0.4851822711775505
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 31,
+        "percent": 0.4065040650406504
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 29,
+        "percent": 0.38027799632835035
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 27,
+        "percent": 0.35405192761605037
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 25,
+        "percent": 0.3278258589037503
+      },
+      {
+        "name": "pc::Disk::readBlock(unsigned long long, std::array<unsigned char, 4096ul>&)",
+        "samples": 24,
+        "percent": 0.3147128245476003
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 24,
+        "percent": 0.3147128245476003
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 24,
+        "percent": 0.3147128245476003
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "std::basic_istream<char>::seekg(std::fpos<__mbstate_t>)",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "std::basic_filebuf<char>::seekpos(std::fpos<__mbstate_t>, unsigned int)",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "fseeko",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 23,
+        "percent": 0.3015997901914503
+      },
+      {
+        "name": "pc::Disk::read(unsigned long long, unsigned int, unsigned char*)",
+        "samples": 22,
+        "percent": 0.2884867558353003
+      },
+      {
+        "name": "_fseeko",
+        "samples": 22,
+        "percent": 0.2884867558353003
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 21,
+        "percent": 0.2753737214791503
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 18,
+        "percent": 0.23603461841070023
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int)",
+        "samples": 17,
+        "percent": 0.22292158405455023
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 16,
+        "percent": 0.2098085496984002
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 15,
+        "percent": 0.1966955153422502
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 14,
+        "percent": 0.1835824809861002
+      },
+      {
+        "name": "_sseek",
+        "samples": 13,
+        "percent": 0.17046944662995017
+      },
+      {
+        "name": "__lseek",
+        "samples": 13,
+        "percent": 0.17046944662995017
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::getSlide() const",
+        "samples": 12,
+        "percent": 0.15735641227380015
+      },
+      {
+        "name": "DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 12,
+        "percent": 0.15735641227380015
+      },
+      {
+        "name": "ZSTD_decompress",
+        "samples": 12,
+        "percent": 0.15735641227380015
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 11,
+        "percent": 0.14424337791765016
+      },
+      {
+        "name": "DyldSharedCache::forEachCache(void (DyldSharedCache const*, bool&) block_pointer) const",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "unw_resume_with_frames_walked",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "unw_resume",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::jumpto()",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "libunwind::Registers_arm64::returnto(unsigned int)",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "ZSTD_decompressMultiFrame",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "ZSTD_decompressBlock_internal",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "std::basic_filebuf<char>::sync()",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "__srefill1",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "_sread",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "__sread",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 10,
+        "percent": 0.13113034356150013
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "pc::Disk::write(unsigned long long, unsigned int, unsigned char const*)",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 9,
+        "percent": 0.11801730920535011
+      },
+      {
+        "name": "ZSTD_decodeLiteralsBlock",
+        "samples": 8,
+        "percent": 0.1049042748492001
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 8,
+        "percent": 0.1049042748492001
+      },
+      {
+        "name": "pc::VGA::pixel(unsigned int, unsigned int) const",
+        "samples": 8,
+        "percent": 0.1049042748492001
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "invocation function for block in DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_14::operator()(int, int, unsigned int) const",
+        "samples": 7,
+        "percent": 0.0917912404930501
+      },
+      {
+        "name": "HUF_decompress4X_hufOnly_wksp",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "HUF_readDTableX1_wksp",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "_swrite",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "__swrite",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 6,
+        "percent": 0.07867820613690008
+      },
+      {
+        "name": "Diagnostics::~Diagnostics()",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "Diagnostics::clearError()",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "_Block_object_dispose",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "DyldSharedCache::forEachRegion(void (void const*, unsigned long long, unsigned long long, unsigned int, unsigned int, unsigned long long, unsigned long long, bool&) block_pointer) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "__cxa_allocate_exception",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "__sflush",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)::$_0::operator()(bool) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_8::operator()(int, unsigned long) const",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "fwrite",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 5,
+        "percent": 0.06556517178075007
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "__cxxabiv1::__aligned_malloc_with_fallback(unsigned long)",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "malloc_type_aligned_alloc",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "__cxxabiv1::set_registers(_Unwind_Exception*, _Unwind_Context*, __cxxabiv1::(anonymous namespace)::scan_results const&)",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()(unsigned int) const",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "std::basic_ostream<char>::write(char const*, long)",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "std::basic_streambuf<char>::xsputn(char const*, long)",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "std::basic_filebuf<char>::overflow(int)",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "pc::Machine::text() const",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "pc::Jit::~Jit()",
+        "samples": 4,
+        "percent": 0.05245213742460005
+      },
+      {
+        "name": "mach_o::Error::~Error()",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "_Unwind_GetLanguageSpecificData",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::CPU::get(int, int) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "_free",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "__bzero",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_2::operator()(int, int, int, int) const",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "std::getline[abi:nqe210106]<char>(std::basic_istream<char>&, std::basic_string<char>&, char)",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "std::basic_filebuf<char>::underflow()",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "fread",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "__fread",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "std::__put_character_sequence[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, unsigned long)",
+        "samples": 3,
+        "percent": 0.03933910306845004
+      },
+      {
+        "name": "Diagnostics::Diagnostics()",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "DYLD-STUB$$_dyld_find_unwind_sections",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_Unwind_GetRegionStart",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "ZSTD_decodeSeqHeaders",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "ZSTD_buildSeqTable",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "std::basic_ostream<char>::flush()",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "fflush",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "HUF_decompress4X1_usingDTable_internal",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "ZSTD_createDCtx_internal",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_xzm_malloc_large_huge",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "xzm_segment_group_alloc_chunk",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_xzm_segment_group_find_and_allocate_chunk",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_xzm_segment_group_span_mark_smaller",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "_xzm_reclaim_mark_used_locked",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "xzm_reclaim_mark_free_locked",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::VGA::read(unsigned int)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "std::function<void (unsigned short, unsigned int, int)>::operator()(unsigned short, unsigned int, int) const",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "pc::PIT8254::write(unsigned int, unsigned char, unsigned long long)",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "flockfile",
+        "samples": 2,
+        "percent": 0.026226068712300026
+      },
+      {
+        "name": "Diagnostics::assertNoError() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "dyld4::RuntimeState::inPermanentRange(unsigned long, unsigned long, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DyldSharedCache::mappedSize() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxxabiv1::get_shim_type_info(unsigned long long, unsigned char const*, unsigned char, bool, _Unwind_Exception*, unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "unw_getcontext",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__cxa_throw",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxa_init_primary_exception",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::get_terminate()",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_xzm_memalign",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setReg(int, unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$_Unwind_GetLanguageSpecificData",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "FSE_readNCount_bmi2",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_buildFSETable",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_compress",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_compressEnd_public",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_compressContinue_internal",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_compressBlock_internal",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_entropyCompressSeqStore",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_entropyCompressSeqStore_internal",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "ZSTD_compressLiterals",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "HUF_compress4X_repeat",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "HUF_compress_internal",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "HUF_buildCTable_wksp",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_vm_reclaim_try_enter",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_Unwind_GetGR",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::function<unsigned int (unsigned short, int)>::operator()(unsigned short, int) const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindDevices()::$_3, unsigned int (unsigned short, int)>::operator()(unsigned short&&, int&&)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxa_begin_catch",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "__cxa_decrement_exception_refcount",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_xzm_xzone_madvise_batch",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_vm_reclaim_ring_resize",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_vm_deferred_reclamation_buffer_resize",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_msg2_internal",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()() const",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::validReg(int)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_xzm_xzone_find_and_malloc_from_freelist_chunk",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "xzm_chunk_mark_used",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "_xzm_reclaim_mark_used",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__error",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::basic_string<char>::append(char const*, unsigned long)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::basic_ostream<char>::sentry::sentry(std::basic_ostream<char>&)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::__stdoutbuf<char>::sync()",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::__pad_and_output[abi:nqe210106]<char>(std::ostreambuf_iterator<char>, char const*, char const*, char const*, std::ios_base&, char)",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "std::basic_ostream<char>::sentry::~sentry()",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      },
+      {
+        "name": "DYLD-STUB$$__cxa_uncaught_exceptions",
+        "samples": 1,
+        "percent": 0.013113034356150013
+      }
+    ]
+  },
+  "compressedHostSample": {
+    "path": "docs/measurements/ps2-poll-win95-2026-10-25.sample.txt.zst",
+    "bytes": 68066,
+    "sha256": "36108d65566f4ce995b1780f5a367b28f38076f86243ea4d7c6f36c5b582e38c"
+  },
+  "limitations": [
+    "CoreMark flat integer workload with real Machine/device polling, not Windows/Rosetta performance",
+    "Five alternating pairs on one Apple M4; no confidence interval",
+    "Fresh Win95 host profile is one observed boot with OCR/dialog work, not a matched timing comparison",
+    "No new installer or Office fixture created"
+  ],
+  "privateOverlaysRemoved": true,
+  "temporaryBaselineAndDebugSymbolsRemoved": true,
+  "sourceSha256": {
+    "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+    "src/machine.cpp": "e39b9e46ab7750d42c9ab5cb53a11e09f6805801fc9f516b2ca0cfe9d44a2478",
+    "tests/i8042_test.cpp": "81209554a84df4b747614b918c2d148f22f7958fd28ccb3a3cf8b3d9c3be27f3"
+  }
+}
