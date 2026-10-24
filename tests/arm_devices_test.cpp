@@ -1,4 +1,9 @@
-#include "arm_devices.hpp"
+#include "arm_pl031.hpp"
+#include "arm_os_lock.hpp"
+#include "arm_psci.hpp"
+#include "arm_nor_flash.hpp"
+#include "arm_pl011.hpp"
+#include "arm_mmio.hpp"
 #include "arm_fw_cfg.hpp"
 #include <array>
 #include <iostream>

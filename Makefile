@@ -87,6 +87,9 @@ smoke-guest-profile: build/guest-bench-profile build/guest-bench build/disk-tool
 smoke-win95: build/pcemu build/disk-tool
 	python3 tools/smoke_win95.py
 
+ARM_DEVICES := src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
+ARM_DEVICE_HEADERS := src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
+
 # Optional ARM64 hypervisor runner. No GUI or x86 core; shared COW storage.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
 .PHONY: test-hvf
@@ -100,10 +103,10 @@ test-hvf: build/virtio-rng-tests build/nvme-tests build/virtio-net-tests acpi-ar
 	./build/pcemu-hvf --self-test
 	python3 -m unittest discover -s tests -p test_hvf_cli.py
 	python3 -m unittest discover -s tests -p test_arm_acpi.py
-build/pcemu-hvf: src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt.hpp src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp src/arm_devices.cpp src/arm_devices.hpp src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
+build/pcemu-hvf: src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt.hpp src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
 	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
 	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_fw_cfg.cpp src/arm_devices.cpp src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp src/virtio_net.cpp src/virtio_rng.cpp src/network.cpp src/ne2000.cpp src/nvme.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_fw_cfg.cpp $(ARM_DEVICES) src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp src/virtio_net.cpp src/virtio_rng.cpp src/network.cpp src/ne2000.cpp src/nvme.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
 	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
 
 .PHONY: firmware-arm64 smoke-uefi
@@ -127,9 +130,9 @@ smoke-arm-acpi: build/pcemu-hvf firmware-arm64
 smoke-windows-loader: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_windows_loader.py
 
-build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp src/arm_devices.cpp src/arm_devices.hpp tests/arm_devices_test.cpp
+build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_devices_test.cpp
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_fw_cfg.cpp src/arm_devices.cpp tests/arm_devices_test.cpp -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_fw_cfg.cpp $(ARM_DEVICES) tests/arm_devices_test.cpp -o $@
 
 build/virtio-tests: src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp tests/virtio_blk_test.cpp
 	@mkdir -p build

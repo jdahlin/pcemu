@@ -1,5 +1,10 @@
 #pragma once
-#include "arm_devices.hpp"
+#include "arm_pl031.hpp"
+#include "arm_os_lock.hpp"
+#include "arm_psci.hpp"
+#include "arm_nor_flash.hpp"
+#include "arm_pl011.hpp"
+#include "arm_mmio.hpp"
 #include "arm_fw_cfg.hpp"
 #include "hvf_machine.hpp"
 #include "virtio_blk.hpp"
@@ -39,6 +44,7 @@ class ArmVirtMachine {
     uint64_t networkReceived() const { return net ? net->received : 0; }
     uint64_t extraDiskRequests() const { return extraBlock ? extraBlock->requests : 0; }
     uint64_t exits() const { return vm.exits(); }
+    bool resetRequested() const { return powerAction == ArmPowerAction::Reset; }
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
