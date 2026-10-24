@@ -1,3 +1,4 @@
+#include "host_key.hpp"
 #include "host_keyboard.hpp"
 #include "machine.hpp"
 #include <filesystem>
@@ -19,51 +20,51 @@ int main() {
         {
             std::deque<uint8_t> stream;
             HostKeyboard keyboard(stream);
-            auto tap = [&](SDL_Scancode key) {
+            auto tap = [&](uint16_t key) {
                 keyboard.event(key, false);
                 keyboard.event(key, true);
             };
-            tap(SDL_SCANCODE_F12);
+            tap(hid::KEY_F12);
             check(stream == std::deque<uint8_t>({0x58, 0xd8}), "host F12 reaches the guest");
             stream.clear();
-            tap(SDL_SCANCODE_RCTRL);
-            tap(SDL_SCANCODE_HOME);
-            tap(SDL_SCANCODE_KP_ENTER);
+            tap(hid::KEY_RCTRL);
+            tap(hid::KEY_HOME);
+            tap(hid::KEY_KP_ENTER);
             check(stream == std::deque<uint8_t>({0xe0, 0x1d, 0xe0, 0x9d, 0xe0, 0x47, 0xe0, 0xc7,
                                                  0xe0, 0x1c, 0xe0, 0x9c}),
                   "host extended keys retain prefixes and distinct keypad Enter");
             stream.clear();
-            tap(SDL_SCANCODE_PRINTSCREEN);
-            tap(SDL_SCANCODE_PAUSE);
+            tap(hid::KEY_PRINTSCREEN);
+            tap(hid::KEY_PAUSE);
             check(stream == std::deque<uint8_t>({0xe0, 0x2a, 0xe0, 0x37, 0xe0, 0xb7, 0xe0, 0xaa,
                                                  0xe1, 0x1d, 0x45, 0xe1, 0x9d, 0xc5}),
                   "Print Screen and Pause wire sequences");
             stream.clear();
-            keyboard.event(SDL_SCANCODE_LCTRL, false);
-            keyboard.event(SDL_SCANCODE_RALT, false);
+            keyboard.event(hid::KEY_LCTRL, false);
+            keyboard.event(hid::KEY_RALT, false);
             keyboard.release();
             check(stream == std::deque<uint8_t>({0x1d, 0xe0, 0x38, 0x9d, 0xe0, 0xb8}),
                   "focus loss releases held modifiers");
             stream.clear();
-            keyboard.event(SDL_SCANCODE_LGUI, false);
+            keyboard.event(hid::KEY_LGUI, false);
             check(stream.empty(), "Command make waits for a guest chord or bare tap");
             keyboard.consumeCommand();
-            keyboard.event(SDL_SCANCODE_LGUI, true);
+            keyboard.event(hid::KEY_LGUI, true);
             check(stream.empty(), "native Command shortcut does not open guest Start menu");
-            tap(SDL_SCANCODE_LGUI);
+            tap(hid::KEY_LGUI);
             check(stream == std::deque<uint8_t>({0xe0, 0x5b, 0xe0, 0xdb}),
                   "bare Command tap is a guest Windows key");
             stream.clear();
-            keyboard.event(SDL_SCANCODE_LGUI, false);
-            tap(SDL_SCANCODE_R);
-            keyboard.event(SDL_SCANCODE_LGUI, true);
+            keyboard.event(hid::KEY_LGUI, false);
+            tap(hid::KEY_R);
+            keyboard.event(hid::KEY_LGUI, true);
             check(stream == std::deque<uint8_t>({0xe0, 0x5b, 0x13, 0x93, 0xe0, 0xdb}),
                   "guest Windows+R chord is preserved");
             stream.clear();
-            keyboard.event(SDL_SCANCODE_LGUI, false);
+            keyboard.event(hid::KEY_LGUI, false);
             keyboard.release();
-            keyboard.event(SDL_SCANCODE_LGUI, true);
-            keyboard.event(SDL_SCANCODE_A, true);
+            keyboard.event(hid::KEY_LGUI, true);
+            keyboard.event(hid::KEY_A, true);
             check(stream.empty(), "focus loss drops pending native Command and unmatched releases");
         }
         Machine m("", "", 2 * 1024 * 1024);

@@ -3,7 +3,7 @@
 #include "machine.hpp"
 #include "network.hpp"
 #include "profile.hpp"
-#include <SDL.h>
+#include "frontend.hpp"
 #include <algorithm>
 #include <chrono>
 #include <csignal>
@@ -287,39 +287,8 @@ int main(int argc, char **argv) {
         unsigned displayWidth = m.vga.graphics ? m.vga.width : 640;
         unsigned displayHeight = m.vga.graphics ? m.vga.height : 400;
         std::vector<uint32_t> pixels(size_t(displayWidth) * displayHeight);
-        SDL_Window *window = nullptr;
-        SDL_Renderer *renderer = nullptr;
-        SDL_Texture *texture = nullptr;
-        if (!headless) {
-            if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
-                throw std::runtime_error(SDL_GetError());
-            int windowWidth = std::max(displayWidth, 960u);
-            int windowHeight = uint64_t(windowWidth) * displayHeight / displayWidth;
-            SDL_Rect bounds{};
-            if (SDL_GetDisplayUsableBounds(0, &bounds) == 0) {
-                double scale = std::min({1.0, double(std::max(bounds.w - 40, 320)) / windowWidth,
-                                         double(std::max(bounds.h - 80, 240)) / windowHeight});
-                windowWidth = int(windowWidth * scale);
-                windowHeight = int(windowHeight * scale);
-            }
-            window =
-                SDL_CreateWindow("PCEmu — click to capture mouse (Cmd+G)", SDL_WINDOWPOS_CENTERED,
-                                 SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight,
-                                 SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-            if (!window)
-                throw std::runtime_error(SDL_GetError());
-            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-            if (!renderer)
-                renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-            if (!renderer)
-                throw std::runtime_error(SDL_GetError());
-            texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                        SDL_TEXTUREACCESS_STREAMING, displayWidth, displayHeight);
-            if (!texture)
-                throw std::runtime_error(SDL_GetError());
-            SDL_RenderSetLogicalSize(renderer, displayWidth, displayHeight);
-            SDL_StopTextInput();
-        }
+        std::unique_ptr<Frontend> frontend;
+        if (!headless) frontend = createFrontend(displayWidth, displayHeight);
         const uint32_t palette[16] = {0xff000000, 0xff0000aa, 0xff00aa00, 0xff00aaaa,
                                       0xffaa0000, 0xffaa00aa, 0xffaa5500, 0xffaaaaaa,
                                       0xff555555, 0xff5555ff, 0xff55ff55, 0xff55ffff,
@@ -495,12 +464,9 @@ int main(int argc, char **argv) {
         bool mouseCaptured = false;
         uint8_t mouseButtons = 0;
         auto setMouseCapture = [&](bool enabled) {
-            bool success = SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE) == 0;
+            bool success = frontend && frontend->capturePointer(enabled);
             mouseCaptured = enabled && success;
-            SDL_SetWindowTitle(window, mouseCaptured ? "PCEmu — mouse captured (Cmd+G to release)"
-                                                     : "PCEmu — click to capture mouse (Cmd+G)");
-            if (enabled && !success)
-                std::cerr << "Mouse capture: " << SDL_GetError() << '\n';
+            if (enabled && !success) std::cerr << "Mouse capture unavailable\n";
         };
         auto releaseInput = [&] {
             keyboard.release();
@@ -512,7 +478,7 @@ int main(int argc, char **argv) {
         const char *networkCapture = std::getenv("PCEMU_NET_PCAP");
         std::unique_ptr<Network> network;
         if (enableNetwork) network = std::make_unique<Network>(networkCapture ? networkCapture : "");
-        uint32_t lastFrame = 0;
+        uint64_t lastFrame = 0;
         std::string lastText;
         auto started = std::chrono::steady_clock::now();
         try {
@@ -752,78 +718,45 @@ int main(int argc, char **argv) {
                         break;
                     continue;
                 }
-                SDL_Event e;
-                while (SDL_PollEvent(&e)) {
-                    if (!enableHostInput &&
-                        (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP ||
-                         e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP ||
-                         e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEWHEEL)) {
-                        // Keep the host quit shortcut available in automated GUI runs.
-                        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q &&
-                            (e.key.keysym.mod & KMOD_GUI)) quit = true;
-                        continue;
-                    }
-                    if (e.type == SDL_QUIT)
-                        quit = true;
-                    else if (e.type == SDL_WINDOWEVENT &&
-                             e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
-                        releaseInput();
-                    else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
-                        auto key = e.key.keysym.scancode;
-                        bool up = e.type == SDL_KEYUP;
-                        if (!up && e.key.keysym.sym == SDLK_q && (e.key.keysym.mod & KMOD_GUI)) {
-                            quit = true;
-                            continue;
-                        }
-                        if (!up && e.key.keysym.sym == SDLK_g && (e.key.keysym.mod & KMOD_GUI)) {
-                            keyboard.consumeCommand();
-                            if (mouseCaptured)
-                                releaseInput();
-                            else
-                                setMouseCapture(true);
-                            continue;
-                        }
-                        keyboard.event(key, up);
+                for (const auto &event : frontend->poll()) {
+                    using K = FrontendEvent::Kind;
+                    if (event.kind == K::Quit) { quit = true; continue; }
+                    if (event.kind == K::FocusLost) { releaseInput(); continue; }
+                    if (!enableHostInput) continue;
+                    if (event.kind == K::ToggleCapture) {
+                        keyboard.consumeCommand();
+                        if (mouseCaptured) releaseInput();
+                        else setMouseCapture(true);
+                    } else if (event.kind == K::Key) {
+                        keyboard.event(event.key, event.released);
                         c.halted = false;
-                    } else if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP) {
-                        bool up = e.type == SDL_MOUSEBUTTONUP;
+                    } else if (event.kind == K::Button) {
                         if (!mouseCaptured) {
-                            if (!up && e.button.button == SDL_BUTTON_LEFT)
-                                setMouseCapture(true);
+                            if (!event.released && event.button == 1) setMouseCapture(true);
                             continue;
                         }
-                        uint8_t bit = e.button.button == SDL_BUTTON_LEFT     ? 1
-                                      : e.button.button == SDL_BUTTON_RIGHT  ? 2
-                                      : e.button.button == SDL_BUTTON_MIDDLE ? 4
-                                                                             : 0;
-                        mouseButtons = up ? mouseButtons & ~bit : mouseButtons | bit;
+                        mouseButtons = event.released ? mouseButtons & ~event.button
+                                                      : mouseButtons | event.button;
                         m.mouse.motion(0, 0, mouseButtons);
-                    } else if (e.type == SDL_MOUSEMOTION && mouseCaptured)
-                        m.mouse.motion(e.motion.xrel, -e.motion.yrel, mouseButtons);
-                    else if (e.type == SDL_MOUSEWHEEL && mouseCaptured)
-                        m.mouse.motion(0, 0, mouseButtons,
-                                       e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? e.wheel.y
-                                                                                   : -e.wheel.y);
+                    } else if (event.kind == K::Motion && mouseCaptured)
+                        m.mouse.motion(event.x, -event.y, mouseButtons);
+                    else if (event.kind == K::Wheel && mouseCaptured)
+                        m.mouse.motion(0, 0, mouseButtons, -event.y);
                 }
-                if (SDL_GetTicks() - lastFrame < 16) {
-                    if (c.halted)
-                        SDL_Delay(1);
+                auto now = std::chrono::steady_clock::now();
+                uint64_t frameTicks = std::chrono::duration_cast<std::chrono::milliseconds>(now - started).count();
+                if (frameTicks - lastFrame < 16) {
+                    if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     continue;
                 }
-                lastFrame = SDL_GetTicks();
+                lastFrame = frameTicks;
                 unsigned newWidth = m.vga.graphics ? m.vga.width : 640;
                 unsigned newHeight = m.vga.graphics ? m.vga.height : 400;
                 if (displayHeight != newHeight || displayWidth != newWidth) {
                     displayWidth = newWidth;
                     pixels.resize(size_t(displayWidth) * newHeight);
                     displayHeight = newHeight;
-                    SDL_DestroyTexture(texture);
-                    texture =
-                        SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                          SDL_TEXTUREACCESS_STREAMING, displayWidth, displayHeight);
-                    if (!texture)
-                        throw std::runtime_error(SDL_GetError());
-                    SDL_RenderSetLogicalSize(renderer, displayWidth, displayHeight);
+
                 }
                 for (unsigned y = 0; y < displayHeight; y++)
                     for (unsigned x = 0; x < displayWidth; x++) {
@@ -840,17 +773,13 @@ int main(int argc, char **argv) {
                             px = palette[(bits & (128 >> (x % 8))) ? (attr & 15)
                                                                    : ((attr >> 4) & 7)];
                             if (row * m.columns + col == m.cursor && y % 16 >= 14 &&
-                                (SDL_GetTicks() / 500) % 2 == 0)
+                                (frameTicks / 500) % 2 == 0)
                                 px = palette[7];
                         }
                         pixels[y * displayWidth + x] = px;
                     }
-                SDL_UpdateTexture(texture, nullptr, pixels.data(), displayWidth * 4);
-                SDL_RenderClear(renderer);
-                SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-                SDL_RenderPresent(renderer);
-                if (c.halted)
-                    SDL_Delay(5);
+                frontend->present(pixels, displayWidth, displayHeight);
+                if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } catch (const std::exception &e) {
             std::cerr << e.what() << '\n';
@@ -881,14 +810,6 @@ int main(int argc, char **argv) {
                       : c.halted   ? "HLT"
                                    : "budget/quit")
                   << '\n';
-        if (texture)
-            SDL_DestroyTexture(texture);
-        if (renderer)
-            SDL_DestroyRenderer(renderer);
-        if (window)
-            SDL_DestroyWindow(window);
-        if (!headless)
-            SDL_Quit();
         return 0;
     } catch (const std::exception &e) {
         std::cerr << "pcemu: " << e.what() << '\n';

@@ -1,139 +1,140 @@
 #include "host_keyboard.hpp"
+#include "host_key.hpp"
 namespace pc {
-static uint16_t pcScan(SDL_Scancode s) {
+static uint16_t pcScan(uint16_t s) {
     static const uint8_t letters[] = {0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22, 0x23, 0x17,
                                       0x24, 0x25, 0x26, 0x32, 0x31, 0x18, 0x19, 0x10, 0x13,
                                       0x1f, 0x14, 0x16, 0x2f, 0x11, 0x2d, 0x15, 0x2c};
-    if (s >= SDL_SCANCODE_A && s <= SDL_SCANCODE_Z)
-        return letters[s - SDL_SCANCODE_A];
-    if (s >= SDL_SCANCODE_1 && s <= SDL_SCANCODE_0)
-        return 2 + s - SDL_SCANCODE_1;
-    if (s >= SDL_SCANCODE_F1 && s <= SDL_SCANCODE_F10)
-        return 0x3b + s - SDL_SCANCODE_F1;
+    if (s >= hid::KEY_A && s <= hid::KEY_Z)
+        return letters[s - hid::KEY_A];
+    if (s >= hid::KEY_1 && s <= hid::KEY_0)
+        return 2 + s - hid::KEY_1;
+    if (s >= hid::KEY_F1 && s <= hid::KEY_F10)
+        return 0x3b + s - hid::KEY_F1;
     switch (s) {
-    case SDL_SCANCODE_ESCAPE:
+    case hid::KEY_ESCAPE:
         return 1;
-    case SDL_SCANCODE_MINUS:
+    case hid::KEY_MINUS:
         return 12;
-    case SDL_SCANCODE_EQUALS:
+    case hid::KEY_EQUALS:
         return 13;
-    case SDL_SCANCODE_BACKSPACE:
+    case hid::KEY_BACKSPACE:
         return 14;
-    case SDL_SCANCODE_TAB:
+    case hid::KEY_TAB:
         return 15;
-    case SDL_SCANCODE_LEFTBRACKET:
+    case hid::KEY_LEFTBRACKET:
         return 26;
-    case SDL_SCANCODE_RIGHTBRACKET:
+    case hid::KEY_RIGHTBRACKET:
         return 27;
-    case SDL_SCANCODE_RETURN:
+    case hid::KEY_RETURN:
         return 28;
-    case SDL_SCANCODE_LCTRL:
+    case hid::KEY_LCTRL:
         return 29;
-    case SDL_SCANCODE_RCTRL:
+    case hid::KEY_RCTRL:
         return 0xe01d;
-    case SDL_SCANCODE_SEMICOLON:
+    case hid::KEY_SEMICOLON:
         return 39;
-    case SDL_SCANCODE_APOSTROPHE:
+    case hid::KEY_APOSTROPHE:
         return 40;
-    case SDL_SCANCODE_GRAVE:
+    case hid::KEY_GRAVE:
         return 41;
-    case SDL_SCANCODE_LSHIFT:
+    case hid::KEY_LSHIFT:
         return 42;
-    case SDL_SCANCODE_BACKSLASH:
+    case hid::KEY_BACKSLASH:
         return 43;
-    case SDL_SCANCODE_COMMA:
+    case hid::KEY_COMMA:
         return 51;
-    case SDL_SCANCODE_PERIOD:
+    case hid::KEY_PERIOD:
         return 52;
-    case SDL_SCANCODE_SLASH:
+    case hid::KEY_SLASH:
         return 53;
-    case SDL_SCANCODE_RSHIFT:
+    case hid::KEY_RSHIFT:
         return 54;
-    case SDL_SCANCODE_LALT:
+    case hid::KEY_LALT:
         return 56;
-    case SDL_SCANCODE_RALT:
+    case hid::KEY_RALT:
         return 0xe038;
-    case SDL_SCANCODE_SPACE:
+    case hid::KEY_SPACE:
         return 57;
-    case SDL_SCANCODE_CAPSLOCK:
+    case hid::KEY_CAPSLOCK:
         return 58;
-    case SDL_SCANCODE_HOME:
+    case hid::KEY_HOME:
         return 0xe000 | 71;
-    case SDL_SCANCODE_UP:
+    case hid::KEY_UP:
         return 0xe000 | 72;
-    case SDL_SCANCODE_PAGEUP:
+    case hid::KEY_PAGEUP:
         return 0xe000 | 73;
-    case SDL_SCANCODE_LEFT:
+    case hid::KEY_LEFT:
         return 0xe000 | 75;
-    case SDL_SCANCODE_RIGHT:
+    case hid::KEY_RIGHT:
         return 0xe000 | 77;
-    case SDL_SCANCODE_END:
+    case hid::KEY_END:
         return 0xe000 | 79;
-    case SDL_SCANCODE_DOWN:
+    case hid::KEY_DOWN:
         return 0xe000 | 80;
-    case SDL_SCANCODE_PAGEDOWN:
+    case hid::KEY_PAGEDOWN:
         return 0xe000 | 81;
-    case SDL_SCANCODE_INSERT:
+    case hid::KEY_INSERT:
         return 0xe000 | 82;
-    case SDL_SCANCODE_DELETE:
+    case hid::KEY_DELETE:
         return 0xe000 | 83;
-    case SDL_SCANCODE_F11:
+    case hid::KEY_F11:
         return 87;
-    case SDL_SCANCODE_F12:
+    case hid::KEY_F12:
         return 88;
-    case SDL_SCANCODE_LGUI:
+    case hid::KEY_LGUI:
         return 57435;
-    case SDL_SCANCODE_RGUI:
+    case hid::KEY_RGUI:
         return 57436;
-    case SDL_SCANCODE_APPLICATION:
+    case hid::KEY_APPLICATION:
         return 57437;
-    case SDL_SCANCODE_KP_ENTER:
+    case hid::KEY_KP_ENTER:
         return 57372;
-    case SDL_SCANCODE_KP_DIVIDE:
+    case hid::KEY_KP_DIVIDE:
         return 57397;
-    case SDL_SCANCODE_KP_MULTIPLY:
+    case hid::KEY_KP_MULTIPLY:
         return 55;
-    case SDL_SCANCODE_KP_MINUS:
+    case hid::KEY_KP_MINUS:
         return 74;
-    case SDL_SCANCODE_KP_PLUS:
+    case hid::KEY_KP_PLUS:
         return 78;
-    case SDL_SCANCODE_NUMLOCKCLEAR:
+    case hid::KEY_NUMLOCKCLEAR:
         return 69;
-    case SDL_SCANCODE_SCROLLLOCK:
+    case hid::KEY_SCROLLLOCK:
         return 70;
-    case SDL_SCANCODE_KP_7:
+    case hid::KEY_KP_7:
         return 71;
-    case SDL_SCANCODE_KP_8:
+    case hid::KEY_KP_8:
         return 72;
-    case SDL_SCANCODE_KP_9:
+    case hid::KEY_KP_9:
         return 73;
-    case SDL_SCANCODE_KP_4:
+    case hid::KEY_KP_4:
         return 75;
-    case SDL_SCANCODE_KP_5:
+    case hid::KEY_KP_5:
         return 76;
-    case SDL_SCANCODE_KP_6:
+    case hid::KEY_KP_6:
         return 77;
-    case SDL_SCANCODE_KP_1:
+    case hid::KEY_KP_1:
         return 79;
-    case SDL_SCANCODE_KP_2:
+    case hid::KEY_KP_2:
         return 80;
-    case SDL_SCANCODE_KP_3:
+    case hid::KEY_KP_3:
         return 81;
-    case SDL_SCANCODE_KP_0:
+    case hid::KEY_KP_0:
         return 82;
-    case SDL_SCANCODE_KP_PERIOD:
+    case hid::KEY_KP_PERIOD:
         return 83;
-    case SDL_SCANCODE_NONUSBACKSLASH:
+    case hid::KEY_NONUSBACKSLASH:
         return 86;
     default:
         return 0;
     }
 }
-void HostKeyboard::emit(SDL_Scancode key, bool up) {
-    if (key == SDL_SCANCODE_PAUSE) {
+void HostKeyboard::emit(uint16_t key, bool up) {
+    if (key == hid::KEY_PAUSE) {
         if (!up)
             destination.insert(destination.end(), {0xe1, 0x1d, 0x45, 0xe1, 0x9d, 0xc5});
-    } else if (key == SDL_SCANCODE_PRINTSCREEN) {
+    } else if (key == hid::KEY_PRINTSCREEN) {
         if (up)
             destination.insert(destination.end(), {0xe0, 0xb7, 0xe0, 0xaa});
         else
@@ -144,10 +145,10 @@ void HostKeyboard::emit(SDL_Scancode key, bool up) {
         destination.push_back(uint8_t(scan) | (up ? 0x80 : 0));
     }
 }
-void HostKeyboard::event(SDL_Scancode key, bool up) {
-    if (key < 0 || key >= SDL_NUM_SCANCODES)
+void HostKeyboard::event(uint16_t key, bool up) {
+    if (key >= held.size())
         return;
-    bool command = key == SDL_SCANCODE_LGUI || key == SDL_SCANCODE_RGUI;
+    bool command = key == hid::KEY_LGUI || key == hid::KEY_RGUI;
     if (up) {
         if (!held[key])
             return;
@@ -163,7 +164,7 @@ void HostKeyboard::event(SDL_Scancode key, bool up) {
     held[key] = true;
     if (command)
         return;
-    for (auto meta : {SDL_SCANCODE_LGUI, SDL_SCANCODE_RGUI})
+    for (auto meta : {hid::KEY_LGUI, hid::KEY_RGUI})
         if (held[meta] && !sent[meta]) {
             emit(meta, false);
             sent[meta] = true;
@@ -174,12 +175,12 @@ void HostKeyboard::event(SDL_Scancode key, bool up) {
 void HostKeyboard::release() {
     for (unsigned i = 0; i < held.size(); ++i) {
         if (sent[i])
-            emit(SDL_Scancode(i), true);
+            emit(i, true);
         held[i] = sent[i] = false;
     }
 }
 void HostKeyboard::consumeCommand() {
-    for (auto key : {SDL_SCANCODE_LGUI, SDL_SCANCODE_RGUI}) {
+    for (auto key : {hid::KEY_LGUI, hid::KEY_RGUI}) {
         if (sent[key])
             emit(key, true);
         held[key] = sent[key] = false;
