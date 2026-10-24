@@ -119,11 +119,22 @@ int main() {
     check(osLock.access(0x62280403, lockValue) && lockValue == 10);
     check(!osLock.access(0x62280401, lockValue)); // OSLAR is write-only.
     check(!osLock.access(0x62280402, lockValue)); // OSLSR is read-only.
-    check(!osLock.access(0x62280407, lockValue)); // Other CRm.
+    check(!osLock.access(0x62280409, lockValue)); // Other CRm.
     check(!osLock.access(0x62080403, lockValue)); // Other op0.
     check(!osLock.access(0x60280403, lockValue)); // Invalid IL.
     check(!osLock.access(0x66280403, lockValue)); // Other EC.
     ArmOsLock freshLock;
+    check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
+    lockValue = 0;
+    check(freshLock.access(0x622807e6, lockValue)); // Linux clears OSDLR via XZR.
+    check(freshLock.access(0x62280407, lockValue) && lockValue == 0);
+    lockValue = 1;
+    check(freshLock.access(0x62280406, lockValue));
+    lockValue = 0;
+    check(freshLock.access(0x62280406, lockValue));
+    check(freshLock.access(0x62280407, lockValue) && lockValue == 1);
+    lockValue = 0;
+    check(freshLock.access(0x62280400, lockValue));
     check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
     ArmPl011 uart;
     check(uart.read(0x18) == 0x90);

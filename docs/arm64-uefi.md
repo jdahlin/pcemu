@@ -211,3 +211,7 @@ not assumed from the EL2-disabled PMU documentation alone.
 Native VHDX images can be attached directly with `--disk IMAGE.vhdx`; writes go
 to that file unless `--disk-overlay` is explicitly supplied. See
 [VHDX storage](vhdx.md) for supported layouts and validation.
+
+The EL1 debug OS-lock model also accepts Linux's `MSR OSDLR_EL1, XZR` during
+early CPU initialization. OSDLR bit zero is sticky until VM recreation; once
+set it prevents OS-lock changes. This does not add software breakpoint execution.

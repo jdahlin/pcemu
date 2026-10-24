@@ -18,7 +18,7 @@ class ArmOsLock {
   public:
     bool access(uint64_t syndrome, uint64_t &value);
   private:
-    bool locked = true;
+    bool locked = true, doubleLocked = false;
 };
 // Two interleaved x16 Intel command-set NOR devices on a 32-bit bus.
 // The firmware uses 256 KiB erase blocks and 128-byte write buffers.
