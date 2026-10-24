@@ -6,14 +6,14 @@ import subprocess
 from build_arm_acpi import ROOT
 
 
-def build(cpu_count, output, ram_mb=2048):
+def build(cpu_count, output, ram_mb=2048, hyperv=False):
     if not 1 <= cpu_count <= 8:
         raise ValueError('ARM platform supports 1..8 CPUs')
     if not 256 <= ram_mb <= 16384:
         raise ValueError('ARM platform RAM must be 256..16384 MiB')
     output.mkdir(parents=True, exist_ok=True)
     subprocess.run(['python3', str(ROOT / 'tools/build_arm_acpi.py'), '--cpus', str(cpu_count),
-                    '--output', str(output / 'acpi')], check=True)
+                    '--output', str(output / 'acpi')] + (['--hyperv'] if hyperv else []), check=True)
     source = (ROOT / 'platform/arm64/pcemu-virt.dts').read_text()
     original = 'cpu@0 { device_type = "cpu"; compatible = "arm,arm-v8"; reg = <0>; enable-method = "psci"; };'
     if source.count(original) != 1:
@@ -39,10 +39,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cpus', type=int, default=2, choices=range(1, 9))
     parser.add_argument('--ram-mb', type=int, default=2048)
+    parser.add_argument('--hyperv', action='store_true')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     name = f'cpus{args.cpus}' + (f'-ram{args.ram_mb}' if args.ram_mb != 2048 else '')
-    print(build(args.cpus, args.output or ROOT / 'build/arm64-fw' / name, args.ram_mb))
+    if args.hyperv:
+        name += '-hyperv'
+    print(build(args.cpus, args.output or ROOT / 'build/arm64-fw' / name, args.ram_mb, args.hyperv))
 
 
 if __name__ == '__main__':

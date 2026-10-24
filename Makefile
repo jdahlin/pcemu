@@ -95,14 +95,15 @@ smoke-win95: build/pcemu build/disk-tool
 
 ARM_BUS := src/mmio_space.cpp src/pci_ecam.cpp
 ARM_BUS_HEADERS := src/mmio_space.hpp src/pci_ecam.hpp
-ARM_DEVICES := src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
-ARM_DEVICE_HEADERS := src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
+ARM_DEVICES := src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
+ARM_DEVICE_HEADERS := src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
 
 # Optional ARM64 hypervisor runner. No GUI or x86 core; shared COW storage.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
 .PHONY: test-hvf
-test-hvf: build/device-bus-tests build/virtio-rng-tests build/nvme-tests build/virtio-net-tests acpi-arm64 build/pcemu-hvf build/arm-device-tests build/virtio-tests build/vhdx-tests
+test-hvf: build/arm-hyperv-tests build/device-bus-tests build/virtio-rng-tests build/nvme-tests build/virtio-net-tests acpi-arm64 build/pcemu-hvf build/arm-device-tests build/virtio-tests build/vhdx-tests
 	./build/device-bus-tests
+	./build/arm-hyperv-tests
 	./build/arm-device-tests
 	./build/virtio-tests
 	./build/virtio-net-tests
@@ -139,6 +140,14 @@ smoke-arm-acpi: build/pcemu-hvf firmware-arm64
 .PHONY: smoke-windows-loader
 smoke-windows-loader: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_windows_loader.py
+
+.PHONY: smoke-arm-hyperv
+smoke-arm-hyperv: build/pcemu-hvf firmware-arm64
+	python3 tools/smoke_arm_hyperv.py
+
+build/arm-hyperv-tests: src/arm_hyperv.cpp src/arm_hyperv.hpp tests/arm_hyperv_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv.cpp tests/arm_hyperv_test.cpp -o $@
 
 build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_devices_test.cpp
 	@mkdir -p build

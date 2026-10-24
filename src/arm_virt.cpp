@@ -14,7 +14,21 @@
 namespace pc {
 namespace fs = std::filesystem;
 namespace {
-void validateCpuTables(std::span<const uint8_t> blob, unsigned expected) {
+void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hyperv) {
+    bool foundFadt = false;
+    for (size_t at = 0; at + 36 <= blob.size();) {
+        uint32_t size = 0;
+        for (unsigned i = 0; i < 4; ++i) size |= uint32_t(blob[at + 4 + i]) << (8 * i);
+        if (size < 36 || size > blob.size() - at) throw std::runtime_error("Invalid ACPI table length");
+        if (std::string(reinterpret_cast<const char *>(blob.data() + at), 4) == "FACP") {
+            if (size < 276) throw std::runtime_error("FADT lacks hypervisor identity field");
+            bool advertised = std::string(reinterpret_cast<const char *>(blob.data() + at + 268), 8) == "MsHyperV";
+            if (advertised != hyperv) throw std::runtime_error("ACPI Hyper-V identity does not match --hyperv; rebuild matching platform assets");
+            foundFadt = true;
+        }
+        at = (at + size + 7) & ~size_t(7);
+    }
+    if (!foundFadt) throw std::runtime_error("Missing FADT");
     auto little = [&](size_t at, unsigned width) {
         if (at > blob.size() || width > blob.size() - at) throw std::runtime_error("Truncated ACPI CPU table");
         uint64_t value = 0;
@@ -57,10 +71,11 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
-      fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus) {
+      fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
+      hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
-    validateCpuTables(tables, c.cpus);
+    validateCpuTables(tables, c.cpus, c.hyperv);
     fwCfg.addFile("etc/acpi/tables", std::move(tables));
     fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
     fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
@@ -237,6 +252,12 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         }
     }
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16) {
+        ArmHyperV::Registers registers;
+        for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
+        if (hyperv.call(unsigned(exit.syndrome & 0xffff), registers, vm.currentCPU())) {
+            for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
+            return; // HVC exits already advance the PC, including legacy HVC #1.
+        }
         auto function = uint32_t(vm.reg(0));
         uint64_t target = vm.reg(1), argument = vm.reg(2), context = vm.reg(3);
         if (!(function & 0x40000000)) { target = uint32_t(target); argument = uint32_t(argument); context = uint32_t(context); }

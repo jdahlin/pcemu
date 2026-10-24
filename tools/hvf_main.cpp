@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -328,7 +329,7 @@ int main(int argc, char **argv) {
         uefi.dtb = "build/arm64-fw/pcemu-virt.dtb";
         uefi.variableTemplate = "roms/edk2-arm64-vars.bin";
         uefi.variables = "build/arm64-uefi/vars.bin";
-        std::string untilText, shellCommand, framebufferPath;
+        std::string untilText, shellCommand, framebufferPath, hypervStatsPath;
         std::string kernel, machine = "arm64-test", backend = "auto";
         unsigned timeout = 1000;
         for (int i = 1; i < argc; ++i) {
@@ -363,6 +364,12 @@ int main(int argc, char **argv) {
                 if (consumed != text.size() || count < 1 || count > 8) throw std::runtime_error("CPUs must be 1..8");
                 uefi.cpus = unsigned(count); uefiOptions = true;
             }
+            else if (arg == "--hyperv") {
+                auto mode = value();
+                if (mode != "off" && mode != "basic") throw std::runtime_error("Hyper-V must be off or basic");
+                uefi.hyperv = mode == "basic"; uefiOptions = true;
+            }
+            else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
                 auto mode = value();
                 if (mode != "user" && mode != "none") throw std::runtime_error("Network must be user or none");
@@ -406,7 +413,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
-                             "      [--ram-mb 256..16384]\n"
+                             "      [--ram-mb 256..16384 --hyperv off|basic --hyperv-stats FILE]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -423,10 +430,11 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
-            if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes) {
+            if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes || uefi.hyperv) {
                 auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
                 if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)
                     directory += "-ram" + std::to_string(uefi.memoryBytes / (1024 * 1024));
+                if (uefi.hyperv) directory += "-hyperv";
                 if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
                 if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
             }
@@ -442,6 +450,15 @@ int main(int argc, char **argv) {
             unsigned reboots = 0;
             do {
                 pc::ArmVirtMachine vm(uefi);
+                auto saveHypervStats = [&](const std::string &path) {
+                    if (path.empty()) return;
+                    auto temporary = path + ".tmp-" + std::to_string(getpid());
+                    std::ofstream out(temporary);
+                    out << vm.hypervReport(); out.close();
+                    if (!out) throw std::runtime_error("Cannot write Hyper-V statistics");
+                    std::filesystem::rename(temporary, path);
+                };
+                saveHypervStats(hypervStatsPath);
                 size_t printed = 0, matchStart = 0;
                 while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
                     if (stdinOpen) {
@@ -460,6 +477,8 @@ int main(int argc, char **argv) {
                     vm.run(std::chrono::milliseconds(100));
                     if (captureRequested) {
                         captureRequested = 0;
+                        saveHypervStats(hypervStatsPath);
+                        if (cpuState) std::cerr << "ARM live CPU: " << vm.cpuState() << '\n';
                         if (!framebufferPath.empty()) {
                             try { vm.saveFramebuffer(framebufferPath); }
                             catch (const std::exception &error) {
@@ -486,6 +505,8 @@ int main(int argc, char **argv) {
                         matched = true; finished = true; break;
                     }
                 }
+                saveHypervStats(hypervStatsPath);
+                if (!hypervStatsPath.empty()) saveHypervStats(hypervStatsPath + ".boot" + std::to_string(reboots) + ".json");
                 vm.saveVariables();
                 if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
                 if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);

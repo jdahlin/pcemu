@@ -33,6 +33,17 @@ class ArmPlatform(unittest.TestCase):
                                               '/memory@40000000', 'reg'], text=True)
             self.assertEqual(memory.split(), ['0', '40000000', '2', '0'])
 
+    def test_hyperv_identity_is_opt_in(self):
+        for enabled in (False, True):
+            with tempfile.TemporaryDirectory() as directory:
+                output = build(1, Path(directory), 8192, enabled)
+                manifest = json.loads((output / 'acpi/manifest.json').read_text())
+                tables = (output / 'acpi/tables').read_bytes()
+                offset = manifest['tableOffsets']['FACP']
+                self.assertEqual(tables[offset + 268:offset + 276],
+                                 b'MsHyperV' if enabled else bytes(8))
+                self.assertEqual(manifest['hyperv'], enabled)
+
     def test_invalid_memory(self):
         for size in (0, 255, 16385):
             with self.assertRaises(ValueError):

@@ -91,12 +91,14 @@ def gas(address):
     return struct.pack('<BBBBQ', 0, 32, 0, 3, address)
 
 
-def build(cpu_count=1):
+def build(cpu_count=1, hyperv=False):
     if not 1 <= cpu_count <= 8:
         raise ValueError('ARM platform supports 1..8 CPUs')
     fadt = bytearray(276 - 36)
     struct.pack_into('<I', fadt, 112 - 36, 1 << 20)  # hardware-reduced ACPI
     struct.pack_into('<H', fadt, 129 - 36, 3)  # PSCI compliant, HVC conduit
+    if hyperv:
+        fadt[268 - 36:276 - 36] = b'MsHyperV'
     fadt[131 - 36] = 5  # ACPI 6.5 minor revision
 
     giccs = bytearray()
@@ -176,6 +178,7 @@ def build(cpu_count=1):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'build/arm64-fw/acpi')
+    parser.add_argument('--hyperv', action='store_true')
     parser.add_argument('--iasl', type=Path)
     parser.add_argument('--cpus', type=int, default=1, choices=range(1, 9))
     args = parser.parse_args()
@@ -185,10 +188,10 @@ def main():
         subprocess.run([str(args.iasl), '-p', str(prefix), str(ROOT / 'platform/arm64/dsdt.asl')], check=True)
         if prefix.with_suffix('.aml').read_bytes() != dsdt():
             raise ValueError('Recompiled DSDT differs from dsdt-aml.json')
-    blob, rsdp, loader, offsets = build(args.cpus)
+    blob, rsdp, loader, offsets = build(args.cpus, args.hyperv)
     for name, data in [('tables', blob), ('rsdp', rsdp), ('table-loader', loader)]:
         (args.output / name).write_bytes(data)
-    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'tableOffsets': offsets,
+    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'hyperv': args.hyperv, 'tableOffsets': offsets,
         'tableBytes': len(blob), 'loaderBytes': len(loader)}, indent=2) + '\n')
     print(f'Built ARM ACPI: {len(blob)} table bytes, {len(loader)} loader bytes')
 

@@ -35,7 +35,8 @@ class HvfCLI(unittest.TestCase):
             self.assertIn('exit=1 ', result.stdout)  # Canceled
 
     def test_validation(self):
-        cases = [(), ('--kernel', '/missing/hvf-guest.bin'),
+        cases = [('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'),
+                 ('--hyperv-stats', 'any', '--self-test'), (), ('--kernel', '/missing/hvf-guest.bin'),
                  ('--timeout-ms', '0'), ('--timeout-ms', '60001'),
                  ('--timeout-ms', '20ms'), ('--kernel',),
                  ('--machine', 'win95', '--self-test'),

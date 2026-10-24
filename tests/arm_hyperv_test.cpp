@@ -1,0 +1,120 @@
+#include "arm_hyperv.hpp"
+#include <algorithm>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+using namespace pc;
+static unsigned checks = 0;
+static void check(bool value) {
+    if (!value) throw std::runtime_error("Hyper-V check " + std::to_string(checks + 1));
+    ++checks;
+}
+static void put(std::vector<uint8_t> &b, size_t at, uint64_t value, size_t size = 8) {
+    for (size_t i = 0; i < size; ++i) b.at(at + i) = uint8_t(value >> (8 * i));
+}
+static uint64_t get(const std::vector<uint8_t> &b, size_t at) {
+    uint64_t value = 0;
+    for (size_t i = 0; i < 8; ++i) value |= uint64_t(b.at(at + i)) << (8 * i);
+    return value;
+}
+int main() {
+    constexpr uint64_t base = 0x140000000ull, one = 1ull << 32;
+    constexpr uint64_t features = (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
+    std::vector<uint8_t> memory(8192);
+    ArmHyperV off(false, memory, base, 2), hv(true, memory, base, 2);
+    ArmHyperV::Registers r{};
+    r[0] = 0x84000009;
+    check(!hv.call(0, r, 0) && r[0] == 0x84000009); // PSCI reset stays with PSCI
+    r[0] = 0x8600ff01;
+    check(!off.call(0, r, 0) && r[0] == 0x8600ff01);
+    check(hv.call(0, r, 0));
+    check(r[0] == 0x4d32ba58 && r[1] == 0xcd244764 && r[2] == 0x8eef6c75 && r[3] == 0x16597024);
+    r = {}; r[0] = 0x80000000;
+    check(hv.call(0, r, 0) && r[0] == 0x10002);
+    r[0] = 0x80000001; r[1] = 0x46000001;
+    check(hv.call(0, r, 0) && r[0] == 0);
+    r[0] = 0x80000001; r[1] = 0x80008000;
+    check(hv.call(0, r, 0) && r[0] == uint64_t(-1)); // No invented mitigation support
+    auto fastRead = [&](uint32_t name, bool smccc = true, unsigned vp = 0) {
+        r.fill(0xcccccccccccccccc);
+        r[0] = smccc ? 0x46000001 : one | 0x10050;
+        auto start = smccc ? 2u : 1u;
+        if (smccc) r[1] = one | 0x10050;
+        r[start] = uint64_t(-1); r[start + 1] = 0xfffffffe; r[start + 2] = name;
+        check(hv.call(smccc ? 0 : 1, r, vp));
+    };
+    fastRead(0x200);
+    check(r[0] == one && r[6] == features && r[7] == 0);
+    check(r[2] == uint64_t(-1) && r[4] == 0x200 && r[8] == 0xcccccccccccccccc);
+    fastRead(0x200, false);
+    check(r[0] == one && r[15] == features && r[16] == 0);
+    check(r[5] == 0xcccccccccccccccc); // Legacy output is NOT after the input
+    fastRead(0x90003);
+    check(r[0] == 6); // Identity required for non-early registers
+    auto fastWrite = [&](uint64_t id, unsigned vp = 0, uint64_t high = 0) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = 0x90002;
+        r[6] = id; r[7] = high;
+        check(hv.call(0, r, vp));
+    };
+    fastWrite(0x1000a000066bbull);
+    check(r[0] == one);
+    fastRead(0x90002, false, 1);
+    check(r[0] == one && r[15] == 0x1000a000066bbull);
+    fastRead(0x90003, true, 1);
+    check(r[0] == one && r[6] == 1);
+    fastWrite(42, 1); check(r[0] == 6);
+    fastWrite(42, 0, 1); check(r[0] == 5);
+    fastRead(0x90004); check(r[0] == 5); // No reference counter advertised or faked
+    fastRead(0x201); check(r[0] == one && r[6] == 0xffffffff00000000ull && r[7] == 0);
+    fastRead(0x202); check(r[0] == one && r[6] == 0x200000002ull);
+    // Memory ABI above 4 GiB, partial completion and resume.
+    put(memory, 0, uint64_t(-1)); put(memory, 8, 0xfffffffe);
+    put(memory, 16, 0x90003, 4); put(memory, 20, 0xffffffff, 4);
+    auto memoryRead = [&](uint64_t control, uint64_t input = base, uint64_t output = base + 4096) {
+        r = {}; r[0] = 0x46000001; r[1] = control; r[2] = input; r[3] = output;
+        check(hv.call(0, r, 1));
+    };
+    std::fill(memory.begin() + 4096, memory.end(), 0xaa);
+    memoryRead((2ull << 32) | 0x50);
+    check(r[0] == (one | 5) && get(memory, 4096) == 1 && get(memory, 4112) == 0xaaaaaaaaaaaaaaaaull);
+    put(memory, 20, 0x90002, 4);
+    memoryRead((2ull << 32) | (1ull << 48) | 0x50);
+    check(r[0] == 2 * one && get(memory, 4096) == 1 && get(memory, 4112) == 0x1000a000066bbull);
+    // Cross-page, unaligned, overlapping and unmapped parameter buffers fail safely.
+    for (auto input : {base + 1, base + 4096 - 8, base - 8, base + 8192}) {
+        memoryRead(one | 0x50, input); check(r[0] == 4);
+    }
+    memoryRead(one | 0x50, base, base + 8); check(r[0] == 4);
+    memoryRead(one | 0x50, base, base + 4097); check(r[0] == 4);
+    for (uint64_t bad : {uint64_t(0x50), one | 0x20050, one | 0x80000050,
+                         one | 0x8000050, one | (1ull << 44) | 0x50,
+                         one | (1ull << 60) | 0x50, one | (1ull << 48) | 0x50}) {
+        memoryRead(bad); check(r[0] == 3);
+    }
+    put(memory, 0, 123); memoryRead(one | 0x50); check(r[0] == 6);
+    put(memory, 0, uint64_t(-1)); put(memory, 8, 0); memoryRead(one | 0x50); check(r[0] == 14);
+    put(memory, 8, 0xfffffffe); put(memory, 12, 1, 4); memoryRead(one | 0x50); check(r[0] == 5);
+    put(memory, 12, 0, 4);
+    // Slow SetVpRegisters, read-only protection and reserved association bytes.
+    put(memory, 16, 0x90002, 4); put(memory, 20, 0, 4); put(memory, 24, 0);
+    put(memory, 32, 321); put(memory, 40, 0);
+    r = {}; r[0] = one | 0x51; r[1] = base;
+    check(hv.call(1, r, 0) && r[0] == one);
+    fastRead(0x90002); check(r[6] == 321);
+    put(memory, 16, 0x90003, 4);
+    r = {}; r[0] = one | 0x51; r[1] = base;
+    check(hv.call(1, r, 0) && r[0] == 5);
+    put(memory, 16, 0x90002, 4); put(memory, 24, 1);
+    r = {}; r[0] = one | 0x51; r[1] = base;
+    check(hv.call(1, r, 0) && r[0] == 5);
+    r = {}; r[0] = 0x46000001; r[1] = 0xdead;
+    check(hv.call(0, r, 0) && r[0] == 2);
+    r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
+    check(!off.call(0, r, 0) && r[0] == 0x46000001);
+    check(!hv.call(2, r, 0));
+    fastWrite(0); fastRead(0x90003); check(r[0] == 6);
+    check(hv.report().find("\"guestOsId\":0") != std::string::npos);
+    check(off.report().find("\"disabledCalls\":1") != std::string::npos);
+    std::cout << checks << " ARM Hyper-V checks passed\n";
+}

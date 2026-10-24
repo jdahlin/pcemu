@@ -49,7 +49,9 @@ The PE/Setup images report base build 26100; installed editions report 26300.
 ## Hyper-V compatibility after boot and networking
 
 The user requested relevant Hyper-V extensions once the preceding milestones
-work. This is a future implementation stage, not a claim of current support.
+work. The initial discovery/register subset is now implemented as opt-in
+`--hyperv basic`; see [contract and evidence](hyperv-arm64.md). Windows use
+and performance benefits remain separate verification steps.
 Use the ARM64 TLFS ABI and the capabilities actually useful to this guest.
 
 | Area | Implementation decision / verification |

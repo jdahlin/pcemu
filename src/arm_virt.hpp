@@ -1,5 +1,6 @@
 #pragma once
 #include "arm_pl031.hpp"
+#include "arm_hyperv.hpp"
 #include "arm_os_lock.hpp"
 #include "arm_psci.hpp"
 #include "arm_nor_flash.hpp"
@@ -29,6 +30,7 @@ class ArmVirtMachine {
         std::string disk, diskOverlay;
         std::string extraDisk, extraDiskOverlay;
         bool network = false;
+        bool hyperv = false;
         uint16_t sshPort = 0;
         std::string networkCapture;
         std::string virtioTransport = "pci";
@@ -56,6 +58,7 @@ class ArmVirtMachine {
     std::string framebuffer() const { return ramfb.mode(); }
     void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
     std::string cpuState() const;
+    std::string hypervReport() const { return hyperv.report(); }
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
     Config config;
@@ -72,6 +75,7 @@ class ArmVirtMachine {
     bool rtcInterruptLevel = false;
     void updateRtcInterrupt();
     std::vector<ArmOsLock> osLocks;
+    ArmHyperV hyperv;
     ArmPowerAction powerAction = ArmPowerAction::None;
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;
