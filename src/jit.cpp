@@ -218,7 +218,7 @@ Jit::Block Jit::compile(bool translate) {
         int kind, dst, src, op, w, dstShift, srcShift, stackDelta;
         uint32_t imm, end;
         bool immediate;
-        bool compareMemory = false, reverse = false, nearCall = false;
+        bool compareMemory = false, reverse = false, nearCall = false, nearReturn = false;
         uint32_t target = 0;
         NativeMemoryMove memory;
     };
@@ -312,7 +312,15 @@ Jit::Block Jit::compile(bool translate) {
             i.kind = -1;
             i.dst = 0;
             i.src = 0;
-            if (op == 0xe8) {
+            if (op == 0xc2 || op == 0xc3) {
+                i.kind = 5;
+                i.nearReturn = true;
+                i.stackDelta = w + (op == 0xc2 ? immediate(2) : 0);
+                i.memory.base = SP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                block.usesStack = true;
+            } else if (op == 0xe8) {
                 // A direct near CALL is a restartable push followed by a jump.
                 // Keep the return address separate from the committed target,
                 // including when the push invalidates this block's code page.
@@ -505,7 +513,7 @@ Jit::Block Jit::compile(bool translate) {
                 i.memory.end = i.nearCall ? i.target : pos;
             }
             ir.push_back(i);
-            if (i.kind == 4 || i.nearCall)
+            if (i.kind == 4 || i.nearCall || i.nearReturn)
                 break;
         } catch (int) {
             pos = begin;
@@ -522,7 +530,8 @@ Jit::Block Jit::compile(bool translate) {
     const bool shortComparison =
         ir.size() == 2 && ir[1].kind == 4 && ir[1].dst >= 0 &&
         (ir[0].compareMemory || ir[0].kind == 2 || (ir[0].kind == 1 && ir[0].op == 7));
-    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && !ir.back().nearCall))
+    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && !ir.back().nearCall &&
+                      !ir.back().nearReturn))
         return block;
     std::vector<uint32_t> code;
     auto emit = [&](uint32_t x) { code.push_back(x); };
@@ -558,7 +567,7 @@ Jit::Block Jit::compile(bool translate) {
     for (auto i : ir) {
         if (i.kind == 3 || i.kind == 4)
             continue;
-        if (!(i.kind == 5 && i.immediate))
+        if (!(i.kind == 5 && (i.immediate || i.nearReturn)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == 5 || i.kind == 6) {
             if (i.memory.base >= 0)
@@ -700,12 +709,22 @@ Jit::Block Jit::compile(bool translate) {
                 // Change SP only after a successful access. POP SP/ESP writes
                 // its destination after the increment, including mixed widths.
                 if (i.stackDelta) {
-                    emit((i.stackDelta < 0 ? 0x51000000u : 0x11000000u) | (unsigned(i.w) << 10) |
-                         ((20 + SP) << 5) | 11);
+                    auto amount = unsigned(i.stackDelta < 0 ? -i.stackDelta : i.stackDelta);
+                    if (amount < 4096)
+                        emit((i.stackDelta < 0 ? 0x51000000u : 0x11000000u) | (amount << 10) |
+                             ((20 + SP) << 5) | 11);
+                    else {
+                        imm(12, amount);
+                        emit(0x0b000000u | (12 << 16) | ((20 + SP) << 5) | 11);
+                    }
                     insert(20 + SP, 11, block.stack32 ? 4 : 2, 0);
                     dirtyRegisters |= 1u << SP;
                 }
-                if (!i.memory.store) {
+                if (i.nearReturn) {
+                    // Commit the dynamic destination only after a successful
+                    // stack read. Fault/MMIO replay retains the original IP.
+                    store(10, 19, offsetof(CPU, ip));
+                } else if (!i.memory.store) {
                     insert(20 + i.dst, 10, i.w, i.dstShift);
                     dirtyRegisters |= 1u << i.dst;
                 }
@@ -864,8 +883,10 @@ Jit::Block Jit::compile(bool translate) {
             // Successful memory access changed code: commit through this instruction.
             flushRegisters(dirtyRegisters);
             finishFlags(i.compareMemory ? int(n) : last, -1, 0);
-            imm(9, i.memory.end);
-            store(9, 19, offsetof(CPU, ip));
+            if (!i.nearReturn) {
+                imm(9, i.memory.end);
+                store(9, 19, offsetof(CPU, ip));
+            }
             imm(0, n + 1);
             exits.push_back(code.size());
             emit(0x14000000u);
@@ -915,9 +936,11 @@ Jit::Block Jit::compile(bool translate) {
     }
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == 4;
-    imm(9, ir.back().nearCall ? ir.back().target
-                             : branch && ir.back().dst < 0 ? ir.back().imm : pos);
-    store(9, 19, offsetof(CPU, ip));
+    if (!ir.back().nearReturn) {
+        imm(9, ir.back().nearCall ? ir.back().target
+                                 : branch && ir.back().dst < 0 ? ir.back().imm : pos);
+        store(9, 19, offsetof(CPU, ip));
+    }
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     imm(0, ir.size());
     for (auto at : exits)

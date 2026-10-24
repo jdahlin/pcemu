@@ -117,8 +117,9 @@ int main() {
             for (bool word : {false, true})
                 for (bool stack32 : {false, true})
                     for (unsigned kind = 0; kind < 4; ++kind)
-                      for (bool call : {false, true}) {
-                        if (call && !store)
+                      for (unsigned transfer = 0; transfer < 3; ++transfer) {
+                        bool call = transfer == 1, ret = transfer == 2;
+                        if ((call && !store) || (ret && store))
                             continue;
                         if (kind == 1 && !store)
                             continue;
@@ -126,7 +127,9 @@ int main() {
                         std::vector<uint8_t> code = {0xb8, 0xff, 0xff, 0xff, 0xff, 0x83, 0xc0, 1};
                         if (word)
                             code.push_back(0x66);
-                        code.push_back(call ? 0xe8 : store ? 0x50 : 0x5c);
+                        code.push_back(ret ? 0xc2 : call ? 0xe8 : store ? 0x50 : 0x5c);
+                        if (ret)
+                            code.insert(code.end(), {0xff, 0xff});
                         if (call)
                             code.insert(code.end(), word ? 2 : 4, 0);
                         code.insert(code.end(), {0xbb, 0xef, 0xbe, 0xad, 0xde, 0xf4});
@@ -284,6 +287,72 @@ int main() {
             check(guarded.run() == 1 && guarded.nativeInstructions == 0 && accesses == 4 &&
                       c.r[SP] == 0xa0000 && c.ip == 10,
                   "CALL MMIO replay executes the stack write and branch exactly once");
+        }
+        for (bool code32 : {false, true})
+            for (bool overrideWidth : {false, true})
+                for (bool stack32 : {false, true})
+                    for (bool paging : {false, true})
+                        for (unsigned extra : {0u, 1u, 4095u, 4096u, 65535u})
+                            for (unsigned edge = 0; edge < 4; ++edge) {
+                                CPU ref(1024 * 1024), native(1024 * 1024);
+                                unsigned width = code32 != overrideWidth ? 4 : 2;
+                                std::vector<uint8_t> code = {0x83, 0xc3, 1};
+                                if (overrideWidth)
+                                    code.push_back(0x66);
+                                code.push_back(extra ? 0xc2 : 0xc3);
+                                if (extra) {
+                                    code.push_back(extra);
+                                    code.push_back(extra >> 8);
+                                }
+                                for (auto c : {&ref, &native}) {
+                                    c->cr[0] = 1;
+                                    c->s[CS].big = code32;
+                                    c->s[SS].big = stack32;
+                                    c->s[SS].base = 0x10000;
+                                    c->r[SP] = (0x7ffc + edge) | (stack32 ? 0 : 0xabcd0000u);
+                                    c->r[BX] = 0x7fffffff;
+                                    c->r[AX] = 0x12345678;
+                                    c->flags = 0x8d7;
+                                    std::copy(code.begin(), code.end(), c->mem.begin());
+                                    c->write(0x17ffc + edge, 0x87654321, width);
+                                    if (paging) {
+                                        c->write(0x80000, 0x81007, 4);
+                                        for (unsigned page = 0; page < 256; ++page)
+                                            c->write(0x81000 + page * 4, (page << 12) | 7, 4);
+                                        c->cr[3] = 0x80000;
+                                        c->cr[0] = 0x80000001;
+                                    }
+                                    c->flushTLB();
+                                }
+                                ref.step();
+                                ref.step();
+                                Jit translated(native, true, 0);
+                                check(translated.run() == 2 && translated.nativeInstructions ==
+                                          (edge + width > 4 ? 1u : 2u),
+                                      "RET runs natively or replays a page-crossing read");
+                                check(native.ip == ref.ip && native.flags == ref.flags,
+                                      "RET commits its dynamic target and preceding flags");
+                                for (unsigned r = 0; r < 8; ++r)
+                                    check(native.r[r] == ref.r[r],
+                                          "RET preserves GPRs and wraps its stack adjustment");
+                                check(native.mem == ref.mem, "RET preserves memory and paging bits");
+                            }
+        {
+            CPU c(1024 * 1024);
+            c.s[CS].big = c.s[SS].big = true;
+            const uint8_t code[] = {0xc2, 0xff, 0xff};
+            std::copy(std::begin(code), std::end(code), c.mem.begin());
+            c.r[SP] = 0xa0000;
+            unsigned accesses = 0;
+            c.videoRead = [&](uint32_t at) {
+                ++accesses;
+                check(c.r[SP] == 0xa0000, "RET MMIO read sees the original stack pointer");
+                return uint8_t(0x12345678u >> ((at & 3) * 8));
+            };
+            Jit guarded(c, true, 0);
+            check(guarded.run() == 1 && guarded.nativeInstructions == 0 && accesses == 4 &&
+                      c.r[SP] == 0xb0003 && c.ip == 0x12345678,
+                  "RET MMIO replay reads and adjusts the stack exactly once");
         }
         std::cout << "Passed " << checks << " stack JIT checks\n";
     } catch (const std::exception &e) {

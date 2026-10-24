@@ -159,9 +159,28 @@ remaining JIT dispatch/control-flow bottleneck without GUI startup noise.
 Direct near CALL lowering now reuses the guarded native PUSH path and terminates
 its block at the call target. Mixed operand/stack widths, page-crossing replay,
 stack faults, MMIO and writes into translated code have differential regression
-coverage. RET remains interpreted. A subsequent diagnostic run at
+coverage. At that stage RET remained interpreted. A subsequent diagnostic run at
 `build/guest-micro-call-native/result.json` reports four million native CALLs in
 each warm call/return sample (out of 14,000,004 guest instructions), with matching
 checksums and instruction counts. Its 32-bit sample took about 292 ms; the earlier
 303 ms observation is not a controlled repeated comparison. This is partial
 control-flow coverage, not evidence that the CALL/RET bottleneck is resolved.
+
+Near RET and RET imm16 now use the guarded POP read path and end the block at
+the value read from the guest stack. Stack adjustment is committed only after
+a successful read, using SS.B independently of operand width; large imm16 cleanup
+values use register arithmetic rather than the ARM immediate field. Differential
+checks cover both code/operand/stack widths, paging, cross-page reads, stack
+faults, MMIO, and cleanup values through 65535. The initial run at
+`build/guest-micro-native-return/result.json` checks all twenty micro intervals
+and returns to DOS. Warm call/return samples execute 12,000,000 of 14,000,004
+instructions natively; the 32-bit sample took about 132 ms. These individual
+observations identify increased native coverage, not a repeated performance
+comparison or an application speedup claim.
+
+The native-return change also passes `make test`, `make smoke-guest-perf` and
+`make smoke-win311` (Notepad saves exact contents through Windows/DOS). Single
+snapshot task runs for the Win95 calculator, Word 97 and Excel 97 reach their
+recorded framebuffer states. These are compatibility checks, not startup
+performance comparisons. Evidence is in `build/native-return-{tests,smoke,win311}.log`
+and `build/native-return-{win95-calc,word,excel}/result.json`.
