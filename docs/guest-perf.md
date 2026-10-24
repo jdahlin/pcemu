@@ -314,3 +314,52 @@ Word/Excel profiles reach the recorded pixels at
 cold boots and guest restarts pass with private disk removal:
 `build/win95-smoke-nryolhk7/result.json` and
 `build/win95-smoke-9pt0r57b/result.json` respectively.
+
+## Repeated host-timed comparisons
+
+```sh
+# Three alternating pairs, each final CoreMark interval >=10 seconds:
+python3 tools/compare_guest_perf.py --repeat 3 --output build/coremark-pairs
+# Keep each microkernel and cold/warm state separate; five million loops:
+python3 tools/compare_guest_perf.py --suite micro --repeat 3 --output build/micro-pairs
+# Quick validation of the comparison pipeline; no eligible CoreMark scores:
+python3 tools/compare_guest_perf.py --iterations 10 --repeat 2 --output build/pairs-check
+```
+
+The tool freezes one guest-bench executable in its output directory, then
+alternates JIT/interpreter ordering by pair. Every run independently boots DOS,
+checks the original guest result and returns to DOS. Guest COM hashes must match
+across all runs; runner hashes must match the frozen executable. Micro checksums,
+work amounts and architectural instruction counts must also agree across both
+engines and every repetition. Passing runs remove their compressed private disks.
+The output directory must be new; failed runs retain diagnostics and no completed
+aggregate is written. `runs.json` preserves validated partial progress.
+
+CoreMark compares iterations per host second because automatic calibration may
+choose different iteration counts across engines. Default runs must pass the
+upstream minimum runtime as well as CRC validation. Fixed iteration mode is
+reported as diagnostic. Micro cases retain separate physical units and cache
+states; no heterogeneous overall score is calculated. Each row reports raw
+samples, median/min/max rates, and paired JIT/interpreter speedup ratios.
+Three pairs are a small sample; ranges are observations, not confidence bounds.
+Host load and scheduling can affect wall times and are recorded in each raw run.
+This comparison establishes neither hardware equivalence nor Rosetta/application
+performance. `--runner PATH` on the single-run tool permits an existing runner
+without rebuilding it and records its path and hash.
+
+Current three-pair validated CoreMark evidence is retained at
+`build/guest-coremark-repeated/result.json`. JIT rates were 267.1, 255.3 and
+251.1 iterations/host-second (median 255.3); interpreter rates were 119.7, 120.4
+and 119.0 (median 119.7). The median of the three paired speedup ratios is 2.12x,
+with observed ratios 2.11–2.23x. Every final interval exceeded ten host seconds,
+passed the canonical CRC checks, and returned to DOS. Native coverage in the
+final JIT intervals was about 73.9%. This is a current JIT-versus-interpreter
+comparison, not a controlled comparison against earlier emulator revisions.
+
+`build/guest-comparison-micro-check/result.json` validates two alternating pairs
+of all 28 intervals at 17 loops, including matching checksums and architectural
+counts. Its short rates are not performance evidence. The separate short
+CoreMark comparison at `build/guest-comparison-short-check/result.json` remains
+explicitly ineligible for a validated score. All fourteen independent DOS runs
+used frozen runner binaries within their comparison and removed their private
+disks after success. Invalid `--runner` input is rejected before disk creation.

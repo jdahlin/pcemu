@@ -21,6 +21,7 @@ parser.add_argument('--iterations', type=int, default=0,
 parser.add_argument('--no-jit', action='store_true')
 parser.add_argument('--timeout', type=int, default=180)
 parser.add_argument('--output', type=Path)
+parser.add_argument('--runner', type=Path, help='use an existing guest-bench executable without rebuilding it')
 args = parser.parse_args()
 if not 1 <= args.loops <= 10000000:
     parser.error('loops must be 1..10000000')
@@ -28,7 +29,11 @@ if not 0 <= args.iterations <= 0x7fffffff:
     parser.error('iterations outside signed 32-bit range')
 if args.timeout <= 0:
     parser.error('timeout must be positive')
-subprocess.run(['make', '-s', 'build/guest-bench', 'build/disk-tool'], cwd=ROOT, check=True)
+runner = args.runner.resolve() if args.runner else ROOT / 'build/guest-bench'
+if args.runner and (not runner.is_file() or not os.access(runner, os.X_OK)):
+    parser.error('Runner must be an existing executable')
+targets = ['build/disk-tool'] + ([] if args.runner else ['build/guest-bench'])
+subprocess.run(['make', '-s', *targets], cwd=ROOT, check=True)
 work = (args.output.resolve() if args.output else
         Path(tempfile.mkdtemp(prefix='guest-perf-', dir=ROOT / 'build')))
 work.mkdir(parents=True, exist_ok=True)
@@ -52,14 +57,15 @@ with CowFile(disk) as handle:
         raise ValueError('Staged COM readback mismatch')
 result = work / 'result.json'
 provenance = {
-    'runnerSha256': hashlib.sha256((ROOT / 'build/guest-bench').read_bytes()).hexdigest(),
+    'runnerSha256': hashlib.sha256(runner.read_bytes()).hexdigest(),
+    'runnerPath': str(runner),
     'gitCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
     'gitDirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT)),
     'host': {'system': platform.system(), 'release': platform.release(),
              'machine': platform.machine(), 'logicalCpus': os.cpu_count(),
              'loadAverageBefore': os.getloadavg()},
 }
-command = [str(ROOT / 'build/guest-bench'), '--disk', str(disk), '--output', str(result),
+command = [str(runner), '--disk', str(disk), '--output', str(result),
            '--timeout', str(args.timeout), '--loops', str(args.loops)]
 if args.no_jit:
     command.append('--no-jit')
