@@ -869,3 +869,30 @@ same tag, high epoch bits, wraparound, byte/dword access, spare-register and
 fully occupied-register blocks, and preservation of untouched guest GPRs.
 The complete suite passes, including 339,746 core checks. Integration evidence
 and current source hashes are listed in `build/hoisted-tlb-validation.json`.
+
+
+### Rejected 32-byte TLB layout experiment (2026-10-24)
+
+A frozen same-source experiment padded and aligned each TLB entry from 20 to
+32 bytes, replacing stride multiplication with a shift and aligning the packed
+key load. This increases the 1,024-entry table from 20 to 32 KiB. It is not
+retained in the implementation.
+
+Three alternating pairs of 9.8-billion-instruction headless memory kernels
+produced paged candidate/baseline ratios 1.04818, 1.07360 and 1.11718 (median
++7.4%). Flat ratios were 0.99646, 1.02317 and 1.07101. All checksums and native
+instruction counts matched; the candidate passed 339,746 focused core checks.
+These results alone do not establish an application benefit.
+
+Five alternating headless pairs per Office task gave median paired response
+ratios (baseline/candidate, higher is better) of 0.91894 for Word and 1.00508
+for Excel. Dispatch/poll wall-time ratios were 0.99594 and 1.01834 respectively.
+Word's observed response slowdown is about 8.1%, but host and capture timing
+noise prevents attributing all of it to the layout. Excel is effectively
+neutral. With no demonstrated broad benefit, the compact layout remains.
+
+Frozen sources, binary hashes, all kernel trials and application trials are
+retained locally under `build/aligned-tlb-comparison/`, including
+`result.json` and `office/result.json`. Full cold-boot compatibility validation
+was not run for this rejected candidate; the application trials verified all
+20 restored tasks against their expected pixels.
