@@ -98,3 +98,11 @@ completion/count/wrap, ISR/IMR, receive filtering, ring wrap/overflow, transmiss
 IRQ 10 delivery, card/wire snapshot roundtrip, ARP, DHCP, ICMP, HTTP TCP handshake,
 retransmission/FIN, actual host TCP/UDP socket forwarding and malformed packet
 rejection. The socket tests use local listeners and need no external service.
+
+The host gateway also has a device-independent packet queue/receive callback
+interface for modern virtio-net. `Network::forwardTCP(hostPort, guestPort)` binds
+only `127.0.0.1`; port zero allocates an ephemeral host port. An accepted host
+socket opens a guest-side TCP connection from the gateway address, with normal
+sequence/checksum validation, retransmission and close handling. Existing
+NE2000 callers use a wrapper around the same gateway. Portable network checks
+exercise a real loopback forward in both directions through the callback API.

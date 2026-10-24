@@ -96,9 +96,9 @@ static Bytes udp(uint32_t dst, uint16_t sp, uint16_t dp, const Bytes &data) {
     std::copy(data.begin(), data.end(), p.begin() + 8);
     return ipv4(17, dst, p);
 }
-static Bytes tcp(uint16_t dp, uint32_t seq, uint32_t ack, uint8_t flags, const Bytes &data = {}) {
+static Bytes tcp(uint16_t dp, uint32_t seq, uint32_t ack, uint8_t flags, const Bytes &data = {}, uint16_t sourcePort = 12345) {
     Bytes p(20 + data.size());
-    put16(p.data(), 12345);
+    put16(p.data(), sourcePort);
     put16(p.data() + 2, dp);
     put32(p.data() + 4, seq);
     put32(p.data() + 8, ack);
@@ -364,6 +364,51 @@ int main() {
         pump(tcp(80, seq + 1, ack, 16));
         reply = take(n, page);
         check(!reply.empty() && (reply[47] & 4), "stale TCP after restore receives reset");
+        // Exercise the device-independent endpoint and a real host-initiated
+        // connection (the same path used by SSH forwarding to virtio-net).
+        Network forwarded;
+        uint16_t forwardPort = forwarded.forwardTCP(0, 22);
+        std::deque<Bytes> outgoing;
+        std::deque<Bytes> incoming;
+        auto endpoint = [&](Bytes packet = {}) {
+            if (!packet.empty()) outgoing.push_back(std::move(packet));
+            forwarded.pump(outgoing, [&](const uint8_t *data, size_t size) {
+                incoming.emplace_back(data, data + size);
+            });
+        };
+        endpoint(arp); incoming.clear(); // Learn the guest MAC before SYN injection.
+        int ssh = socket(AF_INET, SOCK_STREAM, 0);
+        address.sin_port = htons(forwardPort);
+        check(connect(ssh, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0,
+              "host connects to loopback forward");
+        setsockopt(ssh, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        check(incoming.size() == 1 && incoming.front()[47] == 2 &&
+              get16(incoming.front().data() + 36) == 22, "forward injects guest SSH SYN");
+        auto syn = std::move(incoming.front()); incoming.pop_front();
+        uint16_t peerPort = get16(syn.data() + 34);
+        uint32_t peerSeq = get32(syn.data() + 38);
+        endpoint(tcp(peerPort, 3000, peerSeq + 1, 0x12, {}, 22));
+        check(incoming.size() == 1 && incoming.front()[47] == 16 &&
+              get32(incoming.front().data() + 42) == 3001, "guest SYN ACK completes forward handshake");
+        incoming.clear();
+        endpoint(tcp(peerPort, 3001, peerSeq + 1, 24, payload, 22));
+        incoming.clear();
+        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        check(recv(ssh, received, 4, 0) == 4 && std::string(received, 4) == "ping",
+              "guest server sends through forwarded socket");
+        incoming.clear();
+        check(send(ssh, "pong", 4, 0) == 4, "host sends through forwarded socket");
+        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        check(incoming.size() == 1 && std::string(incoming.front().begin() + 54,
+              incoming.front().begin() + 58) == "pong", "host payload reaches guest server");
+        incoming.clear();
+        endpoint(tcp(peerPort, 3005, peerSeq + 5, 16, {}, 22));
+        shutdown(ssh, SHUT_WR);
+        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        check(incoming.size() == 1 && (incoming.front()[47] & 1), "forward closes guest with FIN");
+        incoming.clear(); endpoint(tcp(peerPort, 3005, peerSeq + 6, 17, {}, 22));
+        close(ssh);
         // Malformed IP/transport inputs must not generate packets or consume ring memory.
         auto count = n.received;
         for (unsigned len = 0; len < 60; ++len)

@@ -1,4 +1,5 @@
 #include "network.hpp"
+#include "ne2000.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
@@ -63,7 +64,7 @@ struct Flow {
     uint32_t receiveNext = 0, sendNext = 0, unacknowledged = 0;
     uint16_t window = 65535;
     bool tcp = false, connecting = false, established = false, local = false;
-    bool peerFin = false, hostFin = false, finSent = false;
+    bool peerFin = false, hostFin = false, finSent = false, incoming = false;
     uint8_t pendingFlags = 0;
     Bytes pending, toHost;
     ~Flow() {
@@ -78,7 +79,30 @@ struct Network::State {
     uint64_t epoch = UINT64_MAX, resets = UINT64_MAX, nextPoll = 0;
     uint32_t dns = 0x01010101, serial = 0x50430000;
     uint16_t ipID = 0;
-    NE2000 *nic = nullptr;
+    Network::Receiver receive;
+    int listener = -1;
+    uint16_t forwardedPort = 22, incomingPort = 40000;
+    ~State() { if (listener >= 0) close(listener); }
+    uint16_t forwardTCP(uint16_t hostPort, uint16_t guestPort) {
+        if (listener >= 0 || !guestPort) throw std::runtime_error("Invalid or duplicate TCP forward");
+        int fd = socketFor(SOCK_STREAM);
+        if (fd < 0) throw std::runtime_error("Cannot create TCP forward socket");
+        int one = 1;
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        address.sin_port = htons(hostPort);
+        if (bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) || listen(fd, 16)) {
+            close(fd); throw std::runtime_error("Cannot bind loopback TCP forward");
+        }
+        socklen_t size = sizeof(address);
+        if (getsockname(fd, reinterpret_cast<sockaddr *>(&address), &size)) {
+            close(fd); throw std::runtime_error("Cannot inspect TCP forward port");
+        }
+        listener = fd; forwardedPort = guestPort;
+        return ntohs(address.sin_port);
+    }
     std::ofstream capture;
     explicit State(const std::string &path) {
         std::ifstream resolvers("/etc/resolv.conf");
@@ -117,7 +141,7 @@ struct Network::State {
     void deliver(Bytes p) {
         p.resize(std::max<size_t>(60, p.size()), 0);
         trace(p);
-        nic->receive(p.data(), p.size());
+        receive(p.data(), p.size());
     }
     Bytes ethernet(uint16_t type, size_t size, bool broadcast = false) {
         Bytes p(14 + size);
@@ -373,6 +397,13 @@ struct Network::State {
             return;
         }
         if (flags & 2) {
+            if (f->incoming && (flags & 16) && ack == f->sendNext && f->pendingFlags == 2) {
+                f->receiveNext = seq + 1;
+                f->pendingFlags = 0; f->pending.clear();
+                f->unacknowledged = ack; f->established = true;
+                tcp(*f, 0x10);
+                return;
+            }
             if (!f->connecting && !f->pendingFlags && !f->established)
                 tcp(*f, 0x12, {}, true);
             else if (!f->connecting && f->pendingFlags == 0x12)
@@ -411,6 +442,27 @@ struct Network::State {
         if (now < nextPoll)
             return;
         nextPoll = now + 2;
+        if (listener >= 0 && flows.size() < 128 &&
+            std::any_of(guestMAC.begin(), guestMAC.end(), [](uint8_t b) { return b != 0; })) {
+            int fd = accept(listener, nullptr, nullptr);
+            if (fd >= 0) {
+                fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+                fcntl(fd, F_SETFD, FD_CLOEXEC);
+#ifdef SO_NOSIGPIPE
+                int one = 1; setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+#endif
+                auto f = std::make_unique<Flow>();
+                f->fd = fd; f->source = guestIP; f->destination = gatewayIP;
+                f->sourcePort = forwardedPort;
+                do { if (++incomingPort < 40000) incomingPort = 40000; }
+                while (find(guestIP, gatewayIP, forwardedPort, incomingPort, true));
+                f->destinationPort = incomingPort;
+                f->tcp = f->incoming = true; f->last = now;
+                f->sendNext = serial += 65537; f->unacknowledged = f->sendNext;
+                tcp(*f, 2, {}, true);
+                flows.push_back(std::move(f));
+            }
+        }
         for (auto &ptr : flows) {
             auto &f = *ptr;
             if (!f.last)
@@ -506,18 +558,21 @@ struct Network::State {
 };
 Network::Network(const std::string &capture) : state(std::make_unique<State>(capture)) {}
 Network::~Network() = default;
+uint16_t Network::forwardTCP(uint16_t hostPort, uint16_t guestPort) {
+    return state->forwardTCP(hostPort, guestPort);
+}
 void Network::pump(NE2000 &nic, uint64_t epoch, uint64_t resets) {
+    pump(nic.outgoing, [&](const uint8_t *data, size_t length) { nic.receive(data, length); }, epoch, resets);
+}
+void Network::pump(std::deque<std::vector<uint8_t>> &outgoing, Receiver receive,
+                   uint64_t epoch, uint64_t resets) {
     auto &s = *state;
-    s.nic = &nic;
+    s.receive = std::move(receive);
     if (s.epoch != epoch || s.resets != resets) {
-        s.flows.clear();
-        s.epoch = epoch;
-        s.resets = resets;
+        s.flows.clear(); s.epoch = epoch; s.resets = resets;
     }
-    while (!nic.outgoing.empty()) {
-        Bytes p = std::move(nic.outgoing.front());
-        nic.outgoing.pop_front();
-        s.packet(p);
+    while (!outgoing.empty()) {
+        Bytes p = std::move(outgoing.front()); outgoing.pop_front(); s.packet(p);
     }
     s.service();
 }
