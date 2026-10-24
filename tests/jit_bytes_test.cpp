@@ -33,7 +33,7 @@ int main() {
             ref.step();
             check(jit.run() == 2 && native.ip == ref.ip && native.flags == ref.flags &&
                       native.r[AX] == ref.r[AX],
-                  "native logical flags and taken/untaken Jcc match interpreter");
+                  "native ALU flags and taken/untaken Jcc match interpreter");
         };
         // Every flag combination and predicate, with distinct branch targets,
         // also covers blocks which consume flags without producing any.
@@ -45,20 +45,25 @@ int main() {
                 compareBlock({0xb0, 0x23, uint8_t(0x70 | cc), 0x10}, rng(), flags);
             }
         for (unsigned width : {1u, 2u, 4u})
-            for (unsigned operation : {1u, 4u, 6u, 8u})
+            for (unsigned operation : {0u, 1u, 4u, 5u, 6u, 7u, 8u})
                 for (unsigned cc = 0; cc < 16; ++cc)
                     for (uint32_t value : {0u, 1u, 0x10u, 0xffu, 0x8000u, 0xffffu,
                                            0x80000000u, 0xffffffffu}) {
-                        std::vector<uint8_t> code;
-                        if (width == 2)
-                            code.push_back(0x66);
-                        code.push_back(operation == 8 ? (width == 1 ? 0xa8 : 0xa9)
-                                                      : operation * 8 + (width == 1 ? 4 : 5));
-                        uint32_t operand = rng();
-                        for (unsigned n = 0; n < width; ++n)
-                            code.push_back(operand >> (n * 8));
-                        code.insert(code.end(), {uint8_t(0x70 | cc), 0x10});
-                        compareBlock(code, value, 0x244ed7);
+                        std::vector<uint32_t> operands{rng()};
+                        if (operation == 0 || operation == 5 || operation == 7)
+                            operands = {0, 1, 0xf, 0x10, 0x7f, 0x80, 0xff, 0x7fff,
+                                        0x8000, 0xffff, 0x7fffffff, 0x80000000, 0xffffffff};
+                        for (auto operand : operands) {
+                            std::vector<uint8_t> code;
+                            if (width == 2)
+                                code.push_back(0x66);
+                            code.push_back(operation == 8 ? (width == 1 ? 0xa8 : 0xa9)
+                                                          : operation * 8 + (width == 1 ? 4 : 5));
+                            for (unsigned n = 0; n < width; ++n)
+                                code.push_back(operand >> (n * 8));
+                            code.insert(code.end(), {uint8_t(0x70 | cc), 0x10});
+                            compareBlock(code, value, 0x244ed7);
+                        }
                     }
         unsigned trial = 0;
         auto run = [&](std::vector<uint8_t> code, unsigned mode, int carry = -1, int byteValue = -1) {

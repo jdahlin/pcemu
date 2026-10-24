@@ -332,7 +332,7 @@ preserves unrelated flags, sets the fixed bit, and matches the interpreter's
 deterministic AF convention even though x86 leaves AF undefined for these
 operations. All sixteen conditional branches are also emitted directly when
 they consume these flags or enter a block with already materialized flags.
-Arithmetic flag producers retain their existing helper. Memory fault exits
+That change left arithmetic flag producers on their existing helper. Memory fault exits
 and INC/DEC carry dependencies still materialize the preceding flags before
 replaying or continuing an instruction.
 
@@ -361,3 +361,47 @@ and task-pixel checks pass in `build/native-logical-flags-{word,excel}/`.
 These are compatibility checks, not application timing comparisons or a new
 installer run. Private test disks are removed after success; a source/evidence
 manifest is retained at `build/native-logical-flags-validation.json`.
+
+Native arithmetic flag materialization extends that path to ADD, SUB, CMP and
+register INC/DEC. Addition computes a zero-extended 64-bit sum so the carry out
+of a 32-bit operand is available; subtraction tests unsigned borrow. Signed
+overflow uses the operand/result sign relationships at the actual operand
+width. INC/DEC update OF/SF/ZF/AF/PF while preserving the materialized CF. The
+existing flag-dependency ordering and memory-fault exits remain in place.
+Conditional branches following these operations also stay in generated code.
+ADC/SBB and other unsupported operations still use interpreter fallback.
+
+The full suite passes in `build/native-arithmetic-flags-tests.log`, including
+1,887,397 byte-JIT checks. New arithmetic tests cross carry, borrow, auxiliary
+carry and signed-overflow boundaries at 8/16/32 bits against every Jcc predicate
+with distinct branch targets, and check exact flags against the interpreter.
+
+The initial frozen comparison in `build/native-arithmetic-flags-controlled/`
+changes only `jit.cpp` against `9d5ff3e`. Three alternating calibrated pairs
+pass canonical CRCs, exceed ten seconds, return to DOS and remove their private
+disks. Median rates are 330.655 baseline and 348.126 candidate iterations per
+host second, with paired ratios 1.06811, 1.04854 and 1.05284 (median gain 5.28%).
+Automatic calibration selects 4,000 iterations for baseline and 6,000 for
+candidate, so the absolute instruction counts differ in this comparison.
+
+A second comparison (`build/native-arithmetic-flags-fixed/result.json`) uses
+the same frozen executables with 6,000 iterations in all six independent DOS
+runs. Every run passes canonical CRCs, exceeds ten seconds and executes exactly
+2,385,055,829 guest instructions with 1,894,469,612 native instructions. Median
+rates are 330.009 baseline and 349.041 candidate iterations per host second;
+paired ratios are 1.06184, 1.05540 and 1.06156 (median gain 6.16%). These fixed
+runs include initial JIT warmup and compilation, whereas automatic calibration
+warms the code before its final interval. Both comparisons retain all samples.
+Neither establishes application-wide gains or Rosetta parity.
+
+Runtime compatibility passes DOS CRCs and the 56-interval micro matrix
+(`build/native-arithmetic-flags-smoke.log`), exact Win3.11 Notepad contents
+(`build/native-arithmetic-flags-win311.log`), rtts Win95 boot/restart
+(`build/win95-smoke-avow4uql/result.json`) and installed OSR2 boot/restart
+(`build/win95-smoke-ls6k7hd_/result.json`). Both Win95 runs observe one reset
+and a second Explorer desktop. Word/Excel snapshot task pixels also pass in
+`build/native-arithmetic-flags-{word,excel}/`; these are compatibility checks
+and do not establish application speedups or repeat the installer.
+Passing compatibility and benchmark runs remove their private test disks.
+`build/native-arithmetic-flags-validation.json` records source hashes and
+the evidence paths.

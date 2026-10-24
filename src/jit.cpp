@@ -703,11 +703,13 @@ Jit::Block Jit::compile(bool translate) {
     auto finishFlags = [&](int last, int condition, uint32_t target) {
         if (last < 0 && condition < 0)
             return;
-        // Logical operations need neither carry propagation nor signed
-        // overflow calculation. Materialize their exact interpreter flags in
-        // generated code, including its deterministic undefined-AF value.
+        // Materialize supported ALU flags without a host helper. Match the
+        // interpreter's deterministic undefined-AF value for logical ops too.
         bool logical = last >= 0 &&
                        (ir[last].op == 1 || ir[last].op == 4 || ir[last].op == 6);
+        bool arithmetic = last >= 0 &&
+                          (ir[last].op == 0 || ir[last].op == 5 || ir[last].op == 7 ||
+                           ir[last].op == 8 || ir[last].op == 9);
         auto bits = [&](int dst, int src, unsigned first, unsigned count) {
             emit(0x53000000u | (first << 16) | ((first + count - 1) << 10) |
                  (src << 5) | dst);
@@ -715,18 +717,45 @@ Jit::Block Jit::compile(bool translate) {
         auto flagBit = [&](int src, unsigned bit) {
             emit(0x33000000u | (((32 - bit) & 31) << 16) | (src << 5) | 12);
         };
-        if (logical) {
+        if (logical || arithmetic) {
             load(9, 31, 96);
             load(10, 31, 100);
             auto op = ir[last].op;
-            emit((op == 1 ? 0x2a000000u : op == 4 ? 0x0a000000u : 0x4a000000u) |
-                 (10 << 16) | (9 << 5) | 11);
-            extract(11, 11, ir[last].w, 0);
+            bool addition = op == 0 || op == 8, preserveCarry = op >= 8;
+            if (arithmetic) {
+                extract(9, 9, ir[last].w, 0);
+                extract(10, 10, ir[last].w, 0);
+                // Zero-extended inputs allow a full 33-bit sum for 32-bit CF.
+                emit((addition ? 0x8b000000u : 0x4b000000u) |
+                     (10 << 16) | (9 << 5) | 11);
+            } else
+                emit((op == 1 ? 0x2a000000u : op == 4 ? 0x0a000000u : 0x4a000000u) |
+                     (10 << 16) | (9 << 5) | 11);
             load(12, 19, offsetof(CPU, flags));
-            imm(14, ~(CF | PF | AF | ZF | SF | OF));
+            imm(14, ~((preserveCarry ? 0 : CF) | PF | AF | ZF | SF | OF));
             emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
             imm(14, 2);
             emit(0x2a000000u | (14 << 16) | (12 << 5) | 12);
+            if (arithmetic && !preserveCarry) {
+                if (addition) {
+                    auto bit = ir[last].w * 8;
+                    emit(0xd3400000u | (bit << 16) | (bit << 10) | (11 << 5) | 13);
+                } else {
+                    emit(0x6b00001fu | (10 << 16) | (9 << 5)); // cmp w9,w10
+                    emit(0x1a9f27edu); // cset w13,lo: x86 CF means borrow
+                }
+                flagBit(13, 0);
+            }
+            extract(11, 11, ir[last].w, 0);
+            if (arithmetic) {
+                emit(0x4a000000u | (10 << 16) | (9 << 5) | 13);
+                if (addition)
+                    emit(0x2a2d03edu); // mvn w13,w13
+                emit(0x4a000000u | (11 << 16) | (9 << 5) | 14);
+                emit(0x0a000000u | (14 << 16) | (13 << 5) | 13);
+                bits(13, 13, ir[last].w * 8 - 1, 1);
+                flagBit(13, 11);
+            }
             emit(0x4a000000u | (10 << 16) | (9 << 5) | 13);
             emit(0x4a000000u | (11 << 16) | (13 << 5) | 13);
             bits(13, 13, 4, 1);
@@ -743,12 +772,12 @@ Jit::Block Jit::compile(bool translate) {
             flagBit(14, 2);
             store(12, 19, offsetof(CPU, flags));
         }
-        if (logical || last < 0) {
+        if (logical || arithmetic || last < 0) {
             if (condition < 0)
                 return;
             // Evaluate all sixteen Jcc predicates from materialized flags.
             // Only caller-save temporaries are used, just like nativeFinish.
-            if (!logical)
+            if (last < 0)
                 load(12, 19, offsetof(CPU, flags));
             unsigned base = condition & 14;
             unsigned bit = base == 0 ? 11 : base == 2 || base == 6 ? 0
