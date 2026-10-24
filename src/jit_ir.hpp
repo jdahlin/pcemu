@@ -15,6 +15,7 @@ struct Instruction {
     bool compareMemory = false, reverse = false, nearCall = false, nearReturn = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;
+    bool negate = false; // Register NEG uses the ordinary 0 - operand flag path.
     bool predictedTaken = false; // Trace path only; terminal branches use imm/end.
     uint32_t target = 0;
     NativeMemoryMove memory;

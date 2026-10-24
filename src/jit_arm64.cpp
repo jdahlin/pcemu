@@ -665,6 +665,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             if (i.signedSource)
                 emit(0x13000000u | ((i.sourceWidth * 8 - 1) << 10) | (12 << 5) | 12);
         }
+        if (i.negate)
+            imm(11, 0);
         if (neededFlags[n]) {
             store(11, 31, 96);
             store(12, 31, 100);

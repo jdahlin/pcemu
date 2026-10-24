@@ -296,21 +296,28 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             } else if (op == 0xf6 || op == 0xf7) {
                 i.w = op == 0xf6 ? 1 : w;
                 auto m = byte();
-                if (m & 0x38) {
-                    pos = begin;
-                    break;
-                }
-                i.op = 4;
-                i.immediate = true;
-                if ((m >> 6) == 3) {
-                    i.kind = Kind::Test;
-                    i.dst = m & 7;
+                if ((m & 0x38) == 0x18 && (m >> 6) == 3) {
+                    i.kind = Kind::Alu;
+                    i.op = 5;
+                    i.negate = true;
+                    i.dst = i.src = m & 7;
                 } else {
-                    i.kind = Kind::Memory;
-                    i.compareMemory = true;
-                    i.memory = memoryOperand(m, address32, overrideSegment);
+                    if (m & 0x38) {
+                        pos = begin;
+                        break;
+                    }
+                    i.op = 4;
+                    i.immediate = true;
+                    if ((m >> 6) == 3) {
+                        i.kind = Kind::Test;
+                        i.dst = m & 7;
+                    } else {
+                        i.kind = Kind::Memory;
+                        i.compareMemory = true;
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                    }
+                    i.imm = immediate(i.w);
                 }
-                i.imm = immediate(i.w);
             } else if (op == 0xe2 || op == 0xe3) {
                 auto displacement = int8_t(byte());
                 i.kind = Kind::CounterBranch;

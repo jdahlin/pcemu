@@ -24,6 +24,44 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Exhaust every byte value/alias and exercise signed overflow and
+        // carry boundaries at both wider sizes, including operand overrides.
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u})
+                for (unsigned reg = 0; reg < 8; ++reg) {
+                    std::vector<uint32_t> values;
+                    if (width == 1)
+                        for (unsigned value = 0; value < 256; ++value)
+                            values.push_back(value);
+                    else
+                        values = {0, 1, 15, 16, 0x7f, 0x80, 0x7fff, 0x8000,
+                                  0xffff, 0x7fffffff, 0x80000000, 0xffffffff};
+                    for (auto value : values) {
+                        std::vector<uint8_t> code;
+                        if (width != 1 && (width == 4) != code32)
+                            code.push_back(0x66);
+                        code.insert(code.end(), {uint8_t(width == 1 ? 0xf6 : 0xf7),
+                                                uint8_t(0xd8 | reg), 0x70, 0x10});
+                        for (auto c : {&reference, &actual}) {
+                            c->s[CS].big = code32;
+                            c->ip = c->instructions = 0;
+                            c->flags = 0x244ed7;
+                            for (unsigned n = 0; n < 8; ++n)
+                                c->r[n] = 0xa5b6c7d8u + n;
+                            c->set(reg, value, width);
+                            for (unsigned n = 0; n < code.size(); ++n)
+                                c->write(n, code[n], 1);
+                        }
+                        reference.step();
+                        reference.step();
+                        check(jit.run() == 2, "NEG and overflow branch execute natively");
+                        equal(reference, actual);
+                        uint32_t operand = value & (width == 4 ? UINT32_MAX : (1u << (width * 8)) - 1);
+                        check(bool(actual.flags & 1) == (operand != 0), "NEG carry iff nonzero operand");
+                        check(bool(actual.flags & 0x800) == (operand == (1u << (width * 8 - 1))),
+                              "NEG overflow iff minimum signed operand");
+                    }
+                }
         std::mt19937 rng(0xaadc130f);
         for (unsigned trial = 0; trial < 5000; ++trial) {
             bool code32 = rng() & 1;
@@ -36,7 +74,7 @@ int main() {
                 if (overrideWidth)
                     code.push_back(0x66);
                 auto modrm = uint8_t(0xc0 | (src << 3) | dst);
-                switch (rng() % 12) {
+                switch (rng() % 14) {
                 case 0: code.insert(code.end(), {0x83, uint8_t(0xc0 | dst), uint8_t(rng())}); break;
                 case 1: code.insert(code.end(), {0x31, modrm}); break;
                 case 2: code.insert(code.end(), {0x83, uint8_t(0xf8 | dst), uint8_t(rng())}); break;
@@ -60,6 +98,8 @@ int main() {
                 case 9: code.insert(code.end(), {0xfe, uint8_t(0xc0 | ((rng() & 1) << 3) | dst)}); break;
                 case 10: code.insert(code.end(), {0x6b, modrm, uint8_t(rng())}); break;
                 case 11: code.insert(code.end(), {0x87, modrm}); break;
+                case 12: code.insert(code.end(), {0xf7, uint8_t(0xd8 | dst)}); break;
+                case 13: code.insert(code.end(), {0xf6, uint8_t(0xd8 | dst)}); break;
                 }
             }
             code.insert(code.end(), {uint8_t(0x70 | (trial & 15)), 0x10});
@@ -78,16 +118,18 @@ int main() {
             equal(reference, actual);
         }
         for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace})
-        for (unsigned pattern = 0; pattern < 3; ++pattern)
+        for (unsigned pattern = 0; pattern < 4; ++pattern)
             for (unsigned boundary = 0; boundary < 2; ++boundary) {
                 CPU expected(65536), native(65536);
-                std::vector<uint8_t> code = pattern == 2
+                std::vector<uint8_t> code = pattern == 3
+                    ? std::vector<uint8_t>{0xf7, 0xd8, 0x42, 0x43}
+                    : pattern == 2
                     ? std::vector<uint8_t>{0x83, 0xf8, 1, 0x42, 0x43}
                     : std::vector<uint8_t>{0x83, 0xc0, 1, 0x0f, 0xaf, 0xd9, 0xc1,
                                           uint8_t(pattern ? 0xfa : 0xe2), uint8_t(pattern ? 2 : 1)};
                 bool joining = mode != Jit::BlockMode::Basic;
                 if (mode == Jit::BlockMode::Trace)
-                    code.insert(code.end(), {0x74, 0}); // ZF is clear in all three patterns.
+                    code.insert(code.end(), {0x74, 0}); // ZF is clear in all four patterns.
                 else if (joining)
                     code.insert(code.begin(), {0xeb, 0});
                 auto boundaryIP = code.size();

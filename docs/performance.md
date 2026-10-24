@@ -1083,3 +1083,28 @@ output, hashes, ratios and startup evidence are committed in
 Validation stays disk-light: RAM-only timing, existing Win95 images with small
 compressed overlays deleted on success, and no new VM images or checkpoints.
 The temporary baseline executable was deleted after measurement.
+
+
+## Native register negation (25 October)
+
+A short DOS CoreMark profile identifies 41,030 interpreted register NEG
+instructions. Register F6/F7 /3 now lowers to native subtraction from zero,
+sharing the existing subtraction flags and backward flag-liveness analysis.
+Byte aliases and operand-size overrides preserve the rest of the destination.
+Memory NEG retains the interpreter path. The architectural reference is
+NEG in the local Intel SDM, Volume 2B pages 4-165–166.
+
+237,334 flag-liveness checks pass, including exhaustive byte values in every
+byte alias, wider signed/carry boundaries, mixed randomized sequences and
+precise fault/code-invalidation exits. Both short CoreMark runs execute exactly
+3,975,114 guest instructions with canonical CRCs. Interpreted attempts fall
+from 226,067 to 186,285; dispatches fall from 982,069 to 904,495. These are
+instrumented coverage diagnostics, with overlapping build/validation work,
+not a measured speed improvement. All 64 DOS microbenchmark intervals match
+between JIT and interpreter and return to DOS.
+
+Win3.11 exact Notepad save/return to DOS and both retained Win95 images'
+cold boot/guest restart to unobscured Explorer pass; successful compressed
+overlays are removed. This does not repeat a fresh installer or establish
+Rosetta-level performance. Full interval counters, provenance and compatibility
+results are retained in [the measurement record](measurements/native-neg-2026-10-25.json).
