@@ -260,3 +260,18 @@ source accesses ending at the last RAM byte and EAX/ESP address/destination
 aliases. The previous instruction's flags and the original fault IP must match
 the interpreter. These checks target correctness and do not establish a broad
 performance improvement.
+
+Validation logs: `build/memory-extend-{tests,smoke,win311}.log`. The read-JIT
+suite passes 156,497 checks; DOS CoreMark CRCs, all 24 micro intervals and
+Win3.11 exact Notepad file saving pass. Updated Word/Excel host and opcode
+profiles are at `build/memory-extend-{word,excel}-profile/`, and the Win95
+calculator reaches its recorded pixels. These runs are compatibility/coverage
+checks, not a controlled application-performance comparison.
+
+A fresh COW child of the original `media/rtts-win95.img` cold-boots to an
+unobscured Explorer desktop under this backend. Evidence:
+`build/memory-extend-rtts-cold-tskq3zv6/verification/result.json`. The existing
+checker dismisses the clock/display dialogs; its unrecognized DHCP warning was
+closed with guest Tab/Enter selecting No. This verifies the cold boot but is not
+an unattended-helper pass. The private compressed disk was removed on success;
+the original image was only used as its read-only parent.
