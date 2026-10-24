@@ -44,10 +44,30 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     case 0x90015:
         if (!guestId) return accessDenied;
         value[0] = partitionInfo; return 0;
+    case 0x90016:
+        if (!guestId) return accessDenied;
+        value[0] = tlbiControl[vp]; return 0;
+    case 0x40400: value[0] = syntheticVectors[vp]; return 0;
+    case 0x40401: return 0; // No synthetic exception has been injected.
     default: return invalidParameter;
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name == 0x40400) {
+        if (value[1] || (value[0] & 0x7ff)) return invalidParameter;
+        // A guest VA, separate from the architectural VBAR_EL1. Optional
+        // synthetic interrupt/exception producers remain disabled.
+        syntheticVectors[vp] = value[0];
+        return 0;
+    }
+    if (name == 0x90016) {
+        if (!guestId) return accessDenied;
+        if (value[1] || (value[0] & ~uint64_t(1))) return invalidParameter;
+        // Per-VP TLBI opt-in. Architectural TLBI still executes through HVF;
+        // this backend does not queue additional asynchronous flush actions.
+        tlbiControl[vp] = value[0];
+        return 0;
+    }
     if (name == 0x90015) {
         if (!guestId) return accessDenied;
         if (value[1] || (value[0] & 0xffe)) return invalidParameter;
@@ -170,6 +190,12 @@ std::string ArmHyperV::report() const {
     for (auto [name, n] : registers) {
         if (comma) s << ','; comma = true;
         s << "{\"name\":" << name << ",\"reads\":" << n.reads << ",\"writes\":" << n.writes << ",\"failures\":" << n.failures << '}';
+    }
+    s << "],\"vps\":[";
+    for (unsigned vp = 0; vp < cpus; ++vp) {
+        if (vp) s << ',';
+        s << "{\"index\":" << vp << ",\"tlbiControl\":" << tlbiControl[vp]
+          << ",\"syntheticVector\":" << syntheticVectors[vp] << '}';
     }
     return s.str() + "]}\n";
 }

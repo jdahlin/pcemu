@@ -37,6 +37,14 @@ does not overwrite RAM. This backend does not queue asynchronous address-space
 flushes, so the pending-flush word remains zero. Other fields remain zero;
 additional partition-info features are not advertised.
 
+Per-VP TLBI control (0x90016) retains the guest's bit-0 opt-in and rejects
+reserved bits. ARM architectural TLBI instructions continue through HVF;
+there is no queued hypervisor flush or claimed flush acceleration. The
+synthetic vector base (0x40400) is per-VP, 2 KiB aligned, and independent of
+VBAR_EL1. The synthetic ESR (0x40401) reads zero because this subset has no
+synthetic exception producers. Vector registration does not enable SynIC or
+timer delivery. State is initialized afresh when the VM is recreated.
+
 Feature registers expose guest identity, VP index, register access and fast
 output. No timer, SynIC, VMBus, flush or scheduling facilities are advertised.
 The version is PCEmu interface 1.0 build 1, not a Microsoft release identity.
@@ -48,7 +56,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 101 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 136 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -62,8 +70,7 @@ codes, register reads/writes and failures. Tables are bounded and omissions
 are counted. Disabled mode records attempts without exposing the interface.
 Guest ID/counters establish actual calls, not performance benefit.
 
-Windows on/off boots and register counters remain to be inspected. No Windows
-use or performance improvement is implied by those synthetic tests.
+No Windows use or performance improvement is implied by those synthetic tests.
 
 ## Windows observation, 2026-10-25
 
@@ -92,8 +99,18 @@ page and writes its GPA with enable bit 0. Observed consumers read its initial
 This inspection motivated the real guest-RAM registration above, rather than
 returning a fabricated address. The model tests and EFI probe verify page
 registration, clearing, readback and rejected updates. A fresh Windows clone
-is being tested with that implementation; successful on-mode boot is still
-unproven at this checkpoint.
+with page registration accepted the GPA `0x4000d001`, then successfully read
+VP index. It reached the next missing register, TLBI control (0x90016), and
+halted again. The control's identifier is independently confirmed in Microsoft's
+mu_msvm guest ABI header. Kernel inspection also shows mandatory registration
+of a separate synthetic exception vector (0x40400).
+
+The per-VP model now retains and validates both registrations. Its native tests
+cover isolation between VPs, reserved/alignment errors, early vector access and
+reset state. The EFI probe executes architectural TLBI after opting in and
+verifies that synthetic-vector registration leaves VBAR_EL1 unchanged. A fresh
+Windows clone is being tested with these boot registers; successful on-mode
+boot remains unproven at this checkpoint.
 
 ## Primary references
 
@@ -105,3 +122,4 @@ unproven at this checkpoint.
 - [Privilege mask](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_partition_privilege_mask)
 - [Microsoft OpenVMM ARM64 ABI](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/aarch64.rs)
 - [Microsoft OpenVMM parameter parsing](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/support.rs)
+- [Microsoft mu_msvm ARM64 guest register identifiers](https://github.com/microsoft/mu_msvm/blob/main/MsvmPkg/Include/Hv/HvGuestHypercall.h)

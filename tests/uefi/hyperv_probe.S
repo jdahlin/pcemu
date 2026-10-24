@@ -127,6 +127,53 @@ efi_main:
     orr x8, x8, #1
     cmp x6, x8
     b.ne failed
+    mrs x22, vbar_el1
+    ldr w0, =0x46000001
+    ldr x1, =0x100010051
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x90016
+    mov x5, #0
+    mov x6, #1
+    mov x7, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    // Architectural maintenance remains a native ARM operation.
+    dsb ishst
+    tlbi vmalle1is
+    dsb ish
+    isb
+    ldr w0, =0x46000001
+    ldr x1, =0x100010051
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x40400
+    mov x5, #0
+    mov x6, x21
+    mov x7, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    mrs x8, vbar_el1
+    cmp x8, x22
+    b.ne failed
+    ldr x0, =0x100010050
+    mov x1, #-1
+    ldr w2, =0xfffffffe
+    ldr w3, =0x40400
+    mov x4, #0
+    hvc #1
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    cmp x15, x21
+    b.ne failed
     ldr w0, =0x46000001
     mov x1, #0xdead
     hvc #0

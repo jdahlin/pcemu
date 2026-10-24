@@ -88,6 +88,26 @@ int main() {
     fastRead(0x90015); check(r[6] == base + 4096 + 1);
     page(0); check(r[0] == one && memory[4096] == 0x42);
     fastRead(0x90015); check(r[6] == 0);
+    auto writeVp = [&](uint32_t name, uint64_t value, unsigned vp = 0, uint64_t high = 0) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name;
+        r[6] = value; r[7] = high;
+        check(hv.call(0, r, vp));
+    };
+    writeVp(0x90016, 1); check(r[0] == one);
+    fastRead(0x90016); check(r[6] == 1);
+    fastRead(0x90016, false, 1); check(r[15] == 0); // Per-VP, not partition-wide
+    writeVp(0x90016, 2); check(r[0] == 5);
+    writeVp(0x90016, 1, 0, 1); check(r[0] == 5);
+    fastRead(0x90016); check(r[6] == 1);
+    writeVp(0x40400, 0xfffff80012345000ull); check(r[0] == one);
+    fastRead(0x40400); check(r[6] == 0xfffff80012345000ull);
+    fastRead(0x40400, false, 1); check(r[15] == 0);
+    writeVp(0x40400, 123); check(r[0] == 5);
+    writeVp(0x40400, 0, 0, 1); check(r[0] == 5);
+    fastRead(0x40400); check(r[6] == 0xfffff80012345000ull);
+    fastRead(0x40401); check(r[6] == 0);
+    writeVp(0x40401, 1); check(r[0] == 5);
     // Memory ABI above 4 GiB, partial completion and resume.
     put(memory, 0, uint64_t(-1)); put(memory, 8, 0xfffffffe);
     put(memory, 16, 0x90003, 4); put(memory, 20, 0xffffffff, 4);
@@ -134,6 +154,12 @@ int main() {
     check(!off.call(0, r, 0) && r[0] == 0x46000001);
     check(!hv.call(2, r, 0));
     fastWrite(0); fastRead(0x90003); check(r[0] == 6);
+    fastRead(0x90016); check(r[0] == 6);
+    writeVp(0x40400, 0); check(r[0] == one); // Early register may be written without ID
+    fastRead(0x40400); check(r[0] == one && r[6] == 0);
+    ArmHyperV fresh(true, memory, base, 2);
+    r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x40400;
+    check(fresh.call(1, r, 0) && r[0] == one && r[15] == 0); // VM recreation resets state
     check(hv.report().find("\"guestOsId\":0") != std::string::npos);
     check(off.report().find("\"disabledCalls\":1") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";

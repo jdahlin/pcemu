@@ -20,6 +20,7 @@ class ArmHyperV {
     std::span<uint8_t> ram;
     uint64_t base, guestId = 0, partitionInfo = 0;
     unsigned cpus;
+    std::array<uint64_t, 8> tlbiControl{}, syntheticVectors{};
     uint64_t uidQueries = 0, versionQueries = 0, smcccCalls = 0, legacyCalls = 0;
     uint64_t disabledCalls = 0, failures = 0, omittedCounters = 0;
     uint64_t lastControl = 0, lastResult = 0;
