@@ -80,7 +80,9 @@ def build():
 
     mcfg = bytes(8) + struct.pack('<QHBBI', 0x3f000000, 0, 0, 0, 0)
     spcr = bytearray(80 - 36)
-    spcr[0] = 3  # PL011; polled UART, no interrupt backend advertised here
+    spcr[0] = 3  # PL011
+    spcr[52 - 36] = 8  # ARM GIC interrupt
+    struct.pack_into('<I', spcr, 54 - 36, 33)
     spcr[4:16] = gas(0x09000000)
     spcr[58 - 36] = 7  # 115200 baud
     spcr[60 - 36] = 1  # one stop bit

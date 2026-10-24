@@ -121,6 +121,11 @@ std::pair<size_t, size_t> ArmNorFlash::takeDirty() {
 } // namespace pc
 
 namespace pc {
+uint32_t ArmPl011::rawInterrupts() const {
+    if (!(control & 1)) return 0;
+    return ((control & 0x100) ? 0x20u : 0u) |
+           ((control & 0x200) && !receive.empty() ? 0x50u : 0u);
+}
 uint32_t ArmPl011::read(unsigned offset) {
     switch (offset) {
     case 0:
@@ -139,8 +144,11 @@ uint32_t ArmPl011::read(unsigned offset) {
     case 0xff4: return 0xf0;
     case 0xff8: return 0x05;
     case 0xffc: return 0xb1;
-    // RSR/ECR, interrupt and DMA registers are inert in this polled subset.
-    case 4: case 0x20: case 0x34: case 0x38: case 0x3c: case 0x40: case 0x44: case 0x48:
+    case 0x34: return fifoLevels;
+    case 0x38: return interruptMask;
+    case 0x3c: return rawInterrupts();
+    case 0x40: return rawInterrupts() & interruptMask;
+    case 4: case 0x20: case 0x44: case 0x48:
         return 0;
     default: throw std::runtime_error("Unsupported PL011 read offset: " + std::to_string(offset));
     }
@@ -154,7 +162,10 @@ void ArmPl011::write(unsigned offset, uint32_t value) {
     case 0x28: fractionalDivisor = value & 63; return;
     case 0x2c: lineControl = value & 255; return;
     case 0x30: control = value & 0xffff; return;
-    case 4: case 0x20: case 0x34: case 0x38: case 0x44: case 0x48: return;
+    case 0x34: fifoLevels = value & 0x3f; return;
+    case 0x38: interruptMask = value & 0x7ff; return;
+    // RX/TX levels remain asserted while their FIFO condition holds.
+    case 4: case 0x20: case 0x44: case 0x48: return;
     default: throw std::runtime_error("Unsupported PL011 write offset: " + std::to_string(offset));
     }
 }

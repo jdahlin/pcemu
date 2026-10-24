@@ -82,6 +82,8 @@ class ArmAcpi(unittest.TestCase):
         self.assertEqual(struct.unpack_from('<IIII', tables[b'GTDT'], 56), (30, 4, 27, 4))
         self.assertEqual(struct.unpack_from('<QHBB', tables[b'MCFG'], 44), (0x3f000000, 0, 0, 0))
         self.assertEqual(tables[b'SPCR'][36], 3)
+        self.assertEqual(tables[b'SPCR'][52], 8)
+        self.assertEqual(struct.unpack_from('<I', tables[b'SPCR'], 54)[0], 33)
         self.assertEqual(struct.unpack_from('<Q', tables[b'SPCR'], 44)[0], 0x09000000)
 
     def test_debug_namespace_bounds(self):

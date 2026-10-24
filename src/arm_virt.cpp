@@ -244,6 +244,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
                                              exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
                 if (reg < 31) vm.setReg(reg, value);
             }
+            vm.setSPI(33, uart.irq());
             vm.setPC(exit.pc + 4);
             return;
         }

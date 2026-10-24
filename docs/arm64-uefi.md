@@ -65,7 +65,7 @@ power-loss durability guarantee.
 | `0x04000000` | 768 KiB NOR variable store, guest writes trapped |
 | `0x08000000` | Hypervisor.framework GICv3 distributor |
 | `0x080a0000` | GICv3 redistributor for the single vCPU |
-| `0x09000000` | Polled PL011 serial console |
+| `0x09000000` | PL011 serial console, GIC SPI 33 |
 | `0x0a000000` | Optional virtio-blk MMIO device |
 | `0x10000000`–`0x3effffff` | PCI memory window |
 | `0x3f000000` | PCI ECAM, bus 0 |
@@ -86,7 +86,7 @@ are not implemented. This does not provide deep-idle power management.
 The runner expects that compiled tree and its fixed RAM map; accepting a path to
 an arbitrary DTB does not make arbitrary hardware layouts supported. Device tree configures firmware. The OS receives ACPI through the UEFI
 configuration table. Our original tables describe the CPU, GICv3, architectural
-timers, PCI ECAM/window/INTA and polled PL011 console/debug port. EDK II installs
+timers, PCI ECAM/window/INTA and PL011 console/debug port. EDK II installs
 and relocates them using `etc/table-loader`; it owns the final RSDP/XSDT.
 `make acpi-arm64` regenerates these small assets; `--acpi-dir DIRECTORY` selects
 an alternate generated set. This does not make alternate hardware maps supported.
@@ -94,14 +94,15 @@ an alternate generated set. This does not make alternate hardware maps supported
 The source namespace is `platform/arm64/dsdt.asl`. Its compiled AML and source
 hash are in `dsdt-aml.json`; no compiler is needed for normal builds. To check the
 compiled bytes, run `python3 tools/build_arm_acpi.py --iasl /path/to/iasl`.
-Only the UART memory resource is exposed: IRQ delivery is not implemented.
+The UART exposes its memory resource and level-high GIC interrupt 33.
 
 `src/arm_virt.cpp` owns firmware loading, MMIO dispatch and variable persistence.
 It uses the separate `HvfMachine` execution backend, not the x86 `Machine`.
 `src/arm_devices.cpp` provides deliberately limited firmware device models:
 
-- PL011 polled transmit/receive, selected control registers and PrimeCell IDs.
-  Input is a bounded host queue. UART IRQ delivery and DMA are not implemented.
+- PL011 transmit/receive, selected control registers and PrimeCell IDs.
+  Input is a bounded host queue. Masked RX, receive-timeout and empty-TX level
+  interrupts reach GIC SPI 33. FIFO thresholds and DMA are not implemented.
 - NOR x32 access for two interleaved x16 parts, 256 KiB erase blocks, word and
   buffered programming, ready status and unlocked ID reads. It implements the
   sequences exercised by the pinned EDK II driver, not the complete Intel/CFI

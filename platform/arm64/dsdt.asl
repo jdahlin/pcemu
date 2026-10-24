@@ -35,6 +35,7 @@ DefinitionBlock ("", "DSDT", 2, "PCEMU ", "ARMVIRT ", 1)
             Name (_CRS, ResourceTemplate ()
             {
                 Memory32Fixed (ReadWrite, 0x09000000, 0x1000)
+                Interrupt (ResourceConsumer, Level, ActiveHigh, Exclusive) { 33 }
             })
         }
         Device (FWCF)

@@ -21,7 +21,7 @@ class ArmVirtMachine {
     ArmVirtMachine(const ArmVirtMachine &) = delete;
     ArmVirtMachine &operator=(const ArmVirtMachine &) = delete;
     void run(std::chrono::milliseconds slice);
-    void input(const std::string &text) { uart.input(text); }
+    void input(const std::string &text) { uart.input(text); vm.setSPI(33, uart.irq()); }
     const std::string &output() const { return uart.output(); }
     void saveVariables();
     std::string diskPath() const { return disk ? disk->path : std::string{}; }

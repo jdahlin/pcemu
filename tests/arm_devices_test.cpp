@@ -119,7 +119,22 @@ int main() {
     uart.write(0x24, 0x1234); uart.write(0x28, 0xff); uart.write(0x2c, 0x70);
     check(uart.read(0x24) == 0x1234 && uart.read(0x28) == 63 && uart.read(0x2c) == 0x70);
     check(uart.read(0xfe0) == 0x11 && uart.read(0xffc) == 0xb1);
-    check(uart.read(0x40) == 0);
+    check(uart.read(0x40) == 0 && !uart.irq());
+    uart.write(0x38, 0x50);
+    uart.input("z");
+    check(uart.irq() && uart.read(0x40) == 0x50);
+    uart.write(0x44, 0x7ff);
+    check(uart.irq()); // Clearing cannot suppress a nonempty RX level.
+    check(uart.read(0) == 'z' && !uart.irq());
+    uart.write(0x38, 0x20);
+    check(uart.irq() && uart.read(0x40) == 0x20);
+    uart.write(0x30, 0);
+    check(!uart.irq());
+    uart.write(0x30, 0x301);
+    uart.write(0x38, 0);
+    check(!uart.irq());
+    uart.write(0x34, 0x12);
+    check(uart.read(0x34) == 0x12);
     rejects([&] { uart.input(std::string(4097, 'x')); });
     rejects([&] { uart.read(0x123); });
     rejects([&] { uart.write(0x123, 0); });
