@@ -10,10 +10,11 @@ an ID. Installations and checkpoints remain user-owned VM instances.
 | pc-legacy | Current 32-bit x86 PC | 16 MiB | Available; existing default |
 | win311 | Same PC, Windows 3.11 preset | 16 MiB | Available |
 | win95 | Same PC, Windows 95/Office 97 preset | 32 MiB | Available |
+| arm64-test | Flat ARM64 EL1 test guest | 2 MiB | Available in `pcemu-hvf` |
 | win11-arm64 | ARM64 UEFI virtual machine | 4096 MiB | Planned; launch rejected |
 | win11-x64 | x86-64 UEFI PC | 4096 MiB | Planned; launch rejected |
 
-The available presets share hardware and CPU semantics. They are not 386/486/
+The three legacy x86 presets share hardware and CPU semantics. They are not 386/486/
 Pentium timing models, do not change CPUID, and do not hide devices. BIOS services,
 IDE, PIC/PIT, VGA/DISPI, PS/2, PCI and NE2000 remain available. Add a distinct
 versioned platform when guest-visible hardware changes. Historical years alone
@@ -24,13 +25,14 @@ build/pcemu --machine win311 --backend interpreter --disk media/win311.raw
 build/pcemu --machine win95 --backend jit --load-snapshot build/snapshots/office97-networked
 ```
 
-`auto` currently selects the existing JIT path (including its interpreter
+In the legacy x86 runner, `auto` selects the existing JIT path (including its interpreter
 fallback). `interpreter` disables JIT; `jit` selects that path explicitly.
 `--no-jit` is a compatibility alias and conflicts with an explicit other backend.
-`hvf` and `kvm` are reserved names and fail before a machine or disk is opened;
-no hardware backend is implemented. `--ram-mb` overrides preset RAM, within the
-current 2–64 MiB limit. Restoring a checkpoint supplies its saved RAM and device
-state, overriding preset and explicit RAM. All available presets use the same
+`hvf` is available for `arm64-test` through the separate optional
+`build/pcemu-hvf` runner; see [Hypervisor backend](hypervisor.md). The x86 runner
+rejects it before opening disks. `kvm` remains reserved and unimplemented.
+In the x86 runner, `--ram-mb` overrides preset RAM within the current 2–64 MiB limit. Restoring a checkpoint supplies its saved RAM and device
+state, overriding preset and explicit RAM. All legacy x86 presets use the same
 `pc-legacy-v1` platform and can restore existing checkpoints. State JSON records
 requested preset, actual backend, platform and actual RAM. Existing checkpoint
 formats are unchanged and do not yet encode these profile IDs.
@@ -45,9 +47,10 @@ formats are unchanged and do not yet encode these profile IDs.
    hypervisor vCPUs into the existing concrete x86 CPU class.
 3. For efficient Linux on ARM hosts, implement an ARM64 virtual platform/backend
    as a separate target. A macOS Virtualization.framework adapter is an option
-   for Linux. Its device/firmware contract must not be assumed compatible with
+   for Linux. The initial HVF bare-metal backend is available as `pcemu-hvf`;
+   it does not yet provide that Linux platform. Its device/firmware contract must not be assumed compatible with
    Windows. Linux KVM is a separate host backend.
-4. For Windows 11 on Apple Silicon, prioritize ARM64 and Hypervisor.framework.
+4. For Windows 11 on Apple Silicon, build on the ARM64 Hypervisor.framework backend.
    This requires ARM firmware, memory map, interrupt/timer model, ACPI tables,
    SMP/vCPU lifecycle, UEFI boot and variables, TPM 2.0 and Secure Boot support.
    Validate the selected firmware and each virtual device with Windows ARM64.

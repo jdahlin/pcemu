@@ -39,9 +39,13 @@ These are compatibility-constrained choices: an ARM hardware backend does not
 execute our x86 PC model. A guest OS is software installed on a suitable machine
 model, not a separate frontend or execution backend.
 
-The machine and execution layers are still concretely coupled in today's PC
-implementation. Introduce a session adapter when a second machine/backend is
-actually implemented, rather than declaring empty generalized interfaces now.
+The machine and execution layers remain concretely coupled in the legacy PC
+implementation. The experimental `HvfMachine` is a separate ARM64 platform and
+backend in `pcemu-hvf`, with no x86 CPU or GUI dependencies; see
+[Hypervisor backend](hypervisor.md). It currently runs bare-metal code only.
+Introduce the shared session adapter when integrating OS boot and frontend
+control for that backend, rather than routing hypervisor operations through
+the existing x86 CPU.
 That adapter should expose start/pause/reset, bounded execution, input queues,
 frames and checkpoint operations. Keep virtual dispatch out of per-instruction
 and per-memory-access paths; choose a backend once and run batches within it.

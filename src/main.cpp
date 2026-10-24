@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
             for (const auto &p : machineProfiles)
                 std::cout << p.id << " [" << (p.implemented ? "available" : "planned")
                           << "] arch=" << p.architecture << " platform=" << p.platform
-                          << " ram=" << p.defaultRamMB << " MiB: " << p.description << '\n';
+                          << " runner=" << p.runner << " ram=" << p.defaultRamMB << " MiB: " << p.description << '\n';
             return 0;
         }
         const auto &selectedProfile = machineProfile(machineId);

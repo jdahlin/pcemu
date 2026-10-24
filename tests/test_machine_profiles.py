@@ -43,7 +43,7 @@ class MachineProfiles(unittest.TestCase):
                 self.assertEqual(data['executionBackend'], backend)
 
     def test_rejects_unimplemented_and_invalid(self):
-        cases = [('--machine', 'win11-arm64'), ('--machine', 'win11-x64'),
+        cases = [('--machine', 'arm64-test'), ('--machine', 'win11-arm64'), ('--machine', 'win11-x64'),
                  ('--machine', 'unknown'), ('--backend', 'unknown'),
                  ('--backend', 'hvf'), ('--backend', 'kvm'),
                  ('--backend', 'jit', '--no-jit'), ('--ram-mb', '4096')]

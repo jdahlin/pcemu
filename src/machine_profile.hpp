@@ -13,6 +13,7 @@ struct MachineProfile {
     size_t defaultRamMB;
     bool implemented;
     std::string_view description;
+    std::string_view runner = "pcemu";
 };
 inline constexpr std::array machineProfiles{
     MachineProfile{"pc-legacy", "x86-32", "pc-legacy-v1", 16, true,
@@ -21,6 +22,8 @@ inline constexpr std::array machineProfiles{
                    "Windows 3.11 preset; same legacy hardware, 16 MiB RAM"},
     MachineProfile{"win95", "x86-32", "pc-legacy-v1", 32, true,
                    "Windows 95/Office 97 preset; same legacy hardware, 32 MiB RAM"},
+    MachineProfile{"arm64-test", "arm64", "arm-baremetal-v1", 2, true,
+                   "Experimental flat EL1 ARM64 test machine; no OS firmware/devices", "pcemu-hvf"},
     MachineProfile{"win11-arm64", "arm64", "arm-uefi-v1", 4096, false,
                    "Planned: ARM64 virtualization, UEFI/ACPI/GIC/TPM2 and guest drivers"},
     MachineProfile{"win11-x64", "x86-64", "pc-uefi-v1", 4096, false,
@@ -45,8 +48,11 @@ inline bool useJit(const MachineProfile &profile, ExecutionBackend backend) {
     if (!profile.implemented)
         throw std::runtime_error("Machine profile " + std::string(profile.id) +
                                  " is planned, not implemented: " + std::string(profile.description));
+    if (profile.runner != "pcemu")
+        throw std::runtime_error("Machine profile " + std::string(profile.id) +
+                                 " uses the separate build/" + std::string(profile.runner) + " runner");
     if (backend == ExecutionBackend::Hvf || backend == ExecutionBackend::Kvm)
-        throw std::runtime_error("Hardware virtualization backend is not implemented; "
+        throw std::runtime_error("Hardware virtualization is unavailable for this platform; "
                                  "the current x86-32 machine uses interpreter or jit. "
                                  "ARM hosts cannot hardware-virtualize an x86 guest.");
     return backend != ExecutionBackend::Interpreter;

@@ -67,3 +67,15 @@ firmware:
 
 smoke-guest-perf: build/guest-bench build/disk-tool
 	python3 tools/smoke_guest_perf.py
+
+# Optional, separate ARM64 hypervisor runner. No GUI, x86 core or guest disks.
+# Ad-hoc signing grants the entitlement required by Hypervisor.framework.
+.PHONY: test-hvf
+test-hvf: build/pcemu-hvf
+	./build/pcemu-hvf --self-test
+	python3 -m unittest discover -s tests -p test_hvf_cli.py
+build/pcemu-hvf: src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
+	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp tools/hvf_main.cpp -framework Hypervisor -o $@
+	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
