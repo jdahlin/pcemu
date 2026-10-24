@@ -1,4 +1,5 @@
 #include "machine.hpp"
+#include "pc_bios_disk.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -329,7 +330,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 diskError(4);
                 break;
             }
-            if (ah == 4 || d->transfer(c, ah == 3, lba, count, c.address(ES, c.get(BX, 2)))) {
+            if (ah == 4 || biosDiskTransfer(*d, c, ah == 3, lba, count, c.address(ES, c.get(BX, 2)))) {
                 diskOK();
                 c.set(AX, count, 1);
             } else
@@ -371,7 +372,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
             unsigned count = c.read(ptr + 2, 2);
             uint64_t lba = uint64_t(c.read(ptr + 12, 4)) << 32 | c.read(ptr + 8, 4);
             auto dest = (c.read(ptr + 6, 2) << 4) + c.read(ptr + 4, 2);
-            if (c.read(ptr, 1) >= 16 && d->transfer(c, ah == 0x43, lba, count, dest))
+            if (c.read(ptr, 1) >= 16 && biosDiskTransfer(*d, c, ah == 0x43, lba, count, dest))
                 diskOK();
             else
                 diskError(4);

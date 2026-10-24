@@ -8,7 +8,6 @@
 #include <vector>
 #include "vhdx.hpp"
 namespace pc {
-struct CPU;
 struct Disk {
     std::string path;
     std::fstream file;
@@ -25,7 +24,6 @@ struct Disk {
     bool isOverlay() const {
         return bool(parent);
     }
-    bool transfer(CPU &cpu, bool write, uint64_t lba, unsigned count, uint32_t buffer);
 
   private:
     struct Block {

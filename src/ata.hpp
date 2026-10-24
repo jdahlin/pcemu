@@ -11,6 +11,8 @@ class ATA {
     bool irq = false;
     uint8_t control = 0;
     explicit ATA(Disk *d = nullptr) : disk(d) {}
+    bool interruptLevel() const { return irq && !(control & 2); }
+    void reset(Disk *backing) { *this = ATA(backing); }
     uint32_t in(uint16_t port, int width);
     void out(uint16_t port, uint32_t value, int width);
 

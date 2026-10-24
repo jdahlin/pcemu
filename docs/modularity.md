@@ -76,6 +76,37 @@ versioned snapshot codecs remain explicit until each device can safely own its
 complete lifecycle. CLI/control parsing, tracing and BIOS service state remain
 candidates for session/firmware extraction.
 
+## Hardware independence
+
+All hardware model modules are independent of `Machine`, CPU/JIT, HVF and the
+frontend. `tests/test_device_boundaries.py` checks their local include graph and
+rejects forward declarations of execution/board types. `build/hardware-device-tests`
+links PC and ARM hardware, buses, storage and the network backend without those
+execution/application components. New devices must be added to that inventory.
+
+| Hardware | State/behavior owner | Composition supplies |
+|---|---|---|
+| ATA | `ATA` | Backing disk, port registration, IRQ wire |
+| Interrupt chips | `PIC8259`, `I8259PairDevice` | IRQ inputs and CPU interrupt readiness |
+| PIT | `PIT8254` | Device clock and gate inputs |
+| VGA/DISPI | `VGA` | Video memory callbacks and compatibility retrace clock |
+| PCI display function | `VgaPciDevice` | Attachment through the `PCI` I/O bus |
+| NE2000 | `NE2000` | Ethernet packet backend and IRQ wire |
+| Keyboard/mouse interface | `I8042Device`, `PS2Mouse` | Time, input, IRQ/A20/reset wiring |
+| CMOS/RTC | `CmosRtc` | Hardware inventory and host clock |
+| System port B | `SystemPortBDevice` | PIT output/gate pins |
+| Fast A20/reset port | `Port92Device` | Current A20 pin; apply returned effects |
+| Debug port | `DebugConsoleDevice` | Host byte-output sink |
+| ARM peripherals | Individual PL011/PL031/NOR/fw_cfg/RAMFB models | MMIO and IRQ wiring |
+| Virtio/NVMe | Individual block/network/entropy/NVMe models and transports | Guest RAM, storage/packets/entropy, IRQ sinks |
+
+The machine still owns these objects and their lifetimes. Per-instruction CPU
+execution and interrupt injection remain execution concerns; the interrupt device
+handles priority/cascade/acknowledge. Existing ATA/network edge wires remain board
+wiring. BIOS disk transfers use `biosDiskTransfer` in `pc_bios_disk.*`; `Disk`
+itself no longer exposes a CPU-dependent operation. BIOS services and their
+firmware queues remain separate from hardware state.
+
 ## Future structure
 
 Keep four choices independent as more machines become useful:

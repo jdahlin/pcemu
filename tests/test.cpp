@@ -1,6 +1,7 @@
 #include "cpu.hpp"
 #include "jit.hpp"
 #include "machine.hpp"
+#include "pc_bios_disk.hpp"
 #include "ps2_test_support.hpp"
 #include <cstring>
 #include <filesystem>
@@ -1620,7 +1621,7 @@ int main() {
             check(fixed.in(0x1f0, 2) == (i ^ 0xa55a), "ATA PIO word transfer byte order and data");
         check(fixed.in(0x1f2, 1) == 0 && fixed.in(0x1f7, 1) == 0x50,
               "ATA completion exhausts sector count and DRQ");
-        fixed.disk->transfer(fixed.cpu, false, 1, 1, 0x2000);
+        biosDiskTransfer(*fixed.disk, fixed.cpu, false, 1, 1, 0x2000);
         check(fixed.cpu.read(0x2000, 2) == 0xa55a && fixed.cpu.read(0x21fe, 2) == (255 ^ 0xa55a),
               "BIOS and ATA share backing sectors");
         fixed.out(0x1f7, 0xec, 1);
@@ -1791,7 +1792,7 @@ int main() {
             c.write(0x102, 0x900, 2);
             c.step();
             shadow.timer();
-            check(shadow.ticks == 0 && shadow.timerPending,
+            check(shadow.ticks == 0 && shadow.pic.state().timerPending,
                   "STI defers pending interrupt through following instruction");
             Jit jit(c, true, 0);
             jit.run();
@@ -1912,11 +1913,11 @@ int main() {
         machine.pic[0].isr = 0;
         machine.cpu.flags &= ~IF;
         machine.timer();
-        check(machine.timerPending && machine.ticks == 0,
+        check(machine.pic.state().timerPending && machine.ticks == 0,
               "PIC latches timer IRQ while IF is clear");
         machine.cpu.flags |= IF;
         machine.poll();
-        check(!machine.timerPending && !machine.timerInService && machine.ticks == 1 &&
+        check(!machine.pic.state().timerPending && !machine.pic.state().timerInService && machine.ticks == 1 &&
                   machine.cpu.read(0x46c, 4) == 1,
               "pending timer IRQ delivers after STI and firmware acknowledges EOI");
         machine.cpu.cr[0] |= 1;

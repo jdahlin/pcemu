@@ -223,6 +223,49 @@ Evidence: `build/ps2-standalone-tests.log`, `build/ps2-controller-final-tests.lo
 `build/ps2-{win311,win95,reset,profiles}.log`, and
 `build/ps2-calculator{,-interpreter}/result.json`.
 
+## Remaining device separation (2026-10-24)
+
+The PS/2 model is named `I8042Device` (`i8042.*`), following the emulated hardware
+identity. The remaining PC hardware responsibilities have the same boundary:
+
+- `I8259PairDevice` owns the cascaded PIC pair, priority/acknowledge, cascade
+  state and compatibility snapshot mirrors. The board supplies IRQ inputs and a
+  CPU-ready flag, and injects the returned vector. PIC port handlers no longer
+  implement those rules in `Machine`.
+- ATA, PIT and VGA expose device reset operations. ATA uses only the storage
+  interface; its former machine include is removed. VGA owns its DISPI port and
+  retrace-status behavior, using the existing board-supplied read clock.
+- `VgaPciDevice` owns display-function configuration/BAR probe state. The PCI
+  configuration-mechanism bus owns addressing and delegates register accesses.
+- `SystemPortBDevice`, `Port92Device` and `DebugConsoleDevice` model the remaining
+  system/debug ports. Composition connects PIT pins, applies A20/reset effects
+  and supplies the host output sink.
+- `Disk` no longer declares a CPU type or CPU transfer method. The firmware
+  memory-transfer adapter is the free function `biosDiskTransfer` in
+  `pc_bios_disk.*`, outside the storage model.
+
+Snapshot field order is unchanged. PIC mirrors move into the PIC pair without
+moving their encoded positions; the display configuration remains at its old
+positions. Port B/debug latches restore quietly from their existing port-shadow
+bytes, with no format extension or output replay. Board IRQ wires and firmware
+state remain owned by the machine; they are not hardware command implementations.
+
+The dependency-graph test and standalone device binary enforce this boundary
+for both PC and ARM models. See [hardware independence](modularity.md#hardware-independence).
+
+Validation passed: the include/declaration dependency guard, 37 combined hardware
+checks without CPU/backend linkage, 28 standalone i8042 checks, the full x86 and
+ARM suites, machine profiles, Win3.11 Notepad, Win95 cold boot/restart, DOS reset
+paths and real Debian installer boot. The 2,890 snapshot/COW checks include port
+B/debug latch restoration without output replay. Three independent Calculator
+and three Excel startup restores produced the expected pixels; one Calculator
+restore also passed with the interpreter. No installed Debian VM was modified.
+
+Evidence: `build/device-boundaries.log`, `build/hardware-device-tests.log`,
+`build/device-separation-complete-tests.log`, `build/device-separation-arm-tests.log`,
+`build/device-separation-{win311,win95,reset,debian,profiles}.log` and
+`build/device-separation-{calculator,excel,interpreter}/result.json`.
+
 ## QEMU references
 
 - [Memory and I/O regions](https://www.qemu.org/docs/master/devel/memory.html)

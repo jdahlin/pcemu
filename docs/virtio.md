@@ -63,8 +63,9 @@ there is still no ARM checkpoint format to migrate.
 
 `src/disk.hpp` separates storage declarations from the x86 machine. `disk.cpp`
 is now usable without an x86 CPU or device implementation. Its existing
-CPU-transfer bridge lives in `disk_cpu.cpp`; the COW format and legacy API are
-unchanged. The hypervisor runner links this shared storage and zstd, not the
+CPU-transfer bridge is the firmware function `biosDiskTransfer` in
+`pc_bios_disk.cpp`; the storage API no longer declares or depends on a guest CPU.
+The COW format is unchanged. The hypervisor runner links shared storage and zstd, not the
 x86 execution core. `src/virtio_blk.cpp` owns queues/block requests and
 `src/virtio_pci.cpp` adapts the same device to PCI. Its `VirtioPciDevice`
 transport accepts register callbacks, a device identity and a queue count,

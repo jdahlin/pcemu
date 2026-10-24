@@ -4,6 +4,10 @@ namespace pc {
 VGA::VGA() {
     mode(3, true);
 }
+uint8_t VGA::portRead(uint16_t port, uint32_t ioClock) {
+    auto value = in(port);
+    return port == 0x3da ? ((ioClock & 1) ? 9 : 0) : value;
+}
 uint16_t VGA::dispiRead() const {
     if (dispiIndex >= dispi.size())
         return 0;

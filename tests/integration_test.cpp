@@ -416,11 +416,11 @@ int main() {
         ps2State(m).mouse.motion(13, -9, 2);
         m.pollPs2();
         m.pci.address = 0x80001010;
-        m.pci.barProbe = true;
+        m.pci.display().barProbe = true;
         m.saveSnapshot(point.string());
         Machine restored("", "", 2 * 1024 * 1024);
         restored.loadSnapshot(point.string());
-        check(restored.pci.address == m.pci.address && restored.pci.barProbe,
+        check(restored.pci.address == m.pci.address && restored.pci.display().barProbe,
               "snapshot retains PCI configuration probe state");
         check(restored.vga.vram == m.vga.vram && restored.vga.dispi == m.vga.dispi,
               "snapshot retains true-colour VRAM and mode");

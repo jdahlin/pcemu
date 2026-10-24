@@ -6,7 +6,7 @@ using namespace pc;
 static unsigned checks;
 static void check(bool condition) {
     ++checks;
-    if (!condition) throw std::runtime_error("PS/2 controller check " + std::to_string(checks));
+    if (!condition) throw std::runtime_error("i8042 device check " + std::to_string(checks));
 }
 int main() {
     const I8042Device::IrqState ready{false, false, false, false};
@@ -63,5 +63,5 @@ int main() {
           !controller.state().keyboardFull && !controller.mouse().enabled);
     enqueuePcKey(controller, 'A');
     check(controller.state().scanCodes == std::deque<uint8_t>({0x2a, 0x1e, 0x9e, 0xaa}));
-    std::cout << checks << " standalone PS/2 controller checks passed\n";
+    std::cout << checks << " standalone i8042 device checks passed\n";
 }

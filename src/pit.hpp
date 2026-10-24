@@ -30,6 +30,10 @@ struct PIT8254 {
     };
     std::array<Counter, 3> counters{};
     PIT8254();
+    void reset(uint64_t now) {
+        *this = PIT8254{};
+        for (auto &counter : counters) counter.loadedAt = now;
+    }
     uint8_t read(unsigned channel, uint64_t now) {
         return counters[channel % 3].read(now);
     }

@@ -1,4 +1,5 @@
 #include "machine.hpp"
+#include "pc_bios_disk.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -103,7 +104,7 @@ void Machine::boot(bool fd) {
     auto *d = fd ? floppy.get() : disk.get();
     if (!d)
         throw std::runtime_error("No boot disk");
-    if (!d->transfer(cpu, false, 0, 1, 0x7c00))
+    if (!biosDiskTransfer(*d, cpu, false, 0, 1, 0x7c00))
         throw std::runtime_error("Cannot read boot sector");
     if (cpu.read(0x7dfe, 2) != 0xaa55)
         throw std::runtime_error("Invalid boot signature");

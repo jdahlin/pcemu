@@ -9,7 +9,7 @@ HEADERS := $(wildcard src/*.hpp)
 PS2_TEST_SUPPORT := tests/ps2_test_support.hpp
 JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
 	src/jit_runtime.cpp src/jit_arm64.cpp
-CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/i8042.cpp src/pc_input.cpp src/cmos_rtc.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
+CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/i8042.cpp src/pc_input.cpp src/cmos_rtc.cpp src/disk.cpp src/pc_bios_disk.cpp src/ata.cpp src/pic.cpp src/i8259_pair.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/vga_pci.cpp src/host_keyboard.cpp src/ne2000.cpp
 .PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
 all: build/pcemu
 build/pcemu-profile: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
@@ -47,8 +47,10 @@ build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tes
 build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
-test: build/ps2-controller-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
-	./build/ps2-controller-tests
+test: build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+	python3 -m unittest discover -s tests -p test_device_boundaries.py
+	./build/hardware-device-tests
+	./build/i8042-tests
 	./build/pc-component-tests
 	./build/io-port-space-tests
 	./build/frontend-tests
@@ -197,6 +199,12 @@ build/pc-component-tests: $(CORE) $(HEADERS) src/pc_display.cpp tests/pc_compone
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/pc_display.cpp tests/pc_components_test.cpp $(shell pkg-config --libs libzstd) -o $@
 
-build/ps2-controller-tests: src/i8042.cpp src/i8042.hpp src/pc_input.cpp src/pc_input.hpp src/mouse.cpp src/mouse.hpp tests/ps2_controller_test.cpp
+build/i8042-tests: src/i8042.cpp src/i8042.hpp src/pc_input.cpp src/pc_input.hpp src/mouse.cpp src/mouse.hpp tests/i8042_test.cpp
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/i8042.cpp src/pc_input.cpp src/mouse.cpp tests/ps2_controller_test.cpp -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/i8042.cpp src/pc_input.cpp src/mouse.cpp tests/i8042_test.cpp -o $@
+
+# This target intentionally does not link CPU, JIT, Machine, HVF or a frontend.
+HARDWARE_MODELS := src/ata.cpp src/disk.cpp src/pic.cpp src/i8259_pair.cpp src/pit.cpp src/vga.cpp src/pci.cpp src/vga_pci.cpp src/ne2000.cpp src/network.cpp src/i8042.cpp src/mouse.cpp src/cmos_rtc.cpp $(ARM_BUS) $(ARM_DEVICES) src/arm_fw_cfg.cpp src/arm_ramfb.cpp src/virtio_blk.cpp src/virtio_net.cpp src/virtio_rng.cpp src/virtio_pci.cpp src/nvme.cpp
+build/hardware-device-tests: $(HARDWARE_MODELS) $(HEADERS) tests/hardware_devices_test.cpp
+	@mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(HARDWARE_MODELS) tests/hardware_devices_test.cpp $(shell pkg-config --libs libzstd) -o $@

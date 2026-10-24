@@ -1,5 +1,5 @@
 #include "ata.hpp"
-#include "machine.hpp"
+#include "disk.hpp"
 #include <algorithm>
 #include <cstring>
 namespace pc {

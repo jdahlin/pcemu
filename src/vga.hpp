@@ -19,6 +19,13 @@ struct VGA {
     uint16_t dispiRead() const;
     void dispiWrite(uint16_t value);
     VGA();
+    void reset() { *this = VGA{}; }
+    // The board supplies the existing I/O-derived retrace clock.
+    uint8_t portRead(uint16_t port, uint32_t ioClock);
+    uint16_t dispiPortRead(bool data) const { return data ? dispiRead() : dispiIndex; }
+    void dispiPortWrite(bool data, uint16_t value) {
+        if (data) dispiWrite(value); else dispiIndex = value;
+    }
     void mode(unsigned mode, bool clear);
     void updateGeometry();
     uint8_t read(uint32_t address);

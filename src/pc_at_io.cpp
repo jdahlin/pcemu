@@ -5,6 +5,9 @@
 namespace pc {
 void Machine::bindIoPorts() {
     ioPorts.clear();
+    systemPortB.restore(ports[0x61]);
+    debugConsole.restore(ports[0xe9]);
+    debugConsole.bind([](uint8_t value) { std::cout << char(value) << std::flush; });
     auto ataRead = [this](uint16_t p, int w) {
         auto value = ata.in(p, w);
         if (p == 0x1f7)
@@ -26,7 +29,6 @@ void Machine::bindIoPorts() {
     auto counted = [this](IoPortSpace::Reader read) -> IoPortSpace::Reader {
         return [this, read](uint16_t p, int w) { ++ioReads; return read(p, w); };
     };
-    auto saved = [this](uint16_t p, int) -> uint32_t { return ports[p]; };
     auto store = [this](uint16_t p, uint32_t v, int) { ports[p] = v; };
     // Byte-oriented devices split wide writes through the bus, so the next
     // byte can belong to another region. Reads still remain one transaction.
@@ -40,9 +42,12 @@ void Machine::bindIoPorts() {
     for (uint16_t base : {0x20, 0xa0})
         ioPorts.map(base == 0x20 ? "pic-master" : "pic-slave", base, 2,
             [this](uint16_t p, int) -> uint32_t {
-                auto &controller = pic[p >= 0xa0];
-                return (p & 1) ? controller.mask : controller.read();
-            }, bytes([this](uint16_t p, uint32_t v, int) { writePicPort(p, v); }));
+                return pic.read(p >= 0xa0, p & 1);
+            }, bytes([this](uint16_t p, uint32_t v, int) {
+                ports[p] = v;
+                pic.write(p >= 0xa0, p & 1, v);
+                for (unsigned i = 0; i < 2; ++i) ports[i ? 0xa1 : 0x21] = pic[i].mask;
+            }));
     ioPorts.map("pit", 0x40, 4,
         [this](uint16_t p, int) -> uint32_t {
             if (p == 0x43) { ++ioReads; return ports[p]; }
@@ -53,15 +58,13 @@ void Machine::bindIoPorts() {
         [this](uint16_t p, uint32_t v, int w) { pci.out(p, v, w); });
     ioPorts.map("dispi", 0x1ce, 2,
         counted([this](uint16_t p, int) -> uint32_t {
-            return p == 0x1ce ? vga.dispiIndex : vga.dispiRead();
+            return vga.dispiPortRead(p == 0x1cf);
         }), [this](uint16_t p, uint32_t v, int) {
-            if (p == 0x1ce) vga.dispiIndex = v;
-            else vga.dispiWrite(v);
+            vga.dispiPortWrite(p == 0x1cf, v);
         });
     ioPorts.map("vga", 0x3b0, 0x30,
         counted([this](uint16_t p, int) -> uint32_t {
-            auto value = vga.in(p);
-            return p == 0x3da ? ((ioReads & 1) ? 9 : 0) : value;
+            return vga.portRead(p, ioReads);
         }), bytes([this](uint16_t p, uint32_t v, int) { vga.out(p, v); ports[p] = v; }));
     auto keyboardWritePort = bytes([this](uint16_t p, uint32_t v, int) {
         if (verbose)
@@ -86,12 +89,13 @@ void Machine::bindIoPorts() {
     auto speakerWrite = bytes(store);
     ioPorts.map("speaker", 0x61, 1,
         counted([this](uint16_t p, int) -> uint32_t {
-            return (ports[p] & 0xcf) | (pit.counters[1].output(cpu.instructions / 4) ? 16 : 0) |
-                   (pit.counters[2].output(cpu.instructions / 4) ? 32 : 0);
+            (void)p;
+            return systemPortB.read(pit.counters[1].output(cpu.instructions / 4),
+                                    pit.counters[2].output(cpu.instructions / 4));
         }), [this, speakerWrite](uint16_t p, uint32_t v, int w) {
             // The gate was updated before splitting a wide write, then again
             // for its low byte. Preserve this until timing is refactored.
-            pit.counters[2].setGate(v & 1, cpu.instructions / 4);
+            pit.counters[2].setGate(systemPortB.write(v), cpu.instructions / 4);
             speakerWrite(p, v, w);
         });
     ioPorts.map("cmos", 0x70, 2,
@@ -101,34 +105,19 @@ void Machine::bindIoPorts() {
             if (p == 0x70) rtc.select(v);
         }));
     ioPorts.map("system-control", 0x92, 1,
-        counted([this](uint16_t, int) -> uint32_t { return cpu.a20 ? 2 : 0; }),
+        counted([this](uint16_t, int) -> uint32_t { return port92.read(cpu.a20); }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            cpu.a20 = v & 2;
-            if (v & 1) resetRequested = true;
+            auto effects = port92.write(v);
+            cpu.a20 = effects.a20;
+            resetRequested |= effects.reset;
         }));
-    ioPorts.map("debug-console", 0xe9, 1, counted(saved),
+    ioPorts.map("debug-console", 0xe9, 1,
+        counted([this](uint16_t, int) -> uint32_t { return debugConsole.read(); }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            std::cout << char(v) << std::flush;
+            debugConsole.write(v);
         }));
 }
 
-void Machine::writePicPort(uint16_t p, uint32_t v) {
-    ports[p] = v;
-    if (p == 0x20 || p == 0xa0)
-        pic[p == 0xa0].command(v);
-    if (p == 0x21 || p == 0xa1)
-        pic[p == 0xa1].data(v);
-    if (p == 0x20 || p == 0xa0 || p == 0x21 || p == 0xa1) {
-        for (unsigned k = 0; k < 2; k++) {
-            ports[k ? 0xa1 : 0x21] = pic[k].mask;
-            picBase[k] = pic[k].base;
-        }
-        timerPending = pic[0].irr & 1;
-        timerInService = pic[0].isr & 1;
-        keyboardInService = pic[0].isr & 2;
-        ataInService = pic[1].isr & 0x40;
-    }
-}
 } // namespace pc

@@ -605,7 +605,7 @@ int main(int argc, char **argv) {
             dumpCpu(c);
             saveFrame();
             std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
-                      << " base=" << unsigned(m.picBase[0])
+                      << " base=" << unsigned(m.pic.state().picBase[0])
                       << " pending scan bytes=" << m.ps2.state().scanCodes.size() << std::dec << "\n";
             capture();
             std::cout << m.text();
@@ -613,7 +613,7 @@ int main(int argc, char **argv) {
         }
         saveFrame();
         std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
-                  << " base=" << unsigned(m.picBase[0])
+                  << " base=" << unsigned(m.pic.state().picBase[0])
                   << " pending scan bytes=" << m.ps2.state().scanCodes.size() << std::dec << "\n";
         capture();
         if (headless) {

@@ -50,23 +50,19 @@ void Machine::restart() {
     cpu.interruptBlockedThrough = 0;
     cpu.systemAccess = 0;
     cpu.flushTLB();
-    ata = ATA(disk.get());
-    pic[0] = pic[1] = PIC8259{};
-    pit = PIT8254{};
-    for (auto &counter : pit.counters)
-        counter.loadedAt = cpu.instructions / 4;
-    vga = VGA{};
+    ata.reset(disk.get());
+    pic.reset();
+    pit.reset(cpu.instructions / 4);
+    vga.reset();
     std::fill(std::begin(ports), std::end(ports), 0);
-    std::fill(std::begin(picInit), std::end(picInit), 0);
-    picBase[0] = 8;
-    picBase[1] = 0x70;
-    ataLine = cascadeLine = false;
+    ataLine = false;
+    systemPortB.reset();
+    debugConsole.reset();
     ps2.reset();
-    pci = PCI{};
+    pci.reset();
     nic.reset();
     nicLine = false;
     biosKeyPrefix = biosPauseBytes = 0;
-    timerPending = timerInService = keyboardInService = ataInService = false;
     keys.clear();
     waitingKey = false;
     ticks = ioReads = 0;
@@ -110,7 +106,7 @@ void Machine::poll() {
     if (pit.tick(cpu.instructions / 4))
         pic[0].raise(0);
     pollPs2();
-    if (ata.irq && !(ata.control & 2) && !ataLine) {
+    if (ata.interruptLevel() && !ataLine) {
         pic[1].raise(6);
         ataLine = true;
     }
@@ -118,44 +114,14 @@ void Machine::poll() {
         ataLine = false;
     if (nic.irq() && !nicLine) pic[1].raise(2);
     nicLine = nic.irq();
-    // Slave state cannot change until acknowledgement below. Usually there
-    // is no unmasked request, so avoid repeated priority scans on every step.
-    int slave = (pic[1].irr & ~pic[1].mask) ? pic[1].pending() : -1;
-    if (slave >= 0 && !cascadeLine) {
-        pic[0].raise(2);
-        cascadeLine = true;
+    const bool ready = (cpu.flags & IF) &&
+        !(cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough);
+    if (auto vector = pic.nextVector(ready)) {
+        cpu.halted = false;
+        cpu.interrupt(*vector);
     }
-    if (slave < 0)
-        cascadeLine = false;
-    timerPending = pic[0].irr & 1;
-    timerInService = pic[0].isr & 1;
-    keyboardInService = pic[0].isr & 2;
-    ataInService = pic[1].isr & 0x40;
-    if (!(cpu.flags & IF) ||
-        (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough))
-        return;
-    if (!(pic[0].irr & ~pic[0].mask))
-        return;
-    int irq = pic[0].pending();
-    if (irq < 0)
-        return;
-    pic[0].acknowledge(irq);
-    uint8_t vector = pic[0].base + irq;
-    if (irq == 2) {
-        if (slave >= 0) {
-            pic[1].acknowledge(slave);
-            vector = pic[1].base + slave;
-        } else
-            vector = pic[1].base + 7;
-        cascadeLine = false;
-    }
-    timerPending = pic[0].irr & 1;
-    timerInService = pic[0].isr & 1;
-    keyboardInService = pic[0].isr & 2;
-    ataInService = pic[1].isr & 0x40;
-    cpu.halted = false;
-    cpu.interrupt(vector);
 }
+
 void Machine::timer() {
     pic[0].raise(0);
     poll();

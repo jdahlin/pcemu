@@ -7,7 +7,10 @@
 #include "i8042.hpp"
 #include "ne2000.hpp"
 #include "pci.hpp"
-#include "pic.hpp"
+#include "i8259_pair.hpp"
+#include "system_port_b.hpp"
+#include "port92.hpp"
+#include "debug_console.hpp"
 #include "pit.hpp"
 #include "vga.hpp"
 #include <deque>
@@ -21,7 +24,10 @@ struct Machine {
     CPU cpu;
     VGA vga;
     ATA ata;
-    PIC8259 pic[2];
+    I8259PairDevice pic;
+    SystemPortBDevice systemPortB;
+    Port92Device port92;
+    DebugConsoleDevice debugConsole;
     PIT8254 pit;
     I8042Device ps2;
     PCI pci;
@@ -30,13 +36,9 @@ struct Machine {
     uint8_t biosMouseCount = 0;
     std::array<uint8_t, 3> biosMousePacket{};
     uint8_t biosKeyPrefix = 0, biosPauseBytes = 0;
-    bool ataLine = false, cascadeLine = false;
-    bool ataInService = false;
-    bool timerPending = false, timerInService = false;
+    bool ataLine = false;
     std::unique_ptr<Disk> disk, floppy;
     std::deque<uint16_t> keys;
-    uint8_t picBase[2]{8, 0x70}, picInit[2]{};
-    bool keyboardInService = false;
     bool waitingKey = false, verbose = false;
     bool resetRequested = false, bootFromFloppy = false, vgaOnReset = false;
     uint64_t resets = 0;
@@ -56,7 +58,6 @@ struct Machine {
     void bindIoPorts();
     I8042Device::IrqState ps2IrqState() const;
     void applyPs2Irqs(I8042Device::Irqs irqs);
-    void writePicPort(uint16_t port, uint32_t value);
     int64_t rtcTime() const;
     void saveSnapshot(const std::string &directory);
     void loadSnapshot(const std::string &directory);
