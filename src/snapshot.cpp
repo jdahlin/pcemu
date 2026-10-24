@@ -210,7 +210,7 @@ class SnapshotCodec {
           m.keyboardReplies, m.ataInService, m.timerPending, m.timerInService, m.keys, m.scanCodes,
           m.picBase, m.picInit, m.keyboardInService, m.waitingKey, m.resetRequested,
           m.bootFromFloppy, m.vgaOnReset, m.resets, m.vgaRom, m.ticks, m.videoMode, m.columns,
-          m.rows, m.cursor, m.activePage, m.ports, m.cmosIndex, m.ioReads);
+          m.rows, m.cursor, m.activePage, m.ports, m.rtc.state.index, m.ioReads);
         if (version >= 2) {
             if (version >= 3) a(m.pci.address, m.pci.config, m.pci.barProbe, m.pci.romProbe);
             a(v.dispiIndex, v.dispi);
@@ -243,7 +243,7 @@ class SnapshotCodec {
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
-            m.rtcOffset = rtc - int64_t(std::time(nullptr));
+            m.rtc.setTime(rtc);
         }
     }
     static void validate(const Machine &m) {

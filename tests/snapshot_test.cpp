@@ -168,7 +168,7 @@ int main() {
         m.scanCodes = {0x38, 0x1e, 0x9e, 0xb8};
         m.keys = {0x1e61};
         m.ports[0x1234] = 0x55;
-        m.cmosIndex = 8;
+        m.rtc.state.index = 8;
         m.ioReads = 412;
         m.ticks = 921;
         command(m.ata, 0x20, 2);
@@ -198,7 +198,7 @@ int main() {
         m.cpu.output(0x1f2, 7, 1);
         check(m.ata.in(0x1f2, 1) == 7, "restored ATA port writes bind the destination machine");
         m.cpu.output(0x70, 9, 1);
-        check(m.cmosIndex == 9, "restored I/O callbacks bind the destination machine");
+        check(m.rtc.state.index == 9, "restored I/O callbacks bind the destination machine");
         command(m.ata, 0x30, 10);
         std::array<uint8_t, 1024> expected{};
         for (unsigned n = 0; n < 37; n++) {

@@ -5,6 +5,9 @@
 #include "network.hpp"
 #include "profile.hpp"
 #include "frontend.hpp"
+#include "pc_display.hpp"
+#include "session_diagnostics.hpp"
+#include "cpu_benchmarks.hpp"
 #include <algorithm>
 #include <chrono>
 #include <csignal>
@@ -38,91 +41,6 @@ static std::vector<uint8_t> readFile(const std::string &p) {
     return {std::istreambuf_iterator<char>(f), {}};
 }
 
-static void dump(CPU &c) {
-    std::cerr << "\nCPU " << c.location() << " instructions=" << c.instructions
-              << " flags=" << std::hex << c.flags << " CR0=" << c.cr[0] << " CR3=" << c.cr[3]
-              << " CR2=" << c.cr[2] << '\n';
-    for (int i = 0; i < 8; i++)
-        std::fprintf(
-            stderr, "%s=%08x ",
-            std::array<const char *, 8>{"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"}[i],
-            c.r[i]);
-    std::cerr << '\n';
-    for (int i = 0; i < 6; i++)
-        std::fprintf(stderr, "S%d=%04x(base %08x) ", i, c.s[i].selector, c.s[i].base);
-    std::cerr << std::dec << '\n';
-}
-static double bench(bool enabled, uint64_t target) {
-    CPU c;
-    c.s[CS].big = true;
-    unsigned p = 0;
-    for (int i = 0; i < 48; i++) {
-        c.mem[p++] = 0x83;
-        c.mem[p++] = 0xc0;
-        c.mem[p++] = 1;
-    }
-    c.mem[p++] = 0x83;
-    c.mem[p++] = 0xf8;
-    c.mem[p++] = 0;
-    c.mem[p++] = 0xe9;
-    int32_t disp = -int32_t(p + 4);
-    std::memcpy(&c.mem[p], &disp, 4);
-    Jit jit(c, enabled);
-    auto begin = std::chrono::steady_clock::now();
-    while (c.instructions < target)
-        jit.run();
-    double sec = std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
-    std::cout << (enabled ? "JIT" : "Interpreter") << ": " << c.instructions / sec / 1e6
-              << " million guest instructions/s, " << jit.nativeInstructions << " native, "
-              << jit.compiledBlocks << " blocks; EAX=" << c.r[AX] << '\n';
-    return sec;
-}
-static double benchMemory(bool enabled, uint64_t target, bool paging) {
-    CPU c;
-    c.s[CS].big = true;
-    unsigned p = 0;
-    auto address = [&](uint32_t value) {
-        std::memcpy(c.mem.data() + p, &value, 4);
-        p += 4;
-    };
-    for (unsigned cell = 0; cell < 16; cell++) {
-        c.mem[p++] = 0xa1;
-        address(0x1000 + cell * 4);
-        c.mem[p++] = 0x83;
-        c.mem[p++] = 0xc0;
-        c.mem[p++] = 1;
-        c.mem[p++] = 0xa3;
-        address(0x1000 + cell * 4);
-    }
-    c.mem[p++] = 0xe9;
-    address(uint32_t(-int32_t(p + 4)));
-    if (paging) {
-        c.write(0x2000, 0x3007, 4);
-        c.write(0x3000, 7, 4);
-        c.write(0x3004, 0x1007, 4);
-        c.cr[0] = 0x80000011;
-        c.cr[3] = 0x2000;
-        c.s[CS].selector = 3;
-    }
-    target = std::max(uint64_t(49), target / 49 * 49);
-    Jit jit(c, enabled);
-    auto begin = std::chrono::steady_clock::now();
-    while (c.instructions < target)
-        jit.run();
-    double seconds =
-        std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
-    uint64_t checksum = 0;
-    for (unsigned cell = 0; cell < 16; cell++) {
-        auto value = c.read(0x1000 + cell * 4, 4);
-        if (value != target / 49)
-            throw std::runtime_error("Memory benchmark checksum mismatch");
-        checksum += value;
-    }
-    std::cout << (paging ? "Paged" : "Flat") << " memory " << (enabled ? "JIT" : "interpreter")
-              << ": " << c.instructions / seconds / 1e6 << " million guest instructions/s, "
-              << jit.nativeInstructions << " native; checksum=" << checksum << '\n';
-    return seconds;
-}
 int main(int argc, char **argv) {
     std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
@@ -255,14 +173,14 @@ int main(int argc, char **argv) {
             ramMB = selectedProfile.defaultRamMB;
         if (memoryBenchmark) {
             for (bool paging : {false, true}) {
-                auto ref = benchMemory(false, benchmarkSteps, paging);
-                auto native = benchMemory(true, benchmarkSteps, paging);
+                auto ref = benchmarkCpuMemory(false, benchmarkSteps, paging);
+                auto native = benchmarkCpuMemory(true, benchmarkSteps, paging);
                 std::cout << "Memory speedup: " << ref / native << "x\n";
             }
             return 0;
         }
         if (benchmark) {
-            double ref = bench(false, benchmarkSteps), jit = bench(true, benchmarkSteps);
+            double ref = benchmarkCpuRegisters(false, benchmarkSteps), jit = benchmarkCpuRegisters(true, benchmarkSteps);
             std::cout << "Speedup: " << ref / jit << "x (register-only synthetic workload)\n";
             return 0;
         }
@@ -294,24 +212,14 @@ int main(int argc, char **argv) {
 
         auto &c = m.cpu;
         // VGA ROM is an allowed external asset; use its IBM-compatible text font.
-        std::vector<uint8_t> font(2048);
-        auto loadFont = [&](const std::vector<uint8_t> &bytes) {
-            if (bytes.empty())
-                return;
-            const uint8_t glyph[] = {0x30, 0x78, 0xcc, 0xcc, 0xfc, 0xcc, 0xcc, 0};
-            auto it = std::search(bytes.begin(), bytes.end(), std::begin(glyph), std::end(glyph));
-            if (it == bytes.end() || it - bytes.begin() < 65 * 8)
-                throw std::runtime_error("Cannot locate 8x8 font in VGA ROM");
-            size_t off = it - bytes.begin() - 65 * 8;
-            std::copy_n(bytes.begin() + off, 2048, font.begin());
-        };
+        PcDisplay display;
         if (snapshotPath.empty() && !rom.empty()) {
             auto bytes = readFile(rom);
             for (size_t i = 0; i < bytes.size() && 0xc0000 + i < c.mem.size(); i++)
                 c.mem[0xc0000 + i] = bytes[i];
             m.vgaRom = std::move(bytes);
         }
-        loadFont(m.vgaRom);
+        display.loadFont(m.vgaRom);
         if (snapshotPath.empty() && executeVga) {
             m.initializeVga();
             std::cerr << "VGA ROM initialized: INT10=" << std::hex << c.read(0x40, 4) << std::dec
@@ -330,10 +238,6 @@ int main(int argc, char **argv) {
         std::vector<uint32_t> pixels(size_t(displayWidth) * displayHeight);
         std::unique_ptr<Frontend> frontend;
         if (!headless) frontend = createFrontend(displayWidth, displayHeight);
-        const uint32_t palette[16] = {0xff000000, 0xff0000aa, 0xff00aa00, 0xff00aaaa,
-                                      0xffaa0000, 0xffaa00aa, 0xffaa5500, 0xffaaaaaa,
-                                      0xff555555, 0xff5555ff, 0xff55ff55, 0xff55ffff,
-                                      0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff};
         struct TraceSample {
             uint32_t ip, base, flags, cr0, cr3, r[8];
             uint16_t cs;
@@ -350,81 +254,8 @@ int main(int argc, char **argv) {
             }
             if (!dumpPath.empty() || !stateJsonPath.empty()) {
                 std::ofstream j(stateJsonPath.empty() ? dumpPath + ".json" : stateJsonPath);
-                j << "{\"ip\":" << c.ip << ",\"flags\":" << c.flags << ",\"cr0\":" << c.cr[0]
-                  << ",\"cr3\":" << c.cr[3] << ",\"cr2\":" << c.cr[2]
-                  << ",\"gdtBase\":" << c.gdtBase << ",\"gdtLimit\":" << c.gdtLimit
-                  << ",\"idtBase\":" << c.idtBase << ",\"idtLimit\":" << c.idtLimit
-                  << ",\"trBase\":" << c.trBase << ",\"trSelector\":" << c.trSelector
-                  << ",\"ldtBase\":" << c.ldtBase << ",\"registers\":[";
-                for (int k = 0; k < 8; k++) {
-                    if (k)
-                        j << ',';
-                    j << c.r[k];
-                }
-                j << "],\"segments\":[";
-                for (int k = 0; k < 6; k++) {
-                    if (k)
-                        j << ',';
-                    j << "{\"selector\":" << c.s[k].selector << ",\"base\":" << c.s[k].base
-                      << ",\"limit\":" << c.s[k].limit << ",\"big\":" << c.s[k].big
-                      << ",\"unusable\":" << c.s[k].unusable << '}';
-                }
-                j << "],\"instructions\":" << c.instructions << ",\"resets\":" << m.resets
-                  << ",\"resetRequested\":" << m.resetRequested
-                  << ",\"nativeInstructions\":" << jit.nativeInstructions
-                  << ",\"executionWallNs\":" << executionWallNs
-                  << ",\"nativeMemoryCalls\":" << c.nativeMemoryCalls
-                  << ",\"executionEpoch\":" << c.executionEpoch
-                  << ",\"machineProfile\":" << std::quoted(std::string(selectedProfile.id))
-                  << ",\"machinePlatform\":" << std::quoted(std::string(selectedProfile.platform))
-                  << ",\"executionBackend\":" << std::quoted(enableJit ? "jit" : "interpreter")
-                  << ",\"jitFollowJumps\":" << (enableJit && followJumps)
-                  << ",\"jitTraces\":" << (enableJit && traceJit)
-                  << ",\"ramBytes\":" << c.mem.size()
-                  << ",\"disk\":" << std::quoted(m.disk ? m.disk->path : "")
-                  << ",\"compiledBlocks\":" << jit.compiledBlocks
-                  << ",\"cacheRecycles\":" << jit.cacheRecycles << ",\"halted\":" << c.halted
-                  << ",\"waitingKey\":" << m.waitingKey
-                  << ",\"hostInput\":" << enableHostInput
-                  << ",\"network\":{\"isr\":" << unsigned(m.nic.isr)
-                  << ",\"imr\":" << unsigned(m.nic.imr) << ",\"command\":" << unsigned(m.nic.command)
-                  << ",\"current\":" << unsigned(m.nic.current) << ",\"boundary\":" << unsigned(m.nic.boundary)
-                  << ",\"transmitted\":" << m.nic.transmitted << ",\"received\":" << m.nic.received
-                  << ",\"dropped\":" << m.nic.dropped << "}"
-                  << ",\"mouse\":{\"enabled\":" << m.mouse.enabled
-                  << ",\"id\":" << unsigned(m.mouse.id)
-                  << ",\"pendingPackets\":" << m.mouse.packets.size()
-                  << ",\"auxOutput\":" << (m.keyboardFull && m.keyboardAux) << "}"
-                  << ",\"video\":{\"graphics\":" << m.vga.graphics << ",\"width\":" << m.vga.width
-                  << ",\"height\":" << m.vga.height << ",\"memoryMode\":" << unsigned(m.vga.seq[4])
-                  << ",\"shiftMode\":" << unsigned(m.vga.gfx[5])
-                  << ",\"dispiEnabled\":" << unsigned(m.vga.dispi[4])
-                  << ",\"bpp\":" << m.vga.dispi[3] << ",\"crtc\":[";
-                for (unsigned index = 0; index < 32; index++) {
-                    if (index)
-                        j << ',';
-                    j << unsigned(m.vga.crtc[index]);
-                }
-                j << "]},\"pic\":[";
-                for (int k = 0; k < 2; k++) {
-                    if (k)
-                        j << ',';
-                    j << "{\"irr\":" << unsigned(m.pic[k].irr)
-                      << ",\"isr\":" << unsigned(m.pic[k].isr)
-                      << ",\"mask\":" << unsigned(m.pic[k].mask)
-                      << ",\"base\":" << unsigned(m.pic[k].base)
-                      << ",\"autoEOI\":" << m.pic[k].autoEOI << '}';
-                }
-                auto &counter = m.pit.counters[0];
-                j << "],\"pit0\":{\"reload\":" << counter.reload
-                  << ",\"loadedAt\":" << counter.loadedAt << ",\"mode\":" << unsigned(counter.mode)
-                  << ",\"nullCount\":" << counter.nullCount
-                  << ",\"writeHigh\":" << counter.writeHigh
-                  << ",\"value\":" << counter.value(c.instructions / 4) << "},\"keyboard\":{"
-                  << "\"full\":" << m.keyboardFull << ",\"data\":" << unsigned(m.keyboardData)
-                  << ",\"pendingScans\":" << m.scanCodes.size()
-                  << ",\"pendingReplies\":" << m.keyboardReplies.size()
-                  << ",\"commandByte\":" << unsigned(m.keyboardCommandByte) << "}}";
+                writeMachineState(j, m, jit, {selectedProfile, executionWallNs, enableJit,
+                                               followJumps, traceJit, enableHostInput});
             }
             if (!traceTailPath.empty()) {
                 std::ofstream f(traceTailPath);
@@ -451,57 +282,8 @@ int main(int argc, char **argv) {
                 throw std::runtime_error("Cannot open guest control file");
         }
 
-        auto refreshVideo = [&]() {
-            m.vga.updateGeometry();
-            if (!executeVga)
-                return;
-            auto mode = c.mem[0x449] & 127;
-            m.videoMode = mode;
-            unsigned columns = c.mem[0x44a] | (c.mem[0x44b] << 8);
-            if (columns == 40 || columns == 80)
-                m.columns = columns;
-            m.activePage = c.mem[0x462] & 7;
-            m.rows = std::min(50u, unsigned(c.mem[0x484]) + 1);
-            if (!m.rows)
-                m.rows = 25;
-            auto pos = c.mem[0x450 + m.activePage * 2] | (c.mem[0x451 + m.activePage * 2] << 8);
-            m.cursor = (pos >> 8) * m.columns + (pos & 255);
-        };
-        auto saveFrame = [&]() {
-            refreshVideo();
-            if (verbose) {
-                std::cerr << "VGA attribute palette:";
-                for (int k = 0; k < 16; k++)
-                    std::cerr << ' ' << unsigned(m.vga.attr[k]);
-                std::cerr << " DAC1=" << unsigned(m.vga.dac[1][0]) << ','
-                          << unsigned(m.vga.dac[1][1]) << ',' << unsigned(m.vga.dac[1][2]) << '\n';
-            }
-            if (framePath.empty())
-                return;
-            unsigned width = m.vga.graphics ? m.vga.width : 640,
-                     height = m.vga.graphics ? m.vga.height : 400;
-            std::ofstream f(framePath, std::ios::binary);
-            f << "P6\n" << width << ' ' << height << "\n255\n";
-            std::vector<uint8_t> rgb(size_t(width) * height * 3);
-            for (unsigned y = 0; y < height; y++)
-                for (unsigned x = 0; x < width; x++) {
-                    uint32_t px;
-                    if (m.vga.graphics)
-                        px = m.vga.pixel(x, y);
-                    else {
-                        auto off =
-                            0xb8000 + m.activePage * 4096 + ((y / 16) * m.columns + x / 8) * 2;
-                        auto ch = c.mem[off], attr = c.mem[off + 1];
-                        bool on = font[ch * 8 + (y % 16) / 2] & (128 >> (x & 7));
-                        px = palette[on ? (attr & 15) : (attr >> 4) & 7];
-                    }
-                    auto at = (size_t(y) * width + x) * 3;
-                    rgb[at] = px >> 16;
-                    rgb[at + 1] = px >> 8;
-                    rgb[at + 2] = px;
-                }
-            f.write(reinterpret_cast<const char *>(rgb.data()), rgb.size());
-        };
+        auto refreshVideo = [&]() { display.refresh(m, executeVga); };
+        auto saveFrame = [&]() { refreshVideo(); display.save(m, framePath, verbose); };
         bool quit = false;
         uint64_t nextTimer = 50000, nextCapture = captureEvery;
         size_t typePos = 0;
@@ -687,7 +469,7 @@ int main(int argc, char **argv) {
                                     m.loadSnapshot(path);
                                     jit.clear();
                                     executeVga = m.vgaOnReset;
-                                    loadFont(m.vgaRom);
+                                    display.loadFont(m.vgaRom);
                                     nextTimer = c.instructions + 50000;
                                     nextCapture = c.instructions + captureEvery;
                                     nextTyped = c.instructions;
@@ -724,7 +506,7 @@ int main(int argc, char **argv) {
                     captureRequested = 0;
                     capture();
                     saveFrame();
-                    dump(c);
+                    dumpCpu(c);
                     nextCapture = c.instructions + captureEvery;
                 }
                 refreshVideo();
@@ -805,32 +587,13 @@ int main(int argc, char **argv) {
                     displayHeight = newHeight;
 
                 }
-                for (unsigned y = 0; y < displayHeight; y++)
-                    for (unsigned x = 0; x < displayWidth; x++) {
-                        if (m.vga.graphics) {
-                            pixels[y * displayWidth + x] = m.vga.pixel(x, y);
-                            continue;
-                        }
-                        unsigned col = x / 8, row = y / 16;
-                        uint32_t px = palette[0];
-                        if (col < m.columns && row < m.rows) {
-                            auto off = 0xb8000 + m.activePage * 4096 + (row * m.columns + col) * 2;
-                            uint8_t ch = c.mem[off], attr = c.mem[off + 1],
-                                    bits = font[ch * 8 + (y % 16) / 2];
-                            px = palette[(bits & (128 >> (x % 8))) ? (attr & 15)
-                                                                   : ((attr >> 4) & 7)];
-                            if (row * m.columns + col == m.cursor && y % 16 >= 14 &&
-                                (frameTicks / 500) % 2 == 0)
-                                px = palette[7];
-                        }
-                        pixels[y * displayWidth + x] = px;
-                    }
+                display.render(m, pixels, displayWidth, displayHeight, frameTicks);
                 frontend->present(pixels, displayWidth, displayHeight);
                 if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } catch (const std::exception &e) {
             std::cerr << e.what() << '\n';
-            dump(c);
+            dumpCpu(c);
             saveFrame();
             std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
                       << " base=" << unsigned(m.picBase[0])
@@ -846,7 +609,7 @@ int main(int argc, char **argv) {
         capture();
         if (headless) {
             std::cout << m.text();
-            dump(c);
+            dumpCpu(c);
         }
         double elapsed =
             std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();

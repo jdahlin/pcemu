@@ -4,19 +4,20 @@ SDL_CFLAGS = $(shell pkg-config --cflags sdl2)
 SDL_LIBS = $(shell pkg-config --libs sdl2)
 CXXFLAGS := -std=c++20 -O3 -g -Wall -Wextra -Wpedantic
 LDLIBS = $(SDL_LIBS) $(shell pkg-config --libs libzstd)
+SESSION := src/pc_display.cpp src/session_diagnostics.cpp src/cpu_benchmarks.cpp
 HEADERS := $(wildcard src/*.hpp)
 JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
 	src/jit_runtime.cpp src/jit_arm64.cpp
-CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
+CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/pc_ps2.cpp src/cmos_rtc.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
 .PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
 all: build/pcemu
-build/pcemu-profile: $(CORE) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
-	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
+build/pcemu-profile: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
+	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
 build/disk-tool: $(CORE) $(HEADERS) tools/disk_tool.cpp src/machine.hpp src/cpu.hpp src/profile.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/disk_tool.cpp $(shell pkg-config --libs libzstd) -o $@
-build/pcemu: $(CORE) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
+build/pcemu: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) $(CXXFLAGS) $(CORE) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
+	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
 build/tests: $(CORE) $(HEADERS) tests/test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/test.cpp $(shell pkg-config --libs libzstd) -o $@
@@ -45,7 +46,8 @@ build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tes
 build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
-test: build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+test: build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+	./build/pc-component-tests
 	./build/io-port-space-tests
 	./build/frontend-tests
 	./build/jit-read-tests
@@ -188,3 +190,7 @@ smoke-arm-reboot: build/pcemu-hvf firmware-arm64
 build/device-bus-tests: $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_ramfb.cpp src/arm_ramfb.hpp src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp tests/device_bus_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) $(ARM_BUS) src/arm_ramfb.cpp src/arm_fw_cfg.cpp tests/device_bus_test.cpp -o $@
+
+build/pc-component-tests: $(CORE) $(HEADERS) src/pc_display.cpp tests/pc_components_test.cpp
+	@mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/pc_display.cpp tests/pc_components_test.cpp $(shell pkg-config --libs libzstd) -o $@

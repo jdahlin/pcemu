@@ -1,6 +1,5 @@
 #include "machine.hpp"
 #include <cstdio>
-#include <ctime>
 #include <iostream>
 
 namespace pc {
@@ -86,10 +85,10 @@ void Machine::bindIoPorts() {
             speakerWrite(p, v, w);
         });
     ioPorts.map("cmos", 0x70, 2,
-        counted([this](uint16_t p, int) -> uint32_t { return p == 0x71 ? readCmosPort() : ports[p]; }),
+        counted([this](uint16_t p, int) -> uint32_t { return p == 0x71 ? rtc.readData() : ports[p]; }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            if (p == 0x70) cmosIndex = v;
+            if (p == 0x70) rtc.select(v);
         }));
     ioPorts.map("system-control", 0x92, 1,
         counted([this](uint16_t, int) -> uint32_t { return cpu.a20 ? 2 : 0; }),
@@ -103,77 +102,6 @@ void Machine::bindIoPorts() {
             ports[p] = v;
             std::cout << char(v) << std::flush;
         }));
-}
-
-uint32_t Machine::readKeyboardPort(uint16_t p) {
-    if (p == 0x64) {
-        keyboardPoll();
-        return (keyboardFull ? 1 : 0) | (keyboardFull && keyboardAux ? 0x20 : 0) |
-               (keyboardCommandByte & 4) | (keyboardLastCommand ? 8 : 0);
-    }
-    if (p == 0x60) {
-        keyboardPoll();
-        if (verbose)
-            std::fprintf(stderr, "KBC read %02x full=%d at %04x:%08x count=%llu\n", keyboardData,
-                         keyboardFull, cpu.s[CS].selector, cpu.ip,
-                         static_cast<unsigned long long>(cpu.instructions));
-        if (keyboardFull) {
-            if (keyboardAux) {
-                mouse.lastSent = keyboardData;
-                mouseLine = false;
-            } else
-                keyLine = false;
-            keyboardFull = false;
-            // About one PS/2 byte at the current instruction-clock ratio.
-            keyboardNextAt = cpu.instructions + 4000;
-        }
-        return keyboardData;
-    }
-    return 0;
-}
-
-uint32_t Machine::readCmosPort() {
-    std::time_t now = rtcTime();
-    auto t = *std::localtime(&now);
-    auto bcd = [](int v) { return (v / 10) * 16 + v % 10; };
-    switch (cmosIndex & 127) {
-    case 0:
-        return bcd(t.tm_sec);
-    case 2:
-        return bcd(t.tm_min);
-    case 4:
-        return bcd(t.tm_hour);
-    case 7:
-        return bcd(t.tm_mday);
-    case 8:
-        return bcd(t.tm_mon + 1);
-    case 9:
-        return bcd(t.tm_year % 100);
-    case 0xa:
-        return 0x26;
-    case 0xb:
-        return 2;
-    case 0xd:
-        return 0x80;
-    case 0x10:
-        return floppy ? 0x40 : 0;
-    case 0x12:
-        return disk ? 0xf0 : 0;
-    case 0x14:
-        return 0x20 | (floppy ? 1 : 0);
-    case 0x15:
-        return 128;
-    case 0x16:
-        return 2;
-    case 0x17:
-    case 0x30:
-        return ((cpu.mem.size() - 1024 * 1024) / 1024) & 255;
-    case 0x18:
-    case 0x31:
-        return ((cpu.mem.size() - 1024 * 1024) / 1024) >> 8;
-    default:
-        return 0;
-    }
 }
 
 void Machine::writePicPort(uint16_t p, uint32_t v) {

@@ -137,8 +137,44 @@ Evidence: `build/pc-at-ports-tests.log`, `build/pc-at-ports-{win311,win95,reset,
 `build/pc-at-ports-interpreter/result.json`. Fixed executable copies are
 `build/pc-at-ports-before` and `build/pc-at-ports-after`.
 
-Next: extract CMOS/RTC state and configuration behind its registered region,
-then PS/2 controller state, each with snapshot compatibility preserved.
+## Device state and application responsibilities (2026-10-24)
+
+`CmosRtc` now owns CMOS selection, hardware configuration and the adjusted VM
+clock. `bindDevices()` supplies RAM/disk configuration after construction and
+snapshot restore; reset clears selection while preserving time. The snapshot
+codec writes the selector and time in their original field positions, preserving
+the existing encoding. The injectable clock permits deterministic tests.
+
+PC firmware/boot, BIOS services, BIOS text operations and PS/2 protocol methods
+are separated into `pc_firmware.cpp`, `pc_bios.cpp`, `pc_bios_video.cpp` and
+`pc_ps2.cpp`. `Machine` retains board composition, reset and interrupt wiring;
+PS/2 and BIOS state still live there pending a separate ownership migration.
+
+The application now uses `PcDisplay` for font/geometry/rendering/captures,
+`session_diagnostics.*` for CPU/state output, and `cpu_benchmarks.*` for synthetic
+workloads. These components are toolkit independent. The existing control-file
+protocol, CLI, JSON schema and snapshot preview behavior are retained. Captures
+omit the blinking cursor, matching the previous behavior; presentation tests
+exercise cursor pixels headless without opening a window.
+
+The shared responsibility model is documented in [modularity](modularity.md).
+Next: extract PS/2 controller state, then CLI/control and tracing responsibilities
+from the application loop. Keep each migration independently verifiable.
+
+Validation passed: the full `make test` suite (including 20 new deterministic
+CMOS/RTC/presentation checks), machine-profile tests, Win3.11 Notepad file save,
+Win95 cold boot/restart, and all three DOS reset paths. The existing Calculator
+snapshot produced the expected pixels on three independent JIT restores and one
+interpreter restore. Register/memory benchmark entry points ran with both engines
+and matching final EAX/checksums. `make test-hvf` and the real Debian installer
+language-selection boot also passed; the installed server was not changed.
+
+Evidence: `build/pc-components-final-tests.log`, `build/pc-components-{win311,win95,reset,profiles}.log`,
+`build/pc-components-calculator{,-interpreter}/result.json`,
+`build/pc-components-benchmarks.log`, `build/pc-components-arm-tests.log` and
+`build/pc-components-debian.log`. Snapshot tests retain the existing field-by-field
+round-trip checks; the state JSON continues to be parsed by the profile and guest
+workload checks. No GUI guest run was needed.
 
 ## QEMU references
 

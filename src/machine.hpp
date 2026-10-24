@@ -1,6 +1,7 @@
 #pragma once
 #include "ata.hpp"
 #include "cpu.hpp"
+#include "cmos_rtc.hpp"
 #include "disk.hpp"
 #include "io_port_space.hpp"
 #include "mouse.hpp"
@@ -51,9 +52,9 @@ struct Machine {
     std::vector<uint8_t> vgaRom;
     uint64_t ticks = 0;
     unsigned videoMode = 3, columns = 80, rows = 25, cursor = 0, activePage = 0;
-    uint8_t ports[65536]{}, cmosIndex = 0;
+    uint8_t ports[65536]{};
+    CmosRtc rtc;
     uint32_t ioReads = 0;
-    int64_t rtcOffset = 0;
     explicit Machine(const std::string &hd, const std::string &fd = "",
                      size_t ram = 16 * 1024 * 1024);
     void boot(bool fromFloppy = false);
@@ -63,7 +64,6 @@ struct Machine {
     void bindDevices();
     void bindIoPorts();
     uint32_t readKeyboardPort(uint16_t port);
-    uint32_t readCmosPort();
     void writePicPort(uint16_t port, uint32_t value);
     int64_t rtcTime() const;
     void saveSnapshot(const std::string &directory);

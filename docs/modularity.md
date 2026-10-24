@@ -12,8 +12,14 @@ The current separation is deliberately small:
   application boundary. These are physical keys, not characters or PC scan codes.
 - `src/host_keyboard.cpp`: the current PC machine's HID-to-set-1 translation,
   including extended keys, delayed host Command handling and focus release.
-- `src/main.cpp`: current application/session orchestration, guest control and
-  framebuffer production. It no longer includes or calls SDL.
+- `src/main.cpp`: application/session orchestration and guest control. It no
+  longer owns pixel rendering, diagnostic serialization or synthetic benchmarks.
+- `src/pc_display.*`: PC font lookup, BIOS display geometry, toolkit-independent
+  pixels, blinking cursor and PPM captures.
+- `src/session_diagnostics.*`: CPU diagnostic output and the existing state JSON
+  schema, using an explicit capture context supplied by the session.
+- `src/cpu_benchmarks.*`: register and memory benchmark workloads, independent
+  of CLI parsing and the frontend.
 
 The machine, CPU, JIT, disk tools and core tests do not include or link a GUI
 library. Only the SDL adapter and its test need SDL compile/link flags. Package
@@ -23,6 +29,40 @@ Machine presets and execution selection are now exposed through
 `--machine` and `--backend`; see [machine profiles](machine-profiles.md).
 The presets currently share one concrete legacy platform. Planned modern
 platforms reject launch until implemented.
+
+## Device and firmware model
+
+Keep the following responsibilities explicit for both PC/AT and ARM machines:
+
+| Layer | Owns | Must not own |
+|---|---|---|
+| Device | Register behavior, mutable device state, reset semantics | CLI or frontend state |
+| Bus/transport | Address decoding and forwarding complete transactions | Device command implementations |
+| Machine composition | Device lifetimes, hardware configuration, IRQ wiring and reset order | Image rendering or diagnostic serialization |
+| Firmware adapter | BIOS services, boot contract and firmware data structures | Host window/input implementation |
+| Session/presentation | Execution orchestration, controls, captures and pixels | Hardware register protocols |
+
+`machine.cpp` now contains PC/AT composition, reset, interrupt delivery and port
+fallback. BIOS services are in `pc_bios.cpp`, firmware initialization/boot in
+`pc_firmware.cpp`, BIOS text operations in `pc_bios_video.cpp`, and PS/2 protocol
+methods in `pc_ps2.cpp`. These firmware/PS2 methods still operate on the machine;
+file extraction does not claim their state is fully encapsulated yet.
+
+`CmosRtc` (`cmos_rtc.*`) owns the PC's CMOS register selection and adjusted VM
+clock. The machine configures installed RAM/disks, binds its ports and resets its
+selector. BIOS and snapshots use the same device clock. Runtime configuration and
+clock callbacks are rebuilt or supplied separately from serialized state.
+
+For ARM, individual device models and the RAM framebuffer already own their
+state; `arm_virt_devices.cpp` composes their MMIO/PCI connections. See
+[PC/AT extraction](pc-at-device-model.md) and
+[Debian device composition](debian-device-model.md).
+
+Use composition and capability-specific interfaces. Do not introduce a universal
+device base with unused MMIO/PIO/DMA/frontend methods. Existing reset order and
+versioned snapshot codecs remain explicit until each device can safely own its
+complete lifecycle. The next ownership boundary is the PC PS/2 controller;
+CLI/control parsing and tracing also remain candidates for session extraction.
 
 ## Future structure
 

@@ -100,7 +100,7 @@ int main() {
             check(machine.keyboardControllerPending == 0x60 && machine.ports[0x65] == 0x5a,
                   "wide PS2 writes cross into the adjacent unmapped port");
             machine.out(0x70, 0x558b, 2);
-            check(machine.cmosIndex == 0x8b && machine.in(0x70, 2) == 0x8b &&
+            check(machine.rtc.state.index == 0x8b && machine.in(0x70, 2) == 0x8b &&
                       machine.in(0x71, 2) == 2 && machine.ports[0x71] == 0x55,
                   "CMOS index masks NMI bit for reads and splits wide writes");
             machine.out(0x61, 0x5a01, 2);
