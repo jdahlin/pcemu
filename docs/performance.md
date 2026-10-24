@@ -609,3 +609,34 @@ are excluded from comparisons because compatibility checks ran concurrently.
 Decoder and emitter extraction audits confirm the same logic apart from named
 IR kinds and the extracted analysis function. Passing runs remove their private
 disks; `build/jit-modules-validation.json` records source hashes and evidence.
+
+
+### Register NOT experiment (2026-10-24, not retained)
+
+A trial lowered register F6/F7 `/2` NOT to ARM64 MVN with width-preserving
+insertion, including AH–BH. NOT leaves incoming and pending arithmetic flags
+unchanged. The full unit suite passed, including 91,106 flag checks with mixed
+NOT/ALU blocks and width overrides. An initial decoder overlap with TEST was
+caught by the existing read tests and corrected before these measurements.
+
+Three alternating before/after pairs ran the same 10,000-iteration CoreMark
+program in DOS, with valid upstream CRCs and successful return to DOS. Each
+measured interval exceeded 15 seconds. Raw local evidence is in
+`build/native-not-comparison/`, with runner hashes and all sample results in
+`comparison.json`. The frozen baseline binary predates the experiment; the
+candidate differs in NOT lowering and its tests. Timing variation and unrelated
+host activity remain possible, so these samples do not establish a causal
+regression or an improvement.
+
+| Pair | Before seconds | NOT seconds | Before / NOT |
+| --- | ---: | ---: | ---: |
+| 1 | 16.709717 | 15.998339 | 1.04447 |
+| 2 | 15.478177 | 15.848665 | 0.97662 |
+| 3 | 15.608991 | 16.342087 | 0.95514 |
+
+The median paired ratio is 0.97662. Guest instructions match at 3,975,092,643;
+native instructions rise from 3,728,178,916 to 3,730,218,909, only 0.0513
+percentage points of total coverage. Resident code grows from 700,848 to
+702,464 bytes. With no demonstrated benefit, the implementation and its
+feature-dependent tests were removed. The committed JIT remains the modular
+baseline; this experiment is not a shipped optimization.
