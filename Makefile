@@ -30,6 +30,8 @@ build/network-tests: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/network-tests-sanitize: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
+build/guest-bench: $(CORE) $(HEADERS) tools/guest_bench.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-read-tests: $(CORE) $(HEADERS) tests/jit_read_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_read_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tests/frontend_test.cpp
