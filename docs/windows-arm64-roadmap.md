@@ -310,3 +310,13 @@ script. It refreshes bcdboot and ensures the ARM64 fallback EFI loader exists.
 It contains no clean, format, partition-creation or driver-replacement commands.
 Use it only after the initial deployment reports completion and the installation
 VM has stopped. This follow-up has been prepared, not yet run against the target.
+
+`tools/verify_windows_boot.py REPORT` is the installed-guest report gate. It
+requires the expected Windows build in both ver and registry output, C: as the
+system/BCD partition with the EFI OS loader, one Started device for each of
+VirtIO block/net/RNG, the DHCP lease and successful HTTP response, explicit CNG
+provider I/O, and both report boundary markers. It rejects WinPE reports,
+ambiguous devices, device problems, failed I/O and truncated reports. Original
+fixtures cover those failures. This gate covers the guest report; host disk
+placement, source-media identity and the actual VM launch configuration remain
+separate completion-audit evidence. No installed guest has passed it yet.
