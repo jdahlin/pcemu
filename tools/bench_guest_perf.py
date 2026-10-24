@@ -19,8 +19,12 @@ parser.add_argument('--loops', type=int, default=1000000)
 parser.add_argument('--iterations', type=int, default=0,
                     help='0: upstream automatic >=10s run; short fixed counts are diagnostic only')
 parser.add_argument('--no-jit', action='store_true')
-parser.add_argument('--jit-follow-jumps', action='store_true',
-                    help='experimental bounded same-page unconditional jump stitching')
+jump_mode = parser.add_mutually_exclusive_group()
+jump_mode.add_argument('--jit-follow-jumps', dest='jit_follow_jumps', action='store_true',
+                       help='explicitly enable the default same-page jump joining')
+jump_mode.add_argument('--jit-basic-blocks', dest='jit_follow_jumps', action='store_false',
+                       help='disable same-page jump joining for controlled comparisons')
+parser.set_defaults(jit_follow_jumps=None)
 parser.add_argument('--guest-profile', action='store_true',
                     help='diagnostic opcode/dispatch counters per interval; timings are not benchmark scores')
 parser.add_argument('--timeout', type=int, default=180)
@@ -76,15 +80,17 @@ command = [str(runner), '--disk', str(disk), '--output', str(result),
            '--timeout', str(args.timeout), '--loops', str(args.loops)]
 if args.no_jit:
     command.append('--no-jit')
-if args.jit_follow_jumps:
+if args.jit_follow_jumps is True:
     command.append('--jit-follow-jumps')
+elif args.jit_follow_jumps is False:
+    command.append('--jit-basic-blocks')
 if args.guest_profile:
     command.append('--guest-profile')
 with (work / 'run.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                    check=True, timeout=args.timeout + 10)
 data = json.loads(result.read_text())
-if bool(data.get('followJumps', False)) != args.jit_follow_jumps:
+if args.jit_follow_jumps is not None and bool(data.get('followJumps', False)) != args.jit_follow_jumps:
     raise RuntimeError('Runner jump stitching mode does not match requested mode')
 if bool(data.get('profiled')) != args.guest_profile:
     raise RuntimeError('Runner profiling mode does not match requested mode')

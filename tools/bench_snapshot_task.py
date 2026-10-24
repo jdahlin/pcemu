@@ -7,6 +7,7 @@ private disk deltas and temporary frames. Failure leaves its live guest intact.
 """
 import argparse
 import base64
+import hashlib
 import json
 import shutil
 import statistics
@@ -25,8 +26,13 @@ p.add_argument('--sample', action='store_true', help='macOS sample call stacks d
 p.add_argument('--guest-profile', action='store_true', help='record opcode/dispatch counters with build/pcemu-profile')
 p.add_argument('--gui', action='store_true', help='include the normal SDL frontend rather than headless operation')
 p.add_argument('--sample-wait-ms', type=int, default=3000, help='named guest-side attachment barrier; requires a current emulator (0 for older executables)')
-p.add_argument('--jit-follow-jumps', action='store_true')
+jump_mode = p.add_mutually_exclusive_group()
+jump_mode.add_argument('--jit-follow-jumps', dest='jit_follow_jumps', action='store_true')
+jump_mode.add_argument('--jit-basic-blocks', dest='jit_follow_jumps', action='store_false')
+p.set_defaults(jit_follow_jumps=None)
 a = p.parse_args()
+if a.jit_follow_jumps and a.no_jit:
+    p.error('--jit-follow-jumps requires JIT execution')
 if not 1 <= a.repeat <= 100:
     p.error('--repeat must be 1..100')
 if not 0 <= a.sample_wait_ms <= 10000:
@@ -35,12 +41,15 @@ root = Path(__file__).resolve().parent.parent
 engine = a.emulator.resolve() if a.emulator else root/'build'/('pcemu-profile' if a.guest_profile else 'pcemu')
 if not engine.is_file():
     p.error('Missing emulator executable: '+str(engine))
+engine_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
 if a.sample and not shutil.which('sample'):
     p.error('macOS sample tool is unavailable')
 host_input_suppressed = a.gui and '--no-host-input' in subprocess.run(
     [str(engine), '--help'], check=True, capture_output=True, text=True).stdout
 snapshot = a.snapshot.resolve()
-task = json.loads(a.task.read_text())
+task_data = a.task.read_bytes()
+task_hash = hashlib.sha256(task_data).hexdigest()
+task = json.loads(task_data)
 rect = task['rectangle']
 before = base64.b64decode(task['before'], validate=True)
 after = base64.b64decode(task['after'], validate=True)
@@ -75,8 +84,10 @@ for index in range(a.repeat):
         command.append('--no-host-input')
     if a.no_jit:
         command.append('--no-jit')
-    if a.jit_follow_jumps:
+    if a.jit_follow_jumps is True:
         command.append('--jit-follow-jumps')
+    elif a.jit_follow_jumps is False:
+        command.append('--jit-basic-blocks')
     started = time.perf_counter()
     child = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
     sampler = None
@@ -107,6 +118,9 @@ for index in range(a.repeat):
         restore_ms = (time.perf_counter()-started)*1000
         if host_input_suppressed and initial.get('hostInput') != 0:
             raise RuntimeError('Automated GUI did not disable physical host input')
+        follow_jumps_mode = bool(initial.get('jitFollowJumps', a.jit_follow_jumps or False))
+        if a.jit_follow_jumps is not None and follow_jumps_mode != a.jit_follow_jumps:
+            raise RuntimeError('Guest jump joining mode differs from requested mode')
         if initial['executionEpoch'] != 1:
             raise RuntimeError('Guest did not start from the requested snapshot')
         if a.sample:
@@ -172,7 +186,13 @@ for index in range(a.repeat):
         status = f'guest PID {child.pid} left alive' if child.poll() is None else f'guest exited with status {child.returncode}'
         print(f'Run failed; {status}; files {work} retained',flush=True)
         raise
+if hashlib.sha256(engine.read_bytes()).hexdigest() != engine_hash or \
+        hashlib.sha256(a.task.read_bytes()).hexdigest() != task_hash:
+    raise RuntimeError('Emulator or task changed during measurement; results not accepted')
 report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profiled':a.sample,
+        'followJumps':follow_jumps_mode,
+        'emulatorSha256':engine_hash,
+        'taskSha256':task_hash,
         'guestProfiled':a.guest_profile,
         'frontend':'SDL' if a.gui else 'headless',
         'hostInputSuppressed':bool(host_input_suppressed),

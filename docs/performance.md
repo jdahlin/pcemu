@@ -694,3 +694,47 @@ boot/restart. `build/win95-joined-installer/result.json` and
 records its scope. All temporary disks were removed after success. This is a
 correctness check, with no before/after installer timing claim. A short host
 sample from hardware detection is retained as diagnostic evidence only.
+
+
+### Headless application checks and default joining (2026-10-24)
+
+Five rotated trials per application compare basic blocks, joined blocks and the
+interpreter with one frozen emulator binary and the unchanged VGA launch
+snapshots. All 30 headless launches produce the expected pixels and discard
+private disks. The user requested headless runs; an earlier completed SDL set
+is retained separately and is not pooled into these numbers. Future automated
+x86 validation is headless unless explicitly requested otherwise.
+
+| Task | Basic median ms | Joined median ms | Interpreter median ms | Median paired basic/joined ratio |
+| --- | ---: | ---: | ---: | ---: |
+| Word | 1425.1 | 1430.0 | 2058.4 | 1.00383 |
+| Excel | 702.9 | 665.4 | 928.0 | 1.04366 |
+
+Word is effectively unchanged. Excel's paired median indicates an observed
+4.4% gain; individual paired ratios range from 0.99019 to 1.10031. Word's
+ratios range from 0.87892 to 1.01052, so no Word improvement is claimed.
+All raw samples, including outliers and per-run load averages, remain in
+`build/joined-office-headless/`. These response times include control/capture
+latency and are upper bounds, not isolated CPU time. Separately accumulated
+dispatch/device-poll wall-time medians are 1228.3/1226.8/1774.9 ms for Word and
+605.4/578.2/802.5 ms for Excel (basic/joined/interpreter). The fixtures are the
+older VGA workloads, not the newer integrated high-resolution desktop, and
+this does not establish Rosetta-level application performance.
+
+With these results, the preceding CoreMark boundary reduction, and successful
+fresh OSR2 installation, same-page unconditional jump joining is now the default
+for the normal emulator and DOS benchmark runner. `--jit-basic-blocks` selects
+the previous behavior for controlled comparisons; `--jit-follow-jumps` remains
+an explicit enable. The Jit constructor's Basic default remains for callers
+requiring a one-basic-block contract; production callers choose FollowJumps.
+Metadata and benchmark reports record the effective mode. Snapshot reports
+also retain emulator/task hashes and reject changes during measurement.
+
+Post-change validation passes the full unit suite, normal/profiled DOS smoke
+matrices, Win3.11 exact Notepad file saving, both Win95 sources' cold boot and
+guest restart, and Word/Excel task pixels under default/basic/interpreter modes.
+Both Win95 metadata files confirm joining enabled with no explicit mode flag.
+All checks run headless; compatibility timings from concurrent tests are not
+performance comparisons. `build/joined-default-validation.json` records source
+hashes and evidence locations. This policy change uses the already-verified
+joined emitter and does not introduce another translation algorithm.

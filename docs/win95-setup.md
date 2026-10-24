@@ -15,7 +15,8 @@ setup /is
   --state-json build/win95-install/state.json
 ```
 
-Add `--jit-follow-jumps` to test the experimental joined-block mode. Setup is
+Same-page jump joining is enabled by default; add `--jit-basic-blocks` for a
+comparison with the earlier mode. Setup is
 interactive; `tools/guest_control.py` supplies guest keyboard input and captures
 its framebuffer. `/is` skips ScanDisk, as documented in the CD's `SETUP.TXT`.
 The installation must still complete file copying, its own firmware restart,

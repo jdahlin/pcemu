@@ -126,7 +126,7 @@ static double benchMemory(bool enabled, uint64_t target, bool paging) {
 int main(int argc, char **argv) {
     std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
-    bool ramExplicit = false, noJit = false, listMachines = false, followJumps = false;
+    bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true;
     std::string machineId = "pc-legacy", backendId = "auto";
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = false, memoryBenchmark = false, enableNetwork = true, enableHostInput = true;
@@ -185,6 +185,8 @@ int main(int argc, char **argv) {
                 fromFloppy = true;
             else if (arg == "--headless")
                 headless = true;
+            else if (arg == "--jit-basic-blocks")
+                followJumps = false;
             else if (arg == "--jit-follow-jumps")
                 followJumps = true;
             else if (arg == "--no-jit")
@@ -218,7 +220,7 @@ int main(int argc, char **argv) {
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
-                             "  --jit-follow-jumps (experimental bounded same-page blocks)\n"
+                             "  --jit-basic-blocks (disable default same-page jump joining)\n"
                              "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
                              "  --load-snapshot DIRECTORY (private writable disk clone)\n"
                              "  --no-network (disconnect host socket gateway)\n"
@@ -370,6 +372,7 @@ int main(int argc, char **argv) {
                   << ",\"machineProfile\":" << std::quoted(std::string(selectedProfile.id))
                   << ",\"machinePlatform\":" << std::quoted(std::string(selectedProfile.platform))
                   << ",\"executionBackend\":" << std::quoted(enableJit ? "jit" : "interpreter")
+                  << ",\"jitFollowJumps\":" << (enableJit && followJumps)
                   << ",\"ramBytes\":" << c.mem.size()
                   << ",\"disk\":" << std::quoted(m.disk ? m.disk->path : "")
                   << ",\"compiledBlocks\":" << jit.compiledBlocks

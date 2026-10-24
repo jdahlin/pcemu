@@ -54,7 +54,7 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
 int main(int argc, char **argv) {
     try {
         std::string disk, output;
-        bool native = true, profiled = false, followJumps = false;
+        bool native = true, profiled = false, followJumps = true;
 #ifdef PCEMU_PROFILE
         profiled = true; // Instrumented binaries must never produce benchmark scores.
 #endif
@@ -76,6 +76,8 @@ int main(int argc, char **argv) {
                 loops = std::stoul(value());
             else if (arg == "--no-jit")
                 native = false;
+            else if (arg == "--jit-basic-blocks")
+                followJumps = false;
             else if (arg == "--jit-follow-jumps")
                 followJumps = true;
             else if (arg == "--guest-profile") {
@@ -255,7 +257,7 @@ int main(int argc, char **argv) {
         result << "{\"scope\":\"actual minimal DOS boot, original protected-mode loader, host "
                   "monotonic wall time, no SDL\",\"jit\":"
                << (native ? "true" : "false") << ",\"followJumps\":"
-               << (followJumps ? "true" : "false") << ",\"profiled\":"
+               << (native && followJumps ? "true" : "false") << ",\"profiled\":"
                << (profiled ? "true" : "false") << ",\"returnedToDos\":true,\"crcValidated\":"
                << (coremark && crc ? "true" : "false")
                << ",\"microValidated\":" << (micro ? "true" : "false") << ",\"loops\":" << loops
