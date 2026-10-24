@@ -738,3 +738,35 @@ All checks run headless; compatibility timings from concurrent tests are not
 performance comparisons. `build/joined-default-validation.json` records source
 hashes and evidence locations. This policy change uses the already-verified
 joined emitter and does not introduce another translation algorithm.
+
+
+### Refreshed direct Rosetta comparison (2026-10-24)
+
+A frozen validated emulator binary (matching the default-joining build recorded
+in `build/joined-default-validation.json`) repeats the direct arithmetic and
+RAM comparisons headless. The built-in isolated kernels deliberately retain
+the Basic block contract; these are not measurements of the conditional-trace
+experiment or Windows startup. Register runs use 5,000,000 blocks; memory runs
+use 10,000,000. Native/Rosetta results are medians of five warmed iterations;
+PCEmu results are one long interval per engine/memory mode. All printed checksums
+match their expected values, including EAX=240,000,000 and RAM sum=160,000,000.
+
+| Pattern | PCEmu JIT million equivalent instructions/s | Rosetta million equivalent instructions/s | Rosetta / PCEmu |
+| --- | ---: | ---: | ---: |
+| Register arithmetic | 1320.3 | 4496.9 | 3.41 |
+| Flat guest RAM | 2215.0 | 11970.3 | 5.40 |
+| Paged guest RAM | 924.1 | 11970.3 | 12.95 |
+
+The memory reference is the same host x86-64 kernel in both rows; it does not
+implement guest paging. These gaps therefore include emulator MMU semantics
+which Rosetta avoids. As before, the loops have comparable operations, not
+identical instruction encodings/termination logic, and omit devices, faults and
+application startup. No whole-Windows parity or percentage-complete estimate
+follows from them. Raw logs and runner hashes are retained separately under
+`build/rosetta-current/`; earlier evidence is preserved.
+
+`tools/bench_rosetta.py --emulator PATH --output PATH` can now use a frozen
+executable without rebuilding and retain a new result instead of overwriting
+an older one. It checks every PCEmu checksum against the native result, records
+the executable hash and rejects a changing executable. All benchmark launches
+explicitly request headless mode.
