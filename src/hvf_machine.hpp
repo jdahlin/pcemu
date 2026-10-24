@@ -22,6 +22,8 @@ class HvfMachine {
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
+    std::span<uint8_t> ram();
+    void setSPI(uint32_t interrupt, bool level);
     void mapROM(uint64_t address, std::span<const uint8_t> bytes);
     void writeMemory(uint64_t address, std::span<const uint8_t> bytes);
     void readMemory(uint64_t address, std::span<uint8_t> bytes) const;

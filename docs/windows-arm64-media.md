@@ -18,7 +18,8 @@ The original ISO is 2,587,389,952 bytes. Only the selected files are retained;
 HTTP byte-range extraction avoids storing the ISO, its approximately 1 GB VHDX,
 and its optional packages. No installed disk or extra copy of the WIM is created.
 The payload is not yet a bootable VM. The HVF backend now reaches an EDK II
-UEFI Shell, but still needs boot media, block I/O and the Windows platform
+UEFI Shell and supports virtio block I/O, but still needs Windows boot media
+and the Windows platform
 interfaces described in
 [Hypervisor backend](hypervisor.md). Do not pass the WIM to `--kernel`: that
 option currently expects raw ARM64 instructions, not a Windows image.
@@ -50,3 +51,5 @@ Sources:
 - [Validation OS terms and official ARM64 download](https://learn.microsoft.com/en-us/legal/windows/hardware/validation-os-license)
 - [Windows container image model](https://learn.microsoft.com/en-us/virtualization/windowscontainers/about/index)
 - [Nano Server LTSC 2025 manifest](https://mcr.microsoft.com/v2/windows/nanoserver/manifests/ltsc2025)
+
+Driver inventory and small loader extraction: [virtio and Windows media](virtio.md).

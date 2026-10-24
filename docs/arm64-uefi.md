@@ -2,8 +2,8 @@
 
 `arm64-uefi` boots real EDK II firmware to its built-in UEFI Interactive Shell
 using Hypervisor.framework. Serial command execution and nonvolatile variables
-survive a complete VM teardown and restart. Linux and Windows boot are not yet
-implemented.
+survive a complete VM teardown and restart. The platform also [boots EFI applications from virtio disks](virtio.md).
+Linux and Windows boot are not yet implemented.
 
 Requires Apple Silicon, macOS 15 or newer (for GICv3), the command-line C++ tools,
 and `dtc` on PATH. The existing SDL/x86 emulator remains independent.
@@ -57,7 +57,7 @@ status/ID overlays are not persisted. Using the template itself as a writable
 store is rejected. This is process-safe save/reload, not a VM snapshot or a
 power-loss durability guarantee.
 
-## Guest platform contract: arm-virt-v1
+## Guest platform contract: arm-virt-v2
 
 | Address | Device |
 |---|---|
@@ -66,6 +66,9 @@ power-loss durability guarantee.
 | `0x08000000` | Hypervisor.framework GICv3 distributor |
 | `0x080a0000` | GICv3 redistributor for the single vCPU |
 | `0x09000000` | Polled PL011 serial console |
+| `0x0a000000` | Optional virtio-blk MMIO device |
+| `0x10000000`–`0x3effffff` | PCI memory window |
+| `0x3f000000` | PCI ECAM, bus 0 |
 | `0x40000000` | 256 MiB RAM; device tree initially at RAM base |
 
 The CPU starts at EL1h with translation disabled and DAIF masked. EDK II initializes
@@ -98,13 +101,13 @@ It uses the separate `HvfMachine` execution backend, not the x86 `Machine`.
 
 RAM and GIC register access do not pass through the userspace MMIO dispatcher.
 The UART and flash generate exits; the runner currently processes these one
-access at a time. There is no storage, PCI, fw_cfg, framebuffer/GOP, ACPI, TPM or
-Secure Boot implementation in this platform. Secure Boot is not enabled for the
+access at a time. Virtio-blk PCI/MMIO storage is now available; see [virtio](virtio.md).
+There is no fw_cfg, framebuffer/GOP, ACPI, TPM or Secure Boot implementation. Secure Boot is not enabled for the
 shell milestone. Windows Validation OS requires additional platform work.
 
 ## Verification
 
-`make test-hvf` includes backend ROM/GIC tests, 32 portable NOR/UART checks and
+`make test-hvf` includes backend ROM/GIC tests, 38 portable NOR/UART/MMIO-load checks and 565 virtio block/PCI checks and
 CLI tests for private template protection and variable-file locking.
 `make smoke-uefi` creates a small private directory under `build/uefi-smoke-*`:
 

@@ -51,6 +51,12 @@ int main() {
     rejects([&] { flash.write(0, 0x1234); });
     rejects([] { std::array<uint8_t, 3> bytes{}; ArmNorFlash invalid(bytes); });
 
+    check(armMmioLoad(0x1234, 1, false, true) == 0x34);
+    check(armMmioLoad(UINT64_MAX, 2, false, false) == 0xffff);
+    check(armMmioLoad(0x80, 1, true, true) == 0xffffffffffffff80ull);
+    check(armMmioLoad(0x8001, 2, true, false) == 0xffff8001);
+    check(armMmioLoad(0x80000000, 4, true, true) == 0xffffffff80000000ull);
+    check(armMmioLoad(UINT64_MAX, 8, false, true) == UINT64_MAX);
     ArmPl011 uart;
     check(uart.read(0x18) == 0x90);
     uart.write(0, 'X'); check(uart.output().empty()); // UART disabled at reset.

@@ -55,8 +55,8 @@ callers may resume it, subject to their overall task deadline.
 
 ## Verification
 
-`make test-hvf` runs 49 backend checks, 32 portable device checks and five CLI
-integration tests (the variable-file safety check requires downloaded firmware):
+`make test-hvf` runs 49 backend checks, 38 portable device checks, 565 virtio checks and six CLI
+integration tests (the variable/disk safety checks requires downloaded firmware):
 
 - Twice create/destroy a VM; reject a second concurrent VM in the same process.
 - Execute a 10-million-iteration add/subtract/branch loop plus RAM store/load and
@@ -79,10 +79,11 @@ and cannot be booted by either current platform yet.
 
 ## Next platform work
 
-The versioned `arm-virt-v1` firmware platform now provides a memory map, EDK II
+The versioned `arm-virt-v2` firmware platform now provides a memory map, EDK II
 boot, GICv3, generic timer, polled UART and private NOR variable storage. It reaches
 a UEFI Shell; see [ARM64 UEFI](arm64-uefi.md) for its contract and smoke test.
-The next pieces are block storage and an OS boot contract, followed by SMP and
+Virtio-blk PCI/MMIO storage now boots EFI applications; see [virtio](virtio.md).
+The next pieces are a Windows/Linux OS boot contract, followed by SMP and
 richer devices. A Linux serial boot is a useful intermediate milestone. Keep normal RAM and CPU work in
 the guest, handle device exits in batches where possible, and measure exit counts
 by reason before optimizing.
@@ -97,7 +98,8 @@ ARM; Windows 11 x64 is a separate emulation project.
 Do not serialize HVF handles into legacy snapshots. Add versioned ARM CPU/device
 state and platform/firmware identity when checkpoint support is implemented, then
 share the existing compressed COW disk storage where suitable. This backend
-currently has no snapshots, guest disks, networking or graphical frontend.
+currently has no snapshots, networking or graphical frontend. Private COW guest
+disks are supported on the UEFI platform.
 
 References consulted:
 - [Apple Hypervisor framework and lifecycle](https://developer.apple.com/documentation/hypervisor)

@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 namespace pc {
+uint64_t armMmioLoad(uint64_t value, unsigned width, bool signExtend, bool wideRegister);
 // Two interleaved x16 Intel command-set NOR devices on a 32-bit bus.
 // The firmware uses 256 KiB erase blocks and 128-byte write buffers.
 class ArmNorFlash {

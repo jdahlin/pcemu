@@ -31,6 +31,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     variableLock = open((working.string() + ".lock").c_str(), O_CREAT | O_RDWR, 0600);
     if (variableLock < 0 || flock(variableLock, LOCK_EX | LOCK_NB) != 0) {
         if (variableLock >= 0) close(variableLock);
+    if (diskLock >= 0) close(diskLock);
         variableLock = -1;
         throw std::runtime_error("UEFI variable file is already in use or cannot be locked");
     }
@@ -41,6 +42,26 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 throw std::runtime_error("UEFI variable file has wrong size");
             nor = ArmNorFlash(bytes);
         }
+        if (c.virtioTransport != "pci" && c.virtioTransport != "mmio")
+            throw std::runtime_error("Virtio transport must be pci or mmio");
+        if (!c.disk.empty()) {
+            const auto parent = fs::canonical(c.disk).string();
+            auto overlay = c.diskOverlay.empty() ? config.variables + ".pcd" : fs::absolute(c.diskOverlay).string();
+            fs::create_directories(fs::path(overlay).parent_path());
+            if (fs::exists(overlay) && fs::equivalent(parent, overlay))
+                throw std::runtime_error("Virtio disk overlay must differ from immutable parent");
+            diskLock = open((overlay + ".lock").c_str(), O_CREAT | O_RDWR, 0600);
+            if (diskLock < 0 || flock(diskLock, LOCK_EX | LOCK_NB) != 0)
+                throw std::runtime_error("Virtio disk overlay is already in use or cannot be locked");
+            if (!fs::exists(overlay)) Disk::createOverlay(overlay, parent);
+            disk = std::make_unique<Disk>(overlay);
+            if (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent)
+                throw std::runtime_error("Virtio disk overlay belongs to a different parent");
+            block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
+                                                 [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
+            if (c.virtioTransport == "pci")
+                pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+        } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
         if (dtb.size() < 40 || dtb[0] != 0xd0 || dtb[1] != 0x0d || dtb[2] != 0xfe || dtb[3] != 0xed)
@@ -51,13 +72,16 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         vm.start(0);
         vm.setReg(0, HvfMachine::ramBase);
     } catch (...) {
-        close(variableLock); variableLock = -1; throw;
+        close(variableLock); variableLock = -1;
+        if (diskLock >= 0) { close(diskLock); diskLock = -1; }
+        throw;
     }
 }
 ArmVirtMachine::~ArmVirtMachine() {
     if (variableLock >= 0) close(variableLock);
 }
 void ArmVirtMachine::saveVariables() {
+    if (disk) disk->flush();
     auto target = fs::path(config.variables);
     auto temporary = fs::path(target.string() + ".tmp-" + std::to_string(getpid()));
     try {
@@ -83,17 +107,46 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
             vm.setPC(exit.pc + 4);
             return;
         }
+        if ((exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000) ||
+            (pci && pci->contains(exit.physicalAddress, width))) {
+            bool ecam = exit.physicalAddress >= 0x3f000000;
+            if (write) {
+                if (pci) {
+                    if (ecam) pci->configWrite(exit.physicalAddress - 0x3f000000, reg < 31 ? vm.reg(reg) : 0, width);
+                    else pci->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
+                }
+            } else {
+                uint64_t value = pci ? (ecam ? pci->configRead(exit.physicalAddress - 0x3f000000, width)
+                                                  : pci->read(exit.physicalAddress, width)) : UINT64_MAX;
+                value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
+                if (reg < 31) vm.setReg(reg, value);
+            }
+            if (block && !block->error().empty()) throw std::runtime_error("Virtio device requires reset: " + block->error());
+            vm.setPC(exit.pc + 4); return;
+        }
+        if (exit.physicalAddress >= 0x0a000000 && exit.physicalAddress < 0x0a000200) {
+            unsigned offset = exit.physicalAddress - 0x0a000000;
+            auto *mmio = pci ? nullptr : block.get();
+            if (write) {
+                if (mmio) mmio->write(offset, reg < 31 ? vm.reg(reg) : 0, width);
+            } else {
+                uint64_t value = mmio ? mmio->read(offset, width)
+                                      : (offset == 0 ? 0x74726976u : offset == 4 ? 2u : 0u);
+                value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
+                if (reg < 31) vm.setReg(reg, value);
+            }
+            if (block && !block->error().empty())
+                throw std::runtime_error("Virtio device requires reset: " + block->error());
+            vm.setPC(exit.pc + 4);
+            return;
+        }
         if (exit.physicalAddress >= 0x09000000 && exit.physicalAddress < 0x09001000 && width <= 4) {
             unsigned offset = exit.physicalAddress - 0x09000000;
             if (offset % width) throw std::runtime_error("Unaligned PL011 access");
             if (write) uart.write(offset, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
             else {
-                uint64_t value = uart.read(offset) & (UINT32_MAX >> (32 - width * 8));
-                if (exit.syndrome & (1ull << 21)) {
-                    auto sign = 1ull << (width * 8 - 1);
-                    value = (value ^ sign) - sign;
-                }
-                if (!(exit.syndrome & (1ull << 15))) value = uint32_t(value);
+                uint64_t value = armMmioLoad(uart.read(offset), width,
+                                             exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
                 if (reg < 31) vm.setReg(reg, value);
             }
             vm.setPC(exit.pc + 4);

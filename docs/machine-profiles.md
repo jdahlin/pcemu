@@ -11,7 +11,7 @@ an ID. Installations and checkpoints remain user-owned VM instances.
 | win311 | Same PC, Windows 3.11 preset | 16 MiB | Available |
 | win95 | Same PC, Windows 95/Office 97 preset | 32 MiB | Available |
 | arm64-test | Flat ARM64 EL1 test guest | 2 MiB | Available in `pcemu-hvf` |
-| arm64-uefi | EDK II UEFI Shell, GICv3, PL011, NOR | 256 MiB | Available in `pcemu-hvf` |
+| arm64-uefi | EDK II UEFI Shell, virtio, GICv3, PL011, NOR | 256 MiB | Available in `pcemu-hvf` |
 | win11-arm64 | ARM64 UEFI virtual machine | 4096 MiB | Planned; launch rejected |
 | win11-x64 | x86-64 UEFI PC | 4096 MiB | Planned; launch rejected |
 

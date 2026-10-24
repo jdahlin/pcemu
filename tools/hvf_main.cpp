@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     try {
         bool test = false, timeoutExplicit = false, uefiOptions = false;
         pc::ArmVirtMachine::Config uefi{"roms/edk2-arm64.bin", "build/arm64-fw/pcemu-virt.dtb",
-                                        "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin"};
+                                        "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin", {}, {}, "pci"};
         std::string untilText, shellCommand;
         std::string kernel, machine = "arm64-test", backend = "auto";
         unsigned timeout = 1000;
@@ -166,6 +166,9 @@ int main(int argc, char **argv) {
                 return 0;
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
+            else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
+            else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
             else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
             else if (arg == "--until-text") untilText = value();
@@ -188,6 +191,7 @@ int main(int argc, char **argv) {
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
+                             "      [--disk IMMUTABLE_BASE --disk-overlay PRIVATE_COW --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
                 return 0;
@@ -223,7 +227,8 @@ int main(int argc, char **argv) {
                 }
             }
             vm.saveVariables();
-            std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables << '\n';
+            std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
+                      << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests() << '\n';
             return matched ? 0 : 1;
         }
         if (uefiOptions || !untilText.empty() || !shellCommand.empty())

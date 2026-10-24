@@ -29,6 +29,7 @@ void check(hv_return_t result, const char *operation) {
 }
 struct HvfMachine::Impl {
     std::thread::id owner = std::this_thread::get_id();
+    bool gicEnabled = false;
     bool vmCreated = false, mapped = false, vcpuCreated = false;
     void *memory = MAP_FAILED;
     size_t size = 0;
@@ -68,6 +69,7 @@ struct HvfMachine::Impl {
                     result = hv_gic_create(config);
                 os_release(config);
                 check(result, "create GICv3");
+                gicEnabled = true;
             } else throw std::runtime_error("GICv3 requires macOS 15 or later");
         }
         size = bytes;
@@ -143,6 +145,16 @@ HvfMachine::HvfMachine(size_t ramBytes, bool enableGic) : impl(std::make_unique<
     impl->initialize(ramBytes, enableGic);
 }
 HvfMachine::~HvfMachine() = default;
+std::span<uint8_t> HvfMachine::ram() {
+    impl->requireOwner();
+    return {static_cast<uint8_t *>(impl->memory), impl->size};
+}
+void HvfMachine::setSPI(uint32_t interrupt, bool level) {
+    impl->requireOwner();
+    if (!impl->gicEnabled) throw std::runtime_error("GICv3 is not enabled");
+    if (__builtin_available(macOS 15.0, *)) check(hv_gic_set_spi(interrupt, level), "set GIC SPI");
+    else throw std::runtime_error("GICv3 requires macOS 15");
+}
 void HvfMachine::mapROM(uint64_t address, std::span<const uint8_t> bytes) {
     impl->requireOwner();
     const auto hostPage = sysconf(_SC_PAGESIZE);

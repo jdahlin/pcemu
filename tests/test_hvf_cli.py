@@ -74,6 +74,32 @@ class HvfCLI(unittest.TestCase):
                 self.assertIn('locked', result.stderr)
             self.assertFalse(variables.exists())
 
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists() and
+                         (ROOT / 'build/arm64-fw/pcemu-virt.dtb').exists(), 'Firmware assets absent')
+    def test_private_disk_overlay(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            first, second = directory / 'first.raw', directory / 'second.raw'
+            first.write_bytes(bytes(8192)); second.write_bytes(bytes(8192))
+            variables = directory / 'vars.bin'
+            args = ['--machine', 'arm64-uefi', '--vars', str(variables), '--timeout-ms', '1']
+            result = self.invoke(*args, '--disk', str(first))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            overlay = Path(str(variables) + '.pcd')
+            self.assertTrue(overlay.read_bytes().startswith(b'PCEMUCOW'))
+            self.assertEqual(first.read_bytes(), bytes(8192))
+            result = self.invoke(*args, '--disk', str(second))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('different parent', result.stderr)
+            result = self.invoke(*args, '--disk', str(first), '--disk-overlay', str(first))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('immutable parent', result.stderr)
+            with Path(str(overlay) + '.lock').open('wb') as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                result = self.invoke(*args, '--disk', str(first))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('already in use', result.stderr)
+
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):
             result = self.invoke(option)
