@@ -19,6 +19,14 @@ struct PIT8254 {
         void write(uint8_t v, uint64_t now);
         void setGate(bool v, uint64_t now);
         bool edge(uint64_t now);
+        bool eventDue(uint64_t now) const {
+            if (nullCount || !gate)
+                return false;
+            auto elapsed = now - loadedAt;
+            if (mode == 2 || mode == 3)
+                return elapsed >= (lastEdge + 1) * reload;
+            return (elapsed >= reload ? 1u : 0u) != lastEdge;
+        }
     };
     std::array<Counter, 3> counters{};
     PIT8254();
@@ -27,7 +35,7 @@ struct PIT8254 {
     }
     void write(unsigned port, uint8_t value, uint64_t now);
     bool tick(uint64_t now) {
-        return counters[0].edge(now);
+        return counters[0].eventDue(now) && counters[0].edge(now);
     }
 };
 } // namespace pc

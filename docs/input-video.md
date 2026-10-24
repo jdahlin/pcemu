@@ -118,3 +118,11 @@ records the policy in its results. It prevents everyday Mac input from changing
 the guest during a pixel readiness check. Interactive launches keep their usual
 input behavior. A failed automated guest can be made interactive by appending
 `host-input on` to its control file; `host-input off` disables it again.
+
+Idle input polling now waits for queued controller bytes or the existing mouse
+sample deadline. A due movement packet is still formed while controller output
+is paced; queued button transitions are delivered without waiting for the next
+movement sample. Full output buffers still update IRQ lines immediately when
+IRQ enable bits change. The guard reads live state rather than caching it, so
+host injection, command replies and restored pending packets need no explicit
+wake-up/invalidation hook. Interrupt delivery itself is not batched by this change.

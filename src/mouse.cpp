@@ -149,8 +149,7 @@ void PS2Mouse::motion(int x, int y, uint8_t held, int scroll) {
         packet(packets);
 }
 void PS2Mouse::poll(uint64_t instructions) {
-    if (enabled && !remote && !wrap && packets.empty() && instructions >= nextAt &&
-        (dx || dy || wheel || buttons != reportedButtons)) {
+    if (packetDue(instructions)) {
         packet(packets);
         nextAt = instructions + 4772728 / rate;
     }

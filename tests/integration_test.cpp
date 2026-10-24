@@ -368,6 +368,67 @@ int main() {
         check(biosCPU.get(AX, 2) == 0x4f && firmware.vga.width == 1024 &&
                   firmware.vga.height == 768 && (firmware.vga.dispi[4] & 1),
               "real VGA ROM enables 1024x768 true-colour mode");
+        {
+            Machine scheduled("", "", 4 * 1024 * 1024);
+            scheduled.keyboardCommandByte = 3;
+            scheduled.pic[0].mask = scheduled.pic[1].mask = 0;
+            scheduled.mouse.enabled = true;
+            scheduled.mouse.nextAt = 1000;
+            scheduled.keyboardNextAt = 5000;
+            scheduled.mouse.motion(5, -3, 0);
+            scheduled.cpu.instructions = 999;
+            scheduled.keyboardPoll();
+            check(!scheduled.keyboardFull && scheduled.mouse.packets.empty() && scheduled.mouse.dx == 5,
+                  "idle input guard waits until the mouse sampling deadline");
+            scheduled.cpu.instructions = 1000;
+            scheduled.keyboardPoll();
+            check(!scheduled.keyboardFull && scheduled.mouse.packets.size() == 3 && scheduled.mouse.dx == 0,
+                  "due mouse packet forms even while controller output is paced");
+            scheduled.cpu.instructions = 4999;
+            scheduled.keyboardPoll();
+            check(!scheduled.keyboardFull && scheduled.mouse.packets.size() == 3,
+                  "queued mouse bytes wait until the exact controller deadline");
+            scheduled.cpu.instructions = 5000;
+            scheduled.keyboardPoll();
+            check(scheduled.keyboardFull && scheduled.keyboardAux && scheduled.mouse.packets.size() == 2 &&
+                      (scheduled.pic[1].irr & 0x10),
+                  "controller deadline delivers the mouse byte and raises IRQ12 immediately");
+            scheduled.in(0x60, 1);
+            scheduled.keyboardReplies.push_back(0xfa);
+            scheduled.cpu.instructions = scheduled.keyboardNextAt;
+            scheduled.keyboardPoll();
+            check(scheduled.keyboardFull && !scheduled.keyboardAux && scheduled.keyboardData == 0xfa,
+                  "keyboard command replies retain priority over queued mouse bytes");
+            scheduled.keyLine = false;
+            scheduled.pic[0].irr = 0;
+            scheduled.keyboardCommandByte &= ~1;
+            scheduled.keyboardPoll();
+            check(!(scheduled.pic[0].irr & 2), "full output buffer honors disabled keyboard IRQ");
+            scheduled.keyboardCommandByte |= 1;
+            scheduled.keyboardPoll();
+            check(scheduled.pic[0].irr & 2, "enabling IRQ1 with full output takes effect immediately");
+        }
+        {
+            Machine idle("", "", 4 * 1024 * 1024);
+            idle.keyboardCommandByte = 1;
+            idle.pic[0].mask = 0;
+            idle.keyboardPoll();
+            idle.scanCodes.push_back(0x1e);
+            idle.keyboardPoll();
+            check(idle.keyboardFull && idle.keyboardData == 0x1e && (idle.pic[0].irr & 2),
+                  "host input wakes an idle controller without a stale cached deadline");
+        }
+        {
+            Machine buttons("", "", 4 * 1024 * 1024);
+            buttons.keyboardCommandByte = 2;
+            buttons.pic[1].mask = 0;
+            buttons.mouse.enabled = true;
+            buttons.mouse.nextAt = 1000000;
+            buttons.mouse.motion(0, 0, 1);
+            buttons.keyboardPoll();
+            check(buttons.keyboardFull && buttons.keyboardAux && (buttons.pic[1].irr & 0x10),
+                  "queued mouse button transitions bypass the future movement sample deadline");
+        }
         std::filesystem::remove_all(point);
         std::cout << "Passed " << checks << " input/video integration checks\n";
     } catch (const std::exception &e) {

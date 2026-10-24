@@ -313,6 +313,14 @@ void Machine::key(uint16_t k) {
     cpu.halted = false;
 }
 void Machine::keyboardPoll() {
+    // No output-buffer/IRQ work is possible until queued input is ready or
+    // the mouse sample deadline arrives. Inspect live state so guest I/O,
+    // host input and restored snapshots need no cached-deadline invalidation.
+    if (!keyboardFull && !mouse.packetDue(cpu.instructions) &&
+        (cpu.instructions < keyboardNextAt ||
+         (keyboardReplies.empty() && mouse.replies.empty() && scanCodes.empty() &&
+          mouse.packets.empty())))
+        return;
     mouse.poll(cpu.instructions);
     // Backpressure the injected scan stream until the current IRQ service ends.
     // Command replies can still arrive while a handler is waiting for an ACK.

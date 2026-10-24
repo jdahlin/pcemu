@@ -260,3 +260,42 @@ less eager flag/helper work. Additional opcode coverage remains useful, but its
 instruction percentage alone does not predict speedup. The earlier register-only
 benchmark's ~23x JIT/interpreter ratio and CoreMark's ~2–3x ratio measure different
 workloads. Neither establishes 10–100x acceleration of a complete Windows guest.
+
+## Deadline guards for idle device work
+
+PIT tick checks now test the counter's next edge before entering its out-of-line
+update. Periodic counters wait for the next reload boundary; one-shot counters
+avoid repeat updates after their edge, while preserving backward-clock handling.
+Keyboard/mouse service skips the polling body when the output buffer is empty,
+queued input is not ready and no mouse sample is due. It uses existing live queue,
+controller and mouse-deadline fields: input injection, command replies, guest I/O
+and restored snapshots require no new deadline-cache invalidation or snapshot
+format. Button transitions already queued by the mouse remain immediate.
+
+This is a per-device fast path, not a complete event scheduler. Machine::poll,
+PIC scans and interrupt-delivery checks still run after every dispatch. Full
+batching and native block links remain separate work.
+
+`build/event-deadline-controlled/build.json` records source-frozen runners with
+identical common sources/compiler options and variants only for these guards.
+All six final CoreMark intervals use the same COM bytes and 4,000 iterations,
+with 1,590,037,601 guest instructions and 1,262,986,108 native instructions each.
+Three alternating pairs yield baseline median 295.5 and guarded median 317.4
+iterations/host-second. Paired ratios are 1.0694, 1.0740 and 1.0678: median about
+6.9% improvement. Every interval passes upstream runtime/CRC validation and DOS
+return; raw data remains under `build/event-deadline-controlled/`.
+
+The separate five-second profile at
+`build/event-deadline-host-profile/sample.txt` observes 802/4,271 samples (~19%)
+in machine polling/device children, versus 1,038/4,279 (~24%) in the preceding
+INC/DEC profile. These are sampled observations; profiled timings are excluded
+from the controlled comparison.
+
+`build/event-deadline-tests.log` passes the full suite, including timer mode,
+gate, null-count, reload and rewind boundaries, controller pacing, command reply
+priority, immediate button/input injection and IRQ-enable transitions. DOS CRCs
+and 28 micro intervals pass (`build/event-deadline-smoke.log`); Win3.11 saves exact
+Notepad contents (`build/event-deadline-win311.log`). Updated rtts and installed
+OSR2 cold boots/restarts pass at `build/win95-smoke-35fw89x7/result.json` and
+`build/win95-smoke-422r2bqj/result.json`. Word/Excel pixel-task results are in
+`build/event-deadline-{word,excel}/`. Passing runs removed their private disks.

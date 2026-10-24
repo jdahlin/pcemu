@@ -13,6 +13,10 @@ struct PS2Mouse {
     std::deque<uint8_t> replies, packets;
     void command(uint8_t value);
     void motion(int x, int y, uint8_t held, int scroll = 0);
+    bool packetDue(uint64_t instructions) const {
+        return enabled && !remote && !wrap && packets.empty() && instructions >= nextAt &&
+               (dx || dy || wheel || buttons != reportedButtons);
+    }
     void poll(uint64_t instructions);
     void packet(std::deque<uint8_t> &destination);
     uint8_t status() const;

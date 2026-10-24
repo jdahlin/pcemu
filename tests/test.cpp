@@ -95,6 +95,35 @@ int main() {
         pit.counters[2].setGate(true, 0);
         check(pit.counters[2].output(4) && !pit.counters[2].output(5) && pit.counters[2].output(10),
               "PIT square-wave output and speaker gate");
+        for (unsigned mode = 0; mode < 6; ++mode)
+            for (unsigned reload : {1u, 2u, 3u, 17u, 65536u})
+                for (bool gate : {false, true})
+                    for (bool nullCount : {false, true}) {
+                        PIT8254 scheduled;
+                        auto &counter = scheduled.counters[0];
+                        counter.mode = mode;
+                        counter.load(uint16_t(reload), 0);
+                        counter.gate = gate;
+                        counter.nullCount = nullCount;
+                        uint64_t previous = 0;
+                        for (uint64_t now : {0u, 1u, 2u, 3u, 16u, 17u, 18u, 65535u,
+                                             65536u, 65537u, 131072u, 2u, 0u, 65536u}) {
+                            bool raised = false;
+                            if (gate && !nullCount) {
+                                uint64_t edges = mode == 2 || mode == 3 ? now / reload : now >= reload;
+                                raised = edges > previous;
+                                if (mode == 2 || mode == 3)
+                                    previous = std::max(previous, edges);
+                                else
+                                    previous = edges;
+                            }
+                            check(scheduled.tick(now) == raised && counter.lastEdge == previous,
+                                  "PIT deadline guard preserves edge counts, skipped periods and clock rewinds");
+                        }
+                        counter.load(3, 200000);
+                        check(!scheduled.tick(200002) && scheduled.tick(200003) == gate,
+                              "PIT reload immediately changes the next edge deadline");
+                    }
         CPU c;
         for (unsigned a = 0; a < 256; a++)
             for (unsigned b = 0; b < 256; b++)

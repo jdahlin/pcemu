@@ -107,11 +107,9 @@ void PIT8254::Counter::setGate(bool v, uint64_t now) {
     gate = v;
 }
 bool PIT8254::Counter::edge(uint64_t now) {
-    if (nullCount || !gate)
+    if (!eventDue(now))
         return false;
     uint64_t elapsed = now - loadedAt;
-    if ((mode == 2 || mode == 3) && elapsed < (lastEdge + 1) * reload)
-        return false;
     uint64_t edges = (mode == 2 || mode == 3) ? elapsed / reload : elapsed >= reload ? 1 : 0;
     bool raised = edges > lastEdge;
     lastEdge = edges;
