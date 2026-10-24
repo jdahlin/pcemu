@@ -1,0 +1,49 @@
+diff --git a/src/cpu.cpp b/src/cpu.cpp
+index db08ecc..8b3b7c8 100644
+--- a/src/cpu.cpp
++++ b/src/cpu.cpp
+@@ -73,7 +73,7 @@ void CPU::flushTLB() {
+     }
+     tlbCR3 = cr[3];
+ }
+-uint32_t CPU::physical(uint32_t a, bool wr) {
++uint32_t CPU::physicalSlow(uint32_t a, bool wr) {
+     if (cr[0] & 0x80000000u) {
+         if (tlbCR3 != cr[3])
+             flushTLB();
+diff --git a/src/cpu.hpp b/src/cpu.hpp
+index ee79707..29de1e1 100644
+--- a/src/cpu.hpp
++++ b/src/cpu.hpp
+@@ -67,7 +67,22 @@ struct CPU {
+     std::function<uint32_t(uint16_t, int)> input;
+     std::function<void(uint16_t, uint32_t, int)> output;
+     explicit CPU(size_t ram = 16 * 1024 * 1024);
+-    uint32_t physical(uint32_t linear, bool write = false);
++    // Keep ordinary translations at the caller. Faults, walks, CR3 changes
++    // and first writes still use the full path, with its precise side effects.
++    [[gnu::always_inline]] uint32_t physical(uint32_t linear, bool write = false) {
++        uint32_t translated = linear;
++        if (cr[0] & 0x80000000u) {
++            uint32_t page = linear >> 12;
++            const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
++            bool user = cpl() == 3 && !systemAccess;
++            if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||
++                (user && (!(entry.permissions & 4) || (write && !(entry.permissions & 2)))) ||
++                (write && !entry.dirty))
++                return physicalSlow(linear, write);
++            translated = entry.base | (linear & 4095);
++        }
++        return a20 ? translated : translated & ~(1u << 20);
++    }
+     void flushTLB();
+     uint32_t read(uint32_t linear, int width);
+     uint32_t systemRead(uint32_t linear, int width);
+@@ -107,6 +122,7 @@ struct CPU {
+     } repeatResume;
+ 
+   private:
++    uint32_t physicalSlow(uint32_t linear, bool write);
+     void stepImpl();
+     void ioPermission(uint16_t port, int width);
+     bool descriptorVisible(uint16_t selector, uint32_t high) const;

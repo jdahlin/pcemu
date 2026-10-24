@@ -1177,3 +1177,33 @@ multiplied. It measures flat integer execution, not Windows MMU, GUI startup
 or Rosetta equivalence. [All samples and provenance](measurements/native-memory-alu-timing-2026-10-25.json)
 are committed. Successful compressed overlays, the temporary baseline decoder,
 binary and debug symbols were removed.
+
+
+## Rejected inline software-TLB wrapper (25 October)
+
+The Win95 host profiles motivated an inline ordinary-translation wrapper around
+CPU::physical. It returned directly on nonpaged translations or permitted,
+current, dirty-enough TLB hits, and delegated walks, faults, first writes and
+CR3 changes to the unchanged full body. 2,048 new core assertions cover A20,
+privilege/system-access overrides, permissions, dirty bits, stale tags/epochs,
+CR3 mismatch, CR2 and page-table code invalidation. The candidate passes them.
+
+Five alternating pairs per engine use RAM-only kernels and matched source trees.
+The candidate/baseline throughput medians are:
+
+| Engine | Flat memory | CPL3 paged memory |
+|---|---:|---:|
+| Interpreter | 0.90761x | 1.03876x |
+| JIT | 1.00224x | 1.02191x |
+
+All checksums and native instruction counts match. The roughly 9.2% flat
+interpreter regression outweighs the roughly 3.9% paged gain, so the wrapper
+is **reverted**. Compiler code layout/inlining is a possible cause, not an
+established diagnosis. The added correctness checks remain. These are small,
+cache-resident RAM kernels on one host, not Windows/Rosetta measurements.
+[Every paired sample and build hash](measurements/rejected-inline-tlb-2026-10-25.json)
+and [the rejected patch](measurements/rejected-inline-tlb-2026-10-25.patch)
+are retained, including the initial pilot separately from the paired summary.
+No disk image was opened; the temporary frozen source tree, baseline binary
+and debug symbols were removed. Future MMU work must retain flat-memory controls
+rather than assuming that inlining improves the whole interpreter.

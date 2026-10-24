@@ -1,0 +1,942 @@
+{
+  "scope": "RAM-only flat and CPL3-paged memory kernels; no Machine or disk constructed",
+  "binarySha256": {
+    "baseline": "a0b9124e1abe38c4655cd48efd30f35b023995de8e43255722c2a3fa009e4a28",
+    "candidate": "d46bff9c6fd29a67012571370f1a053b2ea9fe6dd4b083c8c8a06bad0eac610f"
+  },
+  "build": {
+    "scope": "Common source tree; baseline restores the former out-of-line CPU::physical declaration/body, candidate adds only inline TLB-hit wrapper and calls old body as physicalSlow",
+    "baselineCommand": [
+      "clang++",
+      "-I/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/main.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/network.cpp",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/src/frontend_sdl.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline"
+    ],
+    "baselineSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a",
+      "src/cpu.hpp": "ff074dd7748e35e4b7115eb6cdb3b00dc4b7ca2ce0feac26bd85d2836d3898d2",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "f3a0e6ea68064e76b21acd8d6643da5c0bf0c046176f826063ab5d356a140422",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+      "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "7396b98b641a8f13b2cbae61ad57b8042a10ecfa33fc3cc4f2a58c021802da23",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    },
+    "candidateSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "07acc2d029032dbeaaafac2764e29a19ca8a69c2438b9dcda2c58249e5d763c2",
+      "src/cpu.hpp": "14b5649fa1bd811bee44d72d72f29c30896283c7803ba1281518cd93e69fc7fc",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "f3a0e6ea68064e76b21acd8d6643da5c0bf0c046176f826063ab5d356a140422",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+      "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "7396b98b641a8f13b2cbae61ad57b8042a10ecfa33fc3cc4f2a58c021802da23",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    }
+  },
+  "pilot": {
+    "runner": "candidate",
+    "steps": 490000049,
+    "stdout": "Flat memory interpreter: 62.4293 million guest instructions/s, 0 native; checksum=160000016\nPaged memory interpreter: 49.9004 million guest instructions/s, 0 native; checksum=160000016\n",
+    "purpose": "Standalone host-timed pilot for selecting trial length; excluded from paired summaries"
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "engine": "interpreter",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 98000049,
+      "ratios": {
+        "Flat": 0.9076104710831009,
+        "Paged": 0.9983460959948992
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 69.181 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.7379 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 69.181,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 46.7379,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 62.7894 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.6606 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 62.7894,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 46.6606,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 1,
+      "engine": "jit",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 980000049,
+      "ratios": {
+        "Flat": 1.0075962264494236,
+        "Paged": 1.022898302430757
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2198.46 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1085.67 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2198.46,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1085.67,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2215.16 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1110.53 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2215.16,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1110.53,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "engine": "interpreter",
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "steps": 98000049,
+      "ratios": {
+        "Flat": 0.9176365919114527,
+        "Paged": 1.0634851328571677
+      },
+      "results": {
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 62.71 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.9569 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 62.71,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 48.9569,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        },
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 68.3386 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.0344 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 68.3386,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 46.0344,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "engine": "jit",
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "steps": 980000049,
+      "ratios": {
+        "Flat": 1.0022387281848628,
+        "Paged": 1.0168211749990803
+      },
+      "results": {
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2211.55 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1105.61 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2211.55,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1105.61,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        },
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2206.61 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1087.32 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2206.61,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1087.32,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "engine": "interpreter",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 98000049,
+      "ratios": {
+        "Flat": 0.9166418792832228,
+        "Paged": 1.0608303558079621
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 67.5747 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.1513 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 67.5747,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 46.1513,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 61.9418 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.9587 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 61.9418,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 48.9587,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "engine": "jit",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 980000049,
+      "ratios": {
+        "Flat": 1.000542718749576,
+        "Paged": 1.0219097116070517
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2211.09 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1079.43 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2211.09,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1079.43,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2212.29 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1103.08 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2212.29,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1103.08,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "engine": "interpreter",
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "steps": 98000049,
+      "ratios": {
+        "Flat": 0.9000346134567354,
+        "Paged": 1.0376538846058923
+      },
+      "results": {
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 62.6659 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 49.6121 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 62.6659,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 49.6121,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        },
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 69.6261 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 47.8118 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 69.6261,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 47.8118,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "engine": "jit",
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "steps": 980000049,
+      "ratios": {
+        "Flat": 0.9985598389186602,
+        "Paged": 1.0206520435187834
+      },
+      "results": {
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2211.84 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1106.05 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2211.84,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1106.05,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        },
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2215.03 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1083.67 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2215.03,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1083.67,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "engine": "interpreter",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 98000049,
+      "ratios": {
+        "Flat": 0.8961409152827291,
+        "Paged": 1.0387608712676812
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 69.006 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 47.2461 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 69.006,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 47.2461,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "98000049",
+            "--backend",
+            "interpreter"
+          ],
+          "stdout": "Flat memory interpreter: 61.8391 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 49.0774 million guest instructions/s, 0 native; checksum=32000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 61.8391,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 49.0774,
+              "nativeInstructions": 0,
+              "checksum": 32000016
+            }
+          }
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "engine": "jit",
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "steps": 980000049,
+      "ratios": {
+        "Flat": 1.0027747148460802,
+        "Paged": 1.034567234248668
+      },
+      "results": {
+        "baseline": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/inline-tlb-comparison/baseline",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2212.84 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1073.56 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2212.84,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1073.56,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        },
+        "candidate": {
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/pcemu",
+            "--headless",
+            "--benchmark-memory",
+            "--benchmark-steps",
+            "980000049",
+            "--backend",
+            "jit"
+          ],
+          "stdout": "Flat memory JIT: 2218.98 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1110.67 million guest instructions/s, 979999706 native; checksum=320000016\n",
+          "samples": {
+            "Flat": {
+              "millionGuestInstructionsPerSecond": 2218.98,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            },
+            "Paged": {
+              "millionGuestInstructionsPerSecond": 1110.67,
+              "nativeInstructions": 979999706,
+              "checksum": 320000016
+            }
+          }
+        }
+      }
+    }
+  ],
+  "medianRatios": {
+    "interpreter": {
+      "Flat": 0.9076104710831009,
+      "Paged": 1.0387608712676812
+    },
+    "jit": {
+      "Flat": 1.0022387281848628,
+      "Paged": 1.0219097116070517
+    }
+  },
+  "date": "2026-10-25",
+  "disposition": "Rejected; source changes reverted because flat interpreter regression outweighed modest paged gains.",
+  "candidatePatch": "docs/measurements/rejected-inline-tlb-2026-10-25.patch",
+  "limitations": [
+    "RAM-only cache-resident kernels; no Windows startup or Rosetta claim",
+    "Single host with five alternating pairs per engine; no confidence intervals",
+    "Pilot retained but excluded from paired summaries",
+    "Only correctness tests and rejection evidence ship; the inline wrapper does not"
+  ],
+  "temporaryBaselineAndSourceTreeRemoved": true,
+  "coreChecksAfterRevert": 343354
+}

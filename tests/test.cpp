@@ -21,6 +21,55 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
 }
 int main() {
     try {
+        // Translation hits and slow revalidation must agree on permissions,
+        // A20, CR2, page-table writes and code generation side effects.
+        for (bool a20 : {false, true})
+        for (unsigned privilege : {0u, 3u})
+        for (unsigned overrideAccess : {0u, 1u})
+        for (bool write : {false, true})
+        for (unsigned permissions : {0u, 2u, 4u, 6u})
+        for (bool dirty : {false, true})
+        for (unsigned cache = 0; cache < 4; ++cache) {
+            CPU c(2 * 1024 * 1024);
+            constexpr uint32_t linear = 0x401234, pde = 0x3004, pte = 0x2004;
+            c.write(pde, 0x2001 | permissions, 4);
+            c.write(pte, 0x180001 | permissions | (dirty ? 64 : 0), 4);
+            c.cr[0] = 0x80000011;
+            c.cr[3] = c.tlbCR3 = 0x3000;
+            c.cr[2] = 0x12345678;
+            c.s[CS].selector = privilege;
+            c.systemAccess = overrideAccess;
+            c.a20 = a20;
+            auto page = linear >> 12;
+            auto &entry = c.tlb[(page ^ (page >> 10)) & (c.tlb.size() - 1)];
+            entry = {page, c.tlbEpoch, 0x180000, pte, uint8_t(permissions), dirty};
+            if (cache == 1) entry.tag ^= 1;
+            if (cache == 2) --entry.epoch;
+            if (cache == 3) c.tlbCR3 ^= 0x1000;
+            c.markCode(pte);
+            bool denied = privilege == 3 && !overrideAccess &&
+                          (!(permissions & 4) || (write && !(permissions & 2)));
+            bool fault = false;
+            try {
+                auto translated = c.physical(linear, write);
+                check(translated == (a20 ? 0x180234u : 0x80234u),
+                      "TLB translation preserves A20 for hits and revalidation");
+            } catch (const Fault &f) {
+                fault = true;
+                check(f.vector == 14 && f.error == (5u | (write ? 2u : 0u)),
+                      "TLB permission failure retains precise page-fault code");
+            }
+            check(fault == denied && c.cr[2] == (denied ? linear : 0x12345678u),
+                  "TLB permission failure updates CR2 only on fault");
+            uint32_t table;
+            std::memcpy(&table, &c.mem[pte], 4);
+            auto expected = 0x180001u | permissions | (dirty ? 64u : 0u) |
+                            (!denied && cache ? 32u : 0u) | (!denied && write ? 64u : 0u);
+            check(table == expected, "translation hit/walk updates only required A/D bits");
+            unsigned writes = !denied ? unsigned(cache != 0) + unsigned(write && !dirty) : 0;
+            check(c.generation[pte >> 12] == writes,
+                  "translation preserves page-table code invalidation on A/D writes");
+        }
         PIC8259 pic;
         pic.mask = 0;
         pic.raise(3);
