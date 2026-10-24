@@ -488,3 +488,48 @@ task pixels pass in `build/native-imul-{word,excel}/`. Passing runs remove their
 private disks. `build/native-imul-validation.json` records source hashes and
 evidence; these checks do not repeat the installer or establish application
 startup gains.
+
+The JIT now emits register SHL/SAL, SHR and SAR for immediate counts and the
+implicit-one encodings (`C0/C1/D0/D1`) at 8/16/32-bit operand widths. It masks
+counts to five bits and treats zero as an instruction with no flag/register
+effects. Carry extraction handles the operand-width boundary; SAR sign-fills
+for larger counts. CF/SF/ZF/PF and count-one OF are computed in ARM64 code.
+For architecturally undefined AF, multi-bit OF and oversized logical-shift CF,
+the result matches the interpreter's existing deterministic convention.
+Partial flag producers materialize preceding flags before changing their own
+bits. Memory operands, rotates and CL-count encodings retain interpreter fallback.
+The architectural reference is SAL/SAR/SHL/SHR in the local Intel SDM text,
+instruction reference volume 2B, pages 4-600 onward.
+
+`build/native-shift-tests-final.log` passes the full suite, including 2,957,189
+byte-JIT checks. Added cases cover every register (including high-byte aliases),
+both code widths and operand overrides, signed/value boundaries, masked and
+oversized counts, the implicit-one encodings, every Jcc predicate, pending
+ADD flags, carry-consuming INC and a following precise memory-fault exit.
+
+`build/native-shift-controlled/` freezes a common source tree and changes only
+`jit.cpp` against `081d59e`. Each of the six independent DOS runs executes
+10,000 CoreMark iterations, passes canonical CRCs, exceeds ten seconds and
+returns to DOS. Guest instructions are identical at 3,975,092,643. Native
+instructions rise from 3,476,295,000 (87.45%) to 3,728,178,916 (93.79%). Median
+rates are 450.805 baseline and 636.680 candidate iterations per host second;
+paired ratios are 1.44113, 1.42345 and 1.38671, giving a median paired gain of
+42.34%. This measures the effect on guest CoreMark, including block extension
+across shifts, and does not establish application-wide gains or Rosetta parity.
+
+The matched 1,000-iteration profiles (`build/native-imul-guest-profile/` and
+`build/native-shift-guest-profile/`) use the same guest COM hash and instruction
+count. Interpreted attempts fall from 49,887,873 to 24,700,049, and dispatches
+from 130,561,245 to 101,971,099. Average guest instructions per native call rise
+from 4.31 to 4.82, and per dispatch overall from 3.04 to 3.90. Instrumented
+timings are diagnostic only. These short native blocks still leave substantial
+scope for cross-instruction flag elimination and native block linking.
+
+Compatibility passes DOS CRCs and all 56 micro intervals
+(`build/native-shift-smoke.log`), exact Win3.11 Notepad contents
+(`build/native-shift-win311.log`), rtts Win95 cold boot/restart
+(`build/win95-smoke-z79wmxkq/result.json`) and installed OSR2 cold boot/restart
+(`build/win95-smoke-6zll5op6/result.json`). Word/Excel snapshot task pixels pass
+in `build/native-shift-{word,excel}/`. These checks do not repeat the installer
+or establish application startup gains. Passing runs remove their private
+disks; `build/native-shift-validation.json` records source hashes and evidence.

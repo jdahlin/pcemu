@@ -1,5 +1,6 @@
 #include "jit.hpp"
 #include "profile.hpp"
+#include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstring>
@@ -379,6 +380,20 @@ Jit::Block Jit::compile(bool translate) {
                     i.dst = op & 7;
                     i.op = op < 0x48 ? 8 : 9;
                 }
+            } else if (op == 0xc0 || op == 0xc1 || op == 0xd0 || op == 0xd1) {
+                auto m = byte();
+                if ((m >> 6) != 3 || ((m >> 3) & 7) < 4) {
+                    pos = begin;
+                    break;
+                }
+                i.kind = 10;
+                i.w = (op & 1) ? w : 1;
+                i.dst = m & 7;
+                i.op = (m >> 3) & 7;
+                i.immediate = true;
+                i.imm = (op < 0xd0 ? byte() : 1) & 31;
+                if (!i.imm)
+                    i.kind = 3; // A masked zero count preserves all flags/GPRs.
             } else if (op == 0x69 || op == 0x6b) {
                 auto m = byte();
                 if ((m >> 6) != 3) {
@@ -590,7 +605,7 @@ Jit::Block Jit::compile(bool translate) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= 2 || i.kind == 5 || i.kind == 8)) {
+            if (i.w == 1 && (i.kind <= 2 || i.kind == 5 || i.kind == 8 || i.kind == 10)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != 5) {
@@ -720,6 +735,13 @@ Jit::Block Jit::compile(bool translate) {
         pointer(16, address);
         emit(0xd63f0200u);
     };
+    auto bits = [&](int dst, int src, unsigned first, unsigned count) {
+        emit(0x53000000u | (first << 16) | ((first + count - 1) << 10) |
+             (src << 5) | dst);
+    };
+    auto flagBit = [&](int src, unsigned bit) {
+        emit(0x33000000u | (((32 - bit) & 31) << 16) | (src << 5) | 12);
+    };
     auto finishFlags = [&](int last, int condition, uint32_t target) {
         if (last < 0 && condition < 0)
             return;
@@ -730,13 +752,6 @@ Jit::Block Jit::compile(bool translate) {
         bool arithmetic = last >= 0 &&
                           (ir[last].op == 0 || ir[last].op == 5 || ir[last].op == 7 ||
                            ir[last].op == 8 || ir[last].op == 9);
-        auto bits = [&](int dst, int src, unsigned first, unsigned count) {
-            emit(0x53000000u | (first << 16) | ((first + count - 1) << 10) |
-                 (src << 5) | dst);
-        };
-        auto flagBit = [&](int src, unsigned bit) {
-            emit(0x33000000u | (((32 - bit) & 31) << 16) | (src << 5) | 12);
-        };
         if (logical || arithmetic) {
             load(9, 31, 96);
             load(10, 31, 100);
@@ -833,9 +848,9 @@ Jit::Block Jit::compile(bool translate) {
     std::vector<bool> neededFlags(ir.size());
     int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
-        if (ir[n].kind == 9) {
-            // IMUL preserves the interpreter's undefined arithmetic flags,
-            // so publish the preceding producer before replacing CF/OF only.
+        if (ir[n].kind == 9 || ir[n].kind == 10) {
+            // IMUL/shifts preserve some arithmetic flags, so publish the
+            // preceding producer before replacing only their own flag bits.
             if (last >= 0)
                 neededFlags[last] = true;
             last = -1;
@@ -870,6 +885,54 @@ Jit::Block Jit::compile(bool translate) {
         auto i = ir[n];
         if (i.kind == 3 || i.kind == 4)
             continue;
+        if (i.kind == 10) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            unsigned width = i.w * 8, count = i.imm;
+            bool left = i.op == 4 || i.op == 6, arithmetic = i.op == 7;
+            extract(9, 20 + i.dst, i.w, i.dstShift);
+            if (arithmetic) {
+                emit(0x13000000u | ((width - 1) << 10) | (9 << 5) | 11);
+                emit(0x13007c00u | (count << 16) | (11 << 5) | 11); // asr w11,#count
+            } else if (count >= width)
+                imm(11, 0);
+            else if (left)
+                emit(0x53000000u | ((32 - count) << 16) | ((31 - count) << 10) |
+                     (9 << 5) | 11); // lsl w11,w9,#count
+            else
+                emit(0x53007c00u | (count << 16) | (9 << 5) | 11); // lsr
+            extract(11, 11, i.w, 0);
+            load(12, 19, offsetof(CPU, flags));
+            imm(14, ~(CF | SF | ZF | PF | (count == 1 ? OF : 0)));
+            emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+            if (arithmetic || count <= width)
+                bits(13, 9, left ? width - count : std::min(count, width) - 1, 1);
+            else
+                imm(13, 0);
+            flagBit(13, 0);
+            if (count == 1 && !arithmetic) {
+                bits(14, left ? 11 : 9, width - 1, 1);
+                if (left)
+                    emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
+                else
+                    mov(13, 14);
+                flagBit(13, 11);
+            }
+            emit(0x7100017fu); // cmp w11,#0
+            emit(0x1a9f17edu); // cset w13,eq
+            flagBit(13, 6);
+            bits(13, 11, width - 1, 1);
+            flagBit(13, 7);
+            bits(14, 11, 0, 8);
+            for (unsigned shift : {4u, 2u, 1u})
+                emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+            emit(0x2a2e03eeu); // even parity
+            flagBit(14, 2);
+            store(12, 19, offsetof(CPU, flags));
+            insert(20 + i.dst, 11, i.w, i.dstShift);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
         if (i.kind == 9) {
             finishFlags(last, -1, 0);
             last = -1;

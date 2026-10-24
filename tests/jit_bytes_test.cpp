@@ -556,6 +556,113 @@ int main() {
                       actual.r[AX] == expected.r[AX],
                   "multiply flag dependencies and fault restart exactly match interpreter");
         }
+        unsigned shiftTrial = 0;
+        for (bool code32 : {false, true})
+            for (bool overrideWidth : {false, true})
+                for (bool byteOperand : {false, true})
+                    for (unsigned operation : {4u, 5u, 6u, 7u})
+                        for (unsigned reg = 0; reg < 8; ++reg)
+                            for (unsigned count : {0u, 1u, 2u, 7u, 8u, 9u, 15u, 16u,
+                                                   17u, 31u, 32u, 33u, 63u, 127u, 128u, 255u})
+                                for (bool implicit : {false, true}) {
+                                    if (implicit && count != 1)
+                                        continue;
+                                    for (uint32_t value : {0u, 1u, 0x7fu, 0x80u, 0xffu, 0x7fffu,
+                                                           0x8000u, 0xffffu, 0x7fffffffu,
+                                                           0x80000000u, 0xffffffffu})
+                                        for (uint32_t flags : {0x244602u, 0x244ed7u}) {
+                                            unsigned width = byteOperand ? 1 : code32 != overrideWidth ? 4 : 2;
+                                            std::vector<uint8_t> code;
+                                            if (overrideWidth)
+                                                code.push_back(0x66);
+                                            code.push_back((implicit ? 0xd0 : 0xc0) + !byteOperand);
+                                            code.push_back(0xc0 | (operation << 3) | reg);
+                                            if (!implicit)
+                                                code.push_back(count);
+                                            code.insert(code.end(), {uint8_t(0x70 | (shiftTrial++ & 15)), 0x10});
+                                            for (auto c : {&ref, &native}) {
+                                                c->s[CS].big = code32;
+                                                c->ip = c->instructions = 0;
+                                                c->flags = flags;
+                                                for (unsigned n = 0; n < 8; ++n)
+                                                    c->r[n] = 0xaabbcc00 + n;
+                                                c->set(reg, value, width);
+                                                for (unsigned n = 0; n < code.size(); ++n)
+                                                    c->write(n, code[n], 1);
+                                            }
+                                            ref.step();
+                                            ref.step();
+                                            check(jit.run() == 2 && native.flags == ref.flags &&
+                                                      native.ip == ref.ip && native.instructions == ref.instructions,
+                                                  "immediate shifts match result flags, count masking and Jcc");
+                                            for (unsigned n = 0; n < 8; ++n)
+                                                check(native.r[n] == ref.r[n],
+                                                      "shifts preserve byte aliases, upper words and other GPRs");
+                                        }
+                                }
+        for (unsigned operation : {4u, 5u, 7u})
+            for (unsigned count : {0u, 1u, 2u, 8u, 31u, 32u, 255u})
+                for (unsigned cc = 0; cc < 16; ++cc) {
+                    std::vector<uint8_t> code = {0x83, 0xc3, 1, 0xc1,
+                                                 uint8_t(0xc0 | operation << 3), uint8_t(count),
+                                                 uint8_t(0x70 | cc), 0x10};
+                    for (auto c : {&ref, &native}) {
+                        c->s[CS].big = true;
+                        c->ip = c->instructions = 0;
+                        c->flags = 2;
+                        c->r[AX] = 0x80000001;
+                        c->r[BX] = 0x7fffffff;
+                        for (unsigned n = 0; n < code.size(); ++n)
+                            c->write(n, code[n], 1);
+                    }
+                    for (unsigned n = 0; n < 3; ++n)
+                        ref.step();
+                    check(jit.run() == 3 && native.flags == ref.flags && native.ip == ref.ip,
+                          "shifts preserve pending ADD AF/OF, including zero counts");
+                }
+        for (unsigned operation : {4u, 5u, 7u})
+            for (unsigned count : {0u, 1u, 2u, 31u, 32u})
+                for (bool carryConsumer : {false, true}) {
+                    CPU expected(65536), actual(65536);
+                    std::vector<uint8_t> code = {0x83, 0xc3, 1, 0xc1,
+                                                 uint8_t(0xc0 | operation << 3), uint8_t(count)};
+                    if (carryConsumer)
+                        code.push_back(0x42);
+                    auto faultIP = code.size();
+                    code.insert(code.end(), {0x64, 0x8b, 0x3d, 0, 0, 0, 0});
+                    struct Stop {};
+                    unsigned faults = 0;
+                    for (auto c : {&expected, &actual}) {
+                        c->cr[0] = 0x11;
+                        c->s[CS].big = true;
+                        c->s[FS].unusable = true;
+                        c->r[AX] = 0x80000001;
+                        c->r[BX] = 0x7fffffff;
+                        c->r[DX] = 0xffffffff;
+                        std::copy(code.begin(), code.end(), c->mem.begin());
+                        c->observeFault = [&, c](const Fault &f) {
+                            ++faults;
+                            check(f.vector == 13 && c->ip == faultIP,
+                                  "fault following native shift restarts at its own instruction");
+                            throw Stop{};
+                        };
+                    }
+                    try {
+                        for (unsigned n = 0; n < 3 + unsigned(carryConsumer); ++n)
+                            expected.step();
+                    } catch (const Stop &) {
+                    }
+                    Jit shifted(actual, true, 0);
+                    try {
+                        shifted.run();
+                    } catch (const Stop &) {
+                    }
+                    check(faults == 2 && shifted.nativeInstructions == 2 + unsigned(carryConsumer) &&
+                              actual.instructions == expected.instructions && actual.flags == expected.flags,
+                          "shift flags and optional carry-consuming INC survive fault replay");
+                    for (unsigned n = 0; n < 8; ++n)
+                        check(actual.r[n] == expected.r[n], "fault publishes shifted and preceding registers");
+                }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
     } catch (const std::exception &error) {
