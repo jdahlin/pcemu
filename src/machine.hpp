@@ -61,6 +61,10 @@ struct Machine {
     void initializeVga();
     void restart();
     void bindDevices();
+    void bindIoPorts();
+    uint32_t readKeyboardPort(uint16_t port);
+    uint32_t readCmosPort();
+    void writePicPort(uint16_t port, uint32_t value);
     int64_t rtcTime() const;
     void saveSnapshot(const std::string &directory);
     void loadSnapshot(const std::string &directory);

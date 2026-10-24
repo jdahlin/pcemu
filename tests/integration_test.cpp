@@ -65,6 +65,56 @@ int main() {
         }
         std::filesystem::remove_all(point);
         {
+            Machine machine("", "", 2 * 1024 * 1024);
+            machine.in(0x20, 1);
+            machine.in(0x40, 1);
+            check(machine.ioReads == 0, "PIC and PIT data reads do not advance retrace counter");
+            machine.ports[0x43] = 0x57;
+            check(machine.in(0x43, 4) == 0x57 && machine.ioReads == 1,
+                  "PIT control reads retain saved-port fallback and retrace counting");
+            machine.ioReads = 0;
+            check(machine.in(0x3da, 1) == 9, "first counted VGA status read asserts retrace");
+            machine.in(0x1234, 1);
+            check(machine.in(0x3da, 1) == 9 && machine.ioReads == 3,
+                  "unmapped reads still influence VGA retrace parity");
+            machine.out(0x20, 0xff0a, 2);
+            check(machine.pic[0].mask == 0xff && machine.ports[0x21] == 0xff,
+                  "wide PIC writes split across command and mask registers");
+            machine.ports[0x44] = 0x42;
+            machine.out(0x43, 0xaa36, 2);
+            check(machine.pit.counters[0].rw == 3 && machine.pit.counters[0].mode == 3 &&
+                      machine.ports[0x44] == 0x42,
+                  "wide PIT control writes remain a single truncated transaction");
+            machine.out(0xcf8, 0x80001000, 4);
+            check(machine.in(0xcfc, 4) == 0x11111234 && machine.pci.address == 0x80001000,
+                  "PCI config address and data preserve dword accesses");
+            machine.out(0x3c4, 0x0f02, 2);
+            check(machine.vga.seqIndex == 2 && machine.vga.seq[2] == 0x0f &&
+                      machine.ports[0x3c4] == 2 && machine.ports[0x3c5] == 0x0f,
+                  "wide VGA writes split index/data and retain port shadows");
+            machine.out(0x1ce, 1, 2);
+            machine.out(0x1cf, 640, 2);
+            check(machine.in(0x1ce, 2) == 1 && machine.in(0x1cf, 2) == 640,
+                  "DISPI index/data preserve whole word transactions");
+            machine.out(0x64, 0x5a60, 2);
+            check(machine.keyboardControllerPending == 0x60 && machine.ports[0x65] == 0x5a,
+                  "wide PS2 writes cross into the adjacent unmapped port");
+            machine.out(0x70, 0x558b, 2);
+            check(machine.cmosIndex == 0x8b && machine.in(0x70, 2) == 0x8b &&
+                      machine.in(0x71, 2) == 2 && machine.ports[0x71] == 0x55,
+                  "CMOS index masks NMI bit for reads and splits wide writes");
+            machine.out(0x61, 0x5a01, 2);
+            check(machine.pit.counters[2].gate && machine.ports[0x61] == 1 &&
+                      machine.ports[0x62] == 0x5a,
+                  "speaker gate and adjacent byte survive wide output");
+            machine.out(0x92, 0x2200, 2);
+            check(!machine.cpu.a20 && machine.ports[0x93] == 0x22 && !machine.resetRequested,
+                  "system control wide output splits and updates A20");
+            machine.out(0x92, 3, 1);
+            check(machine.cpu.a20 && machine.resetRequested,
+                  "system control still requests reset through bit zero");
+        }
+        {
             std::deque<uint8_t> stream;
             HostKeyboard keyboard(stream);
             auto tap = [&](uint16_t key) {

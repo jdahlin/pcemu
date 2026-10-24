@@ -7,7 +7,7 @@ LDLIBS = $(SDL_LIBS) $(shell pkg-config --libs libzstd)
 HEADERS := $(wildcard src/*.hpp)
 JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
 	src/jit_runtime.cpp src/jit_arm64.cpp
-CORE := src/cpu.cpp src/machine.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
+CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
 .PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
 all: build/pcemu
 build/pcemu-profile: $(CORE) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp

@@ -103,6 +103,43 @@ Local evidence: `build/pc-at-baseline.log`, `build/pc-at-after.log`,
 The calculator used a fixed executable copy at `build/pc-at-validation` because
 concurrent workspace builds can replace `build/pcemu` during a measurement.
 
+## Complete port registration (2026-10-24)
+
+`src/pc_at_io.cpp` now owns the PC/AT port composition in `bindIoPorts()`:
+PIC, PIT, PCI configuration, VGA/DISPI, PS/2, CMOS, speaker, system control and
+debug console join ATA/NE2000 as named regions. `Machine::in/out` only dispatch
+transactions and implement unmapped-port fallback. The small PS/2-read,
+CMOS-read and PIC-write adapters remain machine methods until their respective
+device state is extracted; this step does not claim that state ownership moved.
+
+The composition deliberately preserves asymmetric transaction rules:
+
+- PIC, VGA, PS/2, CMOS, speaker, system control and debug writes split into byte
+  transactions, re-entering the bus for each byte, including adjacent gaps.
+- PIT, PCI, DISPI, ATA and NE2000 receive the original width in one call.
+- Reads remain whole transactions. PIT control reads use the old saved-port
+  fallback. Retrace counting excludes PIC, PIT data, ATA and NE2000 reads.
+- Port shadows, PIC mirror fields, keyboard deadlines and speaker gate ordering
+  retain their previous behavior. Snapshot state and rebinding remain unchanged.
+
+Validation: `make test` passed, including 106 input/video integration checks and
+2,887 snapshot checks. Machine-profile tests, Win3.11 Notepad file verification,
+Win95 cold boot/restart, and all three DOS reset paths passed headless.
+Five independent Calculator snapshot restores passed before and after this step;
+one interpreter restore also passed. Sequential runs after the other guest tests
+finished had task-response medians of about 69 ms on both binaries. This bounded
+end-to-end task is not a general CPU or I/O throughput benchmark, and concurrent
+JIT work in the shared workspace prevents attributing timing differences solely
+to this extraction.
+
+Evidence: `build/pc-at-ports-tests.log`, `build/pc-at-ports-{win311,win95,reset,profiles}.log`,
+`build/pc-at-ports-idle-{before,after}/result.json` and
+`build/pc-at-ports-interpreter/result.json`. Fixed executable copies are
+`build/pc-at-ports-before` and `build/pc-at-ports-after`.
+
+Next: extract CMOS/RTC state and configuration behind its registered region,
+then PS/2 controller state, each with snapshot compatibility preserved.
+
 ## QEMU references
 
 - [Memory and I/O regions](https://www.qemu.org/docs/master/devel/memory.html)

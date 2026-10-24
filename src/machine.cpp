@@ -21,22 +21,7 @@ Machine::Machine(const std::string &hd, const std::string &fd, size_t ram) : cpu
 }
 void Machine::bindDevices() {
     ata.disk = disk.get();
-    ioPorts.clear();
-    auto ataRead = [this](uint16_t p, int w) {
-        auto value = ata.in(p, w);
-        if (p == 0x1f7)
-            ataLine = false;
-        return value;
-    };
-    auto ataWrite = [this](uint16_t p, uint32_t v, int w) { ata.out(p, v, w); };
-    ioPorts.map("ata-primary", 0x1f0, 8, ataRead, ataWrite);
-    ioPorts.map("ata-control", 0x3f6, 1, ataRead, ataWrite);
-    ioPorts.map("ne2000", NE2000::base, 32,
-                [this](uint16_t p, int w) { return nic.in(p, w); },
-                [this](uint16_t p, uint32_t v, int w) {
-                    nic.out(p, v, w);
-                    if (!nic.irq()) nicLine = false;
-                });
+    bindIoPorts();
     cpu.videoRead = [this](uint32_t a) { return vga.read(a); };
     cpu.videoWrite = [this](uint32_t a, uint8_t v) { vga.write(a, v); };
     cpu.bios = [this](uint8_t n) { return bios(n); };
@@ -565,161 +550,16 @@ void Machine::timer() {
 }
 uint32_t Machine::in(uint16_t p, int w) {
     if (auto value = ioPorts.read(p, w)) return *value;
-    if (p >= 0x40 && p <= 0x42)
-        return pit.read(p - 0x40, cpu.instructions / 4);
-    if (p == 0x20 || p == 0xa0)
-        return pic[p == 0xa0].read();
-    if (p == 0x21 || p == 0xa1)
-        return pic[p == 0xa1].mask;
-    (void)w;
-    ioReads++;
-    if (p == 0x3da) {
-        vga.in(p);
-        return (ioReads & 1) ? 9 : 0;
-    }
-    if (p >= 0x3b0 && p <= 0x3df)
-        return vga.in(p);
-    if (p >= 0xcf8 && p <= 0xcff)
-        return pci.in(p, w);
-    if (p == 0x1ce)
-        return vga.dispiIndex;
-    if (p == 0x1cf)
-        return vga.dispiRead();
-    if (p == 0x64) {
-        keyboardPoll();
-        return (keyboardFull ? 1 : 0) | (keyboardFull && keyboardAux ? 0x20 : 0) |
-               (keyboardCommandByte & 4) | (keyboardLastCommand ? 8 : 0);
-    }
-    if (p == 0x60) {
-        keyboardPoll();
-        if (verbose)
-            std::fprintf(stderr, "KBC read %02x full=%d at %04x:%08x count=%llu\n", keyboardData,
-                         keyboardFull, cpu.s[CS].selector, cpu.ip,
-                         static_cast<unsigned long long>(cpu.instructions));
-        if (keyboardFull) {
-            if (keyboardAux) {
-                mouse.lastSent = keyboardData;
-                mouseLine = false;
-            } else
-                keyLine = false;
-            keyboardFull = false;
-            // About one PS/2 byte at the current instruction-clock ratio.
-            keyboardNextAt = cpu.instructions + 4000;
-        }
-        return keyboardData;
-    }
-    if (p == 0x71) {
-        std::time_t now = rtcTime();
-        auto t = *std::localtime(&now);
-        auto bcd = [](int v) { return (v / 10) * 16 + v % 10; };
-        switch (cmosIndex & 127) {
-        case 0:
-            return bcd(t.tm_sec);
-        case 2:
-            return bcd(t.tm_min);
-        case 4:
-            return bcd(t.tm_hour);
-        case 7:
-            return bcd(t.tm_mday);
-        case 8:
-            return bcd(t.tm_mon + 1);
-        case 9:
-            return bcd(t.tm_year % 100);
-        case 0xa:
-            return 0x26;
-        case 0xb:
-            return 2;
-        case 0xd:
-            return 0x80;
-        case 0x10:
-            return floppy ? 0x40 : 0;
-        case 0x12:
-            return disk ? 0xf0 : 0;
-        case 0x14:
-            return 0x20 | (floppy ? 1 : 0);
-        case 0x15:
-            return 128;
-        case 0x16:
-            return 2;
-        case 0x17:
-        case 0x30:
-            return ((cpu.mem.size() - 1024 * 1024) / 1024) & 255;
-        case 0x18:
-        case 0x31:
-            return ((cpu.mem.size() - 1024 * 1024) / 1024) >> 8;
-        default:
-            return 0;
-        }
-    }
-    if (p == 0x61)
-        return (ports[p] & 0xcf) | (pit.counters[1].output(cpu.instructions / 4) ? 16 : 0) |
-               (pit.counters[2].output(cpu.instructions / 4) ? 32 : 0);
-    if (p == 0x92)
-        return cpu.a20 ? 2 : 0;
+    ++ioReads;
     return ports[p];
 }
 void Machine::out(uint16_t p, uint32_t v, int w) {
     if (ioPorts.write(p, v, w)) return;
-    if (p >= 0xcf8 && p <= 0xcff) {
-        pci.out(p, v, w);
-        return;
-    }
-    if (p == 0x1ce) {
-        vga.dispiIndex = v;
-        return;
-    }
-    if (p == 0x1cf) {
-        vga.dispiWrite(v);
-        return;
-    }
-    if (p >= 0x40 && p <= 0x43) {
-        pit.write(p - 0x40, v, cpu.instructions / 4);
-        return;
-    }
-    if (p == 0x61)
-        pit.counters[2].setGate(v & 1, cpu.instructions / 4);
     if (w > 1) {
-        for (int i = 0; i < w; i++)
-            out(p + i, v >> (i * 8), 1);
+        for (int i = 0; i < w; ++i) out(p + i, v >> (8 * i), 1);
         return;
     }
-    if (p == 0x64 || p == 0x60) {
-        if (verbose)
-            std::fprintf(stderr, "KBC OUT %04x=%02x at %s\n", p, unsigned(v),
-                         cpu.location().c_str());
-        ports[p] = v;
-        if (p == 0x64)
-            keyboardCommand(v);
-        else
-            keyboardWrite(v);
-        return;
-    }
-    if (p >= 0x3b0 && p <= 0x3df)
-        vga.out(p, v);
     ports[p] = v;
-    if (p == 0x20 || p == 0xa0)
-        pic[p == 0xa0].command(v);
-    if (p == 0x21 || p == 0xa1)
-        pic[p == 0xa1].data(v);
-    if (p == 0x20 || p == 0xa0 || p == 0x21 || p == 0xa1) {
-        for (unsigned k = 0; k < 2; k++) {
-            ports[k ? 0xa1 : 0x21] = pic[k].mask;
-            picBase[k] = pic[k].base;
-        }
-        timerPending = pic[0].irr & 1;
-        timerInService = pic[0].isr & 1;
-        keyboardInService = pic[0].isr & 2;
-        ataInService = pic[1].isr & 0x40;
-    }
-    if (p == 0x70)
-        cmosIndex = v;
-    if (p == 0x92) {
-        cpu.a20 = v & 2;
-        if (v & 1)
-            resetRequested = true;
-    }
-    if (p == 0xe9)
-        std::cout << char(v) << std::flush;
 }
 bool Machine::bios(uint8_t n) {
     if (n == 0xfe && cpu.s[CS].selector == 0xf000 && cpu.ip == 2) {
