@@ -26,7 +26,11 @@ static std::vector<uint8_t> instruction(unsigned kind, unsigned width, unsigned 
             byte(v >> (i * 8));
     };
     unsigned group = reg;
-    if (kind <= 1)
+    if (kind >= 6) {
+        const uint8_t extended[] = {0xb6, 0xb7, 0xbe, 0xbf};
+        byte(0x0f);
+        byte(extended[kind - 6]);
+    } else if (kind <= 1)
         byte((kind == 0 ? 0x38 : 0x3a) + (width != 1));
     else if (kind == 2) {
         byte(width == 1 ? 0x80 : 0x81);
@@ -60,15 +64,17 @@ int main() {
         for (bool big : {false, true})
             for (bool address32 : {false, true})
                 for (unsigned width : {1, 2, 4})
-                    for (unsigned kind = 0; kind < 6; ++kind)
+                    for (unsigned kind = 0; kind < 10; ++kind)
                         for (unsigned reg = 0; reg < 8; ++reg)
                             for (unsigned cc = 0; cc < 16; ++cc) {
+                                if (kind >= 6 && width == 1)
+                                    continue;
                                 unsigned segment = cc % 3;
                                 uint32_t data = rng(), value = rng();
                                 if (cc < 8) {
                                     const uint32_t edge[] = {0,    1,      0x7f,       0x80,
                                                              0xff, 0x7fff, 0x80000000, 0xffffffff};
-                                    data = edge[cc];
+                                    data = kind >= 6 && cc == 6 ? 0x8000 : edge[cc];
                                     value = edge[7 - cc];
                                 }
                                 auto compare = instruction(kind, width, reg, big, address32,
@@ -99,19 +105,19 @@ int main() {
                                 auto before = jit.nativeInstructions;
                                 auto n = jit.run();
                                 check(n == 3 && jit.nativeInstructions - before == 3,
-                                      "memory CMP/TEST actually execute in native blocks");
+                                      "memory CMP/TEST/MOVZX/MOVSX execute in native blocks");
                                 check(actual.flags == reference.flags &&
                                           actual.ip == reference.ip && actual.instructions == 3,
-                                      "memory comparison exact flags and Jcc");
+                                      "memory read preserves exact flags and Jcc");
                                 for (unsigned r = 0; r < 8; ++r)
                                     check(actual.r[r] == reference.r[r],
-                                          "comparison never changes guest registers");
+                                          "memory read produces exact reference registers");
                                 check(actual.mem == reference.mem,
                                       "comparison never writes guest RAM");
                             }
         // Faults, MMIO, and valid crossing accesses must replay once with the
         // comparison's original IP and the flags of the preceding arithmetic.
-        for (unsigned kind = 0; kind < 6; ++kind)
+        for (unsigned kind = 0; kind < 10; ++kind)
             for (unsigned width : {1, 2, 4})
                 for (unsigned access = 0; access < 6; ++access) {
                     CPU ref(1024 * 1024), native(1024 * 1024);
@@ -185,6 +191,47 @@ int main() {
                     check(native.mem == ref.mem && refReads == nativeReads,
                           "no duplicate device read or page side effects");
                 }
+        // A widened destination must not widen the actual source access.
+        for (unsigned kind = 6; kind < 10; ++kind) {
+            CPU ref(65536), native(65536);
+            unsigned sourceWidth = kind & 1 ? 2 : 1;
+            auto code = instruction(kind, 4, AX, true, true, 0, 65536 - sourceWidth, 0);
+            code.insert(code.end(), {0x90, 0x90, 0x74, 0});
+            for (auto c : {&ref, &native}) {
+                c->s[CS].big = true;
+                c->r[AX] = 0xdeadbeef;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+                c->write(65536 - sourceWidth, 0x8080, sourceWidth);
+            }
+            for (unsigned n = 0; n < 4; ++n)
+                ref.step();
+            Jit widened(native, true, 0);
+            check(widened.run() == 4 && widened.nativeInstructions == 4 &&
+                      native.nativeMemoryCalls == 0 && native.r[AX] == ref.r[AX] &&
+                      native.flags == ref.flags && native.ip == ref.ip,
+                  "MOVZX/MOVSX at RAM end read only source-width bytes through inline RAM path");
+        }
+        for (unsigned extended : {0xb6u, 0xb7u, 0xbeu, 0xbfu})
+            for (unsigned base : {AX, SP}) {
+                CPU ref(65536), native(65536);
+                std::vector<uint8_t> code = {uint8_t(0xb8 | base), 0, 0x40, 0, 0,
+                                            0x0f, uint8_t(extended), uint8_t(base << 3 | base)};
+                if (base == SP)
+                    code.push_back(0x24); // [ESP] SIB with no index.
+                code.insert(code.end(), {0x89, uint8_t(0xc3 | base << 3), 0x74, 0});
+                for (auto c : {&ref, &native}) {
+                    c->s[CS].big = true;
+                    std::copy(code.begin(), code.end(), c->mem.begin());
+                    c->write(0x4000, 0x8080, 2);
+                }
+                for (unsigned n = 0; n < 4; ++n)
+                    ref.step();
+                Jit aliased(native, true, 0);
+                check(aliased.run() == 4 && aliased.nativeInstructions == 4 &&
+                          native.r[base] == ref.r[base] && native.r[BX] == ref.r[BX] &&
+                          native.ip == ref.ip && native.flags == ref.flags,
+                      "MOVZX/MOVSX use original cached EAX/ESP addresses before replacing them");
+            }
         // A later fault must publish comparison flags, not an earlier ALU's flags.
         {
             CPU c(65536);

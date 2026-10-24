@@ -489,16 +489,14 @@ Jit::Block Jit::compile(bool translate) {
                 auto extended = byte();
                 if (extended == 0xb6 || extended == 0xb7 || extended == 0xbe || extended == 0xbf) {
                     auto m = byte();
-                    if ((m >> 6) != 3) {
-                        pos = begin;
-                        break;
-                    }
-                    i.kind = 0;
+                    i.kind = (m >> 6) == 3 ? 0 : 5;
                     i.dst = (m >> 3) & 7;
                     i.src = m & 7;
+                    if (i.kind == 5)
+                        i.memory = memoryOperand(m, address32, overrideSegment);
                     i.sourceWidth = (extended & 1) ? 2 : 1;
                     i.signedSource = extended & 8;
-                    if (i.sourceWidth == 1) {
+                    if (i.kind == 0 && i.sourceWidth == 1) {
                         i.srcShift = (i.src & 4) ? 8 : 0;
                         i.src &= 3;
                     }
@@ -539,7 +537,7 @@ Jit::Block Jit::compile(bool translate) {
                 }
             }
             if (i.kind == 5) {
-                i.memory.width = i.w;
+                i.memory.width = i.sourceWidth ? i.sourceWidth : i.w;
                 i.memory.begin = begin;
                 i.memory.end = i.nearCall ? i.target : pos;
             }
@@ -734,6 +732,7 @@ Jit::Block Jit::compile(bool translate) {
             continue;
         }
         if (i.kind == 5) {
+            const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
             auto metadata = &(*block.memory)[memoryIndex++];
             auto finishMove = [&]() {
@@ -772,6 +771,8 @@ Jit::Block Jit::compile(bool translate) {
                     // stack read. Fault/MMIO replay retains the original IP.
                     store(10, 19, offsetof(CPU, ip));
                 } else if (!i.memory.store) {
+                    if (i.signedSource)
+                        emit(0x13000000u | ((i.sourceWidth * 8 - 1) << 10) | (10 << 5) | 10);
                     insert(20 + i.dst, 10, i.w, i.dstShift);
                     dirtyRegisters |= 1u << i.dst;
                 }
@@ -789,7 +790,7 @@ Jit::Block Jit::compile(bool translate) {
             // dirty-bit updates, code writes and devices retain the precise
             // existing helper/replay path below.
             size_t fastSuccess = size_t(-1);
-            if ((!i.memory.store || !block.watched) && block.ramSize >= unsigned(i.w) &&
+            if ((!i.memory.store || !block.watched) && block.ramSize >= unsigned(accessWidth) &&
                 block.ramSize <= UINT32_MAX) {
                 std::vector<size_t> guards;
                 auto guard = [&](uint32_t instruction) {
@@ -813,7 +814,7 @@ Jit::Block Jit::compile(bool translate) {
                 load(9, 19, segmentOffset + offsetof(Segment, base));
                 emit(0x0b020129u); // add w9,w9,w2 (linear address, wraps at 32 bits)
                 emit(0x12002d2au); // and w10,w9,#4095
-                compareImmediate(10, 4096 - i.w);
+                compareImmediate(10, 4096 - accessWidth);
                 guard(0x54000008u); // b.hi slow (cross-page access)
                 if (block.cr0 & 0x80000000u) {
                     emit(0x530c7d2au); // lsr w10,w9,#12 (page tag)
@@ -861,7 +862,7 @@ Jit::Block Jit::compile(bool translate) {
                     emit(0x53007c00u | (shift << 16) | (9 << 5) | 10);
                     guard(0x3500000au); // cbnz w10,slow (outside RAM)
                 } else {
-                    compareImmediate(9, uint32_t(block.ramSize - i.w));
+                    compareImmediate(9, uint32_t(block.ramSize - accessWidth));
                     guard(0x54000008u); // b.hi slow (outside RAM)
                 }
                 emit(0x53107d2au); // lsr w10,w9,#16
@@ -869,7 +870,7 @@ Jit::Block Jit::compile(bool translate) {
                 guard(0x54000000u); // b.eq slow (VGA aperture)
                 if (i.memory.store) {
                     emit(0x1200152au); // and w10,w9,#63
-                    compareImmediate(10, 64 - i.w);
+                    compareImmediate(10, 64 - accessWidth);
                     guard(0x54000008u); // b.hi slow (two code bitmap words)
                     emit(0x53067d2au);  // lsr w10,w9,#6
                     if (bitmapRegister >= 0)
@@ -888,16 +889,16 @@ Jit::Block Jit::compile(bool translate) {
                         imm(10, i.imm);
                         source = 10;
                     } else if (i.dstShift) {
-                        extract(10, source, i.w, i.dstShift);
+                        extract(10, source, accessWidth, i.dstShift);
                         source = 10;
                     }
-                    emit((i.w == 4   ? 0xb9000000u
-                          : i.w == 2 ? 0x79000000u
+                    emit((accessWidth == 4   ? 0xb9000000u
+                          : accessWidth == 2 ? 0x79000000u
                                      : 0x39000000u) |
                          (11 << 5) | source);
                 } else {
-                    emit((i.w == 4   ? 0xb9400000u
-                          : i.w == 2 ? 0x79400000u
+                    emit((accessWidth == 4   ? 0xb9400000u
+                          : accessWidth == 2 ? 0x79400000u
                                      : 0x39400000u) |
                          (11 << 5) | 10);
                 }

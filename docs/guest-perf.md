@@ -225,8 +225,8 @@ preceding arithmetic operation still supplies subsequent Jcc conditions.
 
 The differential byte suite covers all source/destination registers, both code
 sizes, operand overrides, signed/unsigned extension, sign-boundary values and all
-16 Jcc conditions. Memory-source forms remain on the interpreter path; this
-change does not claim acceleration for all MOVZX/MOVSX instructions or an
+16 Jcc conditions. At that stage memory-source forms remained interpreted; the subsequent change
+below adds guarded reads. Register coverage alone does not establish an
 application speedup. Near Jcc decoding remains supported alongside the new 0F
 opcode forms.
 
@@ -242,3 +242,21 @@ these counts are evidence of current coverage, not an isolated speed comparison.
 under both engines (`build/native-extend-smoke.log`). Win3.11 saves exact Notepad
 contents (`build/native-extend-win311.log`), and the Win95 calculator snapshot
 reaches its recorded result (`build/native-extend-win95-calc/result.json`).
+
+## Guarded memory extension instructions
+
+Memory-source MOVZX/MOVSX now reuse the native RAM-read guards, permission checks
+and interpreter replay of existing loads. The access width is independent of the
+destination width: byte/word reads access exactly one/two bytes, then zero/sign
+extend into a 16/32-bit destination. This distinction applies to page and RAM
+bounds, host load opcodes and slow-helper metadata. The destination changes only
+after a successful read; earlier arithmetic flags remain restartable.
+
+The read differential matrix now includes all four extension opcodes, source
+sign boundaries, 16/32-bit destinations and addressing, segment overrides, all
+destination registers and Jcc conditions. Additional cases cover page/segment
+faults, cached supervisor-only translations, MMIO read counts, cross-page reads,
+source accesses ending at the last RAM byte and EAX/ESP address/destination
+aliases. The previous instruction's flags and the original fault IP must match
+the interpreter. These checks target correctness and do not establish a broad
+performance improvement.
