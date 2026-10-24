@@ -111,8 +111,8 @@ python3 tools/bench_guest_perf.py --suite micro --loops 17 --output build/micro-
 make smoke-guest-perf
 ```
 
-There are seven kernels in real mode with 16-bit operands, then the corresponding
-seven kernels in flat 32-bit protected mode. Both use the original DOS COM loader
+There are eight kernels in real mode with 16-bit operands, then the corresponding
+eight kernels in flat 32-bit protected mode. Both use the original DOS COM loader
 and return through DOS. The real-mode version uses 386 32-bit outer counters;
 it is not an 8086-compatible benchmark. `--loops` defaults to one million and
 accepts 1..10 million without rebuilding the COM image.
@@ -126,6 +126,7 @@ accepts 1..10 million without rebuilding the COM image.
 | 20 / 36 | REP MOVSW/MOVSD of 64 elements | max(1, loops/64) × 128/256 bytes |
 | 21 / 37 | One addition and a backward LOOP using ECX | loops iterations |
 | 22 / 38 | Two AL/AH exchanges with intervening word addition | 2 × loops exchanges |
+| 23 / 39 | REP STOSW/STOSD of 64 elements | max(1, loops/64) × 128/256 bytes |
 
 Each kernel runs twice at the same guest addresses. The first pass explicitly
 clears the JIT after the current dispatch returns; the second retains the code
@@ -137,7 +138,7 @@ outside the measured intervals. Fixed bookkeeping around the loop remains timed.
 
 Every pass reports a checksum through E5. The host calculates the expected value
 independently from the loop count, operand width and data pattern. Missing or
-wrong results fail the run. The runner requires all twenty-eight intervals, the
+wrong results fail the run. The runner requires all thirty-two intervals, the
 expected cold/warm ordering, and identical guest instruction counts for each
 pair. JSON reports work units/host-second, mode, checksum, JIT/native counts and
 translation counts. Do not average different units into an overall score.
@@ -401,3 +402,39 @@ DEC/Jcc instructions natively too. Their timings are single diagnostics, not
 repeated comparisons. Updated cold boot and guest restart checks pass for both
 sources: `build/win95-smoke-7qf2q245/result.json` (rtts) and
 `build/win95-smoke-faunui67/result.json` (installed OSR2), with private disk removal.
+
+
+## REP fill validation (2026-10-24)
+
+Cases 23/39 add checked REP STOSW/STOSD fills to the matrix: eight kernels,
+two code widths and cold/warm passes, for 32 intervals per engine. Both modes
+fill 64 elements per outer iteration; zeroing and checksums are outside the
+host-timed interval. The guest returns to DOS and the runner independently
+checks the expected sum. This remains a cache-resident, paging-disabled test.
+
+Three alternating pairs at ten million loops compare identical guest programs
+and runner sources, changing only CPU execution before/after page-amortized
+STOS. Median paired baseline/candidate host-time ratios are:
+
+| Fill | Cold JIT | Warm JIT |
+| --- | ---: | ---: |
+| STOSW | 6.24x | 6.22x |
+| STOSD | 5.16x | 5.64x |
+
+Every one of the 32 intervals has matching checksums and architectural guest
+instruction counts across all six runs. The fill intervals are short (roughly
+10–72 ms), and three pairs do not establish a precise general speedup. This
+measures the isolated fill path, not Windows startup or paged-memory performance.
+Build provenance, individual paired ratios and raw times are committed in
+`docs/measurements/rep-fill-2026-10-24.json`; larger local evidence is under
+`build/rep-fill-guest-comparison/`.
+
+Media-based checks pass short CoreMark CRCs, all 64 micro intervals across
+JIT/interpreter, wrong-result rejection, interval profiling consistency and the
+comparison wrapper. The current emulator also passes headless Win3.11 Notepad
+save, rtts Win95 cold boot/restart and installed OSR2 cold boot/restart. These
+checks do not repeat the OSR2 installer. Local runtime evidence is under
+`build/win311-smoke-wzhgfs0r/`, `build/win95-smoke-546x5ewg/`,
+`build/win95-smoke-l3it_1hz/`, `build/guest-perf-smoke-3is59fzo/`,
+`build/guest-profile-smoke-1m6278zl/` and
+`build/rep-fill-matrix-compare-check/`. Successful private disks are removed.

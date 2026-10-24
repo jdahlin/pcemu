@@ -29,6 +29,7 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
     case 19:
         return (loops * 4u) & 65535;
     case 20:
+    case 23:
         return 64u * 0x5a5a;
     case 21:
         return (loops * 3u) & 65535;
@@ -41,6 +42,7 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
     case 35:
         return loops * 4u;
     case 36:
+    case 39:
         return uint32_t(64ull * 0x5a5a5a5a);
     case 37:
         return loops * 3u;
@@ -233,7 +235,7 @@ int main(int argc, char **argv) {
         const bool micro =
             std::any_of(samples.begin(), samples.end(), [](const Sample &s) { return s.id != 1; });
         if (micro) {
-            for (unsigned id : {16u, 17u, 18u, 19u, 20u, 21u, 22u, 32u, 33u, 34u, 35u, 36u, 37u, 38u}) {
+            for (unsigned id : {16u, 17u, 18u, 19u, 20u, 21u, 22u, 23u, 32u, 33u, 34u, 35u, 36u, 37u, 38u, 39u}) {
                 unsigned count = 0;
                 uint64_t firstInstructions = 0;
                 for (const auto &s : samples)

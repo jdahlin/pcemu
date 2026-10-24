@@ -24,7 +24,7 @@ for suite in ['coremark', 'micro']:
             if not data['crcValidated'] or data['upstreamValidated'] or data['publishedScoreEligible']:
                 raise RuntimeError('Short CoreMark diagnostic was misclassified')
         else:
-            if not data['microValidated'] or len(data['samples']) != 28:
+            if not data['microValidated'] or len(data['samples']) != 32:
                 raise RuntimeError('Microbenchmark matrix missing')
     if suite == 'micro':
         jit = json.loads((work / 'micro-jit/result.json').read_text())
@@ -56,7 +56,7 @@ if result.returncode == 0 or 'checksum 0 expected 816' not in result.stderr:
 disk.unlink()
 (work / 'result.json').write_text(json.dumps({
     'coremarkCrcBothEngines': True, 'shortScoresRejected': True,
-    'microIntervalsBothEngines': 56, 'microResultsAndInstructionCountsMatch': True,
+    'microIntervalsBothEngines': 64, 'microResultsAndInstructionCountsMatch': True,
     'wrongGuestChecksumRejected': True,
 }, indent=2) + '\n')
 print('PASS: guest benchmark CRCs, cold/warm matrix, instruction counts and wrong-result rejection')

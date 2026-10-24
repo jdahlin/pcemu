@@ -11,7 +11,7 @@ global micro32
 %%warm:
     mov al,%1
     out 0e6h,al
-%if %1 = 36
+%if %1 = 36 || %1 = 39
     xor eax,eax
     mov edi,micro32_destination
     mov ecx,64
@@ -126,6 +126,30 @@ micro32:
     loop .loop_exchange
     MICRO_END32
     MICRO_REPORT32 38
+    MICRO_START32 39
+    mov ebp,ecx
+    shr ebp,6
+    jnz .fill_ready
+    inc ebp
+.fill_ready:
+.loop_fill:
+    mov edi,micro32_destination
+    mov ecx,64
+    mov eax,05a5a5a5ah
+    rep stosd
+    dec ebp
+    jnz .loop_fill
+    mov al,2
+    out 0e7h,al
+    xor ebx,ebx
+    mov esi,micro32_destination
+    mov ecx,64
+.fill_checksum:
+    lodsd
+    add ebx,eax
+    loop .fill_checksum
+    mov eax,ebx
+    MICRO_REPORT32 39
     pop ebp
     pop edi
     pop esi

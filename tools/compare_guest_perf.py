@@ -62,7 +62,7 @@ for pair in range(a.repeat):
             rows = [{'case': 'coremark', 'cache': 'calibrated-warm' if not a.iterations else 'fixed-iterations',
                      'rate': data['iterationsPerHostSecond'], 'unit': 'iterations/host-second'}]
         else:
-            if not data['microValidated'] or len(data['samples']) != 28:
+            if not data['microValidated'] or len(data['samples']) != 32:
                 raise RuntimeError('Micro matrix validation failed')
             signature = [(s['case'], s['cache'], s['checksum'], s['guestInstructions'],
                           s['workUnits'], s['workUnit']) for s in data['samples']]

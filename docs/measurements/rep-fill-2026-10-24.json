@@ -1,0 +1,198 @@
+{
+  "scope": "Headless DOS guest REP STOSW/STOSD, 64-element cache-resident fills, paging disabled; not Windows performance",
+  "loops": 10000000,
+  "pairs": 3,
+  "ordering": [
+    "baseline/candidate",
+    "candidate/baseline",
+    "baseline/candidate"
+  ],
+  "comSha256": "7c0f51ccedc48d568adf35163a96da824336fbe3288e894acb7cab871827e3a4",
+  "all32IntervalsMatchChecksumsAndGuestInstructionCounts": true,
+  "build": {
+    "command": [
+      "clang++",
+      "-Isrc",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/tmp/pcemu-rep-fill-guest-comparison/baseline-cpu.cpp",
+      "src/machine.cpp",
+      "src/pc_at_io.cpp",
+      "src/pc_firmware.cpp",
+      "src/pc_bios.cpp",
+      "src/pc_bios_video.cpp",
+      "src/i8042.cpp",
+      "src/pc_input.cpp",
+      "src/cmos_rtc.cpp",
+      "src/disk.cpp",
+      "src/pc_bios_disk.cpp",
+      "src/ata.cpp",
+      "src/pic.cpp",
+      "src/i8259_pair.cpp",
+      "src/pit.cpp",
+      "src/vga.cpp",
+      "src/jit.cpp",
+      "src/jit_decode.cpp",
+      "src/jit_flags.cpp",
+      "src/jit_runtime.cpp",
+      "src/jit_arm64.cpp",
+      "src/snapshot.cpp",
+      "src/mouse.cpp",
+      "src/pci.cpp",
+      "src/vga_pci.cpp",
+      "src/host_keyboard.cpp",
+      "src/ne2000.cpp",
+      "tools/guest_bench.cpp",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/tmp/pcemu-rep-fill-guest-comparison/baseline"
+    ],
+    "gitCommit": "b33fb1756139e46c677a57eb6b2a6523e00e5b4d",
+    "files": {
+      "src/cpu.cpp": "6225616cd5937ab3bcc7e608418a0d733bc00128669ea3cf392452c31f1aa0a0",
+      "src/machine.cpp": "7396b98b641a8f13b2cbae61ad57b8042a10ecfa33fc3cc4f2a58c021802da23",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/disk.cpp": "6019811dda73f0049cf3b23d90b2daf7a3bd99f84841914dfe51418d9cfe874e",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/jit.cpp": "0854cb3855fabb16923a565fdf99cb82235fc1d71515be53ad02323d8fc84d2a",
+      "src/jit_decode.cpp": "8152c2ef98bab6bd27d2934da0c3aa70bed421d4a195e12cdea385d2247bd507",
+      "src/jit_flags.cpp": "929e759215daaa877225517da55309f0ca4749d9dacdca5737351917aa174325",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_arm64.cpp": "fb63f17d4b078e1577157cad8e443660d352d7fbe11d953dbb0e6c24ab38b33a",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "tools/guest_bench.cpp": "42d0cae1a22806ef175900f85c8e81a39a0ff6e244e4e1e39d54c1a5fbdb1cb6"
+    },
+    "baselineCpuSha256": "7e897af2d306f68461b0dfdd0baf42f02fb3970f6ad7e54e6305ee1a563e9886",
+    "binaries": {
+      "baseline": "8783b4519c508af1967d82ede6b39d426013c83670eed0ee91451f2268f51b92",
+      "candidate": "f30ca9ce6454f8e47319497cce575acc088a5f869f25fc18828c02a06e2b63a6"
+    }
+  },
+  "timings": [
+    {
+      "case": 23,
+      "cache": "cold",
+      "ratios": [
+        5.705759800273664,
+        6.244234063274824,
+        6.459299928131297
+      ],
+      "median": 6.244234063274824,
+      "seconds": {
+        "baseline": [
+          0.059421209,
+          0.064826333,
+          0.06853075
+        ],
+        "candidate": [
+          0.01041425,
+          0.010381791,
+          0.010609625
+        ]
+      }
+    },
+    {
+      "case": 23,
+      "cache": "warm",
+      "ratios": [
+        5.675701699452637,
+        6.215203176800612,
+        6.729006961482925
+      ],
+      "median": 6.215203176800612,
+      "seconds": {
+        "baseline": [
+          0.059363583,
+          0.063975417,
+          0.071649625
+        ],
+        "candidate": [
+          0.01045925,
+          0.010293375,
+          0.010647875
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "cold",
+      "ratios": [
+        5.143750526328033,
+        5.713095710736345,
+        5.155797643501018
+      ],
+      "median": 5.155797643501018,
+      "seconds": {
+        "baseline": [
+          0.055277958,
+          0.061287,
+          0.065719875
+        ],
+        "candidate": [
+          0.010746625,
+          0.010727459,
+          0.012746791
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "warm",
+      "ratios": [
+        5.643504302214025,
+        5.784960903051326,
+        5.256291457552126
+      ],
+      "median": 5.643504302214025,
+      "seconds": {
+        "baseline": [
+          0.060248167,
+          0.06149775,
+          0.066209125
+        ],
+        "candidate": [
+          0.010675666,
+          0.010630625,
+          0.012596167
+        ]
+      }
+    }
+  ],
+  "validation": {
+    "win311": "Notepad saved exact file contents through Windows and DOS",
+    "rtts": "Cold boot and guest restart to Explorer; resets 0 to 1",
+    "osr2Installed": "Cold boot and guest restart to Explorer; resets 0 to 1",
+    "emulatorSha256": "8e9813471b3be45b81c3737f9696842fca71740dddab5eb309644a65cebced34",
+    "dosMicro": "32 intervals per engine, checksums/instruction counts match, wrong checksum rejected",
+    "guestProfiles": "Counters match interval boundaries and guest work under both engines"
+  },
+  "limitations": [
+    "Only three pairs",
+    "Timed fill intervals approximately 10 to 72 ms",
+    "Small hot working set",
+    "No paged or Windows application speedup established"
+  ],
+  "rawEvidence": "build/rep-fill-guest-comparison (moved from /tmp after measurement)"
+}

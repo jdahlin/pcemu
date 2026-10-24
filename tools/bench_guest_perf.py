@@ -119,9 +119,9 @@ if args.suite == 'coremark':
           + ('>=10s upstream validation passed' if data['publishedScoreEligible'] else
              'diagnostic only, not a publishable CoreMark score'))
 else:
-    if not data['microValidated'] or len(data['samples']) != 28:
+    if not data['microValidated'] or len(data['samples']) != 32:
         raise RuntimeError('Microbenchmark matrix was not validated')
-    names = ['alu', 'memory-update', 'branch', 'call-ret', 'rep-copy', 'loop-counter', 'byte-exchange']
+    names = ['alu', 'memory-update', 'branch', 'call-ret', 'rep-copy', 'loop-counter', 'byte-exchange', 'rep-fill']
     for row in data['samples']:
         index = row['case'] - (16 if row['case'] < 32 else 32)
         row['name'] = names[index]
@@ -134,10 +134,11 @@ else:
         row['cache'] = 'cold' if row['jitClearedBefore'] else 'warm'
         row['workUnits'] = [16 * args.loops, 8 * args.loops, args.loops, 4 * args.loops,
                             max(1, args.loops // 64) *
-                            (128 if row['operandBits'] == 16 else 256), args.loops, 2 * args.loops][index]
-        row['workUnit'] = ['additions', 'updates', 'iterations', 'calls', 'bytes', 'iterations', 'exchanges'][index]
+                            (128 if row['operandBits'] == 16 else 256), args.loops, 2 * args.loops, max(1, args.loops // 64) *
+                            (128 if row['operandBits'] == 16 else 256)][index]
+        row['workUnit'] = ['additions', 'updates', 'iterations', 'calls', 'bytes', 'iterations', 'exchanges', 'bytes'][index]
         row['unitsPerHostSecond'] = row['workUnits'] / row['hostSeconds']
-    print('PASS: 28 cold/warm 16/32-bit microbenchmark intervals, every checksum checked; returned to DOS')
+    print('PASS: 32 cold/warm 16/32-bit microbenchmark intervals, every checksum checked; returned to DOS')
 result.write_text(json.dumps(data, indent=2) + '\n')
 print(f'Evidence: {work}')
 disk.unlink()  # Only this private compressed child; original media is unchanged.

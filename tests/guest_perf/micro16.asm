@@ -10,7 +10,7 @@
 %%warm:
     mov al,%1
     out 0e6h,al
-%if %1 = 20
+%if %1 = 20 || %1 = 23
     xor ax,ax
     mov di,micro16_destination
     mov cx,64
@@ -125,6 +125,30 @@ micro16:
     add si,2
     loop .checksum
     MICRO_REPORT16 20
+    MICRO_START16 23
+    mov ebp,ecx
+    shr ebp,6
+    jnz .fill_ready
+    inc ebp
+.fill_ready:
+.loop_fill:
+    mov di,micro16_destination
+    mov cx,64
+    mov ax,05a5ah
+    rep stosw
+    dec ebp
+    jnz .loop_fill
+    mov al,2
+    out 0e7h,al
+    xor eax,eax
+    mov si,micro16_destination
+    mov cx,64
+.fill_checksum:
+    movzx edx,word [si]
+    add eax,edx
+    add si,2
+    loop .fill_checksum
+    MICRO_REPORT16 23
     pop es
     popad
     ret
