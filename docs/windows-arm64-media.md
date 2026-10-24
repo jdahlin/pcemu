@@ -134,3 +134,10 @@ python3 tools/observe_validation_os.py --disk-controller nvme
 ```
 
 See [NVMe implementation and validation](nvme.md) for details.
+
+## Network driver inventory
+
+Both original WIM images contain the ARM64 TCP/IP/NDIS stack and debug network
+adapters, but no NetKVM package or network INF with PCI/USB/VMBus hardware IDs.
+The current ARM machine exposes no NIC, so external Windows networking has not
+been verified. See [the complete read-only inventory and test requirements](validation-network.md).
