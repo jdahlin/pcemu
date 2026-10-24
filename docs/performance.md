@@ -924,3 +924,65 @@ cost; the host stack profiles alone do not establish its contribution to
 application startup. The cleanup also removed the local evidence directories
 referenced by earlier experiments in this document; those historical claims
 now have recorded summaries rather than retained raw local evidence.
+
+
+### Page-amortized REP MOVS (2026-10-25)
+
+Forward REP MOVS now copies page-bounded ordinary-RAM spans after validating
+both cached translations. It retains scalar execution for page walks, dirty-bit
+updates, permissions failures, TLB collisions, watched writes, VGA accesses and
+writes to translated-code bitmap words. Physically overlapping ranges also
+retain scalar execution: forward MOVS can propagate values, so substituting
+memmove would be incorrect. Both linear page ends, both address-size wraps and
+the existing 4,096-element scheduling budget bound each span. The existing
+STOS path is kept separately.
+
+The differential matrix now checks 1,152 batch results against forced scalar
+execution, including virtual aliases of the same physical bytes, direct-mapped
+TLB collisions, overlap in both directions, code writes and VGA callbacks.
+The core suite passes 340,898 checks, including existing partial-REP fault cases.
+
+Three alternating paired DOS runs at ten million loops use identical guest
+programs and frozen runners differing only in CPU execution. Timed cases copy
+64 elements repeatedly in real-mode 16-bit and flat protected-mode 32-bit code;
+paging is disabled. Paired baseline/candidate medians are:
+
+| Case | Cold JIT | Warm JIT |
+| --- | ---: | ---: |
+| MOVSW | 8.86x | 8.96x |
+| MOVSD | 12.03x | 13.97x |
+| STOSW control | 0.780x | 0.804x |
+| STOSD control | 1.002x | 1.022x |
+
+The word-fill control is slower and variable despite preserving its source
+path. A separate CPU-only control (two million 64-element fills per interval,
+three alternating pairs) has word-fill ratios 1.015, 0.990 and 1.032; this
+suggests the slowdown is not intrinsic to the isolated fill loop, but does not
+explain or dismiss the DOS result. No general Windows speedup or absence of
+regressions is claimed. Copy intervals span approximately 12–284 ms; there are
+only three pairs, with substantial host variation. All 32 guest interval
+checksums, architectural instruction counts and COM hashes match across the
+six DOS runs.
+
+An earlier shared MOVS/STOS implementation was not retained after a slower
+word-fill control. Its trials remain alongside the separate-path trials in
+the evidence. Both timing variants use the same disk code preceding the CHS
+geometry fix, keeping that independent correction out of the CPU comparison.
+The geometry correction is validated separately against the compacted OSR2
+image. These copy measurements do not establish paged-copy or application gains.
+
+
+Final validation passes the complete suite, including 340,898 core checks,
+2,896 snapshot/COW checks, 2,957,189 byte JIT checks, 27,567 stack checks and
+183,478 flag-liveness checks. One earlier host-network forwarding assertion
+failed; its standalone rerun and both subsequent full-suite runs passed. The
+failure log is retained rather than discarded.
+
+The final binary passes headless Win3.11 Notepad save, rtts Win95 cold boot and
+restart, installed OSR2 cold boot and restart, DOS CoreMark CRCs, 64 micro
+intervals across both engines, wrong-checksum rejection and interval profiling
+consistency. This does not repeat the fresh OSR2 installer or Office startup.
+Provenance, individual timings, the slower fill controls and runtime evidence
+are committed in `docs/measurements/rep-copy-2026-10-25.json`. Larger local
+artifacts are under `build/rep-copy-comparison/`; successful private guest disks
+are removed.

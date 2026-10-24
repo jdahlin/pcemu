@@ -1087,6 +1087,57 @@ void CPU::stepImpl() {
                         continue;
                     }
                 }
+                // Reuse translations only within the current linear page.
+                // Never speculate a page walk or dirty-bit update: scalar
+                // execution retains first-fault and partial-repeat ordering.
+                if (rep && kind == 0xa4 && !(flags & DF) && a20 && !watchWrite) {
+                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
+                    elements = std::min(elements, (4096u - (src & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - si) / bw));
+                    uint32_t bytes = elements * bw;
+                    auto ramSpan = [&](uint32_t linear, bool write, uint32_t &physicalStart) {
+                        physicalStart = linear;
+                        if (cr[0] & 0x80000000u) {
+                            uint32_t page = linear >> 12;
+                            const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                            unsigned permissions = write ? 6 : 4;
+                            if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||
+                                (write && !entry.dirty) ||
+                                (cpl() == 3 && !systemAccess &&
+                                 (entry.permissions & permissions) != permissions))
+                                return false;
+                            physicalStart = entry.base | (linear & 4095);
+                        }
+                        if (uint64_t(physicalStart) + bytes > mem.size() ||
+                            (physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000))
+                            return false;
+                        if (write)
+                            for (uint32_t word = physicalStart >> 6;
+                                 word <= (physicalStart + bytes - 1) >> 6; ++word)
+                                if (codeUsed[word])
+                                    return false;
+                        return true;
+                    };
+                    uint32_t destination = 0, source = 0;
+                    bool ready = elements > 1 && ramSpan(dst, true, destination);
+                    if (ready)
+                        // memcpy is valid only for disjoint physical ranges.
+                        // Overlapping MOVS can propagate values; memmove would
+                        // silently give different architectural results.
+                        ready = ramSpan(src, false, source) &&
+                                (uint64_t(source) + bytes <= destination ||
+                                 uint64_t(destination) + bytes <= source);
+                    if (ready) {
+                        std::memcpy(&mem[destination], &mem[source], bytes);
+                        set(SI, si + bytes, aw);
+                        set(DI, di + bytes, aw);
+                        count -= elements;
+                        set(CX, count, aw);
+                        batch -= elements - 1;
+                        continue;
+                    }
+                }
                 switch (op & 0xfe) {
                 case 0x6c:
                     write(dst, input ? input(get(DX, 2), bw) : mask(bw), bw);

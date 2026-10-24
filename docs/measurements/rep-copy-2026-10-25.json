@@ -1,0 +1,694 @@
+{
+  "scope": "Original headless DOS copy microkernels; paging disabled, 64-element working sets; not Windows application speed",
+  "loops": 10000000,
+  "pairsPerVariant": 3,
+  "order": [
+    "baseline/candidate",
+    "candidate/baseline",
+    "baseline/candidate"
+  ],
+  "verifiedGuestWork": {
+    "runs": 12,
+    "intervalsPerRun": 32,
+    "signaturesMatch": true,
+    "comSha256": "7c0f51ccedc48d568adf35163a96da824336fbe3288e894acb7cab871827e3a4"
+  },
+  "commonBuildFiles": {
+    "src/machine.cpp": "7396b98b641a8f13b2cbae61ad57b8042a10ecfa33fc3cc4f2a58c021802da23",
+    "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+    "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+    "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+    "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+    "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+    "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+    "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+    "src/disk.cpp": "6019811dda73f0049cf3b23d90b2daf7a3bd99f84841914dfe51418d9cfe874e",
+    "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+    "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+    "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+    "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+    "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+    "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+    "src/jit.cpp": "0854cb3855fabb16923a565fdf99cb82235fc1d71515be53ad02323d8fc84d2a",
+    "src/jit_decode.cpp": "8152c2ef98bab6bd27d2934da0c3aa70bed421d4a195e12cdea385d2247bd507",
+    "src/jit_flags.cpp": "929e759215daaa877225517da55309f0ca4749d9dacdca5737351917aa174325",
+    "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+    "src/jit_arm64.cpp": "fb63f17d4b078e1577157cad8e443660d352d7fbe11d953dbb0e6c24ab38b33a",
+    "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+    "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+    "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+    "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+    "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+    "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+    "tools/guest_bench.cpp": "42d0cae1a22806ef175900f85c8e81a39a0ff6e244e4e1e39d54c1a5fbdb1cb6",
+    "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+    "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+    "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+    "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+    "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+    "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+    "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+    "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+    "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+    "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+    "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+    "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+    "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+    "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+    "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+    "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151",
+    "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+    "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+    "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+    "src/arm_virt.hpp": "9f82bc2ba24520666f53560761e71e330da6166ef78bc40a633f0c9a66c9dad1",
+    "src/cpu_benchmarks.hpp": "b96307b0dbf50912357d96dd8bb1cf85bdca57e80ec6310689119db52d63e3fe",
+    "src/jit_ir.hpp": "1b6c4ed34eae0658dda0ee2d70e9c51a10c86ee686dd2f4e30a30854ce7e274f",
+    "src/i8042.hpp": "f3a0e6ea68064e76b21acd8d6643da5c0bf0c046176f826063ab5d356a140422",
+    "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+    "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+    "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+    "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+    "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+    "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+    "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+    "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+    "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+    "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+    "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+    "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+    "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+    "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+    "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+    "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+    "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+    "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+    "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+    "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+    "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+    "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+    "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+    "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+    "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+    "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+    "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+    "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+    "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+    "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+    "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+    "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87"
+  },
+  "baselineCommand": [
+    "clang++",
+    "-Isrc",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/tmp/pcemu-rep-copy-comparison/baseline-cpu.cpp",
+    "src/machine.cpp",
+    "src/pc_at_io.cpp",
+    "src/pc_firmware.cpp",
+    "src/pc_bios.cpp",
+    "src/pc_bios_video.cpp",
+    "src/i8042.cpp",
+    "src/pc_input.cpp",
+    "src/cmos_rtc.cpp",
+    "src/disk.cpp",
+    "src/pc_bios_disk.cpp",
+    "src/ata.cpp",
+    "src/pic.cpp",
+    "src/i8259_pair.cpp",
+    "src/pit.cpp",
+    "src/vga.cpp",
+    "src/jit.cpp",
+    "src/jit_decode.cpp",
+    "src/jit_flags.cpp",
+    "src/jit_runtime.cpp",
+    "src/jit_arm64.cpp",
+    "src/snapshot.cpp",
+    "src/mouse.cpp",
+    "src/pci.cpp",
+    "src/vga_pci.cpp",
+    "src/host_keyboard.cpp",
+    "src/ne2000.cpp",
+    "tools/guest_bench.cpp",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/tmp/pcemu-rep-copy-comparison/baseline"
+  ],
+  "finalCommand": [
+    "clang++",
+    "-Isrc",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/tmp/pcemu-rep-copy-comparison/separate-cpu.cpp",
+    "src/machine.cpp",
+    "src/pc_at_io.cpp",
+    "src/pc_firmware.cpp",
+    "src/pc_bios.cpp",
+    "src/pc_bios_video.cpp",
+    "src/i8042.cpp",
+    "src/pc_input.cpp",
+    "src/cmos_rtc.cpp",
+    "/tmp/pcemu-rep-copy-comparison/baseline-disk.cpp",
+    "src/pc_bios_disk.cpp",
+    "src/ata.cpp",
+    "src/pic.cpp",
+    "src/i8259_pair.cpp",
+    "src/pit.cpp",
+    "src/vga.cpp",
+    "src/jit.cpp",
+    "src/jit_decode.cpp",
+    "src/jit_flags.cpp",
+    "src/jit_runtime.cpp",
+    "src/jit_arm64.cpp",
+    "src/snapshot.cpp",
+    "src/mouse.cpp",
+    "src/pci.cpp",
+    "src/vga_pci.cpp",
+    "src/host_keyboard.cpp",
+    "src/ne2000.cpp",
+    "tools/guest_bench.cpp",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/tmp/pcemu-rep-copy-comparison/separate"
+  ],
+  "variantCpuSha256": {
+    "baseline": "6225616cd5937ab3bcc7e608418a0d733bc00128669ea3cf392452c31f1aa0a0",
+    "sharedNotRetained": "5576080aba884165e24f60b83fab194b2039300ea544cae27ff8d155111e4659",
+    "finalSeparate": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a"
+  },
+  "binaries": {
+    "baseline": "66ce8baee63f1b72a3dd5f670f734a685d63a07adaf66ee514e686078adcc5ee",
+    "sharedNotRetained": "3455c1cf0bb7d7de23743b90465a5d7f212361ed2c171a74de52ab0f44c2c395",
+    "finalSeparate": "c992ccbbbc4ecb0d824019affb95067a1af2bbe85d2ebe369daa8d7ff7e9b1bd"
+  },
+  "finalTimings": [
+    {
+      "case": 20,
+      "cache": "cold",
+      "ratios": [
+        12.821272548160172,
+        8.862170185540627,
+        8.103167465331756
+      ],
+      "median": 8.862170185540627,
+      "seconds": {
+        "baseline": [
+          0.174543458,
+          0.152367292,
+          0.179881542
+        ],
+        "candidate": [
+          0.013613583,
+          0.017193,
+          0.022198917
+        ]
+      }
+    },
+    {
+      "case": 20,
+      "cache": "warm",
+      "ratios": [
+        11.854133514515643,
+        8.959133348943393,
+        6.831252594011415
+      ],
+      "median": 8.959133348943393,
+      "seconds": {
+        "baseline": [
+          0.164473625,
+          0.153048875,
+          0.159966875
+        ],
+        "candidate": [
+          0.013874791,
+          0.017083,
+          0.023416917
+        ]
+      }
+    },
+    {
+      "case": 36,
+      "cache": "cold",
+      "ratios": [
+        12.03280392396546,
+        13.545774959560129,
+        11.093303246447727
+      ],
+      "median": 12.03280392396546,
+      "seconds": {
+        "baseline": [
+          0.161535375,
+          0.242252084,
+          0.147360667
+        ],
+        "candidate": [
+          0.013424583,
+          0.017883959,
+          0.01328375
+        ]
+      }
+    },
+    {
+      "case": 36,
+      "cache": "warm",
+      "ratios": [
+        12.955410203048508,
+        16.368549986165856,
+        13.968406657737232
+      ],
+      "median": 13.968406657737232,
+      "seconds": {
+        "baseline": [
+          0.1872305,
+          0.28355375,
+          0.186413625
+        ],
+        "candidate": [
+          0.014451916,
+          0.017323083,
+          0.013345375
+        ]
+      }
+    },
+    {
+      "case": 23,
+      "cache": "cold",
+      "ratios": [
+        1.0018985256135788,
+        0.7801237165505959,
+        0.4237413135470832
+      ],
+      "median": 0.7801237165505959,
+      "seconds": {
+        "baseline": [
+          0.017348416,
+          0.016127042,
+          0.016665834
+        ],
+        "candidate": [
+          0.017315542,
+          0.020672416,
+          0.039330208
+        ]
+      }
+    },
+    {
+      "case": 23,
+      "cache": "warm",
+      "ratios": [
+        1.0764048660155079,
+        0.8040482923804545,
+        0.6164573305281619
+      ],
+      "median": 0.8040482923804545,
+      "seconds": {
+        "baseline": [
+          0.017508667,
+          0.016533042,
+          0.0172325
+        ],
+        "candidate": [
+          0.016265875,
+          0.02056225,
+          0.027954084
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "cold",
+      "ratios": [
+        1.0280863935213609,
+        1.0019099286142812,
+        0.9945046895539196
+      ],
+      "median": 1.0019099286142812,
+      "seconds": {
+        "baseline": [
+          0.018797875,
+          0.018579042,
+          0.016400709
+        ],
+        "candidate": [
+          0.018284334,
+          0.018543625,
+          0.016491334
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "warm",
+      "ratios": [
+        1.0234800293072397,
+        1.0223819343208125,
+        1.0061171326231566
+      ],
+      "median": 1.0223819343208125,
+      "seconds": {
+        "baseline": [
+          0.0186835,
+          0.018678875,
+          0.016221375
+        ],
+        "candidate": [
+          0.018254875,
+          0.018269958,
+          0.01612275
+        ]
+      }
+    }
+  ],
+  "sharedNotRetainedTimings": [
+    {
+      "case": 20,
+      "cache": "cold",
+      "ratios": [
+        8.938519300875884,
+        11.75539069475844,
+        10.638170819039747
+      ],
+      "median": 10.638170819039747,
+      "seconds": {
+        "baseline": [
+          0.176784542,
+          0.154692125,
+          0.137573708
+        ],
+        "candidate": [
+          0.019777833,
+          0.01315925,
+          0.012932083
+        ]
+      }
+    },
+    {
+      "case": 20,
+      "cache": "warm",
+      "ratios": [
+        7.81564651096824,
+        11.175608223027435,
+        10.746610469344471
+      ],
+      "median": 10.746610469344471,
+      "seconds": {
+        "baseline": [
+          0.169507375,
+          0.15112775,
+          0.137101667
+        ],
+        "candidate": [
+          0.021688209,
+          0.013523,
+          0.012757666
+        ]
+      }
+    },
+    {
+      "case": 36,
+      "cache": "cold",
+      "ratios": [
+        7.665325179668105,
+        8.749673895143001,
+        11.727934223546093
+      ],
+      "median": 8.749673895143001,
+      "seconds": {
+        "baseline": [
+          0.146656834,
+          0.15280175,
+          0.143709708
+        ],
+        "candidate": [
+          0.0191325,
+          0.017463708,
+          0.012253625
+        ]
+      }
+    },
+    {
+      "case": 36,
+      "cache": "warm",
+      "ratios": [
+        7.715331145135191,
+        8.754291391380827,
+        11.903192839776196
+      ],
+      "median": 8.754291391380827,
+      "seconds": {
+        "baseline": [
+          0.147205625,
+          0.155525458,
+          0.14124725
+        ],
+        "candidate": [
+          0.019079625,
+          0.017765625,
+          0.011866333
+        ]
+      }
+    },
+    {
+      "case": 23,
+      "cache": "cold",
+      "ratios": [
+        0.6096238484210527,
+        0.9396881633949576,
+        0.8940315501884342
+      ],
+      "median": 0.8940315501884342,
+      "seconds": {
+        "baseline": [
+          0.018098208,
+          0.01601025,
+          0.0145
+        ],
+        "candidate": [
+          0.0296875,
+          0.017037833,
+          0.016218667
+        ]
+      }
+    },
+    {
+      "case": 23,
+      "cache": "warm",
+      "ratios": [
+        0.7736599327137883,
+        0.9895393163215511,
+        0.8941960185670493
+      ],
+      "median": 0.8941960185670493,
+      "seconds": {
+        "baseline": [
+          0.018138167,
+          0.016321791,
+          0.0146055
+        ],
+        "candidate": [
+          0.023444625,
+          0.016494333,
+          0.016333667
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "cold",
+      "ratios": [
+        0.9755986982025211,
+        1.0006812105525302,
+        1.0716371572484291
+      ],
+      "median": 1.0006812105525302,
+      "seconds": {
+        "baseline": [
+          0.018323125,
+          0.018911583,
+          0.016314917
+        ],
+        "candidate": [
+          0.018781416,
+          0.018898709,
+          0.015224292
+        ]
+      }
+    },
+    {
+      "case": 39,
+      "cache": "warm",
+      "ratios": [
+        0.9596989162664987,
+        1.0647141137410137,
+        1.0748814774905262
+      ],
+      "median": 1.0647141137410137,
+      "seconds": {
+        "baseline": [
+          0.018286583,
+          0.019854167,
+          0.01636525
+        ],
+        "candidate": [
+          0.0190545,
+          0.018647416,
+          0.015225167
+        ]
+      }
+    }
+  ],
+  "cpuOnlyFillControl": {
+    "iterations": 2000000,
+    "elementsPerFill": 64,
+    "sourceSha256": "de680e76a718a6ac805f91b2d5cee57380cebf738bc3871388b56cd571863819",
+    "compiler": "clang++ -O3 -std=c++20 -Isrc CPU_SOURCE fill-control.cpp",
+    "runs": [
+      {
+        "trial": 0,
+        "variant": "baseline",
+        "output": "0 0.111621\n1 0.115358\n"
+      },
+      {
+        "trial": 0,
+        "variant": "candidate",
+        "output": "0 0.109971\n1 0.128881\n"
+      },
+      {
+        "trial": 1,
+        "variant": "candidate",
+        "output": "0 0.125269\n1 0.127063\n"
+      },
+      {
+        "trial": 1,
+        "variant": "baseline",
+        "output": "0 0.124041\n1 0.118227\n"
+      },
+      {
+        "trial": 2,
+        "variant": "baseline",
+        "output": "0 0.116518\n1 0.117985\n"
+      },
+      {
+        "trial": 2,
+        "variant": "candidate",
+        "output": "0 0.112859\n1 0.118367\n"
+      }
+    ]
+  },
+  "validation": {
+    "sourceHashes": {
+      "src/cpu.cpp": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "tests/test.cpp": "a964454dd3ff0136eb08941fd29a268c14f5cb6fd475a414a04518fae8034c37",
+      "tests/snapshot_test.cpp": "8b825017bc3b3910e79fa57a98078d7f007d01ad7b1ae2e2e796ba21fba984d7"
+    },
+    "emulatorSha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+    "fullSuiteLogSha256": "5d2e6526a9aca9751eea36a837c00362bb968d028a9acab846626c01a14a57b2",
+    "passedChecks": [
+      "37 standalone hardware device checks passed (no CPU/machine backend)",
+      "28 standalone i8042 device checks passed",
+      "20 CMOS/RTC and presentation checks passed",
+      "Passed I/O region boundaries, widths, overlap and rebinding checks",
+      "Passed 9 frontend checks",
+      "Passed 156510 read JIT checks",
+      "91 network checks passed",
+      "Passed 106 input/video integration checks",
+      "Passed 340898 checks",
+      "Passed 2896 snapshot/COW checks",
+      "Passed 2957189 byte JIT checks",
+      "Passed 27567 stack JIT checks",
+      "Passed 183478 flag-liveness checks"
+    ],
+    "networkFlake": "An earlier suite attempt failed at SSH SYN forwarding; standalone rerun, next full run and final full run passed. Initial failure log retained.",
+    "win311": "Exact Notepad save through Windows and DOS, build/win311-smoke-olqkai7u",
+    "rtts": {
+      "pid": 53356,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-1tc94d5i/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-1tc94d5i/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-1tc94d5i/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-1tc94d5i/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "gitCommit": "7f9625f5cd618dbeb7d2a9d412729ea8a5b9e6c8",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 364709210,
+        "afterInstructions": 695970786,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "osr2": {
+      "pid": 53350,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-2buyed5_/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-2buyed5_/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-2buyed5_/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-2buyed5_/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "gitCommit": "7f9625f5cd618dbeb7d2a9d412729ea8a5b9e6c8",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 182060269,
+        "afterInstructions": 565849026,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "dosEvidence": "build/guest-perf-smoke-zkuxcp76",
+    "profileEvidence": "build/guest-profile-smoke-1kirs421"
+  },
+  "limitations": [
+    "Short timing intervals, substantial host variation, only three pairs",
+    "DOS word-fill control slower despite preserved source path; CPU-only word-fill control near neutral",
+    "No paged-copy or Windows application speedup established",
+    "Both timing variants deliberately use disk code preceding independent CHS fix"
+  ],
+  "rawEvidence": "build/rep-copy-comparison; moved from /tmp after measurement"
+}

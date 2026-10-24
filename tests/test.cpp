@@ -178,53 +178,69 @@ int main() {
         program(c, {0xf3, 0xa4});
         c.step();
         check(c.read(0x300, 3) == 0x434241 && c.r[CX] == 0 && c.r[SI] == 0x203, "REP MOVSB");
-        // Compare page-amortized STOS against watched (scalar) execution,
+        // Compare page-amortized MOVS/STOS against watched (scalar) execution,
         // including scheduling yields, page/address wrap, code and VGA writes.
-        for (bool paged : {false, true})
-            for (int width : {1, 2, 4})
-                for (bool address32 : {false, true})
-                    for (bool reverse : {false, true})
-                        for (uint32_t destination : {0x5003u, 0x5ffdu, 0xfffdu, 0xa0000u}) {
-                            CPU fast(2 * 1024 * 1024), scalar(2 * 1024 * 1024);
-                            unsigned fastVideo = 0, scalarVideo = 0;
-                            for (CPU *fill : {&fast, &scalar}) {
-                                fill->s[CS].big = true;
-                                fill->s[CS].base = 0x100000;
-                                fill->r[AX] = 0x1234a5e7;
-                                fill->r[DI] = destination;
-                                fill->r[CX] = 4200;
-                                fill->flags = 2 | (reverse ? DF : 0);
-                                std::vector<uint8_t> code{0xf3};
-                                if (!address32)
-                                    code.push_back(0x67);
-                                if (width == 2)
-                                    code.push_back(0x66);
-                                code.push_back(width == 1 ? 0xaa : 0xab);
-                                std::copy(code.begin(), code.end(), fill->mem.begin() + 0x100000);
-                                if (paged) {
-                                    fill->write(0x180000, 0x181007, 4);
-                                    for (unsigned page = 0; page < 512; ++page)
-                                        fill->write(0x181000 + 4 * page, page * 4096 | 7, 4);
-                                    fill->cr[0] = 0x80000011;
-                                    fill->cr[3] = 0x180000;
-                                    fill->s[CS].selector = 3;
+        for (unsigned kind : {0xa4u, 0xaau})
+            for (unsigned sourceCase = 0; sourceCase < (kind == 0xa4 ? 5u : 1u); ++sourceCase)
+                for (bool paged : {false, true})
+                    for (int width : {1, 2, 4})
+                        for (bool address32 : {false, true})
+                            for (bool reverse : {false, true})
+                                for (uint32_t destination : {0x5003u, 0x5ffdu, 0xfffdu, 0xa0000u}) {
+                                    CPU fast(2 * 1024 * 1024), scalar(2 * 1024 * 1024);
+                                    unsigned fastVideo = 0, scalarVideo = 0, fastReads = 0, scalarReads = 0;
+                                    uint32_t source = sourceCase == 0 ? 0x9003 :
+                                                      sourceCase == 1 ? destination - 1 :
+                                                      sourceCase == 2 ? destination + 1 :
+                                                      sourceCase == 3 ? destination + 0x400000 :
+                                                      0x400000 + ((destination & ~4095u) ^ 4096u) +
+                                                          (destination & 4095);
+
+                                    for (CPU *fill : {&fast, &scalar}) {
+                                        if (kind == 0xa4)
+                                            for (unsigned i = 0; i < fill->mem.size(); ++i)
+                                                fill->mem[i] = uint8_t(i * 17 + (i >> 12) * 23);
+                                        fill->s[CS].big = true;
+                                        fill->s[CS].base = 0x100000;
+                                        fill->r[AX] = 0x1234a5e7;
+                                        fill->r[DI] = destination;
+                                        fill->r[SI] = source;
+                                        fill->r[CX] = 4200;
+                                        fill->flags = 2 | (reverse ? DF : 0);
+                                        std::vector<uint8_t> code{0xf3};
+                                        if (!address32)
+                                            code.push_back(0x67);
+                                        if (width == 2)
+                                            code.push_back(0x66);
+                                        code.push_back(kind | (width != 1));
+                                        std::copy(code.begin(), code.end(), fill->mem.begin() + 0x100000);
+                                        if (paged) {
+                                            fill->write(0x180000, 0x181007, 4);
+                                            fill->write(0x180004, 0x181007, 4);
+                                            for (unsigned page = 0; page < 1024; ++page)
+                                                fill->write(0x181000 + 4 * page, (page & 511) * 4096 | 7, 4);
+                                            fill->cr[0] = 0x80000011;
+                                            fill->cr[3] = 0x180000;
+                                            fill->s[CS].selector = 3;
+                                        }
+                                        // Force code-write fallback in part of the destination.
+                                        fill->markCode(0x6040);
+                                    }
+                                    fast.videoWrite = [&](uint32_t, uint8_t) { ++fastVideo; };
+                                    scalar.videoWrite = [&](uint32_t, uint8_t) { ++scalarVideo; };
+                                    fast.videoRead = [&](uint32_t p) { ++fastReads; return uint8_t(p ^ 0x5a); };
+                                    scalar.videoRead = [&](uint32_t p) { ++scalarReads; return uint8_t(p ^ 0x5a); };
+                                    scalar.watchWrite = [](uint32_t, uint32_t, int) {};
+                                    for (unsigned batch = 0; batch < 2; ++batch) {
+                                        fast.step();
+                                        scalar.step();
+                                        check(fast.mem == scalar.mem && fast.generation == scalar.generation &&
+                                                  std::equal(fast.r, fast.r + 8, scalar.r) &&
+                                                  fast.ip == scalar.ip && fast.flags == scalar.flags &&
+                                                  fastVideo == scalarVideo && fastReads == scalarReads,
+                                              "REP MOVS/STOS page batching matches scalar execution");
+                                    }
                                 }
-                                // Force code-write fallback in part of the destination.
-                                fill->markCode(0x6040);
-                            }
-                            fast.videoWrite = [&](uint32_t, uint8_t) { ++fastVideo; };
-                            scalar.videoWrite = [&](uint32_t, uint8_t) { ++scalarVideo; };
-                            scalar.watchWrite = [](uint32_t, uint32_t, int) {};
-                            for (unsigned batch = 0; batch < 2; ++batch) {
-                                fast.step();
-                                scalar.step();
-                                check(fast.mem == scalar.mem && fast.generation == scalar.generation &&
-                                          std::equal(fast.r, fast.r + 8, scalar.r) &&
-                                          fast.ip == scalar.ip && fast.flags == scalar.flags &&
-                                          fastVideo == scalarVideo,
-                                      "REP STOS page batching matches scalar execution");
-                            }
-                        }
         for (unsigned kind : {0xa4u, 0xa6u, 0xaau, 0xacu, 0xaeu, 0x6cu, 0x6eu})
             for (int width : {1, 2, 4})
                 for (uint8_t prefix : {0xf3, 0xf2})
