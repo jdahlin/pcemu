@@ -119,6 +119,20 @@ finished:
     movk w0, #0xc400, lsl #16 // AFFINITY_INFO64
     hvc #0
     cbnz x0, failed
+    mov w8, #55
+    mrs x0, ID_AA64DFR0_EL1
+    ubfx x0, x0, #8, #4
+    cmp x0, #1
+    b.ne failed
+    mrs x22, PMCCNTR_EL0
+    mov x0, #1000
+counter_delay:
+    subs x0, x0, #1
+    b.ne counter_delay
+    mrs x23, PMCCNTR_EL0
+    mov w8, #56
+    cmp x23, x22
+    b.ls failed
     mov x24, #0
     adr x1, success_text
     b print_result

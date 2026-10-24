@@ -137,6 +137,17 @@ void selfTest() {
         vm.setPC(exit.pc + 4); hvc(vm);
         require((vm.systemReg(0xc005) & 0xffffff) == 0, "Unexpected GIC CPU affinity");
     }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true);
+        // Framework GIC mode handles the exposed PMU cycle counter. Verify that
+        // neither read requires an extra userspace exit; only HVC should exit.
+        code(vm, std::array<uint32_t, 6>{0xd53b9d00, 0xd2807d02, 0xf1000442,
+                                       0x54ffffe1, 0xd53b9d01, 0xd4000002});
+        hvc(vm);
+        require(vm.reg(1) > vm.reg(0), "Framework PMU counter did not advance");
+        require(vm.exits() == 1, "PMU cycle reads caused userspace exits");
+        require(((vm.systemReg(0xc028) >> 8) & 15) == 1, "PMUv3 feature was not exposed");
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }

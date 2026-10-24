@@ -55,7 +55,7 @@ callers may resume it, subject to their overall task deadline.
 
 ## Verification
 
-`make test-hvf` runs 49 backend checks, 38 portable device checks, 565 virtio checks and six CLI
+`make test-hvf` runs 53 backend checks, 74 portable device checks, 565 virtio checks and six CLI
 integration tests (the variable/disk safety checks requires downloaded firmware):
 
 - Twice create/destroy a VM; reject a second concurrent VM in the same process.

@@ -53,3 +53,8 @@ Sources:
 - [Nano Server LTSC 2025 manifest](https://mcr.microsoft.com/v2/windows/nanoserver/manifests/ltsc2025)
 
 Driver inventory and small loader extraction: [virtio and Windows media](virtio.md).
+
+The current ARM platform now publishes minimal ACPI and GOP, and exposes the
+framework PMU needed by this loader. The loader-only probe reaches Windows Boot
+Manager's missing-BCD status `0xc000000f`; this is not a Windows OS boot. See
+[the optional loader smoke check](arm64-uefi.md#framework-pmu-and-windows-loader-check).

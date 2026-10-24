@@ -167,7 +167,42 @@ This is a platform bring-up milestone, not proof of Windows compatibility.
 64 instruction bytes around ELR and the first firmware-reported exception PC.
 Only guest-RAM addresses are read; no RAM image is written to disk. The reported
 PC helps diagnose an original guest fault when the firmware exception handler
-itself subsequently faults. In the current Validation OS loader probe, the first
-fault is `MRS PMCCNTR_EL0` (performance cycle counter); Windows boot is not yet
-working. This was established by matching guest instruction bytes to the
-existing ARM64 `bootmgfw.efi`, rather than assuming ACPI was the cause.
+itself subsequently faults. The original Validation OS loader fault was `MRS PMCCNTR_EL0` (performance
+cycle counter). Matching guest bytes to the existing ARM64 `bootmgfw.efi`
+identified it. Exposing the PMUv3 feature now lets the framework's GIC path
+handle that register, and the loader reaches its expected missing-BCD error
+instead of a synchronous CPU exception. This still does not boot Windows.
+
+## Framework PMU and Windows loader check
+
+The GIC-enabled backend exposes `ID_AA64DFR0_EL1.PMUVer=1` and explicitly
+disables guest EL2. On the tested Apple M4/macOS 26.6 host, framework GIC mode
+handles cycle-counter reads internally. A bare-metal regression reads the
+counter twice around a short compute loop and requires exactly one userspace
+exit (the final HVC), demonstrating that those reads do not enter our dispatcher.
+The counter is supplied by the framework; its frequency has not been calibrated
+as a measure of guest CPU cycles. It is not an instruction count. Counter enable/disable and event profiling are not
+claimed: the framework counter continued advancing after PMCNTENCLR in our probe.
+No PMU interrupt is advertised in MADT. There is no linked or unused software
+PMU model. Older supported hosts need the same runtime checks before relying
+on this Windows bring-up path.
+
+For the optional Windows loader milestone, first create the diagnostic disk:
+
+```sh
+python3 tools/inspect_validation_os.py --make-loader-probe
+make smoke-windows-loader
+```
+
+The smoke check reuses that immutable sparse disk with a private COW, requires
+Windows Boot Manager to report `\EFI\Microsoft\Boot\BCD` and `0xc000000f`,
+and rejects a firmware-reported CPU exception. It downloads no proprietary media
+and does not run as part of the standard tests. Current result: the boot manager
+executes and reports missing BCD; BCD, boot.sdi, WIM media setup and Windows OS
+boot remain unverified. The private disk delta was 102 bytes in the measured run.
+
+Feature-field and PMU register definitions follow the
+[Arm Cortex-A57 reference manual](https://documentation-service.arm.com/static/5e906b9fc8052b1608760c7b);
+framework controls follow the installed Apple Hypervisor SDK's `hv_vm_config.h`
+and `hv_vcpu_types.h`. The GIC-mode behavior above is backed by the runtime test,
+not assumed from the EL2-disabled PMU documentation alone.

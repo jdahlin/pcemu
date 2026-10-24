@@ -57,7 +57,14 @@ struct HvfMachine::Impl {
             throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 2 GiB");
         if (!HvfMachine::supported())
             throw std::runtime_error("Hypervisor.framework is unavailable (kern.hv_support)");
-        check(hv_vm_create(nullptr), "hv_vm_create");
+        hv_return_t created;
+        if (__builtin_available(macOS 15.0, *)) {
+            auto config = hv_vm_config_create();
+            auto configured = hv_vm_config_set_el2_enabled(config, false);
+            created = configured == HV_SUCCESS ? hv_vm_create(config) : configured;
+            os_release(config);
+        } else created = hv_vm_create(nullptr);
+        check(created, "hv_vm_create (EL2 disabled)");
         vmCreated = true;
         if (enableGic) {
             if (__builtin_available(macOS 15.0, *)) {
@@ -81,8 +88,13 @@ struct HvfMachine::Impl {
         mapped = true;
         check(hv_vcpu_create(&vcpu, &exit, nullptr), "hv_vcpu_create");
         vcpuCreated = true;
-        if (enableGic)
+        if (enableGic) {
             check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_MPIDR_EL1, 0x80000000), "set MPIDR_EL1");
+            uint64_t features = 0;
+            check(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1, &features), "get PMU features");
+            check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1,
+                                      (features & ~0xf00ull) | 0x100), "enable framework PMUv3");
+        }
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
             while (!stopping) {

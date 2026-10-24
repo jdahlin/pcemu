@@ -35,14 +35,16 @@ def main():
     output = (directory / 'serial.log').read_bytes()
     if result.returncode or b'PCEMU_ACPI_OK' not in output or b'Synchronous Exception' in output:
         raise RuntimeError(f'Guest ACPI/PSCI probe failed: inspect {directory}')
-    if 'state=power-off' not in (directory / 'host.log').read_text():
+    host_output = (directory / 'host.log').read_text()
+    if 'state=power-off' not in host_output:
         raise RuntimeError(f'PSCI SYSTEM_OFF did not stop VM: inspect {directory}')
     if digest(disk) != original:
         raise RuntimeError('Immutable probe disk changed')
     summary = {'passed': True, 'platform': 'arm-virt-v3',
                'wallSeconds': time.monotonic() - started,
                'validated': ['RSDP', 'XSDT', 'FADT', 'DSDT', 'MADT', 'GTDT', 'MCFG', 'SPCR', 'DBG2',
-                             'PSCI_VERSION', 'PSCI_CPU_ON', 'PSCI_AFFINITY_INFO', 'PSCI_SYSTEM_OFF'],
+                             'PSCI_VERSION', 'PSCI_CPU_ON', 'PSCI_AFFINITY_INFO', 'PSCI_SYSTEM_OFF',
+                             'PMU feature', 'PMCCNTR'],
                'diskAllocatedBytes': disk.stat().st_blocks * 512,
                'overlayBytes': (directory / 'vars.bin.pcd').stat().st_size}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

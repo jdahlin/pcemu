@@ -110,6 +110,10 @@ smoke-uefi: build/pcemu-hvf firmware-arm64
 smoke-arm-acpi: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_arm_acpi.py
 
+.PHONY: smoke-windows-loader
+smoke-windows-loader: build/pcemu-hvf firmware-arm64
+	python3 tools/smoke_windows_loader.py
+
 build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp src/arm_devices.cpp src/arm_devices.hpp tests/arm_devices_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) src/arm_fw_cfg.cpp src/arm_devices.cpp tests/arm_devices_test.cpp -o $@
