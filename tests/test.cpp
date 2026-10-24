@@ -824,6 +824,36 @@ int main() {
                           native.r[BX] == ref.r[BX] && native.ip == ref.ip,
                       "inline bounds preserve partial accesses in non-power-of-two RAM");
             }
+        for (bool store : {false, true})
+            for (bool paging : {false, true})
+                for (bool tracked : {false, true})
+                    for (uint32_t address : {0x103fu, 0x1fffu, 0xffffu}) {
+                        CPU c(65536);
+                        c.s[CS].big = true;
+                        program(c, {uint8_t(store ? 0xa2 : 0xa0), uint8_t(address),
+                                    uint8_t(address >> 8), 0, 0, 0xf4});
+                        c.r[AX] = 0xaabbccdd;
+                        c.mem[address] = 0x5a;
+                        if (paging) {
+                            c.write(0x8000, 0x9007, 4);
+                            for (unsigned page = 0; page < 16; ++page)
+                                c.write(0x9000 + page * 4, page * 4096 | 7, 4);
+                            c.cr[0] = 0x80000011;
+                            c.cr[3] = 0x8000;
+                            c.physical(address, true);
+                            c.s[CS].selector = 3;
+                        }
+                        if (tracked)
+                            c.markCode(address);
+                        Jit jit(c, true, 0);
+                        auto ran = jit.run();
+                        check(ran == 1 && jit.nativeInstructions == 1 &&
+                                  c.nativeMemoryCalls == (store && tracked ? 1u : 0u) &&
+                                  c.mem[address] == (store ? 0xdd : 0x5a) &&
+                                  c.r[AX] == (store ? 0xaabbccddu : 0xaabbcc5au) &&
+                                  c.generation[address >> 12] == (store && tracked ? 1u : 0u),
+                              "native bytes at word/page/RAM ends preserve bounds and code-write guards");
+                    }
         for (bool store : {false, true}) {
             CPU c(1024 * 1024);
             c.s[CS].big = true;

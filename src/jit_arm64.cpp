@@ -491,9 +491,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
                 load(9, 19, segmentOffset + offsetof(Segment, base));
                 emit(0x0b020129u); // add w9,w9,w2 (linear address, wraps at 32 bits)
-                emit(0x12002d2au); // and w10,w9,#4095
-                compareImmediate(10, 4096 - accessWidth);
-                guard(0x54000008u); // b.hi slow (cross-page access)
+                if (accessWidth > 1) {
+                    emit(0x12002d2au); // and w10,w9,#4095
+                    compareImmediate(10, 4096 - accessWidth);
+                    guard(0x54000008u); // b.hi slow (cross-page access)
+                }
                 if (block.cr0 & 0x80000000u) {
                     emit(0x530c7d2au); // lsr w10,w9,#12 (page tag)
                     emit(0x4a4a294bu); // eor w11,w10,w10,lsr #10
@@ -549,7 +551,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     emit(0x0a2a0129u); // bic w9,w9,w10
                 }
                 if (!(block.ramSize & 4095) && std::has_single_bit(uint32_t(block.ramSize))) {
-                    // The earlier page-boundary guard proves the entire access
+                    // A byte, or a wider access passing the page-boundary guard,
                     // fits if its first byte lies in page-aligned RAM.
                     auto shift = std::countr_zero(uint32_t(block.ramSize));
                     emit(0x53007c00u | (shift << 16) | (9 << 5) | 10);
@@ -562,9 +564,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 compareImmediate(10, 10);
                 guard(0x54000000u); // b.eq slow (VGA aperture)
                 if (i.memory.store) {
-                    emit(0x1200152au); // and w10,w9,#63
-                    compareImmediate(10, 64 - accessWidth);
-                    guard(0x54000008u); // b.hi slow (two code bitmap words)
+                    if (accessWidth > 1) {
+                        emit(0x1200152au); // and w10,w9,#63
+                        compareImmediate(10, 64 - accessWidth);
+                        guard(0x54000008u); // b.hi slow (two code bitmap words)
+                    }
                     emit(0x53067d2au);  // lsr w10,w9,#6
                     if (bitmapRegister >= 0)
                         emit(0x8b2a4c00u | (bitmapRegister << 5) | 12);

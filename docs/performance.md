@@ -1044,3 +1044,42 @@ Example: `build/pcemu --headless --benchmark-memory-bytes --backend jit
 --benchmark-steps 9800000049` executes 200,000,001 loops with expected checksum
 152. This is an isolated tiny-working-set kernel, not Windows startup or DRAM
 bandwidth. It requires no new VM images or checkpoints.
+
+
+### Omit impossible byte-boundary crossings (2026-10-25)
+
+A single byte cannot cross a 4 KiB page or a 64-byte code-bitmap word. Native
+byte loads now omit three page-boundary instructions; stores omit those and
+three bitmap-word-boundary instructions. Translation keys, permissions, dirty
+updates, segment checks, A20, RAM bounds, VGA checks and the actual code-bitmap
+lookup remain. Wider accesses retain both crossing checks. No state or disk
+format changes are required.
+
+Twenty-four new checks exercise native byte reads/writes at bitmap-word ends,
+page ends and the final RAM byte, with flat/paged RAM and tracked/untracked code.
+They check native execution, helper use, exact register/data results and code
+generations. Relevant checks pass: 341,306 core, 156,510 read JIT, 2,957,189 byte
+JIT and 183,478 flag-liveness checks. Both retained Win95 images cold-boot to
+unobscured Explorer desktops. This does not repeat a fresh installer or Win3.11.
+
+Five alternating pairs compare frozen binaries with the same byte benchmark
+and guest work. Byte cases execute 9,800,000,049 guest instructions each, with
+checksum 152 and 9,799,999,706 native instructions. Dword controls use shorter
+980,000,049-instruction intervals, checksum 320,000,016 and 979,999,706 native
+instructions. Each cell is checked individually, and every run passes.
+
+| Throughput ratio, candidate/baseline | Flat | CPL3 paged |
+| --- | ---: | ---: |
+| Byte kernel median | 1.16134 | 1.09029 |
+| Unchanged dword control median | 1.02919 | 1.00506 |
+
+Byte-flat paired ratios range 1.14874–1.17644 and byte-paged ratios
+1.08546–1.14705. The observed medians are about +16% and +9%; controls show host
+variation and are not a formal statistical adjustment. These are isolated
+cache-resident kernels, not whole-Windows or Rosetta speedup claims. All raw
+output, hashes, ratios and startup evidence are committed in
+`docs/measurements/byte-boundaries-2026-10-25.json`.
+
+Validation stays disk-light: RAM-only timing, existing Win95 images with small
+compressed overlays deleted on success, and no new VM images or checkpoints.
+The temporary baseline executable was deleted after measurement.

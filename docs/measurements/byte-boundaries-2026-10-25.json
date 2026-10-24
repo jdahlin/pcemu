@@ -1,0 +1,641 @@
+{
+  "scope": "RAM-only byte load/add/store loop; flat and CPL3 paged modes; dword control has a shorter interval; not Windows application speed",
+  "pairs": 5,
+  "baselineSourceRef": "7aade69eac68c5e6b8a34943d86bc7f2f3f2d4b2",
+  "sourceHashes": {
+    "src/jit_arm64.cpp": "1c7b7022b5535c2da7b25ab44d96b14281216aa96b3ea32f6631d18f92ead39a",
+    "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+    "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+    "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+    "tests/test.cpp": "06d2ed4b736762528a0993d7a1cf9a2f0a0e72d03f47f0bbe71a3d431e80e714"
+  },
+  "baselineEmitterSha256": "aceab1034467f6a9aa7eb2a85572007668324b1ea097de94182b34aa3f0b405c",
+  "candidateBinarySha256": "5dca2b51b1da726fc36b8c267cf6029d1ac5d44093b07598729fd7c2ecdeb566",
+  "host": {
+    "machine": "arm64",
+    "macOS": "26.6.2",
+    "hostPageBytes": 16384
+  },
+  "samples": [
+    {
+      "trial": 0,
+      "variant": "baseline",
+      "kind": "byte",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        3.35546875,
+        3.66552734375,
+        3.99609375
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2193.09,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1069.38,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2193.09 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1069.38 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 0,
+      "variant": "baseline",
+      "kind": "dword",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        3.8798828125,
+        3.763671875,
+        4.0244140625
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2201.41,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1078.23,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2201.41 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1078.23 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 0,
+      "variant": "candidate",
+      "kind": "byte",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.8798828125,
+        3.763671875,
+        4.0244140625
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2539.9,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1165.93,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2539.9 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1165.93 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 0,
+      "variant": "candidate",
+      "kind": "dword",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.837890625,
+        3.7587890625,
+        4.01708984375
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2167.78,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1077.19,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2167.78 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1077.19 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 1,
+      "variant": "candidate",
+      "kind": "byte",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.837890625,
+        3.7587890625,
+        4.01708984375
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2551.63,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1162.6,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2551.63 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1162.6 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 1,
+      "variant": "candidate",
+      "kind": "dword",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.93603515625,
+        3.78271484375,
+        4.02197265625
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2196.42,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1076.2,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2196.42 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1076.2 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 1,
+      "variant": "baseline",
+      "kind": "byte",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        3.94091796875,
+        3.7861328125,
+        4.021484375
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2189.95,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1064.08,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2189.95 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1064.08 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 1,
+      "variant": "baseline",
+      "kind": "dword",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.3369140625,
+        3.87548828125,
+        4.0498046875
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2134.13,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1022.69,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2134.13 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1022.69 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 2,
+      "variant": "baseline",
+      "kind": "byte",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.4697265625,
+        3.91064453125,
+        4.06103515625
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1989.2,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 984.997,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 1989.2 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 984.997 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 2,
+      "variant": "baseline",
+      "kind": "dword",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.419921875,
+        3.9296875,
+        4.0654296875
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2047.64,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1000.28,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2047.64 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1000.28 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 2,
+      "variant": "candidate",
+      "kind": "byte",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        4.419921875,
+        3.9296875,
+        4.0654296875
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2310.14,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1129.84,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2310.14 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1129.84 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 2,
+      "variant": "candidate",
+      "kind": "dword",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        4.99755859375,
+        4.0927734375,
+        4.12158203125
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2155.79,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1068.34,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2155.79 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1068.34 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 3,
+      "variant": "candidate",
+      "kind": "byte",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        4.99755859375,
+        4.0927734375,
+        4.12158203125
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2487.14,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1139.64,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2487.14 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1139.64 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 3,
+      "variant": "candidate",
+      "kind": "dword",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        4.77001953125,
+        4.07275390625,
+        4.11376953125
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2152.36,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1058.0,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2152.36 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1058 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 3,
+      "variant": "baseline",
+      "kind": "byte",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.6279296875,
+        4.0546875,
+        4.10693359375
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2114.12,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1048.92,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2114.12 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1048.92 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 3,
+      "variant": "baseline",
+      "kind": "dword",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.37744140625,
+        4.01953125,
+        4.09326171875
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2134.66,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1052.67,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2134.66 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1052.67 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 4,
+      "variant": "baseline",
+      "kind": "byte",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        4.34716796875,
+        4.01904296875,
+        4.09228515625
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2099.85,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1024.47,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2099.85 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1024.47 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 4,
+      "variant": "baseline",
+      "kind": "dword",
+      "binarySha256": "1d85ce2808361b8fa24d52edc0d56a660fa67c353f5a5348f2d8cf6d22903314",
+      "loadBefore": [
+        3.98046875,
+        3.95263671875,
+        4.06689453125
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2052.4,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1035.3,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2052.4 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1035.3 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    },
+    {
+      "trial": 4,
+      "variant": "candidate",
+      "kind": "byte",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.98046875,
+        3.95263671875,
+        4.06689453125
+      ],
+      "steps": 9800000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2412.18,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1112.02,
+          "nativeInstructions": 9799999706,
+          "checksum": 152
+        }
+      },
+      "stdout": "Flat byte memory JIT: 2412.18 million guest instructions/s, 9799999706 native; checksum=152\nPaged byte memory JIT: 1112.02 million guest instructions/s, 9799999706 native; checksum=152\n"
+    },
+    {
+      "trial": 4,
+      "variant": "candidate",
+      "kind": "dword",
+      "binarySha256": "cab553020cc2e890597dd50d9b4a889e676bc738f8cbb2603a38280218a5ecd0",
+      "loadBefore": [
+        3.67578125,
+        3.8876953125,
+        4.04248046875
+      ],
+      "steps": 980000049,
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2136.7,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1020.02,
+          "nativeInstructions": 979999706,
+          "checksum": 320000016
+        }
+      },
+      "stdout": "Flat memory JIT: 2136.7 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1020.02 million guest instructions/s, 979999706 native; checksum=320000016\n"
+    }
+  ],
+  "summary": {
+    "byte Flat": {
+      "ratios": [
+        1.1581376049318541,
+        1.1651544555811777,
+        1.1613412427106373,
+        1.17644220763249,
+        1.1487391956568327
+      ],
+      "median": 1.1613412427106373
+    },
+    "byte Paged": {
+      "ratios": [
+        1.0902859600890236,
+        1.0925870235320652,
+        1.1470491788299864,
+        1.0864889600732182,
+        1.0854588226107158
+      ],
+      "median": 1.0902859600890236
+    },
+    "dword Flat": {
+      "ratios": [
+        0.9847234272579848,
+        1.0291875377788606,
+        1.0528169014084507,
+        1.0082917185875035,
+        1.0410738647437145
+      ],
+      "median": 1.0291875377788606
+    },
+    "dword Paged": {
+      "ratios": [
+        0.9990354562570138,
+        1.0523227957641124,
+        1.0680409485344102,
+        1.0050633151889956,
+        0.9852409929489038
+      ],
+      "median": 1.0050633151889956
+    }
+  },
+  "validation": {
+    "core": 341306,
+    "newBoundaryAssertions": 24,
+    "readJit": 156510,
+    "byteJit": 2957189,
+    "flagLiveness": 183478,
+    "rtts": {
+      "pid": 58085,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-5dmm46qo/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-5dmm46qo/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-5dmm46qo/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-5dmm46qo/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot only",
+      "emulatorSha256": "5dca2b51b1da726fc36b8c267cf6029d1ac5d44093b07598729fd7c2ecdeb566",
+      "gitCommit": "7aade69eac68c5e6b8a34943d86bc7f2f3f2d4b2",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "desktop bootstrap only",
+        "instructions": 464111323,
+        "resets": 0
+      }
+    },
+    "osr2": {
+      "pid": 58081,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-lvyrly6u/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-lvyrly6u/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-lvyrly6u/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-lvyrly6u/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot only",
+      "emulatorSha256": "5dca2b51b1da726fc36b8c267cf6029d1ac5d44093b07598729fd7c2ecdeb566",
+      "gitCommit": "7aade69eac68c5e6b8a34943d86bc7f2f3f2d4b2",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "desktop bootstrap only",
+        "instructions": 288516332,
+        "resets": 0
+      }
+    }
+  },
+  "limitations": [
+    "Five pairs and host variation; all samples retained",
+    "Tiny working sets, not DRAM bandwidth or application startup",
+    "Dword controls use 980000049 guest instructions versus 9800000049 for bytes",
+    "No installer or Win3.11 run repeated for this change"
+  ],
+  "diskPolicy": "No new VM images or checkpoints; successful small startup overlays removed; temporary baseline executable deleted"
+}
