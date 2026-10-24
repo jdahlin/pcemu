@@ -218,7 +218,8 @@ Jit::Block Jit::compile(bool translate) {
         int kind, dst, src, op, w, dstShift, srcShift, stackDelta;
         uint32_t imm, end;
         bool immediate;
-        bool compareMemory = false, reverse = false;
+        bool compareMemory = false, reverse = false, nearCall = false;
+        uint32_t target = 0;
         NativeMemoryMove memory;
     };
     std::vector<IR> ir;
@@ -311,7 +312,23 @@ Jit::Block Jit::compile(bool translate) {
             i.kind = -1;
             i.dst = 0;
             i.src = 0;
-            if ((op >= 0x50 && op <= 0x5f) || op == 0x68 || op == 0x6a) {
+            if (op == 0xe8) {
+                // A direct near CALL is a restartable push followed by a jump.
+                // Keep the return address separate from the committed target,
+                // including when the push invalidates this block's code page.
+                auto displacement = immediate(w);
+                i.kind = 5;
+                i.nearCall = i.immediate = i.memory.store = true;
+                i.imm = pos;
+                i.target = (pos + (w == 2 ? uint32_t(int32_t(int16_t(displacement)))
+                                         : displacement)) & (w == 2 ? 65535u : UINT32_MAX);
+                i.stackDelta = -w;
+                i.memory.base = SP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                i.memory.displacement = uint32_t(-w);
+                block.usesStack = true;
+            } else if ((op >= 0x50 && op <= 0x5f) || op == 0x68 || op == 0x6a) {
                 i.kind = 5;
                 i.immediate = op == 0x68 || op == 0x6a;
                 i.dst = i.memory.reg = i.immediate ? 0 : op & 7;
@@ -485,10 +502,10 @@ Jit::Block Jit::compile(bool translate) {
             if (i.kind == 5) {
                 i.memory.width = i.w;
                 i.memory.begin = begin;
-                i.memory.end = pos;
+                i.memory.end = i.nearCall ? i.target : pos;
             }
             ir.push_back(i);
-            if (i.kind == 4)
+            if (i.kind == 4 || i.nearCall)
                 break;
         } catch (int) {
             pos = begin;
@@ -505,7 +522,7 @@ Jit::Block Jit::compile(bool translate) {
     const bool shortComparison =
         ir.size() == 2 && ir[1].kind == 4 && ir[1].dst >= 0 &&
         (ir[0].compareMemory || ir[0].kind == 2 || (ir[0].kind == 1 && ir[0].op == 7));
-    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison))
+    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && !ir.back().nearCall))
         return block;
     std::vector<uint32_t> code;
     auto emit = [&](uint32_t x) { code.push_back(x); };
@@ -898,7 +915,8 @@ Jit::Block Jit::compile(bool translate) {
     }
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == 4;
-    imm(9, branch && ir.back().dst < 0 ? ir.back().imm : pos);
+    imm(9, ir.back().nearCall ? ir.back().target
+                             : branch && ir.back().dst < 0 ? ir.back().imm : pos);
     store(9, 19, offsetof(CPU, ip));
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     imm(0, ir.size());

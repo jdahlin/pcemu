@@ -116,14 +116,19 @@ int main() {
         for (bool store : {false, true})
             for (bool word : {false, true})
                 for (bool stack32 : {false, true})
-                    for (unsigned kind = 0; kind < 4; ++kind) {
+                    for (unsigned kind = 0; kind < 4; ++kind)
+                      for (bool call : {false, true}) {
+                        if (call && !store)
+                            continue;
                         if (kind == 1 && !store)
                             continue;
                         CPU ref(1024 * 1024), native(1024 * 1024);
                         std::vector<uint8_t> code = {0xb8, 0xff, 0xff, 0xff, 0xff, 0x83, 0xc0, 1};
                         if (word)
                             code.push_back(0x66);
-                        code.push_back(store ? 0x50 : 0x5c); // Faulting PUSH AX / POP SP.
+                        code.push_back(call ? 0xe8 : store ? 0x50 : 0x5c);
+                        if (call)
+                            code.insert(code.end(), word ? 2 : 4, 0);
                         code.insert(code.end(), {0xbb, 0xef, 0xbe, 0xad, 0xde, 0xf4});
                         auto originalSP =
                             (0x9000u + (store ? (word ? 2 : 4) : 0)) | (stack32 ? 0 : 0xabcd0000u);
@@ -206,6 +211,79 @@ int main() {
                   "self-modifying PUSH commits SP then exits before stale native code");
             check(changed.run() == 1 && c.r[BX] == 0x11223344,
                   "self-modifying PUSH updates the following instruction");
+        }
+        for (bool code32 : {false, true})
+            for (bool overrideWidth : {false, true})
+                for (bool stack32 : {false, true})
+                    for (bool paging : {false, true})
+                        for (unsigned edge = 0; edge < 4; ++edge) {
+                            CPU ref(1024 * 1024), native(1024 * 1024);
+                            unsigned width = code32 != overrideWidth ? 4 : 2;
+                            std::vector<uint8_t> code = {0x83, 0xc3, 1};
+                            if (overrideWidth)
+                                code.push_back(0x66);
+                            code.push_back(0xe8);
+                            uint32_t displacement = edge & 1 ? 0xffffffe0u : 0x12345u;
+                            for (unsigned n = 0; n < width; ++n)
+                                code.push_back(displacement >> (n * 8));
+                            for (auto c : {&ref, &native}) {
+                                c->cr[0] = 1;
+                                c->s[CS].big = code32;
+                                c->s[SS].big = stack32;
+                                c->s[SS].base = 0x10000;
+                                c->r[SP] = (0x7000 + edge) | (stack32 ? 0 : 0xabcd0000u);
+                                c->r[BX] = 0x7fffffff;
+                                c->flags = 0x8d7;
+                                std::copy(code.begin(), code.end(), c->mem.begin());
+                                if (paging) {
+                                    c->write(0x80000, 0x81007, 4);
+                                    for (unsigned page = 0; page < 256; ++page)
+                                        c->write(0x81000 + page * 4, (page << 12) | 7, 4);
+                                    c->cr[3] = 0x80000;
+                                    c->cr[0] = 0x80000001;
+                                }
+                                c->flushTLB();
+                            }
+                            ref.step();
+                            ref.step();
+                            Jit translated(native, true, 0);
+                            check(translated.run() == 2 && translated.nativeInstructions == (edge && edge < width ? 1u : 2u),
+                                  "direct CALL runs natively or replays a page-crossing push");
+                            check(native.ip == ref.ip && native.flags == ref.flags,
+                                  "direct CALL preserves target and preceding arithmetic flags");
+                            for (unsigned r = 0; r < 8; ++r)
+                                check(native.r[r] == ref.r[r], "direct CALL preserves registers");
+                            check(std::memcmp(native.mem.data() + 0x16000,
+                                              ref.mem.data() + 0x16000, 0x2000) == 0,
+                                  "direct CALL pushes the exact mixed-width return address");
+                        }
+        {
+            CPU c(65536);
+            c.s[CS].big = c.s[SS].big = true;
+            const uint8_t code[] = {0xe8, 5, 0, 0, 0};
+            std::copy(std::begin(code), std::end(code), c.mem.begin());
+            c.r[SP] = 5;
+            Jit changed(c, true, 0);
+            check(changed.run() == 1 && changed.nativeInstructions == 1 && c.ip == 10 &&
+                      c.r[SP] == 1 && c.read(1, 4) == 5,
+                  "self-modifying CALL commits its target after writing the return address");
+        }
+        {
+            CPU c(1024 * 1024);
+            c.s[CS].big = c.s[SS].big = true;
+            const uint8_t code[] = {0xe8, 5, 0, 0, 0};
+            std::copy(std::begin(code), std::end(code), c.mem.begin());
+            c.r[SP] = 0xa0004;
+            unsigned accesses = 0;
+            c.videoWrite = [&](uint32_t at, uint8_t value) {
+                ++accesses;
+                check(c.r[SP] == 0xa0000 && value == (at == 0xa0000 ? 5 : 0),
+                      "CALL MMIO replay observes the committed SP and return bytes");
+            };
+            Jit guarded(c, true, 0);
+            check(guarded.run() == 1 && guarded.nativeInstructions == 0 && accesses == 4 &&
+                      c.r[SP] == 0xa0000 && c.ip == 10,
+                  "CALL MMIO replay executes the stack write and branch exactly once");
         }
         std::cout << "Passed " << checks << " stack JIT checks\n";
     } catch (const std::exception &e) {

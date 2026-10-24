@@ -155,3 +155,13 @@ interpreter and reports **zero native instructions**. In contrast, arithmetic
 and single-cell updates execute mostly natively. These are individual diagnostic
 samples, not a statistical performance comparison, but they identify a concrete
 remaining JIT dispatch/control-flow bottleneck without GUI startup noise.
+
+Direct near CALL lowering now reuses the guarded native PUSH path and terminates
+its block at the call target. Mixed operand/stack widths, page-crossing replay,
+stack faults, MMIO and writes into translated code have differential regression
+coverage. RET remains interpreted. A subsequent diagnostic run at
+`build/guest-micro-call-native/result.json` reports four million native CALLs in
+each warm call/return sample (out of 14,000,004 guest instructions), with matching
+checksums and instruction counts. Its 32-bit sample took about 292 ms; the earlier
+303 ms observation is not a controlled repeated comparison. This is partial
+control-flow coverage, not evidence that the CALL/RET bottleneck is resolved.
