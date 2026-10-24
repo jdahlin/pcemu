@@ -284,3 +284,12 @@ past 200 MiB during the guest download. Image application, offline driver
 injection and installed Windows boot are still pending at this checkpoint.
 Superseded generated WinPE boot disks were removed to recover local space;
 reports and media hashes remain, and the current installer boot disk is retained.
+
+The guest tooling also builds `check-rng.exe` for the installed-system check.
+It explicitly selects the INF-registered `QEMU VirtIO RNG Provider` through CNG,
+requires two completed 64-byte requests and rejects identical buffers. It prints
+only an outcome marker, never entropy bytes. This distinguishes a loaded viorng
+PnP device from successful I/O through its own CNG provider. Native fixtures
+cover provider-open, either request, close failures and unchanged output.
+The probe has been built and its ARM64 imports checked; it has not yet run in
+installed Windows and is not part of the already-running install WIM snapshot.
