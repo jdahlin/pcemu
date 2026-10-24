@@ -11,11 +11,10 @@ fallback. Original PS/2 mouse and VBE/DISPI display hardware are now available;
 see [input and display integration](docs/input-video.md) for guest driver setup. Both the rtts image and independent OSR2 installation pass guest
 restart, exact saved-file survival and clean shutdown to the full safe-to-turn-off
 screen on the inline RAM backend. The separate OSR2
-installer has completed installation and reached Explorer on
-`media/win95-phase2.raw`; a new full installation now completes its automatic
-first reboot, and its compressed working disk is `media/win95-fresh-installed.pcd`
-(with backing in `build/snapshots`). `media/win95-installed.raw` is the older cold-boot test copy
-(the older installation used a cold-booted private copy for its first restart). Guest reset requests now have a firmware bootstrap path. A Win95 Restart
+installer has completed installation. The current compressed installed disk is
+`media/win95-fresh-installed.pcd`, with backing in `build/snapshots`. Historical
+intermediate raw disks have been removed; original media and saved checkpoints
+are retained. Guest reset requests now have a firmware bootstrap path. A Win95 Restart
 check returned to Explorer in the same process and verified exact Notepad file
 contents after reboot (`build/win95-inline-restart` and `build/rtts-inline-restart`). Full ROM POST is not
 implemented. See [status](docs/GOAL_STATUS.md).
@@ -149,7 +148,8 @@ or the explicitly requested rtts image; no disk images are distributed with sour
    A fresh disk reaches graphical Setup. If retrying a failed installation, Setup
    asks an additional recovery question; use the window or add a scripted answer.
    The full graphical installer has now completed on the separate
-   `media/win311-install.raw` disk. The earlier apparent wait after name
+   private `media/win311-install.raw` test disk (since retired after verification).
+   The earlier apparent wait after name
    confirmation was driver decompression, not a confirmed stall. See
    [current verification status](docs/GOAL_STATUS.md).
 
@@ -178,8 +178,8 @@ The following steps describe the older minimal installation retained in
 
 The older helper scripts write `media/dos.raw`; the independent
 `prepare_win311.py` and `prepare_win95.py` scripts create separate installer disks. Never run two writable instances
-against the same disk simultaneously. `media/setup-stage.raw` is a local snapshot
-from before the shell switch. Disk images, binaries, ROMs, and extracted Microsoft
+against the same disk simultaneously. Historical `media/setup-stage.raw` and
+other intermediate debug disks have been retired. Disk images, binaries, ROMs, and extracted Microsoft
 files are excluded from source control.
 
 ## Debugging and scope
@@ -223,3 +223,7 @@ NE2000 networking and Netscape 3.04 are configured in the `office97-networked`
 checkpoint, now preferred by `./run-office97.sh`. Open the Netscape desktop icon
 for the built-in HTTP test, then its external HTTP link. `--integrated` selects
 the previous input/video checkpoint. See [networking](docs/networking.md).
+
+Local storage was reduced from about 15 GiB to 3.4 GiB while preserving original
+archives, current boot disks and snapshots. Smoke tests now discard successful
+scratch disks by default. See [storage cleanup](docs/storage.md).

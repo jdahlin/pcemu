@@ -16,6 +16,7 @@ root = Path(__file__).resolve().parent.parent
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--disk', type=Path, default=root / 'media/win311.raw')
 p.add_argument('--verbose', action='store_true')
+p.add_argument('--keep-artifacts', action='store_true', help='retain the successful private disk and RAM dump')
 a = p.parse_args()
 if not shutil.which('tesseract'):
     p.error('This optional integration check requires tesseract (brew install tesseract)')
@@ -28,8 +29,8 @@ log = (work / 'emulator.log').open('w')
 proc = subprocess.Popen([
     str(root / 'build/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',
     '--type', 'cd windows\nwin /s\n', '--control-file', str(control),
-    '--capture-every', '100000000', '--frame', str(frame), '--dump-memory', str(ram),
-] + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
+    '--capture-every', '100000000', '--frame', str(frame),
+] + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
 
 def send(*commands, settle=0.35):
     subprocess.run([
@@ -135,6 +136,8 @@ try:
     fat.f.close()
     if actual != b'PCEMU integration passed.':
         raise RuntimeError(f'Guest file mismatch: {actual!r}')
+    if not a.keep_artifacts:
+        disk.unlink()
     print(f'PASS: Notepad saved exact contents through Windows and DOS. Evidence: {work}')
 finally:
     if proc.poll() is None:
@@ -146,4 +149,4 @@ finally:
             proc.terminate()
             proc.wait(timeout=5)
     log.close()
-    print(f'Guest disk and diagnostics retained in {work}')
+    print(f'Diagnostics retained in {work}; private disk '+('retained' if disk.exists() else 'removed after successful verification'))

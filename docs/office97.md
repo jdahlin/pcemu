@@ -75,8 +75,9 @@ raw staging copy were removed after successful installation. Installer files
 remain inside the guest for repairs or additional components.
 
 `media/office97-base/disk.raw` is an immutable APFS clone of the pre-Office
-Windows disk. `media/office97-win95.pcd` and checkpoint disks use compressed
-COW records. Snapshot copies share APFS extents; restores add small private
+Windows disk. Checkpoint disks use compressed COW records. The historical
+`media/office97-win95.pcd` working copy was removed after proving it identical to
+the retained Office desktop disk. Snapshot copies share APFS extents; restores add small private
 children. Keep the base, checkpoint directories and their absolute parent
 paths in place. The format is currently intended for this local checkout.
 
