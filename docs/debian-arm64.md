@@ -86,6 +86,10 @@ file survival. Private keys and preseed credentials are not committed.
 
 ## Regression checks and network contract
 
+Peripheral models now have individual source/header files. MMIO regions and PCI
+endpoints are registered in `arm_virt_devices.cpp`, outside the vCPU exit loop;
+see [device composition and validation](debian-device-model.md).
+
 ```sh
 make test-hvf
 make build/network-tests && build/network-tests

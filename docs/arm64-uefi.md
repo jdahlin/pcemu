@@ -101,9 +101,13 @@ hash are in `dsdt-aml.json`; no compiler is needed for normal builds. To check t
 compiled bytes, run `python3 tools/build_arm_acpi.py --iasl /path/to/iasl`.
 The UART exposes its memory resource and level-high GIC interrupt 33.
 
-`src/arm_virt.cpp` owns firmware loading, MMIO dispatch and variable persistence.
+`src/arm_virt.cpp` owns firmware loading, execution and variable persistence.
 It uses the separate `HvfMachine` execution backend, not the x86 `Machine`.
-`src/arm_devices.cpp` provides deliberately limited firmware device models:
+`src/arm_virt_devices.cpp` registers MMIO regions and PCI endpoints using
+`MmioSpace` and `PciEcamBus`. Device models live in separate files:
+`arm_pl011.*`, `arm_pl031.*`, `arm_nor_flash.*`, `arm_psci.*`, `arm_os_lock.*`,
+`arm_fw_cfg.*` and `arm_ramfb.*`. See [device composition](debian-device-model.md).
+These remain deliberately limited firmware device models:
 
 - PL011 transmit/receive, selected control registers and PrimeCell IDs.
   Input is a bounded host queue. Masked RX, receive-timeout and empty-TX level

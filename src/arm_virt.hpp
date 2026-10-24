@@ -6,6 +6,9 @@
 #include "arm_pl011.hpp"
 #include "arm_mmio.hpp"
 #include "arm_fw_cfg.hpp"
+#include "arm_ramfb.hpp"
+#include "mmio_space.hpp"
+#include "pci_ecam.hpp"
 #include "hvf_machine.hpp"
 #include "virtio_blk.hpp"
 #include "virtio_pci.hpp"
@@ -48,8 +51,8 @@ class ArmVirtMachine {
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
-    std::string framebuffer() const;
-    void saveFramebuffer(const std::string &path) const;
+    std::string framebuffer() const { return ramfb.mode(); }
+    void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
     std::string cpuState() const;
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
@@ -57,6 +60,11 @@ class ArmVirtMachine {
     HvfMachine vm;
     ArmNorFlash nor;
     ArmFwCfg fwCfg;
+    ArmRamFb ramfb;
+    MmioSpace mmio;
+    PciEcamBus pciBus;
+    void bindDevices();
+    void checkDeviceErrors() const;
     ArmPl011 uart;
     ArmPl031 rtc;
     bool rtcInterruptLevel = false;

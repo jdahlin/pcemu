@@ -24,7 +24,7 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(ramBytes, true), nor(load(c.variableTemplate, 0xc0000)),
-      fwCfg(vm.ram(), HvfMachine::ramBase) {
+      fwCfg(vm.ram(), HvfMachine::ramBase), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase) {
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     fwCfg.addFile("etc/acpi/tables", load(c.acpiDirectory + "/tables", 64 * 1024));
     fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
@@ -115,6 +115,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             [this](unsigned o, unsigned w) { return rng->read(o, w); },
             [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
             4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); });
+        bindDevices();
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
         if (dtb.size() < 40 || dtb[0] != 0xd0 || dtb[1] != 0x0d || dtb[2] != 0xfe || dtb[3] != 0xed)
@@ -148,46 +149,6 @@ void ArmVirtMachine::saveVariables() {
         if (!output) throw std::runtime_error("Cannot save UEFI variables");
         fs::rename(temporary, target);
     } catch (...) { fs::remove(temporary); throw; }
-}
-std::string ArmVirtMachine::framebuffer() const {
-    auto bytes = fwCfg.file(0x20);
-    auto field = [&](size_t offset, size_t count) {
-        uint64_t value = 0;
-        for (size_t i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
-        return value;
-    };
-    auto address = field(0, 8), format = field(8, 4), flags = field(12, 4);
-    auto width = field(16, 4), height = field(20, 4), stride = field(24, 4);
-    if (!address) return "inactive";
-    if (format != 0x34325258 || flags || !width || !height || width > 4096 || height > 4096 ||
-        stride < width * 4 || stride > 16384 || address < HvfMachine::ramBase ||
-        address - HvfMachine::ramBase > ramBytes ||
-        height * stride > ramBytes - (address - HvfMachine::ramBase))
-        return "invalid";
-    return std::to_string(width) + "x" + std::to_string(height) + "x32";
-}
-void ArmVirtMachine::saveFramebuffer(const std::string &path) const {
-    auto mode = framebuffer();
-    if (mode == "inactive" || mode == "invalid") throw std::runtime_error("No valid GOP framebuffer");
-    auto bytes = fwCfg.file(0x20);
-    auto field = [&](size_t offset, size_t count) {
-        uint64_t value = 0;
-        for (size_t i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
-        return value;
-    };
-    auto address = field(0, 8), width = field(16, 4), height = field(20, 4), stride = field(24, 4);
-    std::ofstream output(path, std::ios::binary | std::ios::trunc);
-    output << "P6\n" << width << ' ' << height << "\n255\n";
-    std::vector<uint8_t> row(width * 4), rgb(width * 3);
-    for (uint64_t y = 0; y < height; ++y) {
-        vm.readMemory(address + y * stride, row);
-        for (uint64_t x = 0; x < width; ++x) {
-            rgb[x * 3] = row[x * 4 + 2]; rgb[x * 3 + 1] = row[x * 4 + 1]; rgb[x * 3 + 2] = row[x * 4];
-        }
-        output.write(reinterpret_cast<const char *>(rgb.data()), rgb.size());
-    }
-    output.close();
-    if (!output) throw std::runtime_error("Cannot save GOP framebuffer: " + path);
 }
 std::string ArmVirtMachine::cpuState() const {
     auto elr = vm.systemReg(0xc201);
@@ -252,99 +213,12 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         unsigned reg = (exit.syndrome >> 16) & 31;
         unsigned width = 1u << ((exit.syndrome >> 22) & 3);
         bool write = exit.syndrome & (1ull << 6);
-        if (exit.physicalAddress >= 0x09010000 && exit.physicalAddress < 0x09011000 && width <= 4) {
-            unsigned offset = exit.physicalAddress - 0x09010000;
-            if (offset % width) throw std::runtime_error("Unaligned PL031 access");
-            if (write) {
-                if (offset % 4 || width != 4) throw std::runtime_error("PL031 writes require 32 bits");
-                rtc.write(offset, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
-            } else if (reg < 31) vm.setReg(reg, armMmioLoad(rtc.read(offset & ~3u) >> (8 * (offset & 3)), width,
-                exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15)));
-            updateRtcInterrupt();
-            vm.setPC(exit.pc + 4);
-            return;
-        }
-        if (exit.physicalAddress >= 0x09020000 && exit.physicalAddress < 0x09020018) {
-            unsigned offset = exit.physicalAddress - 0x09020000;
-            if (write) fwCfg.write(offset, reg < 31 ? vm.reg(reg) : 0, width);
-            else {
-                auto value = armMmioLoad(fwCfg.read(offset, width), width,
-                    exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
-                if (reg < 31) vm.setReg(reg, value);
-            }
-            vm.setPC(exit.pc + 4);
-            return;
-        }
-        if (exit.physicalAddress >= 0x04000000 && exit.physicalAddress < 0x040c0000 && write && width == 4) {
-            nor.write(exit.physicalAddress - 0x04000000, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
-            auto [begin, end] = nor.takeDirty();
-            if (end > begin) vm.writeMemory(0x04000000 + begin, nor.bytes().subspan(begin, end - begin));
-            vm.setPC(exit.pc + 4);
-            return;
-        }
-        const bool ecam = exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000;
-        VirtioPciDevice *endpoint = nullptr;
-        bool nvmeAccess = false;
-        uint64_t offset = exit.physicalAddress - 0x3f000000;
-        if (ecam && !(offset & 0x7000)) {
-            auto slot = offset >> 15;
-            nvmeAccess = slot == 0 && nvme != nullptr;
-            endpoint = slot == 0 ? pci.get() : slot == 1 ? extraPci.get() : slot == 2 ? netPci.get() : slot == 3 ? rngPci.get() : nullptr;
-            offset &= 0xfff;
-        } else if (!ecam) {
-            nvmeAccess = nvme && nvme->contains(exit.physicalAddress, width);
-            for (auto *candidate : {pci.get(), extraPci.get(), netPci.get(), rngPci.get()})
-                if (candidate && candidate->contains(exit.physicalAddress, width)) endpoint = candidate;
-        }
-        if (ecam || endpoint || nvmeAccess) {
-            if (write) {
-                if (nvmeAccess) {
-                    if (ecam) nvme->configWrite(offset, reg < 31 ? vm.reg(reg) : 0, width);
-                    else nvme->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
-                } else if (endpoint) {
-                    if (ecam) endpoint->configWrite(offset, reg < 31 ? vm.reg(reg) : 0, width);
-                    else endpoint->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
-                }
-            } else {
-                uint64_t value = nvmeAccess ? (ecam ? nvme->configRead(offset, width)
-                    : nvme->read(exit.physicalAddress, width))
-                    : endpoint ? (ecam ? endpoint->configRead(offset, width)
-                    : endpoint->read(exit.physicalAddress, width)) : UINT64_MAX;
-                value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
-                if (reg < 31) vm.setReg(reg, value);
-            }
-            for (auto *device : {block.get(), extraBlock.get()})
-                if (device && !device->error().empty()) throw std::runtime_error("Virtio device requires reset: " + device->error());
-            if (net && !net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
-            if (rng && !rng->error().empty()) throw std::runtime_error("Virtio entropy requires reset: " + rng->error());
-            vm.setPC(exit.pc + 4); return;
-        }
-        if (exit.physicalAddress >= 0x0a000000 && exit.physicalAddress < 0x0a000200) {
-            unsigned offset = exit.physicalAddress - 0x0a000000;
-            auto *mmio = pci ? nullptr : block.get();
-            if (write) {
-                if (mmio) mmio->write(offset, reg < 31 ? vm.reg(reg) : 0, width);
-            } else {
-                uint64_t value = mmio ? mmio->read(offset, width)
-                                      : (offset == 0 ? 0x74726976u : offset == 4 ? 2u : 0u);
-                value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
-                if (reg < 31) vm.setReg(reg, value);
-            }
-            if (block && !block->error().empty())
-                throw std::runtime_error("Virtio device requires reset: " + block->error());
-            vm.setPC(exit.pc + 4);
-            return;
-        }
-        if (exit.physicalAddress >= 0x09000000 && exit.physicalAddress < 0x09001000 && width <= 4) {
-            unsigned offset = exit.physicalAddress - 0x09000000;
-            if (offset % width) throw std::runtime_error("Unaligned PL011 access");
-            if (write) uart.write(offset, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
-            else {
-                uint64_t value = armMmioLoad(uart.read(offset), width,
-                                             exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
-                if (reg < 31) vm.setReg(reg, value);
-            }
-            vm.setSPI(33, uart.irq());
+        MmioAccess access{exit.physicalAddress, write && reg < 31 ? vm.reg(reg) : 0,
+                          width, write, reg == 31};
+        if (mmio.access(access)) {
+            if (!write && reg < 31)
+                vm.setReg(reg, armMmioLoad(access.value, width, exit.syndrome & (1ull << 21),
+                                          exit.syndrome & (1ull << 15)));
             vm.setPC(exit.pc + 4);
             return;
         }
