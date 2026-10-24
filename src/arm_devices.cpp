@@ -2,6 +2,21 @@
 #include <algorithm>
 #include <stdexcept>
 namespace pc {
+ArmPsciResult armPsciCall(uint32_t function, uint64_t arg0, uint64_t arg1) {
+    if (!(function & 0x40000000)) { arg0 = uint32_t(arg0); arg1 = uint32_t(arg1); }
+    switch (function) {
+    case 0x84000000: return {2}; // PSCI 0.2
+    case 0x84000001: case 0xc4000001:
+        // Standby can wake spuriously; deeper states have not been implemented.
+        return {arg0 == 0 ? 0 : -2};
+    case 0x84000002: case 0x84000008: return {0, ArmPowerAction::Off};
+    case 0x84000009: return {0, ArmPowerAction::Reset};
+    case 0x84000003: case 0xc4000003: return {arg0 == 0 ? -4 : -2};
+    case 0x84000004: case 0xc4000004: return {arg0 == 0 && arg1 == 0 ? 0 : -2};
+    case 0x84000006: return {2}; // No resident trusted OS.
+    default: return {-1};
+    }
+}
 uint64_t armMmioLoad(uint64_t value, unsigned width, bool signExtend, bool wideRegister) {
     if (width != 1 && width != 2 && width != 4 && width != 8)
         throw std::runtime_error("Invalid ARM MMIO load width");

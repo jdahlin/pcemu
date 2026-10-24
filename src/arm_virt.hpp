@@ -9,10 +9,12 @@ namespace pc {
 // Concrete ARM firmware platform. Keep x86 CPU/device internals out of this path.
 class ArmVirtMachine {
   public:
+    static constexpr size_t ramBytes = size_t(2) * 1024 * 1024 * 1024;
     struct Config {
         std::string firmware, dtb, variableTemplate, variables;
         std::string disk, diskOverlay;
         std::string virtioTransport = "pci";
+        std::string acpiDirectory = "build/arm64-fw/acpi";
     };
     explicit ArmVirtMachine(const Config &config);
     ~ArmVirtMachine();
@@ -25,6 +27,9 @@ class ArmVirtMachine {
     std::string diskPath() const { return disk ? disk->path : std::string{}; }
     uint64_t diskRequests() const { return block ? block->requests : 0; }
     uint64_t exits() const { return vm.exits(); }
+    bool stopped() const { return powerAction != ArmPowerAction::None; }
+    const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
+        powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
     std::string framebuffer() const;
     void saveFramebuffer(const std::string &path) const;
   private:
@@ -34,6 +39,7 @@ class ArmVirtMachine {
     ArmNorFlash nor;
     ArmFwCfg fwCfg;
     ArmPl011 uart;
+    ArmPowerAction powerAction = ArmPowerAction::None;
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;
     std::unique_ptr<VirtioPciBlock> pci;

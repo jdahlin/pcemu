@@ -52,9 +52,9 @@ struct HvfMachine::Impl {
     }
     void initialize(size_t bytes, bool enableGic) {
         auto pageSize = sysconf(_SC_PAGESIZE);
-        if (pageSize <= 0 || bytes < size_t(pageSize) || bytes > 256 * 1024 * 1024 ||
+        if (pageSize <= 0 || bytes < size_t(pageSize) || bytes > size_t(2) * 1024 * 1024 * 1024 ||
             bytes % size_t(pageSize))
-            throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 256 MiB");
+            throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 2 GiB");
         if (!HvfMachine::supported())
             throw std::runtime_error("Hypervisor.framework is unavailable (kern.hv_support)");
         check(hv_vm_create(nullptr), "hv_vm_create");

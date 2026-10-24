@@ -169,6 +169,7 @@ int main(int argc, char **argv) {
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
+            else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); uefiOptions = true; }
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
             else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
             else if (arg == "--framebuffer-ppm") { framebufferPath = value(); uefiOptions = true; }
@@ -194,7 +195,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMMUTABLE_BASE --disk-overlay PRIVATE_COW --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
-                             "      [--framebuffer-ppm FILE]\n"
+                             "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY]\n"
                              "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
@@ -213,7 +214,7 @@ int main(int argc, char **argv) {
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
             size_t printed = 0, matchStart = 0;
             bool commandSent = shellCommand.empty(), matched = untilText.empty();
-            while (std::chrono::steady_clock::now() < deadline) {
+            while (!vm.stopped() && std::chrono::steady_clock::now() < deadline) {
                 vm.run(std::chrono::milliseconds(100));
                 const auto &output = vm.output();
                 if (output.size() > printed) {
@@ -232,7 +233,7 @@ int main(int argc, char **argv) {
             if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
             std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
                       << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
-                      << " framebuffer=" << vm.framebuffer() << '\n';
+                      << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';
             return matched ? 0 : 1;
         }
         if (uefiOptions || !untilText.empty() || !shellCommand.empty())

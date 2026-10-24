@@ -15,6 +15,22 @@ template <class F> static void rejects(F f) {
     check(rejected);
 }
 int main() {
+    check(armPsciCall(0x84000000, 0, 0).value == 2);
+    check(armPsciCall(0xc4000003, 0, 0).value == -4);
+    check(armPsciCall(0xc4000003, 1, 0).value == -2);
+    check(armPsciCall(0x84000003, 1ull << 32, 0).value == -4);
+    check(armPsciCall(0xc4000003, 1ull << 32, 0).value == -2);
+    check(armPsciCall(0xc4000004, 0, 0).value == 0);
+    check(armPsciCall(0xc4000004, 0, 1).value == -2);
+    check(armPsciCall(0xc4000004, 1, 0).value == -2);
+    check(armPsciCall(0x84000006, 0, 0).value == 2);
+    check(armPsciCall(0xc4000001, 0, 0).value == 0);
+    check(armPsciCall(0xc4000001, 0x10000, 0).value == -2);
+    check(armPsciCall(0x84000002, 0, 0).action == ArmPowerAction::Off);
+    check(armPsciCall(0x84000008, 0, 0).action == ArmPowerAction::Off);
+    check(armPsciCall(0x84000009, 0, 0).action == ArmPowerAction::Reset);
+    check(armPsciCall(0x8400000a, 0, 0).value == -1);
+    check(armPsciCall(0x80000000, 0, 0).value == -1);
     std::vector<uint8_t> memory(4096);
     ArmFwCfg cfg(memory, 0x40000000);
     check(cfg.read(0, 4) == 0x554d4551);

@@ -7,6 +7,10 @@
 #include <utility>
 #include <vector>
 namespace pc {
+enum class ArmPowerAction { None, Off, Reset };
+struct ArmPsciResult { int64_t value; ArmPowerAction action = ArmPowerAction::None; };
+// Single-CPU PSCI 0.2 subset. No power-down suspend or secondary CPUs.
+ArmPsciResult armPsciCall(uint32_t function, uint64_t arg0, uint64_t arg1);
 uint64_t armMmioLoad(uint64_t value, unsigned width, bool signExtend, bool wideRegister);
 // Two interleaved x16 Intel command-set NOR devices on a 32-bit bus.
 // The firmware uses 256 KiB erase blocks and 128-byte write buffers.

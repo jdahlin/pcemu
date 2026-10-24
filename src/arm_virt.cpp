@@ -21,9 +21,12 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(256 * 1024 * 1024, true), nor(load(c.variableTemplate, 0xc0000)),
+    : config(c), vm(ramBytes, true), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase) {
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
+    fwCfg.addFile("etc/acpi/tables", load(c.acpiDirectory + "/tables", 64 * 1024));
+    fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
+    fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
     const auto working = fs::absolute(c.variables).lexically_normal();
     config.variables = working.string();
     const auto original = fs::absolute(c.variableTemplate).lexically_normal();
@@ -107,8 +110,8 @@ std::string ArmVirtMachine::framebuffer() const {
     if (!address) return "inactive";
     if (format != 0x34325258 || flags || !width || !height || width > 4096 || height > 4096 ||
         stride < width * 4 || stride > 16384 || address < HvfMachine::ramBase ||
-        address - HvfMachine::ramBase > 256 * 1024 * 1024 ||
-        height * stride > 256 * 1024 * 1024 - (address - HvfMachine::ramBase))
+        address - HvfMachine::ramBase > ramBytes ||
+        height * stride > ramBytes - (address - HvfMachine::ramBase))
         return "invalid";
     return std::to_string(width) + "x" + std::to_string(height) + "x32";
 }
@@ -136,8 +139,17 @@ void ArmVirtMachine::saveFramebuffer(const std::string &path) const {
     if (!output) throw std::runtime_error("Cannot save GOP framebuffer: " + path);
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
+    if (stopped()) return;
     auto exit = vm.run(slice);
     if (exit.reason == HvfMachine::ExitReason::Canceled) return;
+    if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16) {
+        auto result = (exit.syndrome & 0xffff) == 0
+            ? armPsciCall(vm.reg(0), vm.reg(1), vm.reg(2)) : ArmPsciResult{-1};
+        powerAction = result.action;
+        if (!stopped()) vm.setReg(0, uint64_t(result.value));
+        // Hypervisor.framework reports HVC with PC already advanced.
+        return;
+    }
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x24 &&
         (exit.syndrome & (1ull << 24)) && (exit.syndrome & (1ull << 25))) {
         unsigned reg = (exit.syndrome >> 16) & 31;

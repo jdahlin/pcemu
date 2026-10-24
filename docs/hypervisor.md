@@ -24,7 +24,7 @@ and the GIC-specific backend checks require macOS 15 or newer.
 
 - Profile `arm64-test`, platform `arm-baremetal-v1`, backend `auto` or `hvf`.
 - One VM per process, one vCPU, 2 MiB anonymous RAM mapped at guest physical
-  address `0x40000000`. The backend class accepts page-aligned RAM up to 256 MiB;
+  address `0x40000000`. The backend class accepts page-aligned RAM up to 2 GiB;
   the initial runner uses 2 MiB. There are no disk images or firmware downloads.
 - Raw, little-endian ARM64 instructions loaded at RAM base. Initial mode EL1h,
   MMU and caches disabled, DAIF interrupts masked, stack at RAM end. Other
@@ -79,7 +79,7 @@ and cannot be booted by either current platform yet.
 
 ## Next platform work
 
-The versioned `arm-virt-v2` firmware platform now provides a memory map, EDK II
+The versioned `arm-virt-v3` firmware platform now provides a memory map, EDK II
 boot, GICv3, generic timer, polled UART and private NOR variable storage. It reaches
 a UEFI Shell; see [ARM64 UEFI](arm64-uefi.md) for its contract and smoke test.
 Virtio-blk PCI/MMIO storage now boots EFI applications; see [virtio](virtio.md).

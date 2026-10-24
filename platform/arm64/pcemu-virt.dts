@@ -1,6 +1,6 @@
 /dts-v1/;
 / {
-    compatible = "pcemu,arm-virt-v2", "linux,dummy-virt";
+    compatible = "pcemu,arm-virt-v3", "linux,dummy-virt";
     model = "PCEmu ARM64 virtual machine";
     #address-cells = <2>;
     #size-cells = <2>;
@@ -11,7 +11,7 @@
         reg = <0 0x09020000 0 0x18>;
         dma-coherent;
     };
-    memory@40000000 { device_type = "memory"; reg = <0 0x40000000 0 0x10000000>; };
+    memory@40000000 { device_type = "memory"; reg = <0 0x40000000 0 0x80000000>; };
     flash@0 {
         compatible = "cfi-flash";
         reg = <0 0 0 0x4000000>, <0 0x04000000 0 0xc0000>;

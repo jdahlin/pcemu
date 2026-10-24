@@ -54,7 +54,7 @@ The single PCI root bridge uses ECAM at `0x3f000000`, bus 0, with a 32-bit memor
 window from `0x10000000` to `0x3effffff`. INTx routes to GIC SPI 48 through the
 device-tree interrupt map. The optional MMIO device occupies `0x0a000000` and
 uses the same SPI. Only one transport presents the disk at a time. With no disk,
-both interfaces advertise no device. The platform identity is now `arm-virt-v2`;
+both interfaces advertise no device. The platform identity is now `arm-virt-v3`;
 there is still no ARM checkpoint format to migrate.
 
 `src/disk.hpp` separates storage declarations from the x86 machine. `disk.cpp`
@@ -115,7 +115,8 @@ an arbitrary packaged driver is signed, compatible with this Validation OS, or
 installed in our WIM. Those must be verified before native Windows disk I/O.
 For RAM-disk boot, UEFI can first load the WIM using its own virtio driver;
 Windows then runs from RAM. Either path still needs Windows-compatible platform
-interfaces: ACPI/SMBIOS, display/GOP, boot configuration and additional validation.
+interfaces and validation. GOP and a minimal ACPI handoff are available; Windows
+boot configuration and OS/device compatibility still need validation.
 TPM/Secure Boot and the complete Windows 11 platform remain future work.
 
 References:

@@ -57,7 +57,7 @@ status/ID overlays are not persisted. Using the template itself as a writable
 store is rejected. This is process-safe save/reload, not a VM snapshot or a
 power-loss durability guarantee.
 
-## Guest platform contract: arm-virt-v2
+## Guest platform contract: arm-virt-v3
 
 | Address | Device |
 |---|---|
@@ -69,21 +69,32 @@ power-loss durability guarantee.
 | `0x0a000000` | Optional virtio-blk MMIO device |
 | `0x10000000`–`0x3effffff` | PCI memory window |
 | `0x3f000000` | PCI ECAM, bus 0 |
-| `0x40000000` | 256 MiB RAM; device tree initially at RAM base |
+| `0x40000000` | 2 GiB RAM; device tree initially at RAM base |
 
 The CPU starts at EL1h with translation disabled and DAIF masked. EDK II initializes
 its MMU, interrupt controller and architectural timer. The physical timer uses
 PPI 30; GICv3/timer operation is managed by Hypervisor.framework. Firmware output
 and a progressing shell countdown verify the current timer path. No EL3 monitor
-or nested virtualization is used. PSCI is advertised for the platform contract,
-but PSCI calls, SMP, guest reset/poweroff are not implemented yet and fail clearly
-if trapped; only the single-CPU firmware path is tested.
+or nested virtualization is used. The HVC conduit implements a single-CPU PSCI 0.2 subset: version, CPU_ON
+(already on/invalid CPU), AFFINITY_INFO, MIGRATE_INFO_TYPE and standby with
+immediate wakeup. Power-down suspend is rejected. CPU_OFF/SYSTEM_OFF stop the VM;
+SYSTEM_RESET stops with `state=reset-requested` so a caller can recreate it. The
+CLI saves private disk/variable state before exiting; automatic reboot and SMP
+are not implemented. This does not provide deep-idle power management.
 
 `platform/arm64/pcemu-virt.dts` supplies the versioned hardware description.
 The runner expects that compiled tree and its fixed RAM map; accepting a path to
-an arbitrary DTB does not make arbitrary hardware layouts supported. Device tree
-is sufficient for this firmware milestone; Windows ACPI/SMBIOS tables are still
-missing.
+an arbitrary DTB does not make arbitrary hardware layouts supported. Device tree configures firmware. The OS receives ACPI through the UEFI
+configuration table. Our original tables describe the CPU, GICv3, architectural
+timers, PCI ECAM/window/INTA and polled PL011 console/debug port. EDK II installs
+and relocates them using `etc/table-loader`; it owns the final RSDP/XSDT.
+`make acpi-arm64` regenerates these small assets; `--acpi-dir DIRECTORY` selects
+an alternate generated set. This does not make alternate hardware maps supported.
+
+The source namespace is `platform/arm64/dsdt.asl`. Its compiled AML and source
+hash are in `dsdt-aml.json`; no compiler is needed for normal builds. To check the
+compiled bytes, run `python3 tools/build_arm_acpi.py --iasl /path/to/iasl`.
+Only the UART memory resource is exposed: IRQ delivery is not implemented.
 
 `src/arm_virt.cpp` owns firmware loading, MMIO dispatch and variable persistence.
 It uses the separate `HvfMachine` execution backend, not the x86 `Machine`.
@@ -112,12 +123,12 @@ an observation run. This is a diagnostic image, not a live display frontend.
 DMA is limited to guest RAM; read-only and out-of-bounds file writes fail without
 partially changing the file. An invalid descriptor address is a platform error.
 
-There is no ACPI, TPM or Secure Boot implementation. Secure Boot is not enabled for the
+There is no TPM or Secure Boot implementation. Secure Boot is not enabled for the
 shell milestone. Windows Validation OS requires additional platform work.
 
 ## Verification
 
-`make test-hvf` includes backend ROM/GIC tests, 58 portable NOR/UART/MMIO-load/fw_cfg checks and 565 virtio block/PCI checks and
+`make test-hvf` includes backend ROM/GIC tests, 74 portable NOR/UART/MMIO-load/fw_cfg/PSCI checks and 565 virtio block/PCI checks and
 CLI tests for private template protection and variable-file locking.
 `make smoke-uefi` creates a small private directory under `build/uefi-smoke-*`:
 
@@ -138,3 +149,16 @@ References:
 - [EDK II NOR interface definitions](https://github.com/tianocore/edk2/blob/edk2-stable202502/OvmfPkg/VirtNorFlashDxe/VirtNorFlash.h)
 - [Arm PL011 register specification](https://documentation-service.arm.com/static/5e8e36c2fd977155116a90b5)
 - [Apple GICv3](https://developer.apple.com/documentation/hypervisor/hv_gic_create(_:))
+
+`make smoke-arm-acpi` boots our original EFI probe from a sparse virtio disk.
+It follows the firmware-published ACPI configuration pointer, checks the root
+and leaf table checksums, validates the FADT/DSDT link, exercises real HVC
+version/CPU_ON/AFFINITY_INFO calls, then requires SYSTEM_OFF to stop the VM.
+The table payload is about 1.2 KiB and relocation commands use 2.5 KiB.
+The 64 MiB logical test disk allocates about 1.2 MiB, with a 100-byte COW.
+
+Table layouts follow the [ACPI 6.5 specification](https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html);
+the handoff follows EDK II's [table-loader definitions](https://github.com/tianocore/edk2/blob/edk2-stable202502/OvmfPkg/Include/IndustryStandard/QemuLoader.h).
+PSCI identifiers and return values follow Arm's
+[PSCI interface definitions](https://github.com/ARM-software/arm-trusted-firmware/blob/master/include/lib/psci/psci.h).
+This is a platform bring-up milestone, not proof of Windows compatibility.
