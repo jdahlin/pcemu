@@ -162,3 +162,12 @@ the handoff follows EDK II's [table-loader definitions](https://github.com/tiano
 PSCI identifiers and return values follow Arm's
 [PSCI interface definitions](https://github.com/ARM-software/arm-trusted-firmware/blob/master/include/lib/psci/psci.h).
 This is a platform bring-up milestone, not proof of Windows compatibility.
+
+`--cpu-state` prints a small diagnostic record: PC, ESR/ELR/FAR/SPSR_EL1 and
+64 instruction bytes around ELR and the first firmware-reported exception PC.
+Only guest-RAM addresses are read; no RAM image is written to disk. The reported
+PC helps diagnose an original guest fault when the firmware exception handler
+itself subsequently faults. In the current Validation OS loader probe, the first
+fault is `MRS PMCCNTR_EL0` (performance cycle counter); Windows boot is not yet
+working. This was established by matching guest instruction bytes to the
+existing ARM64 `bootmgfw.efi`, rather than assuming ACPI was the cause.

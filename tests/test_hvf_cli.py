@@ -83,7 +83,9 @@ class HvfCLI(unittest.TestCase):
             first.write_bytes(bytes(8192)); second.write_bytes(bytes(8192))
             variables = directory / 'vars.bin'
             args = ['--machine', 'arm64-uefi', '--vars', str(variables), '--timeout-ms', '1']
-            result = self.invoke(*args, '--disk', str(first))
+            result = self.invoke(*args, '--disk', str(first), '--cpu-state')
+            self.assertIn('esr_el1=0x', result.stderr)
+            self.assertIn('elr_el1=0x', result.stderr)
             self.assertEqual(result.returncode, 0, result.stderr)
             overlay = Path(str(variables) + '.pcd')
             self.assertTrue(overlay.read_bytes().startswith(b'PCEMUCOW'))

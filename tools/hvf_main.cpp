@@ -142,7 +142,7 @@ void selfTest() {
 }
 int main(int argc, char **argv) {
     try {
-        bool test = false, timeoutExplicit = false, uefiOptions = false;
+        bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false;
         pc::ArmVirtMachine::Config uefi{"roms/edk2-arm64.bin", "build/arm64-fw/pcemu-virt.dtb",
                                         "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin", {}, {}, "pci"};
         std::string untilText, shellCommand, framebufferPath;
@@ -173,6 +173,7 @@ int main(int argc, char **argv) {
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
             else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
             else if (arg == "--framebuffer-ppm") { framebufferPath = value(); uefiOptions = true; }
+            else if (arg == "--cpu-state") { cpuState = true; uefiOptions = true; }
             else if (arg == "--until-text") untilText = value();
             else if (arg == "--shell-command") shellCommand = value();
             else if (arg == "--self-test") test = true;
@@ -195,7 +196,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMMUTABLE_BASE --disk-overlay PRIVATE_COW --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
-                             "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY]\n"
+                             "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
@@ -230,6 +231,7 @@ int main(int argc, char **argv) {
                 }
             }
             vm.saveVariables();
+            if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
             if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
             std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
                       << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()

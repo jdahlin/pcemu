@@ -32,6 +32,7 @@ class ArmVirtMachine {
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
     std::string framebuffer() const;
     void saveFramebuffer(const std::string &path) const;
+    std::string cpuState() const;
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
     Config config;

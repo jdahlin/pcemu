@@ -1,7 +1,9 @@
 #include "arm_virt.hpp"
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
@@ -137,6 +139,29 @@ void ArmVirtMachine::saveFramebuffer(const std::string &path) const {
     }
     output.close();
     if (!output) throw std::runtime_error("Cannot save GOP framebuffer: " + path);
+}
+std::string ArmVirtMachine::cpuState() const {
+    auto elr = vm.systemReg(0xc201);
+    std::ostringstream output;
+    output << std::hex << "pc=0x" << vm.pc() << " esr_el1=0x" << vm.systemReg(0xc290)
+           << " elr_el1=0x" << elr << " far_el1=0x" << vm.systemReg(0xc300)
+           << " spsr_el1=0x" << vm.systemReg(0xc200);
+    auto dump = [&](const char *name, uint64_t address) {
+        if (address < HvfMachine::ramBase + 16 || address - HvfMachine::ramBase > ramBytes - 48) return;
+        std::array<uint8_t, 64> bytes{};
+        vm.readMemory(address - 16, bytes);
+        output << ' ' << name << "_start=0x" << address - 16 << ' ' << name << "_bytes=";
+        for (auto byte : bytes) output << std::setw(2) << std::setfill('0') << unsigned(byte);
+    };
+    dump("elr", elr);
+    const std::string marker = "Synchronous Exception at 0x";
+    auto at = uart.output().find(marker);
+    if (at != std::string::npos) {
+        std::istringstream input(uart.output().substr(at + marker.size(), 16));
+        uint64_t address = 0;
+        if (input >> std::hex >> address) dump("reported", address);
+    }
+    return output.str();
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
