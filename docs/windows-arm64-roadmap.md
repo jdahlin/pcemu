@@ -217,3 +217,29 @@ and set FAILED (status 0x8b), without writing queue DMA addresses or enabling
 the queue. This narrows the next investigation to queue allocation/Storport
 initialization before disk I/O, rather than network or disk partitioning.
 The 24 counted extra-disk requests came from firmware before this driver start.
+
+### Driver-level storage diagnosis
+
+`tools/build_windows_guest.py` also builds `trace-viostor.exe`, an original
+ARM64 ETW controller. Run it with `start` before drvload and `stop` afterwards;
+it captures the upstream WPP provider B17FA150-8C45-482E-9EB8-29611A862BF3 to
+`X:\PCEMU\VIOSTOR.ETL` (4 MiB limit). The ETL can be posted using the HTTP helper.
+`tools/inspect_viostor_trace.py --etl PATH --pdb MATCHING_PDB` correlates event
+GUID/message IDs with WPP format annotations from the upstream PDB using LLVM
+llvm-pdbutil and optional dissect.etl. It emits formats plus raw argument bytes,
+without pretending to fully render arbitrary WPP argument types.
+
+The 0.1.302 trace is `build/windows11-install/viostor-wpp.jsonl`, derived from
+`reports/report-1792876500706644000.log` and the matching upstream viostor.pdb.
+It proves the uncached allocation succeeded, zero MSI-X vectors were assigned,
+and virtio_find_queues returned 0x80000011 (STATUS_DEVICE_BUSY). Upstream commit
+[c0fe9d0451c8](https://github.com/virtio-win/kvm-guest-drivers-windows/commit/c0fe9d0451c8)
+changed viostor's config-vector callback to return vector zero even with MSI-X
+disabled. Our INTx-only device returns NO_VECTOR, causing queue setup to abort
+before DMA setup. No synthetic MSI-X success is advertised to work around this.
+
+For an INTx compatibility test, `tools/fetch_virtio_arm64.py --viostor-intx
+--destination media/viostor-arm64-intx-0.1.285` stages only the earlier signed
+upstream ARM64 viostor package (ISO size 789645312 bytes, published September
+2025). NetKVM and the other packages remain at 0.1.302. Loading and actual I/O
+must still be verified before using this package for the installation target.

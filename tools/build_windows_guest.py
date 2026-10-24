@@ -7,6 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 DLLS = {
+    'advapi32': 'StartTraceW EnableTraceEx2 ControlTraceW',
     'kernel32': 'GetStdHandle WriteFile ReadFile CreateFileW GetFileSizeEx CloseHandle GetLastError GetCommandLineW ExitProcess',
     'winhttp': 'WinHttpOpen WinHttpSetTimeouts WinHttpConnect WinHttpOpenRequest WinHttpSendRequest WinHttpWriteData WinHttpReceiveResponse WinHttpReadData WinHttpQueryHeaders WinHttpCloseHandle',
 }
@@ -29,13 +30,14 @@ def main():
         library = args.output / (dll + '.lib')
         subprocess.run([dlltool, '-m', 'arm64', '-d', str(definition), '-l', str(library)], check=True)
         libraries.append(str(library))
-    obj = args.output / 'guest-http.obj'
-    exe = args.output / 'guest-http.exe'
-    subprocess.run([clang, '--target=aarch64-pc-windows-msvc', '-ffreestanding', '-fno-stack-protector',
-                    '-Wall', '-Wextra', '-Werror', '-O2', '-c', str(ROOT / 'tools/windows/guest_http.c'), '-o', str(obj)], check=True)
-    subprocess.run([linker, '/machine:arm64', '/subsystem:console', '/entry:mainCRTStartup',
-                    '/nodefaultlib', '/out:' + str(exe), str(obj), *libraries], check=True)
-    print(exe)
+    for source, name in (('guest_http.c', 'guest-http'), ('trace_viostor.c', 'trace-viostor')):
+        obj = args.output / (name + '.obj')
+        exe = args.output / (name + '.exe')
+        subprocess.run([clang, '--target=aarch64-pc-windows-msvc', '-ffreestanding', '-fno-stack-protector',
+                        '-Wall', '-Wextra', '-Werror', '-O2', '-c', str(ROOT / 'tools/windows' / source), '-o', str(obj)], check=True)
+        subprocess.run([linker, '/machine:arm64', '/subsystem:console', '/entry:mainCRTStartup',
+                        '/nodefaultlib', '/out:' + str(exe), str(obj), *libraries], check=True)
+        print(exe)
 
 
 if __name__ == '__main__':
