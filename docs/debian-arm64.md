@@ -120,3 +120,11 @@ A Debian `sudo reboot` was verified through SSH: the kernel boot ID changed,
 the runner PID stayed alive, a newly written file survived and no services
 failed after reconnecting to port 2222. Evidence is under ignored
 `build/debian-lifecycle/reboot-summary.json` and its serial/host logs.
+
+The current HVF clock backend was also tested with a three-second SIGSTOP/
+SIGCONT pause of the Debian runner. SSH recovered and guest wall time plus RTC
+agreed with the host to the measured one-second resolution. The combined reboot,
+persistence and pause evidence is in ignored
+`build/debian-lifecycle-clock/reboot-pause-summary.json`. Simulated system-sleep
+counter/timer tests run in `make test-hvf`; physical Mac sleep/wake remains a
+manual validation step.

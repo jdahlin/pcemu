@@ -16,6 +16,7 @@
 #include <poll.h>
 #include <termios.h>
 #include <unistd.h>
+#include <mach/mach_time.h>
 using pc::HvfMachine;
 namespace {
 volatile std::sig_atomic_t interrupted = 0;
@@ -165,6 +166,59 @@ void selfTest() {
         require(vm.reg(1) > vm.reg(0), "Framework PMU counter did not advance");
         require(vm.exits() == 1, "PMU cycle reads caused userspace exits");
         require(((vm.systemReg(0xc028) >> 8) & 15) == 1, "PMUv3 feature was not exposed");
+    }
+    {
+        uint64_t sleep = 123456; // Sleep before VM creation must not be added.
+        HvfMachine vm(2 * 1024 * 1024, false, [&] { return sleep; });
+        const std::array<uint32_t, 3> counter{0xd53be040, 0xd53be001, 0xd4000002};
+        // MRS CNTVCT_EL0, MRS CNTFRQ_EL0, HVC. Check the real guest counter
+        // against host absolute-time brackets with injected system-sleep gaps.
+        code(vm, counter);
+        auto absoluteBefore = mach_absolute_time();
+        hvc(vm);
+        auto absoluteAfter = mach_absolute_time();
+        auto previous = vm.reg(0), frequency = vm.reg(1);
+        require(frequency != 0, "Guest counter frequency is zero");
+        for (unsigned sample = 0; sample < 4; ++sample) {
+            if (sample == 0) sleep = 123456 + frequency / 1000; // Ignore sampling jitter.
+            if (sample == 1) sleep = 123456 + 2 * frequency;
+            if (sample == 3) sleep = 123456 + frequency; // Cannot rewind time.
+            std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+            vm.start(HvfMachine::ramBase);
+            auto before = mach_absolute_time();
+            hvc(vm);
+            auto after = mach_absolute_time();
+            auto elapsed = vm.reg(0) - previous;
+            auto correction = sample == 1 ? 2 * frequency : 0;
+            require(elapsed >= before - absoluteAfter + correction &&
+                    elapsed <= after - absoluteBefore + correction,
+                    "Guest counter lost sleep time, repeated correction or moved backwards");
+            previous = vm.reg(0); absoluteBefore = before; absoluteAfter = after;
+        }
+    }
+    for (bool gic : {false, true}) {
+        uint64_t sleep = 0;
+        HvfMachine vm(2 * 1024 * 1024, gic, [&] { return sleep; });
+        // Arm CNTV_CVAL ten seconds ahead, enable CNTV_CTL, HVC. With a GIC,
+        // read the redistributor pending register; otherwise wait for HVF exit.
+        code(vm, std::array<uint32_t, 11>{0xd53be040, 0xd53be001, 0xd2800143,
+            0x9b030020, 0xd51be340, 0xd2800022, 0xd51be322, 0xd5033fdf,
+            0xd4000002, gic ? 0xb9400080u : 0xd503207fu,
+            gic ? 0xd4000002u : 0x14000000u});
+        vm.setReg(4, 0x080b0200); // GICR_ISPENDR0
+        hvc(vm);
+        sleep = 20 * vm.reg(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+        if (gic) {
+            hvc(vm);
+            require(vm.reg(0) & (1u << 27), "GIC virtual timer not pending after simulated sleep");
+        } else {
+            auto exit = vm.run(std::chrono::milliseconds(100));
+            for (unsigned retry = 0; retry < 2 && exit.reason == HvfMachine::ExitReason::Canceled; ++retry)
+                exit = vm.run(std::chrono::milliseconds(100));
+            require(exit.reason == HvfMachine::ExitReason::VirtualTimer,
+                    "Virtual timer did not expire after simulated system sleep");
+        }
     }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }

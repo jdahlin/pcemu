@@ -4,6 +4,7 @@
 #endif
 #include <Hypervisor/Hypervisor.h>
 #include <libkern/OSCacheControl.h>
+#include <mach/mach_time.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -45,6 +46,26 @@ struct HvfMachine::Impl {
     uint64_t generation = 0;
     hv_return_t cancelResult = HV_SUCCESS;
     std::chrono::steady_clock::time_point deadline;
+    SleepTicks sleepTicks;
+    uint64_t sleepBaseline = 0, sleepApplied = 0, nextClockCheck = 0, clockPeriod = 0;
+
+    void synchronizeClock() {
+        auto absolute = mach_absolute_time();
+        if (absolute < nextClockCheck) return;
+        nextClockCheck = absolute + clockPeriod;
+        const auto total = sleepTicks();
+        if (total <= sleepBaseline || total - sleepBaseline <= sleepApplied) return;
+        auto advance = total - sleepBaseline - sleepApplied;
+        // Paired host reads have sampling jitter. Ignore differences below 10 ms
+        // rather than gradually moving the counter while the host is awake.
+        if (advance <= clockPeriod / 100) return;
+        uint64_t offset = 0;
+        check(hv_vcpu_get_vtimer_offset(vcpu, &offset), "get virtual timer offset");
+        // CNTVCT = mach_absolute_time - offset. Unsigned subtraction wraps by
+        // design, advancing the virtual counter without moving it backwards.
+        check(hv_vcpu_set_vtimer_offset(vcpu, offset - advance), "resume virtual clock");
+        sleepApplied += advance;
+    }
 
     void requireOwner() const {
         if (std::this_thread::get_id() != owner)
@@ -88,6 +109,25 @@ struct HvfMachine::Impl {
         mapped = true;
         check(hv_vcpu_create(&vcpu, &exit, nullptr), "hv_vcpu_create");
         vcpuCreated = true;
+        mach_timebase_info_data_t timebase{};
+        check(mach_timebase_info(&timebase), "get host clock timebase");
+        clockPeriod = 1000000000ull * timebase.denom / timebase.numer;
+        if (!sleepTicks) sleepTicks = [last = uint64_t(0), sampled = false,
+                                      tolerance = clockPeriod / 10000]() mutable -> uint64_t {
+            for (unsigned attempt = 0; attempt < 8; ++attempt) {
+                auto before = mach_absolute_time();
+                auto continuous = mach_continuous_time();
+                auto after = mach_absolute_time();
+                if (after - before > tolerance) continue; // Descheduled during sampling.
+                auto absolute = before + (after - before) / 2;
+                last = continuous > absolute ? continuous - absolute : 0;
+                sampled = true;
+                return last;
+            }
+            if (!sampled) throw std::runtime_error("Cannot sample host sleep clock");
+            return last; // Retry next second without disturbing a running guest.
+        };
+        sleepBaseline = sleepTicks();
         if (enableGic) {
             check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_MPIDR_EL1, 0x80000000), "set MPIDR_EL1");
             uint64_t features = 0;
@@ -153,7 +193,8 @@ bool HvfMachine::supported() {
     size_t size = sizeof(value);
     return sysctlbyname("kern.hv_support", &value, &size, nullptr, 0) == 0 && value;
 }
-HvfMachine::HvfMachine(size_t ramBytes, bool enableGic) : impl(std::make_unique<Impl>()) {
+HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks) : impl(std::make_unique<Impl>()) {
+    impl->sleepTicks = std::move(sleepTicks);
     impl->initialize(ramBytes, enableGic);
 }
 HvfMachine::~HvfMachine() = default;
@@ -253,6 +294,7 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     impl->requireOwner();
     if (budget.count() <= 0 || budget > std::chrono::seconds(60))
         throw std::runtime_error("HVF run budget must be 1..60000 ms");
+    impl->synchronizeClock();
     {
         std::lock_guard lock(impl->mutex);
         impl->deadline = std::chrono::steady_clock::now() + budget;

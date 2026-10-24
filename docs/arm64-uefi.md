@@ -251,3 +251,26 @@ service is required for the RTC; the installed Debian guest uses the RTC alone.
 `make smoke-arm-reboot` boots an EFI probe that writes a nonvolatile marker,
 calls ResetSystem, then reads the marker on the second boot and powers off.
 It verifies one reset and two firmware boots in a single runner process.
+
+## Host sleep and virtual time
+
+HVF defines `CNTVCT_EL0 = mach_absolute_time() - vtimer_offset`. The host's
+absolute clock excludes system sleep, while `mach_continuous_time` includes it.
+The backend samples their difference once per active second and advances the
+virtual counter by newly observed sleep time before entering the vCPU again.
+The GIC/virtual timer then sees elapsed deadlines. There is no guest daemon,
+network time service or additional host polling thread.
+
+Sampling is bracketed to reject host scheduling delays; differences below 10 ms
+are ignored. Time is advanced once per observed sleep interval and never moved
+backwards. Ordinary process pauses need no adjustment because absolute time
+already advances while the process is stopped. The PL031 RTC continues to read
+host wall time. Manual host wall-clock changes and physical-counter-based guest
+clocks are outside this virtual-counter correction.
+
+The signed HVF self-test injects sleep samples into a real vCPU and checks
+CNTVCT against host clock brackets, including jitter, prior sleep, repeated and
+backwards samples. Separate cases verify an armed virtual timer expires after
+a simulated 20-second system sleep, both through an HVF timer exit and the
+framework GIC's pending PPI. This tests the offset/timer mechanism;
+physical Mac sleep/wake has not been exercised automatically.

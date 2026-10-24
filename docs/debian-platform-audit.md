@@ -37,7 +37,11 @@ It remains visible; assigning an unavailable PPI merely to hide it would be
 incorrect. Working EL1 timer delivery and clocksource selection were verified.
 
 The installed guest deliberately uses the RTC without an additional NTP service.
-Host sleep/resume correction and precise PTP integration remain unverified.
+Guest-requested reboot now recreates the platform in the same runner; Debian
+SSH reconnect, a changed boot ID and file persistence were verified. HVF now
+advances the virtual counter for host sleep time, with injected sleep/timer tests
+and a live Debian process-pause check. Physical Mac sleep/wake and precise PTP
+integration still require verification.
 
 ## Recommended order
 

@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <span>
 
@@ -18,7 +19,12 @@ class HvfMachine {
         uint64_t syndrome, virtualAddress, physicalAddress, pc;
         unsigned exceptionClass() const { return unsigned(syndrome >> 26) & 63; }
     };
-    explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false);
+    // Cumulative system-sleep time in mach_absolute_time ticks. The default
+    // source samples mach_continuous_time; injection permits real vCPU tests
+    // without putting the user's computer to sleep.
+    using SleepTicks = std::function<uint64_t()>;
+    explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false,
+                        SleepTicks sleepTicks = {});
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
