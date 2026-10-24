@@ -209,3 +209,11 @@ VirtIO storage controller. Debugging can enable bounded host register-write
 tracing with `PCEMU_TRACE_VIRTIO_BLK=1` (at most 4096 entries per process), including
 queue/feature/status writes and device reset reasons. The block unit suite
 passes 575 checks with tracing disabled.
+
+The completed trace is `build/windows11-install/storage-trace/host.log`.
+Windows reset the block device, negotiated features 0x100000246 and reached
+status 0x0b (ACKNOWLEDGE, DRIVER, FEATURES_OK). It then selected queue 0 twice
+and set FAILED (status 0x8b), without writing queue DMA addresses or enabling
+the queue. This narrows the next investigation to queue allocation/Storport
+initialization before disk I/O, rather than network or disk partitioning.
+The 24 counted extra-disk requests came from firmware before this driver start.
