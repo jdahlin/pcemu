@@ -42,7 +42,8 @@ model, not a separate frontend or execution backend.
 The machine and execution layers remain concretely coupled in the legacy PC
 implementation. The experimental `HvfMachine` is a separate ARM64 platform and
 backend in `pcemu-hvf`, with no x86 CPU or GUI dependencies; see
-[Hypervisor backend](hypervisor.md). It currently runs bare-metal code only.
+[Hypervisor backend](hypervisor.md). It runs bare-metal code; the concrete `ArmVirtMachine` additionally boots EDK II
+to a serial UEFI Shell, independently of the x86 device model.
 Introduce the shared session adapter when integrating OS boot and frontend
 control for that backend, rather than routing hypervisor operations through
 the existing x86 CPU.

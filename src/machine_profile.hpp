@@ -24,6 +24,8 @@ inline constexpr std::array machineProfiles{
                    "Windows 95/Office 97 preset; same legacy hardware, 32 MiB RAM"},
     MachineProfile{"arm64-test", "arm64", "arm-baremetal-v1", 2, true,
                    "Experimental flat EL1 ARM64 test machine; no OS firmware/devices", "pcemu-hvf"},
+    MachineProfile{"arm64-uefi", "arm64", "arm-virt-v1", 256, true,
+                   "Experimental EDK II UEFI shell, GICv3, PL011 and private NOR variables", "pcemu-hvf"},
     MachineProfile{"win11-arm64", "arm64", "arm-uefi-v1", 4096, false,
                    "Planned: ARM64 virtualization, UEFI/ACPI/GIC/TPM2 and guest drivers"},
     MachineProfile{"win11-x64", "x86-64", "pc-uefi-v1", 4096, false,

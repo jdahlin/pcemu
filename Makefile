@@ -75,11 +75,25 @@ smoke-win95: build/pcemu build/disk-tool
 # Optional, separate ARM64 hypervisor runner. No GUI, x86 core or guest disks.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
 .PHONY: test-hvf
-test-hvf: build/pcemu-hvf
+test-hvf: build/pcemu-hvf build/arm-device-tests
+	./build/arm-device-tests
 	./build/pcemu-hvf --self-test
 	python3 -m unittest discover -s tests -p test_hvf_cli.py
-build/pcemu-hvf: src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
+build/pcemu-hvf: src/arm_virt.cpp src/arm_virt.hpp src/arm_devices.cpp src/arm_devices.hpp src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
 	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp tools/hvf_main.cpp -framework Hypervisor -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_devices.cpp tools/hvf_main.cpp -framework Hypervisor -o $@
 	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
+
+.PHONY: firmware-arm64 smoke-uefi
+firmware-arm64: build/arm64-fw/pcemu-virt.dtb
+	python3 tools/fetch_arm64_uefi.py
+build/arm64-fw/pcemu-virt.dtb: platform/arm64/pcemu-virt.dts
+	@mkdir -p build/arm64-fw
+	dtc -I dts -O dtb -o $@ $<
+smoke-uefi: build/pcemu-hvf firmware-arm64
+	python3 tools/smoke_uefi.py
+
+build/arm-device-tests: src/arm_devices.cpp src/arm_devices.hpp tests/arm_devices_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_devices.cpp tests/arm_devices_test.cpp -o $@

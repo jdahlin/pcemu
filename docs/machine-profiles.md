@@ -11,6 +11,7 @@ an ID. Installations and checkpoints remain user-owned VM instances.
 | win311 | Same PC, Windows 3.11 preset | 16 MiB | Available |
 | win95 | Same PC, Windows 95/Office 97 preset | 32 MiB | Available |
 | arm64-test | Flat ARM64 EL1 test guest | 2 MiB | Available in `pcemu-hvf` |
+| arm64-uefi | EDK II UEFI Shell, GICv3, PL011, NOR | 256 MiB | Available in `pcemu-hvf` |
 | win11-arm64 | ARM64 UEFI virtual machine | 4096 MiB | Planned; launch rejected |
 | win11-x64 | x86-64 UEFI PC | 4096 MiB | Planned; launch rejected |
 
@@ -28,7 +29,7 @@ build/pcemu --machine win95 --backend jit --load-snapshot build/snapshots/office
 In the legacy x86 runner, `auto` selects the existing JIT path (including its interpreter
 fallback). `interpreter` disables JIT; `jit` selects that path explicitly.
 `--no-jit` is a compatibility alias and conflicts with an explicit other backend.
-`hvf` is available for `arm64-test` through the separate optional
+`hvf` is available for `arm64-test` and `arm64-uefi` through the separate optional
 `build/pcemu-hvf` runner; see [Hypervisor backend](hypervisor.md). The x86 runner
 rejects it before opening disks. `kvm` remains reserved and unimplemented.
 In the x86 runner, `--ram-mb` overrides preset RAM within the current 2–64 MiB limit. Restoring a checkpoint supplies its saved RAM and device
@@ -48,7 +49,7 @@ formats are unchanged and do not yet encode these profile IDs.
 3. For efficient Linux on ARM hosts, implement an ARM64 virtual platform/backend
    as a separate target. A macOS Virtualization.framework adapter is an option
    for Linux. The initial HVF bare-metal backend is available as `pcemu-hvf`;
-   it does not yet provide that Linux platform. Its device/firmware contract must not be assumed compatible with
+   and EDK II reaches a UEFI Shell on `arm64-uefi`. Neither boots Linux yet. Its device/firmware contract must not be assumed compatible with
    Windows. Linux KVM is a separate host backend.
 4. For Windows 11 on Apple Silicon, build on the ARM64 Hypervisor.framework backend.
    This requires ARM firmware, memory map, interrupt/timer model, ACPI tables,

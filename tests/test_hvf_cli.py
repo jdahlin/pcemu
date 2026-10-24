@@ -1,4 +1,5 @@
 """Integration checks for the signed Apple Silicon HVF runner."""
+import fcntl
 from pathlib import Path
 import struct
 import subprocess
@@ -41,7 +42,10 @@ class HvfCLI(unittest.TestCase):
                  ('--machine', 'win11-arm64', '--self-test'),
                  ('--backend', 'interpreter', '--self-test'),
                  ('--backend', 'kvm', '--self-test'),
-                 ('--self-test', '--kernel', 'any')]
+                 ('--self-test', '--kernel', 'any'),
+                 ('--machine', 'arm64-uefi', '--self-test'),
+                 ('--machine', 'arm64-uefi', '--kernel', 'any'),
+                 ('--vars', 'any', '--self-test')]
         for args in cases:
             with self.subTest(args=args):
                 result = self.invoke(*args)
@@ -54,6 +58,21 @@ class HvfCLI(unittest.TestCase):
                 result = self.invoke('--kernel', str(kernel))
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn('4-byte aligned', result.stderr)
+
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
+    def test_private_variables(self):
+        template = ROOT / 'roms/edk2-arm64-vars.bin'
+        result = self.invoke('--machine', 'arm64-uefi', '--vars', str(template))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('private file', result.stderr)
+        with tempfile.TemporaryDirectory() as tmp:
+            variables = Path(tmp) / 'vars.bin'
+            with Path(str(variables) + '.lock').open('wb') as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                result = self.invoke('--machine', 'arm64-uefi', '--vars', str(variables))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('locked', result.stderr)
+            self.assertFalse(variables.exists())
 
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):

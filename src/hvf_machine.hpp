@@ -18,16 +18,18 @@ class HvfMachine {
         uint64_t syndrome, virtualAddress, physicalAddress, pc;
         unsigned exceptionClass() const { return unsigned(syndrome >> 26) & 63; }
     };
-    explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024);
+    explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false);
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
+    void mapROM(uint64_t address, std::span<const uint8_t> bytes);
     void writeMemory(uint64_t address, std::span<const uint8_t> bytes);
     void readMemory(uint64_t address, std::span<uint8_t> bytes) const;
     // Initialize a flat EL1h AArch64 guest, MMU off, interrupts masked.
     void start(uint64_t entry);
     uint64_t reg(unsigned index) const; // X0..X30
     void setReg(unsigned index, uint64_t value);
+    uint64_t systemReg(uint16_t encoding) const;
     uint64_t pc() const;
     void setPC(uint64_t value);
     Exit run(std::chrono::milliseconds budget = std::chrono::milliseconds(1000));

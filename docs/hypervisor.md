@@ -1,8 +1,8 @@
 # ARM64 Hypervisor.framework backend
 
 `make test-hvf` builds and runs an optional native Apple Silicon backend.
-It runs flat ARM64 code in a hardware vCPU, independently of the existing x86
-CPU, JIT, PC devices and SDL frontend. It does not yet boot Linux or Windows.
+It runs flat ARM64 code and an [EDK II UEFI platform](arm64-uefi.md) in a hardware
+vCPU, independently of the existing x86 CPU, JIT, PC devices and SDL frontend. It does not yet boot Linux or Windows.
 Windows 3.11/95 remain on the legacy x86 platform.
 
 ```
@@ -17,9 +17,10 @@ an Apple Silicon macOS host, checks `kern.hv_support`, and ad-hoc signs the bina
 with `com.apple.security.hypervisor` from
 `platform/macos/hypervisor.entitlements`. No root privileges or host configuration
 changes are needed. This signing step applies only to the experimental runner.
-The portable x86 targets do not link Hypervisor.framework.
+The portable x86 targets do not link Hypervisor.framework. The UEFI profile
+and the GIC-specific backend checks require macOS 15 or newer.
 
-## Current platform contract
+## Bare-metal test platform contract
 
 - Profile `arm64-test`, platform `arm-baremetal-v1`, backend `auto` or `hvf`.
 - One VM per process, one vCPU, 2 MiB anonymous RAM mapped at guest physical
@@ -40,7 +41,8 @@ The portable x86 targets do not link Hypervisor.framework.
 - The backend exposes exception syndrome, PC and fault address so a platform can
   implement MMIO and explicitly retire the trapped instruction. It does not
   silently skip unexpected traps. Virtual timer exits are reported; timer/IRQ
-  injection and a guest interrupt controller are not implemented.
+  injection and a guest interrupt controller are not enabled in `arm64-test`.
+  The UEFI platform separately enables the framework GICv3 and timer path.
 
 Create/use/destroy `HvfMachine` on its owning thread. The watchdog uses only the
 cross-thread cancellation API. Public register/memory/run calls reject the wrong
@@ -53,7 +55,8 @@ callers may resume it, subject to their overall task deadline.
 
 ## Verification
 
-`make test-hvf` runs 43 backend checks and four CLI integration tests:
+`make test-hvf` runs 49 backend checks, 32 portable device checks and five CLI
+integration tests (the variable-file safety check requires downloaded firmware):
 
 - Twice create/destroy a VM; reject a second concurrent VM in the same process.
 - Execute a 10-million-iteration add/subtract/branch loop plus RAM store/load and
@@ -64,19 +67,23 @@ callers may resume it, subject to their overall task deadline.
   emulated read response and resume to HVC.
 - Cancel an infinite guest loop and resume the same vCPU with new code.
 - Reject invalid RAM/ranges/registers/entry alignment/timeouts and thread use.
+- Create a GICv3-enabled VM, execute from ROM, trap a guest ROM write, and reject
+  overlapping mappings.
+- Check NOR program/erase/buffer/status behavior and PL011 serial I/O.
 - Load a separate tiny raw guest returning 42; verify CLI timeout, invalid input,
   incompatible machine/backend choices and help/catalog output.
 
 The minimal Windows ARM64 payload is documented in
 [Windows ARM64 test media](windows-arm64-media.md). It is downloaded separately
-and cannot be booted by this raw-code runner yet.
+and cannot be booted by either current platform yet.
 
 ## Next platform work
 
-Choose and version the ARM guest hardware contract before adding an OS image:
-physical memory map, firmware load/entry, boot parameters or UEFI, interrupt
-controller, ARM generic timer, UART and storage. A Linux serial boot is a useful
-next milestone before SMP and richer devices. Keep normal RAM and CPU work in
+The versioned `arm-virt-v1` firmware platform now provides a memory map, EDK II
+boot, GICv3, generic timer, polled UART and private NOR variable storage. It reaches
+a UEFI Shell; see [ARM64 UEFI](arm64-uefi.md) for its contract and smoke test.
+The next pieces are block storage and an OS boot contract, followed by SMP and
+richer devices. A Linux serial boot is a useful intermediate milestone. Keep normal RAM and CPU work in
 the guest, handle device exits in batches where possible, and measure exit counts
 by reason before optimizing.
 
@@ -90,7 +97,7 @@ ARM; Windows 11 x64 is a separate emulation project.
 Do not serialize HVF handles into legacy snapshots. Add versioned ARM CPU/device
 state and platform/firmware identity when checkpoint support is implemented, then
 share the existing compressed COW disk storage where suitable. This backend
-currently has no snapshots, guest disks, networking or frontend.
+currently has no snapshots, guest disks, networking or graphical frontend.
 
 References consulted:
 - [Apple Hypervisor framework and lifecycle](https://developer.apple.com/documentation/hypervisor)

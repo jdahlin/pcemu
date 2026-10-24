@@ -8,7 +8,9 @@ SDL2 window. **Boots the supplied MS-DOS 6.22 disk and Windows 3.11 in standard
 mode to Program Manager.** The legacy PC path uses an original CPU core, with
 no QEMU/DOSBox/Unicorn core or hypervisor. A separate experimental
 [ARM64 Hypervisor.framework backend](docs/hypervisor.md) runs bare-metal test
-guests on Apple Silicon (`make test-hvf`); OS boot is not implemented there yet.
+guests on Apple Silicon (`make test-hvf`). Its
+[ARM64 UEFI platform](docs/arm64-uefi.md) reaches the EDK II Shell and preserves
+UEFI variables across VM instances (`make smoke-uefi`); OS boot is not implemented there yet.
 
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a

@@ -1,4 +1,5 @@
 #include "hvf_machine.hpp"
+#include "arm_virt.hpp"
 #include "machine_profile.hpp"
 #include <array>
 #include <chrono>
@@ -116,12 +117,35 @@ void selfTest() {
         other.join();
         require(wrongThreadRejected, "Cross-thread vCPU operation accepted");
     } // Repeated create/destroy proves cleanup released the process VM.
+    {
+        HvfMachine vm(2 * 1024 * 1024, true);
+        const std::array<uint32_t, 2> rom{0xb9000020, 0xd4000002}; // str w0,[x1]; hvc #0
+        vm.mapROM(0x20000000, {reinterpret_cast<const uint8_t *>(rom.data()), sizeof(rom)});
+        rejects([&] { vm.mapROM(0x20000000, {reinterpret_cast<const uint8_t *>(rom.data()), sizeof(rom)}); },
+                "Overlapping ROM accepted");
+        rejects([&] { vm.mapROM(HvfMachine::ramBase, {reinterpret_cast<const uint8_t *>(rom.data()), sizeof(rom)}); },
+                "ROM over RAM accepted");
+        vm.start(0x20000000);
+        vm.setReg(0, 0); vm.setReg(1, 0x20000000);
+        auto exit = vm.run();
+        require(exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x24 &&
+                    exit.physicalAddress == 0x20000000 && (exit.syndrome & (1ull << 6)),
+                "Guest could write ROM");
+        uint32_t word = 0;
+        vm.readMemory(0x20000000, {reinterpret_cast<uint8_t *>(&word), sizeof(word)});
+        require(word == rom[0], "ROM changed after guest write fault");
+        vm.setPC(exit.pc + 4); hvc(vm);
+        require((vm.systemReg(0xc005) & 0xffffff) == 0, "Unexpected GIC CPU affinity");
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }
 int main(int argc, char **argv) {
     try {
-        bool test = false;
+        bool test = false, timeoutExplicit = false, uefiOptions = false;
+        pc::ArmVirtMachine::Config uefi{"roms/edk2-arm64.bin", "build/arm64-fw/pcemu-virt.dtb",
+                                        "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin"};
+        std::string untilText, shellCommand;
         std::string kernel, machine = "arm64-test", backend = "auto";
         unsigned timeout = 1000;
         for (int i = 1; i < argc; ++i) {
@@ -141,6 +165,11 @@ int main(int argc, char **argv) {
                                   << " ram=" << profile.defaultRamMB << " MiB\n";
                 return 0;
             }
+            else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
+            else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
+            else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
+            else if (arg == "--until-text") untilText = value();
+            else if (arg == "--shell-command") shellCommand = value();
             else if (arg == "--self-test") test = true;
             else if (arg == "--kernel") kernel = value();
             else if (arg == "--timeout-ms") {
@@ -150,22 +179,55 @@ int main(int argc, char **argv) {
                 if (consumed != text.size() || n < 1 || n > 60000)
                     throw std::runtime_error("Timeout must be 1..60000 ms");
                 timeout = unsigned(n);
+                timeoutExplicit = true;
             } else if (arg == "--help") {
                 std::cout << "pcemu-hvf: experimental ARM64 bare-metal platform on Apple Silicon\n"
-                             "  --machine arm64-test --backend auto|hvf --list-machines\n"
+                             "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
                              "  --self-test\n"
                              "  --kernel FILE [--timeout-ms 1..60000]\n"
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
-                             "HVC #0 returns to host; no firmware, disks or OS boot yet.\n";
+                             "HVC #0 returns to host.\n"
+                             "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
+                             "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
+                             "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
         }
         const auto &profile = pc::machineProfile(machine);
         if (profile.runner != "pcemu-hvf" || !profile.implemented)
-            throw std::runtime_error("This runner supports only --machine arm64-test; no OS boot yet");
+            throw std::runtime_error("This runner supports only implemented ARM64 machine profiles; no OS boot yet");
         const auto selectedBackend = pc::executionBackend(backend);
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
+        if (machine == "arm64-uefi") {
+            if (test || !kernel.empty())
+                throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
+            if (!timeoutExplicit) timeout = 30000;
+            pc::ArmVirtMachine vm(uefi);
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+            size_t printed = 0, matchStart = 0;
+            bool commandSent = shellCommand.empty(), matched = untilText.empty();
+            while (std::chrono::steady_clock::now() < deadline) {
+                vm.run(std::chrono::milliseconds(100));
+                const auto &output = vm.output();
+                if (output.size() > printed) {
+                    std::cout.write(output.data() + printed, output.size() - printed);
+                    printed = output.size();
+                    std::cout.flush();
+                }
+                if (!commandSent && output.find("Shell> ") != std::string::npos) {
+                    vm.input(shellCommand + "\r"); commandSent = true; matchStart = output.size();
+                }
+                if (!untilText.empty() && output.find(untilText, matchStart) != std::string::npos) {
+                    matched = true; break;
+                }
+            }
+            vm.saveVariables();
+            std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables << '\n';
+            return matched ? 0 : 1;
+        }
+        if (uefiOptions || !untilText.empty() || !shellCommand.empty())
+            throw std::runtime_error("UEFI options require --machine arm64-uefi");
         if (test && !kernel.empty())
             throw std::runtime_error("Choose --self-test or --kernel");
         if (test) {

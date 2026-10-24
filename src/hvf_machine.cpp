@@ -13,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 
 namespace pc {
 namespace {
@@ -31,6 +32,8 @@ struct HvfMachine::Impl {
     bool vmCreated = false, mapped = false, vcpuCreated = false;
     void *memory = MAP_FAILED;
     size_t size = 0;
+    struct Region { uint64_t address; size_t size; void *memory; };
+    std::vector<Region> regions;
     hv_vcpu_t vcpu = 0;
     hv_vcpu_exit_t *exit = nullptr;
     uint64_t exitCount = 0;
@@ -46,7 +49,7 @@ struct HvfMachine::Impl {
         if (std::this_thread::get_id() != owner)
             throw std::runtime_error("HVF vCPU operations must run on their creating thread");
     }
-    void initialize(size_t bytes) {
+    void initialize(size_t bytes, bool enableGic) {
         auto pageSize = sysconf(_SC_PAGESIZE);
         if (pageSize <= 0 || bytes < size_t(pageSize) || bytes > 256 * 1024 * 1024 ||
             bytes % size_t(pageSize))
@@ -55,6 +58,18 @@ struct HvfMachine::Impl {
             throw std::runtime_error("Hypervisor.framework is unavailable (kern.hv_support)");
         check(hv_vm_create(nullptr), "hv_vm_create");
         vmCreated = true;
+        if (enableGic) {
+            if (__builtin_available(macOS 15.0, *)) {
+                auto config = hv_gic_config_create();
+                auto result = hv_gic_config_set_distributor_base(config, 0x08000000);
+                if (result == HV_SUCCESS)
+                    result = hv_gic_config_set_redistributor_base(config, 0x080a0000);
+                if (result == HV_SUCCESS)
+                    result = hv_gic_create(config);
+                os_release(config);
+                check(result, "create GICv3");
+            } else throw std::runtime_error("GICv3 requires macOS 15 or later");
+        }
         size = bytes;
         memory = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         if (memory == MAP_FAILED)
@@ -64,6 +79,8 @@ struct HvfMachine::Impl {
         mapped = true;
         check(hv_vcpu_create(&vcpu, &exit, nullptr), "hv_vcpu_create");
         vcpuCreated = true;
+        if (enableGic)
+            check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_MPIDR_EL1, 0x80000000), "set MPIDR_EL1");
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
             while (!stopping) {
@@ -94,6 +111,10 @@ struct HvfMachine::Impl {
             watchdog.join();
         if (vcpuCreated)
             hv_vcpu_destroy(vcpu);
+        for (const auto &region : regions) {
+            hv_vm_unmap(region.address, region.size);
+            munmap(region.memory, region.size);
+        }
         if (mapped)
             hv_vm_unmap(ramBase, size);
         if (memory != MAP_FAILED)
@@ -103,9 +124,13 @@ struct HvfMachine::Impl {
     }
     uint8_t *range(uint64_t address, size_t bytes) const {
         requireOwner();
-        if (address < ramBase || address - ramBase > size || bytes > size - (address - ramBase))
-            throw std::runtime_error("HVF guest memory access outside RAM");
-        return static_cast<uint8_t *>(memory) + (address - ramBase);
+        if (address >= ramBase && address - ramBase <= size && bytes <= size - (address - ramBase))
+            return static_cast<uint8_t *>(memory) + (address - ramBase);
+        for (const auto &region : regions)
+            if (address >= region.address && address - region.address <= region.size &&
+                bytes <= region.size - (address - region.address))
+                return static_cast<uint8_t *>(region.memory) + (address - region.address);
+        throw std::runtime_error("HVF guest memory access outside mapped memory");
     }
 };
 
@@ -114,10 +139,37 @@ bool HvfMachine::supported() {
     size_t size = sizeof(value);
     return sysctlbyname("kern.hv_support", &value, &size, nullptr, 0) == 0 && value;
 }
-HvfMachine::HvfMachine(size_t ramBytes) : impl(std::make_unique<Impl>()) {
-    impl->initialize(ramBytes);
+HvfMachine::HvfMachine(size_t ramBytes, bool enableGic) : impl(std::make_unique<Impl>()) {
+    impl->initialize(ramBytes, enableGic);
 }
 HvfMachine::~HvfMachine() = default;
+void HvfMachine::mapROM(uint64_t address, std::span<const uint8_t> bytes) {
+    impl->requireOwner();
+    const auto hostPage = sysconf(_SC_PAGESIZE);
+    if (hostPage <= 0) throw std::runtime_error("Cannot determine host page size");
+    const auto page = size_t(hostPage);
+    if (address % page || bytes.empty() || bytes.size() > 64 * 1024 * 1024)
+        throw std::runtime_error("Invalid HVF ROM mapping");
+    const auto size = (bytes.size() + page - 1) & ~(page - 1);
+    if (address > UINT64_MAX - size ||
+        (address < ramBase + impl->size && address + size > ramBase))
+        throw std::runtime_error("ROM mapping overlaps RAM or overflows");
+    for (const auto &region : impl->regions)
+        if (address < region.address + region.size && address + size > region.address)
+            throw std::runtime_error("ROM mapping overlaps existing mapping");
+    void *memory = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (memory == MAP_FAILED)
+        throw std::runtime_error("Cannot allocate ROM mapping");
+    std::memcpy(memory, bytes.data(), bytes.size());
+    sys_icache_invalidate(memory, bytes.size());
+    auto result = hv_vm_map(memory, address, size, HV_MEMORY_READ | HV_MEMORY_EXEC);
+    if (result != HV_SUCCESS) {
+        munmap(memory, size);
+        check(result, "map ROM");
+    }
+    try { impl->regions.push_back({address, size, memory}); }
+    catch (...) { hv_vm_unmap(address, size); munmap(memory, size); throw; }
+}
 void HvfMachine::writeMemory(uint64_t address, std::span<const uint8_t> bytes) {
     auto *destination = impl->range(address, bytes.size());
     if (!bytes.empty()) {
@@ -154,6 +206,12 @@ void HvfMachine::setReg(unsigned index, uint64_t value) {
     if (index > 30)
         throw std::runtime_error("ARM64 register index must be X0..X30");
     check(hv_vcpu_set_reg(impl->vcpu, static_cast<hv_reg_t>(HV_REG_X0 + index), value), "set register");
+}
+uint64_t HvfMachine::systemReg(uint16_t encoding) const {
+    impl->requireOwner();
+    uint64_t value;
+    check(hv_vcpu_get_sys_reg(impl->vcpu, static_cast<hv_sys_reg_t>(encoding), &value), "get system register");
+    return value;
 }
 uint64_t HvfMachine::pc() const {
     impl->requireOwner();
