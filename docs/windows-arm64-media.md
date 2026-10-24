@@ -73,3 +73,21 @@ the preferred next input for booting the preinstalled system without rebuilding
 boot media or modifying Windows. Its kernel boot has not been tested; the current
 disk backend now supports [direct VHDX read/write](vhdx.md). No full ISO or VHDX
 was downloaded during this inspection, and the original WIM has not been modified.
+
+
+To fetch only that original disk (about 964 MiB), without retaining the ISO:
+
+```sh
+python3 tools/fetch_validation_os.py --vhdx --destination media/validation-os-arm64-vhdx
+make build/pcemu-hvf firmware-arm64
+python3 tools/observe_validation_os.py
+```
+
+The VHDX fetch uses verified 8 MiB HTTP ranges with an 1152 MiB transfer
+limit, records its SHA-256 and source ETag in `download.json`, and refuses an
+existing destination. Keep the original license alongside the earlier WIM
+payload. The observation runner attaches the downloaded VHDX writable and
+uses a fresh private variable store. It retains serial/host logs, a GOP PPM
+and a summary under ignored `build/validation-os-boot-*`. A successful runner
+exit only means the bounded observation ended; inspect the artifacts to assess
+Windows progress. No Windows OS boot is inferred from the process exit code.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch only the ARM64 Validation OS WIM from Microsoft's official ISO.
+"""Fetch the ARM64 Validation OS WIM or original VHDX from Microsoft's official ISO.
 
 Dependency: python3 -m pip install --target build/media-tools pycdlib==1.15.0
 The ISO is read using verified HTTP byte ranges; it is never stored locally.
@@ -29,8 +29,9 @@ FILES = {'/ValidationOS.wim': 'ValidationOS.wim', '/license.rtf': 'license.rtf',
 class RemoteISO(io.RawIOBase):
     block_size = 1024 * 1024
 
-    def __init__(self):
+    def __init__(self, transfer_budget=512 * 1024 * 1024):
         super().__init__()
+        self.transfer_budget = transfer_budget
         self.pos = 0
         self.fetched = 0
         with urllib.request.urlopen(urllib.request.Request(SOURCE, method='HEAD'), timeout=30) as f:
@@ -70,8 +71,8 @@ class RemoteISO(io.RawIOBase):
         if len(data) != end - begin + 1:
             raise RuntimeError('Truncated HTTP range')
         self.fetched += len(data)
-        if self.fetched > 512 * 1024 * 1024:
-            raise RuntimeError('Exceeded 512 MiB transfer budget')
+        if self.fetched > self.transfer_budget:
+            raise RuntimeError('Exceeded ISO transfer budget')
         return data
 
     def read(self, size=-1):
@@ -116,18 +117,23 @@ def inspect_wim(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--destination', type=Path, default=ROOT / 'media/validation-os-arm64')
+    parser.add_argument('--vhdx', action='store_true',
+                        help='Extract the original bootable VHDX instead of the WIM payload')
     args = parser.parse_args()
     # Never overwrite a prior download or a user-maintained VM directory.
     args.destination.mkdir(parents=True, exist_ok=False)
-    remote = RemoteISO()
+    remote = RemoteISO(1152 * 1024 * 1024 if args.vhdx else 512 * 1024 * 1024)
+    if args.vhdx:
+        remote.block_size = 8 * 1024 * 1024
     iso = pycdlib.PyCdlib()
     iso.open_fp(remote)
     manifest = {'source': SOURCE, 'sourceISOBytes': remote.size, 'sourceETag': remote.etag,
                 'license': LICENSE, 'pycdlibVersion': '1.15.0', 'files': []}
-    for source, name in FILES.items():
+    files = {'/ValidationOS.vhdx': 'ValidationOS.vhdx'} if args.vhdx else FILES
+    for source, name in files.items():
         target = args.destination / name
         expected = iso.get_record(udf_path=source).get_data_length()
-        if expected > 300 * 1024 * 1024:
+        if expected > (1024 if args.vhdx else 300) * 1024 * 1024:
             raise RuntimeError('Unexpectedly large payload')
         print(f'Fetching {source}: {expected:,} bytes', flush=True)
         partial = target.with_suffix(target.suffix + '.part')
@@ -142,7 +148,12 @@ def main():
         partial.rename(target)
         manifest['files'].append({'name': name, 'isoPath': source, 'bytes': expected,
                                   'sha256': digest.hexdigest()})
-    manifest['images'] = inspect_wim(args.destination / 'ValidationOS.wim')
+    if args.vhdx:
+        with (args.destination / 'ValidationOS.vhdx').open('rb') as f:
+            if f.read(8) != b'vhdxfile':
+                raise RuntimeError('Downloaded payload is not a VHDX')
+    else:
+        manifest['images'] = inspect_wim(args.destination / 'ValidationOS.wim')
     manifest['downloadedBytes'] = remote.fetched
     (args.destination / 'download.json').write_text(json.dumps(manifest, indent=2) + '\n')
     iso.close()
