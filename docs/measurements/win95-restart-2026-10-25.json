@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-25",
+  "scope": "Headless cold boot and Windows-requested restart to unobscured Explorer on both retained Windows 95 images",
+  "limitations": [
+    "Existing installed images; no fresh installer run",
+    "No guest file persistence assertion or application performance measurement"
+  ],
+  "runs": [
+    {
+      "pid": 58858,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-30xaksqp/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-30xaksqp/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-30xaksqp/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-30xaksqp/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "5dca2b51b1da726fc36b8c267cf6029d1ac5d44093b07598729fd7c2ecdeb566",
+      "gitCommit": "fedd6e03b94859e638e028f05fad6ab9af8e7ff8",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 465373082,
+        "afterInstructions": 870692256,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    {
+      "pid": 58871,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-y5ppbb5c/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-y5ppbb5c/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-y5ppbb5c/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-y5ppbb5c/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "5dca2b51b1da726fc36b8c267cf6029d1ac5d44093b07598729fd7c2ecdeb566",
+      "gitCommit": "fedd6e03b94859e638e028f05fad6ab9af8e7ff8",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 296925540,
+        "afterInstructions": 671222363,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    }
+  ]
+}
