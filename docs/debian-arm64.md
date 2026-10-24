@@ -41,3 +41,27 @@ The media builder and checksum cache stay under ignored `build/`. Do not attach
 this installer as the target system disk or modify a parent while a VM uses it.
 The current serial runner is bounded; an interactive input/control path and
 long-running network service are still needed for installation and SSH testing.
+
+## Network device under construction
+
+The selected device is modern virtio-net PCI (`1af4:1041`), using the shared
+virtio PCI transport. The portable `VirtioNet` device provides one RX/TX
+split-queue pair with 256 descriptors each, MTU 1500, MAC/link reporting,
+transmit checksum offload and EVENT_IDX. It drains a TX batch per notification
+and signals once for that batch. Packed rings, indirect descriptors, multiple
+queue pairs and segmentation offload are not advertised yet. No throughput or
+CPU-overhead comparison has been established.
+
+The model validates every descriptor and DMA range before packet access and
+bounds pending outgoing frames. Portable checks cover scatter/gather receive,
+checksum completion, event suppression, 16-bit ring wrapping, malformed queues
+and reset. To run them before platform integration:
+
+```sh
+clang++ -Isrc -std=c++20 -O2 src/virtio_net.cpp tests/virtio_net_test.cpp \
+  -o build/virtio-net-tests
+build/virtio-net-tests
+```
+
+Connecting this device to the ARM machine and host socket gateway is still
+required; these model checks do not prove guest networking or SSH access.
