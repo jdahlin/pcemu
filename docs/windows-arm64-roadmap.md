@@ -150,3 +150,35 @@ media/driver page is not evidence that installation-source access works. The
 next storage milestone is to expose the full installation source and a separate
 local destination disk to WinPE, followed by installer input and network driver
 provisioning. Existing guest disks and the server ISO were not modified.
+
+### WinPE VirtIO network verified
+
+A private copy of boot WIM image 2 now launches a diagnostic CMD script through
+`Windows/System32/winpeshl.ini`. The source ISO remains unchanged. Pass this
+private WIM explicitly with `tools/prepare_win11_boot.py --wim PATH --output PATH`.
+`tools/build_windows_guest.py` builds the original ARM64 `guest-http.exe` with
+LLVM clang, llvm-dlltool and lld-link, without Windows SDK headers or a CRT.
+It downloads a new file or posts a diagnostic log through WinHTTP.
+
+Run `python3 tools/windows_media_server.py` on the host before the guest probe.
+It listens only on 127.0.0.1:8080; user networking maps guest 10.0.2.2 to that
+loopback address. `/probe` returns a fixed marker, `/install.wim` streams directly
+from the server ISO, and `/report` accepts logs up to 8 MiB into the ignored build
+folder. No local copy of the complete installation image is required on the host.
+The helper refuses to overwrite downloads and verifies the declared byte count.
+
+Observed evidence in `build/windows11-install/reports/report-1792875895811015000.log`:
+NetKVM `drvload` returned 0, PCI VEN_1AF4/DEV_1041 was Started, DHCP assigned
+10.0.2.15 with gateway 10.0.2.2 and DNS 10.0.2.3, and an HTTP GET returned the
+23-byte probe marker. The log itself arrived through a successful HTTP POST.
+NVMe also appeared Started using the inbox stornvme driver. This verifies TCP
+traffic through the VirtIO NIC to the host; external DNS/Internet access and an
+installed Windows system are still unverified.
+
+The private diagnostic script loads `X:\PCEMU\NETKVM\netkvm.inf`, initializes
+networking, captures `ipconfig /all`, `pnputil /enum-devices /class Net` and
+`/class SCSIAdapter`, and runs `diskpart` with only `list disk`. It then runs
+`HTTP.EXE get /probe X:\PCEMU\HTTP.TXT` and posts the captured log using
+`HTTP.EXE post X:\PCEMU\PROBE.LOG`. Only the 1 GiB local boot disk was attached.
+The next step is a dedicated local installation disk with ARM64 viostor; existing
+VM disks must not be selected or modified by installation automation.

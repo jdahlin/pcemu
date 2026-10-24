@@ -70,15 +70,23 @@ def directory_entry(name, cluster):
     return bytes(long) + short
 
 
-def prepare(iso_path, output):
+def prepare(iso_path, output, wim_path=None):
     iso = pycdlib.PyCdlib(); iso.open(str(iso_path))
     try:
-        return prepare_open_iso(iso, iso_path, output)
+        return prepare_open_iso(iso, iso_path, output, wim_path)
     finally:
         iso.close()
 
 
-def prepare_open_iso(iso, iso_path, output):
+def prepare_open_iso(iso, iso_path, output, wim_path=None):
+    def payload(path):
+        if wim_path is not None and path == '/sources/boot.wim':
+            return wim_path.open('rb')
+        return iso.open_file_from_iso(udf_path=path)
+    def payload_size(path):
+        if wim_path is not None and path == '/sources/boot.wim':
+            return wim_path.stat().st_size
+        return iso.get_record(udf_path=path).get_data_length()
     # Inspect architecture before creating a derived disk.
     with iso.open_file_from_iso(udf_path='/efi/boot/bootaa64.efi') as f:
         data = f.read(4096)
@@ -87,8 +95,8 @@ def prepare_open_iso(iso, iso_path, output):
         pe = struct.unpack_from('<I', data, 60)[0]
         if pe + 94 > len(data) or struct.unpack_from('<H', data, pe + 92)[0] != 10:
             raise ValueError('Boot loader is not an EFI application')
-    size = iso.get_record(udf_path='/sources/boot.wim').get_data_length()
-    with iso.open_file_from_iso(udf_path='/sources/boot.wim') as f:
+    size = payload_size('/sources/boot.wim')
+    with payload('/sources/boot.wim') as f:
         images = wim_info(f, size)
     format_disk(output)
     writer = Writer(output)
@@ -113,8 +121,8 @@ def prepare_open_iso(iso, iso_path, output):
         ):
             parent, _, name = target.rpartition('/')
             d = directory(parent)
-            size = iso.get_record(udf_path=source).get_data_length()
-            with iso.open_file_from_iso(udf_path=source) as stream:
+            size = payload_size(source)
+            with payload(source) as stream:
                 cluster, digest = allocate_stream(writer, stream, size)
             d['entries'].append(writer.entry(name, 32, cluster, size))
             records.append({'source': source, 'target': target, 'bytes': size, 'sha256': digest})
@@ -130,20 +138,21 @@ def prepare_open_iso(iso, iso_path, output):
         writer.commit()
     finally:
         writer.f.close()
-    return {'iso': str(iso_path), 'bootDisk': str(output), 'wimImages': images, 'files': records,
+    return {'iso': str(iso_path), 'customWim': str(wim_path) if wim_path else None, 'bootDisk': str(output), 'wimImages': images, 'files': records,
             'installImageIncluded': False, 'windowsSetupBootVerified': False}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--iso', type=Path, default=ROOT / 'media/windows11-arm64/Windows11_Client_arm64_en-us_26300_9457.iso')
+    parser.add_argument('--wim', type=Path, help='Use an explicitly customized ARM64 boot WIM')
     parser.add_argument('--output', type=Path, default=ROOT / 'build/windows11-media/setup-efi-boot.raw')
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.output.exists() or args.output.is_symlink():
         parser.error('Refusing to overwrite an existing boot disk')
     partial = args.output.with_suffix(args.output.suffix + '.part')
-    report = prepare(args.iso.resolve(strict=True), partial)
+    report = prepare(args.iso.resolve(strict=True), partial, args.wim.resolve(strict=True) if args.wim else None)
     partial.rename(args.output)
     report['bootDisk'] = str(args.output)
     args.output.with_suffix('.json').write_text(json.dumps(report, indent=2) + '\n')
