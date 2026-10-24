@@ -32,7 +32,7 @@ intermediate raw disks have been removed; original media and saved checkpoints
 are retained. Guest reset requests now have a firmware bootstrap path. A Win95 Restart
 check returned to Explorer in the same process and verified exact Notepad file
 contents after reboot (`build/win95-inline-restart` and `build/rtts-inline-restart`). Full ROM POST is not
-implemented. See [status](docs/GOAL_STATUS.md).
+implemented. See [status](docs/GOAL_STATUS.md) and [clean installer preparation](docs/win95-setup.md).
 
 Office 97 Professional SR-1 now installs on the independent Windows 95 disk.
 Word edits/saves documents and Excel calculates/saves workbooks; both saved files
