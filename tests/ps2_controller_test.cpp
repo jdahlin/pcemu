@@ -1,4 +1,4 @@
-#include "ps2_controller.hpp"
+#include "i8042.hpp"
 #include "pc_input.hpp"
 #include <iostream>
 #include <stdexcept>
@@ -9,8 +9,8 @@ static void check(bool condition) {
     if (!condition) throw std::runtime_error("PS/2 controller check " + std::to_string(checks));
 }
 int main() {
-    const Ps2Controller::IrqState ready{false, false, false, false};
-    Ps2Controller controller;
+    const I8042Device::IrqState ready{false, false, false, false};
+    I8042Device controller;
     controller.enqueueScan(0x1e); controller.enqueueScan(0x9e);
     auto status = controller.readStatus(0, ready);
     check((status.value & 1) && status.irqs.keyboard && !status.irqs.mouse);

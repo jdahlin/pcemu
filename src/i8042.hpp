@@ -8,7 +8,7 @@ class SnapshotCodec;
 class Ps2TestAccess;
 // AT PS/2 controller and attached keyboard/mouse. No CPU, PIC, BIOS or host
 // frontend dependency: the board supplies time/gating and applies effects.
-class Ps2Controller {
+class I8042Device {
   public:
     struct State {
         bool keyLine = false, mouseLine = false, keyboardAux = false, keyboardFull = false;

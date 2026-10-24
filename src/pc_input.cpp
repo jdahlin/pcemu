@@ -1,8 +1,8 @@
 #include "pc_input.hpp"
-#include "ps2_controller.hpp"
+#include "i8042.hpp"
 #include <cstring>
 namespace pc {
-void enqueuePcKey(Ps2Controller &controller, uint16_t k) {
+void enqueuePcKey(I8042Device &controller, uint16_t k) {
     if (!k)
         return;
     bool shift = (k & 255) >= 'A' && (k & 255) <= 'Z';

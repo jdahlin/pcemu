@@ -1,6 +1,6 @@
-#include "ps2_controller.hpp"
+#include "i8042.hpp"
 namespace pc {
-Ps2Controller::Irqs Ps2Controller::poll(uint64_t now, IrqState inputs) {
+I8042Device::Irqs I8042Device::poll(uint64_t now, IrqState inputs) {
     Irqs result;
     // No output-buffer/IRQ work is possible until queued input is ready or
     // the mouse sample deadline arrives. Inspect live state so guest I/O,
@@ -46,7 +46,7 @@ Ps2Controller::Irqs Ps2Controller::poll(uint64_t now, IrqState inputs) {
     }
     return result;
 }
-Ps2Controller::Effects Ps2Controller::command(uint8_t value, bool a20) {
+I8042Device::Effects I8042Device::command(uint8_t value, bool a20) {
     Effects result;
     state_.keyboardLastCommand = true;
     state_.keyboardControllerPending = 0;
@@ -100,7 +100,7 @@ Ps2Controller::Effects Ps2Controller::command(uint8_t value, bool a20) {
     }
     return result;
 }
-Ps2Controller::Effects Ps2Controller::write(uint8_t value) {
+I8042Device::Effects I8042Device::write(uint8_t value) {
     Effects result;
     state_.keyboardLastCommand = false;
     if (state_.keyboardControllerPending) {
@@ -182,14 +182,14 @@ Ps2Controller::Effects Ps2Controller::write(uint8_t value) {
     }
     return result;
 }
-Ps2Controller::Read Ps2Controller::readStatus(uint64_t now, IrqState inputs) {
+I8042Device::Read I8042Device::readStatus(uint64_t now, IrqState inputs) {
     auto irqs = poll(now, inputs);
     return {uint8_t((state_.keyboardFull ? 1 : 0) |
                    (state_.keyboardFull && state_.keyboardAux ? 0x20 : 0) |
                    (state_.keyboardCommandByte & 4) | (state_.keyboardLastCommand ? 8 : 0)),
             irqs, state_.keyboardFull};
 }
-Ps2Controller::Read Ps2Controller::readData(uint64_t now, IrqState inputs) {
+I8042Device::Read I8042Device::readData(uint64_t now, IrqState inputs) {
     auto irqs = poll(now, inputs);
     bool full = state_.keyboardFull;
     if (full) {

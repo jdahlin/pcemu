@@ -178,7 +178,7 @@ workload checks. No GUI guest run was needed.
 
 ## Independent PS/2 controller (2026-10-24)
 
-`Ps2Controller` (`ps2_controller.*`) replaces the `Machine` PS/2 protocol methods
+`I8042Device` (`i8042.*`) replaces the `Machine` PS/2 protocol methods
 and scattered hardware fields. It owns the output buffer, command and parameter
 state, keyboard replies/scans, byte deadlines, IRQ latches and attached mouse.
 Its implementation only depends on the mouse model and standard C++ types.

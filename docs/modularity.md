@@ -46,7 +46,7 @@ Keep the following responsibilities explicit for both PC/AT and ARM machines:
 fallback. BIOS services are in `pc_bios.cpp`, firmware initialization/boot in
 `pc_firmware.cpp` and BIOS text operations in `pc_bios_video.cpp`. These firmware
 methods still operate on the machine. PS/2 register/protocol state now belongs to
-the independent `Ps2Controller` (`ps2_controller.*`), including its attached mouse.
+the independent `I8042Device` (`i8042.*`), including its attached mouse.
 
 The controller takes instruction time and an `IrqState` describing the board's
 existing delivery/backpressure policy. It returns IRQ edges and A20/reset effects;

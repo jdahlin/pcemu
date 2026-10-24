@@ -90,11 +90,11 @@ void Machine::key(uint16_t value) {
     waitingKey = false;
     cpu.halted = false;
 }
-Ps2Controller::IrqState Machine::ps2IrqState() const {
+I8042Device::IrqState Machine::ps2IrqState() const {
     return {bool(pic[0].isr & 2), bool(pic[0].mask & 2),
             bool(pic[1].isr & 0x10), bool(pic[1].mask & 0x10)};
 }
-void Machine::applyPs2Irqs(Ps2Controller::Irqs irqs) {
+void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {
     if (irqs.keyboard) pic[0].raise(1);
     if (irqs.mouse) pic[1].raise(4);
 }

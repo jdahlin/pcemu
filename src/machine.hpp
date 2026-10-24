@@ -4,7 +4,7 @@
 #include "cmos_rtc.hpp"
 #include "disk.hpp"
 #include "io_port_space.hpp"
-#include "ps2_controller.hpp"
+#include "i8042.hpp"
 #include "ne2000.hpp"
 #include "pci.hpp"
 #include "pic.hpp"
@@ -23,7 +23,7 @@ struct Machine {
     ATA ata;
     PIC8259 pic[2];
     PIT8254 pit;
-    Ps2Controller ps2;
+    I8042Device ps2;
     PCI pci;
     NE2000 nic;
     bool nicLine = false;
@@ -54,8 +54,8 @@ struct Machine {
     void restart();
     void bindDevices();
     void bindIoPorts();
-    Ps2Controller::IrqState ps2IrqState() const;
-    void applyPs2Irqs(Ps2Controller::Irqs irqs);
+    I8042Device::IrqState ps2IrqState() const;
+    void applyPs2Irqs(I8042Device::Irqs irqs);
     void writePicPort(uint16_t port, uint32_t value);
     int64_t rtcTime() const;
     void saveSnapshot(const std::string &directory);
