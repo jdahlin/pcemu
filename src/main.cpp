@@ -1,6 +1,7 @@
 #include "host_keyboard.hpp"
 #include "jit.hpp"
 #include "machine.hpp"
+#include "machine_profile.hpp"
 #include "network.hpp"
 #include "profile.hpp"
 #include "frontend.hpp"
@@ -125,6 +126,8 @@ static double benchMemory(bool enabled, uint64_t target, bool paging) {
 int main(int argc, char **argv) {
     std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
+    bool ramExplicit = false, noJit = false, listMachines = false;
+    std::string machineId = "pc-legacy", backendId = "auto";
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = false, memoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
@@ -141,7 +144,13 @@ int main(int argc, char **argv) {
                     throw std::runtime_error("Missing value for " + arg);
                 return std::string(argv[++i]);
             };
-            if (arg == "--no-host-input")
+            if (arg == "--machine")
+                machineId = value();
+            else if (arg == "--backend")
+                backendId = value();
+            else if (arg == "--list-machines")
+                listMachines = true;
+            else if (arg == "--no-host-input")
                 enableHostInput = false;
             else if (arg == "--no-network")
                 enableNetwork = false;
@@ -163,9 +172,10 @@ int main(int argc, char **argv) {
                 captureEvery = std::stoull(value());
             else if (arg == "--trace-tail")
                 traceTailPath = value();
-            else if (arg == "--ram-mb")
+            else if (arg == "--ram-mb") {
                 ramMB = std::stoul(value());
-            else if (arg == "--wait-text")
+                ramExplicit = true;
+            } else if (arg == "--wait-text")
                 waitText = value();
             else if (arg == "--disk")
                 hd = value();
@@ -176,7 +186,7 @@ int main(int argc, char **argv) {
             else if (arg == "--headless")
                 headless = true;
             else if (arg == "--no-jit")
-                enableJit = false;
+                noJit = true;
             else if (arg == "--verbose")
                 verbose = true;
             else if (arg == "--steps")
@@ -205,6 +215,8 @@ int main(int argc, char **argv) {
                              "--frame FILE.ppm --dump-memory FILE --until-text TEXT\n"
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
+                             "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
                              "  --load-snapshot DIRECTORY (private writable disk clone)\n"
                              "  --no-network (disconnect host socket gateway)\n"
                              "  --no-host-input (automated GUI runs; control input remains active)\n"
@@ -214,6 +226,23 @@ int main(int argc, char **argv) {
             } else
                 throw std::runtime_error("Unknown option: " + arg);
         }
+        if (listMachines) {
+            for (const auto &p : machineProfiles)
+                std::cout << p.id << " [" << (p.implemented ? "available" : "planned")
+                          << "] arch=" << p.architecture << " platform=" << p.platform
+                          << " ram=" << p.defaultRamMB << " MiB: " << p.description << '\n';
+            return 0;
+        }
+        const auto &selectedProfile = machineProfile(machineId);
+        auto backend = executionBackend(backendId);
+        if (noJit) {
+            if (backend != ExecutionBackend::Auto && backend != ExecutionBackend::Interpreter)
+                throw std::runtime_error("--no-jit conflicts with --backend " + backendId);
+            backend = ExecutionBackend::Interpreter;
+        }
+        enableJit = useJit(selectedProfile, backend);
+        if (!ramExplicit)
+            ramMB = selectedProfile.defaultRamMB;
         if (memoryBenchmark) {
             for (bool paging : {false, true}) {
                 auto ref = benchMemory(false, benchmarkSteps, paging);
@@ -334,6 +363,10 @@ int main(int argc, char **argv) {
                   << ",\"executionWallNs\":" << executionWallNs
                   << ",\"nativeMemoryCalls\":" << c.nativeMemoryCalls
                   << ",\"executionEpoch\":" << c.executionEpoch
+                  << ",\"machineProfile\":" << std::quoted(std::string(selectedProfile.id))
+                  << ",\"machinePlatform\":" << std::quoted(std::string(selectedProfile.platform))
+                  << ",\"executionBackend\":" << std::quoted(enableJit ? "jit" : "interpreter")
+                  << ",\"ramBytes\":" << c.mem.size()
                   << ",\"disk\":" << std::quoted(m.disk ? m.disk->path : "")
                   << ",\"compiledBlocks\":" << jit.compiledBlocks
                   << ",\"cacheRecycles\":" << jit.cacheRecycles << ",\"halted\":" << c.halted

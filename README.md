@@ -1,5 +1,8 @@
 # PCEmu — DOS and Windows on Apple Silicon
 
+Machine presets and future virtualization targets: [machine profiles](docs/machine-profiles.md).
+Use `--list-machines`, `--machine win311|win95` and `--backend auto|interpreter|jit`.
+
 An original x86 software emulator in C++20, with an AArch64 baseline JIT and an
 SDL2 window. **Boots the supplied MS-DOS 6.22 disk and Windows 3.11 in standard
 mode to Program Manager.** No QEMU/DOSBox/Unicorn CPU core or hypervisor is used.

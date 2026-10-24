@@ -14,4 +14,4 @@ if [[ ! -f "$point/state.bin" ]]; then
     echo "Missing Office 97 checkpoint: $point. See docs/office97.md." >&2
     exit 1
 fi
-exec ./build/pcemu --load-snapshot "$point" "$@"
+exec ./build/pcemu --machine win95 --load-snapshot "$point" "$@"

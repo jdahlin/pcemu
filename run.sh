@@ -8,4 +8,4 @@ if [[ ! -f "$disk" ]]; then
   echo 'No working disk. See README.md for media preparation.' >&2
   exit 1
 fi
-exec ./build/pcemu --disk "$disk" --type $'cd windows\nwin /s\n' "$@"
+exec ./build/pcemu --machine win311 --disk "$disk" --type $'cd windows\nwin /s\n' "$@"

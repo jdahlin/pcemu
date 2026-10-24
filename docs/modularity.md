@@ -19,6 +19,11 @@ The machine, CPU, JIT, disk tools and core tests do not include or link a GUI
 library. Only the SDL adapter and its test need SDL compile/link flags. Package
 flags use pkg-config rather than a hard-coded macOS Homebrew path.
 
+Machine presets and execution selection are now exposed through
+`--machine` and `--backend`; see [machine profiles](machine-profiles.md).
+The presets currently share one concrete legacy platform. Planned modern
+platforms reject launch until implemented.
+
 ## Future structure
 
 Keep four choices independent as more machines become useful:
