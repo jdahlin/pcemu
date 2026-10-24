@@ -29,6 +29,14 @@ fields, VTL0, self-partition/current-VP restrictions, page bounds and overlappin
 buffers. Guest identity is partition-wide, initially zero and writable on the
 boot VP. Reading VP index requires an established identity.
 
+The partition info page register (0x90015) starts disabled. The guest can
+register an aligned 4 KiB page in its own RAM with bit 0 enabled. Reserved bits,
+unmapped pages and nonzero upper 128-bit halves fail without changing the old
+registration or memory. Successful registration clears the page; disabling it
+does not overwrite RAM. This backend does not queue asynchronous address-space
+flushes, so the pending-flush word remains zero. Other fields remain zero;
+additional partition-info features are not advertised.
+
 Feature registers expose guest identity, VP index, register access and fast
 output. No timer, SynIC, VMBus, flush or scheduling facilities are advertised.
 The version is PCEmu interface 1.0 build 1, not a Microsoft release identity.
@@ -40,7 +48,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 80 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 101 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -55,7 +63,37 @@ are counted. Disabled mode records attempts without exposing the interface.
 Guest ID/counters establish actual calls, not performance benefit.
 
 Windows on/off boots and register counters remain to be inspected. No Windows
-use or performance improvement is claimed at this checkpoint.
+use or performance improvement is implied by those synthetic tests.
+
+## Windows observation, 2026-10-25
+
+Independent APFS clones of the same stopped local system disk and variable
+store were used for on/off runs with 8 GiB RAM and one VP. The original system
+overlay was not attached to either experiment. The off run reached the Windows
+lock screen; `build/windows11-hyperv/off/hyperv.json` records zero discovery or
+Hyper-V calls.
+
+The first basic run recorded 45 legacy HVC #1 calls, including 41 Gets and
+three accepted guest-identity Sets. Windows read features, recommendations,
+hardware features and isolation configuration. Its guest ID was
+`0x0001040a000065f4`: Microsoft NT, version 10, kernel build 26100. The installed
+edition's branding/build remains 26300; these are different observations.
+No SMCCC call or UID query was observed: discovery was through the FADT.
+
+That initial run did not boot successfully. An unsupported extended-capability
+query (0x8001) was tolerated, but GetVpRegisters for 0x90015 failed. Repeated
+live captures showed the same PC and unchanged disk/network counters.
+Inspection of the original kernel with its matching Microsoft public symbols
+identified that PC as the terminal loop in HalReturnToFirmware.
+
+The kernel's HvlpInitializePartitionInfoPage first reads 0x90015, allocates a
+page and writes its GPA with enable bit 0. Observed consumers read its initial
+32-bit pending-flush flag before deciding whether another hypercall is needed.
+This inspection motivated the real guest-RAM registration above, rather than
+returning a fabricated address. The model tests and EFI probe verify page
+registration, clearing, readback and rejected updates. A fresh Windows clone
+is being tested with that implementation; successful on-mode boot is still
+unproven at this checkpoint.
 
 ## Primary references
 

@@ -41,10 +41,28 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     case 0x90003:
         if (!guestId) return accessDenied;
         value[0] = vp; return 0;
+    case 0x90015:
+        if (!guestId) return accessDenied;
+        value[0] = partitionInfo; return 0;
     default: return invalidParameter;
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name == 0x90015) {
+        if (!guestId) return accessDenied;
+        if (value[1] || (value[0] & 0xffe)) return invalidParameter;
+        if (value[0] & 1) {
+            uint64_t address = value[0] & ~uint64_t(4095);
+            if (address < base || address - base > ram.size() ||
+                4096 > ram.size() - (address - base)) return invalidParameter;
+            // Windows supplies this shared page. No asynchronous address-space
+            // flushes are queued by this backend: its pending-flush word is zero.
+            // All remaining fields are reserved/zero in this initial interface.
+            std::fill_n(ram.begin() + size_t(address - base), 4096, uint8_t(0));
+        }
+        partitionInfo = value[0];
+        return 0;
+    }
     if (name != 0x90002 || value[1]) return invalidParameter;
     if (vp != 0) return accessDenied;
     guestId = value[0];
@@ -140,6 +158,7 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
 std::string ArmHyperV::report() const {
     std::ostringstream s;
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
+      << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"uidQueries\":" << uidQueries << ",\"smcccVersionQueries\":" << versionQueries
       << ",\"smcccCalls\":" << smcccCalls << ",\"legacyCalls\":" << legacyCalls
       << ",\"disabledCalls\":" << disabledCalls << ",\"failures\":" << failures

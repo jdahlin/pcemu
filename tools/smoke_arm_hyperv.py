@@ -38,9 +38,11 @@ def main():
         if mode == 'basic':
             names = {r['name']: r for r in report['registers']}
             if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 1
-                    or report['smcccCalls'] != 4 or report['failures'] != 1
+                    or report['smcccCalls'] != 6 or report['failures'] != 1
                     or names[0x90002]['reads'] != 1 or names[0x90002]['writes'] != 1
-                    or names[0x90003]['reads'] != 1):
+                    or names[0x90003]['reads'] != 1
+                    or names[0x90015]['reads'] != 1 or names[0x90015]['writes'] != 1
+                    or not report['partitionInfoPage'] & 1):
                 raise RuntimeError('Guest results and invocation counters disagree')
         elif report['guestOsId'] or report['smcccCalls'] or report['legacyCalls']:
             raise RuntimeError('Disabled mode exposed Hyper-V')

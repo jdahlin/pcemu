@@ -95,6 +95,38 @@ efi_main:
     ldr x9, =0x5043454d55
     cmp x8, x9
     b.ne failed
+    // Register the second allocated page; host must clear its pending state.
+    ldr w0, =0x46000001
+    ldr x1, =0x100010051
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x90015
+    mov x5, #0
+    add x6, x21, #4096
+    orr x6, x6, #1
+    mov x7, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    ldr x8, [x21, #4096]
+    cbnz x8, failed
+    ldr w0, =0x46000001
+    ldr x1, =0x100010050
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x90015
+    mov x5, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    add x8, x21, #4096
+    orr x8, x8, #1
+    cmp x6, x8
+    b.ne failed
     ldr w0, =0x46000001
     mov x1, #0xdead
     hvc #0

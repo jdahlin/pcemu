@@ -18,7 +18,7 @@ class ArmHyperV {
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
     std::span<uint8_t> ram;
-    uint64_t base, guestId = 0;
+    uint64_t base, guestId = 0, partitionInfo = 0;
     unsigned cpus;
     uint64_t uidQueries = 0, versionQueries = 0, smcccCalls = 0, legacyCalls = 0;
     uint64_t disabledCalls = 0, failures = 0, omittedCounters = 0;

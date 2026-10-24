@@ -68,6 +68,26 @@ int main() {
     fastRead(0x90004); check(r[0] == 5); // No reference counter advertised or faked
     fastRead(0x201); check(r[0] == one && r[6] == 0xffffffff00000000ull && r[7] == 0);
     fastRead(0x202); check(r[0] == one && r[6] == 0x200000002ull);
+    // The partition info page is allocated by the guest, not a fabricated GPA.
+    auto page = [&](uint64_t value, uint64_t high = 0) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = 0x90015;
+        r[6] = value; r[7] = high;
+        check(hv.call(0, r, 0));
+    };
+    fastRead(0x90015); check(r[0] == one && r[6] == 0);
+    std::fill(memory.begin() + 4096, memory.end(), 0xaa);
+    page(base + 4096 + 1); check(r[0] == one);
+    check(std::all_of(memory.begin() + 4096, memory.end(), [](uint8_t b) { return b == 0; }));
+    fastRead(0x90015); check(r[6] == base + 4096 + 1);
+    memory[4096] = 0x42;
+    for (uint64_t bad : {base + 4096 + 3, base + 8192 + 1, base - 4096 + 1}) {
+        page(bad); check(r[0] == 5 && memory[4096] == 0x42);
+    }
+    page(base + 4096 + 1, 1); check(r[0] == 5 && memory[4096] == 0x42);
+    fastRead(0x90015); check(r[6] == base + 4096 + 1);
+    page(0); check(r[0] == one && memory[4096] == 0x42);
+    fastRead(0x90015); check(r[6] == 0);
     // Memory ABI above 4 GiB, partial completion and resume.
     put(memory, 0, uint64_t(-1)); put(memory, 8, 0xfffffffe);
     put(memory, 16, 0x90003, 4); put(memory, 20, 0xffffffff, 4);
