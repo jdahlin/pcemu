@@ -405,3 +405,39 @@ and do not establish application speedups or repeat the installer.
 Passing compatibility and benchmark runs remove their private test disks.
 `build/native-arithmetic-flags-validation.json` records source hashes and
 the evidence paths.
+
+Guest benchmark profiling is available with
+`python3 tools/bench_guest_perf.py --guest-profile --iterations 1000` (or
+`--suite micro --loops 17`). It builds `build/guest-bench-profile` and writes
+one counter/IP-sample JSON per measured interval, referenced from each result
+sample. Counters reset at BEGIN and stop at END, excluding DOS boot, calibration
+and checksum verification outside those intervals. Instrumented binaries always
+identify themselves as profiled, and the runner excludes their CoreMark timings
+from score eligibility. Microbenchmark rates in such results are diagnostic
+too. Normal runners reject a profiling request instead of silently omitting it.
+
+`make smoke-guest-profile` checks both engines on CoreMark and the full 28-case
+micro matrix. It verifies interval instruction boundaries, interpreted attempts
+against guest-minus-native counts, dispatch counters, sampled IPs, CRCs/checksums,
+identical guest work across engines, diagnostic labels and private disk cleanup.
+Both this check (`build/guest-profile-smoke-final.log`) and the normal benchmark
+smoke (`build/guest-profile-normal-smoke.log`) pass.
+
+After native flag lowering, the 1,000-iteration diagnostic in
+`build/coremark-guest-profile-steady/` executes 397,509,732 guest instructions,
+315,737,936 natively, with 81,771,796 interpreted attempts. IMUL (`0F AF`) is
+11.58% of interpreted attempts; immediate register shifts (`C0/C1/D1`) total
+about 18.3%. Some already-supported operations remain interpreted because
+unsupported neighbors end blocks before the production minimum block length.
+The `0F` prefix bucket overlaps extended opcode counts; do not sum both.
+These counts identify coverage opportunities, not time spent per opcode.
+
+A separate uninstrumented host sample at
+`build/native-flags-host-profile/sample.txt` has 4,275 main-thread samples:
+1,717 (40.2%) in the interpreted dispatch subtree, 808 (18.9%) in machine/device
+polling, and 863 (20.2%) with `Jit::run` at the top of the stack. These are
+diagnostic stack proportions, not speed comparisons; sampled run timings are
+excluded. The counter run averages only 4.16 guest instructions per native
+call and 2.52 instructions per dispatch overall. Extending blocks across IMUL
+and shifts can therefore also amortize dispatch and polling, while bounded
+native block links and event scheduling remain larger structural work.

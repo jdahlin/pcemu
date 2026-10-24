@@ -1,5 +1,6 @@
 #include "jit.hpp"
 #include "machine.hpp"
+#include "profile.hpp"
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -52,7 +53,10 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
 int main(int argc, char **argv) {
     try {
         std::string disk, output;
-        bool native = true;
+        bool native = true, profiled = false;
+#ifdef PCEMU_PROFILE
+        profiled = true; // Instrumented binaries must never produce benchmark scores.
+#endif
         unsigned timeout = 180, loops = 1000000;
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
@@ -71,6 +75,13 @@ int main(int argc, char **argv) {
                 loops = std::stoul(value());
             else if (arg == "--no-jit")
                 native = false;
+            else if (arg == "--guest-profile") {
+#ifdef PCEMU_PROFILE
+                profiled = true;
+#else
+                throw std::runtime_error("Guest profiling requires build/guest-bench-profile");
+#endif
+            }
             else
                 throw std::runtime_error("Unknown option: " + arg);
         }
@@ -141,11 +152,20 @@ int main(int argc, char **argv) {
                     blocks = jit.compiledBlocks;
                     recycles = jit.cacheRecycles;
                     measuring = true;
+#ifdef PCEMU_PROFILE
+                    if (profiled)
+                        profile::start(c.instructions);
+#endif
                     start = Clock::now();
                 } else if (value == 2) {
                     auto end = Clock::now();
                     if (!measuring)
                         throw std::runtime_error("END without BEGIN");
+#ifdef PCEMU_PROFILE
+                    if (profiled)
+                        profile::stop(output + ".profile-" + std::to_string(samples.size()) + ".json",
+                                      c.instructions);
+#endif
                     samples.push_back({id, std::chrono::duration<double>(end - start).count(),
                                        c.instructions - ins, jit.nativeInstructions - nat,
                                        c.nativeMemoryCalls - mem, jit.compiledBlocks - blocks,
@@ -229,7 +249,8 @@ int main(int argc, char **argv) {
             throw std::runtime_error("Cannot write results");
         result << "{\"scope\":\"actual minimal DOS boot, original protected-mode loader, host "
                   "monotonic wall time, no SDL\",\"jit\":"
-               << (native ? "true" : "false") << ",\"returnedToDos\":true,\"crcValidated\":"
+               << (native ? "true" : "false") << ",\"profiled\":"
+               << (profiled ? "true" : "false") << ",\"returnedToDos\":true,\"crcValidated\":"
                << (coremark && crc ? "true" : "false")
                << ",\"microValidated\":" << (micro ? "true" : "false") << ",\"loops\":" << loops
                << ",\"upstreamValidated\":"
@@ -247,7 +268,11 @@ int main(int argc, char **argv) {
                    << ",\"compiledBlocks\":" << s.blocks << ",\"cacheRecycles\":" << s.recycles
                    << ",\"jitClearedBefore\":" << (s.cold ? "true" : "false")
                    << ",\"checksumChecked\":" << (s.hasChecksum ? "true" : "false")
-                   << ",\"checksum\":" << s.checksum << '}';
+                   << ",\"checksum\":" << s.checksum;
+            if (profiled)
+                result << ",\"guestProfile\":"
+                       << std::quoted(output + ".profile-" + std::to_string(i) + ".json");
+            result << '}';
         }
         result << "]}\n";
         m.disk->flush();

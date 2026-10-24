@@ -19,6 +19,8 @@ parser.add_argument('--loops', type=int, default=1000000)
 parser.add_argument('--iterations', type=int, default=0,
                     help='0: upstream automatic >=10s run; short fixed counts are diagnostic only')
 parser.add_argument('--no-jit', action='store_true')
+parser.add_argument('--guest-profile', action='store_true',
+                    help='diagnostic opcode/dispatch counters per interval; timings are not benchmark scores')
 parser.add_argument('--timeout', type=int, default=180)
 parser.add_argument('--output', type=Path)
 parser.add_argument('--runner', type=Path, help='use an existing guest-bench executable without rebuilding it')
@@ -29,10 +31,11 @@ if not 0 <= args.iterations <= 0x7fffffff:
     parser.error('iterations outside signed 32-bit range')
 if args.timeout <= 0:
     parser.error('timeout must be positive')
-runner = args.runner.resolve() if args.runner else ROOT / 'build/guest-bench'
+default_target = 'build/guest-bench-profile' if args.guest_profile else 'build/guest-bench'
+runner = args.runner.resolve() if args.runner else ROOT / default_target
 if args.runner and (not runner.is_file() or not os.access(runner, os.X_OK)):
     parser.error('Runner must be an existing executable')
-targets = ['build/disk-tool'] + ([] if args.runner else ['build/guest-bench'])
+targets = ['build/disk-tool'] + ([] if args.runner else [default_target])
 subprocess.run(['make', '-s', *targets], cwd=ROOT, check=True)
 work = (args.output.resolve() if args.output else
         Path(tempfile.mkdtemp(prefix='guest-perf-', dir=ROOT / 'build')))
@@ -69,10 +72,19 @@ command = [str(runner), '--disk', str(disk), '--output', str(result),
            '--timeout', str(args.timeout), '--loops', str(args.loops)]
 if args.no_jit:
     command.append('--no-jit')
+if args.guest_profile:
+    command.append('--guest-profile')
 with (work / 'run.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                    check=True, timeout=args.timeout + 10)
 data = json.loads(result.read_text())
+if bool(data.get('profiled')) != args.guest_profile:
+    raise RuntimeError('Runner profiling mode does not match requested mode')
+if args.guest_profile:
+    for sample in data['samples']:
+        counters = json.loads(Path(sample['guestProfile']).read_text())
+        if counters['stopInstructions'] - counters['startInstructions'] != sample['guestInstructions']:
+            raise RuntimeError('Profile instruction boundary mismatch')
 data.update(provenance)
 data['host']['loadAverageAfter'] = os.getloadavg()
 data['build'] = json.loads((work / 'program/build.json').read_text())
@@ -81,11 +93,11 @@ if args.suite == 'coremark':
     iterations = int(re.search(r'Iterations\s+: (\d+)', transcript).group(1))
     data['iterations'] = iterations
     data['iterationsPerHostSecond'] = iterations / data['samples'][-1]['hostSeconds']
-    data['publishedScoreEligible'] = (data['upstreamValidated'] and
+    data['publishedScoreEligible'] = (not args.guest_profile and data['upstreamValidated'] and
                                      data['samples'][-1]['hostSeconds'] >= 10)
     print(f"PASS: {data['iterationsPerHostSecond']:.3f} iterations/host second; CRC checked; returned to DOS; "
           + ('>=10s upstream validation passed' if data['publishedScoreEligible'] else
-             'short diagnostic, not a publishable CoreMark score'))
+             'diagnostic only, not a publishable CoreMark score'))
 else:
     if not data['microValidated'] or len(data['samples']) != 28:
         raise RuntimeError('Microbenchmark matrix was not validated')
