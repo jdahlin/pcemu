@@ -265,3 +265,36 @@ The full suite passes **651,977** checks. Windows 3.11's exact Notepad save and
 all three DOS reset/reboot paths pass again. Fresh instrumented SDL diagnostic
 profiles are `build/profile-{word,excel}-short-compare/`; their timings are not
 performance evidence.
+
+
+## Refreshed compact-TLB headless profile (2026-10-24)
+
+Three independent headless host samples per application use the frozen
+`build/aligned-tlb-comparison/baseline` executable, which includes combined
+TLB keys and block-local epoch retention, with default jump joining. This is
+the compact layout, without the rejected 32-byte alignment or the subsequent
+REP STOS experiment. Executable/task hashes are in the result manifests.
+
+| Main-thread category | Word | Excel |
+| --- | ---: | ---: |
+| Interpreter, including MMU and faults | 31.0% | 32.7% |
+| JIT dispatch/cache/validation | 21.1% | 20.6% |
+| Capture/video/control output | 13.0% | 11.6% |
+| Generated code and native helpers | 10.3% | 6.8% |
+| Compilation | 6.2% | 9.5% |
+| Device polling and interrupt delivery | 6.3% | 6.9% |
+| Disk and compression | 1.4% | 0.8% |
+| Other main-thread work | 10.6% | 11.2% |
+
+The reports contain 5,016 Word and 2,129 Excel task samples after excluding
+the attachment barrier. `CPU::physical` appears inclusively in 11.38% and
+11.74% of stacks, overlapping the categories above. These are main-thread
+wall-stack samples, not exclusive CPU-clock measurements or a before/after
+speed comparison. Generated code is partly unsymbolized. Profiling overlapped
+an independent test build, so host contention is another limitation. No
+profiled latency is used as a benchmark. All six tasks passed pixel checks.
+
+Raw stacks and analysis are under `build/current-mmu-word-host/` and
+`build/current-mmu-excel-host/`, with `summary.json` in each directory.
+The evidence supports work on both translation and dispatch, but does not
+by itself show which guest string operations dominate interpreter time.
