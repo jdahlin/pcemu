@@ -198,3 +198,14 @@ as Windows writes. This disk is distinct from the boot-media disk and all
 existing guests. It has not yet been partitioned or installed. The Mac currently
 has about 20 GiB free, so installation must use compact application and track
 actual free space rather than relying on the target's logical capacity.
+
+The first extra-disk probe is recorded in
+`build/windows11-install/reports/report-1792876012739305000.log`.
+Windows accepted both viostor and viorng packages (`drvload` return 0), but the
+VirtIO block controller reported Problem Code 10 / status C0000001. DiskPart
+therefore saw only the 1 GiB NVMe boot disk. No partitioning was attempted and
+no installation was applied. Driver loading alone does not establish a working
+VirtIO storage controller. Debugging can enable bounded host register-write
+tracing with `PCEMU_TRACE_VIRTIO_BLK=1` (at most 4096 entries per process), including
+queue/feature/status writes and device reset reasons. The block unit suite
+passes 575 checks with tracing disabled.

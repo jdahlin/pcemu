@@ -3,9 +3,20 @@
 #include <array>
 #include <bitset>
 #include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 namespace pc {
 namespace {
+void traceBlock(const void *device, const char *operation, unsigned offset, uint64_t value, unsigned width) {
+    static const bool enabled = std::getenv("PCEMU_TRACE_VIRTIO_BLK") != nullptr;
+    static unsigned remaining = 4096;
+    if (enabled && remaining) {
+        --remaining;
+        std::fprintf(stderr, "virtio-blk[%p] %s offset=%#x value=%#llx width=%u\n",
+                     device, operation, offset, static_cast<unsigned long long>(value), width);
+    }
+}
 // EDK II does not negotiate SIZE_MAX and submits whole EFI images in one
 // descriptor. Bound aggregate I/O, but stream it through a small host buffer.
 constexpr uint64_t maxRequest = 1024ull * 1024 * 1024;
@@ -75,6 +86,7 @@ uint64_t VirtioBlock::read(unsigned offset, unsigned width) const {
     }
 }
 void VirtioBlock::broken(const std::string &reason) {
+    traceBlock(this, reason.c_str(), 0x70, status, 4);
     failure = reason;
     status |= 64; // DEVICE_NEEDS_RESET
     interruptStatus |= 2;
@@ -91,6 +103,7 @@ void VirtioBlock::validateQueue() const {
 void VirtioBlock::write(unsigned offset, uint64_t value64, unsigned width) {
     if (width != 4 || offset % 4)
         throw std::runtime_error("virtio registers require aligned 32-bit writes");
+    traceBlock(this, "write", offset, value64, width);
     uint32_t value = uint32_t(value64);
     if (offset == 0x70 && value == 0) { reset(); return; }
     if (status & (64 | 128)) return;
