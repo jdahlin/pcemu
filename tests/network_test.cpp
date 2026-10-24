@@ -404,10 +404,32 @@ int main() {
               incoming.front().begin() + 58) == "pong", "host payload reaches guest server");
         incoming.clear();
         endpoint(tcp(peerPort, 3005, peerSeq + 5, 16, {}, 22));
+        Bytes bulk(8192);
+        for (size_t i = 0; i < bulk.size(); ++i) bulk[i] = uint8_t(i ^ (i >> 8));
+        check(send(ssh, bulk.data(), bulk.size(), 0) == ssize_t(bulk.size()), "host sends a TCP window");
+        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        Bytes assembled;
+        for (const auto &segment : incoming) {
+            check(segment.size() <= 1514 && get32(segment.data() + 38) == peerSeq + 5 + assembled.size(),
+                  "TCP window is emitted as consecutive MTU-sized segments");
+            auto size = get16(segment.data() + 16) - 20;
+            check(!sum(segment.data() + 34, size,
+                (guest >> 16) + (guest & 65535) + (gateway >> 16) + (gateway & 65535) + 6 + size),
+                  "batched TCP segment checksum");
+            assembled.insert(assembled.end(), segment.begin() + 54, segment.end());
+        }
+        check(assembled == bulk && incoming.size() > 1, "whole TCP window arrives without per-packet ACK stalls");
+        incoming.clear();
+        endpoint(tcp(peerPort, 3005, peerSeq + 5 + 2920, 16, {}, 22));
+        std::this_thread::sleep_for(std::chrono::milliseconds(510)); endpoint();
+        check(!incoming.empty() && get32(incoming.front().data() + 38) == peerSeq + 5 + 2920,
+              "partial ACK retransmits only the unacknowledged suffix");
+        incoming.clear();
+        endpoint(tcp(peerPort, 3005, peerSeq + 8197, 16, {}, 22));
         shutdown(ssh, SHUT_WR);
         std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
         check(incoming.size() == 1 && (incoming.front()[47] & 1), "forward closes guest with FIN");
-        incoming.clear(); endpoint(tcp(peerPort, 3005, peerSeq + 6, 17, {}, 22));
+        incoming.clear(); endpoint(tcp(peerPort, 3005, peerSeq + 8198, 17, {}, 22));
         close(ssh);
         // Malformed IP/transport inputs must not generate packets or consume ring memory.
         auto count = n.received;

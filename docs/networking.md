@@ -106,3 +106,10 @@ socket opens a guest-side TCP connection from the gateway address, with normal
 sequence/checksum validation, retransmission and close handling. Existing
 NE2000 callers use a wrapper around the same gateway. Portable network checks
 exercise a real loopback forward in both directions through the callback API.
+
+Host-to-guest TCP reads use bounded windows of up to 16 KiB, split into
+MTU-sized segments. Partial acknowledgements retire the acknowledged prefix;
+timeout retransmission sends the remaining suffix. This avoids a stop-and-wait
+stall with Linux delayed ACKs while keeping socket buffers and outstanding
+state bounded. The loopback tests verify multi-segment checksums, ordering and
+partial-ACK retransmission; no Internet throughput result is implied.

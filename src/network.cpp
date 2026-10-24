@@ -185,6 +185,22 @@ struct Network::State {
         ip(source, dest, 17, p, broadcast);
     }
     void tcp(Flow &f, uint8_t flags, const Bytes &data = {}, bool remember = false) {
+        if (data.size() > 1460) {
+            // Keep one bounded transmit window, emitted as MTU-sized packets.
+            // A guest can ACK every other segment without stop-and-wait stalls.
+            uint32_t first = remember ? f.sendNext : f.unacknowledged;
+            if (remember) {
+                f.pending = data; f.pendingFlags = flags;
+                f.sendNext += data.size();
+            }
+            for (size_t offset = 0; offset < data.size(); offset += 1460) {
+                f.unacknowledged = first + offset;
+                auto end = std::min(data.size(), offset + 1460);
+                tcp(f, flags, Bytes(data.begin() + offset, data.begin() + end));
+            }
+            f.unacknowledged = first;
+            return;
+        }
         bool syn = flags & 2;
         Bytes p((syn ? 24 : 20) + data.size());
         put16(p.data(), f.destinationPort);
@@ -412,6 +428,13 @@ struct Network::State {
         }
         if (!(flags & 16) || int32_t(ack - f->sendNext) > 0)
             return;
+        if (f->pendingFlags == 0x18 && int32_t(ack - f->unacknowledged) > 0 &&
+            int32_t(f->sendNext - ack) > 0 && ack - f->unacknowledged <= f->pending.size()) {
+            auto count = ack - f->unacknowledged;
+            f->pending.erase(f->pending.begin(), f->pending.begin() + count);
+            f->unacknowledged = ack;
+            f->sentAt = nowMS();
+        }
         if (ack == f->sendNext && f->pendingFlags) {
             f->pending.clear();
             f->pendingFlags = 0;
@@ -536,7 +559,7 @@ struct Network::State {
             if (f.peerFin && f.toHost.empty())
                 shutdown(f.fd, SHUT_WR);
             if (!f.pendingFlags && !f.hostFin && f.window) {
-                uint8_t buffer[1460];
+                uint8_t buffer[16384];
                 ssize_t n = recv(f.fd, buffer, std::min<unsigned>(sizeof(buffer), f.window), 0);
                 if (n > 0)
                     tcp(f, 0x18, Bytes(buffer, buffer + n), true);
