@@ -37,6 +37,9 @@ start:
     mov al,0ffh
     out 21h,al
     out 0a1h,al
+%ifdef MICRO_SUITE
+    call micro16
+%endif
     in al,92h
     and al,0feh
     or al,2
@@ -120,6 +123,9 @@ saved_gs: dw 0
 saved_gdtr: times 6 db 0
 saved_pic: dw 0
 saved_cr0: dd 0
+%ifdef MICRO_SUITE
+%include "micro16.asm"
+%endif
 align 16
 payload:
 incbin PAYLOAD

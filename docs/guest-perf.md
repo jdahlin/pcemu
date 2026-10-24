@@ -14,7 +14,8 @@ run removes its private disk; a failed run keeps it and its log for inspection.
 Results, program binary, object files and exact build options remain under the
 requested output directory. The directory must not contain an existing disk.
 
-The original 12 KiB COM loader disables interrupts, masks the PIC, enables A20,
+The original COM program is about 12 KiB with CoreMark or 14 KiB with the
+microkernels. Its small loader disables interrupts, masks the PIC, enables A20,
 loads a small GDT and enters flat 32-bit protected mode. It copies the payload
 to 1 MiB and uses a stack below 2 MiB. The private DOS configuration loads no
 HIMEM/EMM386/TSRs. Afterward it restores CR0, the original GDT, real-mode segment
@@ -43,7 +44,8 @@ private test ports only in this runner:
 
 | Port | Operation |
 |---|---|
-| E5 | Reserved for case results |
+| E4 IN dword | Microbenchmark loop count from the runner |
+| E5 OUT dword | Completed microbenchmark checksum; a wrong value fails the run |
 | E6 OUT byte | Select benchmark case ID; 1 means CoreMark |
 | E7 OUT byte, 1/2 | Begin/end a synchronous host monotonic wall-clock interval |
 | E7 OUT byte, 3 | Payload finished; still wait for the DOS return marker |
@@ -74,7 +76,7 @@ upstream validation passed and whether the final host interval was >=10 seconds.
 Iterations/host-second is calculated using the precise final host interval.
 This is not a certified or submitted result.
 
-This suite currently isolates 32-bit integer execution, stack/calls/branches and
+The CoreMark configuration isolates 32-bit integer execution, stack/calls/branches and
 flat RAM. Paging is disabled. It does not establish Windows GUI, MMU, disk,
 network or floating-point performance, or Rosetta equivalence. Keep a separate
 16-bit/memory/control-flow microbenchmark matrix and Windows integration tests.
@@ -93,3 +95,63 @@ all three canonical CRCs and successful return to real-mode DOS. These are singl
 validation runs with different automatically selected iteration counts, not a
 statistical before/after claim. Fixed-count diagnostic runs also pass in both
 engines. Their shorter times are deliberately not labelled valid scores.
+
+
+## Original 16/32-bit microbenchmark matrix
+
+```sh
+python3 tools/bench_guest_perf.py --suite micro --output build/micro-jit
+python3 tools/bench_guest_perf.py --suite micro --no-jit --output build/micro-ref
+# Odd-count diagnostic exercises parity and the minimum REP copy count:
+python3 tools/bench_guest_perf.py --suite micro --loops 17 --output build/micro-odd
+make smoke-guest-perf
+```
+
+There are five kernels in real mode with 16-bit operands, then the corresponding
+five kernels in flat 32-bit protected mode. Both use the original DOS COM loader
+and return through DOS. The real-mode version uses 386 32-bit outer counters;
+it is not an 8086-compatible benchmark. `--loops` defaults to one million and
+accepts 1..10 million without rebuilding the COM image.
+
+| IDs, 16/32-bit | Kernel | Work reported per pass |
+|---|---|---|
+| 16 / 32 | Sixteen register additions per iteration | 16 × loops additions |
+| 17 / 33 | Eight load/add/store updates to one cell | 8 × loops updates |
+| 18 / 34 | Alternating odd/even conditional branch | loops iterations |
+| 19 / 35 | Four genuine near CALL/RET pairs | 4 × loops calls |
+| 20 / 36 | REP MOVSW/MOVSD of 64 elements | max(1, loops/64) × 128/256 bytes |
+
+Each kernel runs twice at the same guest addresses. The first pass explicitly
+clears the JIT after the current dispatch returns; the second retains the code
+cache. This is **cold/warm JIT**, not cold host CPU caches or cold disk. Both
+passes reset their input/accumulator state; the REP destination is zeroed before
+each pass. Interrupts are disabled and the PIC is masked in both modes. Boot,
+mode transitions, setup before BEGIN, result checking and the return to DOS are
+outside the measured intervals. Fixed bookkeeping around the loop remains timed.
+
+Every pass reports a checksum through E5. The host calculates the expected value
+independently from the loop count, operand width and data pattern. Missing or
+wrong results fail the run. The runner requires all twenty intervals, the
+expected cold/warm ordering, and identical guest instruction counts for each
+pair. JSON reports work units/host-second, mode, checksum, JIT/native counts and
+translation counts. Do not average different units into an overall score.
+
+These deliberately small working sets isolate translation/dispatch overhead;
+the single-cell update is not a DRAM-bandwidth test, the copy working set fits
+in cache, and the branch pattern is predictable. Paging is disabled. Large/random
+working sets, indirect control flow, MMU workloads and Windows GDI remain separate
+benchmark work. No FPU instructions are used.
+
+`make smoke-guest-perf` runs short CoreMark and odd-count microkernels under both
+JIT and interpreter, compares checksums **and instruction counts** across engines,
+checks that short CoreMark runs are not presented as validated scores, and boots
+an intentionally wrong guest probe to verify checksum rejection. It requires the
+local DOS media and is separate from the media-independent unit tests.
+
+Initial one-million-loop evidence is under `build/guest-micro-{jit,ref}-final/`.
+All twenty checksums, mode returns and instruction counts match. The initial
+32-bit warm CALL/RET sample takes about 303 ms with JIT versus 272 ms with the
+interpreter and reports **zero native instructions**. In contrast, arithmetic
+and single-cell updates execute mostly natively. These are individual diagnostic
+samples, not a statistical performance comparison, but they identify a concrete
+remaining JIT dispatch/control-flow bottleneck without GUI startup noise.

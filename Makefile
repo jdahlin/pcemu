@@ -6,7 +6,7 @@ CXXFLAGS := -std=c++20 -O3 -g -Wall -Wextra -Wpedantic
 LDLIBS = $(SDL_LIBS) $(shell pkg-config --libs libzstd)
 HEADERS := $(wildcard src/*.hpp)
 CORE := src/cpu.cpp src/machine.cpp src/disk.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp src/jit.cpp src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
-.PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset
+.PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
 all: build/pcemu
 build/pcemu-profile: $(CORE) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
 	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
@@ -64,3 +64,6 @@ clean:
 
 firmware:
 	python3 tools/build_firmware.py
+
+smoke-guest-perf: build/guest-bench build/disk-tool
+	python3 tools/smoke_guest_perf.py
