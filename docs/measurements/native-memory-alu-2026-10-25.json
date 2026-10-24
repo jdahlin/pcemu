@@ -1,0 +1,4628 @@
+{
+  "date": "2026-10-25",
+  "scope": "Register-destination ADD/OR/AND/SUB/XOR with guarded read-only memory operands",
+  "checks": {
+    "core": 341306,
+    "byteJit": 2957189,
+    "readJit": 243295,
+    "flagLiveness": 237430
+  },
+  "limitations": [
+    "Short instrumented CoreMark runs are coverage diagnostics, not performance scores",
+    "Builds and compatibility checks overlapped diagnostics",
+    "Memory-destination ALU and ADC/SBB retain interpreter fallback",
+    "No fresh installer or Office fixture created"
+  ],
+  "profiles": {
+    "before": {
+      "coremark": {
+        "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+        "jit": true,
+        "followJumps": true,
+        "traces": false,
+        "profiled": true,
+        "returnedToDos": true,
+        "crcValidated": true,
+        "microValidated": false,
+        "loops": 17,
+        "upstreamValidated": false,
+        "samples": [
+          {
+            "case": 1,
+            "hostSeconds": 0.021471709,
+            "guestInstructions": 3975114,
+            "nativeInstructions": 3788829,
+            "slowMemoryCalls": 0,
+            "compiledBlocks": 286,
+            "cacheRecycles": 0,
+            "residentNativeBytes": 756784,
+            "jitClearedBefore": false,
+            "checksumChecked": false,
+            "checksum": 0,
+            "guestProfile": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-gxu0sb0k/coremark-jit/result.json.profile-0.json"
+          }
+        ],
+        "runnerSha256": "169a7ad52098bf2e0705c2955ae6e0c2ec7322a61ec3e8247f9782485bd1c55f",
+        "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench-profile",
+        "gitCommit": "89bcf698afeb035cce59ff13c0d0026ef5df8a3f",
+        "gitDirty": true,
+        "host": {
+          "system": "Darwin",
+          "release": "25.6.0",
+          "machine": "arm64",
+          "logicalCpus": 10,
+          "loadAverageBefore": [
+            3.3623046875,
+            3.298828125,
+            3.556640625
+          ],
+          "loadAverageAfter": [
+            3.3623046875,
+            3.298828125,
+            3.556640625
+          ]
+        },
+        "build": {
+          "suite": "coremark",
+          "upstream": "https://github.com/eembc/coremark",
+          "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+          "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+          "flags": [
+            "--target=i386-none-elf",
+            "-march=i386",
+            "-mno-sse",
+            "-mno-mmx",
+            "-msoft-float",
+            "-O2",
+            "-ffreestanding",
+            "-fno-builtin",
+            "-fno-pic",
+            "-fno-pie",
+            "-fno-stack-protector",
+            "-fno-asynchronous-unwind-tables",
+            "-DITERATIONS=10",
+            "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+            "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+          ],
+          "iterations": 10,
+          "comBytes": 11988,
+          "comSha256": "b1e7b5924cf6b0bf1fb51287290e7cbc2bb4c10277b5cec410e4bbaf2a9ecea7"
+        },
+        "iterations": 10,
+        "iterationsPerHostSecond": 465.7291135978045,
+        "publishedScoreEligible": false
+      },
+      "counters": {
+        "startInstructions": 9971241,
+        "stopInstructions": 13946355,
+        "interpretedAttempts": 186285,
+        "events": {
+          "dispatch": 904495,
+          "fastHit": 902059,
+          "mapHit": 821,
+          "lookupMiss": 1615,
+          "metadataRebuild": 1615,
+          "translate": 415,
+          "interpretedDispatch": 186285,
+          "negativeHit": 175376,
+          "nativeCall": 718210,
+          "nativeReplay": 0,
+          "devicePoll": 904495,
+          "diskReadSectorsIncludingParents": 0,
+          "diskWriteSectors": 0,
+          "cowDecompress": 0,
+          "cowCacheHit": 0
+        },
+        "opcodes": [
+          {
+            "opcode": 1,
+            "attempts": 3740,
+            "registerOperands": 140,
+            "memoryOperands": 3600,
+            "groups": [
+              381,
+              21,
+              7,
+              7,
+              0,
+              0,
+              35,
+              3289
+            ]
+          },
+          {
+            "opcode": 3,
+            "attempts": 32400,
+            "registerOperands": 0,
+            "memoryOperands": 32400,
+            "groups": [
+              720,
+              360,
+              720,
+              29880,
+              0,
+              0,
+              360,
+              360
+            ]
+          },
+          {
+            "opcode": 4,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 9,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 15,
+            "attempts": 13873,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 33,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 36,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 37,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 41,
+            "attempts": 3240,
+            "registerOperands": 0,
+            "memoryOperands": 3240,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3240,
+              0
+            ]
+          },
+          {
+            "opcode": 43,
+            "attempts": 20,
+            "registerOperands": 0,
+            "memoryOperands": 20,
+            "groups": [
+              20,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 48,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              7,
+              7,
+              0,
+              49,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 49,
+            "attempts": 552,
+            "registerOperands": 552,
+            "memoryOperands": 0,
+            "groups": [
+              154,
+              77,
+              105,
+              62,
+              0,
+              0,
+              98,
+              56
+            ]
+          },
+          {
+            "opcode": 53,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 56,
+            "attempts": 14,
+            "registerOperands": 14,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              14,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 57,
+            "attempts": 224,
+            "registerOperands": 203,
+            "memoryOperands": 21,
+            "groups": [
+              56,
+              28,
+              35,
+              14,
+              0,
+              0,
+              21,
+              70
+            ]
+          },
+          {
+            "opcode": 59,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 42,
+            "groups": [
+              7,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              28
+            ]
+          },
+          {
+            "opcode": 60,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 64,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 65,
+            "attempts": 1122,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 66,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 67,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 70,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 71,
+            "attempts": 374,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 72,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 74,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 79,
+            "attempts": 15,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 80,
+            "attempts": 259,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 81,
+            "attempts": 86,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 82,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 83,
+            "attempts": 56,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 85,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 86,
+            "attempts": 102,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 87,
+            "attempts": 50,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 91,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 93,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 94,
+            "attempts": 57,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 95,
+            "attempts": 43,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 106,
+            "attempts": 23,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 115,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 116,
+            "attempts": 1702,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 117,
+            "attempts": 231,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 118,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 119,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 120,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 126,
+            "attempts": 321,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 127,
+            "attempts": 3310,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 128,
+            "attempts": 1820,
+            "registerOperands": 1806,
+            "memoryOperands": 14,
+            "groups": [
+              1708,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
+              98
+            ]
+          },
+          {
+            "opcode": 129,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              56,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 131,
+            "attempts": 11973,
+            "registerOperands": 11903,
+            "memoryOperands": 70,
+            "groups": [
+              11664,
+              0,
+              0,
+              0,
+              154,
+              21,
+              0,
+              134
+            ]
+          },
+          {
+            "opcode": 132,
+            "attempts": 35,
+            "registerOperands": 35,
+            "memoryOperands": 0,
+            "groups": [
+              14,
+              0,
+              0,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 133,
+            "attempts": 260,
+            "registerOperands": 260,
+            "memoryOperands": 0,
+            "groups": [
+              49,
+              42,
+              42,
+              28,
+              0,
+              0,
+              42,
+              57
+            ]
+          },
+          {
+            "opcode": 136,
+            "attempts": 56,
+            "registerOperands": 21,
+            "memoryOperands": 35,
+            "groups": [
+              21,
+              0,
+              14,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 137,
+            "attempts": 2515,
+            "registerOperands": 1943,
+            "memoryOperands": 572,
+            "groups": [
+              1433,
+              343,
+              210,
+              205,
+              65,
+              0,
+              161,
+              98
+            ]
+          },
+          {
+            "opcode": 139,
+            "attempts": 5010,
+            "registerOperands": 0,
+            "memoryOperands": 5010,
+            "groups": [
+              1041,
+              1148,
+              633,
+              1518,
+              0,
+              0,
+              169,
+              501
+            ]
+          },
+          {
+            "opcode": 141,
+            "attempts": 91,
+            "registerOperands": 0,
+            "memoryOperands": 91,
+            "groups": [
+              49,
+              14,
+              7,
+              14,
+              0,
+              0,
+              0,
+              7
+            ]
+          },
+          {
+            "opcode": 144,
+            "attempts": 1657,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 152,
+            "attempts": 40,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 163,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 176,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 184,
+            "attempts": 1924,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 185,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 186,
+            "attempts": 3,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 190,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 191,
+            "attempts": 3275,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 192,
+            "attempts": 42,
+            "registerOperands": 42,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              42,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 193,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              14,
+              98,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 195,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 199,
+            "attempts": 1968,
+            "registerOperands": 0,
+            "memoryOperands": 1968,
+            "groups": [
+              1968,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 208,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 209,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              112,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 232,
+            "attempts": 272,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 233,
+            "attempts": 995,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 235,
+            "attempts": 1255,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 237,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 238,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 247,
+            "attempts": 2152,
+            "registerOperands": 2152,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              2040,
+              112,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 255,
+            "attempts": 88115,
+            "registerOperands": 0,
+            "memoryOperands": 88115,
+            "groups": [
+              36520,
+              2729,
+              0,
+              0,
+              45760,
+              0,
+              3106,
+              0
+            ]
+          },
+          {
+            "opcode": 387,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 388,
+            "attempts": 99,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 389,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 391,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 398,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 415,
+            "attempts": 12960,
+            "registerOperands": 0,
+            "memoryOperands": 12960,
+            "groups": [
+              12960,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 431,
+            "attempts": 49,
+            "registerOperands": 49,
+            "memoryOperands": 0,
+            "groups": [
+              28,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 438,
+            "attempts": 161,
+            "registerOperands": 63,
+            "memoryOperands": 98,
+            "groups": [
+              70,
+              7,
+              42,
+              28,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 439,
+            "attempts": 422,
+            "registerOperands": 245,
+            "memoryOperands": 177,
+            "groups": [
+              245,
+              114,
+              28,
+              7,
+              0,
+              0,
+              21,
+              7
+            ]
+          },
+          {
+            "opcode": 447,
+            "attempts": 119,
+            "registerOperands": 35,
+            "memoryOperands": 84,
+            "groups": [
+              42,
+              35,
+              21,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          }
+        ],
+        "sampledIPs": [
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048672,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048784,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048786,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048990,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049008,
+            "samples": 6
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049036,
+            "samples": 13
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049120,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049202,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049304,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049332,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049361,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049368,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049370,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049385,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049541,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049552,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049555,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049557,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049574,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049577,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049579,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049632,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049634,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049662,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049681,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049729,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049843,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049873,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049891,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049912,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049921,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050048,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050100,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050102,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050128,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050130,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1051667,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1051682,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053397,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053472,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053481,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053482,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053551,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053554,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053555,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053558,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053640,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053659,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053775,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053778,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053784,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053815,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053867,
+            "samples": 18
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053890,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053926,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053978,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053997,
+            "samples": 112
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054030,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054033,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054034,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054039,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054053,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054071,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054117,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054123,
+            "samples": 9
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054190,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054227,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054340,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054343,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054394,
+            "samples": 17
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054407,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054412,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054467,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054480,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054489,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054490,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055717,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055769,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055811,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055855,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055863,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055866,
+            "samples": 24
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055949,
+            "samples": 15
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055952,
+            "samples": 25
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056016,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056068,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056184,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056217,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056262,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056297,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056306,
+            "samples": 167
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056367,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056372,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056377,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056380,
+            "samples": 9
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056410,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056445,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056467,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056482,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056500,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056510,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056533,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056548,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056550,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056553,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056558,
+            "samples": 32
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056584,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056594,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056599,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057062,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057096,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057344,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057403,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057436,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057562,
+            "samples": 1
+          }
+        ]
+      },
+      "suiteValidation": {
+        "coremark-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-gxu0sb0k/coremark-jit/result.json",
+        "coremark-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-gxu0sb0k/coremark-interpreter/result.json",
+        "micro-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-gxu0sb0k/micro-jit/result.json",
+        "micro-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-gxu0sb0k/micro-interpreter/result.json"
+      }
+    },
+    "after": {
+      "coremark": {
+        "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+        "jit": true,
+        "followJumps": true,
+        "traces": false,
+        "profiled": true,
+        "returnedToDos": true,
+        "crcValidated": true,
+        "microValidated": false,
+        "loops": 17,
+        "upstreamValidated": false,
+        "samples": [
+          {
+            "case": 1,
+            "hostSeconds": 0.033331834,
+            "guestInstructions": 3975114,
+            "nativeInstructions": 3823290,
+            "slowMemoryCalls": 0,
+            "compiledBlocks": 280,
+            "cacheRecycles": 0,
+            "residentNativeBytes": 776416,
+            "jitClearedBefore": false,
+            "checksumChecked": false,
+            "checksum": 0,
+            "guestProfile": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-jit/result.json.profile-0.json"
+          }
+        ],
+        "runnerSha256": "15e43fdc83569413aa8f00b7e31d1898c8ceaa725a668cde0e8857edb8901893",
+        "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench-profile",
+        "gitCommit": "6286480674b7741c1326ee46ee61cbaf1a15535b",
+        "gitDirty": true,
+        "host": {
+          "system": "Darwin",
+          "release": "25.6.0",
+          "machine": "arm64",
+          "logicalCpus": 10,
+          "loadAverageBefore": [
+            2.3125,
+            2.79150390625,
+            3.17724609375
+          ],
+          "loadAverageAfter": [
+            2.3125,
+            2.79150390625,
+            3.17724609375
+          ]
+        },
+        "build": {
+          "suite": "coremark",
+          "upstream": "https://github.com/eembc/coremark",
+          "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+          "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+          "flags": [
+            "--target=i386-none-elf",
+            "-march=i386",
+            "-mno-sse",
+            "-mno-mmx",
+            "-msoft-float",
+            "-O2",
+            "-ffreestanding",
+            "-fno-builtin",
+            "-fno-pic",
+            "-fno-pie",
+            "-fno-stack-protector",
+            "-fno-asynchronous-unwind-tables",
+            "-DITERATIONS=10",
+            "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+            "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+          ],
+          "iterations": 10,
+          "comBytes": 11988,
+          "comSha256": "b1e7b5924cf6b0bf1fb51287290e7cbc2bb4c10277b5cec410e4bbaf2a9ecea7"
+        },
+        "iterations": 10,
+        "iterationsPerHostSecond": 300.0134946069874,
+        "publishedScoreEligible": false
+      },
+      "counters": {
+        "startInstructions": 9971241,
+        "stopInstructions": 13946355,
+        "interpretedAttempts": 151824,
+        "events": {
+          "dispatch": 839456,
+          "fastHit": 837054,
+          "mapHit": 787,
+          "lookupMiss": 1615,
+          "metadataRebuild": 1615,
+          "translate": 392,
+          "interpretedDispatch": 151824,
+          "negativeHit": 140915,
+          "nativeCall": 687632,
+          "nativeReplay": 0,
+          "devicePoll": 839456,
+          "diskReadSectorsIncludingParents": 0,
+          "diskWriteSectors": 0,
+          "cowDecompress": 0,
+          "cowCacheHit": 0
+        },
+        "opcodes": [
+          {
+            "opcode": 1,
+            "attempts": 3740,
+            "registerOperands": 140,
+            "memoryOperands": 3600,
+            "groups": [
+              381,
+              21,
+              7,
+              7,
+              0,
+              0,
+              35,
+              3289
+            ]
+          },
+          {
+            "opcode": 3,
+            "attempts": 70,
+            "registerOperands": 0,
+            "memoryOperands": 70,
+            "groups": [
+              14,
+              7,
+              14,
+              21,
+              0,
+              0,
+              7,
+              7
+            ]
+          },
+          {
+            "opcode": 4,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 9,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 15,
+            "attempts": 13873,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 33,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 36,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 37,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 41,
+            "attempts": 3240,
+            "registerOperands": 0,
+            "memoryOperands": 3240,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3240,
+              0
+            ]
+          },
+          {
+            "opcode": 43,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 7,
+            "groups": [
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 48,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              7,
+              7,
+              0,
+              49,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 49,
+            "attempts": 552,
+            "registerOperands": 552,
+            "memoryOperands": 0,
+            "groups": [
+              154,
+              77,
+              105,
+              62,
+              0,
+              0,
+              98,
+              56
+            ]
+          },
+          {
+            "opcode": 53,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 56,
+            "attempts": 14,
+            "registerOperands": 14,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              14,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 57,
+            "attempts": 224,
+            "registerOperands": 203,
+            "memoryOperands": 21,
+            "groups": [
+              56,
+              28,
+              35,
+              14,
+              0,
+              0,
+              21,
+              70
+            ]
+          },
+          {
+            "opcode": 59,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 42,
+            "groups": [
+              7,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              28
+            ]
+          },
+          {
+            "opcode": 60,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 64,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 65,
+            "attempts": 63,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 66,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 67,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 70,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 71,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 72,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 74,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 79,
+            "attempts": 15,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 80,
+            "attempts": 259,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 81,
+            "attempts": 86,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 82,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 83,
+            "attempts": 56,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 85,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 86,
+            "attempts": 102,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 87,
+            "attempts": 50,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 91,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 93,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 94,
+            "attempts": 57,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 95,
+            "attempts": 43,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 106,
+            "attempts": 23,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 115,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 116,
+            "attempts": 1702,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 117,
+            "attempts": 231,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 118,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 119,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 120,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 126,
+            "attempts": 321,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 127,
+            "attempts": 3310,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 128,
+            "attempts": 1820,
+            "registerOperands": 1806,
+            "memoryOperands": 14,
+            "groups": [
+              1708,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
+              98
+            ]
+          },
+          {
+            "opcode": 129,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              56,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 131,
+            "attempts": 11973,
+            "registerOperands": 11903,
+            "memoryOperands": 70,
+            "groups": [
+              11664,
+              0,
+              0,
+              0,
+              154,
+              21,
+              0,
+              134
+            ]
+          },
+          {
+            "opcode": 132,
+            "attempts": 35,
+            "registerOperands": 35,
+            "memoryOperands": 0,
+            "groups": [
+              14,
+              0,
+              0,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 133,
+            "attempts": 260,
+            "registerOperands": 260,
+            "memoryOperands": 0,
+            "groups": [
+              49,
+              42,
+              42,
+              28,
+              0,
+              0,
+              42,
+              57
+            ]
+          },
+          {
+            "opcode": 136,
+            "attempts": 56,
+            "registerOperands": 21,
+            "memoryOperands": 35,
+            "groups": [
+              21,
+              0,
+              14,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 137,
+            "attempts": 2515,
+            "registerOperands": 1943,
+            "memoryOperands": 572,
+            "groups": [
+              1433,
+              343,
+              210,
+              205,
+              65,
+              0,
+              161,
+              98
+            ]
+          },
+          {
+            "opcode": 139,
+            "attempts": 4304,
+            "registerOperands": 0,
+            "memoryOperands": 4304,
+            "groups": [
+              1041,
+              795,
+              633,
+              1518,
+              0,
+              0,
+              169,
+              148
+            ]
+          },
+          {
+            "opcode": 141,
+            "attempts": 91,
+            "registerOperands": 0,
+            "memoryOperands": 91,
+            "groups": [
+              49,
+              14,
+              7,
+              14,
+              0,
+              0,
+              0,
+              7
+            ]
+          },
+          {
+            "opcode": 144,
+            "attempts": 1657,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 152,
+            "attempts": 40,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 163,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 176,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 184,
+            "attempts": 1924,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 185,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 186,
+            "attempts": 3,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 190,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 191,
+            "attempts": 3275,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 192,
+            "attempts": 42,
+            "registerOperands": 42,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              42,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 193,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              14,
+              98,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 195,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 199,
+            "attempts": 1968,
+            "registerOperands": 0,
+            "memoryOperands": 1968,
+            "groups": [
+              1968,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 208,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 209,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              112,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 232,
+            "attempts": 272,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 233,
+            "attempts": 995,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 235,
+            "attempts": 1255,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 237,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 238,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 247,
+            "attempts": 2152,
+            "registerOperands": 2152,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              2040,
+              112,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 255,
+            "attempts": 88115,
+            "registerOperands": 0,
+            "memoryOperands": 88115,
+            "groups": [
+              36520,
+              2729,
+              0,
+              0,
+              45760,
+              0,
+              3106,
+              0
+            ]
+          },
+          {
+            "opcode": 387,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 388,
+            "attempts": 99,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 389,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 391,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 398,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 415,
+            "attempts": 12960,
+            "registerOperands": 0,
+            "memoryOperands": 12960,
+            "groups": [
+              12960,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 431,
+            "attempts": 49,
+            "registerOperands": 49,
+            "memoryOperands": 0,
+            "groups": [
+              28,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 438,
+            "attempts": 161,
+            "registerOperands": 63,
+            "memoryOperands": 98,
+            "groups": [
+              70,
+              7,
+              42,
+              28,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 439,
+            "attempts": 422,
+            "registerOperands": 245,
+            "memoryOperands": 177,
+            "groups": [
+              245,
+              114,
+              28,
+              7,
+              0,
+              0,
+              21,
+              7
+            ]
+          },
+          {
+            "opcode": 447,
+            "attempts": 119,
+            "registerOperands": 35,
+            "memoryOperands": 84,
+            "groups": [
+              42,
+              35,
+              21,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          }
+        ],
+        "sampledIPs": [
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048643,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048784,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048786,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048963,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049008,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049036,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049202,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049286,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049361,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049385,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049505,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049541,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049552,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049555,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049557,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049574,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049577,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049579,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049632,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049634,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049659,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049662,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049725,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049795,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049880,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049891,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049921,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050032,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050100,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050102,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050128,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050130,
+            "samples": 6
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050146,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050163,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050199,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050209,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1051711,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053447,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053472,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053499,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053622,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053659,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053742,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053867,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054014,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054046,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054067,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054123,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054129,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054276,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054308,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054343,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054380,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054394,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054407,
+            "samples": 13
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054412,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054439,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054468,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054480,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055863,
+            "samples": 21
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055866,
+            "samples": 18
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055922,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055949,
+            "samples": 28
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055952,
+            "samples": 21
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056007,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056031,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056038,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056083,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056154,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056157,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056203,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056265,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056306,
+            "samples": 169
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056367,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056372,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056377,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056380,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056383,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056410,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056445,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056467,
+            "samples": 9
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056482,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056500,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056510,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056533,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056548,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056550,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056553,
+            "samples": 6
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056558,
+            "samples": 43
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056563,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056584,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056587,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056589,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056599,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057062,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057096,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057344,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057403,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057436,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057471,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057562,
+            "samples": 1
+          }
+        ]
+      },
+      "suiteValidation": {
+        "coremark-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-jit/result.json",
+        "coremark-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-interpreter/result.json",
+        "micro-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/micro-jit/result.json",
+        "micro-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/micro-interpreter/result.json"
+      }
+    }
+  },
+  "compatibility": {
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "d61710d4848468fb2c330dff205ab11764719bb95adfd9434acf1acbb32e117b",
+      "gitCommit": "6286480674b7741c1326ee46ee61cbaf1a15535b",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5670,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rtts": {
+      "pid": 61710,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-60nvb5sb/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-60nvb5sb/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-60nvb5sb/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-60nvb5sb/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "d61710d4848468fb2c330dff205ab11764719bb95adfd9434acf1acbb32e117b",
+      "gitCommit": "6286480674b7741c1326ee46ee61cbaf1a15535b",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 453128290,
+        "afterInstructions": 864333296,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "osr2": {
+      "pid": 61705,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-d9444f6o/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-d9444f6o/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-d9444f6o/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-d9444f6o/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "d61710d4848468fb2c330dff205ab11764719bb95adfd9434acf1acbb32e117b",
+      "gitCommit": "6286480674b7741c1326ee46ee61cbaf1a15535b",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 287951024,
+        "afterInstructions": 675697029,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    }
+  },
+  "sourceSha256": {
+    "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+    "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+    "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+    "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+    "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+    "tests/jit_read_test.cpp": "38af17c9bf2457173f060e7bd5bd37f7bce51f782f344eb21bd4fbb6df546a69",
+    "tests/jit_flags_test.cpp": "2c71d34dddc0847eb4c126c4198115fa43ee89d5c14eaaee74858bb25b4f48ab"
+  }
+}

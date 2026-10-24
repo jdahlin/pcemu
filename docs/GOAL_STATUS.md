@@ -532,3 +532,12 @@ and [complete host timing results](measurements/native-neg-timing-2026-10-25.jso
 This does not rerun fresh installation or prove Windows/Rosetta-level speed.
 Historical paths earlier in this log may have been removed by storage cleanup;
 these committed measurement records retain the latest results and provenance.
+
+
+Register-destination ADD/OR/AND/SUB/XOR memory operands now execute through the
+same guarded read path, with precise fault replay and register/flags commits
+only after success. 243,295 read and 237,430 flag checks pass, as do core/byte
+checks, DOS CRC/microbenchmark diagnostics, Win3.11 file-save and both Win95
+cold-boot/restart checks. CoreMark interpreted attempts fall 186,285 -> 151,824
+at identical guest work. This coverage result is not a host timing claim;
+see [the detailed record](measurements/native-memory-alu-2026-10-25.json).

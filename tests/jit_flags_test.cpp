@@ -118,10 +118,12 @@ int main() {
             equal(reference, actual);
         }
         for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace})
-        for (unsigned pattern = 0; pattern < 4; ++pattern)
+        for (unsigned pattern = 0; pattern < 5; ++pattern)
             for (unsigned boundary = 0; boundary < 2; ++boundary) {
                 CPU expected(65536), native(65536);
-                std::vector<uint8_t> code = pattern == 3
+                std::vector<uint8_t> code = pattern == 4
+                    ? std::vector<uint8_t>{0x03, 0x05, 0, 0x40, 0, 0, 0x42, 0x43}
+                    : pattern == 3
                     ? std::vector<uint8_t>{0xf7, 0xd8, 0x42, 0x43}
                     : pattern == 2
                     ? std::vector<uint8_t>{0x83, 0xf8, 1, 0x42, 0x43}
@@ -129,7 +131,7 @@ int main() {
                                           uint8_t(pattern ? 0xfa : 0xe2), uint8_t(pattern ? 2 : 1)};
                 bool joining = mode != Jit::BlockMode::Basic;
                 if (mode == Jit::BlockMode::Trace)
-                    code.insert(code.end(), {0x74, 0}); // ZF is clear in all four patterns.
+                    code.insert(code.end(), {0x74, 0}); // ZF is clear in all five patterns.
                 else if (joining)
                     code.insert(code.begin(), {0xeb, 0});
                 auto boundaryIP = code.size();
@@ -150,6 +152,7 @@ int main() {
                     c->r[CX] = 0xffffffff;
                     c->r[DX] = 0x80000001;
                     std::copy(code.begin(), code.end(), c->mem.begin());
+                    c->mem[0x4000] = 1;
                     c->markCode(0x100); // Successful store must exit after code invalidation.
                     c->observeFault = [&, c](const Fault &f) {
                         ++faults;

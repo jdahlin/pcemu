@@ -26,7 +26,10 @@ static std::vector<uint8_t> instruction(unsigned kind, unsigned width, unsigned 
             byte(v >> (i * 8));
     };
     unsigned group = reg;
-    if (kind >= 6) {
+    if (kind >= 10) {
+        const unsigned operations[] = {0, 1, 4, 5, 6};
+        byte((operations[kind - 10] << 3) | 2 | (width != 1));
+    } else if (kind >= 6) {
         const uint8_t extended[] = {0xb6, 0xb7, 0xbe, 0xbf};
         byte(0x0f);
         byte(extended[kind - 6]);
@@ -64,17 +67,17 @@ int main() {
         for (bool big : {false, true})
             for (bool address32 : {false, true})
                 for (unsigned width : {1, 2, 4})
-                    for (unsigned kind = 0; kind < 10; ++kind)
+                    for (unsigned kind = 0; kind < 15; ++kind)
                         for (unsigned reg = 0; reg < 8; ++reg)
                             for (unsigned cc = 0; cc < 16; ++cc) {
-                                if (kind >= 6 && width == 1)
+                                if (kind >= 6 && kind < 10 && width == 1)
                                     continue;
                                 unsigned segment = cc % 3;
                                 uint32_t data = rng(), value = rng();
                                 if (cc < 8) {
                                     const uint32_t edge[] = {0,    1,      0x7f,       0x80,
                                                              0xff, 0x7fff, 0x80000000, 0xffffffff};
-                                    data = kind >= 6 && cc == 6 ? 0x8000 : edge[cc];
+                                    data = kind >= 6 && kind < 10 && cc == 6 ? 0x8000 : edge[cc];
                                     value = edge[7 - cc];
                                 }
                                 auto compare = instruction(kind, width, reg, big, address32,
@@ -105,7 +108,7 @@ int main() {
                                 auto before = jit.nativeInstructions;
                                 auto n = jit.run();
                                 check(n == 3 && jit.nativeInstructions - before == 3,
-                                      "memory CMP/TEST/MOVZX/MOVSX execute in native blocks");
+                                      "memory ALU/CMP/TEST/MOVZX/MOVSX execute in native blocks");
                                 check(actual.flags == reference.flags &&
                                           actual.ip == reference.ip && actual.instructions == 3,
                                       "memory read preserves exact flags and Jcc");
@@ -117,11 +120,11 @@ int main() {
                             }
         // Faults, MMIO, and valid crossing accesses must replay once with the
         // comparison's original IP and the flags of the preceding arithmetic.
-        for (unsigned kind = 0; kind < 10; ++kind)
+        for (unsigned kind = 0; kind < 15; ++kind)
             for (unsigned width : {1, 2, 4})
-                for (unsigned access = 0; access < 6; ++access) {
+                for (unsigned access = 0; access < 8; ++access) {
                     CPU ref(1024 * 1024), native(1024 * 1024);
-                    unsigned address = access == 3 ? 0xa0000 : access >= 4 ? 0x9fff : 0x9000;
+                    unsigned address = access == 3 ? 0xa0000 : (access == 4 || access == 5) ? 0x9fff : 0x9000;
                     auto compare = instruction(kind, width, 4, true, true, 0, address, 0x80);
                     std::vector<uint8_t> code = {0xb8, 0xff, 0xff, 0xbb, 0xaa, 0x80, 0xc4, 1};
                     code.insert(code.end(), compare.begin(), compare.end());
@@ -150,7 +153,7 @@ int main() {
                             c->physical(0x9000);
                             c->s[CS].selector = 3;
                         }
-                        if (access == 5) {
+                        if (access == 5 || access == 7) {
                             c->physical(address);
                             c->physical(address + 3);
                         }
@@ -190,6 +193,9 @@ int main() {
                         check(native.r[r] == ref.r[r], "comparison replay register equality");
                     check(native.mem == ref.mem && refReads == nativeReads,
                           "no duplicate device read or page side effects");
+                    if (kind >= 10 && access >= 6)
+                        check(native.nativeMemoryCalls == (access == 6 ? 1u : 0u),
+                              "memory ALU uses helper on TLB miss and inline RAM on hit");
                 }
         // A widened destination must not widen the actual source access.
         for (unsigned kind = 6; kind < 10; ++kind) {
@@ -258,13 +264,14 @@ int main() {
         }
         // Address arithmetic uses cached, recently modified registers, including
         // AH as a comparison operand sharing the address base's EAX register.
-        for (bool big : {false, true}) {
+        for (bool big : {false, true})
+        for (uint8_t operation : {0x3a, 0x02, 0x0a, 0x22, 0x2a, 0x32}) {
             CPU ref(65536), native(65536);
             std::vector<uint8_t> code =
                 big ? std::vector<uint8_t>{0xb8, 0, 0x40, 0,    0,    0xb9, 3,    0,
-                                           0,    0, 0x3a, 0x64, 0x88, 1,    0x75, 0}
+                                           0,    0, operation, 0x64, 0x88, 1,    0x75, 0}
                     : std::vector<uint8_t>{0xbd, 0,    0x30, 0xbf, 3, 0,    0xb8,
-                                           0,    0x40, 0x3a, 0x63, 1, 0x75, 0};
+                                           0,    0x40, operation, 0x63, 1, 0x75, 0};
             for (auto c : {&ref, &native}) {
                 c->s[CS].big = big;
                 c->s[SS].base = 0x1000;
@@ -358,7 +365,7 @@ int main() {
         }
         // Production warmup must admit a CMP/TEST + conditional-branch pair,
         // rather than recording a permanent negative entry for the hot loop.
-        for (unsigned kind : {2u, 5u})
+        for (unsigned kind : {2u, 5u, 10u, 11u, 12u, 13u, 14u})
             for (unsigned width : {1u, 2u, 4u}) {
                 CPU c(65536);
                 c.s[CS].big = true;
@@ -366,12 +373,14 @@ int main() {
                 code.push_back(0x75);
                 code.push_back(uint8_t(-int(code.size() + 1)));
                 std::copy(code.begin(), code.end(), c.mem.begin());
-                c.mem[0x4000] = 1;
+                c.mem[0x4000] = kind == 2 || kind == 5 || kind == 11 || kind == 12 ? 1 : 0;
+                if (kind >= 10)
+                    c.r[AX] = 1;
                 Jit hot(c, true);
                 for (unsigned n = 0; n < 40; ++n)
                     hot.run();
                 check(hot.nativeInstructions > 0 && hot.cacheHits > 0 && c.ip == 0,
-                      "production warmup compiles hot memory comparison/branch pairs");
+                      "production warmup compiles hot memory ALU/comparison branch pairs");
             }
         {
             CPU c(65536);

@@ -163,7 +163,7 @@ Jit::Block Jit::compile(bool translate) {
     // blocks cost more than interpreting them unless explicitly testing lowering.
     const bool shortComparison =
         ir.size() == 2 && ir[1].kind == Kind::Branch && ir[1].dst >= 0 &&
-        (ir[0].compareMemory || ir[0].kind == Kind::Test ||
+        (ir[0].memoryAlu || ir[0].kind == Kind::Test ||
          (ir[0].kind == Kind::Alu && (ir[0].op == 7 || ir[0].op == 8 || ir[0].op == 9)));
     if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&

@@ -414,7 +414,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto beforeLoad = dirtyRegisters;
             auto metadata = &(*block.memory)[memoryIndex++];
             auto finishMove = [&]() {
-                if (i.compareMemory) {
+                if (i.memoryAlu) {
                     // w10 contains the successful read. Only now may the new
                     // flags replace the preceding instruction's restart state.
                     if (i.immediate)
@@ -427,6 +427,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     } else {
                         store(10, 31, 96);
                         store(12, 31, 100);
+                    }
+                    if (i.memoryResult) {
+                        // The address/read completed with the original cached
+                        // GPRs. Commit the register result only after success,
+                        // retaining both original operands for precise flags.
+                        uint32_t op = i.op == 0 ? 0x0b000000u
+                                      : i.op == 1 ? 0x2a000000u
+                                      : i.op == 4 ? 0x0a000000u
+                                      : i.op == 6 ? 0x4a000000u : 0x4b000000u;
+                        emit(op | (10 << 16) | (12 << 5) | 11);
+                        insert(20 + i.dst, 11, i.w, i.dstShift);
+                        dirtyRegisters |= 1u << i.dst;
                     }
                     return;
                 }
@@ -627,7 +639,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             emit(0x54000000u); // b.eq continuation
             // Successful memory access changed code: commit through this instruction.
             flushRegisters(dirtyRegisters);
-            finishFlags(i.compareMemory ? int(n) : last, -1, 0);
+            finishFlags(i.memoryAlu ? int(n) : last, -1, 0);
             if (!i.nearReturn) {
                 imm(9, i.memory.end);
                 store(9, 19, offsetof(CPU, ip));
@@ -647,7 +659,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             code[continuation] |= uint32_t(code.size() - continuation) << 5;
             if (fastSuccess != size_t(-1))
                 code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
-            if (i.compareMemory)
+            if (i.memoryAlu)
                 last = n;
             continue;
         }

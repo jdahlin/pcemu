@@ -1128,3 +1128,32 @@ GUI startup or Rosetta equivalence. All raw run results, compiler options,
 source/binary hashes and host load metadata are committed in
 [the timing record](measurements/native-neg-timing-2026-10-25.json). Successful
 compressed disk overlays and the temporary baseline binary/source were removed.
+
+
+## Native register ALU with memory sources (25 October)
+
+ADD/OR/AND/SUB/XOR register destinations now reuse the guarded native memory
+read path at byte/word/dword widths. Effective addresses use the original cached
+registers, including destination/base aliases. Only a successful read commits
+the result and its original flag operands. TLB misses, permission faults, page
+crossings, unusable segments and device reads retain the existing helper/replay
+path. Memory destinations and ADC/SBB remain interpreted. Architectural forms
+follow the local Intel SDM ADD/SUB and logical-operation instruction references.
+
+The read suite passes 243,295 checks, including all destination aliases, code
+and address-size combinations, all Jcc predicates, paging cold/hit paths, faults,
+MMIO, boundary crossings and production warmup. 237,430 flag-liveness checks
+cover precise later faults and code-invalidation exits, and the core and byte
+suites pass 341,306 and 2,957,189 checks. Short DOS CoreMark retains the same
+COM hash, CRCs and 3,975,114 guest instructions while interpreted attempts fall
+186,285 -> 151,824 and dispatches 904,495 -> 839,456. Interpreted opcode 03
+(ADD register from memory) falls 32,400 -> 70 attempts. This is diagnostic
+coverage; overlapping build/compatibility work prevents timing claims.
+
+All 64 DOS microbenchmark intervals match JIT/interpreter guest work and
+checksums. Win3.11 saves exact Notepad contents and exits to DOS; rtts and
+installed OSR2 each cold-boot and guest-restart to unobscured Explorer.
+Successful private compressed disks are removed. [The committed measurement
+record](measurements/native-memory-alu-2026-10-25.json) retains interval counters,
+source hashes and compatibility results. Fresh installation and broad
+Rosetta-level performance are not established by these checks.

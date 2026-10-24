@@ -238,12 +238,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 } else {
                     auto m = byte();
                     if ((m >> 6) != 3) {
-                        if (i.op != 7) {
+                        if (i.op != 7 && !(op & 2)) {
                             pos = begin;
                             break;
                         }
                         i.kind = Kind::Memory;
-                        i.compareMemory = true;
+                        i.memoryAlu = true;
+                        i.memoryResult = i.op != 7;
                         i.reverse = op & 2;
                         i.memory = memoryOperand(m, address32, overrideSegment);
                         i.dst = (m >> 3) & 7;
@@ -261,15 +262,15 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         pos = begin;
                         break;
                     }
-                    i.compareMemory = true;
+                    i.memoryAlu = true;
                     i.memory = memoryOperand(m, address32, overrideSegment);
                 }
                 if (i.op == 2 || i.op == 3) {
                     pos = begin;
                     break;
                 }
-                i.kind = i.compareMemory ? Kind::Memory : Kind::Alu;
-                i.dst = i.compareMemory ? 0 : m & 7;
+                i.kind = i.memoryAlu ? Kind::Memory : Kind::Alu;
+                i.dst = i.memoryAlu ? 0 : m & 7;
                 i.immediate = true;
                 i.imm = op == 0x83 ? uint32_t(int32_t(int8_t(byte()))) : immediate(i.w);
             } else if (op == 0x84 || op == 0x85) {
@@ -278,7 +279,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.op = 4;
                 if ((m >> 6) != 3) {
                     i.kind = Kind::Memory;
-                    i.compareMemory = true;
+                    i.memoryAlu = true;
                     i.memory = memoryOperand(m, address32, overrideSegment);
                     i.dst = (m >> 3) & 7;
                 } else {
@@ -313,7 +314,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.dst = m & 7;
                     } else {
                         i.kind = Kind::Memory;
-                        i.compareMemory = true;
+                        i.memoryAlu = true;
                         i.memory = memoryOperand(m, address32, overrideSegment);
                     }
                     i.imm = immediate(i.w);

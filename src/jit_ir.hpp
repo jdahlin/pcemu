@@ -12,7 +12,8 @@ struct Instruction {
     int dst, src, op, w, dstShift, srcShift, stackDelta;
     uint32_t imm, end;
     bool immediate;
-    bool compareMemory = false, reverse = false, nearCall = false, nearReturn = false;
+    bool memoryResult = false; // Read-only memory ALU with a register destination.
+    bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;
     bool negate = false; // Register NEG uses the ordinary 0 - operand flag path.
