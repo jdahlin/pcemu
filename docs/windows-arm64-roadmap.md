@@ -386,3 +386,19 @@ including addresses above 4 GiB. The HVF self-test executes an actual guest
 store/load at the end of that region; platform tests independently decode the
 compiled device tree and check its 64-bit RAM size. These tests verify the
 platform configuration, not Windows' eventual reported usable memory.
+
+For a running ARM UEFI instance, `SIGUSR1` now requests a framebuffer capture
+at the next completed VM slice when `--framebuffer-ppm` is configured. The
+handler only sets a signal flag; file I/O runs on the VM's owning thread. A
+`UEFI live capture` log records exits, RAM size, disk requests and network
+counters without stopping or rebooting the guest. A diskless 8 GiB firmware
+smoke run produced an 800x600 PPM and remained alive after the signal.
+
+A separate APFS clone of the installed disk allowed diagnostic NTFS reads
+without stopping or opening the live disk through offline tools. Its Panther
+UnattendGC log confirms creation of PCEmu in Users and Administrators and
+registration of the first-logon command. CloudExperienceHostBroker downloaded
+and installed an OOBE ZDP update, then explicitly reported a required reboot.
+This explains one observed reset but still does not prove first-user logon.
+The captured filesystem is only a point-in-time diagnostic view; it is not a
+clean-shutdown backup or proof of the guest's latest state.

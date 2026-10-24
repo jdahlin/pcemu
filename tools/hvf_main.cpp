@@ -22,6 +22,8 @@ using pc::HvfMachine;
 namespace {
 volatile std::sig_atomic_t interrupted = 0;
 void interrupt(int) { interrupted = 1; }
+volatile std::sig_atomic_t captureRequested = 0;
+void requestCapture(int) { captureRequested = 1; }
 class SerialTerminal {
     termios previous{};
     bool changed = false;
@@ -433,6 +435,7 @@ int main(int argc, char **argv) {
             if (!timeoutExplicit) timeout = 30000;
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
+            std::signal(SIGUSR1, requestCapture);
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
             bool matched = untilText.empty(), finished = false, restart;
             bool stdinOpen = serialStdio, commandSent = shellCommand.empty();
@@ -455,6 +458,16 @@ int main(int argc, char **argv) {
                         }
                     }
                     vm.run(std::chrono::milliseconds(100));
+                    if (captureRequested) {
+                        captureRequested = 0;
+                        if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
+                        std::cerr << "UEFI live capture: exits=" << vm.exits()
+                                  << " ramMiB=" << uefi.memoryBytes / (1024 * 1024)
+                                  << " diskRequests=" << vm.diskRequests()
+                                  << " netTx=" << vm.networkTransmitted()
+                                  << " netRx=" << vm.networkReceived()
+                                  << " framebuffer=" << vm.framebuffer() << '\n';
+                    }
                     const auto &output = vm.output();
                     if (output.size() > printed) {
                         std::cout.write(output.data() + printed, output.size() - printed);
