@@ -1,0 +1,25 @@
+#pragma once
+#include "jit_memory.hpp"
+#include <vector>
+namespace pc::jit_detail {
+// Shared decoded operations; no ARM instruction encoding belongs here.
+enum class Kind {
+    Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
+    CounterBranch, Exchange, Multiply, Shift
+};
+struct Instruction {
+    Kind kind = Kind::Unsupported;
+    int dst, src, op, w, dstShift, srcShift, stackDelta;
+    uint32_t imm, end;
+    bool immediate;
+    bool compareMemory = false, reverse = false, nearCall = false, nearReturn = false;
+    unsigned sourceWidth = 0;
+    bool signedSource = false;
+    uint32_t target = 0;
+    NativeMemoryMove memory;
+};
+struct DecodedBlock {
+    std::vector<Instruction> instructions;
+    uint32_t end = 0;
+};
+} // namespace pc::jit_detail

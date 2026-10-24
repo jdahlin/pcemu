@@ -1,13 +1,12 @@
 #pragma once
 #include "cpu.hpp"
+#include "jit_memory.hpp"
 #include <memory>
 #include <unordered_map>
 namespace pc {
-struct NativeMemoryMove {
-    int base = -1, index = -1, scale = 0, segment = DS, reg = 0, width = 4;
-    uint32_t displacement = 0, begin = 0, end = 0;
-    bool address32 = false, store = false;
-};
+namespace jit_detail {
+struct DecodedBlock;
+}
 // ARM64 baseline recompiler. Register arithmetic, direct/counter branches and guarded
 // 8/16/32-bit RAM moves, MOVZX/MOVSX, stack operations and near CALL/RET
 // run in native blocks;
@@ -55,5 +54,7 @@ class Jit {
     };
     std::array<FastEntry, 4096> fast{};
     Block compile(bool translate = true);
+    jit_detail::DecodedBlock decode(Block &block);
+    Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
 };
 } // namespace pc

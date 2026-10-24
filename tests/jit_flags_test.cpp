@@ -134,6 +134,33 @@ int main() {
                     equal(expected, native);
                 }
             }
+        // Long blocks exercise late flag producers and the maximum native
+        // instruction budget with mixed partial/full flag dependencies.
+        for (unsigned length : {49u, 50u, 51u, 63u, 64u}) {
+            CPU expected(65536), native(65536);
+            std::vector<uint8_t> code;
+            for (unsigned n = 0; n < length; ++n)
+                switch (n & 3) {
+                case 0: code.insert(code.end(), {0x83, 0xc0, 1}); break;
+                case 1: code.insert(code.end(), {0x0f, 0xaf, 0xd9}); break;
+                case 2: code.insert(code.end(), {0xc1, 0xfa, 2}); break;
+                case 3: code.push_back(0x46); break;
+                }
+            code.push_back(0xf4); // End decoding without extending this block.
+            for (auto c : {&expected, &native}) {
+                c->s[CS].big = true;
+                c->r[AX] = 0x7fffffff;
+                c->r[BX] = 0x80000000;
+                c->r[CX] = 0xffffffff;
+                c->r[DX] = 0x80000001;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+            }
+            for (unsigned n = 0; n < length; ++n)
+                expected.step();
+            Jit block(native, true, 0, 65536);
+            check(block.run() == length, "long block reconstructs flags from high recipe slots");
+            equal(expected, native);
+        }
         std::cout << "Passed " << checks << " flag-liveness checks\n";
     } catch (const std::exception &error) {
         std::cerr << "FAIL: " << error.what() << " after " << checks << " checks\n";

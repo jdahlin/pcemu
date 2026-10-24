@@ -39,14 +39,18 @@ It lowers immediate/register moves, ADD/SUB/AND/OR/XOR, CMP, TEST, NOP,
 short/near JMP and Jcc, LEA, register PUSH/POP, immediate PUSH, and MOV memory
 operands (including moffs), plus read-only memory CMP/TEST forms, with
 8/16-bit partial-register preservation, including the high byte registers.
+Register INC/DEC, XCHG, MOVZX/MOVSX, IMUL, immediate-count SHL/SHR/SAR,
+LOOP/JCXZ, direct near CALL and near RET also have native lowering.
 Byte memory operations use the same precise fault, MMIO and code-invalidation
-guards as wider moves. Flags are dead-store-eliminated within a
-block; flag producers commit through the reference ALU at block exit or a
-guarded exit. Successful RAM operations retain cached GPRs and deferred flags.
+guards as wider moves. Backward flag liveness removes dead computations within
+a block. Supported flag calculations and conditional branches emit ARM64 code;
+flags materialize at block/guarded exits and before partial flag writers which
+need preceding bits. Successful RAM operations retain cached GPRs and pending
+register-ALU flags.
 A declined guard commits prior effects and the faulting IP before interpreter
 replay; a code-changing store commits its own successful effects before exit.
-A terminating conditional branch consumes the committed flags in the same
-native finalization call; its destination executes on the next dispatch.
+A terminating conditional branch consumes the materialized flags in generated
+code; its destination executes on the next dispatch.
 LEA forms offsets without segment or RAM access. Stack blocks validate SS.B
 at entry independently of CS size; stack pointer updates commit only after
 successful accesses. POP SP/ESP applies the increment before the popped
@@ -64,9 +68,27 @@ for eight visits before compilation to avoid translating one-shot installer code
 
 This is a baseline backend. The register-only microbenchmark is fast, but it does
 **not** establish Rosetta-like application or whole-system performance. Memory
-ALU operands, remaining stack forms, calls/returns, indirect control flow, per-instruction fallback
+ALU operands, remaining stack forms, far transfers, indirect CALL/JMP, per-instruction fallback
 dispatch, remaining translation gaps
 and frequent mode transitions are the major remaining optimization targets.
+
+### JIT source modules
+
+| Module | Responsibility |
+| --- | --- |
+| `src/jit.cpp` / `jit.hpp` | Dispatch, cache validation, warmup, code-arena lifetime and compilation orchestration. |
+| `src/jit_decode.cpp` | Decode x86 instructions and addressing modes into a single-page block. |
+| `src/jit_ir.hpp` | Shared typed instruction kinds and decoded block representation. |
+| `src/jit_memory.hpp` | Guest memory-access descriptors shared by decoding and guarded runtime access. |
+| `src/jit_flags.cpp` / `jit_flags.hpp` | Architecture-independent flag liveness and precise-exit requirements. |
+| `src/jit_arm64.cpp` | ARM64 instruction emission, register allocation, guards, prologue/epilogue and code publication. |
+| `src/jit_runtime.cpp` / `jit_runtime.hpp` | C++ ABI helpers for generated code, including restartable guarded memory access. |
+
+The decoder can update block metadata such as stack-width dependence. The
+dispatcher applies the existing admission policy before passing a decoded
+block to the ARM64 emitter. Runtime helper exceptions never unwind through
+generated frames; declined accesses return to the dispatcher for interpreter
+replay. These interfaces do not change guest execution or snapshot formats.
 
 ## Devices
 

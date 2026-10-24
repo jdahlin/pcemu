@@ -577,3 +577,35 @@ pass in `build/flag-liveness-{word,excel}/`. These concurrent checks establish
 compatibility, not application speed comparisons or a new installer run.
 Passing test disks are removed; `build/flag-liveness-validation.json` records
 source hashes and evidence.
+
+A deferred partial-flag prototype was evaluated after that pass, but is not
+enabled in the shipped backend. It retained per-instruction reconstruction
+inputs in a larger native frame and materialized flag recipes at exits. The
+full suite, including 64-instruction blocks, passed. In the frozen comparison
+`build/deferred-flags-controlled/`, all six 10,000-iteration CoreMark runs pass
+CRCs and DOS return with identical guest/native instruction counts. Paired
+ratios are 0.99743, 0.99369 and 1.00577 (median change -0.26%); resident code
+grows from 700,848 to 712,288 bytes. This establishes no meaningful speedup.
+The prototype remains at `build/deferred-flags-prototype.cpp` for reference;
+the modularized backend retains the previous tested flag-emission behavior.
+
+The JIT source split is documented in `docs/architecture.md`. Dispatch/cache
+management stays in `jit.cpp`; decoding, shared typed IR, flag analysis, guarded
+runtime helpers and ARM64 emission have explicit module boundaries. The full
+suite passes in `build/jit-modules-tests-final.log`, including 50,146
+flag-liveness checks and the added long-block coverage. This refactor is not
+presented as a performance improvement.
+
+Refactor validation passes normal and profiled DOS smoke suites
+(`build/jit-modules-{smoke,profile-smoke}.log`), exact Win3.11 Notepad contents
+(`build/jit-modules-win311.log`), rtts Win95 boot/restart
+(`build/win95-smoke-dptwj6zy/result.json`), installed OSR2 boot/restart
+(`build/win95-smoke-tbbuilsl/result.json`) and Word/Excel snapshot task pixels
+(`build/jit-modules-{word,excel}/`). A 10,000-iteration CoreMark compatibility
+run (`build/jit-modules-coremark/result.json`) matches the pre-split backend's
+3,975,092,643 guest instructions, 3,728,178,916 native instructions, 277 compiled
+blocks, zero arena recycles and 700,848 resident native-code bytes. Its timings
+are excluded from comparisons because compatibility checks ran concurrently.
+Decoder and emitter extraction audits confirm the same logic apart from named
+IR kinds and the extracted analysis function. Passing runs remove their private
+disks; `build/jit-modules-validation.json` records source hashes and evidence.
