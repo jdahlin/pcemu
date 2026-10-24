@@ -95,8 +95,8 @@ class HvfSecondary {
         dispatch([&] { check(hv_vcpu_get_sys_reg(id, static_cast<hv_sys_reg_t>(encoding), &value)); });
         finish(); return value;
     }
-    void beginRun(unsigned index, std::function<void()> cancel) {
-        dispatch([this, index, cancel = std::move(cancel)] {
+    void beginRun(unsigned index, std::function<void(bool)> leave) {
+        dispatch([this, index, leave = std::move(leave)] {
             try {
                 if (needsStart) initializeRegisters();
                 if (offsetDirty) { check(hv_vcpu_set_vtimer_offset(id, offset)); offsetDirty = false; }
@@ -104,18 +104,19 @@ class HvfSecondary {
                     check(hv_vcpu_set_reg(id, static_cast<hv_reg_t>(HV_REG_X0 + i), registers[i])); dirty[i] = false;
                 }
                 if (pcDirty) { check(hv_vcpu_set_reg(id, HV_REG_PC, pc)); pcDirty = false; }
-                check(hv_vcpu_run(id)); ++exits;
+                auto status = hv_vcpu_run(id);
+                leave(status != HV_SUCCESS || exit->reason != HV_EXIT_REASON_CANCELED);
+                check(status); ++exits;
                 auto reason = exit->reason == HV_EXIT_REASON_EXCEPTION ? HvfMachine::ExitReason::Exception :
                     exit->reason == HV_EXIT_REASON_CANCELED ? HvfMachine::ExitReason::Canceled :
                     exit->reason == HV_EXIT_REASON_VTIMER_ACTIVATED ? HvfMachine::ExitReason::VirtualTimer : HvfMachine::ExitReason::Unknown;
-                if (reason != HvfMachine::ExitReason::Canceled) cancel();
                 check(hv_vcpu_get_reg(id, HV_REG_PC, &pc));
                 if (reason != HvfMachine::ExitReason::Canceled)
                     for (unsigned i = 0; i < 31; ++i)
                         check(hv_vcpu_get_reg(id, static_cast<hv_reg_t>(HV_REG_X0 + i), &registers[i]));
                 auto exception = reason == HvfMachine::ExitReason::Exception ? exit->exception : hv_vcpu_exit_exception_t{};
                 result = {reason, exception.syndrome, exception.virtual_address, exception.physical_address, pc, index};
-            } catch (...) { cancel(); throw; }
+            } catch (...) { leave(true); throw; }
         });
     }
 };

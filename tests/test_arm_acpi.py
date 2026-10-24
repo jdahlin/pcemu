@@ -9,8 +9,8 @@ from build_arm_acpi import build, TABLES, RSDP
 
 
 class ArmAcpi(unittest.TestCase):
-    def relocated(self):
-        tables, rsdp, script, _ = build()
+    def relocated(self, cpu_count=1):
+        tables, rsdp, script, _ = build(cpu_count)
         files = {TABLES: bytearray(tables), RSDP: bytearray(rsdp)}
         addresses = {TABLES: 0x4e001000, RSDP: 0x4d000000}
         self.assertEqual(len(script) % 128, 0)
@@ -62,13 +62,13 @@ class ArmAcpi(unittest.TestCase):
             return result
         xsdt = table_at(struct.unpack_from('<Q', rsdp, 24)[0])
         self.assertEqual(xsdt[:4], b'XSDT')
-        self.assertEqual((len(xsdt) - 36) // 8, 6)
+        self.assertEqual((len(xsdt) - 36) // 8, 7)
         tables = {}
         for pos in range(36, len(xsdt), 8):
             data = table_at(struct.unpack_from('<Q', xsdt, pos)[0])
             self.assertNotIn(bytes(data[:4]), tables)
             tables[bytes(data[:4])] = data
-        self.assertEqual(set(tables), {b'FACP', b'APIC', b'GTDT', b'MCFG', b'SPCR', b'DBG2'})
+        self.assertEqual(set(tables), {b'FACP', b'APIC', b'GTDT', b'MCFG', b'SPCR', b'DBG2', b'PPTT'})
         fadt = tables[b'FACP']
         self.assertEqual(struct.unpack_from('<I', fadt, 112)[0], 1 << 20)
         self.assertEqual(struct.unpack_from('<H', fadt, 129)[0], 3)
@@ -87,6 +87,36 @@ class ArmAcpi(unittest.TestCase):
         self.assertEqual(tables[b'SPCR'][52], 8)
         self.assertEqual(struct.unpack_from('<I', tables[b'SPCR'], 54)[0], 33)
         self.assertEqual(struct.unpack_from('<Q', tables[b'SPCR'], 44)[0], 0x09000000)
+
+    def test_cpu_topology_variants(self):
+        from build_arm_acpi import dsdt
+        for count in (1, 2, 4, 8):
+            with self.subTest(cpus=count):
+                files, _ = self.relocated(count)
+                blob, _, _, offsets = build(count)
+                madt = files[TABLES][offsets['APIC']:offsets['APIC'] + 44 + 80 * count + 40]
+                for cpu in range(count):
+                    start = 44 + cpu * 80
+                    self.assertEqual(madt[start:start + 2], bytes([11, 80]))
+                    self.assertEqual(struct.unpack_from('<II', madt, start + 8), (cpu, 1))
+                    self.assertEqual(struct.unpack_from('<Q', madt, start + 68)[0], cpu)
+                gicr = 44 + count * 80 + 24
+                self.assertEqual(struct.unpack_from('<QI', madt, gicr + 4), (0x080a0000, 0x20000 * count))
+                pptt = files[TABLES][offsets['PPTT']:]
+                self.assertEqual(pptt[36:40], bytes([0, 20, 0, 0]))
+                self.assertEqual(struct.unpack_from('<IIII', pptt, 40), (1, 0, 0, 0))
+                for cpu in range(count):
+                    self.assertEqual(struct.unpack_from('<IIII', pptt, 60 + 20 * cpu), (10, 36, cpu, 0))
+                namespace = dsdt(count)
+                self.assertEqual(sum(namespace) & 255, 0)
+                self.assertEqual(struct.unpack_from('<I', namespace, 4)[0], len(namespace))
+                self.assertIn(struct.pack('<II', 0x080a0000, count * 0x20000), namespace)
+                for cpu in range(count):
+                    self.assertEqual(namespace.count(f'CPU{cpu}'.encode()), 1)
+                self.assertNotIn(f'CPU{count}'.encode(), namespace)
+        for count in (0, 9):
+            with self.assertRaises(ValueError):
+                build(count)
 
     def test_debug_namespace_bounds(self):
         files, _ = self.relocated()

@@ -18,7 +18,9 @@ uint64_t swap(uint64_t value, unsigned width) {
     return result;
 }
 }
-ArmFwCfg::ArmFwCfg(std::span<uint8_t> ram, uint64_t ramBase) : ram(ram), base(ramBase) {
+ArmFwCfg::ArmFwCfg(std::span<uint8_t> ram, uint64_t ramBase, unsigned cpuCount) : ram(ram), base(ramBase) {
+    if (!cpuCount || cpuCount > 8) throw std::runtime_error("Invalid fw_cfg CPU count");
+    cpus[0] = uint8_t(cpuCount);
     directory.resize(4);
 }
 uint16_t ArmFwCfg::addFile(std::string name, std::vector<uint8_t> bytes, bool writable) {
@@ -47,6 +49,7 @@ std::span<const uint8_t> ArmFwCfg::data() const {
     static constexpr uint8_t features[] = {3, 0, 0, 0};
     if (selected == 0) return signature;
     if (selected == 1) return features;
+    if (selected == 5 || selected == 0xf) return cpus; // NB_CPUS / MAX_CPUS, little endian.
     if (selected == 0x19) return directory;
     return file(selected);
 }

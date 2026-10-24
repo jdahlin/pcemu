@@ -78,14 +78,15 @@ The CPU starts at EL1h with translation disabled and DAIF masked. EDK II initial
 its MMU, interrupt controller and architectural timer. The physical timer uses
 PPI 30; GICv3/timer operation is managed by Hypervisor.framework. Firmware output
 and a progressing shell countdown verify the current timer path. No EL3 monitor
-or nested virtualization is used. The HVC conduit implements a single-CPU PSCI 0.2 subset: version, CPU_ON
-(already on/invalid CPU), AFFINITY_INFO, MIGRATE_INFO_TYPE and standby with
-immediate wakeup. Power-down suspend is rejected. CPU_OFF/SYSTEM_OFF stop the VM;
+or nested virtualization is used. The HVC conduit implements a PSCI 0.2 subset: version, CPU_ON, CPU_OFF,
+AFFINITY_INFO, MIGRATE_INFO_TYPE and standby with immediate wakeup. CPU_ON/OFF
+operate on live vCPU state; the final online CPU cannot be taken offline.
+Power-down suspend is rejected. SYSTEM_OFF stops the VM;
 SYSTEM_RESET ends the current platform with `state=reset-requested`. The CLI
 flushes disks and UEFI variables, destroys the old VM/devices/sockets and boots
 a fresh platform in the same process. Power-off still exits. The timeout covers
 the entire run, including reboots; signals and a matched `--until-text` stop
-without another boot. SMP is not implemented. This does not provide deep-idle power management.
+without another boot. [SMP supports 1–8 CPUs](arm64-smp.md). This does not provide deep-idle power management.
 
 `platform/arm64/pcemu-virt.dts` supplies the versioned hardware description.
 The runner expects that compiled tree and its fixed RAM map; accepting a path to

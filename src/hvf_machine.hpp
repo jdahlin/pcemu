@@ -9,7 +9,9 @@
 namespace pc {
 // ARM64 bare-metal platform, independent of the x86 Machine/CPU/JIT. One VM
 // per process. Create, use and destroy on one dedicated thread; run() has a
-// persistent watchdog that can request a cross-thread vCPU exit.
+// persistent watchdog that can request a cross-thread vCPU exit. Secondary CPUs
+// have persistent owner threads; run() stops every CPU before returning to the
+// caller for device emulation or RAM access.
 class HvfMachine {
   public:
     static constexpr uint64_t ramBase = 0x40000000;
@@ -45,6 +47,7 @@ class HvfMachine {
     void setReg(unsigned index, uint64_t value);
     uint64_t systemReg(uint16_t encoding) const;
     uint64_t pc() const;
+    uint64_t cpuPC(unsigned cpu) const;
     void setPC(uint64_t value);
     Exit run(std::chrono::milliseconds budget = std::chrono::milliseconds(1000));
     uint64_t exits() const;

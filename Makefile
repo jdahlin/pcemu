@@ -112,6 +112,7 @@ test-hvf: build/device-bus-tests build/virtio-rng-tests build/nvme-tests build/v
 	./build/pcemu-hvf --self-test
 	python3 -m unittest discover -s tests -p test_hvf_cli.py
 	python3 -m unittest discover -s tests -p test_arm_acpi.py
+	python3 -m unittest discover -s tests -p test_arm_platform.py
 build/pcemu-hvf: src/hvf_secondary.hpp src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_virt.hpp src/arm_ramfb.cpp src/arm_ramfb.hpp $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
 	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
 	@mkdir -p build

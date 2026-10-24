@@ -22,8 +22,10 @@ virtual; host allocation grows with data rather than reserving 16 GiB.
 ./run-debian.sh
 ```
 
-The launcher builds/signs the native runner and verifies firmware assets before
-starting the existing disk. It does not reinstall Debian. Ctrl-] saves host state
+The launcher defaults to two vCPUs, builds matching CPU topology, builds/signs
+the native runner and verifies firmware assets before starting the existing disk.
+Use `DEBIAN_CPUS=1` or `DEBIAN_CPUS=4` to select another count (supported: 1–8).
+See [ARM64 SMP](arm64-smp.md) for topology and validation details. It does not reinstall Debian. Ctrl-] saves host state
 and exits; prefer a clean guest shutdown when possible. A running instance holds
 exclusive disk/variable locks, so stop it before starting another.
 

@@ -12,6 +12,7 @@
 #include <condition_variable>
 #include <cstring>
 #include <deque>
+#include <algorithm>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
@@ -61,6 +62,11 @@ struct HvfMachine::Impl {
         if (cancelResult == HV_SUCCESS) cancelResult = result;
     }
     void cancelAll() { std::lock_guard lock(mutex); cancelLocked(); }
+    void leaveCPU(hv_vcpu_t cpu, bool cancelOthers) {
+        std::lock_guard lock(mutex);
+        std::erase(active, cpu);
+        if (cancelOthers) cancelLocked();
+    }
 
     void synchronizeClock() {
         auto absolute = mach_absolute_time();
@@ -344,6 +350,14 @@ uint64_t HvfMachine::pc() const {
     check(hv_vcpu_get_reg(impl->vcpu, HV_REG_PC, &value), "get PC");
     return value;
 }
+uint64_t HvfMachine::cpuPC(unsigned cpu) const {
+    impl->requireOwner();
+    if (cpu >= cpuCount()) throw std::runtime_error("Invalid HVF CPU index");
+    if (cpu) return impl->secondary[cpu - 1]->pc;
+    uint64_t value = 0;
+    check(hv_vcpu_get_reg(impl->vcpu, HV_REG_PC, &value), "get primary PC");
+    return value;
+}
 void HvfMachine::setPC(uint64_t value) {
     impl->requireOwner();
     if (value & 3)
@@ -378,13 +392,16 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     try {
         for (unsigned i = 0; i < impl->secondary.size(); ++i)
             if (impl->secondary[i]->online)
-                impl->secondary[i]->beginRun(i + 1, [this] { impl->cancelAll(); });
+                impl->secondary[i]->beginRun(i + 1, [this, i](bool cancelOthers) {
+                    impl->leaveCPU(impl->secondary[i]->id, cancelOthers);
+                });
         if (impl->primaryOnline) {
-            check(hv_vcpu_run(impl->vcpu), "hv_vcpu_run"); ++impl->exitCount;
+            auto result = hv_vcpu_run(impl->vcpu);
+            impl->leaveCPU(impl->vcpu, result != HV_SUCCESS || impl->exit->reason != HV_EXIT_REASON_CANCELED);
+            check(result, "hv_vcpu_run"); ++impl->exitCount;
             auto reason = impl->exit->reason == HV_EXIT_REASON_EXCEPTION ? ExitReason::Exception :
                 impl->exit->reason == HV_EXIT_REASON_CANCELED ? ExitReason::Canceled :
                 impl->exit->reason == HV_EXIT_REASON_VTIMER_ACTIVATED ? ExitReason::VirtualTimer : ExitReason::Unknown;
-            if (reason != ExitReason::Canceled && !impl->secondary.empty()) impl->cancelAll();
             auto exception = reason == ExitReason::Exception ? impl->exit->exception : hv_vcpu_exit_exception_t{};
             primary = {reason, exception.syndrome, exception.virtual_address, exception.physical_address, pc()};
         }

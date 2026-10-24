@@ -2,6 +2,7 @@
 #include "arm_virt.hpp"
 #include "machine_profile.hpp"
 #include <array>
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -256,6 +257,54 @@ void selfTest() {
             restarted = exit.reason == HvfMachine::ExitReason::Exception && exit.cpu == 1 && exit.exceptionClass() == 0x16;
         }
         require(restarted && vm.reg(0) == mailbox + 8, "CPU hotplug lost its context");
+        require(vm.stopCPU() == 0, "Could not prepare idle-secondary test");
+        const std::array<uint32_t, 2> idle{0xd503207f, 0x17ffffff}; // WFI; repeat.
+        vm.writeMemory(HvfMachine::ramBase + 0x1000,
+            {reinterpret_cast<const uint8_t *>(idle.data()), sizeof(idle)});
+        code(vm, std::array<uint32_t, 3>{0x91000400, 0xf9000020, 0x17fffffe}); // Count/store/repeat.
+        vm.setReg(0, 0); vm.setReg(1, mailbox + 32);
+        require(vm.startCPU(1, HvfMachine::ramBase + 0x1000, 0) == 0, "Idle secondary start failed");
+        vm.run(std::chrono::milliseconds(2));
+        uint64_t first = 0, last = 0;
+        vm.readMemory(mailbox + 32, {reinterpret_cast<uint8_t *>(&first), sizeof(first)});
+        for (unsigned i = 0; i < 10; ++i) vm.run(std::chrono::milliseconds(2));
+        vm.readMemory(mailbox + 32, {reinterpret_cast<uint8_t *>(&last), sizeof(last)});
+        require(last > first, "Watchdog cancellations starved a CPU beside an idle secondary");
+    }
+    {
+        uint64_t sleep = 0;
+        HvfMachine vm(2 * 1024 * 1024, true, [&] { return sleep; }, 2);
+        // Each CPU reads the counter once per host-supplied mailbox phase.
+        code(vm, std::array<uint32_t, 9>{0xd2800024, 0xf9400005, 0xeb0400bf,
+            0x54ffffc1, 0xd53be041, 0xd53be002, 0x91000484, 0xd4000002, 0x17fffff9});
+        auto mailbox = HvfMachine::ramBase + 0x10000;
+        auto phase = [&](uint64_t value) {
+            vm.writeMemory(mailbox, {reinterpret_cast<const uint8_t *>(&value), sizeof(value)});
+        };
+        phase(1); vm.setReg(0, mailbox);
+        require(vm.startCPU(1, HvfMachine::ramBase, mailbox) == 0, "Clock-test CPU start failed");
+        uint64_t frequency = 0;
+        auto sample = [&] {
+            std::array<uint64_t, 2> counters{}; unsigned seen = 0;
+            for (unsigned attempt = 0; seen != 3 && attempt < 16; ++attempt) {
+                auto exit = vm.run(std::chrono::milliseconds(100));
+                if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+                require(exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16,
+                        "Unexpected SMP clock-test exit");
+                counters[exit.cpu] = vm.reg(1); seen |= 1u << exit.cpu;
+                if (!frequency) frequency = vm.reg(2);
+                require(vm.reg(2) == frequency && frequency != 0, "SMP counter frequencies differ");
+            }
+            require(seen == 3, "SMP clock sample incomplete");
+            return counters;
+        };
+        auto before = sample(); sleep = 20 * frequency;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+        phase(2); auto after = sample();
+        for (unsigned i = 0; i < 2; ++i)
+            require(after[i] - before[i] >= sleep, "A secondary CPU lost host sleep time");
+        require(std::max(after[0], after[1]) - std::min(after[0], after[1]) < frequency,
+                "SMP virtual counters diverged after host sleep");
     }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
@@ -263,6 +312,7 @@ void selfTest() {
 int main(int argc, char **argv) {
     try {
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
+        bool dtbExplicit = false, acpiExplicit = false;
         pc::ArmVirtMachine::Config uefi;
         uefi.firmware = "roms/edk2-arm64.bin";
         uefi.dtb = "build/arm64-fw/pcemu-virt.dtb";
@@ -292,6 +342,11 @@ int main(int argc, char **argv) {
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk") { uefi.extraDisk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk-overlay") { uefi.extraDiskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--cpus") {
+                auto text = value(); size_t consumed = 0; auto count = std::stoul(text, &consumed);
+                if (consumed != text.size() || count < 1 || count > 8) throw std::runtime_error("CPUs must be 1..8");
+                uefi.cpus = unsigned(count); uefiOptions = true;
+            }
             else if (arg == "--network") {
                 auto mode = value();
                 if (mode != "user" && mode != "none") throw std::runtime_error("Network must be user or none");
@@ -308,8 +363,8 @@ int main(int argc, char **argv) {
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
             else if (arg == "--disk-controller") { uefi.diskController = value(); uefiOptions = true; }
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
-            else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); uefiOptions = true; }
-            else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
+            else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); acpiExplicit = true; uefiOptions = true; }
+            else if (arg == "--dtb") { uefi.dtb = value(); dtbExplicit = true; uefiOptions = true; }
             else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
             else if (arg == "--framebuffer-ppm") { framebufferPath = value(); uefiOptions = true; }
             else if (arg == "--cpu-state") { cpuState = true; uefiOptions = true; }
@@ -337,6 +392,7 @@ int main(int argc, char **argv) {
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
+                             "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
                              "      [--network user|none --ssh-port PORT --network-capture PCAP]\n"
                              "      [--serial-stdio --run-forever] (Ctrl-] exits serial mode)\n"
                              "Run make firmware-arm64 first; use NVMe for Windows Validation OS.\n";
@@ -350,6 +406,11 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
+            if (uefi.cpus > 1) {
+                auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
+                if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
+                if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
+            }
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
@@ -393,7 +454,7 @@ int main(int argc, char **argv) {
                 vm.saveVariables();
                 if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
                 if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
-                std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
+                std::cerr << "UEFI run complete: exits=" << vm.exits() << " cpus=" << uefi.cpus << " variables=" << uefi.variables
                           << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
                           << " extraDiskRequests=" << vm.extraDiskRequests()
                           << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()

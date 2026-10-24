@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <cstdlib>
 #include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
@@ -11,6 +13,37 @@
 #include <unistd.h>
 namespace pc {
 namespace fs = std::filesystem;
+namespace {
+void validateCpuTables(std::span<const uint8_t> blob, unsigned expected) {
+    auto little = [&](size_t at, unsigned width) {
+        if (at > blob.size() || width > blob.size() - at) throw std::runtime_error("Truncated ACPI CPU table");
+        uint64_t value = 0;
+        for (unsigned i = 0; i < width; ++i) value |= uint64_t(blob[at + i]) << (8 * i);
+        return value;
+    };
+    for (size_t at = 0; at + 36 <= blob.size();) {
+        auto length = size_t(little(at + 4, 4));
+        if (length < 36 || length > blob.size() - at) throw std::runtime_error("Invalid ACPI table length");
+        if (std::string(reinterpret_cast<const char *>(blob.data() + at), 4) == "APIC") {
+            unsigned cpus = 0;
+            for (size_t entry = at + 44; entry + 2 <= at + length;) {
+                auto bytes = blob[entry + 1];
+                if (bytes < 2 || bytes > at + length - entry) throw std::runtime_error("Invalid MADT entry");
+                if (blob[entry] == 11 && bytes >= 80 && (little(entry + 12, 4) & 1)) {
+                    if (little(entry + 8, 4) != cpus || little(entry + 68, 8) != cpus)
+                        throw std::runtime_error("ACPI CPU affinity does not match the HVF topology");
+                    ++cpus;
+                }
+                entry += bytes;
+            }
+            if (cpus != expected) throw std::runtime_error("ACPI CPU count does not match --cpus; build matching ARM platform assets");
+            return;
+        }
+        at = (at + length + 7) & ~size_t(7);
+    }
+    throw std::runtime_error("Missing ACPI CPU table");
+}
+}
 std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximum) {
     std::ifstream input(path, std::ios::binary | std::ios::ate);
     auto length = input.tellg();
@@ -23,10 +56,12 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(ramBytes, true), nor(load(c.variableTemplate, 0xc0000)),
-      fwCfg(vm.ram(), HvfMachine::ramBase), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase) {
+    : config(c), vm(ramBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
+      fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus) {
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
-    fwCfg.addFile("etc/acpi/tables", load(c.acpiDirectory + "/tables", 64 * 1024));
+    auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
+    validateCpuTables(tables, c.cpus);
+    fwCfg.addFile("etc/acpi/tables", std::move(tables));
     fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
     fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
     const auto working = fs::absolute(c.variables).lexically_normal();
@@ -156,6 +191,7 @@ std::string ArmVirtMachine::cpuState() const {
     output << std::hex << "pc=0x" << vm.pc() << " esr_el1=0x" << vm.systemReg(0xc290)
            << " elr_el1=0x" << elr << " far_el1=0x" << vm.systemReg(0xc300)
            << " spsr_el1=0x" << vm.systemReg(0xc200);
+    for (unsigned i = 0; i < vm.cpuCount(); ++i) output << " cpu" << i << "_pc=0x" << vm.cpuPC(i);
     auto dump = [&](const char *name, uint64_t address) {
         if (address < HvfMachine::ramBase + 16 || address - HvfMachine::ramBase > ramBytes - 48) return;
         std::array<uint8_t, 64> bytes{};
@@ -194,15 +230,29 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x18) {
         unsigned reg = (exit.syndrome >> 5) & 31;
         uint64_t value = reg < 31 ? vm.reg(reg) : 0;
-        if (osLock.access(exit.syndrome, value)) {
+        if (osLocks[vm.currentCPU()].access(exit.syndrome, value)) {
             if ((exit.syndrome & 1) && reg < 31) vm.setReg(reg, value);
             vm.setPC(exit.pc + 4);
             return;
         }
     }
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16) {
-        auto result = (exit.syndrome & 0xffff) == 0
-            ? armPsciCall(vm.reg(0), vm.reg(1), vm.reg(2)) : ArmPsciResult{-1};
+        auto function = uint32_t(vm.reg(0));
+        uint64_t target = vm.reg(1), argument = vm.reg(2), context = vm.reg(3);
+        if (!(function & 0x40000000)) { target = uint32_t(target); argument = uint32_t(argument); context = uint32_t(context); }
+        ArmPsciResult result{-1};
+        if ((exit.syndrome & 0xffff) == 0) {
+            if (function == 0x84000003 || function == 0xc4000003) {
+                result.value = target < vm.cpuCount() ? vm.startCPU(unsigned(target), argument, context) : -2;
+                if (std::getenv("PCEMU_TRACE_PSCI")) std::cerr << "PSCI CPU_ON target=" << target << " entry=" << std::hex << argument << " context=" << context << std::dec << " result=" << result.value << '\n';
+                if (!result.value) osLocks[unsigned(target)] = ArmOsLock{};
+            } else if (function == 0x84000002) result.value = vm.stopCPU();
+            else if (function == 0x84000004 || function == 0xc4000004) {
+                result.value = -2;
+                if (argument == 0 && target < vm.cpuCount()) result.value = vm.cpuOnline(unsigned(target)) ? 0 : 1;
+                else if (argument > 0 && argument <= 3 && (target >> (8 * argument)) == 0) result.value = 0;
+            } else result = armPsciCall(function, target, argument);
+        }
         powerAction = result.action;
         if (!stopped()) vm.setReg(0, uint64_t(result.value));
         // Hypervisor.framework reports HVC with PC already advanced.

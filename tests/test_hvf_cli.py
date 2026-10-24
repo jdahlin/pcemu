@@ -46,7 +46,8 @@ class HvfCLI(unittest.TestCase):
                  ('--machine', 'arm64-uefi', '--self-test'),
                  ('--machine', 'arm64-uefi', '--kernel', 'any'),
                  ('--vars', 'any', '--self-test'),
-                 ('--network', 'broken'), ('--ssh-port', '65536'),
+                 ('--cpus', '0'), ('--cpus', '9'), ('--cpus', '2oops'),
+                 ('--cpus', '2', '--self-test'), ('--network', 'broken'), ('--ssh-port', '65536'),
                  ('--ssh-port', '22oops'), ('--run-forever', '--self-test')]
         for args in cases:
             with self.subTest(args=args):
@@ -123,6 +124,15 @@ class HvfCLI(unittest.TestCase):
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 result = self.invoke(*args, '--extra-disk', str(base))
                 self.assertIn('already in use', result.stderr)
+
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
+    def test_cpu_table_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.invoke('--machine', 'arm64-uefi', '--cpus', '2',
+                                 '--acpi-dir', 'build/arm64-fw/acpi',
+                                 '--vars', str(Path(tmp) / 'vars.bin'), '--timeout-ms', '1')
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('ACPI CPU count does not match', result.stderr)
 
     @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
     def test_forever_sigterm_flushes(self):

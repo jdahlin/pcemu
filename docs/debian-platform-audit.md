@@ -26,6 +26,11 @@ firmware and Linux entropy: a real boot reports `KASLR enabled`, CRNG ready at
 time zero, and `virtio_rng.0` selected. The original findings below are retained
 as the audit baseline.
 
+SMP is now integrated: Debian boots with two and four CPUs, matching MADT,
+PPTT, DSDT, device tree and fw_cfg counts. CPU-pinned concurrent work, per-CPU
+timer/IPI delivery and CPU 1 offline/online were verified. The Debian launcher
+now defaults to two CPUs. [Implementation and evidence](arm64-smp.md).
+
 ## Timer capability clarification
 
 The initial GSI0 warning was classified too strongly as a firmware defect.

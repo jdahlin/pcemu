@@ -45,7 +45,18 @@ def checksum(name, result, start, length):
     return command(3, filename(name) + struct.pack('<III', result, start, length))
 
 
-def dsdt():
+def aml_package(opcode, body):
+    for width in range(1, 5):
+        length = len(body) + width
+        if length < (1 << (6 if width == 1 else 4 + 8 * (width - 1))):
+            encoded = bytes([length]) if width == 1 else bytes([
+                ((width - 1) << 6) | (length & 15),
+                *[(length >> (4 + 8 * i)) & 255 for i in range(width - 1)]])
+            return opcode + encoded + body
+    raise ValueError('AML package too large')
+
+
+def dsdt(cpu_count=1):
     source = ROOT / 'platform/arm64/dsdt.asl'
     cached = json.loads((source.parent / 'dsdt-aml.json').read_text())
     if hashlib.sha256(source.read_bytes()).hexdigest() != cached['sourceSha256']:
@@ -53,25 +64,55 @@ def dsdt():
     data = bytes.fromhex(cached['amlHex'])
     if data[:4] != b'DSDT' or len(data) != struct.unpack_from('<I', data, 4)[0] or sum(data) & 255:
         raise ValueError('Invalid compiled DSDT')
-    return data
+    if cpu_count == 1:
+        return data
+    # Extend the single top-level _SB scope with simple processor devices.
+    # The source hash above still validates the original compiled namespace.
+    if data[36] != 0x10:
+        raise ValueError('Expected a top-level AML Scope')
+    width = 1 + (data[37] >> 6)
+    length = data[37] & (63 if width == 1 else 15)
+    for i in range(width - 1):
+        length |= data[38 + i] << (4 + 8 * i)
+    if 37 + length != len(data) or data[37 + width:41 + width] != b'_SB_':
+        raise ValueError('Expected exactly one top-level _SB scope')
+    body = bytearray(data[37 + width:])
+    resource = struct.pack('<II', 0x080a0000, 0x20000)
+    if body.count(resource) != 1:
+        raise ValueError('Expected one GIC redistributor resource')
+    body = body.replace(resource, struct.pack('<II', 0x080a0000, 0x20000 * cpu_count))
+    for cpu in range(1, cpu_count):
+        device = f'CPU{cpu}'.encode() + b'\x08_HID\x0dACPI0007\0\x08_UID\x0a' + bytes([cpu])
+        body.extend(aml_package(b'\x5b\x82', device))
+    return table('DSDT', 2, aml_package(b'\x10', body))
 
 
 def gas(address):
     return struct.pack('<BBBBQ', 0, 32, 0, 3, address)
 
 
-def build():
+def build(cpu_count=1):
+    if not 1 <= cpu_count <= 8:
+        raise ValueError('ARM platform supports 1..8 CPUs')
     fadt = bytearray(276 - 36)
     struct.pack_into('<I', fadt, 112 - 36, 1 << 20)  # hardware-reduced ACPI
     struct.pack_into('<H', fadt, 129 - 36, 3)  # PSCI compliant, HVC conduit
     fadt[131 - 36] = 5  # ACPI 6.5 minor revision
 
-    gicc = bytearray(80)
-    struct.pack_into('<BBHIII', gicc, 0, 11, 80, 0, 0, 0, 1)
-    # Processor UID and MPIDR affinity are both zero. No PMU or GICv2 interface.
+    giccs = bytearray()
+    for cpu in range(cpu_count):
+        gicc = bytearray(80)
+        struct.pack_into('<BBHIII', gicc, 0, 11, 80, 0, cpu, cpu, 1)
+        struct.pack_into('<Q', gicc, 68, cpu)
+        giccs.extend(gicc)
+    # No PMU IRQ or GICv2 interface. Redistributors follow creation/affinity order.
     gicd = struct.pack('<BBHIQIB3x', 12, 24, 0, 0, 0x08000000, 0, 3)
-    gicr = struct.pack('<BBHQI', 14, 16, 0, 0x080a0000, 0x20000)
-    madt = struct.pack('<II', 0, 0) + gicc + gicd + gicr
+    gicr = struct.pack('<BBHQI', 14, 16, 0, 0x080a0000, 0x20000 * cpu_count)
+    madt = struct.pack('<II', 0, 0) + giccs + gicd + gicr
+    # One virtual package with distinct cores; no invented physical cache data.
+    pptt = struct.pack('<BBHIIII', 0, 20, 0, 1, 0, 0, 0)
+    for cpu in range(cpu_count):
+        pptt += struct.pack('<BBHIIII', 0, 20, 0, 0x0a, 36, cpu, 0)
 
     gtdt = bytearray(104 - 36)
     struct.pack_into('<Q', gtdt, 0, 0xffffffffffffffff)  # no MMIO counter control
@@ -97,10 +138,10 @@ def build():
                          len(namespace), 38, 0, 0, 0x8000, 3, 22, 34)
     dbg2 = struct.pack('<II', 44, 1) + device + gas(0x09000000) + struct.pack('<I', 4096) + namespace
 
-    entries = [('DSDT', dsdt()), ('FACP', table('FACP', 6, fadt)),
+    entries = [('DSDT', dsdt(cpu_count)), ('FACP', table('FACP', 6, fadt)),
                ('APIC', table('APIC', 5, madt)), ('GTDT', table('GTDT', 3, gtdt)),
                ('MCFG', table('MCFG', 1, mcfg)), ('SPCR', table('SPCR', 2, spcr)),
-               ('DBG2', table('DBG2', 0, dbg2))]
+               ('DBG2', table('DBG2', 0, dbg2)), ('PPTT', table('PPTT', 3, pptt))]
     blob = bytearray()
     offsets = {}
     for name, data in entries:
@@ -136,6 +177,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'build/arm64-fw/acpi')
     parser.add_argument('--iasl', type=Path)
+    parser.add_argument('--cpus', type=int, default=1, choices=range(1, 9))
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     if args.iasl:
@@ -143,10 +185,10 @@ def main():
         subprocess.run([str(args.iasl), '-p', str(prefix), str(ROOT / 'platform/arm64/dsdt.asl')], check=True)
         if prefix.with_suffix('.aml').read_bytes() != dsdt():
             raise ValueError('Recompiled DSDT differs from dsdt-aml.json')
-    blob, rsdp, loader, offsets = build()
+    blob, rsdp, loader, offsets = build(args.cpus)
     for name, data in [('tables', blob), ('rsdp', rsdp), ('table-loader', loader)]:
         (args.output / name).write_bytes(data)
-    (args.output / 'manifest.json').write_text(json.dumps({'tableOffsets': offsets,
+    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'tableOffsets': offsets,
         'tableBytes': len(blob), 'loaderBytes': len(loader)}, indent=2) + '\n')
     print(f'Built ARM ACPI: {len(blob)} table bytes, {len(loader)} loader bytes')
 

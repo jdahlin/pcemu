@@ -23,6 +23,7 @@ class ArmVirtMachine {
   public:
     static constexpr size_t ramBytes = size_t(2) * 1024 * 1024 * 1024;
     struct Config {
+        unsigned cpus = 1;
         std::string firmware, dtb, variableTemplate, variables;
         std::string disk, diskOverlay;
         std::string extraDisk, extraDiskOverlay;
@@ -69,7 +70,7 @@ class ArmVirtMachine {
     ArmPl031 rtc;
     bool rtcInterruptLevel = false;
     void updateRtcInterrupt();
-    ArmOsLock osLock;
+    std::vector<ArmOsLock> osLocks;
     ArmPowerAction powerAction = ArmPowerAction::None;
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;

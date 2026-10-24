@@ -61,7 +61,7 @@ int main() {
     check(armPsciCall(0x84000006, 0, 0).value == 2);
     check(armPsciCall(0xc4000001, 0, 0).value == 0);
     check(armPsciCall(0xc4000001, 0x10000, 0).value == -2);
-    check(armPsciCall(0x84000002, 0, 0).action == ArmPowerAction::Off);
+    check(armPsciCall(0x84000002, 0, 0).value == -3);
     check(armPsciCall(0x84000008, 0, 0).action == ArmPowerAction::Off);
     check(armPsciCall(0x84000009, 0, 0).action == ArmPowerAction::Reset);
     check(armPsciCall(0x8400000a, 0, 0).value == -1);
@@ -71,6 +71,11 @@ int main() {
     check(cfg.read(0, 4) == 0x554d4551);
     cfg.write(8, 0x100, 2);
     check(cfg.read(0, 4) == 3);
+    ArmFwCfg multicpu(memory, 0x40000000, 4);
+    multicpu.write(8, 0x500, 2);
+    check(multicpu.read(0, 2) == 4);
+    multicpu.write(8, 0x0f00, 2);
+    check(multicpu.read(0, 2) == 4);
     auto key = cfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     check(key == 0x20);
     rejects([&] { cfg.addFile("etc/ramfb", {}); });
