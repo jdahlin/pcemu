@@ -142,6 +142,23 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
         }
     }
     file.clear();
+    if (parent && !fd) {
+        // A compressed import can replace its zero parent's boot sectors.
+        // Inheriting that parent's default CHS geometry breaks legacy boot
+        // loaders even when every guest-visible byte was preserved.
+        std::array<uint8_t, 512> mbr{}, bpb{};
+        if (read(0, 1, mbr.data())) {
+            uint32_t lba = uint32_t(mbr[454]) | (uint32_t(mbr[455]) << 8) |
+                           (uint32_t(mbr[456]) << 16) | (uint32_t(mbr[457]) << 24);
+            if (lba && lba < sectors && read(lba, 1, bpb.data())) {
+                unsigned h = bpb[26] | (bpb[27] << 8), s = bpb[24] | (bpb[25] << 8);
+                if (h && h <= 255 && s && s <= 63) {
+                    heads = h;
+                    spt = s;
+                }
+            }
+        }
+    }
 }
 void Disk::createOverlay(const std::string &destination, const std::string &parentName) {
     auto absolute = fs::absolute(parentName).lexically_normal().string();

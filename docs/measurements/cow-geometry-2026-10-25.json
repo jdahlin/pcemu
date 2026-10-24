@@ -1,0 +1,79 @@
+{
+  "problem": "Compressed import over zero parent inherited 16 heads instead of effective BPB 128 heads; OSR2 loader disk I/O error",
+  "snapshotCowChecks": 2896,
+  "sourceHashes": {
+    "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+    "tests/snapshot_test.cpp": "8b825017bc3b3910e79fa57a98078d7f007d01ad7b1ae2e2e796ba21fba984d7",
+    "src/cpu.cpp": "5576080aba884165e24f60b83fab194b2039300ea544cae27ff8d155111e4659"
+  },
+  "emulatorSha256": "5c21e193bbb1feb3c947356231b27853958286318c2d49ceda3ac64e2d34ec95",
+  "osr2": {
+    "pid": 50540,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-3do0uj0t/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-3do0uj0t/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-3do0uj0t/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-3do0uj0t/state.json"
+    ],
+    "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+    "scope": "cold boot and guest restart",
+    "emulatorSha256": "5c21e193bbb1feb3c947356231b27853958286318c2d49ceda3ac64e2d34ec95",
+    "gitCommit": "def65419cb015ab6cb3fa6e0230d625efc2d0535",
+    "privateDiskRemoved": true,
+    "verification": {
+      "scope": "guest restart and desktop; no file assertion",
+      "beforeInstructions": 170262026,
+      "afterInstructions": 477244141,
+      "beforeResets": 0,
+      "afterResets": 1
+    }
+  },
+  "rtts": {
+    "pid": 50544,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-09aqnuex/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-09aqnuex/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-09aqnuex/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-09aqnuex/state.json"
+    ],
+    "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+    "scope": "cold boot and guest restart",
+    "emulatorSha256": "5c21e193bbb1feb3c947356231b27853958286318c2d49ceda3ac64e2d34ec95",
+    "gitCommit": "def65419cb015ab6cb3fa6e0230d625efc2d0535",
+    "privateDiskRemoved": true,
+    "verification": {
+      "scope": "guest restart and desktop; no file assertion",
+      "beforeInstructions": 359202998,
+      "afterInstructions": 692241069,
+      "beforeResets": 0,
+      "afterResets": 1
+    }
+  },
+  "scope": "Compressed geometry detection, snapshot regressions, cold boot/restart; no fresh installer run"
+}

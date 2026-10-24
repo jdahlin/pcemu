@@ -91,3 +91,26 @@ raw image, including verification after replacement. The images retain their
 original permissions. Reported allocation fell by approximately 280 MiB; APFS
 sharing means actual free-space savings can differ. The local audit is
 `build/storage-cleanup/legacy-compaction.json`. Windows 11 disks were not converted.
+
+
+## Legacy CHS geometry in compressed imports
+
+An imported image over a sparse zero parent must derive BIOS disk geometry
+from its effective partition boot sector, rather than the zero parent's default
+16 heads/63 sectors. Byte-for-byte conversion alone does not preserve that
+host-visible property: the compacted OSR2 backing specifies 128 heads, and
+inheriting 16 heads caused its loader to stop with a disk I/O error.
+
+Compressed disks now inspect their effective MBR and first partition BPB after
+index construction, using the same heads/sectors bounds as raw-image detection.
+Nested child changes take precedence over parent geometry. Invalid geometry
+retains the parent's values; floppy detection remains based on logical size.
+No on-disk format or guest data changes are required.
+
+Six regression checks cover zero-parent imports, read-only reopen, nested BPB
+overrides, floppy behavior and preservation of the parent. All 2,896 snapshot/COW
+checks pass. The affected installed OSR2 image subsequently cold-boots and
+restarts to Explorer; rtts Win95 also passes both operations. Local evidence is
+`build/win95-smoke-3do0uj0t/result.json` and
+`build/win95-smoke-09aqnuex/result.json`. The earlier failed private run is
+retained under `build/win95-smoke-drgc45ac/`.

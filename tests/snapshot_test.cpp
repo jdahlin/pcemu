@@ -45,6 +45,43 @@ int main() {
             file.seekp(4099ull * 512 - 1);
             file.put(0);
         }
+        // Compacted imports may have a zero-filled parent: geometry must
+        // follow their effective partition BPB, including nested overrides.
+        auto geometry = root / "geometry.pcd";
+        Disk::createOverlay(geometry.string(), raw.string());
+        std::array<uint8_t, 512> mbr{}, bpb{};
+        mbr[454] = 63;
+        bpb[24] = 17;
+        bpb[26] = 128;
+        {
+            Disk image(geometry.string());
+            check(image.write(0, 1, mbr.data()) && image.write(63, 1, bpb.data()),
+                  "stage compacted disk partition and geometry");
+        }
+        {
+            Disk image(geometry.string(), false, true);
+            check(image.heads == 128 && image.spt == 17,
+                  "compressed geometry comes from effective BPB rather than zero parent");
+        }
+        auto nestedGeometry = root / "nested-geometry.pcd";
+        Disk::createOverlay(nestedGeometry.string(), geometry.string());
+        {
+            Disk image(nestedGeometry.string());
+            bpb[24] = 32;
+            bpb[26] = 64;
+            check(image.write(63, 1, bpb.data()), "stage child geometry override");
+        }
+        {
+            Disk image(nestedGeometry.string(), false, true);
+            check(image.heads == 64 && image.spt == 32,
+                  "child BPB overrides compressed parent geometry");
+            Disk floppy(nestedGeometry.string(), true, true);
+            check(floppy.heads == 2 && floppy.spt == 18,
+                  "floppy geometry ignores hard-disk partition BPB");
+            Disk parent(raw.string(), false, true);
+            check(parent.heads == 16 && parent.spt == 63,
+                  "geometry detection leaves zero parent unchanged");
+        }
         Disk::createOverlay((root / "a.pcd").string(), raw.string());
         Disk::createOverlay((root / "b.pcd").string(), raw.string());
         std::array<uint8_t, 1536> input{}, output{};
