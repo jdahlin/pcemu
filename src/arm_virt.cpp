@@ -51,6 +51,10 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         }
         if (c.virtioTransport != "pci" && c.virtioTransport != "mmio")
             throw std::runtime_error("Virtio transport must be pci or mmio");
+        if (c.diskController != "virtio" && c.diskController != "nvme")
+            throw std::runtime_error("Disk controller must be virtio or nvme");
+        if (c.diskController == "nvme" && c.virtioTransport != "pci")
+            throw std::runtime_error("NVMe requires PCI transport");
         if (!c.disk.empty()) {
             const auto parent = fs::canonical(c.disk).string();
             std::ifstream probe(parent, std::ios::binary);
@@ -68,10 +72,15 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             disk = std::make_unique<Disk>(overlay);
             if (!direct && (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent))
                 throw std::runtime_error("Virtio disk overlay belongs to a different parent");
-            block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
-                                                 [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
-            if (c.virtioTransport == "pci")
-                pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+            if (c.diskController == "nvme") {
+                nvme = std::make_unique<Nvme>(*disk, vm.ram(), HvfMachine::ramBase,
+                                            [this](bool level) { vm.setSPI(48, level); });
+            } else {
+                block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
+                                                     [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
+                if (c.virtioTransport == "pci")
+                    pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+            }
         } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
         if (!c.extraDisk.empty()) {
             auto parent = fs::canonical(c.extraDisk).string();
@@ -195,6 +204,7 @@ std::string ArmVirtMachine::cpuState() const {
         uint64_t address = 0;
         if (input >> std::hex >> address) dump("reported", address);
     }
+    if (nvme) output << ' ' << nvme->diagnostics();
     return output.str();
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
@@ -248,23 +258,31 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         }
         const bool ecam = exit.physicalAddress >= 0x3f000000 && exit.physicalAddress < 0x3f100000;
         VirtioPciDevice *endpoint = nullptr;
+        bool nvmeAccess = false;
         uint64_t offset = exit.physicalAddress - 0x3f000000;
         if (ecam && !(offset & 0x7000)) {
             auto slot = offset >> 15;
+            nvmeAccess = slot == 0 && nvme != nullptr;
             endpoint = slot == 0 ? pci.get() : slot == 1 ? extraPci.get() : slot == 2 ? netPci.get() : nullptr;
             offset &= 0xfff;
         } else if (!ecam) {
+            nvmeAccess = nvme && nvme->contains(exit.physicalAddress, width);
             for (auto *candidate : {pci.get(), extraPci.get(), netPci.get()})
                 if (candidate && candidate->contains(exit.physicalAddress, width)) endpoint = candidate;
         }
-        if (ecam || endpoint) {
+        if (ecam || endpoint || nvmeAccess) {
             if (write) {
-                if (endpoint) {
+                if (nvmeAccess) {
+                    if (ecam) nvme->configWrite(offset, reg < 31 ? vm.reg(reg) : 0, width);
+                    else nvme->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
+                } else if (endpoint) {
                     if (ecam) endpoint->configWrite(offset, reg < 31 ? vm.reg(reg) : 0, width);
                     else endpoint->write(exit.physicalAddress, reg < 31 ? vm.reg(reg) : 0, width);
                 }
             } else {
-                uint64_t value = endpoint ? (ecam ? endpoint->configRead(offset, width)
+                uint64_t value = nvmeAccess ? (ecam ? nvme->configRead(offset, width)
+                    : nvme->read(exit.physicalAddress, width))
+                    : endpoint ? (ecam ? endpoint->configRead(offset, width)
                     : endpoint->read(exit.physicalAddress, width)) : UINT64_MAX;
                 value = armMmioLoad(value, width, exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
                 if (reg < 31) vm.setReg(reg, value);

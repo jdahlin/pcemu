@@ -7,8 +7,8 @@
 #endif
 namespace pc {
 using jit_detail::Kind;
-Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes)
-    : cpu(c), capacity(arenaBytes), warmup(heat) {
+Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes, BlockMode mode)
+    : cpu(c), capacity(arenaBytes), warmup(heat), blockMode(mode) {
     if (capacity < 65536)
         throw std::invalid_argument("JIT arena must be at least 64 KiB");
 #if defined(__APPLE__) && defined(__aarch64__)

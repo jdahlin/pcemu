@@ -77,6 +77,7 @@ int main() {
             check(jit.run() == length + 1, "entire random instruction sequence executes natively");
             equal(reference, actual);
         }
+        for (bool joining : {false, true})
         for (unsigned pattern = 0; pattern < 3; ++pattern)
             for (unsigned boundary = 0; boundary < 2; ++boundary) {
                 CPU expected(65536), native(65536);
@@ -84,6 +85,8 @@ int main() {
                     ? std::vector<uint8_t>{0x83, 0xf8, 1, 0x42, 0x43}
                     : std::vector<uint8_t>{0x83, 0xc0, 1, 0x0f, 0xaf, 0xd9, 0xc1,
                                           uint8_t(pattern ? 0xfa : 0xe2), uint8_t(pattern ? 2 : 1)};
+                if (joining)
+                    code.insert(code.begin(), {0xeb, 0});
                 auto boundaryIP = code.size();
                 if (!boundary)
                     code.insert(code.end(), {0x64, 0x8b, 0x35, 0, 0, 0, 0});
@@ -111,21 +114,22 @@ int main() {
                     };
                 }
                 try {
-                    for (unsigned n = 0; n < 4; ++n)
+                    for (unsigned n = 0; n < 4 + unsigned(joining); ++n)
                         expected.step();
                 } catch (const Stop &) {
                 }
-                Jit guarded(native, true, 0);
+                Jit guarded(native, true, 0, 65536, joining ? Jit::BlockMode::FollowJumps
+                                                         : Jit::BlockMode::Basic);
                 try {
                     guarded.run();
                 } catch (const Stop &) {
                 }
                 equal(expected, native);
                 if (!boundary)
-                    check(faults == 2 && guarded.nativeInstructions == 3,
+                    check(faults == 2 && guarded.nativeInstructions == 3 + unsigned(joining),
                           "memory-fault boundary keeps earlier partial flag writers live");
                 else {
-                    check(native.ip == continuation && guarded.nativeInstructions == 4 &&
+                    check(native.ip == continuation && guarded.nativeInstructions == 4 + unsigned(joining) &&
                               native.mem == expected.mem,
                           "code-changing store exposes complete flags before later XOR");
                     expected.step();
@@ -134,6 +138,55 @@ int main() {
                     equal(expected, native);
                 }
             }
+        // Joined jumps must count executed branches, skip unreachable bytes,
+        // retain pending flags, and stop at the same 64-instruction budget.
+        for (unsigned trial = 0; trial < 1024; ++trial) {
+            CPU expected(65536), native(65536);
+            std::vector<uint8_t> code;
+            unsigned length = 1 + rng() % 20;
+            bool loop = trial & 1, code32 = trial & 2;
+            for (unsigned n = 0; n < length; ++n) {
+                code.insert(code.end(), {0x83, uint8_t(0xc0 | (rng() & 7)), uint8_t(rng()),
+                                         0xeb, 1, 0xf4});
+            }
+            if (loop) {
+                code.push_back(0xe9);
+                unsigned width = code32 ? 4 : 2;
+                int displacement = -int(code.size() + width);
+                for (unsigned k = 0; k < width; ++k)
+                    code.push_back(uint32_t(displacement) >> (k * 8));
+            } else
+                code.insert(code.end(), {uint8_t(0x70 | (trial & 15)), 0x10});
+            for (auto c : {&expected, &native}) {
+                c->s[CS].big = code32;
+                c->flags = 0x202 | (rng() & 0x8d5);
+                std::copy(code.begin(), code.end(), c->mem.begin());
+            }
+            expected.flags = native.flags;
+            for (unsigned n = 0; n < 8; ++n)
+                expected.r[n] = native.r[n] = rng();
+            Jit block(native, true, 0, 65536, Jit::BlockMode::FollowJumps);
+            unsigned count = block.run();
+            check(count == (loop ? 64 : length * 2 + 1) && block.nativeInstructions == count,
+                  "joined jump block counts every executed instruction");
+            for (unsigned n = 0; n < count; ++n)
+                expected.step();
+            equal(expected, native);
+        }
+        for (unsigned target : {4096u, 100u}) {
+            CPU expected(65536), native(65536);
+            for (auto c : {&expected, &native}) {
+                c->s[CS].big = true;
+                c->mem[0] = 0xe9;
+                c->write(1, target - 5, 4);
+                c->mem[target] = 0xf4;
+            }
+            Jit block(native, true, 0, 65536, Jit::BlockMode::FollowJumps);
+            check(block.run() == 1 && block.nativeInstructions == 1,
+                  "jump to another page or unsupported target remains terminal");
+            expected.step();
+            equal(expected, native);
+        }
         // Long blocks exercise late flag producers and the maximum native
         // instruction budget with mixed partial/full flag dependencies.
         for (unsigned length : {49u, 50u, 51u, 63u, 64u}) {

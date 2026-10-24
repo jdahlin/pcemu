@@ -4,7 +4,8 @@
 using Hypervisor.framework. Serial command execution and nonvolatile variables
 survive a complete VM teardown and restart. The platform also [boots EFI applications from virtio disks](virtio.md).
 The [Debian ARM64 installer](debian-arm64.md) reaches language selection.
-Installed Linux and Windows OS boot remain work in progress.
+[NVMe storage](nvme.md) boots Windows Validation OS to its administrator command
+prompt. Installed Linux remains work in progress.
 
 Requires Apple Silicon, macOS 15 or newer (for GICv3), the command-line C++ tools,
 and `dtc` on PATH. The existing SDL/x86 emulator remains independent.
@@ -126,7 +127,8 @@ DMA is limited to guest RAM; read-only and out-of-bounds file writes fail withou
 partially changing the file. An invalid descriptor address is a platform error.
 
 There is no TPM or Secure Boot implementation. Secure Boot is not enabled for the
-shell milestone. Windows Validation OS requires additional platform work.
+shell milestone. Windows Validation OS boots with the [NVMe controller](nvme.md); interactive
+input and clean Windows shutdown/restart still need validation.
 
 ## Verification
 
@@ -216,3 +218,7 @@ to that file unless `--disk-overlay` is explicitly supplied. See
 The EL1 debug OS-lock model also accepts Linux's `MSR OSDLR_EL1, XZR` during
 early CPU initialization. OSDLR bit zero is sticky until VM recreation; once
 set it prevents OS-lock changes. This does not add software breakpoint execution.
+
+The original Windows Validation OS VHDX now reaches its administrator command
+prompt with `--disk-controller nvme`; see [NVMe storage](nvme.md) for the
+verified milestone, commands and current limitations.

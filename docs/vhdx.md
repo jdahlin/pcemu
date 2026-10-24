@@ -41,8 +41,8 @@ The same suite passes AddressSanitizer and UndefinedBehaviorSanitizer.
 `make smoke-vhdx` boots real EDK II through Hypervisor.framework, writes a FAT
 file directly into VHDX, and reads it back in a fresh VM. It asserts that no COW
 file was created. The verified fixture has 64 MiB logical capacity and occupies
-6 MiB after the two boots. This validates firmware storage access; Windows
-kernel boot from the original Microsoft VHDX has not yet been validated.
+6 MiB after the two boots. This validates firmware storage access. The original Microsoft VHDX also boots
+Windows Validation OS to its command prompt through [NVMe](nvme.md).
 
 Format reference: Microsoft's
 [MS-VHDX specification](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-vhdx/83e061f8-f6e2-4de1-91bd-5d518a43d477).

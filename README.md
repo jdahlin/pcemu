@@ -14,7 +14,10 @@ UEFI variables across VM instances (`make smoke-uefi`).
 [Virtio PCI/MMIO storage](docs/virtio.md) boots ARM64 EFI applications and
 preserves guest file writes in compressed COW deltas (`make smoke-virtio`).
 The [Debian ARM64 installer](docs/debian-arm64.md) reaches language selection.
-Installed Linux and Windows OS boot remain work in progress.
+[NVMe storage](docs/nvme.md) boots the original Windows 11-based ARM64
+Validation OS VHDX to an administrator command prompt using its inbox driver.
+Installed Linux, interactive ARM64 input and Windows shutdown/restart validation
+remain work in progress.
 
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a
@@ -29,7 +32,7 @@ intermediate raw disks have been removed; original media and saved checkpoints
 are retained. Guest reset requests now have a firmware bootstrap path. A Win95 Restart
 check returned to Explorer in the same process and verified exact Notepad file
 contents after reboot (`build/win95-inline-restart` and `build/rtts-inline-restart`). Full ROM POST is not
-implemented. See [status](docs/GOAL_STATUS.md).
+implemented. See [status](docs/GOAL_STATUS.md) and [clean installer preparation](docs/win95-setup.md).
 
 Office 97 Professional SR-1 now installs on the independent Windows 95 disk.
 Word edits/saves documents and Excel calculates/saves workbooks; both saved files

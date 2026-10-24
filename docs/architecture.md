@@ -35,6 +35,16 @@ initialization is repeated when enabled. Full ROM POST is not implemented.
 `Jit` translates up to 64 x86 register operations, direct branches and guarded
 8/16/32-bit RAM moves into native AArch64.
 Eight guest GPRs stay in w20–w27 throughout a block; x19 holds the CPU state.
+The opt-in `--jit-follow-jumps` mode follows unconditional direct jumps while
+forming a block. The original linear and physical code page limits and total
+64-instruction budget still apply, including repeated backward jumps. Each
+executed jump contributes to the returned guest instruction count. Registers
+and pending flags remain cached across these jumps; conditional branches,
+CALL/RET and counter branches still terminate the block. Unsupported targets
+or failed speculative fetches leave the last jump terminal. Existing memory
+exit descriptors retain the original guest IP and prefix instruction count.
+This is bounded block formation, with no native links between cached blocks.
+Default execution continues to use basic blocks.
 It lowers immediate/register moves, ADD/SUB/AND/OR/XOR, CMP, TEST, NOP,
 short/near JMP and Jcc, LEA, register PUSH/POP, immediate PUSH, and MOV memory
 operands (including moffs), plus read-only memory CMP/TEST forms, with

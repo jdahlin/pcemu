@@ -25,6 +25,7 @@ p.add_argument('--sample', action='store_true', help='macOS sample call stacks d
 p.add_argument('--guest-profile', action='store_true', help='record opcode/dispatch counters with build/pcemu-profile')
 p.add_argument('--gui', action='store_true', help='include the normal SDL frontend rather than headless operation')
 p.add_argument('--sample-wait-ms', type=int, default=3000, help='named guest-side attachment barrier; requires a current emulator (0 for older executables)')
+p.add_argument('--jit-follow-jumps', action='store_true')
 a = p.parse_args()
 if not 1 <= a.repeat <= 100:
     p.error('--repeat must be 1..100')
@@ -74,6 +75,8 @@ for index in range(a.repeat):
         command.append('--no-host-input')
     if a.no_jit:
         command.append('--no-jit')
+    if a.jit_follow_jumps:
+        command.append('--jit-follow-jumps')
     started = time.perf_counter()
     child = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
     sampler = None

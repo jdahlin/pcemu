@@ -19,6 +19,7 @@ parser.add_argument('--disk', type=Path, default=root / 'media/rtts-win95.img')
 parser.add_argument('--timeout', type=float, default=240,
                     help='seconds per desktop/reset wait')
 parser.add_argument('--restart', action='store_true', help='also verify a guest-requested restart')
+parser.add_argument('--jit-follow-jumps', action='store_true')
 args = parser.parse_args()
 if args.timeout <= 0:
     parser.error('timeout must be positive')
@@ -36,6 +37,8 @@ control.touch()
 command = [str(root / 'build/pcemu'), '--headless', '--machine', 'win95',
            '--disk', str(disk), '--ram-mb', '64', '--execute-vgabios', '--steps', '0',
            '--control-file', str(control), '--frame', str(frame), '--state-json', str(state)+'.json']
+if args.jit_follow_jumps:
+    command.append('--jit-follow-jumps')
 with (work / 'guest.log').open('w') as log:
     guest = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
     metadata = {'pid': guest.pid, 'command': command, 'sourceDisk': str(source),

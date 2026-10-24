@@ -2,7 +2,8 @@
 
 `make test-hvf` builds and runs an optional native Apple Silicon backend.
 It runs flat ARM64 code and an [EDK II UEFI platform](arm64-uefi.md) in a hardware
-vCPU, independently of the existing x86 CPU, JIT, PC devices and SDL frontend. It does not yet boot Linux or Windows.
+vCPU, independently of the existing x86 CPU, JIT, PC devices and SDL frontend. The UEFI platform boots the Debian installer and [Windows Validation OS](nvme.md)
+to its administrator command prompt using NVMe.
 Windows 3.11/95 remain on the legacy x86 platform.
 
 ```

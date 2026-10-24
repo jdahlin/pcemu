@@ -215,6 +215,7 @@ int main(int argc, char **argv) {
             else if (arg == "--serial-stdio") { serialStdio = true; uefiOptions = true; }
             else if (arg == "--run-forever") { runForever = true; uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--disk-controller") { uefi.diskController = value(); uefiOptions = true; }
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
             else if (arg == "--acpi-dir") { uefi.acpiDirectory = value(); uefiOptions = true; }
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
@@ -241,13 +242,13 @@ int main(int argc, char **argv) {
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
-                             "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --virtio-transport pci|mmio]\n"
+                             "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--network user|none --ssh-port PORT --network-capture PCAP]\n"
                              "      [--serial-stdio --run-forever] (Ctrl-] exits serial mode)\n"
-                             "Run make firmware-arm64 first; Debian installer boot is supported.\n";
+                             "Run make firmware-arm64 first; use NVMe for Windows Validation OS.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
         }

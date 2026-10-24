@@ -13,8 +13,10 @@ struct DecodedBlock;
 // instructions outside the supported lowering set use the reference interpreter.
 class Jit {
   public:
+    enum class BlockMode { Basic, FollowJumps };
     explicit Jit(CPU &cpu, bool enabled = true, unsigned warmup = 8,
-                 size_t arenaBytes = 16 * 1024 * 1024);
+                 size_t arenaBytes = 16 * 1024 * 1024,
+                 BlockMode mode = BlockMode::Basic);
     ~Jit();
     Jit(const Jit &) = delete;
     Jit &operator=(const Jit &) = delete;
@@ -47,6 +49,7 @@ class Jit {
     size_t used = 0, capacity = 16 * 1024 * 1024;
     bool active = false;
     unsigned warmup;
+    BlockMode blockMode;
     std::unordered_map<uint64_t, Block> blocks;
     struct FastEntry {
         uint64_t key = 0;

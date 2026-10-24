@@ -640,6 +640,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     emit(0xa8c77bfdu);
     emit(0xd65f03c0u); // ldp x29,x30,[sp],#112; ret
     size_t bytes = code.size() * 4;
+    if (bytes > capacity)
+        return block; // Never copy an oversized block beyond the executable arena.
     if (used + bytes > capacity) {
         blocks.clear();
         cacheRecycles++;
