@@ -58,3 +58,18 @@ The current ARM platform now publishes minimal ACPI and GOP, and exposes the
 framework PMU needed by this loader. The loader-only probe reaches Windows Boot
 Manager's missing-BCD status `0xc000000f`; this is not a Windows OS boot. See
 [the optional loader smoke check](arm64-uefi.md#framework-pmu-and-windows-loader-check).
+
+## Booting the original distribution without OS changes
+
+The official ARM64 ISO is a distribution container: inspection found no El Torito
+boot catalog and zero ISO boot records. It cannot be booted directly as an EFI
+DVD. In addition to the WIM it contains `/ValidationOS.vhdx` (1,010,827,264 bytes),
+which was discovered by inspecting the complete root directory.
+
+Read-only HTTP-range inspection of that VHDX found a 32 GiB dynamic virtual disk
+with GPT, an EFI system partition at LBAs 264192–342015, and a FAT32 filesystem
+containing `\EFI\BOOT\BOOTAA64.EFI` (3,120,648 bytes). The original VHDX is thus
+the preferred next input for booting the preinstalled system without rebuilding
+boot media or modifying Windows. Its kernel boot has not been tested; the current
+Disk backend still needs VHDX support. No full ISO or VHDX was downloaded during
+this inspection, and the original WIM has not been modified.
