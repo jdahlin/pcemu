@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 
-def verify(report, build='26300'):
+def verify(report, build='26300', user='PCEmu'):
     errors = []
     def require(condition, explanation):
         if not condition:
@@ -24,6 +24,7 @@ def verify(report, build='26300'):
     for field in ('device', 'osdevice'):
         require(re.search(r'^' + field + r'\s+partition=C:\s*$', report, re.M | re.I), f'BCD {field} does not identify the installed partition')
     require(re.search(r'^path\s+\\Windows\\system32\\winload\.efi\s*$', report, re.M | re.I), 'Missing installed EFI OS loader')
+    require(re.search(r'^PCEMU_FIRST_LOGON=' + re.escape(user) + r'\s*$', report, re.M | re.I), 'Local test account has not logged on')
     devices = {}
     blocks = re.split(r'\r?\n\s*\r?\n', report)
     for identifier, name in (('1042', 'storage'), ('1041', 'network'), ('1044', 'rng')):
@@ -41,19 +42,20 @@ def verify(report, build='26300'):
     require('PCEMU_VIRTIO_RNG_PROVIDER_OK bytes=128' in report, 'Explicit VirtIO CNG provider I/O is unverified')
     require(re.search(r'^RNG_CHECK_RC=0\s*$', report, re.M), 'RNG checker did not succeed')
     require('PCEMU_VIRTIO_RNG_PROVIDER_FAILED' not in report, 'RNG provider failure is present')
-    return {'verified': not errors, 'expectedBuild': build, 'devices': devices, 'errors': errors}
+    return {'verified': not errors, 'expectedBuild': build, 'expectedUser': user, 'devices': devices, 'errors': errors}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
     parser.add_argument('--build', default='26300')
+    parser.add_argument('--user', default='PCEmu')
     args = parser.parse_args()
     if args.report.stat().st_size > 8 * 1024 * 1024:
         parser.error('Expected a bounded diagnostic report')
     raw = args.report.read_bytes()
     report = raw.decode('utf-16' if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else 'utf-8')
-    result = verify(report, args.build)
+    result = verify(report, args.build, args.user)
     result.update(report=str(args.report.resolve()), sha256=hashlib.sha256(raw).hexdigest())
     print(json.dumps(result, indent=2))
     return 0 if result['verified'] else 1

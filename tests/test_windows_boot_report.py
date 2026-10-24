@@ -10,6 +10,7 @@ def complete_report():
     report = '''PCEMU_INSTALLED_WINDOWS_BOOT
 Microsoft Windows [Version 10.0.26300.9457]
 SYSTEMDRIVE=C:
+PCEMU_FIRST_LOGON=PCEmu
 CurrentBuildNumber    REG_SZ    26300
 device                  partition=C:
 path                    \\Windows\\system32\\winload.efi
@@ -35,6 +36,7 @@ class BootReportTest(unittest.TestCase):
             ('PCEMU_INSTALLED_WINDOWS_BOOT', ''),
             ('PCEMU_INSTALLED_WINDOWS_REPORT_END', ''),
             ('26300', '26100'),
+            ('PCEMU_FIRST_LOGON=PCEmu', ''),
             ('SYSTEMDRIVE=C:', 'SYSTEMDRIVE=X:'),
             ('partition=C:', 'ramdisk=[boot]\\sources\\boot.wim'),
             ('Status: Started', 'Status: Problem\nProblem Code: 10'),

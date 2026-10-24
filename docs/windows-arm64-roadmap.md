@@ -320,3 +320,31 @@ ambiguous devices, device problems, failed I/O and truncated reports. Original
 fixtures cover those failures. This gate covers the guest report; host disk
 placement, source-media identity and the actual VM launch configuration remain
 separate completion-audit evidence. No installed guest has passed it yet.
+
+Deployment completed successfully in
+`reports/report-1792878866107369000.log`: DISM reached 100%, all six storage/system
+VirtIO packages plus NetKVM were injected, and bcdboot reported success. The
+installation VM was then stopped before any follow-up attached its target.
+Its host summary counted 280878 target-disk requests and 5576000 received network
+frames. The installed image is Windows 11 Pro 10.0.26300.9457; installed boot and
+user logon remain separate, unproven milestones.
+
+`tools/prepare_windows_account.py` generates a private answer file for a local
+PCEmu administrator account, preserving the specialize diagnostics. Its random
+password is retained only in ignored `media/windows11-arm64/local-account.json`
+(mode 0600); the generated answer file is also mode 0600 and ignored. Neither
+is printed or committed. The account has one automatic logon; FIRSTLOGON.CMD
+then disables automatic logon and removes the Winlogon password value. Regional
+settings match the English source media, online-account screens are hidden and
+Express settings are declined. It uses the documented OOBE settings rather than
+SkipMachineOOBE ([Microsoft reference](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/automate-oobe?view=windows-11)).
+
+The finalization pass copies this private answer file, the RNG checker and the
+updated scripts. A background first-logon script records the actual user and
+requests a screenshot after Explorer starts, using inbox Windows PowerShell and
+System.Drawing. The guest posts the screenshot and a separate result log to the
+same loopback endpoint. The boot-report verifier additionally requires the local
+account's first-logon marker. Account-generation tests cover escaping, preserved
+specialize settings, one logon, private/exclusive writes and invalid account
+names. Actual account provisioning, desktop rendering and CNG behavior still
+require the first installed-system run; they are not implied by those tests.

@@ -15,6 +15,12 @@ copy X:\PCEMU\RNG.EXE W:\PCEMU\RNG.EXE
 if errorlevel 1 goto fail
 copy X:\PCEMU\FIRSTBOOT.CMD W:\PCEMU\FIRSTBOOT.CMD
 if errorlevel 1 goto fail
+copy X:\PCEMU\FIRSTLOGON.CMD W:\PCEMU\FIRSTLOGON.CMD
+if errorlevel 1 goto fail
+copy X:\PCEMU\CAPTURE-DESKTOP.PS1 W:\PCEMU\CAPTURE-DESKTOP.PS1
+if errorlevel 1 goto fail
+copy X:\PCEMU\ACCOUNT-UNATTEND.XML W:\Windows\Panther\Unattend.xml
+if errorlevel 1 goto fail
 bcdboot W:\Windows /s S: /f UEFI
 if errorlevel 1 goto fail
 if not exist S:\EFI\Boot mkdir S:\EFI\Boot
