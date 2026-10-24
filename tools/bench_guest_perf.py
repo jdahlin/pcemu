@@ -81,20 +81,25 @@ if args.suite == 'coremark':
           + ('>=10s upstream validation passed' if data['publishedScoreEligible'] else
              'short diagnostic, not a publishable CoreMark score'))
 else:
-    if not data['microValidated'] or len(data['samples']) != 24:
+    if not data['microValidated'] or len(data['samples']) != 28:
         raise RuntimeError('Microbenchmark matrix was not validated')
-    names = ['alu', 'memory-update', 'branch', 'call-ret', 'rep-copy', 'loop-counter']
+    names = ['alu', 'memory-update', 'branch', 'call-ret', 'rep-copy', 'loop-counter', 'byte-exchange']
     for row in data['samples']:
         index = row['case'] - (16 if row['case'] < 32 else 32)
         row['name'] = names[index]
         row['operandBits'] = 16 if row['case'] < 32 else 32
+        row['codeBits'] = row['operandBits']
+        if row['case'] in (22, 38):
+            row['operandBits'] = 8
+            row['accumulatorBits'] = 16
+            row['counterBits'] = 32
         row['cache'] = 'cold' if row['jitClearedBefore'] else 'warm'
         row['workUnits'] = [16 * args.loops, 8 * args.loops, args.loops, 4 * args.loops,
                             max(1, args.loops // 64) *
-                            (128 if row['operandBits'] == 16 else 256), args.loops][index]
-        row['workUnit'] = ['additions', 'updates', 'iterations', 'calls', 'bytes', 'iterations'][index]
+                            (128 if row['operandBits'] == 16 else 256), args.loops, 2 * args.loops][index]
+        row['workUnit'] = ['additions', 'updates', 'iterations', 'calls', 'bytes', 'iterations', 'exchanges'][index]
         row['unitsPerHostSecond'] = row['workUnits'] / row['hostSeconds']
-    print('PASS: 24 cold/warm 16/32-bit microbenchmark intervals, every checksum checked; returned to DOS')
+    print('PASS: 28 cold/warm 16/32-bit microbenchmark intervals, every checksum checked; returned to DOS')
 result.write_text(json.dumps(data, indent=2) + '\n')
 print(f'Evidence: {work}')
 disk.unlink()  # Only this private compressed child; original media is unchanged.

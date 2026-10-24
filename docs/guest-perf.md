@@ -107,8 +107,8 @@ python3 tools/bench_guest_perf.py --suite micro --loops 17 --output build/micro-
 make smoke-guest-perf
 ```
 
-There are six kernels in real mode with 16-bit operands, then the corresponding
-six kernels in flat 32-bit protected mode. Both use the original DOS COM loader
+There are seven kernels in real mode with 16-bit operands, then the corresponding
+seven kernels in flat 32-bit protected mode. Both use the original DOS COM loader
 and return through DOS. The real-mode version uses 386 32-bit outer counters;
 it is not an 8086-compatible benchmark. `--loops` defaults to one million and
 accepts 1..10 million without rebuilding the COM image.
@@ -121,6 +121,7 @@ accepts 1..10 million without rebuilding the COM image.
 | 19 / 35 | Four genuine near CALL/RET pairs | 4 × loops calls |
 | 20 / 36 | REP MOVSW/MOVSD of 64 elements | max(1, loops/64) × 128/256 bytes |
 | 21 / 37 | One addition and a backward LOOP using ECX | loops iterations |
+| 22 / 38 | Two AL/AH exchanges with intervening word addition | 2 × loops exchanges |
 
 Each kernel runs twice at the same guest addresses. The first pass explicitly
 clears the JIT after the current dispatch returns; the second retains the code
@@ -132,7 +133,7 @@ outside the measured intervals. Fixed bookkeeping around the loop remains timed.
 
 Every pass reports a checksum through E5. The host calculates the expected value
 independently from the loop count, operand width and data pattern. Missing or
-wrong results fail the run. The runner requires all twenty-four intervals, the
+wrong results fail the run. The runner requires all twenty-eight intervals, the
 expected cold/warm ordering, and identical guest instruction counts for each
 pair. JSON reports work units/host-second, mode, checksum, JIT/native counts and
 translation counts. Do not average different units into an overall score.
@@ -204,7 +205,7 @@ that wrap past 64 KiB. LOOPE and LOOPNE remain interpreted.
 Microkernel IDs 21/37 exercise the native LOOP path with a checksum of
 `3 * loops` modulo the accumulator width. Both use ECX, including an address-size
 prefix in the real-mode kernel, so the default million-iteration run does not
-silently truncate the count to 16 bits. The complete suite now has 24 intervals.
+silently truncate the count to 16 bits. At that stage the complete suite had 24 intervals.
 
 Validation evidence: `build/guest-micro-native-loop{,-ref}/result.json` uses the
 same COM bytes across both engines, with all 24 checksums and architectural
@@ -275,3 +276,41 @@ checker dismisses the clock/display dialogs; its unrecognized DHCP warning was
 closed with guest Tab/Enter selecting No. This verifies the cold boot but is not
 an unattended-helper pass. The private compressed disk was removed on success;
 the original image was only used as its read-only parent.
+
+## Register exchanges
+
+The memory-extension profiles still counted 288,046 register-byte XCHG attempts
+in Word and 66,566 in Excel. Register XCHG now runs natively for byte, word and
+dword operands, including the accumulator short forms. Both old operands are
+captured before either destination is changed, so AL/AH aliases and self-exchange
+preserve every unaffected bit. Guest flags do not change. Memory XCHG remains
+interpreted; no memory atomic-operation semantics are added by this change.
+
+The byte differential suite checks all ModR/M register combinations, code sizes,
+operand overrides, self-aliases and accumulator encodings. A later segment fault
+also verifies both exchanged registers and the preceding arithmetic flags.
+
+Guest microkernels 22/38 execute `XCHG AL,AH; ADD AX,1; XCHG AL,AH` followed by a
+32-bit-count LOOP. The addition prevents a pair of skipped exchanges from
+producing the intended result in general. The checksum is the low 16 bits of
+the iteration count with its bytes exchanged, computed independently by the
+host. Both execution modes use byte exchanges and a word accumulator. JSON records
+`codeBits` separately from `operandBits` (8), `accumulatorBits` (16), and
+`counterBits` (32) for this kernel. The suite now has 28 intervals.
+
+Validation: `build/register-xchg-tests.log` records the full unit pass, including
+1,271,327 byte-JIT checks. The final odd-count guest smoke is
+`build/guest-perf-smoke-8nq656hw/result.json` (56 intervals across both engines,
+plus CoreMark CRCs and intentional wrong-result rejection). Million-loop results
+in `build/register-xchg-byte-{jit,ref}/result.json` match every checksum and
+architectural instruction count. Each warm exchange sample executes all four
+million loop instructions natively. Observed times of roughly 12–13 ms versus
+76–79 ms interpreted are single diagnostic runs, not a repeated performance
+comparison or an application speedup.
+
+Win3.11 exact file saving passes (`build/register-xchg-win311.log`). Updated
+Word/Excel profiles reach the recorded pixels at
+`build/register-xchg-{word,excel}-profile/`. Both original-rtts and installed-OSR2
+cold boots and guest restarts pass with private disk removal:
+`build/win95-smoke-nryolhk7/result.json` and
+`build/win95-smoke-9pt0r57b/result.json` respectively.

@@ -44,6 +44,15 @@ micro16:
     a32 loop .loop_counter
     MICRO_END16
     MICRO_REPORT16 21
+    MICRO_START16 22
+    xor eax,eax
+.loop_exchange:
+    xchg al,ah
+    add ax,1
+    xchg al,ah
+    a32 loop .loop_exchange
+    MICRO_END16
+    MICRO_REPORT16 22
     pop es
     cld
     MICRO_START16 16

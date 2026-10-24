@@ -117,6 +117,15 @@ micro32:
     loop .loop_counter
     MICRO_END32
     MICRO_REPORT32 37
+    MICRO_START32 38
+    xor eax,eax
+.loop_exchange:
+    xchg al,ah
+    add ax,1
+    xchg al,ah
+    loop .loop_exchange
+    MICRO_END32
+    MICRO_REPORT32 38
     pop ebp
     pop edi
     pop esi

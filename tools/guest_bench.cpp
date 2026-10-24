@@ -42,6 +42,9 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
         return uint32_t(64ull * 0x5a5a5a5a);
     case 37:
         return loops * 3u;
+    case 22:
+    case 38:
+        return ((loops & 255) << 8) | ((loops >> 8) & 255);
     default:
         throw std::runtime_error("Unknown microbenchmark case");
     }
@@ -198,7 +201,7 @@ int main(int argc, char **argv) {
         const bool micro =
             std::any_of(samples.begin(), samples.end(), [](const Sample &s) { return s.id != 1; });
         if (micro) {
-            for (unsigned id : {16u, 17u, 18u, 19u, 20u, 21u, 32u, 33u, 34u, 35u, 36u, 37u}) {
+            for (unsigned id : {16u, 17u, 18u, 19u, 20u, 21u, 22u, 32u, 33u, 34u, 35u, 36u, 37u, 38u}) {
                 unsigned count = 0;
                 uint64_t firstInstructions = 0;
                 for (const auto &s : samples)

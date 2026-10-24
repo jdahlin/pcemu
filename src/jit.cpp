@@ -357,6 +357,20 @@ Jit::Block Jit::compile(bool translate) {
                 i.dst = op & 7;
                 i.immediate = true;
                 i.imm = immediate(i.w);
+            } else if (op == 0x86 || op == 0x87) {
+                auto m = byte();
+                if ((m >> 6) != 3) {
+                    pos = begin;
+                    break;
+                }
+                i.kind = 8;
+                i.w = op == 0x86 ? 1 : w;
+                i.dst = m & 7;
+                i.src = (m >> 3) & 7;
+            } else if (op >= 0x91 && op <= 0x97) {
+                i.kind = 8;
+                i.dst = AX;
+                i.src = op & 7;
             } else if (op >= 0x88 && op <= 0x8b) {
                 i.w = (op & 1) ? w : 1;
                 auto m = byte();
@@ -528,7 +542,7 @@ Jit::Block Jit::compile(bool translate) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= 2 || i.kind == 5)) {
+            if (i.w == 1 && (i.kind <= 2 || i.kind == 5 || i.kind == 8)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != 5) {
@@ -702,6 +716,16 @@ Jit::Block Jit::compile(bool translate) {
         auto i = ir[n];
         if (i.kind == 3 || i.kind == 4)
             continue;
+        if (i.kind == 8) {
+            // Capture both operands before either insert: AL/AH and other
+            // partial-register aliases can share the same cached host GPR.
+            extract(11, 20 + i.dst, i.w, i.dstShift);
+            extract(12, 20 + i.src, i.w, i.srcShift);
+            insert(20 + i.dst, 12, i.w, i.dstShift);
+            insert(20 + i.src, 11, i.w, i.srcShift);
+            dirtyRegisters |= (1u << i.dst) | (1u << i.src);
+            continue;
+        }
         if (i.kind == 7) {
             extract(11, 20 + CX, i.w, 0);
             if (i.op == 0xe2) {

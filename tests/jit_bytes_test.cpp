@@ -56,10 +56,19 @@ int main() {
         };
         for (unsigned mode = 0; mode < 4; mode++)
             for (uint8_t op : {0x88, 0x8a, 0x00, 0x02, 0x08, 0x0a, 0x20, 0x22, 0x28, 0x2a, 0x30,
-                               0x32, 0x38, 0x3a, 0x84})
+                               0x32, 0x38, 0x3a, 0x84, 0x86})
                 for (unsigned dst = 0; dst < 8; dst++)
                     for (unsigned src = 0; src < 8; src++)
                         run({op, uint8_t(0xc0 | (src << 3) | dst)}, mode);
+        for (unsigned mode = 0; mode < 4; ++mode) {
+            for (unsigned dst = 0; dst < 8; ++dst)
+                for (unsigned src = 0; src < 8; ++src)
+                    for (unsigned repeat = 0; repeat < 16; ++repeat)
+                        run({0x87, uint8_t(0xc0 | (src << 3) | dst)}, mode);
+            for (unsigned reg = 0; reg < 8; ++reg)
+                for (unsigned repeat = 0; repeat < 16; ++repeat)
+                    run({uint8_t(0x90 | reg)}, mode);
+        }
         for (unsigned dst = 0; dst < 8; dst++)
             for (unsigned value = 0; value < 256; value++)
                 run({uint8_t(0xb0 | dst), uint8_t(value)}, value & 3);
@@ -242,6 +251,39 @@ int main() {
                                         check(native.r[reg] == ref.r[reg],
                                               "MOVZX/MOVSX preserve aliases, sign bits and upper words");
                                 }
+        {
+            CPU expected(65536), actual(65536);
+            const uint8_t code[] = {0xb8, 0xff, 0xff, 0xff, 0x7f, 0xbb, 0xab, 0x56, 0x34, 0x12,
+                                    0x83, 0xc0, 1, 0x86, 0xdc, 0x64, 0x8b, 0x0d, 0, 0, 0, 0};
+            struct Stop {};
+            unsigned faults = 0;
+            for (auto c : {&expected, &actual}) {
+                c->cr[0] = 0x11;
+                c->s[CS].big = true;
+                c->s[FS].unusable = true;
+                std::copy(std::begin(code), std::end(code), c->mem.begin());
+                c->observeFault = [&, c](const Fault &f) {
+                    ++faults;
+                    check(f.vector == 13 && c->ip == 15 && c->r[AX] == 0x8000ab00 &&
+                              c->r[BX] == 0x12345600 && (c->flags & (OF | SF)) == (OF | SF),
+                          "fault after XCHG publishes both swapped GPRs and prior arithmetic flags");
+                    throw Stop{};
+                };
+            }
+            try {
+                for (unsigned n = 0; n < 5; ++n)
+                    expected.step();
+            } catch (const Stop &) {
+            }
+            Jit exchanged(actual, true, 0);
+            try {
+                exchanged.run();
+            } catch (const Stop &) {
+            }
+            check(faults == 2 && exchanged.nativeInstructions == 4 &&
+                      actual.instructions == expected.instructions && actual.flags == expected.flags,
+                  "XCHG effects and following fault replay exactly match interpreter state");
+        }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
     } catch (const std::exception &error) {
