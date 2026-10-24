@@ -126,7 +126,7 @@ static double benchMemory(bool enabled, uint64_t target, bool paging) {
 int main(int argc, char **argv) {
     std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
-    bool ramExplicit = false, noJit = false, listMachines = false;
+    bool ramExplicit = false, noJit = false, listMachines = false, followJumps = false;
     std::string machineId = "pc-legacy", backendId = "auto";
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = false, memoryBenchmark = false, enableNetwork = true, enableHostInput = true;
@@ -185,6 +185,8 @@ int main(int argc, char **argv) {
                 fromFloppy = true;
             else if (arg == "--headless")
                 headless = true;
+            else if (arg == "--jit-follow-jumps")
+                followJumps = true;
             else if (arg == "--no-jit")
                 noJit = true;
             else if (arg == "--verbose")
@@ -216,6 +218,7 @@ int main(int argc, char **argv) {
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --jit-follow-jumps (experimental bounded same-page blocks)\n"
                              "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
                              "  --load-snapshot DIRECTORY (private writable disk clone)\n"
                              "  --no-network (disconnect host socket gateway)\n"
@@ -309,7 +312,8 @@ int main(int argc, char **argv) {
         }
         if (snapshotPath.empty())
             m.boot(fromFloppy);
-        Jit jit(c, enableJit);
+        Jit jit(c, enableJit, 8, 16 * 1024 * 1024,
+                followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
         std::ofstream trace;
         if (!tracePath.empty() && !afterBreak)
             trace.open(tracePath);

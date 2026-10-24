@@ -54,7 +54,7 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
 int main(int argc, char **argv) {
     try {
         std::string disk, output;
-        bool native = true, profiled = false;
+        bool native = true, profiled = false, followJumps = false;
 #ifdef PCEMU_PROFILE
         profiled = true; // Instrumented binaries must never produce benchmark scores.
 #endif
@@ -76,6 +76,8 @@ int main(int argc, char **argv) {
                 loops = std::stoul(value());
             else if (arg == "--no-jit")
                 native = false;
+            else if (arg == "--jit-follow-jumps")
+                followJumps = true;
             else if (arg == "--guest-profile") {
 #ifdef PCEMU_PROFILE
                 profiled = true;
@@ -91,7 +93,8 @@ int main(int argc, char **argv) {
                                      "[--no-jit] [--timeout SECONDS]");
         Machine m(disk, "", 16 * 1024 * 1024);
         auto &c = m.cpu;
-        Jit jit(c, native);
+        Jit jit(c, native, 8, 16 * 1024 * 1024,
+                followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
         const auto processStart = Clock::now();
         Clock::time_point start;
         std::vector<Sample> samples;
@@ -251,7 +254,8 @@ int main(int argc, char **argv) {
             throw std::runtime_error("Cannot write results");
         result << "{\"scope\":\"actual minimal DOS boot, original protected-mode loader, host "
                   "monotonic wall time, no SDL\",\"jit\":"
-               << (native ? "true" : "false") << ",\"profiled\":"
+               << (native ? "true" : "false") << ",\"followJumps\":"
+               << (followJumps ? "true" : "false") << ",\"profiled\":"
                << (profiled ? "true" : "false") << ",\"returnedToDos\":true,\"crcValidated\":"
                << (coremark && crc ? "true" : "false")
                << ",\"microValidated\":" << (micro ? "true" : "false") << ",\"loops\":" << loops

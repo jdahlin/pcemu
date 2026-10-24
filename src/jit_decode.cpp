@@ -389,6 +389,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.end = i.nearCall ? i.target : pos;
             }
             ir.push_back(i);
+            if (i.kind == Kind::Branch && i.dst < 0 && blockMode == BlockMode::FollowJumps) {
+                // The next byte fetch enforces the original linear/physical page
+                // guard. Failed speculative decoding leaves this jump terminal;
+                // its architectural target remains in i.imm.
+                pos = i.imm;
+                continue;
+            }
             if (i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn)
                 break;
         } catch (int) {

@@ -3,6 +3,8 @@
 ```sh
 python3 tools/bench_guest_perf.py --output build/coremark-jit
 python3 tools/bench_guest_perf.py --no-jit --output build/coremark-interpreter
+# Opt-in same-page unconditional jump stitching (recorded as followJumps):
+python3 tools/bench_guest_perf.py --jit-follow-jumps --output build/coremark-joined
 # Fast checksum/replay diagnostics, not reportable CoreMark scores:
 python3 tools/bench_guest_perf.py --iterations 10 --output build/coremark-quick
 ```

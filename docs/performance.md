@@ -640,3 +640,45 @@ percentage points of total coverage. Resident code grows from 700,848 to
 702,464 bytes. With no demonstrated benefit, the implementation and its
 feature-dependent tests were removed. The committed JIT remains the modular
 baseline; this experiment is not a shipped optimization.
+
+
+### Bounded same-page jump stitching (2026-10-24, opt-in)
+
+`--jit-follow-jumps` keeps GPRs and pending flags in one generated block across
+unconditional direct jumps. Formation remains limited to one linear/physical
+page and 64 executed guest instructions, including backward jumps. Conditional
+branches still terminate blocks. Default execution remains in basic-block mode.
+
+Three alternating mode comparisons used one frozen runner binary (SHA-256
+`5766d0254b91a01dd202afc46c406ae03cf7967e7fd2a744edd120f07a488bdf`), the
+same 10,000-iteration program, valid upstream CRCs, and successful DOS return:
+
+| Pair | Basic seconds | Joined seconds | Basic / joined |
+| --- | ---: | ---: | ---: |
+| 1 | 15.337071 | 14.568708 | 1.05274 |
+| 2 | 20.840752 | 17.179828 | 1.21309 |
+| 3 | 16.346379 | 14.912445 | 1.09616 |
+
+The median paired ratio is 1.09616, an observed 9.6% throughput improvement.
+The wide range and host timing variation limit the precision of this estimate;
+it is not a general application or Rosetta comparison. Raw results, program
+hashes, load averages and runner hashes remain in
+`build/joined-jumps-comparison/`. Guest instructions match at 3,975,092,643;
+native instructions increase from 3,728,178,916 to 3,758,905,372. Arena occupancy
+grows from 700,848 to 758,512 bytes (8.2%).
+
+Separate diagnostic 1,000-iteration profiles execute the same 397,509,732 guest
+instructions. Dispatches/device polls fall from 101,971,099 to 97,379,695 (4.5%);
+native calls fall from 77,271,050 to 75,752,046 (2.0%), and interpreted attempts
+fall from 24,700,049 to 21,627,649. These profiles explain the boundary reduction;
+their timings are excluded from the performance comparison.
+
+The full unit suite passes; the final 60,502 flag checks cover joined forward
+and backward jumps in 16/32-bit code, the instruction budget, terminal targets,
+precise faults and code-changing stores. All 28 DOS microkernel intervals pass.
+Opt-in compatibility checks pass Win3.11 Notepad exact-file verification, rtts
+Win95 and installed OSR2 cold boot/restart, and Word/Excel snapshot task pixels.
+This does not rerun either Windows installer. Evidence and source hashes are
+listed in `build/joined-jumps-validation.json`; successful private disks were
+removed. `smoke_win311.py`, `smoke_win95.py` and `bench_snapshot_task.py` accept
+`--jit-follow-jumps` to reproduce these checks.

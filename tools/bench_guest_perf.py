@@ -19,6 +19,8 @@ parser.add_argument('--loops', type=int, default=1000000)
 parser.add_argument('--iterations', type=int, default=0,
                     help='0: upstream automatic >=10s run; short fixed counts are diagnostic only')
 parser.add_argument('--no-jit', action='store_true')
+parser.add_argument('--jit-follow-jumps', action='store_true',
+                    help='experimental bounded same-page unconditional jump stitching')
 parser.add_argument('--guest-profile', action='store_true',
                     help='diagnostic opcode/dispatch counters per interval; timings are not benchmark scores')
 parser.add_argument('--timeout', type=int, default=180)
@@ -29,6 +31,8 @@ if not 1 <= args.loops <= 10000000:
     parser.error('loops must be 1..10000000')
 if not 0 <= args.iterations <= 0x7fffffff:
     parser.error('iterations outside signed 32-bit range')
+if args.jit_follow_jumps and args.no_jit:
+    parser.error('--jit-follow-jumps requires JIT execution')
 if args.timeout <= 0:
     parser.error('timeout must be positive')
 default_target = 'build/guest-bench-profile' if args.guest_profile else 'build/guest-bench'
@@ -72,12 +76,16 @@ command = [str(runner), '--disk', str(disk), '--output', str(result),
            '--timeout', str(args.timeout), '--loops', str(args.loops)]
 if args.no_jit:
     command.append('--no-jit')
+if args.jit_follow_jumps:
+    command.append('--jit-follow-jumps')
 if args.guest_profile:
     command.append('--guest-profile')
 with (work / 'run.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                    check=True, timeout=args.timeout + 10)
 data = json.loads(result.read_text())
+if bool(data.get('followJumps', False)) != args.jit_follow_jumps:
+    raise RuntimeError('Runner jump stitching mode does not match requested mode')
 if bool(data.get('profiled')) != args.guest_profile:
     raise RuntimeError('Runner profiling mode does not match requested mode')
 if args.guest_profile:
