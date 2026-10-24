@@ -208,6 +208,40 @@ int main() {
                                             check(native.r[reg] == ref.r[reg],
                                                   "LOOP/JCXZ preserve independent CX/ECX counter width");
                                     }
+        for (bool code32 : {false, true})
+            for (bool operandOverride : {false, true})
+                for (unsigned extended : {0xb6u, 0xb7u, 0xbeu, 0xbfu})
+                    for (unsigned dst = 0; dst < 8; ++dst)
+                        for (unsigned src = 0; src < 8; ++src)
+                            for (uint32_t value : {0u, 0x7f7fu, 0x8080u, 0xffffu,
+                                                   0x7fffu, 0x8000u, 0x12345678u})
+                                for (unsigned cc = 0; cc < 16; ++cc) {
+                                    std::vector<uint8_t> code = {0x83, 0xc3, 1};
+                                    if (operandOverride)
+                                        code.push_back(0x66);
+                                    code.insert(code.end(), {0x0f, uint8_t(extended),
+                                                            uint8_t(0xc0 | (dst << 3) | src),
+                                                            uint8_t(0x70 | cc), 0x10});
+                                    for (auto c : {&ref, &native}) {
+                                        c->s[CS].big = code32;
+                                        c->ip = 0;
+                                        c->instructions = 0;
+                                        c->flags = 0x8d7;
+                                        for (unsigned reg = 0; reg < 8; ++reg)
+                                            c->r[reg] = value | 0xabcd0000u;
+                                        for (unsigned n = 0; n < code.size(); ++n)
+                                            c->write(n, code[n], 1);
+                                    }
+                                    ref.step();
+                                    ref.step();
+                                    ref.step();
+                                    check(jit.run() == 3 && native.ip == ref.ip &&
+                                              native.flags == ref.flags,
+                                          "MOVZX/MOVSX preserve flags used by subsequent Jcc");
+                                    for (unsigned reg = 0; reg < 8; ++reg)
+                                        check(native.r[reg] == ref.r[reg],
+                                              "MOVZX/MOVSX preserve aliases, sign bits and upper words");
+                                }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
     } catch (const std::exception &error) {

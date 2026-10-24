@@ -219,6 +219,8 @@ Jit::Block Jit::compile(bool translate) {
         uint32_t imm, end;
         bool immediate;
         bool compareMemory = false, reverse = false, nearCall = false, nearReturn = false;
+        unsigned sourceWidth = 0;
+        bool signedSource = false;
         uint32_t target = 0;
         NativeMemoryMove memory;
     };
@@ -483,18 +485,37 @@ Jit::Block Jit::compile(bool translate) {
                 i.w = address32 ? 4 : 2;
             } else if (op == 0x90) {
                 i.kind = 3;
-            } else if (op == 0xeb || op == 0xe9 || (op >= 0x70 && op <= 0x7f) || op == 0x0f) {
-                int displacementWidth = op == 0xe9 ? w : 1;
-                i.dst = -1;
-                if (op == 0x0f) {
-                    auto extended = byte();
-                    if (extended < 0x80 || extended > 0x8f) {
+            } else if (op == 0x0f) {
+                auto extended = byte();
+                if (extended == 0xb6 || extended == 0xb7 || extended == 0xbe || extended == 0xbf) {
+                    auto m = byte();
+                    if ((m >> 6) != 3) {
                         pos = begin;
                         break;
                     }
+                    i.kind = 0;
+                    i.dst = (m >> 3) & 7;
+                    i.src = m & 7;
+                    i.sourceWidth = (extended & 1) ? 2 : 1;
+                    i.signedSource = extended & 8;
+                    if (i.sourceWidth == 1) {
+                        i.srcShift = (i.src & 4) ? 8 : 0;
+                        i.src &= 3;
+                    }
+                } else if (extended >= 0x80 && extended <= 0x8f) {
+                    auto raw = immediate(w);
+                    auto displacement = w == 2 ? int32_t(int16_t(raw)) : int32_t(raw);
+                    i.kind = 4;
                     i.dst = extended & 15;
-                    displacementWidth = w;
-                } else if (op >= 0x70 && op <= 0x7f)
+                    i.imm = (pos + displacement) & (w == 4 ? UINT32_MAX : 65535u);
+                } else {
+                    pos = begin;
+                    break;
+                }
+            } else if (op == 0xeb || op == 0xe9 || (op >= 0x70 && op <= 0x7f)) {
+                int displacementWidth = op == 0xe9 ? w : 1;
+                i.dst = -1;
+                if (op >= 0x70 && op <= 0x7f)
                     i.dst = op & 15;
                 auto raw = immediate(displacementWidth);
                 int32_t displacement = displacementWidth == 1   ? int8_t(raw)
@@ -939,7 +960,9 @@ Jit::Block Jit::compile(bool translate) {
         if (i.immediate)
             imm(12, i.imm & (i.w == 1 ? 255 : i.w == 2 ? 65535 : 0xffffffff));
         else {
-            extract(12, 20 + i.src, i.w, i.srcShift);
+            extract(12, 20 + i.src, i.sourceWidth ? i.sourceWidth : i.w, i.srcShift);
+            if (i.signedSource)
+                emit(0x13000000u | ((i.sourceWidth * 8 - 1) << 10) | (12 << 5) | 12);
         }
         if (neededFlags[n]) {
             store(11, 31, 96);

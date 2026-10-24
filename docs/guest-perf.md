@@ -213,3 +213,32 @@ the unit suite, odd-count DOS matrix/CRC rejection checks and exact Win3.11 file
 save. Win95 calculator and Office compatibility task results are retained under
 `build/native-loop-{win95-calc,word,excel}/`; their timings are not used to claim
 an application performance improvement.
+
+## Register extension instructions
+
+The post-return profiles counted 159,217 register-source MOVZX-byte attempts in
+Word and 86,144 in Excel, plus word-source and signed-extension forms. Native
+register MOVZX/MOVSX now accept byte/word sources and independently selected
+16/32-bit destinations. AH/CH/DH/BH are extracted before writing the destination,
+including when source and destination overlap. Flags remain unchanged, so a
+preceding arithmetic operation still supplies subsequent Jcc conditions.
+
+The differential byte suite covers all source/destination registers, both code
+sizes, operand overrides, signed/unsigned extension, sign-boundary values and all
+16 Jcc conditions. Memory-source forms remain on the interpreter path; this
+change does not claim acceleration for all MOVZX/MOVSX instructions or an
+application speedup. Near Jcc decoding remains supported alongside the new 0F
+opcode forms.
+
+Post-change host/opcode profiles and framebuffer task results are retained at
+`build/native-extend-{word,excel}-profile/`. Word records 116,583 interpreted
+register MOVZX-byte attempts and 23,975 register MOVZX-word attempts; Excel
+records 69,012 and 14,910 respectively. Cold addresses and short blocks still
+interpret. The earlier post-return profile also preceded LOOP lowering, so
+these counts are evidence of current coverage, not an isolated speed comparison.
+
+`build/native-extend-tests.log` records the full regression pass, including
+1,227,548 byte-JIT checks. DOS CoreMark CRCs and the 24-interval micro matrix pass
+under both engines (`build/native-extend-smoke.log`). Win3.11 saves exact Notepad
+contents (`build/native-extend-win311.log`), and the Win95 calculator snapshot
+reaches its recorded result (`build/native-extend-win95-calc/result.json`).
