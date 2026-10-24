@@ -577,3 +577,18 @@ A fresh Win95 host profile remains dominated by interpreter/MMU and dispatch;
 this does not establish broad Windows/Rosetta gains. [Complete evidence](measurements/ps2-poll-2026-10-25.json)
 retains all samples, checks and a compressed raw call tree. No large VM fixture
 was created.
+
+
+## 25 October: demand-based paging privilege checks
+
+The out-of-line MMU now computes CPL/system override only for restricted
+permissions or fault reporting. 343,418 core checks (including 64 new nonpresent
+VM86/system-access fault assertions), read/byte/flag suites, DOS CRC/micro checks,
+Win3.11 file-save and both Win95 boot/restart checks pass. Five matched bounded
+Win95 startup pairs show 2.67% median process throughput improvement at exactly
+300M guest instructions, with all captured state equal except host timing/disk
+path. RAM paged interpretation improves 2.73%, with a documented 1.23% flat
+interpreter cost. This does not measure full Explorer readiness or establish
+Rosetta speed. [Complete evidence](measurements/lazy-page-permissions-2026-10-25.json)
+preserves samples and states; successful small compressed overlays and temporary
+baseline files were removed.

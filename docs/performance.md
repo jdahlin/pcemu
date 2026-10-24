@@ -1245,3 +1245,48 @@ and a [compressed raw call tree](measurements/ps2-poll-win95-2026-10-25.sample.t
 are committed. Successful compressed overlays and the temporary baseline runner,
 source and debug symbols were removed; no new installer or Office fixture was
 created.
+
+
+## Defer redundant paging privilege evaluation (25 October)
+
+CPU::physical retains its out-of-line translation body, but evaluates CPL and
+system-access override only when combined PDE/PTE permissions restrict the
+requested access, or when encoding a page fault. Pages already permitting user
+reads/writes also permit supervisor/system accesses. Restricted pages, missing
+entries, dirty-bit updates, CR3/epoch invalidation, A20 and precise CR2/error
+reporting retain their previous behavior. This avoids the broadly inlined
+wrapper rejected above.
+
+The core suite passes 343,418 checks. This includes the existing hit/miss,
+permission, A20, dirty and code-invalidation matrix and 64 new assertions for
+nonpresent PDE/PTE fault U/S/W/R encoding across VM86, CPL and system overrides.
+Read/byte/flag suites pass 243,295 / 2,957,189 / 237,430 checks. DOS benchmark
+CRCs, 64 micro intervals, matching JIT/interpreter work and wrong-checksum
+rejection pass; Win3.11 exact Notepad save and both Win95 cold-boot/restart
+checks pass headless.
+
+Five alternating RAM-only pairs per engine give these candidate/baseline
+throughput medians, with matching checksums/native counts:
+
+| Engine | Flat memory | CPL3 paged memory |
+|---|---:|---:|
+| Interpreter | 0.98766x | 1.02731x |
+| JIT | 1.00084x | 1.01224x |
+
+The flat interpreter's 1.2% regression is a retained tradeoff, not a neutral
+control. Five additional alternating rtts Win95 pairs each stop at exactly
+300,000,000 guest instructions with 217,575,627 native instructions and 282,224
+slow memory calls. All captured state fields match except host timing and
+private disk path. Process-wall ratios are 1.02705, 1.03423, 1.02672, 1.02350
+and 1.01595: median paired throughput improves **2.67%**. CPU/device-batch wall
+ratios have median 1.02965. The gateway is disconnected, no UI automation or
+frame capture runs during execution, and this is a bounded startup workload,
+not time to Explorer or a byte-for-byte final RAM comparison.
+
+The change is retained for its measured paged/Win95 improvement with the smaller
+flat cost documented. These are one-host samples without confidence intervals,
+not broad Windows or Rosetta equivalence. [All samples, build/source hashes,
+full captured states and compatibility checks](measurements/lazy-page-permissions-2026-10-25.json)
+are committed. Each successful boot used a compressed child allocating 397,312
+bytes; all were removed. RAM kernels opened no disk. Temporary baseline source,
+binary/debug files were removed, without creating installer/Office fixtures.

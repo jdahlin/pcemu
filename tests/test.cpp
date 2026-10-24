@@ -70,6 +70,32 @@ int main() {
             check(c.generation[pte >> 12] == writes,
                   "translation preserves page-table code invalidation on A/D writes");
         }
+        // Lazy privilege evaluation must still encode U/S on nonpresent
+        // PDE/PTE faults, including VM86 and supervisor system-read overrides.
+        for (unsigned privilege : {0u, 3u})
+        for (bool vm86 : {false, true})
+        for (unsigned overrideAccess : {0u, 1u})
+        for (bool write : {false, true})
+        for (bool missingPte : {false, true}) {
+            CPU c(65536);
+            c.write(0x1000, missingPte ? 0x2007 : 0, 4);
+            c.write(0x200c, missingPte ? 0 : 0x3007, 4);
+            c.cr[0] = 0x80000011;
+            c.cr[3] = 0x1000;
+            c.flags = 2 | (vm86 ? 0x20000 : 0);
+            c.s[CS].selector = privilege;
+            c.systemAccess = overrideAccess;
+            bool fault = false;
+            try {
+                c.physical(0x3000, write);
+            } catch (const Fault &f) {
+                fault = true;
+                bool user = (vm86 || privilege == 3) && !overrideAccess;
+                check(f.vector == 14 && f.error == ((write ? 2u : 0u) | (user ? 4u : 0u)),
+                      "nonpresent page fault retains U/S and W/R with lazy privilege");
+            }
+            check(fault && c.cr[2] == 0x3000, "nonpresent PDE/PTE fault sets precise CR2");
+        }
         PIC8259 pic;
         pic.mask = 0;
         pic.raise(3);

@@ -1,0 +1,3003 @@
+{
+  "date": "2026-10-25",
+  "scope": "Lazy privilege evaluation for pages already permitting access, retaining out-of-line translation",
+  "ramTrials": {
+    "scope": "RAM-only flat and CPL3-paged memory kernels; no Machine or disk constructed",
+    "binarySha256": {
+      "baseline": "255e59061a9e8f95973dec113aebe423a8d73d0d1fae28c226d7ca054901410a",
+      "candidate": "c7dc14d9d013376ed279f43f6d043f15f85f46f30aae5f94f5df166957ccbedc"
+    },
+    "build": {
+      "baselineCommand": [
+        "clang++",
+        "-Isrc",
+        "-I/opt/homebrew/opt/zstd/include",
+        "-I/opt/homebrew/include",
+        "-I/opt/homebrew/include/SDL2",
+        "-D_THREAD_SAFE",
+        "-std=c++20",
+        "-O3",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline-cpu.cpp",
+        "src/machine.cpp",
+        "src/pc_at_io.cpp",
+        "src/pc_firmware.cpp",
+        "src/pc_bios.cpp",
+        "src/pc_bios_video.cpp",
+        "src/i8042.cpp",
+        "src/pc_input.cpp",
+        "src/cmos_rtc.cpp",
+        "src/disk.cpp",
+        "src/pc_bios_disk.cpp",
+        "src/ata.cpp",
+        "src/pic.cpp",
+        "src/i8259_pair.cpp",
+        "src/pit.cpp",
+        "src/vga.cpp",
+        "src/jit.cpp",
+        "src/jit_decode.cpp",
+        "src/jit_flags.cpp",
+        "src/jit_runtime.cpp",
+        "src/jit_arm64.cpp",
+        "src/snapshot.cpp",
+        "src/mouse.cpp",
+        "src/pci.cpp",
+        "src/vga_pci.cpp",
+        "src/host_keyboard.cpp",
+        "src/ne2000.cpp",
+        "src/pc_display.cpp",
+        "src/session_diagnostics.cpp",
+        "src/cpu_benchmarks.cpp",
+        "src/main.cpp",
+        "src/network.cpp",
+        "src/frontend_sdl.cpp",
+        "-L/opt/homebrew/lib",
+        "-lSDL2",
+        "-L/opt/homebrew/opt/zstd/lib",
+        "-lzstd",
+        "-o",
+        "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline"
+      ],
+      "baselineCpuSha256": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a",
+      "baselineCommit": "88635c962778f51951213055d256504dffe2ed41"
+    },
+    "candidateSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "03ef08a76dfac7b4f7477bdb439d69d93d8db58a03e6f055255486c8052ed446",
+      "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+      "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "e39b9e46ab7750d42c9ab5cb53a11e09f6805801fc9f516b2ca0cfe9d44a2478",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    },
+    "pairs": [
+      {
+        "pair": 1,
+        "engine": "interpreter",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 98000049,
+        "ratios": {
+          "Flat": 0.9820125326794543,
+          "Paged": 1.0347600607457372
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.0036 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.8181 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.0036,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 46.8181,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 67.7624 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.4455 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 67.7624,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 48.4455,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 1,
+        "engine": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 980000049,
+        "ratios": {
+          "Flat": 0.9963333784332296,
+          "Paged": 1.013015204419073
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2217.3 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1082.58 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2217.3,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1082.58,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2209.17 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1096.67 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2209.17,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1096.67,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 2,
+        "engine": "interpreter",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "steps": 98000049,
+        "ratios": {
+          "Flat": 0.9948294165937188,
+          "Paged": 1.0273131737114436
+        },
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.4378 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.1664 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.4378,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 48.1664,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.7987 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.8858 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.7987,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 46.8858,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 2,
+        "engine": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "steps": 980000049,
+        "ratios": {
+          "Flat": 1.0009737098344693,
+          "Paged": 1.0122351812209345
+        },
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2220.48 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1097.02 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2220.48,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1097.02,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2218.32 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1083.76 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2218.32,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1083.76,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 3,
+        "engine": "interpreter",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 98000049,
+        "ratios": {
+          "Flat": 0.9936313709683223,
+          "Paged": 1.005924647325049
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.4655 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 47.9691 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.4655,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 47.9691,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.0231 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.2533 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.0231,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 48.2533,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 3,
+        "engine": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 980000049,
+        "ratios": {
+          "Flat": 1.0008360788354551,
+          "Paged": 1.0122230006268205
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2212.71 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1084.84 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2212.71,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1084.84,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2214.56 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1098.1 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2214.56,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1098.1,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 4,
+        "engine": "interpreter",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "steps": 98000049,
+        "ratios": {
+          "Flat": 0.9823560885661929,
+          "Paged": 1.0201119071275428
+        },
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 68.2987 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.769 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 68.2987,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 48.769,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 69.5254 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 47.8075 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 69.5254,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 47.8075,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 4,
+        "engine": "jit",
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "steps": 980000049,
+        "ratios": {
+          "Flat": 1.086612437988805,
+          "Paged": 1.0140682230197193
+        },
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2218.83 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1096.37 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2218.83,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1096.37,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2041.97 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1081.16 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2041.97,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1081.16,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 5,
+        "engine": "interpreter",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 98000049,
+        "ratios": {
+          "Flat": 0.9876594891371011,
+          "Paged": 1.055652621427243
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 68.3197 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 46.2458 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 68.3197,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 46.2458,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "98000049",
+              "--backend",
+              "interpreter"
+            ],
+            "stdout": "Flat memory interpreter: 67.4766 million guest instructions/s, 0 native; checksum=32000016\nPaged memory interpreter: 48.8195 million guest instructions/s, 0 native; checksum=32000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 67.4766,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 48.8195,
+                "nativeInstructions": 0,
+                "checksum": 32000016
+              }
+            }
+          }
+        }
+      },
+      {
+        "pair": 5,
+        "engine": "jit",
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "steps": 980000049,
+        "ratios": {
+          "Flat": 0.9957803246943323,
+          "Paged": 1.0111520048703546
+        },
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2220.55 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1084.11 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2220.55,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1084.11,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--benchmark-memory",
+              "--benchmark-steps",
+              "980000049",
+              "--backend",
+              "jit"
+            ],
+            "stdout": "Flat memory JIT: 2211.18 million guest instructions/s, 979999706 native; checksum=320000016\nPaged memory JIT: 1096.2 million guest instructions/s, 979999706 native; checksum=320000016\n",
+            "samples": {
+              "Flat": {
+                "millionGuestInstructionsPerSecond": 2211.18,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              },
+              "Paged": {
+                "millionGuestInstructionsPerSecond": 1096.2,
+                "nativeInstructions": 979999706,
+                "checksum": 320000016
+              }
+            }
+          }
+        }
+      }
+    ],
+    "medianRatios": {
+      "interpreter": {
+        "Flat": 0.9876594891371011,
+        "Paged": 1.0273131737114436
+      },
+      "jit": {
+        "Flat": 1.0008360788354551,
+        "Paged": 1.0122351812209345
+      }
+    }
+  },
+  "win95BoundedBootTrials": {
+    "scope": "Five alternating paired cold boot portions to exactly 300M guest instructions, with matching final CPU state/work; host gateway disconnected; not full desktop readiness",
+    "runnerSha256": {
+      "baseline": "255e59061a9e8f95973dec113aebe423a8d73d0d1fae28c226d7ca054901410a",
+      "candidate": "c7dc14d9d013376ed279f43f6d043f15f85f46f30aae5f94f5df166957ccbedc"
+    },
+    "pairs": [
+      {
+        "pair": 1,
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baselineSecondsOverCandidateSeconds": 1.0270486489367856,
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-baseline/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-baseline/state.json"
+            ],
+            "processWallSeconds": 4.717246042,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4648838732,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-baseline/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-candidate/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-candidate/state.json"
+            ],
+            "processWallSeconds": 4.593011292,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4508655891,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-1-candidate/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          }
+        },
+        "executionWallRatio": 1.0310919361310824
+      },
+      {
+        "pair": 2,
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "baselineSecondsOverCandidateSeconds": 1.0342253632005758,
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-candidate/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-candidate/state.json"
+            ],
+            "processWallSeconds": 4.564841958999999,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4501531012,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-candidate/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-baseline/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-baseline/state.json"
+            ],
+            "processWallSeconds": 4.721075333000002,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4662160226,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-2-baseline/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          }
+        },
+        "executionWallRatio": 1.0356832405623333
+      },
+      {
+        "pair": 3,
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baselineSecondsOverCandidateSeconds": 1.026724720954187,
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-baseline/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-baseline/state.json"
+            ],
+            "processWallSeconds": 4.70374975,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4644309677,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-baseline/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-candidate/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-candidate/state.json"
+            ],
+            "processWallSeconds": 4.581315374999999,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4510558884,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-3-candidate/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          }
+        },
+        "executionWallRatio": 1.0296528205128737
+      },
+      {
+        "pair": 4,
+        "order": [
+          "candidate",
+          "baseline"
+        ],
+        "baselineSecondsOverCandidateSeconds": 1.0234975751985895,
+        "results": {
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-candidate/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-candidate/state.json"
+            ],
+            "processWallSeconds": 4.6138625829999995,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4547150833,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-candidate/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          },
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-baseline/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-baseline/state.json"
+            ],
+            "processWallSeconds": 4.7222771660000005,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4652838662,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-4-baseline/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          }
+        },
+        "executionWallRatio": 1.0232426486126196
+      },
+      {
+        "pair": 5,
+        "order": [
+          "baseline",
+          "candidate"
+        ],
+        "baselineSecondsOverCandidateSeconds": 1.015947405125588,
+        "results": {
+          "baseline": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/baseline",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-baseline/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-baseline/state.json"
+            ],
+            "processWallSeconds": 4.681404875,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4638317481,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-baseline/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          },
+          "candidate": {
+            "command": [
+              "/Users/johandahlin/dev/pcemu/build/pcemu",
+              "--headless",
+              "--machine",
+              "win95",
+              "--ram-mb",
+              "64",
+              "--execute-vgabios",
+              "--no-network",
+              "--disk",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-candidate/disk.pcd",
+              "--steps",
+              "300000000",
+              "--state-json",
+              "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-candidate/state.json"
+            ],
+            "processWallSeconds": 4.607920499999999,
+            "state": {
+              "ip": 2322,
+              "flags": 582,
+              "cr0": 2147483669,
+              "cr3": 4702208,
+              "cr2": 2143420288,
+              "gdtBase": 3221521996,
+              "gdtLimit": 503,
+              "idtBase": 2148155392,
+              "idtLimit": 767,
+              "trBase": 3221270204,
+              "trSelector": 24,
+              "ldtBase": 2148089856,
+              "registers": [
+                127342623,
+                73687,
+                0,
+                140672,
+                12046,
+                2149658394,
+                133672,
+                2149646337
+              ],
+              "segments": [
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 1903,
+                  "base": 2149376000,
+                  "limit": 33983,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 8151,
+                  "base": 2149665280,
+                  "limit": 13631,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 6175,
+                  "base": 2178596864,
+                  "limit": 2228223,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 5503,
+                  "base": 2149266240,
+                  "limit": 159,
+                  "big": 0,
+                  "unusable": 0
+                },
+                {
+                  "selector": 0,
+                  "base": 0,
+                  "limit": 0,
+                  "big": 0,
+                  "unusable": 1
+                }
+              ],
+              "instructions": 300000000,
+              "resets": 0,
+              "resetRequested": 0,
+              "nativeInstructions": 217575627,
+              "executionWallNs": 4557596227,
+              "nativeMemoryCalls": 282224,
+              "executionEpoch": 0,
+              "machineProfile": "win95",
+              "machinePlatform": "pc-legacy-v1",
+              "executionBackend": "jit",
+              "jitFollowJumps": 1,
+              "jitTraces": 0,
+              "ramBytes": 67108864,
+              "disk": "/Users/johandahlin/dev/pcemu/build/lazy-permissions-comparison/win95-prefix-5-candidate/disk.pcd",
+              "compiledBlocks": 32674,
+              "cacheRecycles": 1,
+              "halted": 0,
+              "waitingKey": 0,
+              "hostInput": 1,
+              "network": {
+                "isr": 66,
+                "imr": 27,
+                "command": 18,
+                "current": 77,
+                "boundary": 76,
+                "transmitted": 1,
+                "received": 0,
+                "dropped": 0
+              },
+              "mouse": {
+                "enabled": 1,
+                "id": 0,
+                "pendingPackets": 0,
+                "auxOutput": 0
+              },
+              "video": {
+                "graphics": 1,
+                "width": 640,
+                "height": 480,
+                "memoryMode": 6,
+                "shiftMode": 0,
+                "dispiEnabled": 0,
+                "bpp": 8,
+                "crtc": [
+                  95,
+                  79,
+                  80,
+                  130,
+                  84,
+                  128,
+                  11,
+                  62,
+                  0,
+                  64,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  234,
+                  140,
+                  223,
+                  40,
+                  0,
+                  231,
+                  4,
+                  227,
+                  255,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "pic": [
+                {
+                  "irr": 0,
+                  "isr": 0,
+                  "mask": 248,
+                  "base": 80,
+                  "autoEOI": 0
+                },
+                {
+                  "irr": 4,
+                  "isr": 0,
+                  "mask": 45,
+                  "base": 88,
+                  "autoEOI": 0
+                }
+              ],
+              "pit0": {
+                "reload": 16384,
+                "loadedAt": 8481479,
+                "mode": 2,
+                "nullCount": 0,
+                "writeHigh": 0,
+                "value": 519
+              },
+              "keyboard": {
+                "full": 0,
+                "data": 85,
+                "pendingScans": 0,
+                "pendingReplies": 0,
+                "commandByte": 71
+              }
+            },
+            "overlayBytes": 348616,
+            "overlayAllocatedBytes": 397312,
+            "privateOverlayRemoved": true
+          }
+        },
+        "executionWallRatio": 1.0177113658120465
+      }
+    ],
+    "medianPairedRatio": 1.026724720954187,
+    "matchedStateKeys": [
+      "ip",
+      "flags",
+      "cr0",
+      "cr3",
+      "cr2",
+      "registers",
+      "segments",
+      "instructions",
+      "nativeInstructions",
+      "nativeMemoryCalls",
+      "resets"
+    ],
+    "allCapturedStateFieldsMatchExcept": [
+      "executionWallNs",
+      "disk"
+    ],
+    "medianExecutionWallRatio": 1.0296528205128737
+  },
+  "checks": {
+    "core": 343418,
+    "readJit": 243295,
+    "byteJit": 2957189,
+    "flagLiveness": 237430
+  },
+  "compatibility": {
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "c7dc14d9d013376ed279f43f6d043f15f85f46f30aae5f94f5df166957ccbedc",
+      "gitCommit": "88635c962778f51951213055d256504dffe2ed41",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5670,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rttsRestart": {
+      "pid": 65979,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-jbfao916/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-jbfao916/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-jbfao916/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-jbfao916/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "c7dc14d9d013376ed279f43f6d043f15f85f46f30aae5f94f5df166957ccbedc",
+      "profiled": false,
+      "gitCommit": "88635c962778f51951213055d256504dffe2ed41",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 445591927,
+        "afterInstructions": 865317159,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    },
+    "osr2Restart": {
+      "pid": 65984,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-oso_dfzk/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-oso_dfzk/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-oso_dfzk/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-oso_dfzk/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot and guest restart",
+      "emulatorSha256": "c7dc14d9d013376ed279f43f6d043f15f85f46f30aae5f94f5df166957ccbedc",
+      "profiled": false,
+      "gitCommit": "88635c962778f51951213055d256504dffe2ed41",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "guest restart and desktop; no file assertion",
+        "beforeInstructions": 277978164,
+        "afterInstructions": 675479647,
+        "beforeResets": 0,
+        "afterResets": 1
+      }
+    }
+  },
+  "dosGuestValidation": {
+    "coremarkCrcBothEngines": true,
+    "shortScoresRejected": true,
+    "microIntervalsBothEngines": 64,
+    "microResultsAndInstructionCountsMatch": true,
+    "wrongGuestChecksumRejected": true
+  },
+  "limitations": [
+    "Cache-resident RAM microkernels on one host, five pairs per engine; no confidence interval",
+    "Flat interpreter median ratio 0.98766 is a measured tradeoff, not hidden as neutral",
+    "Win95 comparison stops at 300M guest instructions with host socket gateway disconnected; not full desktop boot time",
+    "Boot captures match state and counters, not a byte-for-byte RAM comparison",
+    "No fresh installer or Office fixture created; no Rosetta claim"
+  ],
+  "sourceSha256": {
+    "src/cpu.cpp": "03ef08a76dfac7b4f7477bdb439d69d93d8db58a03e6f055255486c8052ed446",
+    "tests/test.cpp": "cf78afe0e932c9824ea908e2616dcdc0fe2dcac91ca5ecd08253f1d878aa5abb"
+  },
+  "temporaryBaselineAndDebugSymbolsRemoved": true
+}

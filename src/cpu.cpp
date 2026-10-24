@@ -77,10 +77,12 @@ uint32_t CPU::physical(uint32_t a, bool wr) {
     if (cr[0] & 0x80000000u) {
         if (tlbCR3 != cr[3])
             flushTLB();
-        bool user = cpl() == 3 && !systemAccess;
+        // A user-accessible page also permits supervisor/system accesses.
+        // Compute privilege only for restricted permissions or a fault report.
+        auto user = [&] { return cpl() == 3 && !systemAccess; };
         auto fault = [&](bool present) -> void {
             cr[2] = a;
-            throw Fault{14, uint32_t((present ? 1 : 0) | (wr ? 2 : 0) | (user ? 4 : 0)), true};
+            throw Fault{14, uint32_t((present ? 1 : 0) | (wr ? 2 : 0) | (user() ? 4 : 0)), true};
         };
         uint32_t page = a >> 12;
         auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
@@ -105,7 +107,7 @@ uint32_t CPU::physical(uint32_t a, bool wr) {
             if (!(pte & 1))
                 fault(false);
             auto permissions = (pde & pte) & 6;
-            if (user && (!(permissions & 4) || (wr && !(permissions & 2))))
+            if ((!(permissions & 4) || (wr && !(permissions & 2))) && user())
                 fault(true);
             pde |= 32;
             pte |= 32;
@@ -116,7 +118,7 @@ uint32_t CPU::physical(uint32_t a, bool wr) {
             entry = {page,          tlbEpoch, pte & ~4095u, pteAddress, uint8_t(permissions),
                      bool(pte & 64)};
         }
-        if (user && (!(entry.permissions & 4) || (wr && !(entry.permissions & 2))))
+        if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) && user())
             fault(true);
         if (wr && !entry.dirty) {
             written(entry.pteAddress, 1);
