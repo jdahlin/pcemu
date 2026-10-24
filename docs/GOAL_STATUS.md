@@ -1,6 +1,6 @@
 # Boot and performance status
 
-Updated 2026-10-24. Work remains in progress.
+Updated 2026-10-25. Work remains in progress.
 
 - MS-DOS 6.22: boots the supplied VHD converted to a private raw image.
 - Windows 3.11: standard-mode Program Manager, Notepad, and Calculator run.
@@ -510,3 +510,25 @@ runs remove their temporary COW children and sparse DOS backing; original
 archives and the existing installed system/checkpoints remain available.
 No experiment guest remains running. This is installer correctness evidence,
 not an installer performance comparison or proof of Rosetta-level speed.
+
+
+## 25 October: register NEG and current compatibility
+
+Register NEG now executes natively at byte/word/dword widths. 237,334 flag
+checks, 341,306 core checks, 156,510 read-JIT checks and 2,957,189 byte-JIT
+checks pass. Exhaustive byte aliases, wider signed/carry boundaries and precise
+fault/code-invalidation exits cover the new lowering. Current headless checks
+save exact Notepad contents in Win3.11 and cold-boot/restart both retained
+Win95 images to unobscured Explorer, removing their private compressed disks.
+The short DOS profile verifies matching JIT/interpreter checksums and guest
+instruction counts across all 64 microbenchmark intervals.
+
+Five alternating pairs of uninstrumented 10,000-iteration DOS CoreMark trials
+show a median paired throughput gain of 10.74% for native NEG. All runs pass
+canonical CRCs and upstream minimum-duration validation, execute identical
+3,975,092,643 guest instructions and return to DOS. The baseline differs only
+in NEG decoding. See [correctness/profile evidence](measurements/native-neg-2026-10-25.json)
+and [complete host timing results](measurements/native-neg-timing-2026-10-25.json).
+This does not rerun fresh installation or prove Windows/Rosetta-level speed.
+Historical paths earlier in this log may have been removed by storage cleanup;
+these committed measurement records retain the latest results and provenance.

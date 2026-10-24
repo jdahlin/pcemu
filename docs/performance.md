@@ -1108,3 +1108,23 @@ cold boot/guest restart to unobscured Explorer pass; successful compressed
 overlays are removed. This does not repeat a fresh installer or establish
 Rosetta-level performance. Full interval counters, provenance and compatibility
 results are retained in [the measurement record](measurements/native-neg-2026-10-25.json).
+
+
+### Controlled NEG host timing
+
+Five alternating pairs of uninstrumented DOS CoreMark runs now measure the
+change with 10,000 iterations per run. Both runners use the same current
+sources and options; only the baseline decoder comes from before register NEG
+admission. All ten runs pass canonical CRCs, upstream minimum-duration
+validation and DOS return, with identical COM hash and 3,975,092,643 guest
+instructions. No competing runner build or validation was launched during the
+timed trials.
+
+Baseline/candidate time ratios are 1.11152, 1.09722, 1.11037, 1.09732 and
+1.10736: median paired throughput improves **10.74%**. Median interval times
+are 15.0585 s and 13.5945 s. These are five samples on one Apple M4, without a
+confidence interval, and cover flat integer CoreMark rather than Windows MMU,
+GUI startup or Rosetta equivalence. All raw run results, compiler options,
+source/binary hashes and host load metadata are committed in
+[the timing record](measurements/native-neg-timing-2026-10-25.json). Successful
+compressed disk overlays and the temporary baseline binary/source were removed.
