@@ -17,6 +17,7 @@ class HvfMachine {
     struct Exit {
         ExitReason reason;
         uint64_t syndrome, virtualAddress, physicalAddress, pc;
+        unsigned cpu = 0;
         unsigned exceptionClass() const { return unsigned(syndrome >> 26) & 63; }
     };
     // Cumulative system-sleep time in mach_absolute_time ticks. The default
@@ -24,7 +25,7 @@ class HvfMachine {
     // without putting the user's computer to sleep.
     using SleepTicks = std::function<uint64_t()>;
     explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false,
-                        SleepTicks sleepTicks = {});
+                        SleepTicks sleepTicks = {}, unsigned cpuCount = 1);
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
@@ -35,6 +36,11 @@ class HvfMachine {
     void readMemory(uint64_t address, std::span<uint8_t> bytes) const;
     // Initialize a flat EL1h AArch64 guest, MMU off, interrupts masked.
     void start(uint64_t entry);
+    unsigned cpuCount() const;
+    unsigned currentCPU() const;
+    bool cpuOnline(unsigned cpu) const;
+    int64_t startCPU(unsigned cpu, uint64_t entry, uint64_t context);
+    int64_t stopCPU();
     uint64_t reg(unsigned index) const; // X0..X30
     void setReg(unsigned index, uint64_t value);
     uint64_t systemReg(uint16_t encoding) const;

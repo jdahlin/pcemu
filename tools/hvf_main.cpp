@@ -220,6 +220,43 @@ void selfTest() {
                     "Virtual timer did not expire after simulated system sleep");
         }
     }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true, {}, 2);
+        require(vm.cpuCount() == 2 && vm.cpuOnline(0) && !vm.cpuOnline(1), "SMP reset state is invalid");
+        code(vm, std::array<uint32_t, 12>{0xd53800a1, 0x92401c21, 0xd2800022,
+            0xf9000002, 0xd5033f9f, 0xd2400023, 0xcb010c04, 0x8b030c84,
+            0xf9400085, 0xb4ffffe5, 0xd4000002, 0x14000000});
+        auto mailbox = HvfMachine::ramBase + 0x10000;
+        vm.setReg(0, mailbox);
+        require(vm.startCPU(2, HvfMachine::ramBase, 0) == -2, "Invalid secondary CPU accepted");
+        require(vm.startCPU(1, 3, 0) == -2, "Unaligned secondary entry accepted");
+        require(vm.startCPU(1, HvfMachine::ramBase, mailbox + 8) == 0, "Secondary CPU start failed");
+        require(vm.startCPU(1, HvfMachine::ramBase, 0) == -4, "Running CPU restarted");
+        unsigned seen = 0;
+        for (unsigned attempt = 0; seen != 3 && attempt < 8; ++attempt) {
+            auto exit = vm.run(std::chrono::milliseconds(500));
+            if (attempt == 0) require(exit.reason != HvfMachine::ExitReason::Canceled,
+                "CPUs could not pass a shared-memory barrier concurrently");
+            if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+            require(exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16,
+                    "Unexpected SMP exit");
+            require(vm.currentCPU() == exit.cpu && vm.reg(1) == exit.cpu, "Wrong secondary register context");
+            require(vm.reg(0) == mailbox + 8 * exit.cpu, "CPU context argument was lost");
+            seen |= 1u << exit.cpu;
+            if (exit.cpu == 1) {
+                require((vm.systemReg(0xc005) & 0xff) == 1, "Secondary MPIDR is incorrect");
+                require(vm.stopCPU() == 0, "Secondary CPU_OFF failed");
+            }
+        }
+        require(seen == 3 && !vm.cpuOnline(1), "SMP barrier or CPU_OFF failed");
+        require(vm.startCPU(1, HvfMachine::ramBase, mailbox + 8) == 0, "CPU hotplug restart failed");
+        bool restarted = false;
+        for (unsigned attempt = 0; attempt < 8 && !restarted; ++attempt) {
+            auto exit = vm.run(std::chrono::milliseconds(100));
+            restarted = exit.reason == HvfMachine::ExitReason::Exception && exit.cpu == 1 && exit.exceptionClass() == 0x16;
+        }
+        require(restarted && vm.reg(0) == mailbox + 8, "CPU hotplug lost its context");
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }
