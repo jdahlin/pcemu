@@ -703,6 +703,73 @@ Jit::Block Jit::compile(bool translate) {
     auto finishFlags = [&](int last, int condition, uint32_t target) {
         if (last < 0 && condition < 0)
             return;
+        // Logical operations need neither carry propagation nor signed
+        // overflow calculation. Materialize their exact interpreter flags in
+        // generated code, including its deterministic undefined-AF value.
+        bool logical = last >= 0 &&
+                       (ir[last].op == 1 || ir[last].op == 4 || ir[last].op == 6);
+        auto bits = [&](int dst, int src, unsigned first, unsigned count) {
+            emit(0x53000000u | (first << 16) | ((first + count - 1) << 10) |
+                 (src << 5) | dst);
+        };
+        auto flagBit = [&](int src, unsigned bit) {
+            emit(0x33000000u | (((32 - bit) & 31) << 16) | (src << 5) | 12);
+        };
+        if (logical) {
+            load(9, 31, 96);
+            load(10, 31, 100);
+            auto op = ir[last].op;
+            emit((op == 1 ? 0x2a000000u : op == 4 ? 0x0a000000u : 0x4a000000u) |
+                 (10 << 16) | (9 << 5) | 11);
+            extract(11, 11, ir[last].w, 0);
+            load(12, 19, offsetof(CPU, flags));
+            imm(14, ~(CF | PF | AF | ZF | SF | OF));
+            emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+            imm(14, 2);
+            emit(0x2a000000u | (14 << 16) | (12 << 5) | 12);
+            emit(0x4a000000u | (10 << 16) | (9 << 5) | 13);
+            emit(0x4a000000u | (11 << 16) | (13 << 5) | 13);
+            bits(13, 13, 4, 1);
+            flagBit(13, 4);
+            emit(0x7100017fu); // cmp w11,#0
+            emit(0x1a9f17edu); // cset w13,eq
+            flagBit(13, 6);
+            bits(13, 11, ir[last].w * 8 - 1, 1);
+            flagBit(13, 7);
+            bits(14, 11, 0, 8);
+            for (unsigned shift : {4u, 2u, 1u})
+                emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+            emit(0x2a2e03eeu); // mvn w14,w14: even parity sets PF
+            flagBit(14, 2);
+            store(12, 19, offsetof(CPU, flags));
+        }
+        if (logical || last < 0) {
+            if (condition < 0)
+                return;
+            // Evaluate all sixteen Jcc predicates from materialized flags.
+            // Only caller-save temporaries are used, just like nativeFinish.
+            if (!logical)
+                load(12, 19, offsetof(CPU, flags));
+            unsigned base = condition & 14;
+            unsigned bit = base == 0 ? 11 : base == 2 || base == 6 ? 0
+                                           : base == 4 ? 6 : base == 8 ? 7 : 2;
+            if (base >= 12) {
+                bits(13, 12, 7, 1);
+                bits(14, 12, 11, 1);
+                emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
+            } else
+                bits(13, 12, bit, 1);
+            if (base == 6 || base == 14) {
+                bits(14, 12, 6, 1);
+                emit(0x2a000000u | (14 << 16) | (13 << 5) | 13);
+            }
+            auto skip = code.size();
+            emit((condition & 1 ? 0x35000000u : 0x34000000u) | 13);
+            imm(9, target);
+            store(9, 19, offsetof(CPU, ip));
+            code[skip] |= uint32_t(code.size() - skip) << 5;
+            return;
+        }
         emit(0xaa1303e0u);
         imm(1, last >= 0 ? ir[last].op : -1);
         if (last >= 0) {

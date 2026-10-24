@@ -325,3 +325,39 @@ from host variation with this sample. This does not establish a meaningful
 whole-workload improvement; native block boundaries and flag/helper overhead
 remain higher-priority optimization work. All six private disk children were
 removed after validation.
+
+Logical flag materialization for native OR/AND/XOR/TEST now stays in generated
+ARM64 code. It computes operand-width ZF/SF and low-byte parity, clears CF/OF,
+preserves unrelated flags, sets the fixed bit, and matches the interpreter's
+deterministic AF convention even though x86 leaves AF undefined for these
+operations. All sixteen conditional branches are also emitted directly when
+they consume these flags or enter a block with already materialized flags.
+Arithmetic flag producers retain their existing helper. Memory fault exits
+and INC/DEC carry dependencies still materialize the preceding flags before
+replaying or continuing an instruction.
+
+The byte-JIT suite adds every combination of OF/CF/ZF/SF/PF against all sixteen
+branch predicates, with distinct taken and fallthrough targets, plus logical
+operand-width and flag preservation checks. The full suite passes in
+`build/native-logical-flags-tests.log` (1,872,421 byte-JIT checks).
+
+The frozen-source comparison in `build/native-logical-flags-controlled/`
+changes only `jit.cpp` against `22259a5`. Three alternating CoreMark pairs all
+pass canonical CRCs, exceed ten seconds and return to DOS. Every run executes
+1,590,037,601 guest instructions with 1,262,986,108 native instructions. Median
+rates are 318.233 baseline and 327.905 candidate iterations per host second;
+paired ratios are 1.03039, 1.03565 and 1.03446 (median gain 3.45%). This measures
+cheaper native execution, not increased instruction coverage. It is a guest
+CoreMark result, not evidence of the same gain for Windows applications or of
+Rosetta parity. Passing runs removed their private compressed disk children.
+
+Runtime compatibility passes DOS CRCs and all 56 JIT/interpreter micro intervals
+(`build/native-logical-flags-smoke.log`), exact Win3.11 Notepad file contents
+(`build/native-logical-flags-win311.log`), rtts Win95 cold boot/restart
+(`build/win95-smoke-47t38uzd/result.json`) and installed OSR2 cold boot/restart
+(`build/win95-smoke-yi34o65h/result.json`). Both Windows 95 runs observe one
+guest-requested firmware reset followed by Explorer. Word and Excel restore
+and task-pixel checks pass in `build/native-logical-flags-{word,excel}/`.
+These are compatibility checks, not application timing comparisons or a new
+installer run. Private test disks are removed after success; a source/evidence
+manifest is retained at `build/native-logical-flags-validation.json`.
