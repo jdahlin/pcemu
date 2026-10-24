@@ -986,3 +986,40 @@ Provenance, individual timings, the slower fill controls and runtime evidence
 are committed in `docs/measurements/rep-copy-2026-10-25.json`. Larger local
 artifacts are under `build/rep-copy-comparison/`; successful private guest disks
 are removed.
+
+
+### Shorter user-mode RAM permission guards (2026-10-25)
+
+Paged user loads now check the user-readable bit directly with LDRB/TBZ, reducing
+the permission check from six ARM64 instructions to two. User stores validate
+adjacent permission/dirty bytes with LDRH, CMP and a conditional branch, replacing
+eight instructions with three. TLB entries remain 20 bytes; no RAM, snapshot or
+disk format is expanded. Supervisor-mode emission is unchanged.
+
+A page that passes user permissions is also valid during a system-access
+override. Pages that do not pass conservatively use the existing helper, which
+applies the current override before deciding whether to fault. Unknown permission
+bits may force a store fallback, but cannot bypass protection. First-write dirty
+updates and all existing translation, device, code-write and fault guards remain.
+
+The new matrix has 384 assertions over byte/word/dword reads and writes, all
+user/read-write permission combinations, clean/dirty entries, system overrides
+and unknown permission bits. It checks actual native execution, helper use,
+precise faults, unchanged data on denial and PTE dirty state. Relevant checks
+pass: 341,282 core, 156,510 read JIT, 2,957,189 byte JIT, 27,567 stack JIT and
+183,478 flag-liveness checks. Both retained Win95 images cold-boot headlessly to
+an unobscured Explorer desktop on the final binary. Successful small compressed
+overlays are removed; no new VM images or checkpoints are created.
+
+Five alternating RAM-only pairs run 9.8 billion guest instructions per case.
+Each checksum is 3,200,000,000 and every native count is 9,799,999,657. Median
+candidate/baseline throughput ratios are 1.08953 paged and 1.06210 flat. The
+paged ratios are 1.07703, 1.11497, 1.08953, 1.49053 and 0.98201. The unchanged
+flat control also varies heavily (1.00044–1.37177), so the observed roughly 9%
+paged median is not a precise causal or general speedup claim. All outliers are
+retained. This is CPL3 RAM work, not whole Windows or Rosetta performance.
+
+All raw timing output, hashes, paired ratios and startup results are committed
+in `docs/measurements/user-ram-guards-2026-10-25.json`. The small temporary
+baseline executable was deleted after measurement to avoid retaining extra
+binaries. The baseline hash matches the preceding validated REP-copy build.

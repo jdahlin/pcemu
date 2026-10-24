@@ -521,14 +521,22 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0x54000001u); // b.ne slow
                     bool user = block.vm || ((block.cr0 & 1) && (cpu.s[CS].selector & 3) == 3);
                     if (user) {
-                        load(13, 19, offsetof(CPU, systemAccess));
-                        guard(0x3500000du); // cbnz w13,slow (supervisor override)
-                        emit(0x3940418du);  // ldrb w13,[x12,#permissions]
-                        emit(0x121f05adu);  // and w13,w13,#6
-                        compareImmediate(13, i.memory.store ? 6 : 4);
-                        guard(i.memory.store ? 0x54000001u : 0x54000003u); // ne / lo
+                        // User-accessible pages are also valid during a system
+                        // access override. Other pages conservatively take the
+                        // helper, which applies the override before faulting.
+                        if (i.memory.store) {
+                            static_assert(offsetof(CPU::TLBEntry, dirty) ==
+                                          offsetof(CPU::TLBEntry, permissions) + 1);
+                            static_assert(sizeof(bool) == 1);
+                            emit(0x7940218du); // ldrh w13,[x12,#permissions]: dirty:permissions
+                            compareImmediate(13, 0x106); // writable + user + dirty
+                            guard(0x54000001u); // b.ne slow
+                        } else {
+                            emit(0x3940418du); // ldrb w13,[x12,#permissions]
+                            guard(0x3610000du); // tbz w13,#2,slow (not user-readable)
+                        }
                     }
-                    if (i.memory.store) {
+                    if (i.memory.store && !user) {
                         emit(0x3940458du);  // ldrb w13,[x12,#dirty]
                         guard(0x3400000du); // cbz w13,slow
                     }

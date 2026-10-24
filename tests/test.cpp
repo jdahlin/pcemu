@@ -852,6 +852,64 @@ int main() {
             check(seen && c.nativeMemoryCalls == 1 && c.instructions == 3,
                   "prewarmed supervisor-only and read-only TLB hits enforce user permissions");
         }
+        for (bool store : {false, true})
+            for (int width : {1, 2, 4})
+                for (unsigned permissions : {0u, 2u, 4u, 6u})
+                    for (bool dirty : {false, true})
+                        for (bool override : {false, true})
+                            for (bool extraBits : {false, true}) {
+                                CPU c(1024 * 1024);
+                                c.s[CS].big = true;
+                                std::vector<uint8_t> code;
+                                if (width == 2)
+                                    code.push_back(0x66);
+                                code.push_back((store ? 0xa2 : 0xa0) | (width != 1));
+                                code.insert(code.end(), {0, 0x90, 0, 0, 0xf4});
+                                std::copy(code.begin(), code.end(), c.mem.begin());
+                                c.r[AX] = 0xaabbccdd;
+                                c.write(0x9000, 0x12345678, 4);
+                                c.write(0x80000, 0x81007, 4);
+                                c.write(0x81000, 7, 4);
+                                c.write(0x81024, 0x9001 | permissions | (dirty ? 64 : 0), 4);
+                                c.cr[0] = 0x80000011;
+                                c.cr[3] = 0x80000;
+                                c.physical(0x9000); // Warm as supervisor, including denied user pages.
+                                auto &entry = c.tlb[9];
+                                if (extraBits)
+                                    entry.permissions |= 0x80; // Unknown bits may only force fallback.
+                                c.s[CS].selector = 3;
+                                c.systemAccess = override;
+                                bool allowed = override || ((permissions & 4) &&
+                                                            (!store || (permissions & 2)));
+                                bool faulted = false;
+                                struct Stop {};
+                                c.observeFault = [&](const Fault &fault) {
+                                    faulted = fault.vector == 14 && fault.error == (store ? 7u : 5u) &&
+                                              c.cr[2] == 0x9000 && c.ip == 0;
+                                    throw Stop{};
+                                };
+                                Jit jit(c, true, 0);
+                                try {
+                                    jit.run();
+                                } catch (const Stop &) {
+                                }
+                                bool fast = (permissions & 4) &&
+                                            (!store || ((permissions & 2) && dirty && !extraBits));
+                                check(faulted == !allowed && c.nativeMemoryCalls == (fast ? 0u : 1u) &&
+                                          jit.nativeInstructions == (allowed ? 1u : 0u),
+                                      "user RAM permission guards preserve faults and override fallback");
+                                uint32_t lowMask = width == 4 ? ~0u : (1u << (width * 8)) - 1;
+                                uint32_t expectedAX = allowed && !store ?
+                                    (0xaabbccddu & ~lowMask) | (0x12345678u & lowMask) : 0xaabbccddu;
+                                uint32_t expectedMemory = allowed && store ?
+                                    (0x12345678u & ~lowMask) | (0xaabbccddu & lowMask) : 0x12345678u;
+                                // Inspect physical bytes without another permission-checked access.
+                                uint32_t memory;
+                                std::memcpy(&memory, c.mem.data() + 0x9000, 4);
+                                check(c.r[AX] == expectedAX && memory == expectedMemory &&
+                                          bool(c.mem[0x81024] & 64) == (dirty || (allowed && store)),
+                                      "combined permission and dirty checks preserve values and PTE dirty state");
+                            }
         for (bool vm : {false, true}) {
             CPU c(1024 * 1024);
             c.s[CS].big = true;

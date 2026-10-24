@@ -1,0 +1,350 @@
+{
+  "scope": "Uninstrumented headless RAM-only load/add/store kernels; flat control and CPL3 paged case; not application speed",
+  "pairs": 5,
+  "guestInstructionsPerCase": 9800000000,
+  "expectedChecksum": 3200000000,
+  "expectedNativeInstructions": 9799999657,
+  "baselinePreviouslyValidatedBinary": true,
+  "baselineReference": "docs/measurements/rep-copy-2026-10-25.json validation.emulatorSha256",
+  "sourceHashes": {
+    "src/jit_arm64.cpp": "aceab1034467f6a9aa7eb2a85572007668324b1ea097de94182b34aa3f0b405c",
+    "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+    "src/cpu.cpp": "5cb2b0bc13d0781f90cf01a3b5e5cc3c82d2d2c448c40890032c418d796cba5a",
+    "src/cpu_benchmarks.cpp": "c64c6e22e14efb3b38f013d0e9d20363d8f281f9dbee95028262fe779eea7913",
+    "tests/test.cpp": "e0c4a8ddae0a21c4623faa0faef07c0bb86bf341bf9607f17fa2fe4f9c44811d"
+  },
+  "baselineEmitterSha256": "fb63f17d4b078e1577157cad8e443660d352d7fbe11d953dbb0e6c24ab38b33a",
+  "candidateBinarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+  "samples": [
+    {
+      "trial": 0,
+      "variant": "baseline",
+      "binarySha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "loadBefore": [
+        2.85009765625,
+        3.44140625,
+        4.25927734375
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2179.87,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 971.9,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 2179.87 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 971.9 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 0,
+      "variant": "candidate",
+      "binarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "loadBefore": [
+        3.412109375,
+        3.53369140625,
+        4.27685546875
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2180.82,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1046.77,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 2180.82 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 1046.77 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 1,
+      "variant": "candidate",
+      "binarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "loadBefore": [
+        3.4921875,
+        3.54052734375,
+        4.26513671875
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2068.89,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 1017.47,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 2068.89 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 1017.47 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 1,
+      "variant": "baseline",
+      "binarySha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "loadBefore": [
+        3.51806640625,
+        3.54541015625,
+        4.25341796875
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1947.93,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 912.555,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 1947.93 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 912.555 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 2,
+      "variant": "baseline",
+      "binarySha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "loadBefore": [
+        3.31689453125,
+        3.50146484375,
+        4.224609375
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2000.07,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 907.166,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 2000.07 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 907.166 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 2,
+      "variant": "candidate",
+      "binarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "loadBefore": [
+        3.7509765625,
+        3.58935546875,
+        4.24365234375
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 2015.17,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 988.383,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 2015.17 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 988.383 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 3,
+      "variant": "candidate",
+      "binarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "loadBefore": [
+        3.66357421875,
+        3.576171875,
+        4.2275390625
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1916.68,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 853.461,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 1916.68 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 853.461 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 3,
+      "variant": "baseline",
+      "binarySha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "loadBefore": [
+        3.80810546875,
+        3.61767578125,
+        4.2275390625
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1397.23,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 572.59,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 1397.23 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 572.59 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 4,
+      "variant": "baseline",
+      "binarySha256": "23039c05906e2c1df7a2c15ddeb5b1bc85dd369aca9daefcba10188d9adab187",
+      "loadBefore": [
+        4.0712890625,
+        3.68994140625,
+        4.2392578125
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1206.9,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 578.603,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 1206.9 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 578.603 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    },
+    {
+      "trial": 4,
+      "variant": "candidate",
+      "binarySha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "loadBefore": [
+        4.12451171875,
+        3.73046875,
+        4.23779296875
+      ],
+      "cases": {
+        "Flat": {
+          "millionInstructionsPerSecond": 1456.98,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        },
+        "Paged": {
+          "millionInstructionsPerSecond": 568.195,
+          "nativeInstructions": 9799999657,
+          "checksum": 3200000000
+        }
+      },
+      "stdout": "Flat memory JIT: 1456.98 million guest instructions/s, 9799999657 native; checksum=3200000000\nPaged memory JIT: 568.195 million guest instructions/s, 9799999657 native; checksum=3200000000\n"
+    }
+  ],
+  "summary": {
+    "Flat": {
+      "ratios": [
+        1.0004358058049334,
+        1.0620966872526219,
+        1.0075497357592484,
+        1.3717712903387418,
+        1.2072085508327117
+      ],
+      "median": 1.0620966872526219
+    },
+    "Paged": {
+      "ratios": [
+        1.077034674349213,
+        1.1149684128627864,
+        1.0895282671528694,
+        1.4905272533575507,
+        0.9820118457733543
+      ],
+      "median": 1.0895282671528694
+    }
+  },
+  "validation": {
+    "core": 341282,
+    "readJit": 156510,
+    "byteJit": 2957189,
+    "stackJit": 27567,
+    "flagLiveness": 183478,
+    "newPermissionAssertions": 384,
+    "rtts": {
+      "pid": 56548,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-04vijgja/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-04vijgja/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-04vijgja/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-04vijgja/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot only",
+      "emulatorSha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "gitCommit": "1bc41e0d2b7a5af4c979c6190be4c8d5673d4acf",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "desktop bootstrap only",
+        "instructions": 372983923,
+        "resets": 0
+      }
+    },
+    "osr2": {
+      "pid": 56544,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4rnctpk_/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4rnctpk_/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4rnctpk_/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-4rnctpk_/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot only",
+      "emulatorSha256": "aaa9d85c9fb5e6094c424539b9ad24ee6a731cf56b41432c77ce85afec3f0182",
+      "gitCommit": "1bc41e0d2b7a5af4c979c6190be4c8d5673d4acf",
+      "privateDiskRemoved": true,
+      "verification": {
+        "scope": "desktop bootstrap only",
+        "instructions": 233727330,
+        "resets": 0
+      }
+    }
+  },
+  "limitations": [
+    "Unchanged flat control varies strongly; observed ratios cannot establish a precise causal speedup",
+    "Five pairs; all outliers retained",
+    "No Office or installer performance measurement",
+    "No new VM images or checkpoints; successful startup overlays removed; temporary baseline executable removed"
+  ]
+}
