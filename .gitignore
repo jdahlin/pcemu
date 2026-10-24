@@ -1,0 +1,9 @@
+/build/
+/media/
+/roms/*.bin
+/docs/*.pdf
+/docs/i386.txt
+/docs/*.html
+*.7z
+__pycache__/
+.DS_Store
