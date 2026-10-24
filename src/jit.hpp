@@ -25,6 +25,9 @@ class Jit {
     bool enabled() const {
         return active;
     }
+    size_t residentCodeBytes() const {
+        return used; // Arena occupancy, including block alignment; resets on recycle/clear.
+    }
 
   private:
     using Function = uint32_t (*)(CPU *);

@@ -533,3 +533,47 @@ Compatibility passes DOS CRCs and all 56 micro intervals
 in `build/native-shift-{word,excel}/`. These checks do not repeat the installer
 or establish application startup gains. Passing runs remove their private
 disks; `build/native-shift-validation.json` records source hashes and evidence.
+
+The JIT now analyzes flag liveness backward across each decoded block. It
+tracks CF/PF/AF/ZF/SF/OF separately, including INC/DEC's preserved CF, IMUL's
+preserved non-CF/OF flags and shifts' preserved AF/multi-bit OF. Flag producers
+whose outputs are all overwritten can omit their flag calculations; a dead
+register CMP/TEST omits its entire computation while retaining architectural
+instruction accounting. A skipped partial flag writer leaves any earlier
+pending producer available for later preserved-bit dependencies.
+
+All flags remain live at block exits and before memory operations. Memory
+comparisons also retain their output flags for an exit after code invalidation.
+This conservative boundary preserves fault replay and code-change state; it
+does not yet defer partial-flag reconstruction onto cold memory-exit paths.
+ADC/SBB remain interpreter-only and would require explicit flag-input analysis
+when introduced to the JIT.
+
+`make test` includes the new `build/jit-flags-tests` target: 5,000 deterministic
+mixed arithmetic/multiply/shift/compare sequences at both code widths with
+operand overrides, plus memory-fault and successful code-invalidating-store
+boundaries before a later flag overwrite. It passes 50,096 checks, and the full
+suite passes in `build/flag-liveness-tests-complete.log`.
+
+`build/flag-liveness-controlled/` changes only `jit.cpp` against `0e08cde` in a
+common frozen tree. All six independent 10,000-iteration CoreMark runs validate
+canonical CRCs, exceed ten seconds and return to DOS. They execute identical
+guest/native instruction counts (3,975,092,643 / 3,728,178,916), compile 277
+blocks during the interval and never recycle the code arena. Median rates are
+650.653 baseline and 664.656 candidate iterations per host second; paired
+ratios are 1.03851, 1.02401 and 1.01609 (median observed gain 2.40%). Resident
+aligned arena occupancy after each run falls from 712,384 to 700,848 bytes
+(1.62%), including previously compiled boot code. This is a small measured
+CoreMark gain; conservative memory barriers limit the available dead-flag work.
+The new `residentNativeBytes` sample field reports current arena occupancy,
+which resets on recycle/clear rather than accumulating all historical code.
+
+Compatibility passes normal DOS benchmark checks and diagnostic profiling
+checks (`build/flag-liveness-{smoke,profile-smoke}.log`), exact Win3.11 Notepad
+contents (`build/flag-liveness-win311.log`), rtts Win95 cold boot/restart
+(`build/win95-smoke-kj6zh5z5/result.json`) and installed OSR2 cold boot/restart
+(directory recorded in `build/flag-liveness-osr2.log`). Word/Excel task pixels
+pass in `build/flag-liveness-{word,excel}/`. These concurrent checks establish
+compatibility, not application speed comparisons or a new installer run.
+Passing test disks are removed; `build/flag-liveness-validation.json` records
+source hashes and evidence.

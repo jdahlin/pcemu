@@ -24,6 +24,8 @@ build/jit-byte-tests: $(CORE) $(HEADERS) tests/jit_bytes_test.cpp src/cpu.hpp sr
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_bytes_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-stack-tests: $(CORE) $(HEADERS) tests/jit_stack_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_stack_test.cpp $(shell pkg-config --libs libzstd) -o $@
+build/jit-flags-tests: $(CORE) $(HEADERS) tests/jit_flags_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_flags_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/integration-tests: $(CORE) $(HEADERS) tests/integration_test.cpp src/machine.hpp src/mouse.hpp src/vga.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/integration_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/network-tests: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
@@ -38,7 +40,7 @@ build/jit-read-tests: $(CORE) $(HEADERS) tests/jit_read_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_read_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tests/frontend_test.cpp
 	$(CXX) -Isrc $(SDL_CFLAGS) $(CXXFLAGS) src/frontend_sdl.cpp tests/frontend_test.cpp $(SDL_LIBS) -o $@
-test: build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests
+test: build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
 	./build/frontend-tests
 	./build/jit-read-tests
 	./build/network-tests
@@ -47,6 +49,7 @@ test: build/frontend-tests build/jit-read-tests build/network-tests build/integr
 	./build/snapshot-tests
 	./build/jit-byte-tests
 	./build/jit-stack-tests
+	./build/jit-flags-tests
 run: build/pcemu
 	./run.sh
 dos: build/pcemu

@@ -846,27 +846,28 @@ Jit::Block Jit::compile(bool translate) {
         call(reinterpret_cast<uintptr_t>(&nativeFinish));
     };
     std::vector<bool> neededFlags(ir.size());
-    int last = -1;
-    for (size_t n = 0; n < ir.size(); n++) {
-        if (ir[n].kind == 9 || ir[n].kind == 10) {
-            // IMUL/shifts preserve some arithmetic flags, so publish the
-            // preceding producer before replacing only their own flag bits.
-            if (last >= 0)
-                neededFlags[last] = true;
-            last = -1;
+    constexpr unsigned arithmeticFlags = CF | PF | AF | ZF | SF | OF;
+    unsigned liveFlags = arithmeticFlags; // Every block exit observes full flags.
+    for (size_t n = ir.size(); n-- > 0;) {
+        const auto &i = ir[n];
+        if (i.kind == 5) {
+            // A memory operation may replay before access or exit after a
+            // successful access changes code. Keep both restart states exact,
+            // including comparison flags even if a later ALU overwrites them.
+            neededFlags[n] = i.compareMemory;
+            liveFlags = arithmeticFlags;
+            continue;
         }
-        if (ir[n].kind == 1 && ir[n].op >= 8 && last >= 0)
-            neededFlags[last] = true; // INC/DEC consume the preceding CF.
-        if (ir[n].kind == 1 || ir[n].kind == 2)
-            last = n;
-        if (ir[n].kind == 5 && last >= 0) {
-            neededFlags[last] = true;
-        }
-        if (ir[n].compareMemory)
-            last = n;
+        unsigned written = 0;
+        if (i.kind == 1 || i.kind == 2)
+            written = i.kind == 1 && i.op >= 8 ? arithmeticFlags & ~CF : arithmeticFlags;
+        else if (i.kind == 9)
+            written = CF | OF;
+        else if (i.kind == 10)
+            written = CF | SF | ZF | PF | (i.imm == 1 ? OF : 0);
+        neededFlags[n] = written & liveFlags;
+        liveFlags &= ~written;
     }
-    if (last >= 0)
-        neededFlags[last] = true;
     block.memory = std::make_shared<std::vector<NativeMemoryMove>>();
     block.memory->reserve(ir.size());
     for (auto i : ir)
@@ -880,14 +881,20 @@ Jit::Block Jit::compile(bool translate) {
                 store(20 + reg, 19, offsetof(CPU, r) + reg * 4);
     };
     std::vector<size_t> exits;
-    last = -1;
+    int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         if (i.kind == 3 || i.kind == 4)
             continue;
+        // A register-only CMP/TEST has no other architectural result. Its
+        // instruction still contributes to the block's guest instruction count.
+        if (!neededFlags[n] && (i.kind == 2 || (i.kind == 1 && i.op == 7)))
+            continue;
         if (i.kind == 10) {
-            finishFlags(last, -1, 0);
-            last = -1;
+            if (neededFlags[n]) {
+                finishFlags(last, -1, 0);
+                last = -1;
+            }
             unsigned width = i.w * 8, count = i.imm;
             bool left = i.op == 4 || i.op == 6, arithmetic = i.op == 7;
             extract(9, 20 + i.dst, i.w, i.dstShift);
@@ -902,40 +909,44 @@ Jit::Block Jit::compile(bool translate) {
             else
                 emit(0x53007c00u | (count << 16) | (9 << 5) | 11); // lsr
             extract(11, 11, i.w, 0);
-            load(12, 19, offsetof(CPU, flags));
-            imm(14, ~(CF | SF | ZF | PF | (count == 1 ? OF : 0)));
-            emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
-            if (arithmetic || count <= width)
-                bits(13, 9, left ? width - count : std::min(count, width) - 1, 1);
-            else
-                imm(13, 0);
-            flagBit(13, 0);
-            if (count == 1 && !arithmetic) {
-                bits(14, left ? 11 : 9, width - 1, 1);
-                if (left)
-                    emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
+            if (neededFlags[n]) {
+                load(12, 19, offsetof(CPU, flags));
+                imm(14, ~(CF | SF | ZF | PF | (count == 1 ? OF : 0)));
+                emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+                if (arithmetic || count <= width)
+                    bits(13, 9, left ? width - count : std::min(count, width) - 1, 1);
                 else
-                    mov(13, 14);
-                flagBit(13, 11);
+                    imm(13, 0);
+                flagBit(13, 0);
+                if (count == 1 && !arithmetic) {
+                    bits(14, left ? 11 : 9, width - 1, 1);
+                    if (left)
+                        emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
+                    else
+                        mov(13, 14);
+                    flagBit(13, 11);
+                }
+                emit(0x7100017fu); // cmp w11,#0
+                emit(0x1a9f17edu); // cset w13,eq
+                flagBit(13, 6);
+                bits(13, 11, width - 1, 1);
+                flagBit(13, 7);
+                bits(14, 11, 0, 8);
+                for (unsigned shift : {4u, 2u, 1u})
+                    emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+                emit(0x2a2e03eeu); // even parity
+                flagBit(14, 2);
+                store(12, 19, offsetof(CPU, flags));
             }
-            emit(0x7100017fu); // cmp w11,#0
-            emit(0x1a9f17edu); // cset w13,eq
-            flagBit(13, 6);
-            bits(13, 11, width - 1, 1);
-            flagBit(13, 7);
-            bits(14, 11, 0, 8);
-            for (unsigned shift : {4u, 2u, 1u})
-                emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
-            emit(0x2a2e03eeu); // even parity
-            flagBit(14, 2);
-            store(12, 19, offsetof(CPU, flags));
             insert(20 + i.dst, 11, i.w, i.dstShift);
             dirtyRegisters |= 1u << i.dst;
             continue;
         }
         if (i.kind == 9) {
-            finishFlags(last, -1, 0);
-            last = -1;
+            if (neededFlags[n]) {
+                finishFlags(last, -1, 0);
+                last = -1;
+            }
             unsigned left = 20 + (i.immediate ? i.src : i.dst);
             emit(0x13000000u | ((i.w * 8 - 1) << 10) | (left << 5) | 11);
             if (i.immediate) {
@@ -944,15 +955,17 @@ Jit::Block Jit::compile(bool translate) {
             } else
                 emit(0x13000000u | ((i.w * 8 - 1) << 10) | ((20 + i.src) << 5) | 12);
             emit(0x9b207c00u | (12 << 16) | (11 << 5) | 13); // smull x13,w11,w12
-            emit(0x93400000u | ((i.w * 8 - 1) << 10) | (13 << 5) | 14);
-            emit(0xeb00001fu | (14 << 16) | (13 << 5)); // cmp full,sign-extended low
-            emit(0x1a9f07ebu); // cset w11,ne: signed overflow sets both CF and OF
-            load(12, 19, offsetof(CPU, flags));
-            imm(14, ~(CF | OF));
-            emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
-            for (unsigned bit : {0u, 11u})
-                emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
-            store(12, 19, offsetof(CPU, flags));
+            if (neededFlags[n]) {
+                emit(0x93400000u | ((i.w * 8 - 1) << 10) | (13 << 5) | 14);
+                emit(0xeb00001fu | (14 << 16) | (13 << 5)); // cmp full,sign-extended low
+                emit(0x1a9f07ebu); // cset w11,ne: signed overflow sets both CF and OF
+                load(12, 19, offsetof(CPU, flags));
+                imm(14, ~(CF | OF));
+                emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+                for (unsigned bit : {0u, 11u})
+                    emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
+                store(12, 19, offsetof(CPU, flags));
+            }
             insert(20 + i.dst, 13, i.w, 0);
             dirtyRegisters |= 1u << i.dst;
             continue;
@@ -1219,10 +1232,11 @@ Jit::Block Jit::compile(bool translate) {
                 last = n;
             continue;
         }
-        if (i.kind == 1 && i.op >= 8)
-            finishFlags(last, -1, 0);
-        if (i.kind == 1 || i.kind == 2)
+        if ((i.kind == 1 || i.kind == 2) && neededFlags[n]) {
+            if (i.kind == 1 && i.op >= 8)
+                finishFlags(last, -1, 0);
             last = n;
+        }
         int dst = 20 + i.dst;
         extract(11, dst, i.w, i.dstShift);
         if (i.immediate)

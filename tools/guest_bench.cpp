@@ -16,6 +16,7 @@ struct Sample {
     uint64_t instructions, native, memory, blocks, recycles;
     bool cold = false, hasChecksum = false;
     uint32_t checksum = 0;
+    size_t residentNativeBytes = 0;
 };
 static uint32_t expectedChecksum(unsigned id, unsigned loops) {
     switch (id) {
@@ -170,6 +171,7 @@ int main(int argc, char **argv) {
                                        c.instructions - ins, jit.nativeInstructions - nat,
                                        c.nativeMemoryCalls - mem, jit.compiledBlocks - blocks,
                                        jit.cacheRecycles - recycles, sampleCold});
+                    samples.back().residentNativeBytes = jit.residentCodeBytes();
                     measuring = false;
                 } else if (value == 3) {
                     if (measuring)
@@ -266,6 +268,7 @@ int main(int argc, char **argv) {
                    << ",\"guestInstructions\":" << s.instructions
                    << ",\"nativeInstructions\":" << s.native << ",\"slowMemoryCalls\":" << s.memory
                    << ",\"compiledBlocks\":" << s.blocks << ",\"cacheRecycles\":" << s.recycles
+                   << ",\"residentNativeBytes\":" << s.residentNativeBytes
                    << ",\"jitClearedBefore\":" << (s.cold ? "true" : "false")
                    << ",\"checksumChecked\":" << (s.hasChecksum ? "true" : "false")
                    << ",\"checksum\":" << s.checksum;
