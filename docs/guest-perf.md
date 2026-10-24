@@ -5,6 +5,8 @@ python3 tools/bench_guest_perf.py --output build/coremark-jit
 python3 tools/bench_guest_perf.py --no-jit --output build/coremark-interpreter
 # Compare against basic blocks; the default JIT joins same-page jumps:
 python3 tools/bench_guest_perf.py --jit-basic-blocks --output build/coremark-basic
+# Experimental conditional traces (larger code footprint):
+python3 tools/bench_guest_perf.py --jit-traces --output build/coremark-traces
 # Fast checksum/replay diagnostics, not reportable CoreMark scores:
 python3 tools/bench_guest_perf.py --iterations 10 --output build/coremark-quick
 ```

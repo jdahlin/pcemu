@@ -54,7 +54,7 @@ static uint32_t expectedChecksum(unsigned id, unsigned loops) {
 int main(int argc, char **argv) {
     try {
         std::string disk, output;
-        bool native = true, profiled = false, followJumps = true;
+        bool native = true, profiled = false, followJumps = true, traceJit = false;
 #ifdef PCEMU_PROFILE
         profiled = true; // Instrumented binaries must never produce benchmark scores.
 #endif
@@ -76,10 +76,14 @@ int main(int argc, char **argv) {
                 loops = std::stoul(value());
             else if (arg == "--no-jit")
                 native = false;
-            else if (arg == "--jit-basic-blocks")
-                followJumps = false;
-            else if (arg == "--jit-follow-jumps")
+            else if (arg == "--jit-basic-blocks") {
+                followJumps = traceJit = false;
+            } else if (arg == "--jit-follow-jumps") {
                 followJumps = true;
+                traceJit = false;
+            } else if (arg == "--jit-traces") {
+                followJumps = traceJit = true;
+            }
             else if (arg == "--guest-profile") {
 #ifdef PCEMU_PROFILE
                 profiled = true;
@@ -96,7 +100,8 @@ int main(int argc, char **argv) {
         Machine m(disk, "", 16 * 1024 * 1024);
         auto &c = m.cpu;
         Jit jit(c, native, 8, 16 * 1024 * 1024,
-                followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
+                traceJit ? Jit::BlockMode::Trace
+                         : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
         const auto processStart = Clock::now();
         Clock::time_point start;
         std::vector<Sample> samples;
@@ -257,7 +262,8 @@ int main(int argc, char **argv) {
         result << "{\"scope\":\"actual minimal DOS boot, original protected-mode loader, host "
                   "monotonic wall time, no SDL\",\"jit\":"
                << (native ? "true" : "false") << ",\"followJumps\":"
-               << (native && followJumps ? "true" : "false") << ",\"profiled\":"
+               << (native && followJumps ? "true" : "false") << ",\"traces\":"
+               << (native && traceJit ? "true" : "false") << ",\"profiled\":"
                << (profiled ? "true" : "false") << ",\"returnedToDos\":true,\"crcValidated\":"
                << (coremark && crc ? "true" : "false")
                << ",\"microValidated\":" << (micro ? "true" : "false") << ",\"loops\":" << loops

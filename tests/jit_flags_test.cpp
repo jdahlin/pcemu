@@ -77,7 +77,7 @@ int main() {
             check(jit.run() == length + 1, "entire random instruction sequence executes natively");
             equal(reference, actual);
         }
-        for (bool joining : {false, true})
+        for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace})
         for (unsigned pattern = 0; pattern < 3; ++pattern)
             for (unsigned boundary = 0; boundary < 2; ++boundary) {
                 CPU expected(65536), native(65536);
@@ -85,7 +85,10 @@ int main() {
                     ? std::vector<uint8_t>{0x83, 0xf8, 1, 0x42, 0x43}
                     : std::vector<uint8_t>{0x83, 0xc0, 1, 0x0f, 0xaf, 0xd9, 0xc1,
                                           uint8_t(pattern ? 0xfa : 0xe2), uint8_t(pattern ? 2 : 1)};
-                if (joining)
+                bool joining = mode != Jit::BlockMode::Basic;
+                if (mode == Jit::BlockMode::Trace)
+                    code.insert(code.end(), {0x74, 0}); // ZF is clear in all three patterns.
+                else if (joining)
                     code.insert(code.begin(), {0xeb, 0});
                 auto boundaryIP = code.size();
                 if (!boundary)
@@ -118,8 +121,7 @@ int main() {
                         expected.step();
                 } catch (const Stop &) {
                 }
-                Jit guarded(native, true, 0, 65536, joining ? Jit::BlockMode::FollowJumps
-                                                         : Jit::BlockMode::Basic);
+                Jit guarded(native, true, 0, 65536, mode);
                 try {
                     guarded.run();
                 } catch (const Stop &) {
@@ -185,6 +187,69 @@ int main() {
             check(block.run() == 1 && block.nativeInstructions == 1,
                   "jump to another page or unsupported target remains terminal");
             expected.step();
+            equal(expected, native);
+        }
+        // Every Jcc condition and arithmetic-flag image exercises both trace
+        // predictions, including the precise prefix count on an unexpected exit.
+        for (unsigned condition = 0; condition < 16; ++condition)
+            for (unsigned pattern = 0; pattern < 64; ++pattern)
+                for (bool backward : {false, true})
+                    for (bool code32 : {false, true})
+                    for (bool terminal : {false, true}) {
+                        CPU expected(65536), native(65536);
+                        std::vector<uint8_t> code = backward
+                            ? std::vector<uint8_t>{0x40, 0xeb, 2, 0xf4, 0xf4,
+                                                  uint8_t(0x70 | condition), 0xf9, 0xf4}
+                            : std::vector<uint8_t>{uint8_t(0x70 | condition), 3,
+                                                  0x31, 0xdb, 0x90, 0xf4};
+                        if (terminal)
+                            code = backward
+                                ? std::vector<uint8_t>{0xf4, 0x90, 0x90, 0x90, 0x90,
+                                                      uint8_t(0x70 | condition), 0xf9, 0xf4}
+                                : std::vector<uint8_t>{uint8_t(0x70 | condition), 3,
+                                                      0xf4, 0x90, 0x90, 0x40, 0xf4};
+                        unsigned flags = 0x202;
+                        unsigned bits[] = {CF, PF, AF, ZF, SF, OF};
+                        for (unsigned k = 0; k < 6; ++k)
+                            if (pattern & (1u << k))
+                                flags |= bits[k];
+                        for (auto c : {&expected, &native}) {
+                            c->s[CS].big = code32;
+                            c->ip = backward ? 5 : 0;
+                            c->flags = flags;
+                            std::copy(code.begin(), code.end(), c->mem.begin());
+                        }
+                        for (unsigned k = 0; k < 8; ++k)
+                            expected.r[k] = native.r[k] = rng();
+                        Jit block(native, true, 0, 65536, Jit::BlockMode::Trace);
+                        unsigned count = block.run();
+                        check(count >= 1 && count <= (terminal ? 1u : 64u) && block.nativeInstructions == count,
+                              "conditional trace executes an exact bounded native prefix");
+                        for (unsigned k = 0; k < count; ++k)
+                            expected.step();
+                        equal(expected, native);
+                    }
+        // A comparison before an internal branch remains observable on its
+        // side exit even though XOR overwrites every arithmetic flag afterward.
+        for (unsigned trial = 0; trial < 4096; ++trial) {
+            CPU expected(65536), native(65536);
+            std::vector<uint8_t> code = {0x83, 0xf8, uint8_t(trial >> 4),
+                uint8_t(0x70 | (trial & 15)), 3, 0x31, 0xdb, 0x90, 0xf4};
+            for (auto c : {&expected, &native}) {
+                c->s[CS].big = trial & 16;
+                c->flags = 0x202;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+            }
+            for (unsigned k = 0; k < 8; ++k)
+                expected.r[k] = native.r[k] = rng();
+            if (trial & 32)
+                expected.r[AX] = native.r[AX] = uint32_t(int32_t(int8_t(trial >> 4)));
+            Jit block(native, true, 0, 65536, Jit::BlockMode::Trace);
+            unsigned count = block.run();
+            check((count == 2 || count == 4) && block.nativeInstructions == count,
+                  "CMP side exit precedes the predicted path's flag overwrite");
+            for (unsigned k = 0; k < count; ++k)
+                expected.step();
             equal(expected, native);
         }
         // Long blocks exercise late flag producers and the maximum native

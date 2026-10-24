@@ -13,7 +13,7 @@ struct DecodedBlock;
 // instructions outside the supported lowering set use the reference interpreter.
 class Jit {
   public:
-    enum class BlockMode { Basic, FollowJumps };
+    enum class BlockMode { Basic, FollowJumps, Trace };
     explicit Jit(CPU &cpu, bool enabled = true, unsigned warmup = 8,
                  size_t arenaBytes = 16 * 1024 * 1024,
                  BlockMode mode = BlockMode::Basic);

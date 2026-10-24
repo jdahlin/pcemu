@@ -72,6 +72,17 @@ value, including mixed operand/stack widths. MMIO and observed writes replay
 in the interpreter so callbacks see the architectural stack pointer.
 Instructions outside that lowering set execute in the interpreter.
 
+The experimental `--jit-traces` mode can also follow conditional branches:
+backward branches predict taken and forward branches predict fallthrough.
+Generated guards keep the predicted continuation inside the native block; an
+unexpected outcome spills the executed prefix's GPRs, full flags and exact
+instruction count, commits the other destination, and returns to dispatch.
+Conditional guards are flag-liveness barriers, so later overwrites cannot drop
+flags visible at an earlier side exit. A branch whose predicted successor
+cannot be decoded remains terminal and uses its original taken/fallthrough IPs.
+The same code-page and 64-instruction bounds apply. This mode is opt-in because
+its larger code footprint and Windows performance need further measurement.
+
 The macOS code arena uses `MAP_JIT`, per-thread write protection, and instruction
 cache synchronization. Guest writes overlapping translated instruction bytes update page generations. Cached blocks also
 validate CS base, mode, A20 and control-register state. A block cannot span a

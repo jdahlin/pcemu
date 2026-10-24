@@ -121,6 +121,24 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     auto flagBit = [&](int src, unsigned bit) {
         emit(0x33000000u | (((32 - bit) & 31) << 16) | (src << 5) | 12);
     };
+    // Return the non-inverted (even Jcc) predicate in w13.
+    auto conditionValue = [&](int condition, bool loadFlags) {
+        if (loadFlags)
+            load(12, 19, offsetof(CPU, flags));
+        unsigned base = condition & 14;
+        unsigned bit = base == 0 ? 11 : base == 2 || base == 6 ? 0
+                                       : base == 4 ? 6 : base == 8 ? 7 : 2;
+        if (base >= 12) {
+            bits(13, 12, 7, 1);
+            bits(14, 12, 11, 1);
+            emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
+        } else
+            bits(13, 12, bit, 1);
+        if (base == 6 || base == 14) {
+            bits(14, 12, 6, 1);
+            emit(0x2a000000u | (14 << 16) | (13 << 5) | 13);
+        }
+    };
     auto finishFlags = [&](int last, int condition, uint32_t target) {
         if (last < 0 && condition < 0)
             return;
@@ -191,21 +209,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 return;
             // Evaluate all sixteen Jcc predicates from materialized flags.
             // Only caller-save temporaries are used, just like nativeFinish.
-            if (last < 0)
-                load(12, 19, offsetof(CPU, flags));
-            unsigned base = condition & 14;
-            unsigned bit = base == 0 ? 11 : base == 2 || base == 6 ? 0
-                                           : base == 4 ? 6 : base == 8 ? 7 : 2;
-            if (base >= 12) {
-                bits(13, 12, 7, 1);
-                bits(14, 12, 11, 1);
-                emit(0x4a000000u | (14 << 16) | (13 << 5) | 13);
-            } else
-                bits(13, 12, bit, 1);
-            if (base == 6 || base == 14) {
-                bits(14, 12, 6, 1);
-                emit(0x2a000000u | (14 << 16) | (13 << 5) | 13);
-            }
+            conditionValue(condition, last < 0);
             auto skip = code.size();
             emit((condition & 1 ? 0x35000000u : 0x34000000u) | 13);
             imm(9, target);
@@ -241,8 +245,28 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch)
+        if (i.kind == Kind::Nop)
             continue;
+        if (i.kind == Kind::Branch) {
+            if (i.dst >= 0 && n + 1 < ir.size()) {
+                finishFlags(last, -1, 0);
+                last = -1;
+                conditionValue(i.dst, true);
+                auto expected = code.size();
+                bool nonzero = i.predictedTaken != bool(i.dst & 1);
+                emit((nonzero ? 0x35000000u : 0x34000000u) | 13);
+                // The unexpected outcome returns with the prefix's exact GPRs,
+                // materialized flags, instruction count and branch destination.
+                flushRegisters(dirtyRegisters);
+                imm(9, i.predictedTaken ? i.end : i.imm);
+                store(9, 19, offsetof(CPU, ip));
+                imm(0, n + 1);
+                exits.push_back(code.size());
+                emit(0x14000000u);
+                code[expected] |= uint32_t(code.size() - expected) << 5;
+            }
+            continue;
+        }
         // A register-only CMP/TEST has no other architectural result. Its
         // instruction still contributes to the block's guest instruction count.
         if (!neededFlags[n] && (i.kind == Kind::Test || (i.kind == Kind::Alu && i.op == 7)))
@@ -626,7 +650,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     if (!ir.back().nearReturn && ir.back().kind != Kind::CounterBranch) {
         imm(9, ir.back().nearCall ? ir.back().target
-                                 : branch && ir.back().dst < 0 ? ir.back().imm : pos);
+                                 : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
+                                          : pos);
         store(9, 19, offsetof(CPU, ip));
     }
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);

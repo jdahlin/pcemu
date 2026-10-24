@@ -126,7 +126,7 @@ static double benchMemory(bool enabled, uint64_t target, bool paging) {
 int main(int argc, char **argv) {
     std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
-    bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true;
+    bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true, traceJit = false;
     std::string machineId = "pc-legacy", backendId = "auto";
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = false, memoryBenchmark = false, enableNetwork = true, enableHostInput = true;
@@ -185,10 +185,14 @@ int main(int argc, char **argv) {
                 fromFloppy = true;
             else if (arg == "--headless")
                 headless = true;
-            else if (arg == "--jit-basic-blocks")
-                followJumps = false;
-            else if (arg == "--jit-follow-jumps")
+            else if (arg == "--jit-basic-blocks") {
+                followJumps = traceJit = false;
+            } else if (arg == "--jit-follow-jumps") {
                 followJumps = true;
+                traceJit = false;
+            } else if (arg == "--jit-traces") {
+                followJumps = traceJit = true;
+            }
             else if (arg == "--no-jit")
                 noJit = true;
             else if (arg == "--verbose")
@@ -220,6 +224,7 @@ int main(int argc, char **argv) {
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --jit-traces (experimental conditional branch traces)\n"
                              "  --jit-basic-blocks (disable default same-page jump joining)\n"
                              "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
                              "  --load-snapshot DIRECTORY (private writable disk clone)\n"
@@ -315,7 +320,8 @@ int main(int argc, char **argv) {
         if (snapshotPath.empty())
             m.boot(fromFloppy);
         Jit jit(c, enableJit, 8, 16 * 1024 * 1024,
-                followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
+                traceJit ? Jit::BlockMode::Trace
+                         : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
         std::ofstream trace;
         if (!tracePath.empty() && !afterBreak)
             trace.open(tracePath);
@@ -373,6 +379,7 @@ int main(int argc, char **argv) {
                   << ",\"machinePlatform\":" << std::quoted(std::string(selectedProfile.platform))
                   << ",\"executionBackend\":" << std::quoted(enableJit ? "jit" : "interpreter")
                   << ",\"jitFollowJumps\":" << (enableJit && followJumps)
+                  << ",\"jitTraces\":" << (enableJit && traceJit)
                   << ",\"ramBytes\":" << c.mem.size()
                   << ",\"disk\":" << std::quoted(m.disk ? m.disk->path : "")
                   << ",\"compiledBlocks\":" << jit.compiledBlocks

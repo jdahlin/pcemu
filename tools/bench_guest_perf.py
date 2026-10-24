@@ -24,6 +24,8 @@ jump_mode.add_argument('--jit-follow-jumps', dest='jit_follow_jumps', action='st
                        help='explicitly enable the default same-page jump joining')
 jump_mode.add_argument('--jit-basic-blocks', dest='jit_follow_jumps', action='store_false',
                        help='disable same-page jump joining for controlled comparisons')
+jump_mode.add_argument('--jit-traces', dest='jit_follow_jumps', action='store_const',
+                       const='traces', help='experimental conditional branch traces')
 parser.set_defaults(jit_follow_jumps=None)
 parser.add_argument('--guest-profile', action='store_true',
                     help='diagnostic opcode/dispatch counters per interval; timings are not benchmark scores')
@@ -80,7 +82,9 @@ command = [str(runner), '--disk', str(disk), '--output', str(result),
            '--timeout', str(args.timeout), '--loops', str(args.loops)]
 if args.no_jit:
     command.append('--no-jit')
-if args.jit_follow_jumps is True:
+if args.jit_follow_jumps == 'traces':
+    command.append('--jit-traces')
+elif args.jit_follow_jumps is True:
     command.append('--jit-follow-jumps')
 elif args.jit_follow_jumps is False:
     command.append('--jit-basic-blocks')
@@ -90,7 +94,9 @@ with (work / 'run.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                    check=True, timeout=args.timeout + 10)
 data = json.loads(result.read_text())
-if args.jit_follow_jumps is not None and bool(data.get('followJumps', False)) != args.jit_follow_jumps:
+if args.jit_follow_jumps is not None and (
+        bool(data.get('followJumps', False)) != bool(args.jit_follow_jumps) or
+        bool(data.get('traces', False)) != (args.jit_follow_jumps == 'traces')):
     raise RuntimeError('Runner jump stitching mode does not match requested mode')
 if bool(data.get('profiled')) != args.guest_profile:
     raise RuntimeError('Runner profiling mode does not match requested mode')

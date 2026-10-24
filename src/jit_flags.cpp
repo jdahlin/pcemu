@@ -6,6 +6,12 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
     unsigned liveFlags = arithmeticFlags; // Every block exit observes full flags.
     for (size_t n = ir.size(); n-- > 0;) {
         const auto &i = ir[n];
+        if (i.kind == Kind::Branch && i.dst >= 0) {
+            // Either outcome can expose this exact flags image through a trace
+            // side exit, even if the predicted continuation overwrites flags.
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         if (i.kind == Kind::Memory) {
             // A memory operation may replay before access or exit after a
             // successful access changes code. Keep both restart states exact,

@@ -17,7 +17,9 @@ p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--disk', type=Path, default=root / 'media/win311.raw')
 p.add_argument('--verbose', action='store_true')
 p.add_argument('--keep-artifacts', action='store_true', help='retain the successful private disk and RAM dump')
-p.add_argument('--jit-follow-jumps', action='store_true')
+jump_mode = p.add_mutually_exclusive_group()
+jump_mode.add_argument('--jit-follow-jumps', action='store_true')
+jump_mode.add_argument('--jit-traces', action='store_true')
 a = p.parse_args()
 if not shutil.which('tesseract'):
     p.error('This optional integration check requires tesseract (brew install tesseract)')
@@ -31,7 +33,7 @@ proc = subprocess.Popen([
     str(root / 'build/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',
     '--type', 'cd windows\nwin /s\n', '--control-file', str(control),
     '--capture-every', '100000000', '--frame', str(frame),
-] + (['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
+] + (['--jit-traces'] if a.jit_traces else ['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
 
 def send(*commands, settle=0.35):
     subprocess.run([

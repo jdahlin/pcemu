@@ -770,3 +770,47 @@ executable without rebuilding and retain a new result instead of overwriting
 an older one. It checks every PCEmu checksum against the native result, records
 the executable hash and rejects a changing executable. All benchmark launches
 explicitly request headless mode.
+
+
+### Conditional native trace experiment (2026-10-24, opt-in)
+
+`--jit-traces` follows predicted conditional paths as well as direct jumps,
+retaining GPRs across basic blocks. Backward branches predict taken; forward
+branches predict fallthrough. An unexpected outcome exits with exact flags,
+GPRs, destination and executed-prefix instruction count. The same one-page and
+64-instruction bounds remain; an unsupported predicted target leaves a terminal
+branch with its original two destinations. This is separate from default
+unconditional jump joining.
+
+Three alternating same-binary pairs run 20,000 CoreMark iterations, with valid
+upstream CRCs, matching 7,950,184,496 guest instructions, and return to DOS:
+
+| Pair | Joined seconds | Trace seconds | Joined / trace |
+| --- | ---: | ---: | ---: |
+| 1 | 30.374847 | 23.919932 | 1.26986 |
+| 2 | 29.597460 | 23.901700 | 1.23830 |
+| 3 | 29.773277 | 23.513710 | 1.26621 |
+
+The median paired throughput gain is 26.6%. All intervals exceed ten seconds.
+Runner hashes, build inputs and every sample remain in
+`build/conditional-trace-comparison/`. Native instructions increase from
+7,517,819,881 to 7,540,227,450; arena occupancy grows from 758,512 to 1,757,152
+bytes (2.32x). The code-size cost is material, so traces remain opt-in and no
+Windows application performance gain is claimed.
+
+A separate diagnostic 1,000-iteration profile executes 397,509,732 guest
+instructions. Compared with default joining's matching profile, dispatches and
+device polls fall from 97,379,695 to 53,907,241 (44.6%), native calls fall from
+75,752,046 to 33,400,277, and interpreted attempts from 21,627,649 to 20,506,964.
+Average native instructions per call rise from 4.96 to 11.29. Profile timings
+are excluded from the comparison.
+
+The full unit suite passes; final 183,478 flag checks cover every Jcc and flag
+image, both prediction directions, 16/32-bit execution, terminal successors,
+CMP before later flag overwrites, exact memory faults and code-changing stores.
+All 28 DOS microkernel intervals pass. Headless compatibility checks verify
+Win3.11 Notepad exact contents, rtts/installed OSR2 cold boot and restart, and
+Word/Excel task pixels. They do not rerun the installer in trace mode.
+`build/conditional-trace-validation.json` records evidence and source hashes.
+The normal emulator, DOS benchmark and snapshot task runner accept the mode;
+metadata records it separately from unconditional joining.

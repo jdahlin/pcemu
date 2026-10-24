@@ -29,6 +29,7 @@ p.add_argument('--sample-wait-ms', type=int, default=3000, help='named guest-sid
 jump_mode = p.add_mutually_exclusive_group()
 jump_mode.add_argument('--jit-follow-jumps', dest='jit_follow_jumps', action='store_true')
 jump_mode.add_argument('--jit-basic-blocks', dest='jit_follow_jumps', action='store_false')
+jump_mode.add_argument('--jit-traces', dest='jit_follow_jumps', action='store_const', const='traces')
 p.set_defaults(jit_follow_jumps=None)
 a = p.parse_args()
 if a.jit_follow_jumps and a.no_jit:
@@ -84,7 +85,9 @@ for index in range(a.repeat):
         command.append('--no-host-input')
     if a.no_jit:
         command.append('--no-jit')
-    if a.jit_follow_jumps is True:
+    if a.jit_follow_jumps == 'traces':
+        command.append('--jit-traces')
+    elif a.jit_follow_jumps is True:
         command.append('--jit-follow-jumps')
     elif a.jit_follow_jumps is False:
         command.append('--jit-basic-blocks')
@@ -119,7 +122,9 @@ for index in range(a.repeat):
         if host_input_suppressed and initial.get('hostInput') != 0:
             raise RuntimeError('Automated GUI did not disable physical host input')
         follow_jumps_mode = bool(initial.get('jitFollowJumps', a.jit_follow_jumps or False))
-        if a.jit_follow_jumps is not None and follow_jumps_mode != a.jit_follow_jumps:
+        trace_mode = bool(initial.get('jitTraces', a.jit_follow_jumps == 'traces'))
+        if a.jit_follow_jumps is not None and (follow_jumps_mode != bool(a.jit_follow_jumps) or
+                trace_mode != (a.jit_follow_jumps == 'traces')):
             raise RuntimeError('Guest jump joining mode differs from requested mode')
         if initial['executionEpoch'] != 1:
             raise RuntimeError('Guest did not start from the requested snapshot')
@@ -190,7 +195,7 @@ if hashlib.sha256(engine.read_bytes()).hexdigest() != engine_hash or \
         hashlib.sha256(a.task.read_bytes()).hexdigest() != task_hash:
     raise RuntimeError('Emulator or task changed during measurement; results not accepted')
 report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profiled':a.sample,
-        'followJumps':follow_jumps_mode,
+        'followJumps':follow_jumps_mode, 'traces':trace_mode,
         'emulatorSha256':engine_hash,
         'taskSha256':task_hash,
         'guestProfiled':a.guest_profile,
