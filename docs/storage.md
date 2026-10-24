@@ -62,3 +62,32 @@ of its three reset paths. Evidence is in `build/storage-cleanup/`,
 `build/win311-smoke-cuhbrg9h/` and `build/reset-smoke-n_q3y6z0/`.
 
 Safety checks: `python3 -m unittest discover -s tests -p test_cleanup.py`.
+
+## Windows 11 focused cleanup and legacy disk compaction
+
+A later cleanup removed Debian VM data and unrelated build artifacts. The Office
+checkpoint state was removed; `run-office97.sh` requires restoring or recreating
+an Office checkpoint before it can run. The remaining Win95 backing disks and
+Office base were retained. Restore Office checkpoints separately when needed.
+
+The following local images now use PCEmu's compressed COW format despite retaining
+their existing `.raw`/`.img` names. Format detection uses the file header:
+
+- `media/win95.raw`
+- `media/rtts-win95.img`
+- `media/office97-base/disk.raw`
+- `build/snapshots/win95-desktop/disk.raw`
+
+Each image uses an immutable sparse zero parent in `media/compact-bases/`, named
+`zero-268435456.raw` or `zero-2147483648.raw` for its logical byte size. Keep those
+parents with the images: the COW headers contain absolute parent paths. Existing
+child overlays retain their original backing paths and guest-visible contents.
+These images can be used directly by PCEmu; external raw-disk tools must not treat
+them as flat raw images.
+
+Conversion used `disk-tool import-diff` against the zero parents. Every guest byte
+was read back through `disk-tool serve` and its SHA-256 compared with the original
+raw image, including verification after replacement. The images retain their
+original permissions. Reported allocation fell by approximately 280 MiB; APFS
+sharing means actual free-space savings can differ. The local audit is
+`build/storage-cleanup/legacy-compaction.json`. Windows 11 disks were not converted.
