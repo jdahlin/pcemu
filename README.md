@@ -13,7 +13,8 @@ guests on Apple Silicon (`make test-hvf`). Its
 UEFI variables across VM instances (`make smoke-uefi`).
 [Virtio PCI/MMIO storage](docs/virtio.md) boots ARM64 EFI applications and
 preserves guest file writes in compressed COW deltas (`make smoke-virtio`).
-Linux/Windows boot is not implemented on that platform yet.
+The [Debian ARM64 installer](docs/debian-arm64.md) reaches language selection.
+Installed Linux and Windows OS boot remain work in progress.
 
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a

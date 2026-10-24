@@ -3,7 +3,8 @@
 `arm64-uefi` boots real EDK II firmware to its built-in UEFI Interactive Shell
 using Hypervisor.framework. Serial command execution and nonvolatile variables
 survive a complete VM teardown and restart. The platform also [boots EFI applications from virtio disks](virtio.md).
-Linux and Windows boot are not yet implemented.
+The [Debian ARM64 installer](debian-arm64.md) reaches language selection.
+Installed Linux and Windows OS boot remain work in progress.
 
 Requires Apple Silicon, macOS 15 or newer (for GICv3), the command-line C++ tools,
 and `dtc` on PATH. The existing SDL/x86 emulator remains independent.
