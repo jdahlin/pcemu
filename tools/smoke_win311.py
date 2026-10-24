@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Boot a private Windows 3.11 copy, save in Notepad, and verify the FAT16 file.
+"""Boot a private compressed Windows 3.11 overlay and verify a Notepad save.
 Requires the completed installation in media/win311.raw. No external emulator.
 """
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -11,23 +12,29 @@ import tempfile
 import time
 from pathlib import Path
 from prepare_media import FAT
+from cow_file import CowFile
 
 root = Path(__file__).resolve().parent.parent
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--disk', type=Path, default=root / 'media/win311.raw')
 p.add_argument('--verbose', action='store_true')
-p.add_argument('--keep-artifacts', action='store_true', help='retain the successful private disk and RAM dump')
+p.add_argument('--keep-artifacts', action='store_true', help='retain the successful compressed private disk and RAM dump')
 jump_mode = p.add_mutually_exclusive_group()
 jump_mode.add_argument('--jit-follow-jumps', action='store_true')
 jump_mode.add_argument('--jit-traces', action='store_true')
 a = p.parse_args()
 if not shutil.which('tesseract'):
     p.error('This optional integration check requires tesseract (brew install tesseract)')
-subprocess.run(['make', '-s'], cwd=root, check=True)
+source = a.disk.resolve()
+if not source.is_file():
+    p.error('Missing local source disk: ' + str(source))
+subprocess.run(['make', '-s', 'build/pcemu', 'build/disk-tool'], cwd=root, check=True)
 work = Path(tempfile.mkdtemp(prefix='win311-smoke-', dir=root / 'build'))
-disk, control, frame = (work / n for n in ['disk.raw', 'control.txt', 'frame.ppm'])
+disk, control, frame = (work / n for n in ['disk.pcd', 'control.txt', 'frame.ppm'])
 ram = work / 'ram.bin'
-subprocess.run(['cp', '-c', str(a.disk.resolve()), str(disk)], check=True)
+subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)
+emulator_hash = hashlib.sha256((root / 'build/pcemu').read_bytes()).hexdigest()
+source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 log = (work / 'emulator.log').open('w')
 proc = subprocess.Popen([
     str(root / 'build/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',
@@ -133,14 +140,32 @@ try:
     proc.wait(timeout=10)
     if proc.returncode:
         raise RuntimeError(f'Emulator exited with status {proc.returncode}')
-    fat = FAT(disk)
-    entry = next(e for e in fat.entries() if e[1] == 'PCEMU   TXT')
-    actual = fat.read_file(entry[2], entry[3])
-    fat.f.close()
+    # The guest has exited and flushed its own child. Inspect through the
+    # compressed disk reader rather than expanding it into a raw staging file.
+    with CowFile(disk) as handle:
+        fat = FAT(handle)
+        entry = next(e for e in fat.entries() if e[1] == 'PCEMU   TXT')
+        actual = fat.read_file(entry[2], entry[3])
     if actual != b'PCEMU integration passed.':
         raise RuntimeError(f'Guest file mismatch: {actual!r}')
+    if hashlib.sha256((root / 'build/pcemu').read_bytes()).hexdigest() != emulator_hash:
+        raise RuntimeError('Emulator binary changed during verification')
+    result = {
+        'scope': 'Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents',
+        'sourceDisk': str(source),
+        'emulatorSha256': emulator_hash,
+        'gitCommit': source_commit,
+        'privateDiskFormat': 'PCEMUCOW',
+        'privateDiskBytes': disk.stat().st_size,
+        'privateDiskAllocatedBytes': disk.stat().st_blocks * 512,
+        'verifiedFile': 'C:\\PCEMU.TXT',
+        'verifiedBytes': len(actual),
+        'verifiedSha256': hashlib.sha256(actual).hexdigest(),
+        'privateDiskRemoved': not a.keep_artifacts,
+    }
     if not a.keep_artifacts:
         disk.unlink()
+    (work / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(f'PASS: Notepad saved exact contents through Windows and DOS. Evidence: {work}')
 finally:
     if proc.poll() is None:

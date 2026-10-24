@@ -46,7 +46,13 @@ requires space for its uncompressed contents.
 
 ## Avoid repeated growth
 
-The Win3.11 and DOS reset smoke scripts now remove their private disks after
+The Win3.11 smoke test creates a compressed COW overlay and reads the saved
+FAT file directly through the compressed disk reader, without a raw staging
+image. Its result manifest records the emulator hash and overlay size. A
+headless standard-mode boot, Notepad save and return to DOS on 2026-10-25
+passed with an 8 KiB allocated overlay, which was removed after verification.
+
+The Win3.11 and DOS reset smoke scripts remove their private disks after
 successful verification and write small state JSON instead of full RAM dumps.
 They retain failing disks for investigation. Pass `--keep-artifacts` explicitly
 when full successful disks/RAM dumps are needed:

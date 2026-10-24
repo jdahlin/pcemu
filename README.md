@@ -81,7 +81,7 @@ came from the already-installed Homebrew QEMU package. See `roms/README.md`.
 make test
 make bench
 ./build/pcemu --benchmark-memory # checked flat/paged load-add-store loops
-make smoke-win311 # installed disk + tesseract required; private clone, file readback
+make smoke-win311 # installed disk + tesseract required; private compressed overlay, file readback
 make smoke-reset  # DOS requests warm, 8042 and fast resets; verifies second boot
 make smoke-win95  # original rtts disk + tesseract; private compressed overlay
 ./build/pcemu --headless --disk media/dos.raw --steps 30000000 \
