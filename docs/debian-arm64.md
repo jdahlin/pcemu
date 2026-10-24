@@ -7,6 +7,9 @@ The installation contains 232 packages, OpenSSH and no desktop; the ext4 root
 used about 916 MiB at verification. The kernel is `6.12.107+deb13-arm64` and
 OpenSSH is `1:10.0p1-7+deb13u4`.
 
+See the [platform audit and integration roadmap](debian-platform-audit.md) for
+observed kernel warnings and prioritized host/guest improvements.
+
 ## Run the installed server
 
 The local VM is under ignored `media/debian-arm64/`. It contains the sparse
