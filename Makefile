@@ -80,10 +80,10 @@ test-hvf: build/pcemu-hvf build/arm-device-tests build/virtio-tests
 	./build/virtio-tests
 	./build/pcemu-hvf --self-test
 	python3 -m unittest discover -s tests -p test_hvf_cli.py
-build/pcemu-hvf: src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt.hpp src/arm_devices.cpp src/arm_devices.hpp src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
+build/pcemu-hvf: src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt.hpp src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp src/arm_devices.cpp src/arm_devices.hpp src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
 	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
 	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_devices.cpp src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_fw_cfg.cpp src/arm_devices.cpp src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
 	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
 
 .PHONY: firmware-arm64 smoke-uefi
@@ -95,9 +95,9 @@ build/arm64-fw/pcemu-virt.dtb: platform/arm64/pcemu-virt.dts
 smoke-uefi: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_uefi.py
 
-build/arm-device-tests: src/arm_devices.cpp src/arm_devices.hpp tests/arm_devices_test.cpp
+build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp src/arm_devices.cpp src/arm_devices.hpp tests/arm_devices_test.cpp
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_devices.cpp tests/arm_devices_test.cpp -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_fw_cfg.cpp src/arm_devices.cpp tests/arm_devices_test.cpp -o $@
 
 build/virtio-tests: src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp tests/virtio_blk_test.cpp
 	@mkdir -p build

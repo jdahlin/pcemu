@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
         bool test = false, timeoutExplicit = false, uefiOptions = false;
         pc::ArmVirtMachine::Config uefi{"roms/edk2-arm64.bin", "build/arm64-fw/pcemu-virt.dtb",
                                         "roms/edk2-arm64-vars.bin", "build/arm64-uefi/vars.bin", {}, {}, "pci"};
-        std::string untilText, shellCommand;
+        std::string untilText, shellCommand, framebufferPath;
         std::string kernel, machine = "arm64-test", backend = "auto";
         unsigned timeout = 1000;
         for (int i = 1; i < argc; ++i) {
@@ -171,6 +171,7 @@ int main(int argc, char **argv) {
             else if (arg == "--virtio-transport") { uefi.virtioTransport = value(); uefiOptions = true; }
             else if (arg == "--dtb") { uefi.dtb = value(); uefiOptions = true; }
             else if (arg == "--vars") { uefi.variables = value(); uefiOptions = true; }
+            else if (arg == "--framebuffer-ppm") { framebufferPath = value(); uefiOptions = true; }
             else if (arg == "--until-text") untilText = value();
             else if (arg == "--shell-command") shellCommand = value();
             else if (arg == "--self-test") test = true;
@@ -193,6 +194,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMMUTABLE_BASE --disk-overlay PRIVATE_COW --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
+                             "      [--framebuffer-ppm FILE]\n"
                              "Run make firmware-arm64 first; OS boot is not implemented yet.\n";
                 return 0;
             } else throw std::runtime_error("Unknown option: " + arg);
@@ -227,8 +229,10 @@ int main(int argc, char **argv) {
                 }
             }
             vm.saveVariables();
+            if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
             std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
-                      << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests() << '\n';
+                      << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
+                      << " framebuffer=" << vm.framebuffer() << '\n';
             return matched ? 0 : 1;
         }
         if (uefiOptions || !untilText.empty() || !shellCommand.empty())

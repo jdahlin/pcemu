@@ -6,6 +6,11 @@
     #size-cells = <2>;
     interrupt-parent = <&gic>;
     chosen { stdout-path = "/pl011@9000000"; };
+    fw-cfg@9020000 {
+        compatible = "qemu,fw-cfg-mmio";
+        reg = <0 0x09020000 0 0x18>;
+        dma-coherent;
+    };
     memory@40000000 { device_type = "memory"; reg = <0 0x40000000 0 0x10000000>; };
     flash@0 {
         compatible = "cfi-flash";

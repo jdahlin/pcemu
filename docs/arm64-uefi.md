@@ -102,12 +102,22 @@ It uses the separate `HvfMachine` execution backend, not the x86 `Machine`.
 RAM and GIC register access do not pass through the userspace MMIO dispatcher.
 The UART and flash generate exits; the runner currently processes these one
 access at a time. Virtio-blk PCI/MMIO storage is now available; see [virtio](virtio.md).
-There is no fw_cfg, framebuffer/GOP, ACPI, TPM or Secure Boot implementation. Secure Boot is not enabled for the
+The original fw_cfg MMIO device at `0x09020000` supplies a writable `etc/ramfb`
+file. Its directory, stream reads and synchronous DMA follow the
+[documented fw_cfg wire interface](https://www.qemu.org/docs/master/specs/fw_cfg.html).
+No QEMU device code is linked. The existing EDK II Ramfb driver installs GOP and
+allocates its framebuffer inside guest RAM; default mode is 800×600 XRGB8888.
+`--framebuffer-ppm build/console.ppm` exports a bounded RGB image at the end of
+an observation run. This is a diagnostic image, not a live display frontend.
+DMA is limited to guest RAM; read-only and out-of-bounds file writes fail without
+partially changing the file. An invalid descriptor address is a platform error.
+
+There is no ACPI, TPM or Secure Boot implementation. Secure Boot is not enabled for the
 shell milestone. Windows Validation OS requires additional platform work.
 
 ## Verification
 
-`make test-hvf` includes backend ROM/GIC tests, 38 portable NOR/UART/MMIO-load checks and 565 virtio block/PCI checks and
+`make test-hvf` includes backend ROM/GIC tests, 58 portable NOR/UART/MMIO-load/fw_cfg checks and 565 virtio block/PCI checks and
 CLI tests for private template protection and variable-file locking.
 `make smoke-uefi` creates a small private directory under `build/uefi-smoke-*`:
 
@@ -117,7 +127,9 @@ CLI tests for private template protection and variable-file locking.
    and execute `echo %PcemuNv%`. Require the saved value as guest output.
 
 The test retains two small serial logs, host logs, its 768 KiB variable file and
-`summary.json`. No guest disks or RAM dumps are created. The shared firmware
+`summary.json`, and two 1.4 MB PPM console images. The test requires GOP to be
+configured and the captured console image to contain nonuniform pixel data.
+No guest disks or RAM dumps are created. The shared firmware
 and variable template are not changed.
 
 References:

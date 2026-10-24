@@ -21,7 +21,9 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(256 * 1024 * 1024, true), nor(load(c.variableTemplate, 0xc0000)) {
+    : config(c), vm(256 * 1024 * 1024, true), nor(load(c.variableTemplate, 0xc0000)),
+      fwCfg(vm.ram(), HvfMachine::ramBase) {
+    fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     const auto working = fs::absolute(c.variables).lexically_normal();
     config.variables = working.string();
     const auto original = fs::absolute(c.variableTemplate).lexically_normal();
@@ -79,6 +81,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
 }
 ArmVirtMachine::~ArmVirtMachine() {
     if (variableLock >= 0) close(variableLock);
+    if (diskLock >= 0) close(diskLock);
 }
 void ArmVirtMachine::saveVariables() {
     if (disk) disk->flush();
@@ -92,6 +95,46 @@ void ArmVirtMachine::saveVariables() {
         fs::rename(temporary, target);
     } catch (...) { fs::remove(temporary); throw; }
 }
+std::string ArmVirtMachine::framebuffer() const {
+    auto bytes = fwCfg.file(0x20);
+    auto field = [&](size_t offset, size_t count) {
+        uint64_t value = 0;
+        for (size_t i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
+        return value;
+    };
+    auto address = field(0, 8), format = field(8, 4), flags = field(12, 4);
+    auto width = field(16, 4), height = field(20, 4), stride = field(24, 4);
+    if (!address) return "inactive";
+    if (format != 0x34325258 || flags || !width || !height || width > 4096 || height > 4096 ||
+        stride < width * 4 || stride > 16384 || address < HvfMachine::ramBase ||
+        address - HvfMachine::ramBase > 256 * 1024 * 1024 ||
+        height * stride > 256 * 1024 * 1024 - (address - HvfMachine::ramBase))
+        return "invalid";
+    return std::to_string(width) + "x" + std::to_string(height) + "x32";
+}
+void ArmVirtMachine::saveFramebuffer(const std::string &path) const {
+    auto mode = framebuffer();
+    if (mode == "inactive" || mode == "invalid") throw std::runtime_error("No valid GOP framebuffer");
+    auto bytes = fwCfg.file(0x20);
+    auto field = [&](size_t offset, size_t count) {
+        uint64_t value = 0;
+        for (size_t i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
+        return value;
+    };
+    auto address = field(0, 8), width = field(16, 4), height = field(20, 4), stride = field(24, 4);
+    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    output << "P6\n" << width << ' ' << height << "\n255\n";
+    std::vector<uint8_t> row(width * 4), rgb(width * 3);
+    for (uint64_t y = 0; y < height; ++y) {
+        vm.readMemory(address + y * stride, row);
+        for (uint64_t x = 0; x < width; ++x) {
+            rgb[x * 3] = row[x * 4 + 2]; rgb[x * 3 + 1] = row[x * 4 + 1]; rgb[x * 3 + 2] = row[x * 4];
+        }
+        output.write(reinterpret_cast<const char *>(rgb.data()), rgb.size());
+    }
+    output.close();
+    if (!output) throw std::runtime_error("Cannot save GOP framebuffer: " + path);
+}
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     auto exit = vm.run(slice);
     if (exit.reason == HvfMachine::ExitReason::Canceled) return;
@@ -100,6 +143,17 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         unsigned reg = (exit.syndrome >> 16) & 31;
         unsigned width = 1u << ((exit.syndrome >> 22) & 3);
         bool write = exit.syndrome & (1ull << 6);
+        if (exit.physicalAddress >= 0x09020000 && exit.physicalAddress < 0x09020018) {
+            unsigned offset = exit.physicalAddress - 0x09020000;
+            if (write) fwCfg.write(offset, reg < 31 ? vm.reg(reg) : 0, width);
+            else {
+                auto value = armMmioLoad(fwCfg.read(offset, width), width,
+                    exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15));
+                if (reg < 31) vm.setReg(reg, value);
+            }
+            vm.setPC(exit.pc + 4);
+            return;
+        }
         if (exit.physicalAddress >= 0x04000000 && exit.physicalAddress < 0x040c0000 && write && width == 4) {
             nor.write(exit.physicalAddress - 0x04000000, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
             auto [begin, end] = nor.takeDirty();

@@ -1,5 +1,6 @@
 #pragma once
 #include "arm_devices.hpp"
+#include "arm_fw_cfg.hpp"
 #include "hvf_machine.hpp"
 #include "virtio_blk.hpp"
 #include "virtio_pci.hpp"
@@ -24,11 +25,14 @@ class ArmVirtMachine {
     std::string diskPath() const { return disk ? disk->path : std::string{}; }
     uint64_t diskRequests() const { return block ? block->requests : 0; }
     uint64_t exits() const { return vm.exits(); }
+    std::string framebuffer() const;
+    void saveFramebuffer(const std::string &path) const;
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
     Config config;
     HvfMachine vm;
     ArmNorFlash nor;
+    ArmFwCfg fwCfg;
     ArmPl011 uart;
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;

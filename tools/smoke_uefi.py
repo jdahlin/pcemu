@@ -17,14 +17,24 @@ def boot(directory, name, command, expected):
             str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
             '--vars', str(directory / 'vars.bin'), '--shell-command', command,
             '--until-text', expected, '--timeout-ms', '30000',
+            '--framebuffer-ppm', str(directory / (name + '.ppm')),
         ], cwd=ROOT, stdout=serial, stderr=host, timeout=40)
     output = (directory / (name + '.serial.log')).read_bytes()
     if result.returncode != 0 or expected.encode() not in output:
         raise RuntimeError(f'UEFI {name} failed; inspect {directory}')
     if b'Synchronous Exception' in output:
         raise RuntimeError(f'UEFI guest exception; inspect {directory}')
+    host_output = (directory / (name + '.host.log')).read_text()
+    if 'framebuffer=800x600x32' not in host_output:
+        raise RuntimeError('Firmware did not configure GOP')
+    image = (directory / (name + '.ppm')).read_bytes()
+    header = b'P6\n800 600\n255\n'
+    pixels = image[len(header):]
+    if not image.startswith(header) or len(pixels) != 800 * 600 * 3 or len(set(pixels)) < 2:
+        raise RuntimeError('Missing or blank GOP console image')
     return {'name': name, 'wallSeconds': time.monotonic() - started,
-            'serialBytes': len(output)}
+            'serialBytes': len(output), 'framebuffer': '800x600x32',
+            'framebufferBytes': len(image)}
 
 
 def main():
