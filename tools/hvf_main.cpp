@@ -62,6 +62,14 @@ HvfMachine::Exit hvc(HvfMachine &vm) {
 void selfTest() {
     // Invalid configuration must fail before claiming the process-wide VM.
     rejects([] { HvfMachine invalid(123); }, "Unaligned memory accepted");
+    {
+        HvfMachine vm(size_t(8) * 1024 * 1024 * 1024);
+        code(vm, std::array<uint32_t, 3>{0xb9000020, 0xb9400022, 0xd4000002});
+        vm.setReg(0, 0x12345678);
+        vm.setReg(1, HvfMachine::ramBase + size_t(8) * 1024 * 1024 * 1024 - 4);
+        hvc(vm);
+        require(vm.reg(2) == 0x12345678, "High guest RAM load/store failed");
+    }
     for (unsigned iteration = 0; iteration < 2; ++iteration) {
         HvfMachine vm;
         rejects([] { HvfMachine second; }, "Second process-wide VM unexpectedly created");
@@ -342,6 +350,12 @@ int main(int argc, char **argv) {
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk") { uefi.extraDisk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk-overlay") { uefi.extraDiskOverlay = value(); uefiOptions = true; }
+            else if (arg == "--ram-mb") {
+                auto text = value(); size_t consumed = 0; auto mib = std::stoul(text, &consumed);
+                if (consumed != text.size() || mib < 256 || mib > 16384)
+                    throw std::runtime_error("ARM UEFI RAM must be 256..16384 MiB");
+                uefi.memoryBytes = size_t(mib) * 1024 * 1024; uefiOptions = true;
+            }
             else if (arg == "--cpus") {
                 auto text = value(); size_t consumed = 0; auto count = std::stoul(text, &consumed);
                 if (consumed != text.size() || count < 1 || count > 8) throw std::runtime_error("CPUs must be 1..8");
@@ -390,6 +404,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
+                             "      [--ram-mb 256..16384]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -406,8 +421,10 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
-            if (uefi.cpus > 1) {
+            if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes) {
                 auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
+                if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)
+                    directory += "-ram" + std::to_string(uefi.memoryBytes / (1024 * 1024));
                 if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
                 if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
             }
@@ -455,7 +472,7 @@ int main(int argc, char **argv) {
                 if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
                 if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
                 std::cerr << "UEFI run complete: exits=" << vm.exits() << " cpus=" << uefi.cpus << " variables=" << uefi.variables
-                          << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
+                          << " ramMiB=" << uefi.memoryBytes / (1024 * 1024) << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
                           << " extraDiskRequests=" << vm.extraDiskRequests()
                           << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()
                           << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';

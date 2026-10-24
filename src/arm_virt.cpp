@@ -56,7 +56,7 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(ramBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
+    : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus) {
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
@@ -193,7 +193,7 @@ std::string ArmVirtMachine::cpuState() const {
            << " spsr_el1=0x" << vm.systemReg(0xc200);
     for (unsigned i = 0; i < vm.cpuCount(); ++i) output << " cpu" << i << "_pc=0x" << vm.cpuPC(i);
     auto dump = [&](const char *name, uint64_t address) {
-        if (address < HvfMachine::ramBase + 16 || address - HvfMachine::ramBase > ramBytes - 48) return;
+        if (address < HvfMachine::ramBase + 16 || address - HvfMachine::ramBase > config.memoryBytes - 48) return;
         std::array<uint8_t, 64> bytes{};
         vm.readMemory(address - 16, bytes);
         output << ' ' << name << "_start=0x" << address - 16 << ' ' << name << "_bytes=";

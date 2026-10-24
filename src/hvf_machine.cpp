@@ -95,9 +95,9 @@ struct HvfMachine::Impl {
         if (!cpuCount || cpuCount > 8 || (cpuCount > 1 && !enableGic))
             throw std::runtime_error("HVF supports 1..8 CPUs; SMP requires GICv3");
         auto pageSize = sysconf(_SC_PAGESIZE);
-        if (pageSize <= 0 || bytes < size_t(pageSize) || bytes > size_t(2) * 1024 * 1024 * 1024 ||
+        if (pageSize <= 0 || bytes < size_t(pageSize) || bytes > size_t(16) * 1024 * 1024 * 1024 ||
             bytes % size_t(pageSize))
-            throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 2 GiB");
+            throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 16 GiB");
         if (!HvfMachine::supported())
             throw std::runtime_error("Hypervisor.framework is unavailable (kern.hv_support)");
         hv_return_t created;

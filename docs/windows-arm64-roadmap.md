@@ -376,3 +376,13 @@ user provisioning will finish. Framebuffer files are captured at reset/exit,
 so their black reset image is not a live desktop observation. Generated media
 containing the private answer file, writable system overlay and variable store
 are restricted to mode 0600; the private staging directory is mode 0700.
+
+The ARM UEFI runner now accepts `--ram-mb 256..16384`, keeping 2048 MiB as its
+default. For this Windows instance, prepare matching firmware descriptions with
+`python3 tools/build_arm_platform.py --cpus 1 --ram-mb 8192`, then launch with
+`--ram-mb 8192`. The runner selects `build/arm64-fw/cpus1-ram8192` automatically.
+The generated device tree describes an 8 GiB region starting at 0x40000000,
+including addresses above 4 GiB. The HVF self-test executes an actual guest
+store/load at the end of that region; platform tests independently decode the
+compiled device tree and check its 64-bit RAM size. These tests verify the
+platform configuration, not Windows' eventual reported usable memory.

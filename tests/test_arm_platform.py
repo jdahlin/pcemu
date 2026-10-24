@@ -26,6 +26,18 @@ class ArmPlatform(unittest.TestCase):
                 self.assertEqual(manifest['cpuCount'], count)
                 self.assertIn('PPTT', manifest['tableOffsets'])
 
+    def test_eight_gib_memory_description(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = build(1, Path(directory), 8192)
+            memory = subprocess.check_output(['fdtget', '-t', 'x', str(output / 'pcemu-virt.dtb'),
+                                              '/memory@40000000', 'reg'], text=True)
+            self.assertEqual(memory.split(), ['0', '40000000', '2', '0'])
+
+    def test_invalid_memory(self):
+        for size in (0, 255, 16385):
+            with self.assertRaises(ValueError):
+                build(1, Path('/unused'), size)
+
     def test_invalid_count(self):
         for count in (0, 9):
             with self.assertRaises(ValueError):

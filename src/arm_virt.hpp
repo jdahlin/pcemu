@@ -24,6 +24,7 @@ class ArmVirtMachine {
     static constexpr size_t ramBytes = size_t(2) * 1024 * 1024 * 1024;
     struct Config {
         unsigned cpus = 1;
+        size_t memoryBytes = ramBytes;
         std::string firmware, dtb, variableTemplate, variables;
         std::string disk, diskOverlay;
         std::string extraDisk, extraDiskOverlay;
