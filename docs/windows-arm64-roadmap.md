@@ -293,3 +293,20 @@ PnP device from successful I/O through its own CNG provider. Native fixtures
 cover provider-open, either request, close failures and unchanged output.
 The probe has been built and its ARM64 imports checked; it has not yet run in
 installed Windows and is not part of the already-running install WIM snapshot.
+
+The CNG probe was also run in a separate WinPE instance without attaching the
+installation target. Report `reports/report-1792877830130962000.log` shows
+viorng Started, its provider registry entries present and viorngum.dll copied,
+but BCryptOpenAlgorithmProvider returned STATUS_NOT_FOUND (0xC0000225). No
+entropy request was completed in that probe. The checker now reports the failed
+stage and NTSTATUS to distinguish provider discovery from device I/O failure.
+This WinPE result does not establish installed Windows CNG behavior.
+
+`tools/windows/finalize.cmd` is a non-formatting WinPE follow-up for the same
+known two-disk installation VM. `finalize_mount.txt` mounts the target's GPT
+partitions; the script requires both the installed kernel and this deployment's
+PCEMU first-boot script before copying the RNG checker and updated diagnostic
+script. It refreshes bcdboot and ensures the ARM64 fallback EFI loader exists.
+It contains no clean, format, partition-creation or driver-replacement commands.
+Use it only after the initial deployment reports completion and the installation
+VM has stopped. This follow-up has been prepared, not yet run against the target.

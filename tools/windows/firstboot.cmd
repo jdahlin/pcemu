@@ -15,6 +15,8 @@ ipconfig /all
 pnputil /enum-devices /class SCSIAdapter
 pnputil /enum-devices /class Net
 pnputil /enum-devices /class System
+C:\PCEMU\RNG.EXE
+echo RNG_CHECK_RC=%errorlevel%
 dism /Online /Get-Drivers
 C:\PCEMU\HTTP.EXE get /probe C:\PCEMU\HTTP-BOOT.TXT
 echo HTTP_GET_RC=%errorlevel%

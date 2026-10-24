@@ -11,19 +11,38 @@ DLL HANDLE GetStdHandle(DWORD);
 DLL int WriteFile(HANDLE, const void *, DWORD, DWORD *, void *);
 DLL void ExitProcess(DWORD);
 static unsigned char first[64], second[64];
-static void finish(int ok) {
-    const char *s = ok ? "PCEMU_VIRTIO_RNG_PROVIDER_OK bytes=128\r\n" : "PCEMU_VIRTIO_RNG_PROVIDER_FAILED\r\n";
+static const char *failedStage = "open";
+static int lastStatus;
+static void text(const char *s) {
     DWORD n = 0, written; while (s[n]) ++n;
     WriteFile(GetStdHandle((DWORD)-11), s, n, &written, 0);
+}
+static void finish(int ok) {
+    if (ok) text("PCEMU_VIRTIO_RNG_PROVIDER_OK bytes=128\r\n");
+    else {
+        text("PCEMU_VIRTIO_RNG_PROVIDER_FAILED stage="); text(failedStage);
+        text(" status=0x");
+        char hex[9]; const char digits[] = "0123456789abcdef";
+        for (unsigned i = 0; i < 8; ++i) hex[i] = digits[((DWORD)lastStatus >> ((7 - i) * 4)) & 15];
+        hex[8] = 0; text(hex); text("\r\n");
+    }
     ExitProcess(ok ? 0 : 1);
 }
 void mainCRTStartup(void) {
     HANDLE provider = 0;
-    if (BCryptOpenAlgorithmProvider(&provider, L"RNG", L"QEMU VirtIO RNG Provider", 0) < 0) finish(0);
-    int ok = BCryptGenRandom(provider, first, sizeof(first), 0) >= 0 &&
-             BCryptGenRandom(provider, second, sizeof(second), 0) >= 0;
-    if (BCryptCloseAlgorithmProvider(provider, 0) < 0) ok = 0;
+    lastStatus = BCryptOpenAlgorithmProvider(&provider, L"RNG", L"QEMU VirtIO RNG Provider", 0);
+    if (lastStatus < 0) finish(0);
+    failedStage = "first-read";
+    lastStatus = BCryptGenRandom(provider, first, sizeof(first), 0);
+    if (lastStatus >= 0) {
+        failedStage = "second-read";
+        lastStatus = BCryptGenRandom(provider, second, sizeof(second), 0);
+    }
+    int ok = lastStatus >= 0;
+    int closed = BCryptCloseAlgorithmProvider(provider, 0);
+    if (ok && closed < 0) { failedStage = "close"; lastStatus = closed; ok = 0; }
     unsigned different = 0;
     for (unsigned i = 0; i < sizeof(first); ++i) different |= first[i] ^ second[i];
-    finish(ok && different != 0);
+    if (ok && !different) { failedStage = "unchanged-output"; lastStatus = (int)0xc0000001u; ok = 0; }
+    finish(ok);
 }
