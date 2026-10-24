@@ -1,5 +1,6 @@
 #include "jit.hpp"
 #include "machine.hpp"
+#include "ps2_test_support.hpp"
 #include <chrono>
 #include <cstring>
 #include <filesystem>
@@ -161,11 +162,11 @@ int main() {
         m.vga.dac[9][2] = 0x27;
         m.vga.attrData = true;
         m.vga.seqIndex = 0xff;
-        m.keyboardFull = true;
-        m.keyboardData = 0x1c;
-        m.keyboardNextAt = 12345690;
-        m.keyboardReplies = {0xfa, 0xaa};
-        m.scanCodes = {0x38, 0x1e, 0x9e, 0xb8};
+        ps2State(m).keyboardFull = true;
+        ps2State(m).keyboardData = 0x1c;
+        ps2State(m).keyboardNextAt = 12345690;
+        ps2State(m).keyboardReplies = {0xfa, 0xaa};
+        ps2State(m).scanCodes = {0x38, 0x1e, 0x9e, 0xb8};
         m.keys = {0x1e61};
         m.ports[0x1234] = 0x55;
         m.rtc.state.index = 8;
@@ -182,7 +183,7 @@ int main() {
         auto first = unpack(root / "point/state.bin");
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
-        m.keyboardReplies.clear();
+        ps2State(m).keyboardReplies.clear();
         m.loadSnapshot((root / "point").string());
         check(m.cpu.r[AX] == 0xabc00000 && m.cpu.mem[0x5000] == 0xdd && m.cpu.executionEpoch == 1,
               "CPU RAM and cache identity restore");
@@ -193,6 +194,11 @@ int main() {
         check(first.size() == second.size() &&
                   std::equal(first.begin(), first.end() - 16, second.begin()),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
+        check(m.cpu.input(0x60, 1) == 0x1c && !m.ps2.state().keyboardFull,
+              "restored PS2 controller delivers and consumes its latched byte");
+        m.cpu.instructions += 4000;
+        check(m.cpu.input(0x60, 1) == 0xfa,
+              "restored PS2 replies resume at the preserved serial deadline");
         for (unsigned n = 73; n < 512; n++)
             check(m.cpu.input(0x1f0, 2) == 0, "routed pending PIO read resumes after snapshot rebinding");
         m.cpu.output(0x1f2, 7, 1);

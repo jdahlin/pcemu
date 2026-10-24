@@ -6,9 +6,10 @@ CXXFLAGS := -std=c++20 -O3 -g -Wall -Wextra -Wpedantic
 LDLIBS = $(SDL_LIBS) $(shell pkg-config --libs libzstd)
 SESSION := src/pc_display.cpp src/session_diagnostics.cpp src/cpu_benchmarks.cpp
 HEADERS := $(wildcard src/*.hpp)
+PS2_TEST_SUPPORT := tests/ps2_test_support.hpp
 JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
 	src/jit_runtime.cpp src/jit_arm64.cpp
-CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/pc_ps2.cpp src/cmos_rtc.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
+CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/ps2_controller.cpp src/pc_input.cpp src/cmos_rtc.cpp src/disk.cpp src/disk_cpu.cpp src/ata.cpp src/pic.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/host_keyboard.cpp src/ne2000.cpp
 .PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
 all: build/pcemu
 build/pcemu-profile: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
@@ -18,10 +19,10 @@ build/disk-tool: $(CORE) $(HEADERS) tools/disk_tool.cpp src/machine.hpp src/cpu.
 build/pcemu: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
-build/tests: $(CORE) $(HEADERS) tests/test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
+build/tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/snapshot-tests: $(CORE) $(HEADERS) tests/snapshot_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
+build/snapshot-tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/snapshot_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/snapshot_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-byte-tests: $(CORE) $(HEADERS) tests/jit_bytes_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_bytes_test.cpp $(shell pkg-config --libs libzstd) -o $@
@@ -29,7 +30,7 @@ build/jit-stack-tests: $(CORE) $(HEADERS) tests/jit_stack_test.cpp src/cpu.hpp s
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_stack_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-flags-tests: $(CORE) $(HEADERS) tests/jit_flags_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_flags_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/integration-tests: $(CORE) $(HEADERS) tests/integration_test.cpp src/machine.hpp src/mouse.hpp src/vga.hpp
+build/integration-tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/integration_test.cpp src/machine.hpp src/mouse.hpp src/vga.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/integration_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/network-tests: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
@@ -46,7 +47,8 @@ build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tes
 build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
-test: build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+test: build/ps2-controller-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+	./build/ps2-controller-tests
 	./build/pc-component-tests
 	./build/io-port-space-tests
 	./build/frontend-tests
@@ -108,7 +110,7 @@ test-hvf: build/device-bus-tests build/virtio-rng-tests build/nvme-tests build/v
 	./build/pcemu-hvf --self-test
 	python3 -m unittest discover -s tests -p test_hvf_cli.py
 	python3 -m unittest discover -s tests -p test_arm_acpi.py
-build/pcemu-hvf: src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_virt.hpp src/arm_ramfb.cpp src/arm_ramfb.hpp $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
+build/pcemu-hvf: src/hvf_secondary.hpp src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_virt.hpp src/arm_ramfb.cpp src/arm_ramfb.hpp $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
 	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_ramfb.cpp $(ARM_BUS) src/arm_fw_cfg.cpp $(ARM_DEVICES) src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp src/virtio_net.cpp src/virtio_rng.cpp src/network.cpp src/ne2000.cpp src/nvme.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
@@ -194,3 +196,7 @@ build/device-bus-tests: $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_ramfb.cpp src/arm_
 build/pc-component-tests: $(CORE) $(HEADERS) src/pc_display.cpp tests/pc_components_test.cpp
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/pc_display.cpp tests/pc_components_test.cpp $(shell pkg-config --libs libzstd) -o $@
+
+build/ps2-controller-tests: src/ps2_controller.cpp src/ps2_controller.hpp src/pc_input.cpp src/pc_input.hpp src/mouse.cpp src/mouse.hpp tests/ps2_controller_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/ps2_controller.cpp src/pc_input.cpp src/mouse.cpp tests/ps2_controller_test.cpp -o $@

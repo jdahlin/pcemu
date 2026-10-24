@@ -1,6 +1,7 @@
 #include "cpu.hpp"
 #include "jit.hpp"
 #include "machine.hpp"
+#include "ps2_test_support.hpp"
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -1607,8 +1608,8 @@ int main() {
             fixed.cpu.r[AX] = 0xdeadbeef;
             fixed.cpu.write(0x100000, 0x12345678, 4);
             fixed.pic[0].isr = 2;
-            fixed.keyboardFull = true;
-            fixed.scanCodes = {0x1e};
+            ps2State(fixed).keyboardFull = true;
+            ps2State(fixed).scanCodes = {0x1e};
             fixed.vga.mode(0x13, true);
             if (resetSource == 1) {
                 fixed.cpu.cr[0] = 0x80000011;
@@ -1637,7 +1638,7 @@ int main() {
                       fixed.cpu.cr[3] == 0 && fixed.cpu.gdtBase == 0 && fixed.cpu.ldtBase == 0 &&
                       fixed.cpu.instructions >= before && fixed.cpu.read(0x100000, 4) == 0x12345678,
                   "firmware restart preserves RAM and disk while resetting CPU and boot stack");
-            check(!fixed.keyboardFull && fixed.scanCodes.empty() && fixed.pic[0].isr == 0 &&
+            check(!ps2State(fixed).keyboardFull && ps2State(fixed).scanCodes.empty() && fixed.pic[0].isr == 0 &&
                       fixed.pic[0].mask == 0xfc && fixed.pic[1].base == 0x70 &&
                       !fixed.vga.graphics && fixed.cpu.read(0x40, 4) == 0xf0001040,
                   "firmware restart restores device state and BIOS vectors");
@@ -1674,7 +1675,7 @@ int main() {
             Machine pulse("", "");
             for (unsigned value = 0xf0; value <= 0xff; value++) {
                 pulse.resetRequested = false;
-                pulse.keyboardCommand(value);
+                pulse.out(0x64, value, 1);
                 check(pulse.resetRequested == !(value & 1),
                       "8042 pulse commands reset exactly when output bit zero is pulsed");
             }
@@ -1786,12 +1787,12 @@ int main() {
         {
             Machine keyboard("", "");
             keyboard.cpu.flags &= ~IF;
-            keyboard.scanCodes = {0x1e, 0x9e};
+            ps2State(keyboard).scanCodes = {0x1e, 0x9e};
             keyboard.poll();
             check((keyboard.in(0x64, 1) & 1) && keyboard.in(0x60, 1) == 0x1e,
                   "keyboard controller latches one scan byte and clears OBF after read");
             check(!(keyboard.in(0x64, 1) & 1) && keyboard.in(0x60, 1) == 0x1e &&
-                      keyboard.scanCodes.size() == 1,
+                      ps2State(keyboard).scanCodes.size() == 1,
                   "rereading empty keyboard output does not consume another scan byte");
             keyboard.cpu.instructions += 3999;
             keyboard.poll();
@@ -1801,7 +1802,7 @@ int main() {
             keyboard.poll();
             check((keyboard.in(0x64, 1) & 1) && keyboard.in(0x60, 1) == 0x9e,
                   "keyboard break byte arrives after the serial interval");
-            keyboard.scanCodes = {0x2e};
+            ps2State(keyboard).scanCodes = {0x2e};
             keyboard.pic[0].isr = 2;
             keyboard.cpu.instructions += 4000;
             keyboard.poll();
@@ -1818,12 +1819,12 @@ int main() {
             };
             keyboard.out(0x64, 0xd1, 1);
             keyboard.out(0x60, 3, 1);
-            keyboard.scanCodes = {0x30, 0xb0};
+            ps2State(keyboard).scanCodes = {0x30, 0xb0};
             keyboard.out(0x60, 0xed, 1);
-            check(keyboard.cpu.a20 && nextByte() == 0xfa && keyboard.scanCodes.size() == 2,
+            check(keyboard.cpu.a20 && nextByte() == 0xfa && ps2State(keyboard).scanCodes.size() == 2,
                   "LED command acknowledges without consuming key bytes or changing A20");
             keyboard.out(0x60, 7, 1);
-            check(nextByte() == 0xfa && keyboard.keyboardLEDs == 7,
+            check(nextByte() == 0xfa && ps2State(keyboard).keyboardLEDs == 7,
                   "LED parameter acknowledges and resumes keyboard scanning");
             check(nextByte() == 0x30, "keyboard input resumes after command transaction");
             keyboard.out(0x64, 0x20, 1);
@@ -1831,7 +1832,7 @@ int main() {
             keyboard.out(0x64, 0xad, 1);
             keyboard.cpu.instructions += 4000;
             keyboard.poll();
-            check(!(keyboard.in(0x64, 1) & 1) && keyboard.scanCodes.size() == 1,
+            check(!(keyboard.in(0x64, 1) & 1) && ps2State(keyboard).scanCodes.size() == 1,
                   "disabled keyboard interface retains pending input");
             keyboard.out(0x64, 0xae, 1);
             check(nextByte() == 0xb0, "reenabled keyboard delivers retained break byte");
@@ -1870,23 +1871,23 @@ int main() {
               "pending timer IRQ delivers after STI and firmware acknowledges EOI");
         machine.cpu.cr[0] |= 1;
         machine.key('+');
-        check(machine.scanCodes == std::deque<uint8_t>({0x2a, 0x0d, 0x8d, 0xaa}),
+        check(ps2State(machine).scanCodes == std::deque<uint8_t>({0x2a, 0x0d, 0x8d, 0xaa}),
               "shifted punctuation scan codes");
         machine.cpu.cr[0] &= ~1u;
-        machine.scanCodes.clear();
+        ps2State(machine).scanCodes.clear();
         machine.keys.clear();
         machine.key('r');
-        check(machine.keys.empty() && machine.scanCodes == std::deque<uint8_t>({0x13, 0x93}),
+        check(machine.keys.empty() && ps2State(machine).scanCodes == std::deque<uint8_t>({0x13, 0x93}),
               "host keyboard follows IRQ1 across temporary real-mode transitions");
-        machine.scanCodes.clear();
+        ps2State(machine).scanCodes.clear();
         machine.cpu.r[AX] = 0x0500;
         machine.cpu.r[CX] = 0x1e61;
         machine.service(0x16);
-        check(machine.keys == std::deque<uint16_t>({0x1e61}) && machine.scanCodes.empty(),
+        check(machine.keys == std::deque<uint16_t>({0x1e61}) && ps2State(machine).scanCodes.empty(),
               "BIOS insert-key service enqueues a BIOS key rather than physical input");
         machine.keys.clear();
         machine.cpu.write(0x417, 2, 1);
-        machine.keyboardData = 0x0d;
+        ps2State(machine).keyboardData = 0x0d;
         machine.cpu.r[AX] = 0x0d;
         machine.service(9, true);
         check(machine.keys == std::deque<uint16_t>({0x0d2b}),

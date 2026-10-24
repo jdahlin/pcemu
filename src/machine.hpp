@@ -4,7 +4,7 @@
 #include "cmos_rtc.hpp"
 #include "disk.hpp"
 #include "io_port_space.hpp"
-#include "mouse.hpp"
+#include "ps2_controller.hpp"
 #include "ne2000.hpp"
 #include "pci.hpp"
 #include "pic.hpp"
@@ -23,27 +23,18 @@ struct Machine {
     ATA ata;
     PIC8259 pic[2];
     PIT8254 pit;
-    PS2Mouse mouse;
+    Ps2Controller ps2;
     PCI pci;
     NE2000 nic;
     bool nicLine = false;
-    bool mouseLine = false, keyboardAux = false;
     uint8_t biosMouseCount = 0;
     std::array<uint8_t, 3> biosMousePacket{};
     uint8_t biosKeyPrefix = 0, biosPauseBytes = 0;
-    bool keyLine = false, ataLine = false, cascadeLine = false;
-    bool keyboardFull = false;
-    uint8_t keyboardData = 0;
-    uint64_t keyboardNextAt = 0;
-    uint8_t keyboardCommandByte = 0x45, keyboardControllerPending = 0, keyboardParameter = 0,
-            keyboardLEDs = 0, keyboardScanSet = 2, keyboardOutputPort = 3;
-    bool keyboardEnabled = true, keyboardLastCommand = false;
-    std::deque<uint8_t> keyboardReplies;
+    bool ataLine = false, cascadeLine = false;
     bool ataInService = false;
     bool timerPending = false, timerInService = false;
     std::unique_ptr<Disk> disk, floppy;
     std::deque<uint16_t> keys;
-    std::deque<uint8_t> scanCodes;
     uint8_t picBase[2]{8, 0x70}, picInit[2]{};
     bool keyboardInService = false;
     bool waitingKey = false, verbose = false;
@@ -63,7 +54,8 @@ struct Machine {
     void restart();
     void bindDevices();
     void bindIoPorts();
-    uint32_t readKeyboardPort(uint16_t port);
+    Ps2Controller::IrqState ps2IrqState() const;
+    void applyPs2Irqs(Ps2Controller::Irqs irqs);
     void writePicPort(uint16_t port, uint32_t value);
     int64_t rtcTime() const;
     void saveSnapshot(const std::string &directory);
@@ -78,9 +70,7 @@ struct Machine {
     void key(uint16_t key);
     void timer();
     void poll();
-    void keyboardPoll();
-    void keyboardCommand(uint8_t value);
-    void keyboardWrite(uint8_t value);
+    void pollPs2();
     std::string text() const;
 };
 } // namespace pc

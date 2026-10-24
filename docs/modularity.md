@@ -44,9 +44,21 @@ Keep the following responsibilities explicit for both PC/AT and ARM machines:
 
 `machine.cpp` now contains PC/AT composition, reset, interrupt delivery and port
 fallback. BIOS services are in `pc_bios.cpp`, firmware initialization/boot in
-`pc_firmware.cpp`, BIOS text operations in `pc_bios_video.cpp`, and PS/2 protocol
-methods in `pc_ps2.cpp`. These firmware/PS2 methods still operate on the machine;
-file extraction does not claim their state is fully encapsulated yet.
+`pc_firmware.cpp` and BIOS text operations in `pc_bios_video.cpp`. These firmware
+methods still operate on the machine. PS/2 register/protocol state now belongs to
+the independent `Ps2Controller` (`ps2_controller.*`), including its attached mouse.
+
+The controller takes instruction time and an `IrqState` describing the board's
+existing delivery/backpressure policy. It returns IRQ edges and A20/reset effects;
+it never reads or modifies CPU/PIC/BIOS objects. `Machine` supplies those inputs,
+applies effects and binds ports 60/64. Keyboard/mouse queues and deadlines are
+private controller state, with a const diagnostic view and explicit snapshot
+codec access. BIOS key translation, BIOS key queues and firmware mouse packet
+assembly stay outside the hardware controller.
+
+`HostKeyboard` writes physical scan bytes through a sink; automation translation
+is in `pc_input.*`. Neither path borrows the controller's internal queue. BIOS
+mouse services access the attached `PS2Mouse` endpoint, not controller registers.
 
 `CmosRtc` (`cmos_rtc.*`) owns the PC's CMOS register selection and adjusted VM
 clock. The machine configures installed RAM/disks, binds its ports and resets its
@@ -61,8 +73,8 @@ state; `arm_virt_devices.cpp` composes their MMIO/PCI connections. See
 Use composition and capability-specific interfaces. Do not introduce a universal
 device base with unused MMIO/PIO/DMA/frontend methods. Existing reset order and
 versioned snapshot codecs remain explicit until each device can safely own its
-complete lifecycle. The next ownership boundary is the PC PS/2 controller;
-CLI/control parsing and tracing also remain candidates for session extraction.
+complete lifecycle. CLI/control parsing, tracing and BIOS service state remain
+candidates for session/firmware extraction.
 
 ## Future structure
 

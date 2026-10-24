@@ -158,8 +158,8 @@ omit the blinking cursor, matching the previous behavior; presentation tests
 exercise cursor pixels headless without opening a window.
 
 The shared responsibility model is documented in [modularity](modularity.md).
-Next: extract PS/2 controller state, then CLI/control and tracing responsibilities
-from the application loop. Keep each migration independently verifiable.
+The subsequent PS/2 ownership migration is described below; CLI/control and
+tracing responsibilities remain in the application loop.
 
 Validation passed: the full `make test` suite (including 20 new deterministic
 CMOS/RTC/presentation checks), machine-profile tests, Win3.11 Notepad file save,
@@ -175,6 +175,53 @@ Evidence: `build/pc-components-final-tests.log`, `build/pc-components-{win311,wi
 `build/pc-components-debian.log`. Snapshot tests retain the existing field-by-field
 round-trip checks; the state JSON continues to be parsed by the profile and guest
 workload checks. No GUI guest run was needed.
+
+## Independent PS/2 controller (2026-10-24)
+
+`Ps2Controller` (`ps2_controller.*`) replaces the `Machine` PS/2 protocol methods
+and scattered hardware fields. It owns the output buffer, command and parameter
+state, keyboard replies/scans, byte deadlines, IRQ latches and attached mouse.
+Its implementation only depends on the mouse model and standard C++ types.
+
+| Interface | Responsibility |
+|---|---|
+| `poll(now, IrqState)` | Advance device time and return new keyboard/mouse IRQ edges |
+| `readStatus` / `readData` | Poll, read register state and consume output bytes with the existing deadline |
+| `command(value, a20)` / `write(value)` | Process controller/keyboard commands; return A20/reset effects |
+| `enqueueScan` / `motion` | Accept host input without exposing internal queues |
+| `reset()` | Restore hardware defaults independently of BIOS state |
+| `state()` | Read-only diagnostic/checkpoint view |
+
+The board passes the existing PIC mask/in-service conditions as values; that
+preserves current scan backpressure without coupling the device to a PIC class.
+The device reports edges rather than accessing interrupt controllers. A20 reads
+sample the board's current A20 state, and writes return an optional value so
+"no change" remains distinct from disabling A20. No runtime board callbacks or
+references are embedded in checkpoint state.
+
+`pc_input.*` handles automation text-to-scan translation. `HostKeyboard` uses a
+scan sink bound to the current controller. `Machine::key` only injects input and
+wakes the CPU. BIOS key queues, scan-to-BIOS translation and mouse callback packet
+assembly remain firmware responsibilities. The attached mouse endpoint retains
+its own existing command/status API for BIOS mouse services.
+
+Snapshot codecs keep all hardware fields in their existing versioned positions,
+including the version-2 mouse/auxiliary fields. Only the codec and test fixture
+helper have mutable access to controller checkpoint state. Restores continue to
+rebind the board's port callbacks; controller state itself has no pointers to the
+old or staged machine.
+
+Validation passed headless: 28 standalone controller checks linked only with the
+mouse/input components (no `Machine`, CPU, JIT or PIC), the full `make test` suite,
+2,889 snapshot/COW checks, profile checks, Win3.11 Notepad file verification,
+Win95 cold boot/restart and all three DOS reset paths. Three JIT restores and one
+interpreter restore of the existing Calculator checkpoint produced the expected
+pixels. Snapshot regression checks additionally consume the restored output byte
+and resume queued replies at the preserved serial deadline.
+
+Evidence: `build/ps2-standalone-tests.log`, `build/ps2-controller-final-tests.log`,
+`build/ps2-{win311,win95,reset,profiles}.log`, and
+`build/ps2-calculator{,-interpreter}/result.json`.
 
 ## QEMU references
 

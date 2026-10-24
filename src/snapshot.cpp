@@ -204,10 +204,10 @@ class SnapshotCodec {
             a(p.reload, p.loadedAt, p.lastEdge, p.pausedAt, p.writeValue, p.latched, p.rw, p.mode,
               p.status, p.writeHigh, p.readHigh, p.countLatched, p.latchHigh, p.statusLatched,
               p.gate, p.nullCount, p.bcd);
-        a(m.keyLine, m.ataLine, m.cascadeLine, m.keyboardFull, m.keyboardData, m.keyboardNextAt,
-          m.keyboardCommandByte, m.keyboardControllerPending, m.keyboardParameter, m.keyboardLEDs,
-          m.keyboardScanSet, m.keyboardOutputPort, m.keyboardEnabled, m.keyboardLastCommand,
-          m.keyboardReplies, m.ataInService, m.timerPending, m.timerInService, m.keys, m.scanCodes,
+        a(m.ps2.state_.keyLine, m.ataLine, m.cascadeLine, m.ps2.state_.keyboardFull, m.ps2.state_.keyboardData, m.ps2.state_.keyboardNextAt,
+          m.ps2.state_.keyboardCommandByte, m.ps2.state_.keyboardControllerPending, m.ps2.state_.keyboardParameter, m.ps2.state_.keyboardLEDs,
+          m.ps2.state_.keyboardScanSet, m.ps2.state_.keyboardOutputPort, m.ps2.state_.keyboardEnabled, m.ps2.state_.keyboardLastCommand,
+          m.ps2.state_.keyboardReplies, m.ataInService, m.timerPending, m.timerInService, m.keys, m.ps2.state_.scanCodes,
           m.picBase, m.picInit, m.keyboardInService, m.waitingKey, m.resetRequested,
           m.bootFromFloppy, m.vgaOnReset, m.resets, m.vgaRom, m.ticks, m.videoMode, m.columns,
           m.rows, m.cursor, m.activePage, m.ports, m.rtc.state.index, m.ioReads);
@@ -215,8 +215,8 @@ class SnapshotCodec {
             if (version >= 3) a(m.pci.address, m.pci.config, m.pci.barProbe, m.pci.romProbe);
             a(v.dispiIndex, v.dispi);
             a.bytes(v.vram.data(), v.vram.size());
-            auto &mouse = m.mouse;
-            a(m.mouseLine, m.keyboardAux, m.biosKeyPrefix, m.biosPauseBytes, m.biosMouseCount,
+            auto &mouse = m.ps2.state_.mouse;
+            a(m.ps2.state_.mouseLine, m.ps2.state_.keyboardAux, m.biosKeyPrefix, m.biosPauseBytes, m.biosMouseCount,
               m.biosMousePacket, mouse.enabled, mouse.remote, mouse.wrap, mouse.scaling2,
               mouse.resolution, mouse.rate, mouse.id, mouse.parameter, mouse.buttons,
               mouse.reportedButtons, mouse.lastSent, mouse.rates, mouse.dx, mouse.dy, mouse.wheel,
@@ -261,9 +261,9 @@ class SnapshotCodec {
               uint64_t(m.vga.dispi[6]) * m.vga.dispi[2] * ((m.vga.dispi[3] + 7) / 8) >
                   VGA::vramSize)))
             throw std::runtime_error("Invalid snapshot framebuffer state");
-        if (m.biosMouseCount > 2 || !m.mouse.rate || m.mouse.resolution > 3 ||
-            (m.mouse.id != 0 && m.mouse.id != 3) || m.mouse.buttons > 7 ||
-            m.mouse.reportedButtons > 7)
+        if (m.biosMouseCount > 2 || !m.ps2.state_.mouse.rate || m.ps2.state_.mouse.resolution > 3 ||
+            (m.ps2.state_.mouse.id != 0 && m.ps2.state_.mouse.id != 3) || m.ps2.state_.mouse.buttons > 7 ||
+            m.ps2.state_.mouse.reportedButtons > 7)
             throw std::runtime_error("Invalid snapshot mouse state");
         for (auto &e : m.cpu.tlb)
             if (e.permissions & ~6u)

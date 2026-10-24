@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
         size_t typePos = 0;
         uint64_t graphicsStart = 0, nextTyped = 0;
         uint64_t loops = 0;
-        HostKeyboard keyboard(m.scanCodes);
+        HostKeyboard keyboard([&](uint8_t byte) { m.ps2.enqueueScan(byte); });
         bool mouseCaptured = false;
         uint8_t mouseButtons = 0;
         auto setMouseCapture = [&](bool enabled) {
@@ -301,7 +301,7 @@ int main(int argc, char **argv) {
             keyboard.release();
             c.halted = false;
             mouseButtons = 0;
-            m.mouse.motion(0, 0, 0);
+            m.ps2.motion(0, 0, 0);
             setMouseCapture(false);
         };
         const char *networkCapture = std::getenv("PCEMU_NET_PCAP");
@@ -381,7 +381,7 @@ int main(int argc, char **argv) {
                         } else if (op == "scan") {
                             unsigned k;
                             command >> std::hex >> k;
-                            m.scanCodes.push_back(k);
+                            m.ps2.enqueueScan(k);
                             c.halted = false;
                         } else if (op == "text") {
                             std::string text;
@@ -395,7 +395,7 @@ int main(int argc, char **argv) {
                             if (!(command >> dx >> dy >> buttons))
                                 throw std::runtime_error("mouse needs DX DY BUTTONS [WHEEL]");
                             command >> wheel;
-                            m.mouse.motion(dx, dy, buttons, wheel);
+                            m.ps2.motion(dx, dy, buttons, wheel);
                         } else if (op == "capture")
                             captureRequested = 1;
                         else if (op == "profile-wait") {
@@ -566,11 +566,11 @@ int main(int argc, char **argv) {
                         }
                         mouseButtons = event.released ? mouseButtons & ~event.button
                                                       : mouseButtons | event.button;
-                        m.mouse.motion(0, 0, mouseButtons);
+                        m.ps2.motion(0, 0, mouseButtons);
                     } else if (event.kind == K::Motion && mouseCaptured)
-                        m.mouse.motion(event.x, -event.y, mouseButtons);
+                        m.ps2.motion(event.x, -event.y, mouseButtons);
                     else if (event.kind == K::Wheel && mouseCaptured)
-                        m.mouse.motion(0, 0, mouseButtons, -event.y);
+                        m.ps2.motion(0, 0, mouseButtons, -event.y);
                 }
                 auto now = std::chrono::steady_clock::now();
                 uint64_t frameTicks = std::chrono::duration_cast<std::chrono::milliseconds>(now - started).count();
@@ -597,7 +597,7 @@ int main(int argc, char **argv) {
             saveFrame();
             std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
                       << " base=" << unsigned(m.picBase[0])
-                      << " pending scan bytes=" << m.scanCodes.size() << std::dec << "\n";
+                      << " pending scan bytes=" << m.ps2.state().scanCodes.size() << std::dec << "\n";
             capture();
             std::cout << m.text();
             return 1;
@@ -605,7 +605,7 @@ int main(int argc, char **argv) {
         saveFrame();
         std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
                   << " base=" << unsigned(m.picBase[0])
-                  << " pending scan bytes=" << m.scanCodes.size() << std::dec << "\n";
+                  << " pending scan bytes=" << m.ps2.state().scanCodes.size() << std::dec << "\n";
         capture();
         if (headless) {
             std::cout << m.text();

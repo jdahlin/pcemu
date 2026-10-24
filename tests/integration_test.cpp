@@ -1,6 +1,7 @@
 #include "host_key.hpp"
 #include "host_keyboard.hpp"
 #include "machine.hpp"
+#include "ps2_test_support.hpp"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -97,7 +98,7 @@ int main() {
             check(machine.in(0x1ce, 2) == 1 && machine.in(0x1cf, 2) == 640,
                   "DISPI index/data preserve whole word transactions");
             machine.out(0x64, 0x5a60, 2);
-            check(machine.keyboardControllerPending == 0x60 && machine.ports[0x65] == 0x5a,
+            check(ps2State(machine).keyboardControllerPending == 0x60 && machine.ports[0x65] == 0x5a,
                   "wide PS2 writes cross into the adjacent unmapped port");
             machine.out(0x70, 0x558b, 2);
             check(machine.rtc.state.index == 0x8b && machine.in(0x70, 2) == 0x8b &&
@@ -190,7 +191,7 @@ int main() {
         check(m.pic[1].irr & 0x10, "AUX data raises IRQ12");
         check(!(m.pic[0].irr & 2), "AUX data does not raise IRQ1");
         check(readByte() == 0xfa, "enable reporting ACK");
-        m.mouse.motion(-255, 255, 1);
+        ps2State(m).mouse.motion(-255, 255, 1);
         c.instructions += 4000;
         check(!(m.in(0x64, 1) & 1),
               "masked host mouse reporting cannot block shared keyboard buffer");
@@ -199,7 +200,7 @@ int main() {
         m.pic[1].mask &= ~0x10;
         check(readByte() == 0x19 && readByte() == 1 && readByte() == 255,
               "signed 9-bit movement and left button");
-        m.mouse.motion(0, 0, 0);
+        ps2State(m).mouse.motion(0, 0, 0);
         check(readByte() == 8 && readByte() == 0 && readByte() == 0,
               "button release retained without motion");
         for (unsigned rate : {200, 100, 80}) {
@@ -210,21 +211,21 @@ int main() {
         }
         mouseCommand(0xf2);
         check(readByte() == 0xfa && readByte() == 3, "wheel mouse negotiation");
-        m.mouse.motion(10, -3, 2, -1);
+        ps2State(m).mouse.motion(10, -3, 2, -1);
         check(readByte() == 0x2a && readByte() == 10 && readByte() == 253 && readByte() == 255,
               "four-byte wheel packet");
         mouseCommand(0xf0);
         check(readByte() == 0xfa, "remote mode ACK");
-        m.mouse.motion(4, 5, 0);
-        m.mouse.poll(c.instructions + 100000);
-        check(m.mouse.packets.empty(), "remote mode waits for request");
+        ps2State(m).mouse.motion(4, 5, 0);
+        ps2State(m).mouse.poll(c.instructions + 100000);
+        check(ps2State(m).mouse.packets.empty(), "remote mode waits for request");
         mouseCommand(0xeb);
         check(readByte() == 0xfa && readByte() == 8 && readByte() == 4 && readByte() == 5 &&
                   readByte() == 0,
               "remote read packet");
         // Exercise actual ROM code and its far callback stack, rather than only
         // testing host-side BIOS service helpers.
-        m.mouse.defaults();
+        ps2State(m).mouse.defaults();
         c.segment(CS, 0);
         c.ip = 0x500;
         c.segment(SS, 0);
@@ -237,7 +238,7 @@ int main() {
         c.r[BX] = 0x100;
         c.r[AX] = 0xc200;
         m.service(0x15);
-        check(!(c.flags & CF) && m.mouse.enabled, "BIOS enables PS/2 reporting");
+        check(!(c.flags & CF) && ps2State(m).mouse.enabled, "BIOS enables PS/2 reporting");
         // Callback copies the four stack words to 0700, preserving BP/AX.
         const uint8_t handler[] = {0x55, 0x89, 0xe5, 0x50, 0x8b, 0x46, 0x0c, 0xa3, 0x00, 0x07, 0x8b,
                                    0x46, 0x0a, 0xa3, 0x02, 0x07, 0x8b, 0x46, 0x08, 0xa3, 0x04, 0x07,
@@ -246,7 +247,7 @@ int main() {
         c.segment(DS, 0);
         c.r[AX] = 0xabcd;
         c.r[BX] = 0x1234;
-        m.mouse.motion(7, -4, 1);
+        ps2State(m).mouse.motion(7, -4, 1);
         for (unsigned byte = 0; byte < 3; ++byte) {
             c.instructions += 4000;
             m.in(0x64, 1);
@@ -412,8 +413,8 @@ int main() {
         c.write(VGA::lfbBase, 0x34, 1);
         c.write(VGA::lfbBase + 1, 0x12, 1);
         check(m.vga.pixel(0, 0) == 0xff001234, "packed 24-bit rendering");
-        m.mouse.motion(13, -9, 2);
-        m.keyboardPoll();
+        ps2State(m).mouse.motion(13, -9, 2);
+        m.pollPs2();
         m.pci.address = 0x80001010;
         m.pci.barProbe = true;
         m.saveSnapshot(point.string());
@@ -423,8 +424,8 @@ int main() {
               "snapshot retains PCI configuration probe state");
         check(restored.vga.vram == m.vga.vram && restored.vga.dispi == m.vga.dispi,
               "snapshot retains true-colour VRAM and mode");
-        check(restored.mouse.packets == m.mouse.packets && restored.mouse.dx == m.mouse.dx &&
-                  restored.keyboardAux == m.keyboardAux &&
+        check(ps2State(restored).mouse.packets == ps2State(m).mouse.packets && ps2State(restored).mouse.dx == ps2State(m).mouse.dx &&
+                  ps2State(restored).keyboardAux == ps2State(m).keyboardAux &&
                   restored.biosMouseCount == m.biosMouseCount,
               "snapshot retains pending mouse/controller packet state");
         check(std::filesystem::file_size(point / "state.bin") < 100000,
@@ -467,63 +468,63 @@ int main() {
               "real VGA ROM enables 1024x768 true-colour mode");
         {
             Machine scheduled("", "", 4 * 1024 * 1024);
-            scheduled.keyboardCommandByte = 3;
+            ps2State(scheduled).keyboardCommandByte = 3;
             scheduled.pic[0].mask = scheduled.pic[1].mask = 0;
-            scheduled.mouse.enabled = true;
-            scheduled.mouse.nextAt = 1000;
-            scheduled.keyboardNextAt = 5000;
-            scheduled.mouse.motion(5, -3, 0);
+            ps2State(scheduled).mouse.enabled = true;
+            ps2State(scheduled).mouse.nextAt = 1000;
+            ps2State(scheduled).keyboardNextAt = 5000;
+            ps2State(scheduled).mouse.motion(5, -3, 0);
             scheduled.cpu.instructions = 999;
-            scheduled.keyboardPoll();
-            check(!scheduled.keyboardFull && scheduled.mouse.packets.empty() && scheduled.mouse.dx == 5,
+            scheduled.pollPs2();
+            check(!ps2State(scheduled).keyboardFull && ps2State(scheduled).mouse.packets.empty() && ps2State(scheduled).mouse.dx == 5,
                   "idle input guard waits until the mouse sampling deadline");
             scheduled.cpu.instructions = 1000;
-            scheduled.keyboardPoll();
-            check(!scheduled.keyboardFull && scheduled.mouse.packets.size() == 3 && scheduled.mouse.dx == 0,
+            scheduled.pollPs2();
+            check(!ps2State(scheduled).keyboardFull && ps2State(scheduled).mouse.packets.size() == 3 && ps2State(scheduled).mouse.dx == 0,
                   "due mouse packet forms even while controller output is paced");
             scheduled.cpu.instructions = 4999;
-            scheduled.keyboardPoll();
-            check(!scheduled.keyboardFull && scheduled.mouse.packets.size() == 3,
+            scheduled.pollPs2();
+            check(!ps2State(scheduled).keyboardFull && ps2State(scheduled).mouse.packets.size() == 3,
                   "queued mouse bytes wait until the exact controller deadline");
             scheduled.cpu.instructions = 5000;
-            scheduled.keyboardPoll();
-            check(scheduled.keyboardFull && scheduled.keyboardAux && scheduled.mouse.packets.size() == 2 &&
+            scheduled.pollPs2();
+            check(ps2State(scheduled).keyboardFull && ps2State(scheduled).keyboardAux && ps2State(scheduled).mouse.packets.size() == 2 &&
                       (scheduled.pic[1].irr & 0x10),
                   "controller deadline delivers the mouse byte and raises IRQ12 immediately");
             scheduled.in(0x60, 1);
-            scheduled.keyboardReplies.push_back(0xfa);
-            scheduled.cpu.instructions = scheduled.keyboardNextAt;
-            scheduled.keyboardPoll();
-            check(scheduled.keyboardFull && !scheduled.keyboardAux && scheduled.keyboardData == 0xfa,
+            ps2State(scheduled).keyboardReplies.push_back(0xfa);
+            scheduled.cpu.instructions = ps2State(scheduled).keyboardNextAt;
+            scheduled.pollPs2();
+            check(ps2State(scheduled).keyboardFull && !ps2State(scheduled).keyboardAux && ps2State(scheduled).keyboardData == 0xfa,
                   "keyboard command replies retain priority over queued mouse bytes");
-            scheduled.keyLine = false;
+            ps2State(scheduled).keyLine = false;
             scheduled.pic[0].irr = 0;
-            scheduled.keyboardCommandByte &= ~1;
-            scheduled.keyboardPoll();
+            ps2State(scheduled).keyboardCommandByte &= ~1;
+            scheduled.pollPs2();
             check(!(scheduled.pic[0].irr & 2), "full output buffer honors disabled keyboard IRQ");
-            scheduled.keyboardCommandByte |= 1;
-            scheduled.keyboardPoll();
+            ps2State(scheduled).keyboardCommandByte |= 1;
+            scheduled.pollPs2();
             check(scheduled.pic[0].irr & 2, "enabling IRQ1 with full output takes effect immediately");
         }
         {
             Machine idle("", "", 4 * 1024 * 1024);
-            idle.keyboardCommandByte = 1;
+            ps2State(idle).keyboardCommandByte = 1;
             idle.pic[0].mask = 0;
-            idle.keyboardPoll();
-            idle.scanCodes.push_back(0x1e);
-            idle.keyboardPoll();
-            check(idle.keyboardFull && idle.keyboardData == 0x1e && (idle.pic[0].irr & 2),
+            idle.pollPs2();
+            ps2State(idle).scanCodes.push_back(0x1e);
+            idle.pollPs2();
+            check(ps2State(idle).keyboardFull && ps2State(idle).keyboardData == 0x1e && (idle.pic[0].irr & 2),
                   "host input wakes an idle controller without a stale cached deadline");
         }
         {
             Machine buttons("", "", 4 * 1024 * 1024);
-            buttons.keyboardCommandByte = 2;
+            ps2State(buttons).keyboardCommandByte = 2;
             buttons.pic[1].mask = 0;
-            buttons.mouse.enabled = true;
-            buttons.mouse.nextAt = 1000000;
-            buttons.mouse.motion(0, 0, 1);
-            buttons.keyboardPoll();
-            check(buttons.keyboardFull && buttons.keyboardAux && (buttons.pic[1].irr & 0x10),
+            ps2State(buttons).mouse.enabled = true;
+            ps2State(buttons).mouse.nextAt = 1000000;
+            ps2State(buttons).mouse.motion(0, 0, 1);
+            buttons.pollPs2();
+            check(ps2State(buttons).keyboardFull && ps2State(buttons).keyboardAux && (buttons.pic[1].irr & 0x10),
                   "queued mouse button transitions bypass the future movement sample deadline");
         }
         std::filesystem::remove_all(point);

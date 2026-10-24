@@ -81,7 +81,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
     case 9:
         // The firmware IRQ handler must complete the controller/PIC handshake,
         // including when a protected-mode keyboard driver chains to this vector.
-        if ((guestStub && c.get(AX, 1)) || (!guestStub && keyboardFull)) {
+        if ((guestStub && c.get(AX, 1)) || (!guestStub && ps2.state().keyboardFull)) {
             auto scan = guestStub ? c.get(AX, 1) : in(0x60, 1);
             if (biosPauseBytes) {
                 --biosPauseBytes;
@@ -147,7 +147,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
             biosMousePacket[biosMouseCount++] = byte;
             if (biosMouseCount == 3) {
                 biosMouseCount = 0;
-                if (mouse.enabled && c.read(0xf0320, 4)) {
+                if (ps2.mouse().enabled && c.read(0xf0320, 4)) {
                     for (unsigned i = 0; i < 3; ++i)
                         c.write(0xf0324 + i * 2, biosMousePacket[i], 2);
                     c.set(AX, 1, 1);
@@ -461,19 +461,19 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     break;
                 }
                 c.write(0xf032a, bh ? 1 : 2, 1);
-                mouse.enabled = bh;
-                keyboardCommandByte = (keyboardCommandByte & ~0x20) | 2;
+                ps2.mouse().enabled = bh;
+                ps2.enableAuxiliaryInterface();
                 if (bh) {
                     pic[0].mask &= ~4;
                     pic[1].mask &= ~0x10;
                 } else {
-                    mouse.packets.clear();
+                    ps2.mouse().packets.clear();
                     biosMouseCount = 0;
                 }
                 ok();
                 break;
             case 1:
-                mouse.defaults();
+                ps2.mouse().defaults();
                 biosMouseCount = 0;
                 c.set(BX, 0xaa, 2);
                 ok();
@@ -484,7 +484,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     error(2);
                     break;
                 }
-                mouse.rate = rates[bh];
+                ps2.mouse().rate = rates[bh];
                 ok();
                 break;
             }
@@ -493,11 +493,11 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     error(2);
                     break;
                 }
-                mouse.resolution = bh;
+                ps2.mouse().resolution = bh;
                 ok();
                 break;
             case 4:
-                c.set(BX, (c.get(BX, 2) & 255) | (mouse.id << 8), 2);
+                c.set(BX, (c.get(BX, 2) & 255) | (ps2.mouse().id << 8), 2);
                 ok();
                 break;
             case 5:
@@ -505,17 +505,17 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     error(2);
                     break;
                 }
-                mouse.defaults();
+                ps2.mouse().defaults();
                 biosMouseCount = 0;
                 ok();
                 break;
             case 6:
                 if (bh == 0) {
-                    c.set(BX, (c.get(BX, 2) & 0xff00) | mouse.status(), 2);
-                    c.set(CX, (c.get(CX, 2) & 0xff00) | mouse.resolution, 2);
-                    c.set(DX, (c.get(DX, 2) & 0xff00) | mouse.rate, 2);
+                    c.set(BX, (c.get(BX, 2) & 0xff00) | ps2.mouse().status(), 2);
+                    c.set(CX, (c.get(CX, 2) & 0xff00) | ps2.mouse().resolution, 2);
+                    c.set(DX, (c.get(DX, 2) & 0xff00) | ps2.mouse().rate, 2);
                 } else if (bh <= 2)
-                    mouse.scaling2 = bh == 2;
+                    ps2.mouse().scaling2 = bh == 2;
                 else {
                     error(2);
                     break;
@@ -526,8 +526,8 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 c.write(0xf0320, (uint32_t(c.s[ES].selector) << 16) | c.get(BX, 2), 4);
                 biosMouseCount = 0;
                 if (!c.read(0xf0320, 4)) {
-                    mouse.enabled = false;
-                    mouse.packets.clear();
+                    ps2.mouse().enabled = false;
+                    ps2.mouse().packets.clear();
                 }
                 ok();
                 break;

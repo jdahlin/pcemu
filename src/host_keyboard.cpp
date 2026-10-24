@@ -133,16 +133,16 @@ static uint16_t pcScan(uint16_t s) {
 void HostKeyboard::emit(uint16_t key, bool up) {
     if (key == hid::KEY_PAUSE) {
         if (!up)
-            destination.insert(destination.end(), {0xe1, 0x1d, 0x45, 0xe1, 0x9d, 0xc5});
+            emitBytes({0xe1, 0x1d, 0x45, 0xe1, 0x9d, 0xc5});
     } else if (key == hid::KEY_PRINTSCREEN) {
         if (up)
-            destination.insert(destination.end(), {0xe0, 0xb7, 0xe0, 0xaa});
+            emitBytes({0xe0, 0xb7, 0xe0, 0xaa});
         else
-            destination.insert(destination.end(), {0xe0, 0x2a, 0xe0, 0x37});
+            emitBytes({0xe0, 0x2a, 0xe0, 0x37});
     } else if (auto scan = pcScan(key)) {
         if (scan >> 8)
-            destination.push_back(scan >> 8);
-        destination.push_back(uint8_t(scan) | (up ? 0x80 : 0));
+            destination(scan >> 8);
+        destination(uint8_t(scan) | (up ? 0x80 : 0));
     }
 }
 void HostKeyboard::event(uint16_t key, bool up) {

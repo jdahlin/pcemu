@@ -1,5 +1,6 @@
 #include "machine.hpp"
 #include "profile.hpp"
+#include "pc_input.hpp"
 #include <algorithm>
 #include <cstdio>
 namespace pc {
@@ -59,23 +60,14 @@ void Machine::restart() {
     std::fill(std::begin(picInit), std::end(picInit), 0);
     picBase[0] = 8;
     picBase[1] = 0x70;
-    keyLine = mouseLine = keyboardAux = ataLine = cascadeLine = keyboardFull = false;
-    mouse = PS2Mouse{};
+    ataLine = cascadeLine = false;
+    ps2.reset();
     pci = PCI{};
     nic.reset();
     nicLine = false;
     biosKeyPrefix = biosPauseBytes = 0;
     timerPending = timerInService = keyboardInService = ataInService = false;
-    keyboardData = keyboardControllerPending = keyboardParameter = keyboardLEDs = 0;
-    keyboardCommandByte = 0x45;
-    keyboardScanSet = 2;
-    keyboardOutputPort = 3;
-    keyboardEnabled = true;
-    keyboardLastCommand = false;
-    keyboardNextAt = 0;
-    keyboardReplies.clear();
     keys.clear();
-    scanCodes.clear();
     waitingKey = false;
     ticks = ioReads = 0;
     rtc.reset();
@@ -92,6 +84,23 @@ void Machine::restart() {
     if (verbose)
         std::fprintf(stderr, "Firmware restart %llu\n", static_cast<unsigned long long>(resets));
 }
+void Machine::key(uint16_t value) {
+    if (!value) return;
+    enqueuePcKey(ps2, value);
+    waitingKey = false;
+    cpu.halted = false;
+}
+Ps2Controller::IrqState Machine::ps2IrqState() const {
+    return {bool(pic[0].isr & 2), bool(pic[0].mask & 2),
+            bool(pic[1].isr & 0x10), bool(pic[1].mask & 0x10)};
+}
+void Machine::applyPs2Irqs(Ps2Controller::Irqs irqs) {
+    if (irqs.keyboard) pic[0].raise(1);
+    if (irqs.mouse) pic[1].raise(4);
+}
+void Machine::pollPs2() {
+    applyPs2Irqs(ps2.poll(cpu.instructions, ps2IrqState()));
+}
 void Machine::poll() {
     profile::event(profile::DevicePoll);
     if (resetRequested) {
@@ -100,7 +109,7 @@ void Machine::poll() {
     }
     if (pit.tick(cpu.instructions / 4))
         pic[0].raise(0);
-    keyboardPoll();
+    pollPs2();
     if (ata.irq && !(ata.control & 2) && !ataLine) {
         pic[1].raise(6);
         ataLine = true;

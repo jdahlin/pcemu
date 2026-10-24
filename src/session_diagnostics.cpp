@@ -67,10 +67,10 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"current\":" << unsigned(m.nic.current) << ",\"boundary\":" << unsigned(m.nic.boundary)
       << ",\"transmitted\":" << m.nic.transmitted << ",\"received\":" << m.nic.received
       << ",\"dropped\":" << m.nic.dropped << "}"
-      << ",\"mouse\":{\"enabled\":" << m.mouse.enabled
-      << ",\"id\":" << unsigned(m.mouse.id)
-      << ",\"pendingPackets\":" << m.mouse.packets.size()
-      << ",\"auxOutput\":" << (m.keyboardFull && m.keyboardAux) << "}"
+      << ",\"mouse\":{\"enabled\":" << m.ps2.state().mouse.enabled
+      << ",\"id\":" << unsigned(m.ps2.state().mouse.id)
+      << ",\"pendingPackets\":" << m.ps2.state().mouse.packets.size()
+      << ",\"auxOutput\":" << (m.ps2.state().keyboardFull && m.ps2.state().keyboardAux) << "}"
       << ",\"video\":{\"graphics\":" << m.vga.graphics << ",\"width\":" << m.vga.width
       << ",\"height\":" << m.vga.height << ",\"memoryMode\":" << unsigned(m.vga.seq[4])
       << ",\"shiftMode\":" << unsigned(m.vga.gfx[5])
@@ -97,9 +97,9 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"nullCount\":" << counter.nullCount
       << ",\"writeHigh\":" << counter.writeHigh
       << ",\"value\":" << counter.value(c.instructions / 4) << "},\"keyboard\":{"
-      << "\"full\":" << m.keyboardFull << ",\"data\":" << unsigned(m.keyboardData)
-      << ",\"pendingScans\":" << m.scanCodes.size()
-      << ",\"pendingReplies\":" << m.keyboardReplies.size()
-      << ",\"commandByte\":" << unsigned(m.keyboardCommandByte) << "}}";
+      << "\"full\":" << m.ps2.state().keyboardFull << ",\"data\":" << unsigned(m.ps2.state().keyboardData)
+      << ",\"pendingScans\":" << m.ps2.state().scanCodes.size()
+      << ",\"pendingReplies\":" << m.ps2.state().keyboardReplies.size()
+      << ",\"commandByte\":" << unsigned(m.ps2.state().keyboardCommandByte) << "}}";
 }
 } // namespace pc
