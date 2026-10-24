@@ -31,7 +31,9 @@ double benchmarkCpuRegisters(bool enabled, uint64_t target) {
               << jit.compiledBlocks << " blocks; EAX=" << c.r[AX] << '\n';
     return sec;
 }
-double benchmarkCpuMemory(bool enabled, uint64_t target, bool paging) {
+double benchmarkCpuMemory(bool enabled, uint64_t target, bool paging, unsigned width) {
+    if (width != 1 && width != 4)
+        throw std::invalid_argument("Memory benchmark width must be 1 or 4");
     CPU c;
     c.s[CS].big = true;
     unsigned p = 0;
@@ -40,13 +42,15 @@ double benchmarkCpuMemory(bool enabled, uint64_t target, bool paging) {
         p += 4;
     };
     for (unsigned cell = 0; cell < 16; cell++) {
-        c.mem[p++] = 0xa1;
-        address(0x1000 + cell * 4);
-        c.mem[p++] = 0x83;
+        c.mem[p++] = width == 1 ? 0xa0 : 0xa1;
+        address(0x1000 + cell * width);
+        c.mem[p++] = width == 1 ? 0x80 : 0x83;
         c.mem[p++] = 0xc0;
         c.mem[p++] = 1;
-        c.mem[p++] = 0xa3;
-        address(0x1000 + cell * 4);
+        c.mem[p++] = width == 1 ? 0xa2 : 0xa3;
+        address(0x1000 + cell * width);
+        if (width == 1)
+            c.write(0x1000 + cell, cell + 1, 1);
     }
     c.mem[p++] = 0xe9;
     address(uint32_t(-int32_t(p + 4)));
@@ -67,12 +71,13 @@ double benchmarkCpuMemory(bool enabled, uint64_t target, bool paging) {
         std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
     uint64_t checksum = 0;
     for (unsigned cell = 0; cell < 16; cell++) {
-        auto value = c.read(0x1000 + cell * 4, 4);
-        if (value != target / 49)
+        auto value = c.read(0x1000 + cell * width, width);
+        auto expected = width == 1 ? (cell + 1 + target / 49) & 255u : target / 49;
+        if (value != expected)
             throw std::runtime_error("Memory benchmark checksum mismatch");
         checksum += value;
     }
-    std::cout << (paging ? "Paged" : "Flat") << " memory " << (enabled ? "JIT" : "interpreter")
+    std::cout << (paging ? "Paged" : "Flat") << (width == 1 ? " byte memory " : " memory ") << (enabled ? "JIT" : "interpreter")
               << ": " << c.instructions / seconds / 1e6 << " million guest instructions/s, "
               << jit.nativeInstructions << " native; checksum=" << checksum << '\n';
     return seconds;

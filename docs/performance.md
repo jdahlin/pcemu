@@ -1023,3 +1023,24 @@ All raw timing output, hashes, paired ratios and startup results are committed
 in `docs/measurements/user-ram-guards-2026-10-25.json`. The small temporary
 baseline executable was deleted after measurement to avoid retaining extra
 binaries. The baseline hash matches the preceding validated REP-copy build.
+
+
+### RAM-only byte-access benchmark (2026-10-25)
+
+`--benchmark-memory-bytes` runs the same 49-instruction load/add/store loop as
+`--benchmark-memory`, using AL and adjacent byte cells instead of EAX and dword
+cells. Flat and CPL3 paged cases run without constructing a machine or opening
+a guest disk. `--backend jit|interpreter` selects an engine; auto runs both.
+The dword command and its output remain unchanged.
+
+Byte cells start at 1 through 16, and each cell is checked individually against
+its modulo-256 result. This detects missing work even when the loop count is a
+multiple of 256. Timing excludes initialization and checksums. CLI checks cover
+minimum work, rounding to complete loops and 255/256/257-loop wraparound under
+both engines (32 flat/paged cases). At 49,000,049 guest instructions both byte
+engines produce checksum 1,176; the dword control produces 16,000,016.
+
+Example: `build/pcemu --headless --benchmark-memory-bytes --backend jit
+--benchmark-steps 9800000049` executes 200,000,001 loops with expected checksum
+152. This is an isolated tiny-working-set kernel, not Windows startup or DRAM
+bandwidth. It requires no new VM images or checkpoints.

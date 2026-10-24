@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true, traceJit = false;
     std::string machineId = "pc-legacy", backendId = "auto";
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
-         executeVga = false, memoryBenchmark = false, enableNetwork = true, enableHostInput = true;
+         executeVga = false, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
     std::string tracePath, dumpPath, framePath, untilText, traceTailPath;
     std::string snapshotPath;
@@ -135,12 +135,17 @@ int main(int argc, char **argv) {
                 benchmark = true;
             else if (arg == "--benchmark-memory")
                 memoryBenchmark = true;
+            else if (arg == "--benchmark-memory-bytes") {
+                memoryBenchmark = true;
+                byteMemoryBenchmark = true;
+            }
             else if (arg == "--help") {
                 std::cout << "pcemu (Apple Silicon)\n  --disk FILE --floppy FILE [--boot-floppy]\n "
                              " --headless --steps N --type TEXT --trace FILE --verbose --no-jit\n  "
                              "--frame FILE.ppm --dump-memory FILE --until-text TEXT\n"
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
+                             "  --benchmark-memory-bytes (byte loads/stores with wraparound)\n"
                              "    --backend jit|interpreter selects one benchmark engine\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
                              "  --jit-traces (experimental conditional branch traces)\n"
@@ -175,10 +180,10 @@ int main(int argc, char **argv) {
         if (memoryBenchmark) {
             for (bool paging : {false, true}) {
                 if (backend != ExecutionBackend::Auto)
-                    benchmarkCpuMemory(enableJit, benchmarkSteps, paging);
+                    benchmarkCpuMemory(enableJit, benchmarkSteps, paging, byteMemoryBenchmark ? 1 : 4);
                 else {
-                    auto ref = benchmarkCpuMemory(false, benchmarkSteps, paging);
-                    auto native = benchmarkCpuMemory(true, benchmarkSteps, paging);
+                    auto ref = benchmarkCpuMemory(false, benchmarkSteps, paging, byteMemoryBenchmark ? 1 : 4);
+                    auto native = benchmarkCpuMemory(true, benchmarkSteps, paging, byteMemoryBenchmark ? 1 : 4);
                     std::cout << "Memory speedup: " << ref / native << "x\n";
                 }
             }
