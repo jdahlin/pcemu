@@ -896,3 +896,31 @@ retained locally under `build/aligned-tlb-comparison/`, including
 `result.json` and `office/result.json`. Full cold-boot compatibility validation
 was not run for this rejected candidate; the application trials verified all
 20 restored tasks against their expected pixels.
+
+
+### Page-amortized REP STOS (2026-10-24)
+
+Forward repeated fills now reuse one validated ordinary-RAM translation up
+to a linear page boundary, address-size wrap, or the existing 4,096-element
+scheduling budget. Byte fills use memset; word/dword fills store the repeated
+accumulator value. Paged fills require an existing permitted, dirty TLB entry
+with matching CR3 and epoch. The scalar path performs page walks and first
+writes, retaining precise faults and accessed/dirty-bit ordering. Reverse
+fills, disabled A20, write observers, VGA memory and destination code-bitmap
+words retain scalar execution. No host virtual-memory mapping is required.
+
+An additional 192 comparisons against forced scalar execution cover paged
+and flat RAM, all element widths, both address sizes and directions, page
+and address wrapping, scheduling yields, VGA callbacks and code generation.
+The core suite passed 339,938 checks and the full make test completed before
+the concurrent storage cleanup removed its logs and binaries. Existing REP
+fault-progress tests also passed. No new full guest-boot validation or Office
+performance result is claimed for this change.
+
+Exploratory isolated fill timings showed substantial improvement, but the
+final timing run was interrupted by removal of its binaries. No finalized
+speedup is reported. This optimization addresses a known repeated-translation
+cost; the host stack profiles alone do not establish its contribution to
+application startup. The cleanup also removed the local evidence directories
+referenced by earlier experiments in this document; those historical claims
+now have recorded summaries rather than retained raw local evidence.

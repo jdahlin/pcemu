@@ -1046,6 +1046,47 @@ void CPU::stepImpl() {
                     (kind == 0x6c || kind == 0xa4 || kind == 0xa6 || kind == 0xaa || kind == 0xae)
                         ? address(ES, di)
                         : 0;
+                // Repeated forward fills can reuse a validated translation until
+                // the next linear page. Never speculate a page walk or a write:
+                // the scalar path retains first-fault and dirty-bit ordering.
+                if (rep && kind == 0xaa && !(flags & DF) && a20 && !watchWrite) {
+                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
+                    uint32_t physicalStart = dst;
+                    bool ready = true;
+                    if (cr[0] & 0x80000000u) {
+                        uint32_t page = dst >> 12;
+                        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                        ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&
+                                entry.tag == page && entry.dirty &&
+                                (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);
+                        physicalStart = entry.base | (dst & 4095);
+                    }
+                    uint32_t bytes = elements * bw;
+                    ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&
+                            !(physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000);
+                    if (ready) {
+                        for (uint32_t word = physicalStart >> 6;
+                             word <= (physicalStart + bytes - 1) >> 6; ++word)
+                            if (codeUsed[word]) {
+                                ready = false;
+                                break;
+                            }
+                    }
+                    if (ready) {
+                        auto value = get(AX, bw);
+                        if (bw == 1)
+                            std::memset(&mem[physicalStart], value, bytes);
+                        else
+                            for (uint32_t offset = 0; offset < bytes; offset += bw)
+                                storeRAM(&mem[physicalStart + offset], value, bw);
+                        set(DI, di + bytes, aw);
+                        count -= elements;
+                        set(CX, count, aw);
+                        batch -= elements - 1;
+                        continue;
+                    }
+                }
                 switch (op & 0xfe) {
                 case 0x6c:
                     write(dst, input ? input(get(DX, 2), bw) : mask(bw), bw);

@@ -298,3 +298,12 @@ Raw stacks and analysis are under `build/current-mmu-word-host/` and
 `build/current-mmu-excel-host/`, with `summary.json` in each directory.
 The evidence supports work on both translation and dispatch, but does not
 by itself show which guest string operations dominate interpreter time.
+
+
+The concurrent Win11-only storage cleanup subsequently removed these raw
+profiles, manifests and analysis files. The cleanup inventory is
+`build/storage-cleanup/win11-only-cleanup.json`. The figures above were read
+from completed analyzer output before removal, but the underlying traces are
+no longer available for independent inspection. Treat them as recorded
+observations, not a currently reproducible evidence bundle. The cleanup also
+removed the Word/Excel startup checkpoints used for these measurements.
