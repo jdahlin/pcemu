@@ -182,3 +182,19 @@ networking, captures `ipconfig /all`, `pnputil /enum-devices /class Net` and
 `HTTP.EXE post X:\PCEMU\PROBE.LOG`. Only the 1 GiB local boot disk was attached.
 The next step is a dedicated local installation disk with ARM64 viostor; existing
 VM disks must not be selected or modified by installation automation.
+
+`python3 tools/fetch_virtio_arm64.py` stages viostor, vioscsi, viorng,
+vioserial, vioinput and Balloon from the same pinned upstream 0.1.302 ISO.
+It uses bounded HTTP ranges, checks the source length/ETag, rejects unexpected
+sizes or non-ARM64 PE payloads, retains catalogs and the upstream license, and
+records SHA256 for each file in ignored `media/virtio-arm64-0.1.302/download.json`.
+These packages are staged for offline provisioning; staging is not proof that
+Windows loaded a driver or that the corresponding virtual device exists.
+
+The dedicated installation target is now a new sparse 64 GiB local
+`media/windows11-arm64/system-base.raw` with writable `system.pcd` beside it.
+The immutable zero-filled base consumes no 64 GiB allocation; the overlay grows
+as Windows writes. This disk is distinct from the boot-media disk and all
+existing guests. It has not yet been partitioned or installed. The Mac currently
+has about 20 GiB free, so installation must use compact application and track
+actual free space rather than relying on the target's logical capacity.
