@@ -414,3 +414,13 @@ Visual inspection shows the Windows desktop, taskbar and Start menu with PCEmu
 signed in. This evidence was captured with 2 GiB RAM, before the requested
 restart with 8 GiB; it must not be used as evidence of Windows' usable RAM after
 that restart.
+
+The subsequent 8 GiB instance reached the Windows lock screen, verified by a
+live SIGUSR1 capture in `build/windows11-installed/console.png`. Its capture
+log records `ramMiB=8192`, 30690 disk requests, 299 transmitted and 724 received
+network frames. The actual 8 GiB HVF mapping and matching firmware description
+were verified separately above; Windows' own usable-memory counter has not been
+queried. One-time automatic logon was disabled by FIRSTLOGON.CMD as intended,
+so the lock screen after reboot does not imply a failed installation. The
+installed-system report and earlier desktop capture prove the local account's
+successful first logon and VirtIO I/O; the live capture proves the later boot.
