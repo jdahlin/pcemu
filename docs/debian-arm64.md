@@ -37,8 +37,8 @@ ssh -i media/debian-arm64/id_ed25519 -p 2222 \
 SSH uses the generated private key; password authentication is disabled. The
 `pcemu` account can use `sudo /usr/sbin/poweroff` and `sudo /usr/sbin/reboot`
 without a password for lifecycle checks. Other sudo commands are not enabled by
-that rule. A guest reset ends the current runner; start it again to complete a
-reboot. `DEBIAN_VM_DIR` and `DEBIAN_SSH_PORT` override the launcher's defaults.
+that rule. A guest reboot now restarts firmware and Debian in the same runner
+process. SSH disconnects during reboot; reconnect to the same forwarded port. `DEBIAN_VM_DIR` and `DEBIAN_SSH_PORT` override the launcher's defaults.
 
 The installed-system boot attaches **only the system disk**, with no installer
 or host-supplied kernel/initrd. Linux reports `/dev/vda3` as the ext4 root, the
@@ -111,3 +111,8 @@ cover bidirectional loopback forwarding, partial ACKs and retransmission.
 Packed rings, indirect descriptors, multiple queue pairs, segmentation offload,
 MSI-X and IPv6 are not advertised. No comparative throughput or CPU-overhead
 claim has been established.
+
+A Debian `sudo reboot` was verified through SSH: the kernel boot ID changed,
+the runner PID stayed alive, a newly written file survived and no services
+failed after reconnecting to port 2222. Evidence is under ignored
+`build/debian-lifecycle/reboot-summary.json` and its serial/host logs.

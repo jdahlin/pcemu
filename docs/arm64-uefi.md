@@ -81,9 +81,11 @@ and a progressing shell countdown verify the current timer path. No EL3 monitor
 or nested virtualization is used. The HVC conduit implements a single-CPU PSCI 0.2 subset: version, CPU_ON
 (already on/invalid CPU), AFFINITY_INFO, MIGRATE_INFO_TYPE and standby with
 immediate wakeup. Power-down suspend is rejected. CPU_OFF/SYSTEM_OFF stop the VM;
-SYSTEM_RESET stops with `state=reset-requested` so a caller can recreate it. The
-CLI saves private disk/variable state before exiting; automatic reboot and SMP
-are not implemented. This does not provide deep-idle power management.
+SYSTEM_RESET ends the current platform with `state=reset-requested`. The CLI
+flushes disks and UEFI variables, destroys the old VM/devices/sockets and boots
+a fresh platform in the same process. Power-off still exits. The timeout covers
+the entire run, including reboots; signals and a matched `--until-text` stop
+without another boot. SMP is not implemented. This does not provide deep-idle power management.
 
 `platform/arm64/pcemu-virt.dts` supplies the versioned hardware description.
 The runner expects that compiled tree and its fixed RAM map; accepting a path to
@@ -241,3 +243,7 @@ and RTC agree with the host (2026-10-24), SSH works and no services fail.
 RTC polling avoids host clock reads while the alarm is masked, and updates HVF's
 interrupt line only when its level changes. No time daemon or network clock
 service is required for the RTC; the installed Debian guest uses the RTC alone.
+
+`make smoke-arm-reboot` boots an EFI probe that writes a nonvolatile marker,
+calls ResetSystem, then reads the marker on the second boot and powers off.
+It verifies one reset and two firmware boots in a single runner process.

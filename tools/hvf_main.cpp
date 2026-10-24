@@ -264,47 +264,55 @@ int main(int argc, char **argv) {
             if (!timeoutExplicit) timeout = 30000;
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
-            pc::ArmVirtMachine vm(uefi);
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
-            size_t printed = 0, matchStart = 0;
-            bool commandSent = shellCommand.empty(), matched = untilText.empty();
-            bool stdinOpen = serialStdio;
-            while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
-                if (stdinOpen) {
-                    pollfd input{STDIN_FILENO, POLLIN, 0};
-                    if (poll(&input, 1, 0) > 0) {
-                        std::array<char, 1024> bytes{};
-                        auto count = read(STDIN_FILENO, bytes.data(), bytes.size());
-                        if (count > 0) {
-                            std::string text(bytes.data(), size_t(count));
-                            auto escape = text.find(char(0x1d));
-                            if (escape != std::string::npos) { text.resize(escape); interrupted = 1; }
-                            vm.input(text);
-                        } else stdinOpen = false;
+            bool matched = untilText.empty(), finished = false, restart;
+            bool stdinOpen = serialStdio, commandSent = shellCommand.empty();
+            unsigned reboots = 0;
+            do {
+                pc::ArmVirtMachine vm(uefi);
+                size_t printed = 0, matchStart = 0;
+                while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
+                    if (stdinOpen) {
+                        pollfd input{STDIN_FILENO, POLLIN, 0};
+                        if (poll(&input, 1, 0) > 0) {
+                            std::array<char, 1024> bytes{};
+                            auto count = read(STDIN_FILENO, bytes.data(), bytes.size());
+                            if (count > 0) {
+                                std::string text(bytes.data(), size_t(count));
+                                auto escape = text.find(char(0x1d));
+                                if (escape != std::string::npos) { text.resize(escape); interrupted = 1; }
+                                vm.input(text);
+                            } else stdinOpen = false;
+                        }
+                    }
+                    vm.run(std::chrono::milliseconds(100));
+                    const auto &output = vm.output();
+                    if (output.size() > printed) {
+                        std::cout.write(output.data() + printed, output.size() - printed);
+                        printed = output.size();
+                        std::cout.flush();
+                    }
+                    if (!commandSent && output.find("Shell> ") != std::string::npos) {
+                        vm.input(shellCommand + "\r"); commandSent = true; matchStart = output.size();
+                    }
+                    if (!untilText.empty() && output.find(untilText, matchStart) != std::string::npos) {
+                        matched = true; finished = true; break;
                     }
                 }
-                vm.run(std::chrono::milliseconds(100));
-                const auto &output = vm.output();
-                if (output.size() > printed) {
-                    std::cout.write(output.data() + printed, output.size() - printed);
-                    printed = output.size();
-                    std::cout.flush();
-                }
-                if (!commandSent && output.find("Shell> ") != std::string::npos) {
-                    vm.input(shellCommand + "\r"); commandSent = true; matchStart = output.size();
-                }
-                if (!untilText.empty() && output.find(untilText, matchStart) != std::string::npos) {
-                    matched = true; break;
-                }
-            }
-            vm.saveVariables();
-            if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
-            if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
-            std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
-                      << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
-                      << " extraDiskRequests=" << vm.extraDiskRequests()
-                      << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()
-                      << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';
+                vm.saveVariables();
+                if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
+                if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
+                std::cerr << "UEFI run complete: exits=" << vm.exits() << " variables=" << uefi.variables
+                          << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
+                          << " extraDiskRequests=" << vm.extraDiskRequests()
+                          << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()
+                          << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';
+                restart = vm.resetRequested() && !interrupted && !finished &&
+                    (runForever || std::chrono::steady_clock::now() < deadline);
+                if (restart) std::cerr << "UEFI restarting after guest reset: reboot=" << ++reboots << '\n';
+                // Destroy devices, sockets and HVF before recreating the platform.
+                // Saved variables and flushed disks are reopened by the next boot.
+            } while (restart);
             return matched ? 0 : 1;
         }
         if (uefiOptions || !untilText.empty() || !shellCommand.empty())

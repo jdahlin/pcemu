@@ -177,3 +177,7 @@ build/virtio-rng-tests: src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_
 .PHONY: smoke-arm-integration
 smoke-arm-integration: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_arm_integration.py
+
+.PHONY: smoke-arm-reboot
+smoke-arm-reboot: build/pcemu-hvf firmware-arm64
+	python3 tools/smoke_arm_reboot.py
