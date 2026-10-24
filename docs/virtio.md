@@ -16,8 +16,11 @@ build/pcemu-hvf --machine arm64-uefi --disk PATH_TO_BASE \
   --vars build/my-arm-vm/vars.bin --until-text 'Shell> '
 ```
 
-`--disk` is always the immutable parent. The default private compressed COW file
-is `<vars-path>.pcd`; `--disk-overlay PATH` selects another private overlay.
+`--disk IMAGE.vhdx` opens VHDX directly for reading and writing by default; no
+COW file is created. See [native VHDX storage](vhdx.md) for format limits.
+For RAW and PCEMUCOW inputs, `--disk` remains the immutable parent and the default
+private compressed COW file is `<vars-path>.pcd`. Explicit `--disk-overlay PATH`
+selects an optional private overlay for any supported parent, including VHDX.
 Reopening an overlay requires its saved parent to match. Opening the parent
 itself as the overlay is rejected. Variable stores and disk overlays have
 separate advisory locks. Never modify an attached parent using other tools.
@@ -41,8 +44,8 @@ RAM and the disk queue implementation are shared.
   Out-of-range disk requests and transfers over the bounded 16 MiB host request
   budget return IOERR without a large host allocation.
 - Completion is synchronous while the single vCPU is stopped. No host syscall
-  occurs per guest instruction or per descriptor. Disk I/O still uses the
-  existing synchronous COW engine; async I/O and multiple vCPUs are future work.
+  occurs per guest instruction or per descriptor. Disk I/O uses the
+  shared synchronous storage backend; async I/O and multiple vCPUs are future work.
 
 PCI endpoint `00:00.0` exposes vendor `1af4`, device `1042`, revision 1, subsystem
 `0042`, a vendor capability list and one 16 KiB 32-bit MMIO BAR. The BAR contains

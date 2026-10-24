@@ -113,6 +113,10 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
             liveBytes += 24 + size;
             at += 24 + size;
         }
+    } else if (!std::memcmp(signature, "vhdxfile", 8)) {
+        if (fd) throw std::runtime_error("VHDX cannot be used as a floppy");
+        vhdx = std::make_unique<Vhdx>(path, fileBytes, !ro);
+        sectors = vhdx->size() / 512;
     } else {
         if (!fileBytes || fileBytes % 512)
             throw std::runtime_error("Invalid raw disk size");
@@ -157,6 +161,7 @@ void Disk::createOverlay(const std::string &destination, const std::string &pare
         throw std::runtime_error("Cannot create COW disk");
 }
 void Disk::flush() {
+    if (vhdx) { vhdx->flush(); return; }
     file.clear();
     file.flush();
     if (!file)
@@ -200,6 +205,10 @@ bool Disk::read(uint64_t lba, unsigned count, uint8_t *data) {
     if (lba >= sectors || count > sectors - lba)
         return false;
     try {
+        if (vhdx) {
+            vhdx->read(lba * 512, {data, size_t(count) * 512});
+            return true;
+        }
         if (!parent) {
             file.clear();
             file.seekg(lba * 512);
@@ -225,6 +234,7 @@ bool Disk::write(uint64_t lba, unsigned count, const uint8_t *data) {
     if (readOnly || lba >= sectors || count > sectors - lba)
         return false;
     try {
+        if (vhdx) { vhdx->write(lba * 512, {data, size_t(count) * 512}); return true; }
         if (!parent) {
             file.clear();
             file.seekp(lba * 512);

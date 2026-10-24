@@ -71,5 +71,5 @@ with GPT, an EFI system partition at LBAs 264192–342015, and a FAT32 filesyste
 containing `\EFI\BOOT\BOOTAA64.EFI` (3,120,648 bytes). The original VHDX is thus
 the preferred next input for booting the preinstalled system without rebuilding
 boot media or modifying Windows. Its kernel boot has not been tested; the current
-Disk backend still needs VHDX support. No full ISO or VHDX was downloaded during
-this inspection, and the original WIM has not been modified.
+disk backend now supports [direct VHDX read/write](vhdx.md). No full ISO or VHDX
+was downloaded during this inspection, and the original WIM has not been modified.

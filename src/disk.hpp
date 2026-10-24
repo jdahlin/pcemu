@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "vhdx.hpp"
 namespace pc {
 struct CPU;
 struct Disk {
@@ -32,6 +33,7 @@ struct Disk {
         uint32_t size = 0;
     };
     std::unique_ptr<Disk> parent;
+    std::unique_ptr<Vhdx> vhdx;
     std::unordered_map<uint64_t, Block> blocks;
     bool readOnly = false;
     uint64_t headerSize = 0, liveBytes = 0, fileBytes = 0;

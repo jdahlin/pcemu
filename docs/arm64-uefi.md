@@ -206,3 +206,7 @@ Feature-field and PMU register definitions follow the
 framework controls follow the installed Apple Hypervisor SDK's `hv_vm_config.h`
 and `hv_vcpu_types.h`. The GIC-mode behavior above is backed by the runtime test,
 not assumed from the EL2-disabled PMU documentation alone.
+
+Native VHDX images can be attached directly with `--disk IMAGE.vhdx`; writes go
+to that file unless `--disk-overlay` is explicitly supplied. See
+[VHDX storage](vhdx.md) for supported layouts and validation.

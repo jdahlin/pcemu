@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
-                             "      [--disk IMMUTABLE_BASE --disk-overlay PRIVATE_COW --virtio-transport pci|mmio]\n"
+                             "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "Run make firmware-arm64 first; OS boot is not implemented yet.\n";

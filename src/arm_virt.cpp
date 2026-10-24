@@ -53,16 +53,20 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             throw std::runtime_error("Virtio transport must be pci or mmio");
         if (!c.disk.empty()) {
             const auto parent = fs::canonical(c.disk).string();
-            auto overlay = c.diskOverlay.empty() ? config.variables + ".pcd" : fs::absolute(c.diskOverlay).string();
+            std::ifstream probe(parent, std::ios::binary);
+            std::array<char, 8> signature{};
+            probe.read(signature.data(), signature.size());
+            bool direct = c.diskOverlay.empty() && std::string(signature.data(), signature.size()) == "vhdxfile";
+            auto overlay = direct ? parent : c.diskOverlay.empty() ? config.variables + ".pcd" : fs::absolute(c.diskOverlay).string();
             fs::create_directories(fs::path(overlay).parent_path());
-            if (fs::exists(overlay) && fs::equivalent(parent, overlay))
+            if (!direct && fs::exists(overlay) && fs::equivalent(parent, overlay))
                 throw std::runtime_error("Virtio disk overlay must differ from immutable parent");
             diskLock = open((overlay + ".lock").c_str(), O_CREAT | O_RDWR, 0600);
             if (diskLock < 0 || flock(diskLock, LOCK_EX | LOCK_NB) != 0)
-                throw std::runtime_error("Virtio disk overlay is already in use or cannot be locked");
-            if (!fs::exists(overlay)) Disk::createOverlay(overlay, parent);
+                throw std::runtime_error("Virtio disk is already in use or cannot be locked");
+            if (!direct && !fs::exists(overlay)) Disk::createOverlay(overlay, parent);
             disk = std::make_unique<Disk>(overlay);
-            if (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent)
+            if (!direct && (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent))
                 throw std::runtime_error("Virtio disk overlay belongs to a different parent");
             block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
                                                  [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
