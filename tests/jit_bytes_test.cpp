@@ -448,6 +448,114 @@ int main() {
                       actual.instructions == expected.instructions && actual.flags == expected.flags,
                   "INC carry and flags remain exact through later memory-fault replay");
         }
+        unsigned multiplyTrial = 0;
+        const std::pair<uint32_t, uint32_t> multiplyEdges[] = {
+            {0, 0xffffffff}, {1, 0x80000000}, {0xffffffff, 0xffffffff},
+            {0x80000000, 0xffffffff}, {0x7fffffff, 2}, {0xffff8000, 0xffffffff},
+            {0x7fff, 2}, {0x8000, 0xffff}, {0xffff, 0x80}, {0x12345678, 0x7f},
+            {0x10000, 0x10000}, {0x7fffffff, 0x80000000}, {0x80000000, 0x80000000},
+            {46340, 46340}, {46341, 46341}};
+        for (bool code32 : {false, true})
+            for (bool overrideWidth : {false, true})
+                for (unsigned form = 0; form < 3; ++form)
+                    for (unsigned dst = 0; dst < 8; ++dst)
+                        for (unsigned src = 0; src < 8; ++src)
+                            for (auto [a, b] : multiplyEdges)
+                                for (uint32_t flags : {0x244602u, 0x244ed7u}) {
+                                    unsigned width = code32 != overrideWidth ? 4 : 2;
+                                    std::vector<uint8_t> code;
+                                    if (overrideWidth)
+                                        code.push_back(0x66);
+                                    if (!form)
+                                        code.insert(code.end(), {0x0f, 0xaf});
+                                    else
+                                        code.push_back(form == 1 ? 0x69 : 0x6b);
+                                    code.push_back(0xc0 | (dst << 3) | src);
+                                    if (form)
+                                        for (unsigned n = 0; n < (form == 2 ? 1 : width); ++n)
+                                            code.push_back(b >> (n * 8));
+                                    code.insert(code.end(), {uint8_t(0x70 | (multiplyTrial++ & 15)), 0x10});
+                                    for (auto c : {&ref, &native}) {
+                                        c->s[CS].big = code32;
+                                        c->ip = c->instructions = 0;
+                                        c->flags = flags;
+                                        for (unsigned n = 0; n < 8; ++n)
+                                            c->r[n] = 0xabcdef00 + n;
+                                        c->r[dst] = a;
+                                        c->r[src] = form ? a : b;
+                                        for (unsigned n = 0; n < code.size(); ++n)
+                                            c->write(n, code[n], 1);
+                                    }
+                                    ref.step();
+                                    ref.step();
+                                    check(jit.run() == 2 && native.flags == ref.flags &&
+                                              native.ip == ref.ip && native.instructions == ref.instructions,
+                                          "IMUL forms preserve exact flags, predicate and instruction count");
+                                    for (unsigned n = 0; n < 8; ++n)
+                                        check(native.r[n] == ref.r[n],
+                                              "IMUL preserves aliases, source registers and upper words");
+                                }
+        // IMUL preserves flags from a preceding producer except CF/OF; an
+        // INC consumes its new carry, and a later fault must see all effects.
+        for (bool logical : {false, true})
+            for (bool overflow : {false, true})
+                for (unsigned cc = 0; cc < 16; ++cc) {
+                    std::vector<uint8_t> code = logical ? std::vector<uint8_t>{0x31, 0xdb}
+                                                        : std::vector<uint8_t>{0x83, 0xfb, 1};
+                    code.insert(code.end(), {0x0f, 0xaf, 0xc1, uint8_t(0x70 | cc), 0x10});
+                    for (auto c : {&ref, &native}) {
+                        c->s[CS].big = true;
+                        c->ip = c->instructions = 0;
+                        c->flags = 2;
+                        c->r[AX] = overflow ? 0x80000000 : 3;
+                        c->r[CX] = 0xffffffff;
+                        c->r[BX] = 0;
+                        for (unsigned n = 0; n < code.size(); ++n)
+                            c->write(n, code[n], 1);
+                    }
+                    for (unsigned n = 0; n < 3; ++n)
+                        ref.step();
+                    check(jit.run() == 3 && native.flags == ref.flags && native.ip == ref.ip,
+                          "IMUL merges pending logical/arithmetic flags with CF/OF before Jcc");
+                }
+        for (bool overflow : {false, true}) {
+            CPU expected(65536), actual(65536);
+            std::vector<uint8_t> code = {0x83, 0xfb, 1, 0x0f, 0xaf, 0xc1, 0x42,
+                                         0x64, 0x8b, 0x35, 0, 0, 0, 0};
+            struct Stop {};
+            unsigned faults = 0;
+            for (auto c : {&expected, &actual}) {
+                c->cr[0] = 0x11;
+                c->s[CS].big = true;
+                c->s[FS].unusable = true;
+                c->r[AX] = overflow ? 0x80000000 : 3;
+                c->r[CX] = 0xffffffff;
+                c->r[BX] = 0;
+                c->r[DX] = 0xffffffff;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+                c->observeFault = [&, c](const Fault &f) {
+                    ++faults;
+                    check(f.vector == 13 && c->ip == 7 && c->r[DX] == 0 &&
+                              bool(c->flags & CF) == overflow && (c->flags & ZF),
+                          "IMUL carry survives INC and a later memory fault");
+                    throw Stop{};
+                };
+            }
+            try {
+                for (unsigned n = 0; n < 4; ++n)
+                    expected.step();
+            } catch (const Stop &) {
+            }
+            Jit multiplied(actual, true, 0);
+            try {
+                multiplied.run();
+            } catch (const Stop &) {
+            }
+            check(faults == 2 && multiplied.nativeInstructions == 3 &&
+                      actual.instructions == expected.instructions && actual.flags == expected.flags &&
+                      actual.r[AX] == expected.r[AX],
+                  "multiply flag dependencies and fault restart exactly match interpreter");
+        }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
     } catch (const std::exception &error) {

@@ -379,6 +379,17 @@ Jit::Block Jit::compile(bool translate) {
                     i.dst = op & 7;
                     i.op = op < 0x48 ? 8 : 9;
                 }
+            } else if (op == 0x69 || op == 0x6b) {
+                auto m = byte();
+                if ((m >> 6) != 3) {
+                    pos = begin;
+                    break;
+                }
+                i.kind = 9; // Three-operand signed register multiply.
+                i.dst = (m >> 3) & 7;
+                i.src = m & 7;
+                i.immediate = true;
+                i.imm = op == 0x6b ? uint32_t(int32_t(int8_t(byte()))) : immediate(w);
             } else if (op >= 0xb0 && op <= 0xbf) {
                 i.kind = 0;
                 i.w = op < 0xb8 ? 1 : w;
@@ -529,7 +540,16 @@ Jit::Block Jit::compile(bool translate) {
                 i.kind = 3;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xb6 || extended == 0xb7 || extended == 0xbe || extended == 0xbf) {
+                if (extended == 0xaf) {
+                    auto m = byte();
+                    if ((m >> 6) != 3) {
+                        pos = begin;
+                        break;
+                    }
+                    i.kind = 9;
+                    i.dst = (m >> 3) & 7;
+                    i.src = m & 7;
+                } else if (extended == 0xb6 || extended == 0xb7 || extended == 0xbe || extended == 0xbf) {
                     auto m = byte();
                     i.kind = (m >> 6) == 3 ? 0 : 5;
                     i.dst = (m >> 3) & 7;
@@ -646,7 +666,7 @@ Jit::Block Jit::compile(bool translate) {
                 usedRegisters |= 1u << i.memory.base;
             if (i.memory.index >= 0)
                 usedRegisters |= 1u << i.memory.index;
-        } else if (!i.immediate)
+        } else if (!i.immediate || i.kind == 9)
             usedRegisters |= 1u << i.src;
     }
     bool fastMemory = false, fastStore = false;
@@ -813,6 +833,13 @@ Jit::Block Jit::compile(bool translate) {
     std::vector<bool> neededFlags(ir.size());
     int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
+        if (ir[n].kind == 9) {
+            // IMUL preserves the interpreter's undefined arithmetic flags,
+            // so publish the preceding producer before replacing CF/OF only.
+            if (last >= 0)
+                neededFlags[last] = true;
+            last = -1;
+        }
         if (ir[n].kind == 1 && ir[n].op >= 8 && last >= 0)
             neededFlags[last] = true; // INC/DEC consume the preceding CF.
         if (ir[n].kind == 1 || ir[n].kind == 2)
@@ -843,6 +870,30 @@ Jit::Block Jit::compile(bool translate) {
         auto i = ir[n];
         if (i.kind == 3 || i.kind == 4)
             continue;
+        if (i.kind == 9) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            unsigned left = 20 + (i.immediate ? i.src : i.dst);
+            emit(0x13000000u | ((i.w * 8 - 1) << 10) | (left << 5) | 11);
+            if (i.immediate) {
+                imm(12, i.imm);
+                emit(0x13000000u | ((i.w * 8 - 1) << 10) | (12 << 5) | 12);
+            } else
+                emit(0x13000000u | ((i.w * 8 - 1) << 10) | ((20 + i.src) << 5) | 12);
+            emit(0x9b207c00u | (12 << 16) | (11 << 5) | 13); // smull x13,w11,w12
+            emit(0x93400000u | ((i.w * 8 - 1) << 10) | (13 << 5) | 14);
+            emit(0xeb00001fu | (14 << 16) | (13 << 5)); // cmp full,sign-extended low
+            emit(0x1a9f07ebu); // cset w11,ne: signed overflow sets both CF and OF
+            load(12, 19, offsetof(CPU, flags));
+            imm(14, ~(CF | OF));
+            emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+            for (unsigned bit : {0u, 11u})
+                emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
+            store(12, 19, offsetof(CPU, flags));
+            insert(20 + i.dst, 13, i.w, 0);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
         if (i.kind == 8) {
             // Capture both operands before either insert: AL/AH and other
             // partial-register aliases can share the same cached host GPR.

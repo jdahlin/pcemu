@@ -441,3 +441,50 @@ excluded. The counter run averages only 4.16 guest instructions per native
 call and 2.52 instructions per dispatch overall. Extending blocks across IMUL
 and shifts can therefore also amortize dispatch and polling, while bounded
 native block links and event scheduling remain larger structural work.
+
+The JIT now lowers register-source IMUL in its `0F AF`, `69` and `6B` forms,
+at 16/32-bit operand widths with operand-size overrides. ARM64 SMULL produces
+the full signed product; comparing it with the sign-extended truncated result
+sets CF/OF as specified in Intel's
+[IMUL reference](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2a-manual.pdf).
+Other flags follow the interpreter's deterministic preservation convention for
+the architecturally undefined flags. Pending arithmetic flags are materialized
+before IMUL, and subsequent carry consumers/fault exits observe its new CF/OF.
+The low product replaces only the destination operand, preserving upper words
+and aliased source semantics. Memory-source and one-operand IMUL remain on the
+interpreter path.
+
+`build/native-imul-tests.log` passes the full suite, with 2,094,827 byte-JIT
+checks. New coverage includes all register pairs, three encodings, signed
+overflow boundaries, sign-extended immediates, both code/operand widths,
+pending logical/arithmetic flag producers, all Jcc predicates and fault replay
+after a carry-consuming INC.
+
+The frozen comparison at `build/native-imul-controlled/` changes only
+`jit.cpp` against `ca07999` and runs 6,000 CoreMark iterations per independent
+DOS boot. All six samples pass canonical CRCs, exceed ten seconds, execute
+2,385,055,829 guest instructions and return to DOS. Baseline executes
+1,894,469,612 instructions natively (79.43%); candidate executes 2,085,773,535
+(87.45%). Median rates are 346.933 baseline and 451.013 candidate iterations
+per host second. Paired ratios are 1.33493, 1.30000 and 1.27539, giving a median
+paired gain of 30.0%. The coverage gain exceeds the IMUL count alone because
+blocks can now include adjacent supported instructions. This establishes a
+CoreMark improvement, not the same application-wide gain or Rosetta parity.
+
+The diagnostic profile at `build/native-imul-guest-profile/` uses the same
+1,000-iteration COM hash as `build/coremark-guest-profile-steady/`. Guest
+instructions stay at 397,509,732; interpreted attempts drop from 81,771,796 to
+49,887,873 (39.0%), and dispatches from 157,629,140 to 130,561,245 (17.2%).
+Average guest instructions per native call rise from 4.16 to 4.31, and per
+dispatch overall from 2.52 to 3.04. These are coverage/boundary counts; profiled
+timings are excluded from performance comparisons.
+
+Compatibility passes DOS CRCs and all 56 micro intervals
+(`build/native-imul-smoke.log`), exact Win3.11 Notepad file contents
+(`build/native-imul-win311.log`), rtts Win95 cold boot/restart
+(`build/win95-smoke-dyholej1/result.json`) and installed OSR2 cold boot/restart
+(the result directory is recorded in `build/native-imul-osr2.log`). Word/Excel
+task pixels pass in `build/native-imul-{word,excel}/`. Passing runs remove their
+private disks. `build/native-imul-validation.json` records source hashes and
+evidence; these checks do not repeat the installer or establish application
+startup gains.
