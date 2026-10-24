@@ -45,7 +45,9 @@ VBAR_EL1. The synthetic ESR (0x40401) reads zero because this subset has no
 synthetic exception producers. Vector registration does not enable SynIC or
 timer delivery. State is initialized afresh when the VM is recreated.
 
-Feature registers expose guest identity, VP index, register access and fast
+The early interface-version register (0x90006) returns `Hv#1`, as specified
+by Microsoft's ARM64 guest header. Feature registers expose guest identity,
+VP index, register access and fast
 output. No timer, SynIC, VMBus, flush or scheduling facilities are advertised.
 The version is PCEmu interface 1.0 build 1, not a Microsoft release identity.
 Unsupported operations/registers return errors rather than fabricated success.
@@ -56,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 136 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 138 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -109,8 +111,25 @@ The per-VP model now retains and validates both registrations. Its native tests
 cover isolation between VPs, reserved/alignment errors, early vector access and
 reset state. The EFI probe executes architectural TLBI after opting in and
 verifies that synthetic-vector registration leaves VBAR_EL1 unchanged. A fresh
-Windows clone is being tested with these boot registers; successful on-mode
-boot remains unproven at this checkpoint.
+Windows clone with these boot registers reached its lock screen, captured in
+`build/windows11-hyperv/basic-vp/console.png`. The counters show accepted page,
+TLBI and synthetic-vector registrations and successful VP-index queries.
+
+That working boot also exposed unsuccessful interface-version reads, now
+implemented above, and frequent SyncContext (0x19) calls. SyncContext and the
+extended capability query (0x8001) remain unsupported and return errors.
+Windows tolerates these rejections and boots, but this is an experimental
+subset: successful core use must not be reported as full Hyper-V support or
+a performance improvement. A final restart is checking the interface-version
+readback with the updated implementation.
+
+Use `python3 tools/verify_windows_hyperv.py REPORT --baseline OFF_REPORT` to
+audit core register consumption. It requires Windows NT kernel identity,
+successful register operations, enabled page/per-VP state, complete consistent
+counters and an inactive baseline. It lists unsupported calls even when core
+use passes. It explicitly does not verify GUI boot or performance; inspect
+the live framebuffer separately. Fixtures reject synthetic-probe identity,
+missing/failed operations, bad state, counter mismatches and an active baseline.
 
 ## Primary references
 

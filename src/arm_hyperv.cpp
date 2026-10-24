@@ -38,6 +38,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
     case 0x204: case 0x205: case 0x206: case 0x207: case 0x208: case 0x209: return 0;
     case 0x90002: value[0] = guestId; return 0;
+    case 0x90006: value[0] = 0x31237648; return 0; // ARM64 interface version: Hv#1
     case 0x90003:
         if (!guestId) return accessDenied;
         value[0] = vp; return 0;

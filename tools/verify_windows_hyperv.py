@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Audit actual Windows use of the initial ARM64 Hyper-V register subset.
+
+This does not prove GUI boot, performance benefit, SyncContext or other optional
+services. Unsupported call attempts remain visible even when core use passes.
+"""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+
+def verify(report, baseline, kernel_build=26100):
+    errors = []
+    def require(value, message):
+        if not value:
+            errors.append(message)
+    require(report.get('schema') == 1 and report.get('mode') == 'basic', 'Expected basic-mode counters')
+    identity = report.get('guestOsId', 0)
+    require(type(identity) is int and identity >= 0, 'Invalid guest identity')
+    identity = identity if type(identity) is int and identity >= 0 else 0
+    require((identity >> 48) & 0xffff == 1 and (identity >> 40) & 255 == 4
+            and (identity >> 32) & 255 == 10 and identity & 65535 == kernel_build,
+            'Identity does not match the expected Microsoft Windows NT kernel')
+    registers = {}
+    for row in report.get('registers', []):
+        name = row.get('name')
+        require(type(name) is int and name not in registers, 'Invalid or duplicate register counter')
+        registers[name] = row
+        require(all(type(row.get(k)) is int and row[k] >= 0 for k in ('reads', 'writes', 'failures')),
+                'Invalid register operation counts')
+    for name, operation in ((0x200, 'reads'), (0x90002, 'writes'), (0x90003, 'reads'),
+                            (0x90006, 'reads'), (0x90015, 'reads'), (0x90015, 'writes'),
+                            (0x90016, 'writes'), (0x40400, 'writes')):
+        row = registers.get(name, {})
+        require(type(row.get(operation)) is int and row[operation] > 0 and row.get('failures') == 0,
+                f'Unverified successful {operation} of register {name:#x}')
+    page = report.get('partitionInfoPage', 0)
+    require(type(page) is int and page > 4096 and page & 4095 == 1, 'Partition info page is not enabled')
+    vps = report.get('vps', [])
+    require(bool(vps) and vps[0].get('index') == 0 and vps[0].get('tlbiControl') == 1,
+            'Boot VP has not opted into TLBI control')
+    vector = vps[0].get('syntheticVector', 0) if vps else 0
+    require(type(vector) is int and vector > 0 and vector & 2047 == 0,
+            'Boot VP has not registered an aligned synthetic vector')
+    require(report.get('omittedCounters') == 0, 'Counters were omitted')
+    calls = report.get('calls', [])
+    counts = {}
+    for row in calls:
+        code, count = row.get('code'), row.get('count')
+        require(type(code) is int and 0 <= code <= 65535 and code not in counts,
+                'Invalid or duplicate hypercall code')
+        require(type(count) is int and count >= 0, 'Invalid hypercall count')
+        counts[code] = count if type(count) is int and count >= 0 else 0
+    require(counts.get(0x50, 0) > 0 and counts.get(0x51, 0) > 0, 'Missing register hypercall invocations')
+    abis = [report.get('smcccCalls'), report.get('legacyCalls')]
+    require(all(type(n) is int and n >= 0 for n in abis)
+            and sum(abis) == sum(counts.values()), 'Hypercall totals disagree')
+    require(baseline.get('schema') == 1 and baseline.get('mode') == 'off', 'Expected off-mode baseline')
+    require(baseline.get('guestOsId') == 0 and baseline.get('smcccCalls') == 0
+            and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
+            'Off-mode Windows baseline unexpectedly used Hyper-V registers')
+    unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51)]
+    return {'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
+            'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
+            'guiBootVerified': False, 'performanceBenefitVerified': False}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('report', type=Path)
+    parser.add_argument('--baseline', type=Path, required=True)
+    parser.add_argument('--kernel-build', type=int, default=26100)
+    args = parser.parse_args()
+    raw = {}
+    for name, path in (('report', args.report), ('baseline', args.baseline)):
+        if path.stat().st_size > 1024 * 1024:
+            parser.error('Expected bounded counter snapshots')
+        raw[name] = path.read_bytes()
+    result = verify(json.loads(raw['report']), json.loads(raw['baseline']), args.kernel_build)
+    result['sha256'] = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
+    print(json.dumps(result, indent=2))
+    return 0 if result['verifiedCoreUsage'] else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

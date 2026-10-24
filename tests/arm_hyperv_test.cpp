@@ -49,6 +49,8 @@ int main() {
     fastRead(0x200, false);
     check(r[0] == one && r[15] == features && r[16] == 0);
     check(r[5] == 0xcccccccccccccccc); // Legacy output is NOT after the input
+    fastRead(0x90006);
+    check(r[0] == one && r[6] == 0x31237648 && r[7] == 0); // Discovery before OS identity
     fastRead(0x90003);
     check(r[0] == 6); // Identity required for non-early registers
     auto fastWrite = [&](uint64_t id, unsigned vp = 0, uint64_t high = 0) {

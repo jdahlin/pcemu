@@ -43,6 +43,21 @@ efi_main:
     b.ne failed
     cbnz x7, failed
     ldr w0, =0x46000001
+    ldr x1, =0x100010050
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x90006
+    mov x5, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    ldr w8, =0x31237648
+    cmp x6, x8
+    b.ne failed
+    cbnz x7, failed
+    ldr w0, =0x46000001
     ldr x1, =0x100010051
     mov x2, #-1
     ldr w3, =0xfffffffe
