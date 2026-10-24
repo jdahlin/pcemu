@@ -17,6 +17,12 @@ The server boots, SSH works, no systemd services failed, and virtio network
 counters showed no errors or drops. Linux uses `arch_sys_counter` at 24 MHz.
 The following priorities address observed gaps and useful host integration.
 
+## Implemented after the audit
+
+The host-backed PL031 RTC now provides EFI time services. Debian registers
+`rtc-efi` and boots with the correct date (2026-10-24), verified over SSH.
+NTP/precision time synchronization remains separate work.
+
 ## Recommended order
 
 | Priority | Work | Evidence and acceptance criteria |

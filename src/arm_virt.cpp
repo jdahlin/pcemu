@@ -209,6 +209,8 @@ std::string ArmVirtMachine::cpuState() const {
 }
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
+    vm.setSPI(34, rtc.irq());
+    slice = std::min(slice, std::chrono::milliseconds(1000));
     if (gateway) {
         gateway->pump(net->outgoing, [this](const uint8_t *data, size_t size) { net->receive(data, size); }, 0, net->resetCount);
         if (!net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
@@ -238,6 +240,18 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         unsigned reg = (exit.syndrome >> 16) & 31;
         unsigned width = 1u << ((exit.syndrome >> 22) & 3);
         bool write = exit.syndrome & (1ull << 6);
+        if (exit.physicalAddress >= 0x09010000 && exit.physicalAddress < 0x09011000 && width <= 4) {
+            unsigned offset = exit.physicalAddress - 0x09010000;
+            if (offset % width) throw std::runtime_error("Unaligned PL031 access");
+            if (write) {
+                if (offset % 4 || width != 4) throw std::runtime_error("PL031 writes require 32 bits");
+                rtc.write(offset, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
+            } else if (reg < 31) vm.setReg(reg, armMmioLoad(rtc.read(offset & ~3u) >> (8 * (offset & 3)), width,
+                exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15)));
+            vm.setSPI(34, rtc.irq());
+            vm.setPC(exit.pc + 4);
+            return;
+        }
         if (exit.physicalAddress >= 0x09020000 && exit.physicalAddress < 0x09020018) {
             unsigned offset = exit.physicalAddress - 0x09020000;
             if (write) fwCfg.write(offset, reg < 31 ? vm.reg(reg) : 0, width);

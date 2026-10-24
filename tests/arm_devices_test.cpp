@@ -15,6 +15,33 @@ template <class F> static void rejects(F f) {
     check(rejected);
 }
 int main() {
+    int64_t now = 1792800000;
+    ArmPl031 rtc([&] { return now; });
+    check(rtc.read(0) == now);
+    check(rtc.read(0xfe0) == 0x31 && rtc.read(0xffc) == 0xb1);
+    rtc.write(4, uint32_t(now + 2));
+    now += 3; // Polling can skip the matching second.
+    check(rtc.read(0x14) == 1 && !rtc.irq());
+    rtc.write(0x10, 1);
+    check(rtc.irq());
+    rtc.write(0x1c, 1);
+    check(!rtc.irq());
+    rtc.write(8, 100);
+    check(rtc.read(0) == 100 && rtc.read(8) == 100);
+    now += 7;
+    check(rtc.read(0) == 107);
+    rtc.write(0xc, 0);
+    check(rtc.read(0xc) == 1);
+    rtc.write(4, 110);
+    now -= 20;
+    check(!rtc.irq()); // Backwards wall-clock adjustment does not trigger alarm.
+    now += 23;
+    check(rtc.irq());
+    rtc.write(0x1c, 1);
+    rtc.write(8, 0xfffffffe);
+    rtc.write(4, 1);
+    now += 4;
+    check(rtc.read(0) == 2 && rtc.irq());
     check(armPsciCall(0x84000000, 0, 0).value == 2);
     check(armPsciCall(0xc4000003, 0, 0).value == -4);
     check(armPsciCall(0xc4000003, 1, 0).value == -2);

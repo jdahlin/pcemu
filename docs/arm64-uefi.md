@@ -223,3 +223,17 @@ set it prevents OS-lock changes. This does not add software breakpoint execution
 The original Windows Validation OS VHDX now reaches its administrator command
 prompt with `--disk-controller nvme`; see [NVMe storage](nvme.md) for the
 verified milestone, commands and current limitations.
+
+## Real-time clock
+
+A host-backed PL031 at `0x09010000` (SPI 34) is described in the firmware device
+tree. EDK II discovers it and supplies EFI time services; an ACPI Linux guest
+uses `rtc-efi` without needing a second native RTC device in the DSDT. Time is
+UTC, follows host wall time including sleep, and guest SetTime changes only a
+per-VM offset. That offset is not persisted across a new VM process. Alarm match,
+mask, clear and level interrupts are emulated; delivery is polled at most once
+per second while the runner executes. This does not implement host wake from
+sleep or an NTP client in the guest.
+
+Verified with Debian 13.7: `rtc0` registers as `rtc-efi`, the cold-boot system date
+and RTC agree with the host (2026-10-24), SSH works and no services fail.

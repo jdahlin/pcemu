@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <string>
 #include <span>
 #include <utility>
@@ -56,5 +57,20 @@ class ArmPl011 {
     std::string transcript;
     uint32_t control = 0x300, integerDivisor = 0, fractionalDivisor = 0, lineControl = 0;
     uint32_t interruptMask = 0, fifoLevels = 0;
+};
+// PL031 RTC. Guest writes adjust only this VM's clock, never the host clock.
+// Host wall time includes sleep; the callback also permits deterministic tests.
+class ArmPl031 {
+  public:
+    explicit ArmPl031(std::function<int64_t()> seconds = {});
+    uint32_t read(unsigned offset);
+    void write(unsigned offset, uint32_t value);
+    bool irq();
+  private:
+    std::function<int64_t()> seconds;
+    int64_t adjustment = 0, previous = 0;
+    uint32_t match = 0, loaded = 0;
+    bool masked = false, pending = false;
+    int64_t update();
 };
 } // namespace pc
