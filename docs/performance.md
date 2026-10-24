@@ -814,3 +814,58 @@ Word/Excel task pixels. They do not rerun the installer in trace mode.
 `build/conditional-trace-validation.json` records evidence and source hashes.
 The normal emulator, DOS benchmark and snapshot task runner accept the mode;
 metadata records it separately from unconditional joining.
+
+
+### Combined TLB keys and block-local epoch (2026-10-24)
+
+The paged RAM hit path now validates the adjacent tag/epoch pair with one
+64-bit load and comparison. This replaces two 32-bit checks without changing
+TLB storage or guest paging rules. Where a spare callee-saved register exists,
+the current epoch is loaded once per native entry and retained across ordinary
+RAM helpers. Register allocation prefers already-saved pairs; fully occupied
+blocks retain the per-access epoch load. User permissions, first-write dirty
+updates, RAM bounds, device checks, code writes and precise replay remain.
+
+A common-source snapshot builds three frozen variants, changing only
+`jit_arm64.cpp`: the preceding implementation, combined keys alone, and combined
+keys plus epoch retention. Build/source hashes and commands are retained in
+`build/packed-tlb-comparison/`. Both comparisons use three alternating pairs of
+9.8 billion guest instructions per flat/paged case. Every case checks the sum
+3,200,000,000, and native instruction counts match. The built-in kernels retain
+their Basic policy; these are MMU-path comparisons, not conditional-trace tests.
+
+| Variant | Median paged million instructions/s | Median paired paged ratio | Median paired flat control ratio |
+| --- | ---: | ---: | ---: |
+| Combined keys alone | 896.7 (baseline 866.8) | 1.03442 | 1.00442 |
+| Keys plus retained epoch | 936.2 (baseline 880.6) | 1.06314 | 0.97663 |
+
+The combined change's paged ratios are 1.02747, 1.06314 and 1.12721: an observed
+median gain of 6.3%. The flat code path is unchanged, but its ratios vary with
+host conditions, so no flat-RAM improvement is claimed. All samples, including
+the slow final pair in the keys-only trial, remain in the evidence. These small
+trials do not establish a precise general speedup or close the Rosetta gap.
+
+Five alternating headless pairs per application on the unchanged VGA fixtures
+show the following end-to-end response-time upper bounds:
+
+| Task | Baseline median ms | Changed median ms | Median paired ratio |
+| --- | ---: | ---: | ---: |
+| Word | 1656.8 | 1554.2 | 1.06542 |
+| Excel | 751.9 | 734.9 | 1.00136 |
+
+Word's paired ratios range 0.90716–1.12374; Excel's range 0.97316–1.19389. Thus
+Word has an observed 6.5% paired median improvement and Excel is effectively
+neutral, with substantial noise. Dispatch/poll wall-time paired medians are
+1.06614 and 0.99925 respectively. Timing records and runner hashes are under
+`build/packed-tlb-comparison/office/`; no universal startup gain is claimed.
+
+`--benchmark` and `--benchmark-memory` now honor explicit
+`--backend jit|interpreter` selection, so long native trials need not also run
+the slower interpreter. The default auto mode still runs both and reports the
+speedup. This selection is identical in all frozen comparison binaries.
+
+New CPU regressions cover collisions at the same epoch, remapping with the
+same tag, high epoch bits, wraparound, byte/dword access, spare-register and
+fully occupied-register blocks, and preservation of untouched guest GPRs.
+The complete suite passes, including 339,746 core checks. Integration evidence
+and current source hashes are listed in `build/hoisted-tlb-validation.json`.

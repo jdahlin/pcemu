@@ -78,10 +78,22 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 bitmapRegister = 20 + reg;
                 break;
             }
+    int epochRegister = -1;
     auto savePair = [&](int pair) {
         return pair == 0 || (usedRegisters & (3u << (pair * 2 - 1))) || (pair == 4 && fastMemory) ||
-               bitmapRegister == 19 + pair * 2 || bitmapRegister == 20 + pair * 2;
+               bitmapRegister == 19 + pair * 2 || bitmapRegister == 20 + pair * 2 ||
+               epochRegister == 19 + pair * 2 || epochRegister == 20 + pair * 2;
     };
+    if (fastMemory && (block.cr0 & 0x80000000u))
+        for (unsigned pass = 0; pass < 2 && epochRegister < 0; ++pass)
+            for (int reg = 7; reg >= 0; --reg) {
+                int host = 20 + reg;
+                if (!(usedRegisters & (1u << reg)) && host != bitmapRegister &&
+                    (pass || savePair((host - 19) / 2))) {
+                    epochRegister = host; // Prefer an already-saved register pair.
+                    break;
+                }
+            }
     emit(0xa9b97bfdu); // stp x29,x30,[sp,#-112]!
     emit(0x910003fdu); // mov x29,sp: keep a valid host frame chain for diagnostics.
     for (int k = 0; k < 5; k++)
@@ -110,6 +122,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (low || !high)
             emit(0x91000000u | (low << 10) | ((high ? reg : 19) << 5) | reg);
     };
+    if (epochRegister >= 0) {
+        // Fetch validation synchronizes CR3/TLB before entry. Supported native
+        // instructions and continuing RAM helpers cannot change the epoch;
+        // MMIO, faults and state-changing instructions leave this block.
+        cpuAddress(9, offsetof(CPU, tlbEpoch) & ~4095u);
+        load(epochRegister, 9, offsetof(CPU, tlbEpoch) & 4095u);
+    }
     auto call = [&](uintptr_t address) {
         pointer(16, address);
         emit(0xd63f0200u);
@@ -485,14 +504,21 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     static_assert(offsetof(CPU::TLBEntry, dirty) == 17);
                     cpuAddress(12, offsetof(CPU, tlb));
                     emit(0x8b2b498cu); // add x12,x12,w11,uxtw #2
-                    load(13, 12, offsetof(CPU::TLBEntry, epoch));
-                    cpuAddress(14, offsetof(CPU, tlbEpoch) & ~4095u);
-                    load(14, 14, offsetof(CPU, tlbEpoch) & 4095u);
-                    emit(0x6b0e01bfu);  // cmp w13,w14
+                    // The little-endian tag/epoch pair forms one 64-bit key.
+                    // A stale epoch or colliding page tag must both miss.
+                    static_assert(std::endian::native == std::endian::little);
+                    static_assert(offsetof(CPU::TLBEntry, tag) == 0);
+                    static_assert(offsetof(CPU::TLBEntry, epoch) == 4);
+                    emit(0xf940018du); // ldr x13,[x12]: epoch:tag (unaligned entries allowed)
+                    int epoch = epochRegister;
+                    if (epoch < 0) {
+                        cpuAddress(14, offsetof(CPU, tlbEpoch) & ~4095u);
+                        load(14, 14, offsetof(CPU, tlbEpoch) & 4095u);
+                        epoch = 14;
+                    }
+                    emit(0xaa00814eu | (epoch << 16)); // orr x14,x10,xEpoch,lsl #32
+                    emit(0xeb0e01bfu); // cmp x13,x14
                     guard(0x54000001u); // b.ne slow
-                    load(13, 12, offsetof(CPU::TLBEntry, tag));
-                    emit(0x6b0a01bfu); // cmp w13,w10
-                    guard(0x54000001u);
                     bool user = block.vm || ((block.cr0 & 1) && (cpu.s[CS].selector & 3) == 3);
                     if (user) {
                         load(13, 19, offsetof(CPU, systemAccess));

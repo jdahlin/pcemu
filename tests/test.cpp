@@ -561,6 +561,56 @@ int main() {
                 for (unsigned reg = 0; reg < 8; reg++)
                     check(native.r[reg] == ref.r[reg], "native memory preserves exact GPR state");
             }
+        // A packed native TLB key must distinguish page collisions from epoch
+        // changes, including high epoch bits and wraparound. Odd table slots
+        // also exercise the 20-byte entry stride's unaligned 64-bit key load.
+        for (bool byte : {false, true})
+            for (bool allRegisters : {false, true})
+            for (uint32_t epoch : {1u, 0x80000001u, UINT32_MAX}) {
+                CPU hot(1024 * 1024);
+                hot.s[CS].big = true;
+                program(hot, {uint8_t(byte ? 0xa0 : 0xa1), 0, 0x50, 0, 0,
+                              uint8_t(byte ? 0x80 : 0x83), 0xc0, 1,
+                              uint8_t(byte ? 0xa2 : 0xa3), 0, 0x50, 0, 0, 0xeb, 0xf1});
+                if (allRegisters) {
+                    std::memmove(hot.mem.data() + 16, hot.mem.data(), 15);
+                    for (unsigned reg = 0; reg < 8; ++reg) {
+                        hot.mem[reg * 2] = 0x89;
+                        hot.mem[reg * 2 + 1] = 0xc0 | (reg << 3) | reg;
+                    }
+                    hot.mem[30] = uint8_t(-31);
+                }
+                unsigned blockInstructions = allRegisters ? 12 : 4;
+                for (unsigned reg = 1; reg < 8; ++reg)
+                    hot.r[reg] = 0x12345000 + reg;
+                hot.write(0x80000, 0x81007, 4);
+                hot.write(0x80004, 0x82007, 4);
+                hot.write(0x81000, 7, 4);
+                hot.write(0x81014, 0x5007, 4);
+                hot.write(0x82010, 0x6007, 4);
+                hot.cr[0] = 0x80000011;
+                hot.cr[3] = 0x80000;
+                hot.s[CS].selector = 3;
+                hot.flushTLB();
+                hot.tlbEpoch = epoch;
+                Jit jit(hot, true, 0);
+                check(jit.run() == blockInstructions && hot.mem[0x5000] == 1 && hot.nativeMemoryCalls == 2,
+                      "native TLB key accepts full-width epochs after cold access");
+                hot.physical(0x404000, true); // Hashes to the same slot as page 5.
+                check(jit.run() == blockInstructions && hot.mem[0x5000] == 2 && hot.mem[0x6000] == 0 &&
+                          hot.nativeMemoryCalls == 3,
+                      "same-epoch TLB tag collision cannot reuse another page's RAM");
+                uint32_t mapping = 0x7007;
+                std::memcpy(hot.mem.data() + 0x81014, &mapping, 4);
+                hot.flushTLB();
+                check(jit.run() == blockInstructions && hot.mem[0x7000] == 1 && hot.mem[0x5000] == 2 &&
+                          hot.nativeMemoryCalls == 5 &&
+                          hot.tlbEpoch == (epoch == UINT32_MAX ? 1u : epoch + 1),
+                      "same-tag TLB epoch change and wrap observe the remapped page");
+                for (unsigned reg = 1; reg < 8; ++reg)
+                    check(hot.r[reg] == 0x12345000 + reg,
+                          "TLB scratch allocation preserves unused and fully cached guest GPRs");
+            }
         for (bool byte : {false, true})
             for (bool paging : {false, true}) {
                 CPU hot(1024 * 1024);

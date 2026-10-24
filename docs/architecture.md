@@ -191,6 +191,16 @@ The native emitter caches the RAM base in callee-saved x28, and the bitmap base
 in an unused guest GPR slot when available. Save/restore masks include these
 host-only assignments; guest register state is untouched. x29 anchors a valid
 host frame record. TLB pointer calculations use CPU-relative ADD instructions.
+The adjacent little-endian page-tag/epoch fields are checked together with one
+64-bit comparison; neither a colliding tag nor a stale epoch can hit. When an
+unused cached-register slot is available, a paged block loads its current epoch
+once at entry, preferring an already-saved host register pair. Permissions,
+dirty state, RAM/device guards and code-write guards still run as before.
+Fetch validation synchronizes CR3/TLB before native entry. Supported native
+instructions cannot change the epoch, and continuing ordinary-RAM helpers do
+not flush it. MMIO/fault replay and state-changing instructions leave the native
+block. Each subsequent entry reloads the epoch, including after wrap or remap.
+Without a spare register the same combined check reloads the epoch per access.
 
 REP string faults now retain completed elements rather than rolling back the
 entire repetition. SI/DI/CX and the LODS accumulator retain their progress; the

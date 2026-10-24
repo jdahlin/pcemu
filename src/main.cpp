@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
                              "--frame FILE.ppm --dump-memory FILE --until-text TEXT\n"
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
+                             "    --backend jit|interpreter selects one benchmark engine\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
                              "  --jit-traces (experimental conditional branch traces)\n"
                              "  --jit-basic-blocks (disable default same-page jump joining)\n"
@@ -173,15 +174,23 @@ int main(int argc, char **argv) {
             ramMB = selectedProfile.defaultRamMB;
         if (memoryBenchmark) {
             for (bool paging : {false, true}) {
-                auto ref = benchmarkCpuMemory(false, benchmarkSteps, paging);
-                auto native = benchmarkCpuMemory(true, benchmarkSteps, paging);
-                std::cout << "Memory speedup: " << ref / native << "x\n";
+                if (backend != ExecutionBackend::Auto)
+                    benchmarkCpuMemory(enableJit, benchmarkSteps, paging);
+                else {
+                    auto ref = benchmarkCpuMemory(false, benchmarkSteps, paging);
+                    auto native = benchmarkCpuMemory(true, benchmarkSteps, paging);
+                    std::cout << "Memory speedup: " << ref / native << "x\n";
+                }
             }
             return 0;
         }
         if (benchmark) {
-            double ref = benchmarkCpuRegisters(false, benchmarkSteps), jit = benchmarkCpuRegisters(true, benchmarkSteps);
-            std::cout << "Speedup: " << ref / jit << "x (register-only synthetic workload)\n";
+            if (backend != ExecutionBackend::Auto)
+                benchmarkCpuRegisters(enableJit, benchmarkSteps);
+            else {
+                double ref = benchmarkCpuRegisters(false, benchmarkSteps), jit = benchmarkCpuRegisters(true, benchmarkSteps);
+                std::cout << "Speedup: " << ref / jit << "x (register-only synthetic workload)\n";
+            }
             return 0;
         }
         if (ramMB < 2 || ramMB > 64)
