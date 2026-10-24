@@ -550,3 +550,15 @@ upstream minimum-duration validation and DOS return, with identical guest work.
 This is incremental over NEG, not a Windows/Rosetta claim. [Complete timings
 and provenance](measurements/native-memory-alu-timing-2026-10-25.json) are committed;
 private overlays and temporary baseline/debug files were removed.
+
+
+Fresh host call-tree profiles now cover both retained Win95 cold boots and a
+separate rtts boot/restart. Interpreter work is about 51% of main-thread
+samples, dispatch 17–18%, device polling 12–13% and disk/compression under 1%.
+Software address translation alone is 11–13% in self samples. Named profiler
+attachment waits are excluded, with raw call trees preserved as small zstd
+archives. These windows include dialog/OCR observation and do not establish
+isolated boot speed. `tools/smoke_win95.py --sample` reproduces collection;
+see [the full host evidence](measurements/win95-host-startup-2026-10-25.json)
+and [scope/method](startup-profiling.md). Both profiled cold boots, profiled
+rtts restart and unprofiled OSR2 restart pass and remove private compressed disks.

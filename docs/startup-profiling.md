@@ -307,3 +307,59 @@ from completed analyzer output before removal, but the underlying traces are
 no longer available for independent inspection. Treat them as recorded
 observations, not a currently reproducible evidence bundle. The cleanup also
 removed the Word/Excel startup checkpoints used for these measurements.
+
+
+## Current headless Windows 95 boot host profiles (25 October)
+
+The retained rtts and installed OSR2 images now have fresh host call-tree
+profiles with the current native NEG and memory-source ALU implementation.
+These use the ordinary headless emulator, not an instrumented build or restored
+RAM checkpoint:
+
+```sh
+python3 tools/smoke_win95.py --sample
+python3 tools/smoke_win95.py --sample --disk media/win95-fresh-installed.pcd
+# Also collect through the guest-requested restart:
+python3 tools/smoke_win95.py --sample --restart
+```
+
+The first control pause protects early startup during symbol discovery; a second
+named pause is queued after the sampler confirms attachment. Analysis requires
+that a named pause appears in the stacks, excludes its samples, and rejects
+sampling that terminates before desktop verification. `sample -mayDie` collects
+until the owned guest exits. The emulator hash is checked before/after the run.
+Successful compressed overlays are removed. The analyzer recognizes native
+helpers in both their former `pc::native*` and current `pc::jit_detail::native*`
+namespaces, so their work does not inflate dispatch accounting.
+
+| Main-thread category | rtts cold boot | OSR2 cold boot |
+|---|---:|---:|
+| Interpreter, including MMU and guest faults | 50.7% | 51.2% |
+| JIT dispatch/cache/validation | 16.7% | 18.0% |
+| Device polling and interrupt delivery | 13.2% | 12.1% |
+| Main loop/other work | 9.0% | 8.3% |
+| Generated code/native helpers | 8.3% | 7.7% |
+| JIT compilation | 1.6% | 1.9% |
+| Disk/compression | 0.4% | 0.5% |
+| Capture/video/control output | 0.2% | 0.2% |
+
+The cold-boot profiles contain 7,757 and 5,113 task samples, after excluding
+4,617 and 4,628 attachment samples. `CPU::physical` accounts for 12.9%/11.3%
+self samples, `Jit::run` 13.4%/14.8%, and `I8042Device::poll` 6.6%/5.3%.
+Exception throwing has 5.9%/6.8% inclusive samples; those overlap interpreter
+work and are not an independent category to add. This supports investigating
+software-MMU/interpreter hot paths and polling overhead before disk work.
+Guest faults must retain architectural behavior when reducing exception cost.
+
+These are one host profile per cold boot, plus a separate rtts boot/restart
+profile that also passed. The windows include known startup-dialog dismissal,
+OCR observation, guest execution while the observer works, and small attachment/
+exit margins after the first dispatch batch. Unresolved generated stacks can
+appear under other work. They are wall-stack samples, not exclusive CPU-clock
+counts, isolated boot times, or a before/after/Rosetta comparison.
+[Complete summaries and verification](measurements/win95-host-startup-2026-10-25.json)
+include hashes and paths to three committed zstd-compressed raw call trees
+(219,048 compressed bytes total). Decompress each with `zstd -d -c FILE` to audit
+the original stacks. This preserves the evidence independently of local build
+cleanup. Four host-accounting regression tests and the normal unprofiled Win95
+restart path validate the profiling tool changes.

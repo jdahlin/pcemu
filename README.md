@@ -97,6 +97,11 @@ and verifies exactly one firmware reset when restart is requested. Successful
 runs remove their private disk; failures retain their owned guest and diagnostics
 under `build/win95-smoke-*`. These are compatibility tests, not performance scores.
 
+Add `--sample` to collect macOS host stacks through desktop verification (and
+restart when requested). Named attachment waits are excluded from the summary;
+OCR/dialog handling remains in the workload. `host-profile.json` and raw
+`host-profile/run-1/sample.txt` are diagnostics, not isolated boot-time scores.
+
 The tests include exhaustive 8-bit ADC/SBB flags, randomized interpreter/JIT
 comparisons with paging, remapping and code invalidation, VM86 transitions,
 interrupt shadows, segment-fault restart, page permissions, ATA, PIC, PIT,
