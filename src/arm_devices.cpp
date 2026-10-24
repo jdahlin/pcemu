@@ -22,7 +22,12 @@ int64_t ArmPl031::update() {
     previous = current;
     return current;
 }
-bool ArmPl031::irq() { update(); return masked && pending; }
+bool ArmPl031::irq() {
+    // Raw status is sampled on reads/unmask. A masked alarm needs no host poll.
+    if (!masked) return false;
+    update();
+    return pending;
+}
 uint32_t ArmPl031::read(unsigned offset) {
     auto current = update();
     switch (offset) {

@@ -15,6 +15,9 @@ template <class F> static void rejects(F f) {
     check(rejected);
 }
 int main() {
+    unsigned rtcSamples = 0;
+    ArmPl031 idleRtc([&] { ++rtcSamples; return int64_t(123); });
+    check(!idleRtc.irq() && !idleRtc.irq() && rtcSamples == 1);
     int64_t now = 1792800000;
     ArmPl031 rtc([&] { return now; });
     check(rtc.read(0) == now);

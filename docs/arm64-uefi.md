@@ -237,3 +237,7 @@ sleep or an NTP client in the guest.
 
 Verified with Debian 13.7: `rtc0` registers as `rtc-efi`, the cold-boot system date
 and RTC agree with the host (2026-10-24), SSH works and no services fail.
+
+RTC polling avoids host clock reads while the alarm is masked, and updates HVF's
+interrupt line only when its level changes. No time daemon or network clock
+service is required for the RTC; the installed Debian guest uses the RTC alone.

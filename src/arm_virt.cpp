@@ -213,9 +213,15 @@ std::string ArmVirtMachine::cpuState() const {
     if (nvme) output << ' ' << nvme->diagnostics();
     return output.str();
 }
+void ArmVirtMachine::updateRtcInterrupt() {
+    bool level = rtc.irq();
+    if (level == rtcInterruptLevel) return;
+    vm.setSPI(34, level);
+    rtcInterruptLevel = level;
+}
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
-    vm.setSPI(34, rtc.irq());
+    updateRtcInterrupt();
     slice = std::min(slice, std::chrono::milliseconds(1000));
     if (gateway) {
         gateway->pump(net->outgoing, [this](const uint8_t *data, size_t size) { net->receive(data, size); }, 0, net->resetCount);
@@ -254,7 +260,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
                 rtc.write(offset, reg < 31 ? uint32_t(vm.reg(reg)) : 0);
             } else if (reg < 31) vm.setReg(reg, armMmioLoad(rtc.read(offset & ~3u) >> (8 * (offset & 3)), width,
                 exit.syndrome & (1ull << 21), exit.syndrome & (1ull << 15)));
-            vm.setSPI(34, rtc.irq());
+            updateRtcInterrupt();
             vm.setPC(exit.pc + 4);
             return;
         }

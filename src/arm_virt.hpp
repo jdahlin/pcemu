@@ -53,6 +53,8 @@ class ArmVirtMachine {
     ArmFwCfg fwCfg;
     ArmPl011 uart;
     ArmPl031 rtc;
+    bool rtcInterruptLevel = false;
+    void updateRtcInterrupt();
     ArmOsLock osLock;
     ArmPowerAction powerAction = ArmPowerAction::None;
     std::unique_ptr<Disk> disk;
