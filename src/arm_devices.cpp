@@ -2,6 +2,21 @@
 #include <algorithm>
 #include <stdexcept>
 namespace pc {
+bool ArmOsLock::access(uint64_t syndrome, uint64_t &value) {
+    // ESR_EL2.ISS: ignore Rt, retain direction and every register encoding bit.
+    if ((syndrome >> 26 & 63) != 0x18 || !(syndrome & (1ull << 25))) return false;
+    const auto encoding = syndrome & 0x3ffc1f;
+    if (encoding == 0x280403) { // MRS OSLSR_EL1: S2_0_C1_C1_4.
+        value = 8 | (locked ? 2 : 0); // OSLM=0b10, nTT=0, OSLK.
+        return true;
+    }
+    if (encoding == 0x280400) { // MSR OSLAR_EL1: S2_0_C1_C0_4.
+        locked = value & 1;
+        return true;
+    }
+    return false;
+}
+
 ArmPsciResult armPsciCall(uint32_t function, uint64_t arg0, uint64_t arg1) {
     if (!(function & 0x40000000)) { arg0 = uint32_t(arg0); arg1 = uint32_t(arg1); }
     switch (function) {

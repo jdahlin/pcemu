@@ -171,6 +171,15 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
     auto exit = vm.run(slice);
     if (exit.reason == HvfMachine::ExitReason::Canceled) return;
+    if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x18) {
+        unsigned reg = (exit.syndrome >> 5) & 31;
+        uint64_t value = reg < 31 ? vm.reg(reg) : 0;
+        if (osLock.access(exit.syndrome, value)) {
+            if ((exit.syndrome & 1) && reg < 31) vm.setReg(reg, value);
+            vm.setPC(exit.pc + 4);
+            return;
+        }
+    }
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16) {
         auto result = (exit.syndrome & 0xffff) == 0
             ? armPsciCall(vm.reg(0), vm.reg(1), vm.reg(2)) : ArmPsciResult{-1};

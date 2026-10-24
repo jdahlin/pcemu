@@ -91,3 +91,23 @@ uses a fresh private variable store. It retains serial/host logs, a GOP PPM
 and a summary under ignored `build/validation-os-boot-*`. A successful runner
 exit only means the bounded observation ended; inspect the artifacts to assess
 Windows progress. No Windows OS boot is inferred from the process exit code.
+
+
+### Original-disk bring-up result
+
+The original 26100.9549 VHDX was downloaded and attached directly on the tested
+Apple M4 host. Its EFI boot entry runs, reads the populated boot configuration,
+and progresses beyond the loader-only missing-BCD milestone. The initial
+platform exit was `ESR=0x62280503`, an `MRS X8, OSLSR_EL1` at
+`PC=0xfffff800e11296a4`. The platform now supplies OS-lock status and control
+(`OSLSR_EL1`/`OSLAR_EL1`), including cold-reset locked state and bit-zero
+lock/unlock writes. Unknown system-register accesses still fail explicitly.
+This is debug-lock bookkeeping, not external debug or breakpoint support.
+
+A subsequent 15-second observation reached the Windows boot spinner, with
+512 virtio requests and guest execution at `PC=0xfffff8029fa609ac`. The
+Validation OS command prompt has not been verified. Boot animation and high
+virtual addresses alone do not establish a usable Windows system.
+
+Register definitions follow the Arm ARM's OSLAR_EL1/OSLSR_EL1 definitions
+([Arm architecture register reference](https://developer.arm.com/documentation/ddi0487/latest/)).

@@ -108,6 +108,23 @@ int main() {
     check(armMmioLoad(0x8001, 2, true, false) == 0xffff8001);
     check(armMmioLoad(0x80000000, 4, true, true) == 0xffffffff80000000ull);
     check(armMmioLoad(UINT64_MAX, 8, false, true) == UINT64_MAX);
+    ArmOsLock osLock;
+    uint64_t lockValue = 0;
+    check(osLock.access(0x62280503, lockValue) && lockValue == 10);
+    lockValue = 0;
+    check(osLock.access(0x62280400, lockValue));
+    check(osLock.access(0x622807e3, lockValue) && lockValue == 8); // Rt=XZR.
+    lockValue = UINT64_MAX;
+    check(osLock.access(0x62280420, lockValue));
+    check(osLock.access(0x62280403, lockValue) && lockValue == 10);
+    check(!osLock.access(0x62280401, lockValue)); // OSLAR is write-only.
+    check(!osLock.access(0x62280402, lockValue)); // OSLSR is read-only.
+    check(!osLock.access(0x62280407, lockValue)); // Other CRm.
+    check(!osLock.access(0x62080403, lockValue)); // Other op0.
+    check(!osLock.access(0x60280403, lockValue)); // Invalid IL.
+    check(!osLock.access(0x66280403, lockValue)); // Other EC.
+    ArmOsLock freshLock;
+    check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
     ArmPl011 uart;
     check(uart.read(0x18) == 0x90);
     uart.write(0, 'X'); check(uart.output().empty()); // UART disabled at reset.

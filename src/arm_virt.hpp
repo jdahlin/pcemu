@@ -40,6 +40,7 @@ class ArmVirtMachine {
     ArmNorFlash nor;
     ArmFwCfg fwCfg;
     ArmPl011 uart;
+    ArmOsLock osLock;
     ArmPowerAction powerAction = ArmPowerAction::None;
     std::unique_ptr<Disk> disk;
     std::unique_ptr<VirtioBlock> block;
