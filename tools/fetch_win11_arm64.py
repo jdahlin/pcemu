@@ -25,6 +25,9 @@ def main():
     parser.add_argument('--request', type=Path, required=True)
     parser.add_argument('--destination', type=Path, default=ROOT / 'media/windows11-arm64')
     parser.add_argument('--sha256', default=EXPECTED_SHA256)
+    parser.add_argument('--local-link', type=Path, help='Publish this local ISO symlink after verification')
+    parser.add_argument('--remove-local-prefix', action='store_true',
+                        help='After verification remove the matching earlier staged partial beside --local-link')
     args = parser.parse_args()
     expected = args.sha256.lower()
     if len(expected) != 64 or any(c not in '0123456789abcdef' for c in expected):
@@ -36,6 +39,14 @@ def main():
         raise RuntimeError('Expected official Microsoft ISO URL')
     args.destination.mkdir(parents=True, exist_ok=True)
     target = args.destination / Path(parsed.path).name
+    if args.remove_local_prefix and not args.local_link:
+        parser.error('--remove-local-prefix requires --local-link')
+    if args.local_link:
+        link = args.local_link.absolute()
+        if link == target.absolute() or (link.exists() and not link.is_symlink()):
+            raise RuntimeError('Local ISO link must not replace an existing regular file')
+        if link.is_symlink() and link.resolve() != target.resolve():
+            raise RuntimeError('Local ISO symlink already points to different media')
     partial = target.with_suffix('.iso.part')
     metadata = target.with_suffix('.iso.partial.json')
     if target.exists():
@@ -98,6 +109,24 @@ def main():
               'checksumSource': PAGE, 'path': str(target)}
     (args.destination / 'download.json').write_text(json.dumps(report, indent=2) + '\n')
     metadata.unlink()
+    if args.local_link:
+        link.parent.mkdir(parents=True, exist_ok=True)
+        temporary = link.with_name(link.name + '.link-tmp')
+        if temporary.exists() or temporary.is_symlink():
+            raise RuntimeError('Prior temporary ISO symlink exists')
+        temporary.symlink_to(target.resolve())
+        temporary.replace(link)
+        report['localLink'] = str(link)
+        if args.remove_local_prefix:
+            old_partial = link.with_suffix('.iso.part')
+            old_metadata = link.with_suffix('.iso.partial.json')
+            if (old_partial.is_file() and not old_partial.is_symlink() and old_metadata.is_file()
+                    and not old_metadata.is_symlink() and json.loads(old_metadata.read_text()) == identity
+                    and old_partial.stat().st_size <= size):
+                old_partial.unlink()
+                old_metadata.unlink()
+                report['localPartialRemoved'] = True
+        (args.destination / 'download.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 
 

@@ -21,7 +21,9 @@ Signed query parameters stay out of tracked documentation and manifests.
 
 ```sh
 python3 tools/fetch_win11_arm64.py --request build/win11-download/request.json \
-  --destination /Volumes/srv/apps/pc/os
+  --destination /Volumes/srv/apps/pc/os \
+  --local-link media/windows11-arm64/Windows11_Client_arm64_en-us_26300_9457.iso \
+  --remove-local-prefix
 python3 tools/inspect_win11_iso.py \
   /Volumes/srv/apps/pc/os/Windows11_Client_arm64_en-us_26300_9457.iso
 ```
@@ -74,3 +76,20 @@ References: [Microsoft ARM64 ISO download](https://www.microsoft.com/en-us/softw
 [ARM64 discovery](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/feature-discovery),
 [Hypercall ABI](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercall-interface),
 [Virtual interrupts](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/virtual-interrupts).
+
+
+## Media location policy
+
+Only the Windows 11 installation ISO is being moved to caixapreta. Writable VM
+disks (`.raw`, `.vhdx`, `.pcd`), snapshots and active guest state stay local.
+No bulk media/disk migration has been applied. The archive target is exactly
+`/Volumes/srv/apps/pc/os/Windows11_Client_arm64_en-us_26300_9457.iso`, corresponding
+to `/srv/apps/pc/os` on caixapreta.
+
+The transfer remains a `.iso.part` until its full Microsoft SHA-256 is verified.
+After verification the downloader publishes a local ISO symlink under ignored
+`media/windows11-arm64/` and removes only a matching task-owned earlier local
+partial plus its metadata. The server copy remains authoritative; mount the
+`srv` share before using that symlink. Transfer progress is recorded locally in
+ignored `build/win11-download/transfer.log`, with the final result in the
+server-side `download.json`. File presence with a `.part` suffix is not completion.
