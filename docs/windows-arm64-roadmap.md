@@ -243,3 +243,29 @@ For an INTx compatibility test, `tools/fetch_virtio_arm64.py --viostor-intx
 upstream ARM64 viostor package (ISO size 789645312 bytes, published September
 2025). NetKVM and the other packages remain at 0.1.302. Loading and actual I/O
 must still be verified before using this package for the installation target.
+
+The INTx test succeeded: report `reports/report-1792876680161916000.log`
+shows viostor 100.101.104.28500 Started and DiskPart lists the 64 GiB target as
+Disk 1 beside the 1 GiB NVMe boot disk. NetKVM and viorng remain 0.1.302 and both
+are Started. This preserves the actual INTx interrupt path.
+
+`tools/windows/install.cmd` automates Windows Pro image 3 deployment to that
+specific two-disk VM. Before DiskPart, the original ARM64 `verify-install-disk.exe`
+opens PhysicalDrive1 read-only, requires exactly 64 GiB and checks both 1 MiB
+boundaries for emptiness. It permits only the four-byte MBR disk signature that
+Windows automatically assigned to the otherwise empty target; all partition
+entries, boot signatures and GPT data must still be zero. Twelve native WinAPI
+fixture cases cover mismatched sizes, failed/truncated reads, nonempty boundaries
+and the permitted signature. The guest guard passed in
+`reports/report-1792877035768591000.log`. It will refuse an already-partitioned
+target, so the deployment script is not an automatic reinstall/resume tool.
+
+After the guard, the script creates GPT ESP/MSR/NTFS partitions, downloads the
+installation WIM onto the local target and applies it with DISM `/Compact`,
+`/CheckIntegrity` and `/Verify`. It injects the driver packages, provisions a
+specialize-pass report script and runs bcdboot. The HTTP helper can now post a
+fixed-size snapshot of a log while CMD still holds it open for writing; this was
+verified in the guard probe. Phase reports identify download, image application,
+driver injection and boot configuration separately. On any checked failure,
+the script posts its log and stops. Installation completion and boot must still
+be observed; preparing these scripts alone is not proof of either.

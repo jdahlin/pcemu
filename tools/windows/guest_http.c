@@ -73,17 +73,18 @@ void mainCRTStartup(void) {
     HANDLE file = (HANDLE)-1;
     long long size = 0;
     if (post) {
-        file = CreateFileW(args[2], 0x80000000u, 1, 0, 3, 0x80, 0);
+        file = CreateFileW(args[2], 0x80000000u, 3, 0, 3, 0x80, 0);
         if (file == (HANDLE)-1 || !GetFileSizeEx(file, &size)) fail("open log");
         if (size < 0 || size > 8 * 1024 * 1024) { text("Log too large\r\n"); ExitProcess(2); }
     }
     if (!WinHttpSendRequest(request, 0, 0, 0, 0, (DWORD)size, 0)) fail("send");
     if (post) {
-        for (;;) {
-            DWORD got, sent;
-            if (!ReadFile(file, buffer, sizeof(buffer), &got, 0)) fail("read log");
-            if (!got) break;
+        U64 left = (U64)size;
+        while (left) {
+            DWORD got, sent, wanted = left < sizeof(buffer) ? (DWORD)left : sizeof(buffer);
+            if (!ReadFile(file, buffer, wanted, &got, 0) || !got) fail("read log snapshot");
             if (!WinHttpWriteData(request, buffer, got, &sent) || sent != got) fail("post log");
+            left -= got;
         }
         CloseHandle(file);
     }
