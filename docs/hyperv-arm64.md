@@ -120,8 +120,7 @@ implemented above, and frequent SyncContext (0x19) calls. SyncContext and the
 extended capability query (0x8001) remain unsupported and return errors.
 Windows tolerates these rejections and boots, but this is an experimental
 subset: successful core use must not be reported as full Hyper-V support or
-a performance improvement. A final restart is checking the interface-version
-readback with the updated implementation.
+a performance improvement.
 
 Use `python3 tools/verify_windows_hyperv.py REPORT --baseline OFF_REPORT` to
 audit core register consumption. It requires Windows NT kernel identity,
@@ -130,6 +129,31 @@ counters and an inactive baseline. It lists unsupported calls even when core
 use passes. It explicitly does not verify GUI boot or performance; inspect
 the live framebuffer separately. Fixtures reject synthetic-probe identity,
 missing/failed operations, bad state, counter mismatches and an active baseline.
+
+The final restart reached the Windows lock screen with 8 GiB RAM and Hyper-V
+basic enabled. The frozen report is
+`build/windows11-hyperv/basic-final/core-evidence.json`, SHA256
+`89386140a0fca9dec80f340917d1c48a4d6ac45ea67bed825dcb37405c52f1c6`;
+the off baseline hash is
+`cbfeb8ff3fc0a67ef0f97d3d15afe4af5680a768bb835c57faaff7f64f0e9fbb`.
+The audit returns `verifiedCoreUsage: true`. It records 1028 Gets and six Sets,
+all successful, including four successful `Hv#1` interface reads. The separate
+live framebuffer capture `basic-final/console.png` was visually inspected and
+shows the lock screen. Its hash and exact active launch paths are retained in
+`basic-final/launch.json`.
+
+There were also 48066 rejected SyncContext calls and one rejected extended
+capability query. These remain visible in the passing *core-use* report; the
+verifier deliberately does not claim complete Hyper-V compatibility or a
+measured speedup. Synthetic ESR is implemented but was not queried by Windows
+in this observation. SMCCC transport/UID discovery passed the EFI probe, while
+Windows used FADT discovery and legacy HVC #1 only.
+
+The running guest uses the private local SSD overlay
+`media/windows11-arm64/hyperv-basic-vp.pcd` and variables under
+`build/windows11-hyperv/basic-final`. The original system overlay and variables
+are preserved. Superseded experiment overlays were removed after their guests
+stopped; their diagnostic reports remain. The default Hyper-V mode remains off.
 
 ## Primary references
 
