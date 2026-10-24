@@ -29,12 +29,13 @@ FILES = {'/ValidationOS.wim': 'ValidationOS.wim', '/license.rtf': 'license.rtf',
 class RemoteISO(io.RawIOBase):
     block_size = 1024 * 1024
 
-    def __init__(self, transfer_budget=512 * 1024 * 1024):
+    def __init__(self, transfer_budget=512 * 1024 * 1024, source=None):
         super().__init__()
         self.transfer_budget = transfer_budget
+        self.source = source or SOURCE
         self.pos = 0
         self.fetched = 0
-        with urllib.request.urlopen(urllib.request.Request(SOURCE, method='HEAD'), timeout=30) as f:
+        with urllib.request.urlopen(urllib.request.Request(self.source, method='HEAD'), timeout=30) as f:
             self.size = int(f.headers['Content-Length'])
             self.etag = f.headers.get('ETag')
 
@@ -63,7 +64,7 @@ class RemoteISO(io.RawIOBase):
         headers = {'Range': f'bytes={begin}-{end}', 'Accept-Encoding': 'identity'}
         if self.etag:
             headers['If-Match'] = self.etag
-        with urllib.request.urlopen(urllib.request.Request(SOURCE, headers=headers), timeout=60) as f:
+        with urllib.request.urlopen(urllib.request.Request(self.source, headers=headers), timeout=60) as f:
             expected = f'bytes {begin}-{end}/{self.size}'
             if f.status != 206 or f.headers.get('Content-Range') != expected:
                 raise RuntimeError('Server did not honor exact ISO byte range; refusing full download')

@@ -71,3 +71,15 @@ working Windows VHDX during this inventory.
 Microsoft references: [Validation OS customization and driver packages](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/validation-os-customize),
 [NetAdapterCx framework](https://learn.microsoft.com/en-us/windows-hardware/drivers/netcx/),
 and [KDNIC's relationship to KDNET](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/setting-up-a-kdnet-usb-connection#no_kdnic-setting-for-enhanced-performance-and-reliablity).
+
+## Staged ARM64 NetKVM package
+
+`python3 tools/fetch_netkvm_arm64.py` extracts only the Windows 11 ARM64 driver
+package from upstream virtio-win 0.1.302 (driver version 100.103.104.30200), using
+verified HTTP ranges rather than retaining the 837 MiB ISO. The local package
+is ignored at `media/netkvm-arm64-0.1.302`; its manifest records source ETag and
+file SHA-256 hashes. SYS/helper EXEs are checked as ARM64 and the INF matches
+`PCI\VEN_1AF4&DEV_1041`. Catalog presence does not establish Windows signature
+acceptance. This package has been downloaded and inspected, not installed.
+The current follow-up is full Windows 11 ARM64 installation media, whose WinPE
+servicing tools can provide a Windows-based driver-installation environment.
