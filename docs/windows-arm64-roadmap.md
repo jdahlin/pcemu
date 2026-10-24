@@ -269,3 +269,18 @@ verified in the guard probe. Phase reports identify download, image application,
 driver injection and boot configuration separately. On any checked failure,
 the script posts its log and stops. Installation completion and boot must still
 be observed; preparing these scripts alone is not proof of either.
+
+Deployment was launched with `build/windows11-install/install-boot.raw` as the
+NVMe boot disk and the dedicated local target as `--extra-disk` with
+`--extra-disk-overlay media/windows11-arm64/system.pcd`. The live installation
+uses `--run-forever`; variables and logs are in `build/windows11-install/install`.
+Its `run.json` records process/session handles for follow-up, but a live process
+must always be rechecked before treating it as running.
+
+Report `reports/report-1792877127371203000.log` proves the guard passed, DiskPart
+successfully created/formatted GPT ESP/MSR/NTFS partitions, and the pagefile was
+created. The host endpoint accepted `/install.wim` and the target overlay grew
+past 200 MiB during the guest download. Image application, offline driver
+injection and installed Windows boot are still pending at this checkpoint.
+Superseded generated WinPE boot disks were removed to recover local space;
+reports and media hashes remain, and the current installer boot disk is retained.
