@@ -77,7 +77,7 @@ empty target with `--extra-disk TARGET --extra-disk-overlay PRIVATE_COW`.
 Enable `--network user`, and use `--serial-stdio --run-forever` to drive the
 installer. The existing installed disk must not be used as a new install target.
 The boot disk is PCI slot 0 (SPI 48), target slot 1 (SPI 49), network slot 2
-(SPI 50); ACPI and device-tree maps agree. Each writable delta is independently
+(SPI 50), entropy device slot 3 (SPI 51); ACPI and device-tree maps agree. Each writable delta is independently
 locked. `--network-capture FILE` records Ethernet traffic for diagnosis.
 
 `build/debian-arm64-installed/summary.json` and its logs record the local

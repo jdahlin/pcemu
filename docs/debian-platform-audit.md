@@ -21,7 +21,10 @@ The following priorities address observed gaps and useful host integration.
 
 The host-backed PL031 RTC now provides EFI time services. Debian registers
 `rtc-efi` and boots with the correct date (2026-10-24), verified over SSH.
-NTP/precision time synchronization remains separate work.
+NTP/precision time synchronization remains separate work. Virtio-rng now supplies
+firmware and Linux entropy: a real boot reports `KASLR enabled`, CRNG ready at
+time zero, and `virtio_rng.0` selected. The original findings below are retained
+as the audit baseline.
 
 ## Recommended order
 

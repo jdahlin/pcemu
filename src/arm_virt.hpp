@@ -5,6 +5,7 @@
 #include "virtio_blk.hpp"
 #include "virtio_pci.hpp"
 #include "virtio_net.hpp"
+#include "virtio_rng.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
 #include <string>
@@ -60,7 +61,8 @@ class ArmVirtMachine {
     std::unique_ptr<Nvme> nvme;
     std::unique_ptr<Disk> extraDisk;
     std::unique_ptr<VirtioBlock> extraBlock;
-    std::unique_ptr<VirtioPciDevice> extraPci, netPci;
+    std::unique_ptr<VirtioPciDevice> extraPci, netPci, rngPci;
+    std::unique_ptr<VirtioRng> rng;
     std::unique_ptr<VirtioNet> net;
     std::unique_ptr<Network> gateway;
     int variableLock = -1, diskLock = -1, extraDiskLock = -1;

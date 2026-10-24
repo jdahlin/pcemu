@@ -109,6 +109,12 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             gateway = std::make_unique<Network>(c.networkCapture);
             if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
         } else if (c.sshPort || !c.networkCapture.empty()) throw std::runtime_error("SSH forwarding/capture requires --network user");
+        rng = std::make_unique<VirtioRng>(vm.ram(), HvfMachine::ramBase,
+            [this](bool level) { if (rngPci) rngPci->irq(level); });
+        rngPci = std::make_unique<VirtioPciDevice>(
+            [this](unsigned o, unsigned w) { return rng->read(o, w); },
+            [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
+            4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); });
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
         if (dtb.size() < 40 || dtb[0] != 0xd0 || dtb[1] != 0x0d || dtb[2] != 0xfe || dtb[3] != 0xed)
@@ -277,11 +283,11 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         if (ecam && !(offset & 0x7000)) {
             auto slot = offset >> 15;
             nvmeAccess = slot == 0 && nvme != nullptr;
-            endpoint = slot == 0 ? pci.get() : slot == 1 ? extraPci.get() : slot == 2 ? netPci.get() : nullptr;
+            endpoint = slot == 0 ? pci.get() : slot == 1 ? extraPci.get() : slot == 2 ? netPci.get() : slot == 3 ? rngPci.get() : nullptr;
             offset &= 0xfff;
         } else if (!ecam) {
             nvmeAccess = nvme && nvme->contains(exit.physicalAddress, width);
-            for (auto *candidate : {pci.get(), extraPci.get(), netPci.get()})
+            for (auto *candidate : {pci.get(), extraPci.get(), netPci.get(), rngPci.get()})
                 if (candidate && candidate->contains(exit.physicalAddress, width)) endpoint = candidate;
         }
         if (ecam || endpoint || nvmeAccess) {
@@ -304,6 +310,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
             for (auto *device : {block.get(), extraBlock.get()})
                 if (device && !device->error().empty()) throw std::runtime_error("Virtio device requires reset: " + device->error());
             if (net && !net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
+            if (rng && !rng->error().empty()) throw std::runtime_error("Virtio entropy requires reset: " + rng->error());
             vm.setPC(exit.pc + 4); return;
         }
         if (exit.physicalAddress >= 0x0a000000 && exit.physicalAddress < 0x0a000200) {

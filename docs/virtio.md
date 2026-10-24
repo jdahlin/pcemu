@@ -139,3 +139,19 @@ stop screen on the virtio endpoint. This particular image has no installed
 VirtIO storage driver; Windows supports VirtIO when suitable drivers are
 installed. The same unchanged disk now boots to its command prompt through
 our [NVMe controller](nvme.md), using the inbox `stornvme.sys` driver.
+
+## Entropy device
+
+The ARM UEFI profile always exposes a modern virtio-rng PCI endpoint at slot 3
+(`1af4:1044`, SPI 51). It uses the host CSPRNG (`arc4random_buf`), one 256-entry
+split queue and only VIRTIO_F_VERSION_1. Descriptor chains must be writable,
+direct, acyclic and wholly inside guest RAM. Each completion supplies at most
+64 KiB; partial fills are reported through used length. No entropy state is
+saved or replayed on VM restart.
+
+EDK II's existing VirtioRngDxe supplies EFI_RNG to the boot loader, and Debian's
+virtio-rng driver supplies `/dev/hwrng`. A real Debian boot now reports
+`KASLR enabled` and `random: crng init done` at time zero, and selects
+`virtio_rng.0`. `make smoke-arm-integration` independently boots an EFI probe
+that checks GetTime and two distinct GetRNG results. Portable device tests,
+including malformed DMA and reset, run with `make test-hvf`.
