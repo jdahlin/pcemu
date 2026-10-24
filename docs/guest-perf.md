@@ -363,3 +363,37 @@ CoreMark comparison at `build/guest-comparison-short-check/result.json` remains
 explicitly ineligible for a validated score. All fourteen independent DOS runs
 used frozen runner binaries within their comparison and removed their private
 disks after success. Invalid `--runner` input is rejected before disk creation.
+
+## INC/DEC and preserved carry
+
+Native register INC/DEC supports byte ModR/M, word/dword ModR/M and short
+register encodings. The result is computed in cached ARM64 registers. Flag
+materialization uses private INC/DEC operation tags that preserve CF while
+updating the remaining arithmetic flags. A pending earlier ALU or memory-CMP
+flag result is materialized before INC/DEC consumes its carry, including chains
+and later full flag overwrites. Two-instruction INC/DEC + Jcc blocks can warm
+into native code. Memory read/modify/write forms remain interpreted.
+
+The differential suite covers every byte value with both carries, high-byte
+registers, 16/32-bit sign/overflow boundaries, all Jcc conditions, pending
+ADD/SUB/CMP carry chains and restart state at a following segment fault.
+`build/incdec-tests.log` passes the full suite, including 1,870,373 byte checks.
+`build/incdec-smoke.log` passes DOS CRCs and all 28 micro intervals under both
+engines; `build/incdec-win311.log` verifies exact Notepad file saving.
+
+The controlled comparison at `build/incdec-controlled/` freezes all source files
+and compiler arguments for two runners and changes only `src/jit.cpp`. Its build
+manifest records both JIT-source hashes and common-source hashes. Three
+alternating, independently booted CoreMark pairs pass upstream minimum runtime
+and CRC checks. Baseline median throughput is 254.6 iterations/host-second;
+INC/DEC median is 294.1. Paired ratios are 1.155, 1.170 and 1.163 (median about
+16.3% improvement). Native coverage rises from 73.9% to 79.4%. This measures this
+specific change; it does not establish Rosetta-level throughput.
+
+Million-loop baseline/candidate micro results at
+`build/incdec-micro-{baseline,candidate}/result.json` retain matching checksums
+and architectural counts. Warm ALU and CALL/RET loops now execute their counter
+DEC/Jcc instructions natively too. Their timings are single diagnostics, not
+repeated comparisons. Updated cold boot and guest restart checks pass for both
+sources: `build/win95-smoke-7qf2q245/result.json` (rtts) and
+`build/win95-smoke-faunui67/result.json` (installed OSR2), with private disk removal.

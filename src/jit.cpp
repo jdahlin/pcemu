@@ -12,7 +12,11 @@
 namespace pc {
 static void nativeFinish(CPU *cpu, int op, uint32_t a, uint32_t b, int w, int condition,
                          uint32_t target) {
-    if (op >= 0)
+    if (op >= 8) {
+        auto carry = cpu->flags & CF;
+        cpu->alu(op == 8 ? 0 : 5, a, b, w);
+        cpu->flags = (cpu->flags & ~CF) | carry;
+    } else if (op >= 0)
         cpu->alu(op, a, b, w);
     if (condition >= 0 && cpu->condition(condition))
         cpu->ip = target;
@@ -351,6 +355,23 @@ Jit::Block Jit::compile(bool translate) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = i.memory.store ? uint32_t(-w) : 0;
                 block.usesStack = true;
+            } else if ((op >= 0x40 && op <= 0x4f) || op == 0xfe || op == 0xff) {
+                i.kind = 1;
+                i.immediate = true;
+                i.imm = 1;
+                if (op == 0xfe || op == 0xff) {
+                    auto m = byte();
+                    if ((m >> 6) != 3 || ((m >> 3) & 7) > 1) {
+                        pos = begin;
+                        break;
+                    }
+                    i.w = op == 0xfe ? 1 : w;
+                    i.dst = m & 7;
+                    i.op = 8 + ((m >> 3) & 1);
+                } else {
+                    i.dst = op & 7;
+                    i.op = op < 0x48 ? 8 : 9;
+                }
             } else if (op >= 0xb0 && op <= 0xbf) {
                 i.kind = 0;
                 i.w = op < 0xb8 ? 1 : w;
@@ -572,7 +593,8 @@ Jit::Block Jit::compile(bool translate) {
     // blocks cost more than interpreting them unless explicitly testing lowering.
     const bool shortComparison =
         ir.size() == 2 && ir[1].kind == 4 && ir[1].dst >= 0 &&
-        (ir[0].compareMemory || ir[0].kind == 2 || (ir[0].kind == 1 && ir[0].op == 7));
+        (ir[0].compareMemory || ir[0].kind == 2 ||
+         (ir[0].kind == 1 && (ir[0].op == 7 || ir[0].op == 8 || ir[0].op == 9)));
     if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && ir.back().kind != 7 &&
                       !ir.back().nearCall && !ir.back().nearReturn))
         return block;
@@ -688,6 +710,8 @@ Jit::Block Jit::compile(bool translate) {
     std::vector<bool> neededFlags(ir.size());
     int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
+        if (ir[n].kind == 1 && ir[n].op >= 8 && last >= 0)
+            neededFlags[last] = true; // INC/DEC consume the preceding CF.
         if (ir[n].kind == 1 || ir[n].kind == 2)
             last = n;
         if (ir[n].kind == 5 && last >= 0) {
@@ -978,6 +1002,8 @@ Jit::Block Jit::compile(bool translate) {
                 last = n;
             continue;
         }
+        if (i.kind == 1 && i.op >= 8)
+            finishFlags(last, -1, 0);
         if (i.kind == 1 || i.kind == 2)
             last = n;
         int dst = 20 + i.dst;
@@ -996,7 +1022,7 @@ Jit::Block Jit::compile(bool translate) {
         if (i.kind == 0)
             mov(10, 12);
         else {
-            uint32_t op = i.op == 0   ? 0x0b000000
+            uint32_t op = i.op == 0 || i.op == 8 ? 0x0b000000
                           : i.op == 1 ? 0x2a000000
                           : i.op == 4 ? 0x0a000000
                           : i.op == 6 ? 0x4a000000

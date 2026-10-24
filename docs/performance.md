@@ -234,3 +234,29 @@ attribution, opcode gaps, observer overhead, sample-boundary checks, worker
 thread waits and reproduction commands. Evidence:
 `build/profile-comparison-sdl/result.json`. All 541,340 checks and the Win3.11
 save-file / DOS reset smoke tests pass on this version.
+
+## Why native instruction coverage is not whole-guest speedup
+
+After native INC/DEC, a separate five-second macOS host sample of a long,
+fixed-count CoreMark diagnostic is retained in `build/incdec-host-profile/sample.txt`.
+The sampled run passes guest CRC/return-to-DOS checks; its timings are excluded
+from performance comparisons. Of 4,279 main-thread samples, 1,626 (~38%) are on
+the interpreted-dispatch path, 1,038 (~24%) in machine polling and its device
+children, and 787 (~18%) have Jit::run itself at the top of the stack. These are
+sampling observations for this workload, not universal CPU-time percentages.
+Native generated blocks and their helpers account for much of the remainder.
+
+The same workload executes about 79% of guest instructions natively. That count
+omits dispatch/device overhead and does not weight expensive interpreted
+instructions. It must not be treated as a native share of execution time.
+Generated blocks still return through the host dispatcher, spill/load guest
+registers and materialize flags through C++ helpers. Machine polling currently
+checks keyboard/mouse/PIT/IRQ state after every dispatch, including tiny blocks
+and single interpreted instructions.
+
+Larger gains therefore require reducing execution boundaries: event-deadline
+based device service, native block links with bounded interrupt/fault exits, and
+less eager flag/helper work. Additional opcode coverage remains useful, but its
+instruction percentage alone does not predict speedup. The earlier register-only
+benchmark's ~23x JIT/interpreter ratio and CoreMark's ~2–3x ratio measure different
+workloads. Neither establishes 10–100x acceleration of a complete Windows guest.

@@ -20,7 +20,7 @@ int main() {
         }
         std::mt19937 rng(39183);
         unsigned trial = 0;
-        auto run = [&](std::vector<uint8_t> code, unsigned mode) {
+        auto run = [&](std::vector<uint8_t> code, unsigned mode, int carry = -1, int byteValue = -1) {
             bool big = mode & 1;
             if (mode & 2)
                 code.insert(code.begin(), 0x66); // Byte operands ignore operand-size overrides.
@@ -40,9 +40,13 @@ int main() {
                 if (trial % 3 == 0)
                     value = (value & 0xffff0000u) | (uint32_t(edges[(trial / 3 + reg) % 6]) << 8) |
                             edges[(trial + reg) % 6];
+                if (byteValue >= 0)
+                    value = (value & 0xffff0000u) | (unsigned(byteValue) << 8) | unsigned(byteValue);
                 ref.r[reg] = native.r[reg] = value;
             }
             ref.flags = native.flags = 2 | (rng() & 0x8d5);
+            if (carry >= 0)
+                ref.flags = native.flags = (ref.flags & ~CF) | unsigned(carry);
             ref.step();
             ref.step();
             auto n = jit.run();
@@ -69,6 +73,13 @@ int main() {
                 for (unsigned repeat = 0; repeat < 16; ++repeat)
                     run({uint8_t(0x90 | reg)}, mode);
         }
+        for (unsigned mode = 0; mode < 4; ++mode)
+            for (unsigned decrement = 0; decrement < 2; ++decrement)
+                for (unsigned reg = 0; reg < 8; ++reg)
+                    for (unsigned value = 0; value < 256; ++value)
+                        for (unsigned carry = 0; carry < 2; ++carry)
+                            run({0xfe, uint8_t(0xc0 | (decrement << 3) | reg)},
+                                mode, carry, value);
         for (unsigned dst = 0; dst < 8; dst++)
             for (unsigned value = 0; value < 256; value++)
                 run({uint8_t(0xb0 | dst), uint8_t(value)}, value & 3);
@@ -283,6 +294,113 @@ int main() {
             check(faults == 2 && exchanged.nativeInstructions == 4 &&
                       actual.instructions == expected.instructions && actual.flags == expected.flags,
                   "XCHG effects and following fault replay exactly match interpreter state");
+        }
+        for (bool code32 : {false, true})
+            for (bool overrideWidth : {false, true})
+                for (bool modrm : {false, true})
+                    for (unsigned reg = 0; reg < 8; ++reg)
+                        for (unsigned decrement = 0; decrement < 2; ++decrement)
+                            for (uint32_t value : {0u, 1u, 0x7fffu, 0x8000u, 0xffffu,
+                                                   0x7fffffffu, 0x80000000u, 0xffffffffu})
+                                for (unsigned carry = 0; carry < 2; ++carry)
+                                    for (unsigned cc = 0; cc < 16; ++cc) {
+                                        std::vector<uint8_t> code;
+                                        if (overrideWidth)
+                                            code.push_back(0x66);
+                                        if (modrm)
+                                            code.insert(code.end(), {0xff, uint8_t(0xc0 | decrement << 3 | reg)});
+                                        else
+                                            code.push_back(0x40 | decrement << 3 | reg);
+                                        code.insert(code.end(), {uint8_t(0x70 | cc), 0x10});
+                                        for (auto c : {&ref, &native}) {
+                                            c->s[CS].big = code32;
+                                            c->ip = c->instructions = 0;
+                                            c->flags = 0x8d6 | carry;
+                                            for (unsigned n = 0; n < 8; ++n)
+                                                c->r[n] = value;
+                                            for (unsigned n = 0; n < code.size(); ++n)
+                                                c->write(n, code[n], 1);
+                                        }
+                                        ref.step();
+                                        ref.step();
+                                        check(jit.run() == 2 && native.flags == ref.flags && native.ip == ref.ip,
+                                              "INC/DEC preserve CF and compute all remaining flags for Jcc");
+                                        for (unsigned n = 0; n < 8; ++n)
+                                            check(native.r[n] == ref.r[n], "INC/DEC preserve upper words and other registers");
+                                    }
+        for (bool big : {false, true})
+            for (bool subtract : {false, true})
+                for (bool memoryCompare : {false, true})
+                    for (bool overwriteFlags : {false, true})
+                        for (uint32_t value : {0u, 0xffffu, 0xffffffffu, 0x7fffffffu})
+                            for (unsigned cc = 0; cc < 16; ++cc) {
+                                std::vector<uint8_t> code;
+                                unsigned instructions = 0;
+                                if (memoryCompare) {
+                                    code = {0x3b, uint8_t(big ? 5 : 6), 0, 0x40};
+                                    if (big)
+                                        code.insert(code.end(), {0, 0});
+                                } else
+                                    code = {0x83, uint8_t(subtract ? 0xe8 : 0xc0), 1};
+                                ++instructions;
+                                code.insert(code.end(), {0x43, 0x4a});
+                                instructions += 2;
+                                if (overwriteFlags) {
+                                    code.insert(code.end(), {0x83, 0xc6, 1});
+                                    ++instructions;
+                                }
+                                code.insert(code.end(), {0xfe, 0xc4, uint8_t(0x70 | cc), 0x10});
+                                instructions += 2;
+                                for (auto c : {&ref, &native}) {
+                                    c->s[CS].big = big;
+                                    c->ip = c->instructions = 0;
+                                    c->flags = 0x8d7;
+                                    for (unsigned reg = 0; reg < 8; ++reg)
+                                        c->r[reg] = value;
+                                    for (unsigned n = 0; n < code.size(); ++n)
+                                        c->write(n, code[n], 1);
+                                    c->write(0x4000, 0x80, 4);
+                                }
+                                for (unsigned n = 0; n < instructions; ++n)
+                                    ref.step();
+                                check(jit.run() == instructions && native.flags == ref.flags && native.ip == ref.ip,
+                                      "INC/DEC chains consume pending ALU/CMP carry and honor later full flag writes");
+                                for (unsigned reg = 0; reg < 8; ++reg)
+                                    check(native.r[reg] == ref.r[reg], "INC/DEC chains produce reference registers");
+                            }
+        for (unsigned carry : {0u, 1u}) {
+            CPU expected(65536), actual(65536);
+            std::vector<uint8_t> code = {0xb8, 0xff, 0xff, 0xff, uint8_t(carry ? 0xff : 0x7f),
+                                         0xbb, 0xff, 0xff, 0xff, 0xff, 0x83, 0xc0, 1, 0x43,
+                                         0x64, 0x8b, 0x0d, 0, 0, 0, 0};
+            struct Stop {};
+            unsigned faults = 0;
+            for (auto c : {&expected, &actual}) {
+                c->cr[0] = 0x11;
+                c->s[CS].big = true;
+                c->s[FS].unusable = true;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+                c->observeFault = [&, c](const Fault &f) {
+                    ++faults;
+                    check(f.vector == 13 && c->ip == 14 && c->r[BX] == 0 &&
+                              (c->flags & CF) == carry && (c->flags & ZF),
+                          "fault after INC publishes preserved ADD carry and new zero flag");
+                    throw Stop{};
+                };
+            }
+            try {
+                for (unsigned n = 0; n < 5; ++n)
+                    expected.step();
+            } catch (const Stop &) {
+            }
+            Jit incremented(actual, true, 0);
+            try {
+                incremented.run();
+            } catch (const Stop &) {
+            }
+            check(faults == 2 && incremented.nativeInstructions == 4 &&
+                      actual.instructions == expected.instructions && actual.flags == expected.flags,
+                  "INC carry and flags remain exact through later memory-fault replay");
         }
         check(jit.cacheRecycles > 0, "byte blocks remain correct across repeated arena recycling");
         std::cout << "Passed " << checks << " byte JIT checks\n";
