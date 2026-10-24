@@ -460,7 +460,12 @@ int main(int argc, char **argv) {
                     vm.run(std::chrono::milliseconds(100));
                     if (captureRequested) {
                         captureRequested = 0;
-                        if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);
+                        if (!framebufferPath.empty()) {
+                            try { vm.saveFramebuffer(framebufferPath); }
+                            catch (const std::exception &error) {
+                                std::cerr << "UEFI live capture unavailable: " << error.what() << '\n';
+                            }
+                        }
                         std::cerr << "UEFI live capture: exits=" << vm.exits()
                                   << " ramMiB=" << uefi.memoryBytes / (1024 * 1024)
                                   << " diskRequests=" << vm.diskRequests()

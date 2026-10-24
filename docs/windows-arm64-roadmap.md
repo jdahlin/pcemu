@@ -402,3 +402,15 @@ and installed an OOBE ZDP update, then explicitly reported a required reboot.
 This explains one observed reset but still does not prove first-user logon.
 The captured filesystem is only a point-in-time diagnostic view; it is not a
 clean-shutdown backup or proof of the guest's latest state.
+
+First-user logon is now verified by
+`build/windows11-install/reports/report-1792880162196783000.log` (SHA256
+`e123a663971865125a90712f07ad52d4fa49e24858a183fba1bd0a8b7253d8eb`).
+The full boot-report gate passes for PCEmu, installed Windows, all three
+Started VirtIO devices and their I/O probes. The guest also posted
+`PCEMU_DESKTOP_CAPTURE_OK user=PCEmu width=800 height=600` and an 800x600 PNG
+(SHA256 `52de6f60c0284d766cadf328a242c7ec38b6054c03b322d2f8686cd31ddbe2f9`).
+Visual inspection shows the Windows desktop, taskbar and Start menu with PCEmu
+signed in. This evidence was captured with 2 GiB RAM, before the requested
+restart with 8 GiB; it must not be used as evidence of Windows' usable RAM after
+that restart.
