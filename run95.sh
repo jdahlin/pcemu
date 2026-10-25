@@ -5,6 +5,8 @@ cd "$(dirname "$0")"
 disk=media/win95.raw
 if [[ ${1:-} == --vga ]]; then
   shift
+elif [[ -f media/win95-mouse.pcd ]]; then
+  disk=media/win95-mouse.pcd
 elif [[ -f media/win95-monitor.pcd ]]; then
   disk=media/win95-monitor.pcd
 elif [[ -f media/win95-svga.pcd ]]; then

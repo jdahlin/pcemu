@@ -1,0 +1,32 @@
+{
+  "mode": [
+    1440,
+    900,
+    32
+  ],
+  "absoluteActive": true,
+  "target": [
+    960,
+    300
+  ],
+  "cursorBounds": [
+    960,
+    300,
+    970,
+    318
+  ],
+  "absoluteClickOpenedStart": true,
+  "absoluteRightClickOpenedMenu": true,
+  "queueDrained": true,
+  "hostGuiInput": false,
+  "guest": "Windows 95 OSR2",
+  "driver": "QEMouse v1.03",
+  "driverArchiveSha256": "1970cb19bf99558acdc88c110cfc9a5bfe54a58c927118b1970048c229a6ad71",
+  "installationVerified": "SYSTEM.INI [boot] mouse.drv=qemouse.drv and driver file read back offline",
+  "cleanShutdown": true,
+  "evidence": "build/seamless-validation/mouse-check",
+  "frontendValidation": "headless SDL coordinate mapping, cursor visibility, no relative capture, leave/focus release, first-click delivery",
+  "snapshotValidation": "v5 negotiation and packet-state roundtrip, existing compatibility suite",
+  "cursorRendering": "Windows cursor inside image; native host cursor outside; no cursor-shape upload",
+  "guestDriverLimits": "QEMouse v1.03 reports two buttons; no wheel events"
+}

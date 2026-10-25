@@ -26,6 +26,9 @@ struct Input : GuestInput {
         events.push_back({FrontendEvent::Kind::Motion, 0, false, b, x, y});
         events.back().key = wheel;
     }
+    void absolutePointer(int x, int y, int wheel, uint8_t b) override {
+        events.push_back({FrontendEvent::Kind::AbsoluteMotion, uint16_t(wheel), false, b, x, y});
+    }
     void release() override {
         keys.release();
         pointer(0, 0, 0, 0);
@@ -63,6 +66,23 @@ int main() {
     input.event({K::Key, hid::KEY_B}, false);
     assert(guest.events.size() == count);
     assert(!input.event({K::Quit}, false));
+    guest.events.clear();
+    input.setAbsolutePointer(true);
+    guest.events.clear();
+    input.event({K::AbsoluteMotion, 0, false, 0, 12000, 48000});
+    input.event({K::Button, 0, false, 1});
+    assert(!ui.captured && guest.events.size() == 2);
+    assert(guest.events.back().x == 12000 && guest.events.back().button == 1);
+    input.event({K::PointerLeave});
+    assert(guest.events.back().button == 0);
+    input.event({K::Button, 0, false, 2});
+    input.event({K::FocusLost});
+    assert(guest.events.back().button == 0 && !ui.captured);
+    input.setAbsolutePointer(false);
+    guest.events.clear();
+    ui.allow = true;
+    input.event({K::Button, 0, false, 1});
+    assert(ui.captured && guest.events.empty());
     std::vector<uint8_t> scans;
     int dx = 0, dy = 0, wh = 0;
     unsigned buttons = 0, wakes = 0;

@@ -67,6 +67,8 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"current\":" << unsigned(m.nic.current) << ",\"boundary\":" << unsigned(m.nic.boundary)
       << ",\"transmitted\":" << m.nic.transmitted << ",\"received\":" << m.nic.received
       << ",\"dropped\":" << m.nic.dropped << "}"
+      << ",\"absoluteMouse\":{\"active\":" << m.absoluteMouse.active()
+      << ",\"queuedWords\":" << m.absoluteMouse.count << "}"
       << ",\"mouse\":{\"enabled\":" << m.ps2.state().mouse.enabled
       << ",\"id\":" << unsigned(m.ps2.state().mouse.id)
       << ",\"pendingPackets\":" << m.ps2.state().mouse.packets.size()

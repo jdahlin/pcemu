@@ -1,5 +1,6 @@
 #pragma once
 #include "ata.hpp"
+#include "absolute_mouse.hpp"
 #include "cpu.hpp"
 #include "cmos_rtc.hpp"
 #include "disk.hpp"
@@ -30,6 +31,11 @@ struct Machine {
     DebugConsoleDevice debugConsole;
     PIT8254 pit;
     I8042Device ps2;
+    AbsoluteMouse absoluteMouse;
+    void absolutePointer(int x, int y, int wheel, uint8_t buttons) {
+        if (absoluteMouse.motion(x, y, wheel, buttons))
+            ps2.motion(1, 0, buttons); // Wake the guest driver even for a stationary click.
+    }
     PCI pci;
     NE2000 nic;
     bool nicLine = false;

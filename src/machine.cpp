@@ -59,6 +59,7 @@ void Machine::restart() {
     systemPortB.reset();
     debugConsole.reset();
     ps2.reset();
+    absoluteMouse.reset();
     pci.reset();
     nic.reset();
     nicLine = false;

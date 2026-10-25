@@ -1,4 +1,4 @@
-#include "host_keyboard.hpp"
+#include "ps2_guest_input.hpp"
 #include "jit.hpp"
 #include "machine.hpp"
 #include "machine_profile.hpp"
@@ -323,24 +323,15 @@ int main(int argc, char **argv) {
         size_t typePos = 0;
         uint64_t graphicsStart = 0, nextTyped = 0;
         uint64_t loops = 0;
-        HostKeyboard keyboard([&](uint8_t byte) { m.ps2.enqueueScan(byte); });
-        bool mouseCaptured = false;
-        uint8_t mouseButtons = 0;
-        auto setMouseCapture = [&](bool enabled) {
-            bool success = frontend && frontend->capturePointer(enabled);
-            mouseCaptured = enabled && success;
-            if (enabled && !success) std::cerr << "Mouse capture unavailable\n";
-        };
-        auto releaseInput = [&] {
-            keyboard.release();
-            c.halted = false;
-            mouseButtons = 0;
-            m.ps2.motion(0, 0, 0);
-            setMouseCapture(false);
-        };
+        Ps2GuestInput guestInput(
+            [&](uint8_t byte) { m.ps2.enqueueScan(byte); },
+            [&](int dx, int dy, uint8_t buttons, int wheel) { m.ps2.motion(dx, dy, buttons, wheel); },
+            [&] { c.halted = false; },
+            [&](int x, int y, int wheel, uint8_t buttons) { m.absolutePointer(x, y, wheel, buttons); });
+        FrontendInput hostInput(frontend.get(), guestInput);
         Win95ShutdownRequest shutdown;
         auto requestClose = [&] {
-            releaseInput();
+            hostInput.release();
             if (machineId != "win95") { quit = true; return; }
             const auto now = std::chrono::steady_clock::now().time_since_epoch();
             shutdown.request(std::chrono::duration_cast<std::chrono::milliseconds>(now).count(), c.instructions);
@@ -417,7 +408,7 @@ int main(int argc, char **argv) {
                             command >> setting;
                             if (setting != "on" && setting != "off")
                                 throw std::runtime_error("host-input needs on or off");
-                            releaseInput();
+                            hostInput.release();
                             enableHostInput = setting == "on";
                         } else if (op == "key") {
                             unsigned k;
@@ -435,6 +426,12 @@ int main(int argc, char **argv) {
                                 text.erase(0, 1);
                             for (unsigned char ch : text)
                                 m.key(ch);
+                        } else if (op == "absolute-mouse") {
+                            int x, y, buttons, wheel = 0;
+                            if (!(command >> x >> y >> buttons))
+                                throw std::runtime_error("absolute-mouse needs X Y BUTTONS [WHEEL]");
+                            command >> wheel;
+                            m.absolutePointer(x, y, wheel, buttons);
                         } else if (op == "mouse") {
                             int dx = 0, dy = 0, buttons = 0, wheel = 0;
                             if (!(command >> dx >> dy >> buttons))
@@ -607,30 +604,10 @@ int main(int argc, char **argv) {
                         break;
                     continue;
                 }
+                hostInput.setAbsolutePointer(m.absoluteMouse.active());
                 for (const auto &event : frontend->poll()) {
-                    using K = FrontendEvent::Kind;
-                    if (event.kind == K::Quit) { requestClose(); continue; }
-                    if (event.kind == K::FocusLost) { releaseInput(); continue; }
-                    if (!enableHostInput) continue;
-                    if (event.kind == K::ToggleCapture) {
-                        keyboard.consumeCommand();
-                        if (mouseCaptured) releaseInput();
-                        else setMouseCapture(true);
-                    } else if (event.kind == K::Key) {
-                        keyboard.event(event.key, event.released);
-                        c.halted = false;
-                    } else if (event.kind == K::Button) {
-                        if (!mouseCaptured) {
-                            if (!event.released && event.button == 1) setMouseCapture(true);
-                            continue;
-                        }
-                        mouseButtons = event.released ? mouseButtons & ~event.button
-                                                      : mouseButtons | event.button;
-                        m.ps2.motion(0, 0, mouseButtons);
-                    } else if (event.kind == K::Motion && mouseCaptured)
-                        m.ps2.motion(event.x, -event.y, mouseButtons);
-                    else if (event.kind == K::Wheel && mouseCaptured)
-                        m.ps2.motion(0, 0, mouseButtons, -event.y);
+                    if (event.kind == FrontendEvent::Kind::Quit) requestClose();
+                    else if (!hostInput.event(event, enableHostInput)) quit = true;
                 }
                 auto now = std::chrono::steady_clock::now();
                 uint64_t frameTicks = std::chrono::duration_cast<std::chrono::milliseconds>(now - started).count();

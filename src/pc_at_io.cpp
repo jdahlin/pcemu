@@ -8,6 +8,10 @@ void Machine::bindIoPorts() {
     systemPortB.restore(ports[0x61]);
     debugConsole.restore(ports[0xe9]);
     debugConsole.bind([](uint8_t value) { std::cout << char(value) << std::flush; });
+    ioPorts.map("absolute-mouse", AbsoluteMouse::port, 1,
+        [this](uint16_t, int width) -> uint32_t {
+            return absoluteMouse.read(width, cpu.r) ? cpu.r[AX] : 0xffffffffu;
+        }, [](uint16_t, uint32_t, int) {});
     auto ataRead = [this](uint16_t p, int w) {
         auto value = ata.in(p, w);
         if (p == 0x1f7)

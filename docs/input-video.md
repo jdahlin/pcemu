@@ -6,7 +6,8 @@ The Windows display driver is the external, MIT-licensed VMDisp9x guest driver;
 no emulator implementation is linked or copied from the products named in its
 compatibility list.
 
-`./run95.sh` prefers the persistent `media/win95-monitor.pcd` disk, configured with
+`./run95.sh` prefers `media/win95-mouse.pcd` when present, with seamless mouse integration.
+It falls back to `media/win95-monitor.pcd`, configured with
 VMDisp9x at 1440×900 in 32-bit colour with a Super VGA 1600x1200 monitor profile. It cold boots normally, including the BIOS
 screen. `./run95.sh --vga` selects the original working disk. If that disk is absent, the launcher falls back to `media/win95-svga.pcd`,
 then the original VGA disk. Existing disks remain available.
@@ -40,15 +41,16 @@ Ctrl/Alt, navigation keys, keypad keys, Windows/Menu keys, F11/F12, Print Screen
 and Pause have their own scan sequences. F12 and Ctrl+Q reach Windows/Office.
 Losing focus releases held host keys and mouse buttons.
 
-Click inside the window to capture relative mouse movement. **Cmd+G** releases
+The configured QEMouse guest follows the host pointer without capture.
+For guests using the stock relative mouse driver, click inside the window to capture relative mouse movement. **Cmd+G** releases
 or captures the mouse. For the `win95` profile, window close and **Cmd+Q** request
 a normal Windows shutdown. The emulator stays open for save prompts or cancellation
 and exits only after recognizing WIN.COM’s completed shutdown loop and flushing
 the disks. Other profiles retain immediate close behavior. The capture click is consumed. The window title shows capture state.
 The guest keyboard layout controls characters; host IME/text composition is
 disabled for this physical-keyboard path.
-The first implementation uses relative PS/2 input, not an absolute pointer or
-shared clipboard. Windows controls its own pointer acceleration. A wheel is
+Stock guests use relative PS/2 input; configured Windows 95 guests use the
+absolute protocol below. A shared clipboard is not implemented. Windows controls its own pointer acceleration. A wheel is
 available to guest drivers that negotiate IntelliMouse ID 3; the built-in
 Windows 95 PS/2 driver normally uses the standard three-byte protocol.
 
@@ -205,3 +207,59 @@ and its backing chain. An already-running original SVGA guest is left intact;
 close it cleanly and relaunch to use the configured monitor disk. Later changes
 made in the original disk are separate from this upgrade snapshot; it remains
 available with `./run95.sh --disk media/win95-svga.pcd`.
+
+## Seamless Windows 95 mouse
+
+QEMouse v1.03 is installed in the persistent `media/win95-mouse.pcd` overlay.
+Its immutable parent, `media/win95-before-mouse.pcd`, preserves the previous
+monitor-configured disk. Keep the complete parent chain. `run95.sh` selects the
+mouse disk first, then falls back to the monitor, SVGA and original VGA disks.
+`--vga` retains the original relative-input installation.
+
+The guest driver negotiates the VMware-compatible absolute-pointer protocol on
+I/O port 5658h. PCEmu implements version detection, enable/disable, relative and
+absolute mode selection, status and 1–4-word data reads. Coordinates span
+0–65535 across the guest image. PS/2 IRQ12 notifications wake the driver, which
+reports absolute motion to Windows. Only a negotiated driver activates seamless
+frontend input. Continuous motion is coalesced; button transitions remain ordered.
+Invalid reads and queue overflow report a protocol error and relinquish absolute
+mode. Reset clears negotiation. Snapshot version 5 preserves negotiation and
+pending data; versions 1–4 remain readable.
+
+SDL maps input through the scaled guest viewport, delivers the first click and
+never enables relative mouse mode while integrated. The host pointer can leave
+the image freely. To show one pointer while preserving Windows text/resize
+cursors, Windows draws its cursor inside the image and the native host cursor
+is shown outside it. This does not upload Windows cursor shapes for native host
+composition. Leaving the image or losing focus releases held buttons; focus loss
+also releases keys. The fallback relative driver retains capture and Cmd+G.
+
+QEMouse is an external GPL-2.0 guest asset, not emulator code. Source and license:
+[QEMouse v1.03](https://github.com/qemus/qemouse/tree/v1.03). The pinned release
+archive SHA-256 is
+`1970cb19bf99558acdc88c110cfc9a5bfe54a58c927118b1970048c229a6ad71`.
+The current guest driver exposes left/right buttons; middle-button and wheel
+reporting need additional guest-driver support.
+
+To prepare another installation from a stopped, immutable parent:
+
+```sh
+python3 tools/stage_mouse_driver.py PARENT.pcd DESTINATION.pcd
+```
+
+The staging tool verifies the archive and reads all staged files back from
+`C:\QEMOUSE`. In Windows, right-click `qemouse.inf`, choose Install, then reboot.
+This installs `qemouse.drv` and updates `[boot] mouse.drv` in SYSTEM.INI. The
+standard mouse driver remains available in the unchanged parent disk.
+
+Headless validation covers protocol/register results, partial reads, notification
+packets, coalescing, overflow, reset, snapshots, scaled SDL coordinates, cursor
+visibility, first clicks, focus loss and relative fallback. The configured guest
+was cold-booted at 1440×900×32; absolute movement reached the expected framebuffer
+pixels, left-click opened Start, right-click opened the desktop menu, and normal
+shutdown completed with a disk flush. To repeat the live-guest mouse checks after
+bootstrapping an unobscured headless desktop:
+
+```sh
+python3 tools/check_win95_mouse.py CONTROL FRAME.ppm STATE.json --output build/mouse-check
+```

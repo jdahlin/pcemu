@@ -15,6 +15,50 @@ static void check(bool condition) {
     if (!condition) throw std::runtime_error("PC component check " + std::to_string(checks));
 }
 int main() {
+    {
+        Machine vm("", "", 2 * 1024 * 1024);
+        auto call = [&](unsigned command, unsigned argument) {
+            vm.cpu.r[AX] = AbsoluteMouse::magic;
+            vm.cpu.r[BX] = argument;
+            vm.cpu.r[CX] = command;
+            vm.cpu.r[DX] = AbsoluteMouse::port;
+            return vm.in(AbsoluteMouse::port, 4);
+        };
+        check(call(10, 0) == 6 && vm.cpu.r[BX] == AbsoluteMouse::magic);
+        check(!vm.absoluteMouse.active());
+        call(41, 0x45414552); check(call(40, 0) == 1);
+        check(call(39, 1) == 0x3442554a);
+        call(41, 0x53424152); check(vm.absoluteMouse.active());
+        vm.ps2.mouse().enabled = true;
+        vm.absolutePointer(65535, 0, -1, 3);
+        check(vm.ps2.mouse().packets.size() == 3 && vm.ps2.mouse().packets[1] == 1 &&
+              (vm.ps2.mouse().packets[0] & 3) == 3);
+        check(call(40, 0) == 4);
+        check(call(39, 4) == 0x30 && vm.cpu.r[BX] == 65535 &&
+              vm.cpu.r[CX] == 0 && vm.cpu.r[DX] == 0xffffffff);
+        vm.absolutePointer(-1, 70000, 0, 4);
+        check(call(39, 1) == 8 && call(39, 1) == 0 && call(39, 1) == 65535);
+        check(call(39, 1) == 0);
+        call(39, 4); check(!vm.absoluteMouse.active() && call(40, 0) == 0xffff0000);
+        call(41, 0x45414552); call(39, 1); call(41, 0x53424152);
+        for (unsigned i = 0; i < 1000; ++i) vm.absolutePointer(i, i, 0, 0);
+        check(vm.absoluteMouse.active() && call(40, 0) == 4);
+        check(call(39, 4) == 0 && vm.cpu.r[BX] == 999 && vm.cpu.r[CX] == 999);
+        for (unsigned i = 0; i < 33; ++i) vm.absolutePointer(i, i, 0, i & 1);
+        check(!vm.absoluteMouse.active() && vm.absoluteMouse.count <= 128);
+        vm.absoluteMouse.reset();
+        vm.cpu.segment(CS, 0); vm.cpu.ip = 0x600;
+        vm.cpu.mem[0x600] = 0x66; vm.cpu.mem[0x601] = 0xed; // IN EAX,DX
+        vm.cpu.r[AX] = AbsoluteMouse::magic; vm.cpu.r[BX] = ~AbsoluteMouse::magic;
+        vm.cpu.r[CX] = 10; vm.cpu.r[DX] = AbsoluteMouse::port;
+        vm.cpu.step();
+        check(vm.cpu.r[AX] == 6 && vm.cpu.r[BX] == AbsoluteMouse::magic);
+        vm.cpu.r[AX] = 0;
+        check(vm.in(AbsoluteMouse::port, 4) == 0xffffffff);
+        vm.cpu.r[AX] = AbsoluteMouse::magic;
+        check(vm.in(AbsoluteMouse::port, 2) == 0xffffffff);
+    }
+
     int64_t host = 1700000000;
     CmosRtc rtc([&] { return host; });
     rtc.configure({32 * 1024 * 1024, true, false});

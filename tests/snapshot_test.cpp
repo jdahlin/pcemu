@@ -216,6 +216,8 @@ int main() {
         command(m.ata, 0x20, 2);
         for (unsigned n = 0; n < 73; n++)
             m.ata.in(0x1f0, 2);
+        m.absoluteMouse.enabled = m.absoluteMouse.absolute = true;
+        m.absoluteMouse.motion(1234, 5678, 0, 1);
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
               "first checkpoint switches live disks to compressed deltas");
@@ -230,7 +232,11 @@ int main() {
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
         ps2State(m).keyboardReplies.clear();
+        m.absoluteMouse.reset();
         m.loadSnapshot((root / "point").string());
+        check(m.absoluteMouse.active() && m.absoluteMouse.count == 4 &&
+              m.absoluteMouse.words[1] == 1234 && m.absoluteMouse.words[2] == 5678,
+              "absolute mouse negotiation and pending event survive restore");
         check(m.cpu.r[AX] == 0xabc00000 && m.cpu.mem[0x5000] == 0xdd && m.cpu.executionEpoch == 1,
               "CPU RAM and cache identity restore");
         check(m.disk->isOverlay() && fs::file_size(m.disk->path) < 1024,

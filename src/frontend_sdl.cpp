@@ -10,6 +10,18 @@ class SDLFrontend final : public Frontend {
     SDL_Texture *texture = nullptr;
     unsigned width = 0, height = 0;
     int autoWidth = 0, autoHeight = 0;
+    bool absolutePointer = false, pointerInside = false;
+    void pointerPosition(std::vector<FrontendEvent> &events, int x, int y) {
+        const bool inside = width && height && x >= 0 && y >= 0 &&
+                            unsigned(x) < width && unsigned(y) < height;
+        pointerInside = inside;
+        SDL_ShowCursor(inside ? SDL_DISABLE : SDL_ENABLE);
+        if (inside) {
+            const int nx = width > 1 ? uint64_t(x) * 65535 / (width - 1) : 0;
+            const int ny = height > 1 ? uint64_t(y) * 65535 / (height - 1) : 0;
+            events.push_back({FrontendEvent::Kind::AbsoluteMotion, 0, false, 0, nx, ny});
+        } else events.push_back({FrontendEvent::Kind::PointerLeave});
+    }
     unsigned desktopWidth = 0, desktopHeight = 0;
     void fitWindow(unsigned w, unsigned h) {
         int ww = w, wh = h;
@@ -85,7 +97,20 @@ class SDLFrontend final : public Frontend {
     ~SDLFrontend() override {
         destroy();
     }
+    void setAbsolutePointer(bool enabled) override {
+        absolutePointer = enabled;
+        pointerInside = false;
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDL_ShowCursor(SDL_ENABLE);
+        SDL_SetWindowTitle(window, enabled ? "PCEmu — seamless mouse" :
+                           "PCEmu — click to capture mouse (Cmd+G)");
+    }
     bool capturePointer(bool enabled) override {
+        if (absolutePointer) {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+            SDL_ShowCursor(pointerInside ? SDL_DISABLE : SDL_ENABLE);
+            return !enabled;
+        }
         bool success = SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE) == 0;
         bool captured = enabled && success;
         SDL_SetWindowTitle(window, captured ? "PCEmu — mouse captured (Cmd+G to release)"
@@ -99,8 +124,13 @@ class SDLFrontend final : public Frontend {
             using K = FrontendEvent::Kind;
             if (e.type == SDL_QUIT)
                 events.push_back({K::Quit});
-            else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
-                events.push_back({K::FocusLost});
+            else if (e.type == SDL_WINDOWEVENT &&
+                     (e.window.event == SDL_WINDOWEVENT_LEAVE || e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
+                pointerInside = false;
+                SDL_ShowCursor(SDL_ENABLE);
+                if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) events.push_back({K::FocusLost});
+                else if (absolutePointer) events.push_back({K::PointerLeave});
+            }
             else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
                 bool up = e.type == SDL_KEYUP;
                 if (!up && (e.key.keysym.mod & KMOD_GUI) && e.key.keysym.sym == SDLK_q)
@@ -114,9 +144,13 @@ class SDLFrontend final : public Frontend {
                               : e.button.button == SDL_BUTTON_RIGHT  ? 2
                               : e.button.button == SDL_BUTTON_MIDDLE ? 4
                                                                      : 0;
+                if (absolutePointer) pointerPosition(events, e.button.x, e.button.y);
+                if (absolutePointer && !pointerInside) continue;
                 events.push_back({K::Button, 0, e.type == SDL_MOUSEBUTTONUP, bit});
-            } else if (e.type == SDL_MOUSEMOTION)
-                events.push_back({K::Motion, 0, false, 0, e.motion.xrel, e.motion.yrel});
+            } else if (e.type == SDL_MOUSEMOTION) {
+                if (absolutePointer) pointerPosition(events, e.motion.x, e.motion.y);
+                else events.push_back({K::Motion, 0, false, 0, e.motion.xrel, e.motion.yrel});
+            }
             else if (e.type == SDL_MOUSEWHEEL)
                 events.push_back(
                     {K::Wheel, 0, false, 0, 0,

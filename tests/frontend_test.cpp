@@ -179,6 +179,32 @@ int main() {
         check(events[5].kind == K::FocusLost, "focus loss remains available to release guest keys");
         check(events[6].kind == K::ToggleCapture && events[7].kind == K::Quit,
               "host shortcuts stay distinct from guest input");
+        frame.assign(64 * 48, 0xff000000);
+        SDL_SetWindowSize(window, 320, 240);
+        frontend->present(frame, 64, 48);
+        frontend->setAbsolutePointer(true);
+        frontend->poll();
+        SDL_Event absoluteEvent{};
+        absoluteEvent.type = SDL_MOUSEMOTION;
+        absoluteEvent.motion.windowID = SDL_GetWindowID(window);
+        absoluteEvent.motion.x = 160; absoluteEvent.motion.y = 120;
+        SDL_PushEvent(&absoluteEvent);
+        auto absoluteEvents = frontend->poll();
+        check(absoluteEvents.size() == 1 && absoluteEvents[0].kind == K::AbsoluteMotion,
+              "seamless motion is delivered without capture");
+        check(absoluteEvents[0].x == 32 * 65535 / 63 && absoluteEvents[0].y == 24 * 65535 / 47,
+              "window coordinates map through the scaled guest viewport");
+        check(!SDL_GetRelativeMouseMode() && SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE,
+              "seamless mode never locks the pointer and shows only the guest cursor inside");
+        absoluteEvent = {};
+        absoluteEvent.type = SDL_WINDOWEVENT;
+        absoluteEvent.window.windowID = SDL_GetWindowID(window);
+        absoluteEvent.window.event = SDL_WINDOWEVENT_LEAVE;
+        SDL_PushEvent(&absoluteEvent);
+        absoluteEvents = frontend->poll();
+        check(absoluteEvents.size() == 1 && absoluteEvents[0].kind == K::PointerLeave &&
+              SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE, "host cursor restored outside guest image");
+        frontend->setAbsolutePointer(false);
         frontend.reset();
         check(!SDL_WasInit(SDL_INIT_VIDEO), "frontend owns SDL resource lifetime");
         std::cout << "Passed " << checks << " frontend checks\n";
