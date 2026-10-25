@@ -1,0 +1,131 @@
+capture
+capture
+capture
+capture
+capture
+capture
+capture
+key 011b
+capture
+capture
+key 011b
+capture
+capture
+capture
+key 011b
+capture
+capture
+scan 1d
+scan 01
+capture
+scan 81
+scan 9d
+text r
+capture
+text excel C:\RESTORED.XLS
+key 1c0d
+capture
+capture
+profile-start
+scan 1d
+scan 22
+capture
+scan a2
+scan 9d
+capture
+text B1:B4096
+key 1c0d
+capture
+text =ROW()*3+7
+scan 1d
+scan 1c
+capture
+scan 9c
+scan 9d
+capture
+profile-stop /Users/johandahlin/dev/pcemu/build/office97-steady-use/excel-fill-profile.json
+capture
+profile-start
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+scan 1d
+scan 38
+scan 43
+capture
+scan c3
+scan b8
+scan 9d
+capture
+profile-stop /Users/johandahlin/dev/pcemu/build/office97-steady-use/excel-recalculate-profile.json
+capture
+scan 1d
+scan 22
+capture
+scan a2
+scan 9d
+capture
+text B4096
+key 1c0d
+capture
+key 5800
+capture
+text C:\PERF4096.XLS
+key 1c0d
+capture
+quit
+capture

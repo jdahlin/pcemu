@@ -151,3 +151,21 @@ copy or extracted ISO tree is required. `--verify-only` rereads the staged
 payloads against the ISO. Both forms must be used only with offline disks.
 `python3 tests/test_stage_iso.py` covers raw/COW payload verification, duplicate
 staging rejection and unchanged parent bytes using tiny synthetic media.
+
+## Recalculation workload on the restored installation
+
+`/Volumes/data/pcemu/office97-steady-use.pcd` is a small child of the restored
+Office installation, containing `C:\PERF4096.XLS`. B1:B4096 contain
+`=ROW()*3+7`; the selected-range sum is 25,200,640 and B4096 is 12,295.
+The reopened original workbook preserved A1's `=2+2` formula and value 4 after
+Windows restart. Screenshots and diagnostic fill/recalculation counts are in
+`measurements/office97-excel-steady-use-2026-10-25.json` and adjacent files.
+
+The recalculation interval sends eight Ctrl+Alt+F9 requests after load. These
+are opcode coverage observations, including guest message/idle handling and
+input settling, not elapsed-time benchmarks or per-opcode host costs. The
+control transcript records the exact input. Repeated timing needs fixed task
+boundaries and validated completion, plus an idle baseline; do not infer a
+speedup from diagnostic counts alone. The saved workbook has an offline
+compound-file header/hash check; its full formula range has not been parsed
+from BIFF or reopened after this new save.

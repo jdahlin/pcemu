@@ -754,3 +754,18 @@ persistence on reopening and representative steady-use Office profiles remain
 next steps. Evidence: `docs/measurements/office97-restored-install-2026-10-25.json`
 and adjacent setup/Word/Excel screenshots. The frozen runner hash is recorded.
 The broad emulator goal remains active; this does not repeat Windows Setup.
+
+## Excel use and recalculation coverage (25 October)
+
+The restored Excel workbook reopens after the previous firmware restart with
+A1 =2+2 and displayed value 4. Filling B1:B4096 with =ROW()*3+7 gives the
+expected selected-range sum 25,200,640 and terminal value 12,295. A separate
+post-load interval requests eight full recalculations. Opcode profiles show
+byte arithmetic/test/shift and indirect control flow among common fallbacks;
+these are frequency observations including idle/input settling, not host costs.
+The saved PERF4096.XLS has a verified compound-file header/hash after clean
+exit; its compressed child on /Volumes/data is 927,116 bytes. Raw ISO or large
+fixture duplication was unnecessary. Evidence and exact control transcript:
+`docs/measurements/office97-excel-steady-use-2026-10-25.json` and adjacent files.
+Full saved formula-range parsing/reopening, fixed completion/timing boundaries,
+and an idle baseline remain. No Rosetta-level or overall performance claim.
