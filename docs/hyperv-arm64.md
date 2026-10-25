@@ -1483,3 +1483,64 @@ with [Linux's guest heartbeat handler](https://github.com/torvalds/linux/blob/ma
 providing an independent interoperating peer reference. Microsoft documents the
 Windows service as
 [vmicheartbeat](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/integration-services).
+
+
+### Windows HAL prerequisite experiment: EL2 identification and GIC security
+
+Further disassembly of the same cached Windows kernel identifies an earlier
+prerequisite than SINT delivery. The helper at RVA 0x486270 reads
+ID_AA64PFR0_EL1 and tests its EL2 field (mask 0xf00) before accepting the FADT's
+Microsoft hypervisor identity. It caches the result. `HalpIsSynicAvailable`
+(RVA 0x486420) depends on that result and feature bit 2.
+`HalpInitializeInterruptsPn` then registers software vectors 0x300..0x304 with
+`HalpInterruptSintService`. `HalpInterruptInitializeIpis` assigns those vectors to
+lines 5..9. This explains a possible split between the later VMBus callback
+selection and early HAL interrupt setup: the default HVF EL1-only CPU reports
+EL2=0 even when the Hyper-V interface advertises SynIC. The exact executing
+Windows path must still be verified; disassembly alone is not a runtime trace.
+
+A disposable native guest now reproduces the relevant HVF properties:
+
+```sh
+clang++ -std=c++20 -O2 -Wall -Wextra -Wpedantic \
+  tools/probe_arm_hvf_synic.cpp -framework Hypervisor \
+  -o build/probe-arm-hvf-synic
+codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements \
+  build/probe-arm-hvf-synic
+build/probe-arm-hvf-synic
+```
+
+On the tested Mac, with native GIC enabled, PFR0 is 0x1101000011110011.
+Setting only its EL2 field to 1 succeeds and an actual EL1 guest reads back
+0x1101000011110111 before exiting through HVC. VM EL2 execution remains disabled;
+this probe does not implement or claim nested virtualization. Native GICD_TYPER
+is 0x0478001f, with SecurityExtn bit 10 clear. The distributor setter returns
+success when asked to set that bit, but readback remains unchanged. API success
+must therefore not be interpreted as a capability change. All vCPU operations
+run on their owning thread, as required by
+[Apple's API](https://developer.apple.com/documentation/hypervisor/hv_vcpu_set_sys_reg(_:_:_:)).
+The tool uses a temporary 16 KiB RAM-only VM and opens no disks.
+
+An isolated Windows experiment applied only the EL2 ID-field change to both VPs,
+with VM EL2 execution still disabled and no forced GIC enables. Its source is an
+isolated snapshot of 8d06d78. The guest fails earlier with bugcheck 0x5c,
+subtype 0x200, tag 0x05250631, phase 2 and status 0xc000000e
+(STATUS_NO_SUCH_DEVICE), before any VMBus contact. Hyper-V records 64 legacy calls
+and zero hypercall failures. Evidence and source/executable hashes are under
+`build/windows11-hyperv/pfr0-el2/`; the EL2-field change is not a production fix.
+
+Another concrete mismatch appears in `HalpGic3ValidateIoUnit` (RVA 0x4ab5a8):
+when GICD_TYPER.SecurityExtn is clear, a non-native GIC profile is rejected with
+0xc0000184. `HalpInterruptSocEntry` selects a Microsoft profile when the earlier
+identity gate succeeds. The changed CPU field can therefore expose additional
+GIC-model requirements. This is an inference from code and the native readback;
+the final Windows 0xc000000e does not by itself prove which fallback failed.
+A future compatibility implementation must establish the full GIC register and
+security-state semantics. Merely forcing a read-only feature bit or enabling
+SGI8 is insufficient evidence of a correct interrupt controller.
+
+The diagnostic Windows VM was stopped, its APFS-cloned writable disk removed,
+and the original QCOW2/PCD installation restarted with the original `basic`
+runner. Its stopped-VP capture shows zero crash notifications and zero Hyper-V
+failures. Current PID/session is recorded in `build/windows11-qcow2/launch.json`.
+No production CPU-identification or GIC policy was changed by this experiment.
