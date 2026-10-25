@@ -20,6 +20,7 @@ class UsbXhci {
     void mouse(int dx, int dy, int wheel, uint8_t buttons);
     void releaseAll();
     uint64_t commands = 0, transfers = 0, reports = 0;
+    std::string inputState() const;
     const std::string &error() const {
         return failure;
     }
@@ -55,6 +56,7 @@ class UsbXhci {
     std::array<bool, 256> keys{};
     uint8_t buttons = 0;
     std::string failure;
+    uint64_t keyInputs = 0, pointerInputs = 0;
     uint64_t get(uint64_t address, unsigned width) const;
     void put(uint64_t address, uint64_t value, unsigned width);
     void range(uint64_t address, uint64_t length) const;

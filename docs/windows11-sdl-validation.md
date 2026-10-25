@@ -13,6 +13,12 @@ Both devices repeatedly failed immediately after configuration-descriptor reads.
 Evaluate Context now updates only its defined fields, preserving the port,
 device address, slot state, endpoint state and transfer dequeue pointers.
 Endpoint-zero evaluation updates Max Packet Size without replacing its ring.
+Configure Endpoint likewise preserves the root port, device address and EP0,
+consuming only Context Entries and the newly added endpoint contexts. Its input
+slot context does not repopulate the root port either. The regression fixture
+now explicitly zeroes that field; preserving it in the old fixture hid this
+second failure. Snapshot diagnostics count host key/pointer events separately
+from delivered reports and show each slot's configuration and pending IN state.
 
 Short descriptor responses also retain their Short Packet completion code at
 an Event Data TRB. The following status stage starts with a fresh byte count and
@@ -27,10 +33,11 @@ Controller tests pass with AddressSanitizer and UndefinedBehaviorSanitizer.
 Shared input tests, 36 PCI/MMIO/framebuffer checks, and 13 native HVF CLI checks
 also pass.
 
-The native installed Windows run reached its lock screen with 14 xHCI commands,
-66 transfer TRBs, and no controller error. Previously it retried enumeration
-through 48 commands and 120 transfer TRBs. Actual user input remains a separate
-interactive acceptance check; reaching the lock screen alone does not prove it.
+The first native correction reached the lock screen with 14 xHCI commands and
+66 transfer TRBs, but user testing still found no input. This exposed the
+Configure Endpoint bug above. Those counters were not proof of functional HID
+input. Previously descriptor enumeration retried through 48 commands and 120
+transfer TRBs. Native acceptance for the complete correction is recorded below.
 
 ## Startup profiling
 

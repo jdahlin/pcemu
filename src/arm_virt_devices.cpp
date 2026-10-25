@@ -90,6 +90,6 @@ void ArmVirtMachine::bindDevices() {
 }
 std::string ArmVirtMachine::usbReport() const {
     return usb ? "commands=" + std::to_string(usb->commands) +
-        " transfers=" + std::to_string(usb->transfers) + " reports=" + std::to_string(usb->reports) + " error=" + usb->error() : "disabled";
+        " transfers=" + std::to_string(usb->transfers) + " reports=" + std::to_string(usb->reports) + usb->inputState() + " error=" + usb->error() : "disabled";
 }
 } // namespace pc

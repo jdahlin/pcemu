@@ -371,13 +371,13 @@ void UsbXhci::command() {
                 uint32_t drop = get(input, 4), add = get(input + 4, 4);
                 if (type == 11)
                     add = 3;
-                if (add & 1) {
+                if (type == 11) {
                     s.port = (get(input + 32 + 4, 4) >> 16) & 255;
                     if (s.port < 1 || s.port > 2)
                         cc = 17;
                 }
                 if (cc == 1) {
-                    for (unsigned ep = 0; ep < 32; ++ep) {
+                    for (unsigned ep = type == 12 ? 2 : 0; ep < 32; ++ep) {
                         if (drop & (1u << ep)) {
                             s.active[ep] = false;
                             context(id, ep, 0);
@@ -396,6 +396,10 @@ void UsbXhci::command() {
                     if (type == 11)
                         put(out + 12, (t[3] & (1 << 9)) ? (1u << 27) : (id & 255) | (2u << 27), 4);
                     if (type == 12) {
+                        // Configure Endpoint consumes Context Entries, not a
+                        // replacement slot address/root port or EP0 context.
+                        put(out, (get(out, 4) & 0x07ffffff) |
+                            (get(input + 32, 4) & 0xf8000000), 4);
                         auto state = get(out + 12, 4);
                         put(out + 12, (state & 0x7ffffff) | (3u << 27), 4);
                     }
@@ -604,6 +608,7 @@ void UsbXhci::queue(unsigned port, std::vector<uint8_t> report) {
     }
 }
 void UsbXhci::key(uint16_t k, bool released) {
+    ++keyInputs;
     if (k >= 256 || keys[k] == !released)
         return;
     keys[k] = !released;
@@ -623,6 +628,7 @@ void UsbXhci::key(uint16_t k, bool released) {
     queue(1, std::move(report));
 }
 void UsbXhci::mouse(int dx, int dy, int wheel, uint8_t b) {
+    ++pointerInputs;
     buttons = b & 7;
     do {
         int x = std::clamp(dx, -127, 127), y = std::clamp(dy, -127, 127),
@@ -640,3 +646,17 @@ void UsbXhci::releaseAll() {
     queue(2, std::vector<uint8_t>(4));
 }
 } // namespace pc
+
+namespace pc {
+std::string UsbXhci::inputState() const {
+    std::string result = " keys=" + std::to_string(keyInputs) +
+        " pointers=" + std::to_string(pointerInputs);
+    for (unsigned id = 1; id < slots.size(); ++id) {
+        const auto &slot = slots[id];
+        if (slot.enabled) result += " slot" + std::to_string(id) + "=port" +
+            std::to_string(slot.port) + ",config" + std::to_string(slot.configuration) +
+            ",waiting" + std::to_string(slot.active[3]);
+    }
+    return result;
+}
+}

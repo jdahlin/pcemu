@@ -69,9 +69,14 @@ struct Guest {
         control += 48;
     }
     void interruptEndpoint() {
+        auto portAndLatency = get(output + 4), address = get(output + 12) & 255;
         put(input + 4, 1 | 8);
+        put(input + 36, 0); // Configure Endpoint does not supply the root port.
         put(input + 128 + 8, intr | 1, 8);
         cmd(12, input);
+        assert(get(output + 4) == portAndLatency);
+        assert((get(output + 12) & 255) == address);
+        assert((get(output + 12) >> 27) == 3);
     }
 };
 struct TestFrontend : Frontend {
