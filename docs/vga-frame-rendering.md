@@ -88,3 +88,14 @@ Relative SDL mouse movement is independent of renderer logical size and DPI
 scaling. The frontend disables SDL relative scaling so the 4:3 monitor
 coordinates cannot shrink motion counts; guest mouse drivers retain control
 over acceleration and sensitivity.
+
+## Crisp desktop scaling
+
+SDL textures explicitly use nearest-neighbour sampling. Square-pixel VBE and
+ARM output uses whole-number scaling in physical renderer pixels (including
+Retina backing pixels) whenever the guest image fits; unused space is black.
+Smaller windows use a fitted downscale to avoid cropping. Classic VGA retains
+its non-square-pixel 4:3 monitor correction. On VGA-to-SVGA transitions and subsequent desktop mode changes,
+the window fits the guest's native desktop dimensions within the host's usable
+screen, until the user resizes the window. Manual window sizes are preserved. Headless SDL readback tests verify exact pixel replication and
+letterboxing even when the host requests linear filtering.

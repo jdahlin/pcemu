@@ -45,6 +45,7 @@ int main() {
         check(command == "rrundll32.exe user.exe,ExitWindows", "normal guest shutdown command");
         check(keys.back() == 0x1c0d, "Run command submitted once");
         SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "1");
         auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);
         check(!SDL_GetHintBoolean(SDL_HINT_MOUSE_RELATIVE_SCALING, SDL_TRUE),
@@ -94,6 +95,43 @@ int main() {
         frontend->present(frame, 640, 400);
         frame.resize(1024 * 768, 0xffabcdef);
         frontend->present(frame, 1024, 768);
+        SDL_SetWindowSize(window, 320, 240);
+        frame.assign(63 * 47, 0xffffffff);
+        frontend->present(frame, 63, 47);
+        check(SDL_RenderGetIntegerScale(renderer), "SVGA uses whole physical pixel scaling");
+        float sx = 0, sy = 0;
+        SDL_RenderGetScale(renderer, &sx, &sy);
+        check(sx == 5 && sy == 5, "SVGA pixels remain square at integer scale");
+        std::vector<uint32_t> output(320 * 240);
+        check(SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_ARGB8888,
+                                   output.data(), 320 * 4) == 0, "headless output readable");
+        unsigned white = 0, other = 0;
+        for (auto pixel : output) {
+            white += (pixel & 0xffffff) == 0xffffff;
+            other += (pixel & 0xffffff) != 0xffffff && (pixel & 0xffffff) != 0;
+        }
+        check(white == 315 * 235 && other == 0, "integer image centered with crisp black borders");
+        // An externally requested smooth-filter hint must not blur guest pixels.
+        frame.assign(64 * 48, 0xff000000);
+        for (unsigned y = 0; y < 48; ++y)
+            for (unsigned x = 0; x < 64; ++x)
+                if ((x + y) % 2) frame[y * 64 + x] = 0xffffffff;
+        frontend->present(frame, 64, 48);
+        check(SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_ARGB8888,
+                                   output.data(), 320 * 4) == 0, "checkerboard output readable");
+        other = 0;
+        for (unsigned y = 0; y < 240; ++y)
+            for (unsigned x = 0; x < 320; ++x)
+                other += output[y * 320 + x] != frame[(y / 5) * 64 + x / 5];
+        check(other == 0, "nearest sampling exactly repeats every guest pixel");
+        frame.assign(640 * 480, 0xffffffff);
+        frontend->present(frame, 640, 480);
+        int manualWidth, manualHeight;
+        SDL_GetWindowSize(window, &manualWidth, &manualHeight);
+        check(manualWidth == 320 && manualHeight == 240, "manual window size survives mode changes");
+        check(!SDL_RenderGetIntegerScale(renderer), "undersized windows fit instead of cropping");
+        frontend->present(frame, 640, 480, DisplayShape::ClassicVga);
+        check(!SDL_RenderGetIntegerScale(renderer), "classic VGA retains monitor aspect correction");
         check(frontend->capturePointer(false), "pointer release works without guest state");
         SDL_Event e{};
         e.type = SDL_KEYDOWN;
