@@ -22,7 +22,10 @@ in progress.
 
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a
-private working copy. Use `./run95.sh` to open it. Network and configured Cirrus hardware are absent, so that older disk uses VGA
+private working copy or a link to a preserved QCOW2 base. Use `./run95.sh` to open it.
+For a QCOW2 base, the launcher creates and reuses `media/win95-working.pcd`,
+a compressed writable overlay that retains Windows changes between runs. Keep
+its base image available; raw disks and existing native overlays open directly. Network and configured Cirrus hardware are absent, so that older disk uses VGA
 fallback. Original PS/2 mouse and VBE/DISPI display hardware are now available;
 see [input and display integration](docs/input-video.md) for guest driver setup. Both the rtts image and independent OSR2 installation pass guest
 restart, exact saved-file survival and clean shutdown to the full safe-to-turn-off

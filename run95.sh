@@ -6,4 +6,14 @@ if [[ ! -f media/win95.raw ]]; then
   echo 'No Windows 95 working disk. See README.md for current media requirements.' >&2
   exit 1
 fi
-exec ./build/pcemu --machine win95 --disk media/win95.raw --ram-mb 64 --execute-vgabios "$@"
+disk=media/win95.raw
+# Detect the contents, including when the historical .raw name is a symlink.
+magic=$(od -An -tx1 -N4 "$disk" | tr -d ' \n')
+if [[ "$magic" == 514649fb ]]; then
+  disk=media/win95-working.pcd
+  if [[ ! -e "$disk" ]]; then
+    make -s build/disk-tool
+    ./build/disk-tool overlay "$disk" media/win95.raw
+  fi
+fi
+exec ./build/pcemu --machine win95 --disk "$disk" --ram-mb 64 --execute-vgabios "$@"
