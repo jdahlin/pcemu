@@ -2,6 +2,7 @@
 #include "arm_virt.hpp"
 #include "arm_vmbus.hpp"
 #include "machine_profile.hpp"
+#include "hyperv_kvp_roundtrip.hpp"
 #include <array>
 #include <algorithm>
 #include <chrono>
@@ -672,7 +673,7 @@ int main(int argc, char **argv) {
     try {
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
-        bool kvpProbe=false;
+        bool kvpProbe=false,kvpRoundtrip=false;
         auto guestPowerAction = pc::ArmHyperVShutdown::Action::PowerOff;
         pc::ArmVirtMachine::Config uefi;
         uefi.firmware = "roms/edk2-arm64.bin";
@@ -726,6 +727,7 @@ int main(int argc, char **argv) {
                 else throw std::runtime_error("Expected --hyperv-power-action poweroff|reboot");
                 uefiOptions = true;
             }
+            else if (arg == "--hyperv-kvp-roundtrip") { kvpRoundtrip=true; uefiOptions=true; }
             else if (arg == "--hyperv-kvp-probe") { kvpProbe=true; uefiOptions=true; }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
@@ -772,6 +774,7 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
+                             "      [--hyperv-kvp-roundtrip] (private VM disposable-key mutation test)\n"
                              "      [--hyperv-kvp-probe] (one read-only intrinsic enumeration)\n"
                              "      [--hyperv-power-action poweroff|reboot] (SIGUSR2 request; default poweroff)\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
@@ -802,6 +805,7 @@ int main(int argc, char **argv) {
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
+            if(kvpRoundtrip && (!uefi.hypervVmbus || kvpProbe)) throw std::runtime_error("--hyperv-kvp-roundtrip requires VMBus and excludes --hyperv-kvp-probe");
             if(kvpProbe && !uefi.hypervVmbus) throw std::runtime_error("--hyperv-kvp-probe requires --hyperv vmbus");
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
@@ -831,6 +835,13 @@ int main(int argc, char **argv) {
                 saveHypervStats(hypervStatsPath, true);
                 size_t printed = 0, matchStart = 0;
                 bool kvpProbeQueued=false;
+                std::optional<pc::HyperVKvpRoundtrip> kvpRoundtripState;
+                bool kvpRoundtripReported=false;
+                if(kvpRoundtrip) {
+                    auto key="PCEmuValidation-"+std::to_string(getpid())+"-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+                    kvpRoundtripState.emplace(std::u16string(key.begin(),key.end()));
+                    std::cerr<<"Hyper-V KVP disposable key: "<<key<<'\n';
+                }
                 while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
                     if (stdinOpen) {
                         pollfd input{STDIN_FILENO, POLLIN, 0};
@@ -846,6 +857,13 @@ int main(int argc, char **argv) {
                         }
                     }
                     vm.run(std::chrono::milliseconds(100));
+                    if(kvpRoundtripState && !kvpRoundtripReported) {
+                        kvpRoundtripState->tick(vm);
+                        if(kvpRoundtripState->finished()) {
+                            std::cerr<<"Hyper-V KVP roundtrip: "<<kvpRoundtripState->report()<<'\n';
+                            kvpRoundtripReported=true;
+                        }
+                    }
                     if(kvpProbe) {
                         if(!kvpProbeQueued) kvpProbeQueued=vm.enumerateGuestKvp(pc::ArmHyperVKvpCodec::Pool::Auto,0);
                         if(auto result=vm.takeGuestKvpResult()) {
@@ -898,6 +916,8 @@ int main(int argc, char **argv) {
                 }
                 saveHypervStats(hypervStatsPath);
                 if (!hypervStatsPath.empty()) saveHypervStats(hypervStatsPath + ".boot" + std::to_string(reboots) + ".json");
+                if(kvpRoundtripState && !kvpRoundtripReported)
+                    std::cerr<<"Hyper-V KVP roundtrip: "<<kvpRoundtripState->report()<<'\n';
                 vm.saveVariables();
                 if (cpuState) std::cerr << "ARM CPU: " << vm.cpuState() << '\n';
                 if (!framebufferPath.empty()) vm.saveFramebuffer(framebufferPath);

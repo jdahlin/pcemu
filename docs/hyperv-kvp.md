@@ -166,3 +166,18 @@ including set/get/delete through public host APIs, and the ARM platform forwardi
 header passes native syntax validation. Actual Windows mutation/readback/delete
 cleanup still requires a single bounded disposable-key test on the private disk.
 The VM remains stopped while this diskless implementation is completed.
+
+## Opt-in disposable-key round-trip probe
+
+`--hyperv-kvp-roundtrip` is separate from the read-only probe and requires
+VMBus. It generates a unique validation key, first requires an explicit
+file-not-found result, then sets a fixed string, reads and compares the value,
+deletes the key and verifies absence. It never overwrites an existing key.
+After a SET attempt, explicit cleanup is performed where the channel permits
+it; uncertain/timed-out operations are never automatically retried. The final
+report distinguishes readback/removal from acknowledgments and flags any
+remaining cleanup requirement. The generated key is logged for recovery.
+
+The controller passes 22 diskless checks under ASan/UBSan (including collision,
+denied write, wrong value and lost SET response), and native CLI checks reject
+non-VMBus or conflicting probe modes. Actual Windows verification is pending.

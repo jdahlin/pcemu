@@ -202,6 +202,14 @@ class HvfCLI(unittest.TestCase):
         self.assertIn('--hyperv-kvp-probe requires --hyperv vmbus', result.stderr)
         self.assertIn('--hyperv-kvp-probe', self.invoke('--help').stdout)
 
+    def test_kvp_roundtrip_requires_explicit_exclusive_vmbus_mode(self):
+        result = self.invoke('--machine', 'arm64-uefi', '--hyperv', 'basic', '--hyperv-kvp-roundtrip')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('--hyperv-kvp-roundtrip requires VMBus', result.stderr)
+        result = self.invoke('--machine', 'arm64-uefi', '--hyperv', 'vmbus', '--hyperv-kvp-roundtrip', '--hyperv-kvp-probe')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('excludes --hyperv-kvp-probe', result.stderr)
+
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):
             result = self.invoke(option)
