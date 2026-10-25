@@ -1106,3 +1106,27 @@ The kernel, candidate patch, alternatives and all raw measurements remain in
 `measurements/ps2-idle-ordering-rejected-2026-10-26.json`. This motivates testing
 longer execution paths/event-driven polling instead of keeping a local ordering
 change based on one favorable mode. The broader goal remains active.
+
+
+## Conditional traces reduce loaded Excel dispatch cost (26 October)
+
+The existing experimental trace mode is compared with FollowJumps using the same
+frozen executable. Three alternating loaded Excel pairs all favor traces, with
+median process CPU ratio 1.205 (about 17% less CPU), response ratio 1.214, and
+verified output pixels. Separate counters show 251.24M versus 362.34M dispatches
+for roughly 1.404B guest instructions: 30.7% fewer dispatches and 5.59 rather
+than 3.88 guest instructions per dispatch. Translation attempts increase.
+
+Three Word warm-launch pairs do not show a consistent gain (median CPU ratio
+0.979), so no default policy is changed. Trace mode passes 17,861 jump checks
+and headless DOS, Win3.11, rtts and installed OSR2 application persistence/restart
+gates. rtts verification resumes in the same live guest after a real Calculator
+OCR miss; exact 38-byte readback is verified. The title fallback reads actual
+blue-band glyphs and retains literal expected tokens. All owned test children
+and index sidecars are removed. Fresh Setup is not yet tested in trace mode.
+
+Evidence supports investigating selective hot-block trace promotion, rather
+than globally using large traces or retaining the rejected PS/2 ordering change.
+The 2× target remains unproven and the broader goal stays active. See
+`conditional-trace-evaluation.md` and
+`measurements/conditional-traces-2026-10-26.json`.
