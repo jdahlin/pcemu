@@ -14,8 +14,8 @@
 namespace pc {
 namespace fs = std::filesystem;
 namespace {
-void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hyperv) {
-    bool foundFadt = false;
+void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hyperv, bool vmbus) {
+    bool foundFadt = false, foundVmbus = false;
     for (size_t at = 0; at + 36 <= blob.size();) {
         uint32_t size = 0;
         for (unsigned i = 0; i < 4; ++i) size |= uint32_t(blob[at + 4 + i]) << (8 * i);
@@ -26,8 +26,14 @@ void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hy
             if (advertised != hyperv) throw std::runtime_error("ACPI Hyper-V identity does not match --hyperv; rebuild matching platform assets");
             foundFadt = true;
         }
+        if (std::string(reinterpret_cast<const char *>(blob.data() + at), 4) == "SSDT" &&
+            std::string(reinterpret_cast<const char *>(blob.data() + at + 16), 8) == "VMBUS   ") {
+            if (foundVmbus) throw std::runtime_error("Duplicate VMBus SSDT");
+            foundVmbus = true;
+        }
         at = (at + size + 7) & ~size_t(7);
     }
+    if (foundVmbus != vmbus) throw std::runtime_error("ACPI VMBus does not match --hyperv; rebuild matching platform assets");
     if (!foundFadt) throw std::runtime_error("Missing FADT");
     auto little = [&](size_t at, unsigned width) {
         if (at > blob.size() || width > blob.size() - at) throw std::runtime_error("Truncated ACPI CPU table");
@@ -78,6 +84,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         return true;
     });
     hyperv.advertiseSynic(c.hypervSynic);
+    if (c.hypervVmbus) hyperv.enableVmbus();
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;
@@ -92,7 +99,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     });
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
-    validateCpuTables(tables, c.cpus, c.hyperv);
+    validateCpuTables(tables, c.cpus, c.hyperv, c.hypervVmbus);
     fwCfg.addFile("etc/acpi/tables", std::move(tables));
     fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
     fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));

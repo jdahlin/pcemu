@@ -1,5 +1,6 @@
 #pragma once
 #include "arm_synic.hpp"
+#include "arm_vmbus.hpp"
 #include "arm_hyperv_timers.hpp"
 #include <array>
 #include <cstdint>
@@ -29,6 +30,8 @@ class ArmHyperV {
     bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
     void setPrivateInterruptSender(SoftwareInterruptSender send);
     void advertiseSynic(bool advertise);
+    // Owns fixed VMBus bootstrap (4) and control (1) message connections.
+    void enableVmbus();
     // Message payloads are borrowed only for the synchronous handler call.
     using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
     using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
@@ -46,6 +49,8 @@ class ArmHyperV {
     bool enabled;
     bool synicAdvertised = false;
     ArmSynic synic;
+    ArmVmbus vmbus;
+    bool vmbusEnabled = false;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;
     struct Connection { MessageHandler message; EventHandler event; unsigned flagCount = 0; };

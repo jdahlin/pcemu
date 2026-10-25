@@ -22,7 +22,7 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, size_t size) {
 }
 }
 ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count, Clock source)
-    : enabled(on), synic(memory, start, count), timers(count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
+    : enabled(on), synic(memory, start, count), vmbus(memory, start, count), timers(count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
     if (!clock) clock = [] {
         return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count()) / 100;
@@ -44,13 +44,14 @@ uint64_t ArmHyperV::timeNow() const {
 void ArmHyperV::service() {
     if (enabled) {
         synic.service(); // A false injection keeps the queued message for retry.
+        if (vmbusEnabled) vmbus.service();
         timers.service(timeNow());
     }
 }
 std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     if (!enabled) return {};
     auto delay = timers.nextDelay(timeNow(), false);
-    if (synic.needsService()) return std::min(delay.value_or(10000), uint64_t(10000));
+    if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
     return delay;
 }
 void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
@@ -61,7 +62,27 @@ void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
 void ArmHyperV::advertiseSynic(bool advertise) {
     if (advertise && (!enabled || !privateInterruptSender))
         throw std::runtime_error("SynIC advertisement requires enabled Hyper-V and a private interrupt backend");
+    if (!advertise && vmbusEnabled) throw std::runtime_error("Cannot disable SynIC with VMBus attached");
     synicAdvertised = advertise;
+}
+void ArmHyperV::enableVmbus() {
+    if (vmbusEnabled) return;
+    if (!enabled || !synicAdvertised || !privateInterruptSender)
+        throw std::runtime_error("VMBus requires advertised SynIC with an interrupt backend");
+    if (connections.contains(1) || connections.contains(4) || connections.size() > 62)
+        throw std::runtime_error("VMBus control connections unavailable");
+    vmbus.setSender([this](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
+        return synic.postMessage(vp, sint, 1, 0, payload);
+    });
+    auto receive = [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
+        return vmbus.receive(type, payload);
+    };
+    bindMessageConnection(4, receive);
+    bindMessageConnection(1, receive);
+    // Grant the implemented event API. No channel event ports exist until an
+    // actual channel is offered; unknown connections still fail, never succeed.
+    allowSignalEvents = true;
+    vmbusEnabled = true;
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -74,7 +95,10 @@ bool ArmHyperV::bindEventConnection(uint32_t id, unsigned flagCount, EventHandle
     connections.emplace(id, Connection{{}, std::move(handler), flagCount});
     allowSignalEvents = true; return true;
 }
-bool ArmHyperV::removeConnection(uint32_t id) { return connections.erase(id) != 0; }
+bool ArmHyperV::removeConnection(uint32_t id) {
+    if (vmbusEnabled && (id == 1 || id == 4)) return false;
+    return connections.erase(id) != 0;
+}
 ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
     auto it = registers.find(name);
     if (it != registers.end()) return &it->second;
@@ -462,7 +486,7 @@ std::string ArmHyperV::takeCrashReport() {
 }
 std::string ArmHyperV::report() const {
     std::ostringstream s;
-    s << "{\"schema\":1,\"mode\":\"" << (enabled ? (synicAdvertised ? "synic" : "basic") : "off") << "\",\"guestOsId\":" << guestId
+    s << "{\"schema\":1,\"mode\":\"" << (enabled ? (vmbusEnabled ? "vmbus" : (synicAdvertised ? "synic" : "basic")) : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"syntheticTimerDeliveries\":" << timers.delivered()
@@ -497,6 +521,8 @@ std::string ArmHyperV::report() const {
         s << "{\"index\":" << vp << ",\"tlbiControl\":" << tlbiControl[vp]
           << ",\"syntheticVector\":" << syntheticVectors[vp] << '}';
     }
-    return s.str() + "]}\n";
+    s << ']';
+    if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
+    return s.str() + "}\n";
 }
 } // namespace pc

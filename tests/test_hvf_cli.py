@@ -3,6 +3,7 @@ import fcntl
 from pathlib import Path
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -35,7 +36,7 @@ class HvfCLI(unittest.TestCase):
             self.assertIn('exit=1 ', result.stdout)  # Canceled
 
     def test_validation(self):
-        cases = [('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'),
+        cases = [('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'), ('--hyperv', 'vmbus', '--self-test'),
                  ('--hyperv-stats', 'any', '--self-test'), (), ('--kernel', '/missing/hvf-guest.bin'),
                  ('--timeout-ms', '0'), ('--timeout-ms', '60001'),
                  ('--timeout-ms', '20ms'), ('--kernel',),
@@ -154,6 +155,25 @@ class HvfCLI(unittest.TestCase):
             finally:
                 if process.poll() is None:
                     process.kill(); process.communicate()
+
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists(), 'Firmware not downloaded')
+    def test_vmbus_requires_matching_acpi(self):
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from build_arm_acpi import build
+        for bus_tables, mode in ((False, 'vmbus'), (True, 'synic'), (True, 'vmbus')):
+            with self.subTest(bus_tables=bus_tables, mode=mode), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                tables, rsdp, loader, _ = build(hyperv=True, vmbus=bus_tables)
+                for name, contents in (('tables', tables), ('rsdp', rsdp), ('table-loader', loader)):
+                    (root / name).write_bytes(contents)
+                result = self.invoke('--machine', 'arm64-uefi', '--hyperv', mode,
+                    '--acpi-dir', str(root), '--dtb', 'build/arm64-fw/pcemu-virt.dtb',
+                    '--vars', str(root / 'vars.bin'), '--timeout-ms', '1')
+                if mode == 'vmbus' and bus_tables:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('ACPI VMBus does not match', result.stderr)
 
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):

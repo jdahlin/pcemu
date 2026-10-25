@@ -14,9 +14,9 @@ static void check(bool value, std::source_location location = std::source_locati
 static void put(std::vector<uint8_t> &b, size_t at, uint64_t value, size_t size = 8) {
     for (size_t i = 0; i < size; ++i) b.at(at + i) = uint8_t(value >> (8 * i));
 }
-static uint64_t get(const std::vector<uint8_t> &b, size_t at) {
+static uint64_t get(const std::vector<uint8_t> &b, size_t at, size_t size = 8) {
     uint64_t value = 0;
-    for (size_t i = 0; i < 8; ++i) value |= uint64_t(b.at(at + i)) << (8 * i);
+    for (size_t i = 0; i < size; ++i) value |= uint64_t(b.at(at + i)) << (8 * i);
     return value;
 }
 int main() {
@@ -955,5 +955,71 @@ int main() {
     bus.setSender([](unsigned, unsigned, std::span<const uint8_t>) { return uint16_t(0); });
     bus.service(); check(!bus.needsService());
     check(bus.report().find("\"offeredChannels\":0") != std::string::npos);
+    for (bool smccc : {false, true}) {
+        std::vector<uint8_t> integratedRam(16384);
+        ArmHyperV integrated(true, integratedRam, base, 2);
+        bool rejected = false;
+        try { integrated.enableVmbus(); } catch (const std::runtime_error &) { rejected = true; }
+        check(rejected);
+        unsigned notifications = 0;
+        integrated.setPrivateInterruptSender([&](uint64_t mask, unsigned intid) {
+            check(mask == 2 && intid == 16); ++notifications; return true;
+        });
+        integrated.advertiseSynic(true);
+        integrated.enableVmbus(); integrated.enableVmbus(); // Idempotent setup.
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
+        r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
+        check(integrated.call(0, r, 0) && r[0] == one &&
+              r[6] == (features | 4 | (1ull << 36) | (1ull << 37)));
+        check(!integrated.removeConnection(1) && !integrated.removeConnection(4));
+        check(!integrated.bindMessageConnection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+        rejected = false;
+        try { integrated.advertiseSynic(false); } catch (const std::runtime_error &) { rejected = true; }
+        check(rejected);
+        auto &controller = integrated.synicController();
+        check(controller.write(0xa0010, 1, 1) == 0);
+        check(controller.write(0xa0013, 1, base + 4096 + 1) == 0);
+        check(controller.write(0xa0002, 1, 16) == 0);
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x90002; r[6] = 0x1000a000066bbull;
+        check(integrated.call(0, r, 0) && r[0] == one);
+        auto post = [&](uint32_t connection, uint32_t kind, unsigned bytes) {
+            std::fill(integratedRam.begin(), integratedRam.begin() + 256, 0);
+            put(integratedRam, 0, connection, 4); put(integratedRam, 8, 1, 4);
+            put(integratedRam, 12, bytes, 4); put(integratedRam, 16, kind, 4);
+            if (kind == 14) {
+                put(integratedRam, 24, 0x60000, 4); put(integratedRam, 28, 1, 4);
+                integratedRam[32] = 2;
+            }
+            r = {}; r[0] = smccc ? 0x46000001 : 0x5c;
+            r[smccc ? 1 : 0] = 0x5c; r[smccc ? 2 : 1] = base;
+            if (smccc) r[0] = 0x46000001;
+            check(integrated.call(smccc ? 0 : 1, r, 0) && r[0] == 0);
+            check(integrated.serviceDelay100ns().value_or(10001) <= 10000);
+            integrated.service();
+        };
+        post(4, 14, 40);
+        const size_t slot = 4096 + 2 * 256;
+        check(notifications == 1 && get(integratedRam, slot, 4) == 1);
+        check(integratedRam[slot + 4] == 20 && get(integratedRam, slot + 16, 4) == 15);
+        check(integratedRam[slot + 24] == 1 && get(integratedRam, slot + 28, 4) == 1);
+        post(1, 3, 8); // Occupied version reply must survive the request-offers reply.
+        check(get(integratedRam, slot + 16, 4) == 15 && notifications == 1);
+        put(integratedRam, slot, 0, 4); integrated.service();
+        check(get(integratedRam, slot + 16, 4) == 4 && notifications == 2);
+        put(integratedRam, slot, 0, 4);
+        post(1, 16, 8);
+        check(get(integratedRam, slot + 16, 4) == 17 && notifications == 3);
+        check(integrated.report().find("\"mode\":\"vmbus\"") != std::string::npos);
+        check(integrated.report().find("\"offeredChannels\":0") != std::string::npos);
+    }
+    ArmHyperV collision(true, busRam, base, 1);
+    collision.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
+    collision.advertiseSynic(true);
+    check(collision.bindMessageConnection(1, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    bool collisionRejected = false;
+    try { collision.enableVmbus(); } catch (const std::runtime_error &) { collisionRejected = true; }
+    check(collisionRejected && collision.removeConnection(1));
+    check(collision.bindMessageConnection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

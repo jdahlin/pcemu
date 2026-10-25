@@ -996,7 +996,14 @@ edge-triggered, active-high PPI 16. The namespace follows
 The separate module avoids a PCI address collision with the existing boot disk.
 It advertises no synthetic channels or MMIO allocation windows.
 
-This is firmware preparation; the normal runner does not yet attach this bus.
+The runner selects these assets with `--hyperv vmbus`. It requires matching
+VMBus ACPI tables and an advertised SynIC with a real private interrupt backend.
+The profile attaches fixed bootstrap connection 4 and control connection 1; they
+cannot be removed while the bus is attached. Replies are serviced between guest
+runs, including retries under SynIC backpressure. PostMessage/SignalEvent API
+privileges are granted, but nonexistent channel event ports still fail. The
+statistics use mode `vmbus` and include the control server counters; actual
+Windows negotiation must be established separately from model/native tests.
 The checked-in AML is source-hash checked. To verify it with ACPICA, run
 `tools/build_arm_acpi.py --hyperv --vmbus --iasl PATH_TO_IASL`.
 Compilation suppresses only the known diagnostics for the historical short

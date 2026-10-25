@@ -34,6 +34,7 @@ class ArmVirtMachine {
         bool hypervSynic = false;
         uint16_t sshPort = 0;
         std::string networkCapture;
+        bool hypervVmbus = false;
         std::string virtioTransport = "pci";
         std::string diskController = "virtio";
         std::string acpiDirectory = "build/arm64-fw/acpi";

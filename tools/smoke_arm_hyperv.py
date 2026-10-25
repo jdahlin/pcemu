@@ -20,8 +20,9 @@ def main():
     disk = directory / 'probe.raw'
     create(disk, probe)
     platform(1, ROOT / 'build/arm64-fw/cpus1-hyperv', hyperv=True)
+    platform(1, ROOT / 'build/arm64-fw/cpus1-hyperv-vmbus', hyperv=True, vmbus=True)
     summary = {}
-    for mode in ('off', 'basic', 'synic'):
+    for mode in ('off', 'basic', 'synic', 'vmbus'):
         stats = directory / f'{mode}.json'
         result = subprocess.run([str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
             '--vars', str(directory / f'{mode}-vars.bin'), '--disk', str(disk),

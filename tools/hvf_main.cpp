@@ -501,15 +501,8 @@ void selfTest() {
         require(hyperv.bindEventConnection(42, 10, [&](unsigned, uint16_t relative) {
             bool newly = false; return synic.signalEvent(0, 2, 100 + relative, newly);
         }), "Native event endpoint binding failed");
-        pc::ArmVmbus bus(vm.ram(), HvfMachine::ramBase, 1);
-        bus.setSender([&](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
-            return synic.postMessage(vp, sint, 1, 0, payload);
-        });
-        auto postBus = [&](unsigned, uint32_t type, std::span<const uint8_t> payload) {
-            auto status = bus.receive(type, payload); bus.service(); return status;
-        };
-        require(hyperv.bindMessageConnection(4, postBus) && hyperv.bindMessageConnection(1, postBus),
-                "Native VMBus connection binding failed");
+        hyperv.advertiseSynic(true);
+        hyperv.enableVmbus();
         std::array<uint8_t, 256> packet{};
         packet[0] = 4; packet[8] = 1; packet[12] = 40;
         packet[16] = 14; packet[26] = 6; packet[32] = 2; // Copper contact, VP0/SINT2.
@@ -536,6 +529,7 @@ void selfTest() {
                 for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
                 require(hyperv.call(immediate, registers, 0) && registers[0] == 0,
                         "Native connection hypercall failed");
+                hyperv.service();
                 for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
             } else {
                 require(immediate == 0x55 && vm.reg(4) == 0, "Native connection guest did not acknowledge both SGIs");
@@ -710,8 +704,8 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--hyperv") {
                 auto mode = value();
-                if (mode != "off" && mode != "basic" && mode != "synic") throw std::runtime_error("Hyper-V must be off, basic or synic");
-                uefi.hyperv = mode != "off"; uefi.hypervSynic = mode == "synic"; uefiOptions = true;
+                if (mode != "off" && mode != "basic" && mode != "synic" && mode != "vmbus") throw std::runtime_error("Hyper-V must be off, basic, synic or vmbus");
+                uefi.hyperv = mode != "off"; uefi.hypervSynic = mode == "synic" || mode == "vmbus"; uefi.hypervVmbus = mode == "vmbus"; uefiOptions = true;
             }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
@@ -757,7 +751,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
-                             "      [--ram-mb 256..16384 --hyperv off|basic|synic --hyperv-stats FILE]\n"
+                             "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -781,6 +775,7 @@ int main(int argc, char **argv) {
                 if (uefi.hyperv) directory += "-hyperv";
                 if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
                 if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
+                if (uefi.hypervVmbus) directory += "-vmbus";
             }
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
