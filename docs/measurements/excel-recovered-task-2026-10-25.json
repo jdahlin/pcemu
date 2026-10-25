@@ -1,0 +1,110 @@
+{
+  "scope": "Recovered Excel 97 4096-row dependent recalculation fixture on current external QCOW2-backed Office chain; not a performance comparison",
+  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+  "task": "docs/measurements/excel-dependent-recalc-2026-10-25.task.json",
+  "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+  "initialSum": 25200640,
+  "updatedSum": 33591296,
+  "formulaRange": "B1:B4096 =ROW()*$D$1+7",
+  "sumFormula": "C1 =SUM(B1:B4096)",
+  "trigger": "D1 changes from 3 to 4",
+  "historicalBeforeAfterPixelsMatch": true,
+  "source": {
+    "pid": 32973,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+      "--headless",
+      "--machine",
+      "win95",
+      "--load-snapshot",
+      "/Volumes/data/pcemu/snapshots/office97-recovered-desktop",
+      "--no-network",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/recovered-excel-task/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/recovered-excel-task/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/recovered-excel-task/state.json"
+    ],
+    "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23"
+  },
+  "savedWorkbook": {
+    "file": "C:\\PERF4096.XLS",
+    "bytes": 235008,
+    "sha256": "9d373c6c0e4f6928d60ee7f19e544729df75faa061c2e55de421a10dc91b3353",
+    "compoundFileHeader": true,
+    "scope": "Saved workbook header/hash; formulas validated in live Excel, not parsed from BIFF"
+  },
+  "positive": {
+    "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+    "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+    "jit": true,
+    "profiled": false,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23",
+    "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+    "restoreTimeoutSeconds": 90.0,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "samples": [
+      {
+        "restoreReadyMs": 28952.814584,
+        "taskResponseMs": 13165.236499999995,
+        "instructions": 1403363711,
+        "nativeInstructions": 1248613254,
+        "compiledBlocks": 29848,
+        "executionWallMs": 11326.240344
+      }
+    ],
+    "medianRestoreReadyMs": 28952.814584,
+    "medianTaskResponseMs": 13165.236499999995
+  },
+  "negative": {
+    "scope": "No-input task correctly rejected: final C1 rectangle still exactly matches before and differs from after",
+    "beforeMatches": true,
+    "afterMatches": false,
+    "expectedFailure": "Expected framebuffer state not observed before timeout",
+    "processAlreadyAbsentWhenInspected": true,
+    "ownedTemporaryDiskRemoved": true
+  },
+  "checkpointFiles": {
+    "disk.raw": {
+      "bytes": 112585,
+      "sha256": "f039421b8b2e9aa8092d5c48cfea0579d8e77454992f4f72a593d5d88d95a7ca"
+    },
+    "state.bin": {
+      "bytes": 14362344,
+      "sha256": "41ee1a07e69687c6a441d46fe29d152b58d0bec4a73a51df254f70fd65551e4e"
+    },
+    "preview.ppm.zst": {
+      "bytes": 17535,
+      "sha256": "46f571fbb78316585c3f5c359ba465a15e01f8c9f084302471292e8fe769acfc"
+    },
+    "task.json": {
+      "bytes": 8442,
+      "sha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a"
+    }
+  },
+  "parentChain": [
+    {
+      "path": "/Volumes/data/pcemu/snapshots/office97-recovered-desktop/disk.raw",
+      "bytes": 811580
+    },
+    {
+      "path": "/Volumes/data/pcemu/recovered/office97.pcd",
+      "bytes": 555728705
+    },
+    {
+      "path": "/Volumes/data/pcemu/recovered/win95.qcow2",
+      "bytes": 212402176
+    }
+  ],
+  "rawDiskCopies": 0,
+  "sourceTemporaryDiskRemoved": true
+}

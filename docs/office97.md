@@ -21,8 +21,8 @@ Office disk, avoiding another full Office copy. See
 
 Earlier Office overlays and performance checkpoints still refer to a missing
 parent. They cannot be substituted onto the new base: their old measurements
-remain historical. The dependent-recalculation fixture must be rebuilt before
-resuming those comparisons. The remaining sections describe the earlier
+remain historical. A replacement dependent-recalculation fixture is now validated on the recovered
+chain; use the external checkpoint described below for new comparisons. The remaining sections describe the earlier
 installation, driver setup and measurements; those old checkpoint paths have
 not been restored by this recovery.
 
@@ -208,3 +208,31 @@ and restore child were cleaned up. Task timing includes control/capture/poll
 work and starts with a cold JIT cache. Boot, load and restore are outside it.
 Evidence: `measurements/excel-dependent-recalc-2026-10-25.json`. Paired baseline/
 candidate timings and steady-state cache measurements remain to be collected.
+
+## Recovered dependent-recalculation fixture
+
+`/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered` replaces the
+broken earlier checkpoint. It adds about 14 MiB of compressed state plus a
+110 KiB disk child, sharing the recovered Office desktop and immutable
+QCOW2-backed installation. Keep every ancestor named in its recovery manifest.
+
+B1:B4096 contain `=ROW()*$D$1+7`, D1 starts at 3, and C1 contains
+`=SUM(B1:B4096)`. The task changes D1 to 4 and waits for C1 to change from
+25,200,640 to 33,591,296. The same checked-in task's before/after pixels match
+exactly. An independent restore passed, and a no-input negative control retained
+the initial pixels and correctly failed the completion gate. The saved workbook
+also has a stopped-guest compound-file header/hash check; BIFF formulas were
+validated in Excel rather than parsed offline. Successful/negative test children
+and the source session child were removed.
+
+```sh
+python3 tools/bench_snapshot_task.py \
+  /Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered \
+  --task docs/measurements/excel-dependent-recalc-2026-10-25.task.json \
+  --restore-timeout 90 --repeat 3 --output build/excel-recovered-measurement
+```
+
+The initial observed NAS restore took about 29 seconds; restore readiness has
+its own timeout and is excluded from task response timing. This fixture
+validation is not a speedup comparison.
+[Recovery and positive/negative evidence](measurements/excel-recovered-task-2026-10-25.json).
