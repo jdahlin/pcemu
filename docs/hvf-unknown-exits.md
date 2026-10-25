@@ -67,3 +67,24 @@ backpressure and all reply categories; 21 Windows auditor tests pass, including
 live-channel and inconsistent-counter cases. The already-running clock guest
 uses the preceding binary, so actual Windows typed-counter validation requires
 a subsequent launch.
+
+## Actual VMIC wall-clock correction
+
+The corrected probe returned `clock-adjustment/guest-report3.json` from the
+four-GiB Windows guest. Its initial UTC offset was 25,200.989 seconds; the
+explicit backward step changed that to 25,079.574 seconds (a 121.415-second
+observed decrease, including request timing). After vmictimesync restarted,
+the fourth five-second sample reached an offset of 0.867259 seconds with
+120.687 ms HTTP RTT. Windows reported `VM IC Time Synchronization Provider`
+with exit code zero. NTP was disabled before and after correction,
+`adjustmentObserved=true`, `restoredByProbe=false`, error was null and cleanup
+errors were empty. The preexisting seven-hour clock offset is recorded as
+observed; its cause has not been established.
+
+The correlated immutable `clock-success-hyperv3.json` snapshot reports two
+timesync negotiations, 20 samples and 20 acknowledgments, no rejected replies
+or timeouts, and zero Hyper-V failures. `launch3.json` retains SHA-256 hashes
+of both reports. This is actual guest wall-clock correction evidence, unlike
+the earlier protocol acknowledgments alone. The command-line auditor's
+`guestClockAdjustmentVerified` remains conservative until a dedicated input
+validator is added; this observation does not change that gate implicitly.
