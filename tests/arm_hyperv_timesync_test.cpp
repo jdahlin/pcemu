@@ -15,6 +15,11 @@ std::vector<uint8_t> negotiate(ArmHyperVTimeSync& t,unsigned fw=3) {
 }
 }
 int main(){
+    constexpr int64_t epoch=116444736000000000ll;
+    check(ArmHyperVTimeSync::utcFromUnix100ns(0)==uint64_t(epoch));
+    check(ArmHyperVTimeSync::utcFromUnix100ns(-epoch)==0);
+    check(ArmHyperVTimeSync::utcFromUnix100ns(INT64_MAX)==uint64_t(INT64_MAX)+uint64_t(epoch));
+    bool rejected=false;try{ArmHyperVTimeSync::utcFromUnix100ns(-epoch-1);}catch(const std::invalid_argument&){rejected=true;}check(rejected);
     constexpr uint64_t utc=134373000000000000ull;
     auto offer=ArmHyperVTimeSync::offer();
     const std::array<uint8_t,16> interface={0x30,0xe6,0x27,0x95,0xae,0xd0,0x7b,0x49,0xad,0xce,0xe8,0x0a,0xb0,0x17,0x5c,0xaf};

@@ -1928,3 +1928,28 @@ mismatch, duplicate replies, backward UTC steps and timeouts. The new target is
 included in `test` and `test-hvf`. This commit adds the independently tested model;
 production registration, the actual host FILETIME clock source and Windows
 acknowledgment/time-adjustment validation remain to be connected and verified.
+
+### Integrated timesync service and UTC source
+
+The VMBus runtime now registers timesync alongside heartbeat. `enableTimeSync`
+accepts an injectable FILETIME clock; the default converts host UTC system-clock
+ticks using the 1601/1970 epoch difference, with checked pre-1601 rejection and
+unsigned arithmetic at the upper signed tick boundary. Hyper-V reference time
+continues to use the independent monotonic clock.
+
+Only due samples read the UTC source. A successful direct ring publication
+advances the timesync state; a full ring retries later with a fresh paired
+UTC/reference value. Close/unload callbacks stop the service, and the scheduler
+includes its next deadline without polling an inactive channel. JSON reports
+include version, samples, acknowledgments, rejected responses and timeouts.
+
+The updated model has 175 checks including epoch/overflow boundaries. A separate
+32-check integration fixture exercises actual HVC PostMessage/SignalEvent,
+SynIC, GPADL and shared rings, negotiation, initial and periodic messages,
+backpressure with a refreshed clock pair, and closure. Both pass sanitizers.
+Heartbeat (189), channel (269) and Hyper-V (2,136) regressions pass; an isolated
+headless native runner builds with the integrated code. EFI smoke checks pass
+in all four Hyper-V modes. The fixture must set a
+Guest OS ID before PostMessage, matching the existing privilege contract.
+Actual Windows timesync negotiation/acknowledgments and clock policy remain to
+be validated; no guest clock adjustment is established by these tests.

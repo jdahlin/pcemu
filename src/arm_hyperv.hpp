@@ -2,6 +2,7 @@
 #include "arm_synic.hpp"
 #include "arm_vmbus.hpp"
 #include "arm_hyperv_heartbeat.hpp"
+#include "arm_hyperv_timesync.hpp"
 #include "arm_hyperv_timers.hpp"
 #include <array>
 #include <cstdint>
@@ -37,6 +38,8 @@ class ArmHyperV {
                           std::function<void()> closed = {}, std::function<void()> opened = {});
     // Registers a real host initiated heartbeat IC in the VMBus inventory.
     void enableHeartbeat();
+    // UTC clock returns FILETIME; reference time remains the monotonic Clock.
+    void enableTimeSync(Clock utcClock = {});
     // Message payloads are borrowed only for the synchronous handler call.
     using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
     using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
@@ -66,6 +69,9 @@ class ArmHyperV {
     ArmVmbus vmbus;
     bool vmbusEnabled = false, heartbeatEnabled = false;
     ArmHyperVHeartbeat heartbeat;
+    bool timesyncEnabled = false;
+    ArmHyperVTimeSync timesync;
+    Clock utcClock;
     std::map<uint32_t, uint32_t> vmbusEventPorts;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;

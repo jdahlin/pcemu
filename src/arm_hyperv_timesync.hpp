@@ -9,6 +9,7 @@ class ArmHyperVTimeSync {
     static constexpr uint32_t channelId=2, connectionId=17;
     static constexpr uint64_t interval=50000000, timeout=300000000;
     static ArmVmbus::Offer offer();
+    static uint64_t utcFromUnix100ns(int64_t ticks);
     void opened(uint64_t now);
     void closed();
     // Rebuild an unpublished sample on retry so ring backpressure cannot make

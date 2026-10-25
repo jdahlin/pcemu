@@ -107,8 +107,8 @@ smoke-win95: build/pcemu build/disk-tool
 
 ARM_BUS := src/mmio_space.cpp src/pci_ecam.cpp
 ARM_BUS_HEADERS := src/mmio_space.hpp src/pci_ecam.hpp
-ARM_DEVICES := src/arm_gic_ns.cpp src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
-ARM_DEVICE_HEADERS := src/arm_gic_ns.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_vmbus.hpp src/arm_hyperv_timers.hpp src/arm_synic.hpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
+ARM_DEVICES := src/arm_gic_ns.cpp src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
+ARM_DEVICE_HEADERS := src/arm_gic_ns.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_vmbus.hpp src/arm_hyperv_timers.hpp src/arm_synic.hpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
 
 # Optional ARM64 hypervisor runner. No GUI or x86 core; shared COW storage.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
@@ -158,9 +158,9 @@ smoke-windows-loader: build/pcemu-hvf firmware-arm64
 smoke-arm-hyperv: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_arm_hyperv.py
 
-build/arm-hyperv-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv.hpp tests/arm_hyperv_test.cpp
+build/arm-hyperv-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv.hpp tests/arm_hyperv_test.cpp
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp tests/arm_hyperv_test.cpp -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv.cpp tests/arm_hyperv_test.cpp -o $@
 
 build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_devices_test.cpp
 	@mkdir -p build
@@ -276,9 +276,9 @@ test test-hvf: test-arm-vmbus-ring
 test-arm-vmbus-channel: build/arm-vmbus-channel-tests
 	./build/arm-vmbus-channel-tests
 
-build/arm-vmbus-channel-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv.hpp tests/arm_vmbus_channel_test.cpp
+build/arm-vmbus-channel-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv.hpp tests/arm_vmbus_channel_test.cpp
 	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp tests/arm_vmbus_channel_test.cpp -o $@
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv.cpp tests/arm_vmbus_channel_test.cpp -o $@
 
 test test-hvf: test-arm-vmbus-channel
 
@@ -316,3 +316,11 @@ build/arm-hyperv-timesync-tests: src/arm_hyperv_timesync.cpp src/arm_hyperv_time
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_timesync.cpp tests/arm_hyperv_timesync_test.cpp -o $@
 test test-hvf: test-arm-hyperv-timesync
+
+.PHONY: test-arm-hyperv-timesync-integration
+test-arm-hyperv-timesync-integration: build/arm-hyperv-timesync-integration-tests
+	./build/arm-hyperv-timesync-integration-tests
+build/arm-hyperv-timesync-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_hyperv_timesync_integration_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_timesync_integration_test.cpp -o $@
+test test-hvf: test-arm-hyperv-timesync-integration

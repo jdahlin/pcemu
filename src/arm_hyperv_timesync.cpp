@@ -1,5 +1,6 @@
 #include "arm_hyperv_timesync.hpp"
 #include <sstream>
+#include <stdexcept>
 namespace pc {
 namespace {
 uint64_t get(std::span<const uint8_t> p,size_t at,unsigned n) {
@@ -8,6 +9,11 @@ uint64_t get(std::span<const uint8_t> p,size_t at,unsigned n) {
 void put(std::span<uint8_t> p,size_t at,uint64_t v,unsigned n) {
     for(unsigned i=0;i<n;++i)p[at+i]=uint8_t(v>>(8*i));
 }
+}
+uint64_t ArmHyperVTimeSync::utcFromUnix100ns(int64_t ticks) {
+    constexpr int64_t epoch=116444736000000000ll;
+    if(ticks < -epoch) throw std::invalid_argument("UTC precedes the FILETIME epoch");
+    return ticks<0 ? uint64_t(epoch)-uint64_t(-ticks) : uint64_t(epoch)+uint64_t(ticks);
 }
 ArmVmbus::Offer ArmHyperVTimeSync::offer() {
     ArmVmbus::Offer o{};o.channel=channelId;o.connection=connectionId;o.flags=0x11;o.userData[0]=4;

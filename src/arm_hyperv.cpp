@@ -50,6 +50,15 @@ void ArmHyperV::service() {
             if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVHeartbeat::channelId,packet))
                 heartbeat.sent(now);
         }
+        if (timesyncEnabled) {
+            auto now=timeNow();
+            auto due=timesync.delay(now);
+            if(due && !*due) {
+                auto packet=timesync.packet(now,utcClock());
+                if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVTimeSync::channelId,packet))
+                    timesync.sent(now);
+            }
+        }
         if (vmbusEnabled) vmbus.service();
         timers.service(timeNow());
     }
@@ -60,6 +69,10 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     if (heartbeatEnabled) {
         auto next=heartbeat.delay(timeNow());
         if(next) delay=std::min(delay.value_or(UINT64_MAX), std::max(*next,uint64_t(10000)));
+    }
+    if (timesyncEnabled) {
+        auto next=timesync.delay(timeNow());
+        if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
     return delay;
@@ -119,6 +132,20 @@ void ArmHyperV::enableHeartbeat() {
         }, [this] {heartbeat.closed();}, [this] {heartbeat.opened(timeNow());}))
         throw std::runtime_error("Heartbeat requires VMBus and an available channel/connection");
     heartbeatEnabled=true;
+}
+void ArmHyperV::enableTimeSync(Clock source) {
+    if(timesyncEnabled) return;
+    if(!source) source=[] {
+        using Ticks=std::chrono::duration<int64_t,std::ratio<1,10000000>>;
+        return ArmHyperVTimeSync::utcFromUnix100ns(std::chrono::duration_cast<Ticks>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
+    };
+    if(!offerVmbusChannel(ArmHyperVTimeSync::offer(),
+        [this](std::span<const uint8_t> packet) {
+            timesync.receive(packet,timeNow()); return std::vector<uint8_t>{};
+        },[this]{timesync.closed();},[this]{timesync.opened(timeNow());}))
+        throw std::runtime_error("Timesync requires VMBus and an available channel/connection");
+    utcClock=std::move(source);timesyncEnabled=true;
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -608,6 +635,7 @@ std::string ArmHyperV::report() const {
     s << ']';
     if (synicAdvertised) s << ",\"synic\":" << synic.report();
     if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
+    if (timesyncEnabled) s << ",\"timesync\":" << timesync.report();
     if (heartbeatEnabled) s << ",\"heartbeat\":" << heartbeat.report();
     return s.str() + "}\n";
 }
