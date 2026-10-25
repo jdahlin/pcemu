@@ -80,10 +80,26 @@ void ArmHyperV::enableVmbus() {
     bindMessageConnection(1, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
         return vmbus.receive(type, payload, false);
     });
+    vmbus.setEventSender([this](unsigned vp, unsigned sint, unsigned flag) {
+        bool newly = false;
+        return synic.signalEvent(vp, sint, flag, newly);
+    });
     // Grant the implemented event API. No channel event ports exist until an
     // actual channel is offered; unknown connections still fail, never succeed.
     allowSignalEvents = true;
     vmbusEnabled = true;
+}
+bool ArmHyperV::offerVmbusChannel(const ArmVmbus::Offer &offer, ArmVmbus::PacketHandler handler,
+                                 std::function<void()> closed) {
+    if (!vmbusEnabled || connections.contains(offer.connection)) return false;
+    if (!bindEventConnection(offer.connection, 1, [this, id = offer.channel](unsigned, uint16_t) {
+            return vmbus.signalChannel(id);
+        })) return false;
+    if (!vmbus.addChannel(offer, std::move(handler), std::move(closed))) {
+        connections.erase(offer.connection); return false;
+    }
+    vmbusEventPorts.emplace(offer.connection, offer.channel);
+    return true;
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -97,7 +113,7 @@ bool ArmHyperV::bindEventConnection(uint32_t id, unsigned flagCount, EventHandle
     allowSignalEvents = true; return true;
 }
 bool ArmHyperV::removeConnection(uint32_t id) {
-    if (vmbusEnabled && (id == 1 || id == 4)) return false;
+    if (vmbusEnabled && (id == 1 || id == 4 || vmbusEventPorts.contains(id))) return false;
     return connections.erase(id) != 0;
 }
 ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {

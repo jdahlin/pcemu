@@ -1308,8 +1308,8 @@ oracles across both ring and PFN boundaries, exact-full backpressure, optional
 flow control, masked notifications, 3,000 FIFO operations with repeated wrapping,
 malformed descriptors, alias rejection, multiple aligned GPA ranges and GPADL
 reuse. The existing 1,581 GPADL checks still pass. This portable diskless target
-is included in `test` and `test-hvf`. Channel offers/open/close and GPADL wire
-messages are not yet connected to this ring engine.
+is included in `test` and `test-hvf`. Registered channel offers/open/close and GPADL wire messages now connect to
+this engine, as described below.
 
 ### Controlled interrupt-routing experiments
 
@@ -1348,3 +1348,78 @@ removed after evidence capture. The original verified QCOW2/PCD installation
 was restarted with `--hyperv basic`; no experimental interrupt-enable code is
 in that executable. The latest PID/session is in
 `build/windows11-qcow2/launch.json` and must be revalidated before use.
+
+
+### Registered VMBus channels
+
+The host can register up to eight real channel backends before guest contact
+through `ArmHyperV::offerVmbusChannel`. Each has distinct interface/instance
+GUIDs, a channel ID and a dedicated event connection. RequestOffers advertises
+only registered backends, followed by AllOffersDelivered; no default device or
+integration service is fabricated. The normal runtime inventory remains empty
+until an actual service is registered.
+
+GPADL_HEADER/BODY assemble validated mappings and return GPADL_CREATED. OPENCHANNEL
+validates ownership, target VP and both ring partitions before installation.
+The registered handler consumes complete wire packets and may return one response.
+At most sixteen packets per channel are consumed per service call; a full output
+ring retains one response and prevents further input consumption. Failed event
+notifications retry without repeating backend calls or responses. CLOSECHANNEL
+releases rings and calls the backend once; GPADL teardown while its ring is open
+fails, and unload releases all mappings. Dedicated SignalEvent ports accept only
+relative flag zero, while host notifications set the channel ID in the guest's
+SINT event bitmap. Target VP 0xffffffff suppresses host interrupt notifications.
+All guest VPs must be stopped during these operations. Backends must not reenter
+the bus or alter its inventory from callbacks.
+
+`make test-arm-vmbus-channel` passes 247 diskless checks, including under
+AddressSanitizer/UndefinedBehaviorSanitizer. Coverage includes wire offer offsets,
+fragment assembly, wrong ownership, invalid opens, fragmented-page ring traffic,
+notification retries, FIFO/bounded processing, output backpressure, close/unload,
+malformed ring indices and atomic control-queue exhaustion. An additional fixture
+registers a channel through ArmHyperV, establishes guest identity, posts control
+messages through HVC and signals its real dedicated connection; the reply is read
+from the shared ring and its SynIC event bitmap is checked. Its echo handler is a
+test fixture, not an advertised runtime service. Existing Hyper-V (2,136), GPADL
+(1,581) and ring (4,352) checks also pass. This does not prove Windows consumes
+the initial control reply; the interrupt-routing blocker above remains. An isolated native HVF build
+with these changes also passes all 284 headless self-test checks.
+
+### KVM/QEMU implementation comparison (2026-10-25)
+
+The [KVM API](https://www.kernel.org/doc/html/latest/virt/kvm/api.html)
+explicitly scopes KVM_CAP_HYPERV_SYNIC/SYNIC2 to x86.
+In [KVM's implementation](https://github.com/torvalds/linux/blob/master/arch/x86/kvm/hyperv.c),
+`synic_set_irq` constructs a fixed-delivery local APIC interrupt and calls
+`kvm_irq_delivery_to_apic`. Its valid vector range and auto-EOI handling are
+architecture-specific; they must not be copied into our ARM64 GIC backend.
+`synic_deliver_msg` checks occupied message slots, sets message-pending and retries;
+EOM acknowledges SINTs and wakes pending timer/message delivery.
+
+[QEMU's Hyper-V helper](https://github.com/qemu/qemu/blob/master/hw/hyperv/hyperv.c)
+separates shared-memory publication from interrupt delivery: `cpu_post_msg`
+marks an occupied slot pending and waits for guest acknowledgement; event flags
+notify on a clear-to-set transition. `hyperv_sint_route_set_sint` triggers an
+irqfd-backed KVM route, rather than establishing an ARM64 HAL callback mechanism.
+These are useful references for queue ownership, EOM and duplicate-event behavior.
+[QEMU's enlightenment documentation](https://www.qemu.org/docs/master/system/i386/hyperv.html)
+is explicitly about x86 and says VMBus devices are not yet implemented there;
+it cannot serve as a complete VMBus device-stack reference.
+
+For an actual ARM64 comparison, Linux's Hyper-V **guest** driver provides a
+separate, concrete path. In
+[`vmbus_drv.c`](https://github.com/torvalds/linux/blob/master/drivers/hv/vmbus_drv.c),
+`vmbus_set_irq` obtains the platform IRQ and converts it to a hardware IRQ number;
+initialization registers `vmbus_percpu_isr` with `request_percpu_irq`.
+In [`hv.c`](https://github.com/torvalds/linux/blob/master/drivers/hv/hv.c),
+`hv_hyp_synic_enable_regs` enables that per-CPU IRQ and stores its hardware number
+in the shared SINT vector. This supports an ordinary GIC path for that Linux
+configuration, but does not establish the transport used by Windows's enlightened
+HAL callback path. Next routing work must account for that observed difference,
+rather than assuming Linux's IRQ registration happened in Windows too.
+
+Reviewed source copies are cached under `build/hyperv-research/` as
+`kvm-hyperv.c`, `qemu-hyperv.c`, `linux-hv.c` and `linux-vmbus-drv.c`.
+They are reference material only; no third-party source was copied into runtime
+code. Microsoft TLFS remains the contract, with OpenVMM providing the channel
+protocol implementation reference.
