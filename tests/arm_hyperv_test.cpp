@@ -282,5 +282,39 @@ int main() {
     ArmHyperV crashReset(true, memory, base, 2);
     check(crashReset.takeCrashReport().empty());
     check(crashReset.report().find("\"notifications\":0") != std::string::npos);
+    uint64_t synced = 0;
+    unsigned syncCalls = 0;
+    ArmHyperV syncing(true, memory, base, 2);
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90002; r[5] = 123;
+    check(syncing.call(1, r, 0) && r[0] == one);
+    auto sync = [&](uint64_t flags, uint64_t mask, bool smccc, uint64_t control = 0x10019, unsigned vp = 0) {
+        r.fill(0x5555555555555555);
+        r[0] = smccc ? 0x46000001 : control;
+        if (smccc) r[1] = control;
+        unsigned in = smccc ? 2 : 1;
+        r[in] = flags; r[in + 1] = mask;
+        check(syncing.call(smccc ? 0 : 1, r, vp));
+        check(r[in] == flags && r[in + 1] == mask && r[17] == 0x5555555555555555);
+        return r[0];
+    };
+    check(sync(1, 0, false) == 2); // No backend: never fake successful synchronization.
+    syncing.setContextSynchronizer([&](uint64_t targets) { synced = targets; ++syncCalls; return true; });
+    check(sync(1, 0, false) == 0 && synced == 3 && syncCalls == 1);
+    check(sync(0, 2, true, 0x10019, 1) == 0 && synced == 2 && syncCalls == 2);
+    check(sync(0, 0, true) == 0 && synced == 0 && syncCalls == 3);
+    for (auto bad : {uint64_t(0x19), uint64_t(0x30019), one | 0x10019, (1ull << 48) | 0x10019})
+        check(sync(1, 0, false, bad) == 3 && syncCalls == 3);
+    check(sync(2, 0, true) == 5 && syncCalls == 3);
+    check(sync(1, 1, false) == 5 && syncCalls == 3);
+    check(sync(0, 4, true) == 14 && syncCalls == 3);
+    check(sync(1, 0, true, 0x10019, 2) == 3 && syncCalls == 3);
+    syncing.setContextSynchronizer([](uint64_t) { return false; });
+    check(sync(1, 0, true) == 0x71);
+    check(syncing.report().find("\"contextSyncRequests\":3") != std::string::npos);
+    check(syncing.report().find("\"contextSyncTargetMask\":0") != std::string::npos);
+    ArmHyperV earlySync(true, memory, base, 1);
+    r = {}; r[0] = 0x10019; r[1] = 1;
+    check(earlySync.call(1, r, 0) && r[0] == 6);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

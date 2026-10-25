@@ -58,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 287 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 330 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -172,7 +172,7 @@ stopped; their diagnostic reports remain. The default Hyper-V mode remains off.
 
 ## SyncContext investigation, 2026-10-25
 
-SyncContext remains unsupported. Microsoft's [OpenVMM WHP definitions](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/whp/src/abi.rs)
+At the start of this investigation SyncContext was unsupported. Microsoft's [OpenVMM WHP definitions](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/whp/src/abi.rs)
 identify SyncContext/Ex as a separate ARM64 facility. The WHP synthetic-feature
 bit (39) is not a TLFS partition privilege and must not be copied into this
 implementation's privilege mask.
@@ -289,7 +289,7 @@ The following is a work inventory, not a completion claim:
 | Discovery, identity and VP registers | Native EFI and actual Windows register use verified. |
 | Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
-| SyncContext / SyncContextEx | Windows invokes 0x19 frequently; guest instruction synchronization mechanism and multi-VP tests still required. |
+| SyncContext / SyncContextEx | Fixed fast 0x19 implemented with real per-VP barriers; native MMU-on and multi-VP tests pass. Windows validation and Ex/slow layouts remain. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
@@ -341,3 +341,50 @@ Windows with extended queries enabled reached the lock screen on the local
 queries with zero failures; `extendedCapabilitiesObserved` is true. Core usage
 also passes, with continued disk/network activity. Report SHA-256:
 `7051fc988ecd62f6b9c61f2fb9afd87204e560c9ea326e8b43aade6349714598`.
+
+
+## Fixed fast SyncContext
+
+The observed Windows fast 0x19 ABI is implemented: two input words contain
+flags and a VP mask. Flag 1 selects all configured VPs and requires a zero mask;
+flag 0 selects the supplied mask. Guest identity is required. Reserved flags,
+unknown VPs, variable headers, rep fields and non-fast layouts are rejected.
+Both SMCCC and legacy transports preserve other argument registers. A missing
+backend returns invalid-code; a backend reporting incomplete work returns
+operation-failed (0x71). Exceptions from the native backend stop the runner
+rather than acknowledging a barrier that did not complete.
+
+This fixed layout is reconstructed from the original Windows HvlSyncContext
+routine described above; it is not a claim to implement the undocumented
+SyncContextEx or slow-call layouts. Those remain unsupported.
+
+The HVF backend maps a private read/execute-only stub below RAM, at GPA
+0x3fff0000. For each selected online VP it temporarily selects physical EL1h
+execution, masks interrupts, debugger activity and virtual-timer exits, and
+runs `DSB SY; ISB; HVC #0xfffe` on that VP's own HVF owner thread. Completion
+requires both the sentinel HVC and the exact expected PC. It then restores
+PC, PSTATE, SCTLR, VBAR, ELR, SPSR, ESR, FAR, MDSCR and the timer mask. The stub
+uses no GPRs or guest stack. Its private vectors catch unexpected EL1 exceptions
+without entering the guest's normal handler. All other VPs remain stopped.
+The existing watchdog bounds each attempt to 250 ms; errors restore the saved
+context and do not increment completion counters. Offline/never-started VPs
+have no old instruction stream and are skipped.
+
+The backend counter `instructionContextBarriers` records completed execution
+per VP. The model records successful requests/last target mask separately.
+`contextSyncObserved` requires successful Windows calls, matching request
+counts and actual native barrier counts; a model counter alone is insufficient.
+
+Native tests execute changed code on two VPs, verify target masks and preserved
+GPR/PC/system context, inject both a breakpoint and an infinite loop into the
+stub, and verify rollback/recovery on both owner threads. Another test covers
+an online VP in WFI. The EFI probe executes a self-modified RAM function with
+MMU enabled, synchronizes through the real 0x19 HVC and verifies the new result,
+SCTLR and VBAR before continuing to crash-report and PSCI tests. These tests
+establish the backend and guest ABI; Windows consumption still needs a fresh
+run with this implementation.
+
+Architecture rationale: Arm's [cross-thread self-modifying-code explanation](https://developer.arm.com/community/arm-community-blogs/b/architectures-and-processors-blog/posts/caches-self-modifying-code-working-with-threads)
+requires an instruction synchronization event on executing cores. The explicit
+ISB path avoids depending on undocumented HVF exception-entry EIS/EOS choices
+or mistaking a host memory fence for a guest instruction barrier.

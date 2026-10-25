@@ -47,6 +47,8 @@ struct HvfMachine::Impl {
     hv_vcpu_t vcpu = 0;
     hv_vcpu_exit_t *exit = nullptr;
     uint64_t exitCount = 0;
+    bool contextRomMapped = false;
+    std::array<uint64_t, 8> contextBarriers{};
     std::mutex mutex;
     std::condition_variable changed;
     std::thread watchdog;
@@ -423,6 +425,105 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     for (auto &cpu : impl->secondary)
         if (cpu->online && cpu->result.reason != ExitReason::Canceled) impl->pending.push_back(cpu->result);
     return impl->pending.empty() ? primary : takePending();
+}
+
+void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
+    impl->requireOwner();
+    if (cpuMask & ~((1ull << cpuCount()) - 1))
+        throw std::runtime_error("Invalid instruction synchronization CPU mask");
+    if (!cpuMask) return;
+    {
+        std::lock_guard lock(impl->mutex);
+        if (!impl->active.empty() || impl->armed)
+            throw std::runtime_error("Instruction synchronization requires stopped vCPUs");
+    }
+    // A read/execute-only stage-2 region outside platform RAM and MMIO. The
+    // private entry executes no loads/stores and does not use guest registers.
+    // Every EL1 vector catches unexpected exceptions instead of running the
+    // guest's handler in this temporary context.
+    constexpr uint64_t address = 0x3fff0000;
+    if (!impl->contextRomMapped) {
+        std::array<uint32_t, 1024> words;
+        words.fill(0xd41fffa2); // HVC #0xfffd: unexpected EL1 exception.
+        words[0] = 0xd5033f9f; // DSB SY
+        words[1] = 0xd5033fdf; // ISB
+        words[2] = 0xd41fffc2; // HVC #0xfffe: completed barrier.
+        mapROM(address, {reinterpret_cast<const uint8_t *>(words.data()), sizeof(words)});
+        impl->contextRomMapped = true;
+    }
+    auto execute = [&](hv_vcpu_t id, hv_vcpu_exit_t *exit) {
+        constexpr std::array<hv_sys_reg_t, 7> names{
+            HV_SYS_REG_SCTLR_EL1, HV_SYS_REG_VBAR_EL1, HV_SYS_REG_ELR_EL1,
+            HV_SYS_REG_SPSR_EL1, HV_SYS_REG_ESR_EL1, HV_SYS_REG_FAR_EL1, HV_SYS_REG_MDSCR_EL1};
+        std::array<uint64_t, names.size()> saved{};
+        uint64_t pc = 0, cpsr = 0;
+        bool timerMask = false;
+        for (unsigned i = 0; i < names.size(); ++i)
+            check(hv_vcpu_get_sys_reg(id, names[i], &saved[i]), "save barrier context");
+        check(hv_vcpu_get_reg(id, HV_REG_PC, &pc), "save barrier PC");
+        check(hv_vcpu_get_reg(id, HV_REG_CPSR, &cpsr), "save barrier PSTATE");
+        check(hv_vcpu_get_vtimer_mask(id, &timerMask), "save barrier timer mask");
+        auto restore = [&] {
+            for (unsigned i = 0; i < names.size(); ++i)
+                check(hv_vcpu_set_sys_reg(id, names[i], saved[i]), "restore barrier context");
+            check(hv_vcpu_set_reg(id, HV_REG_PC, pc), "restore barrier PC");
+            check(hv_vcpu_set_reg(id, HV_REG_CPSR, cpsr), "restore barrier PSTATE");
+            check(hv_vcpu_set_vtimer_mask(id, timerMask), "restore barrier timer mask");
+        };
+        try {
+            check(hv_vcpu_set_vtimer_mask(id, true), "mask barrier timer exit");
+            check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_MDSCR_EL1,
+                saved[6] & ~uint64_t((1u << 15) | (1u << 13) | 1u)), "mask barrier debug exceptions");
+            check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_VBAR_EL1, address + 0x800), "set barrier vectors");
+            check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_SCTLR_EL1, saved[0] & ~uint64_t(1)), "set barrier physical execution");
+            check(hv_vcpu_set_reg(id, HV_REG_CPSR, 0x3c5), "set barrier EL1h and DAIF");
+            check(hv_vcpu_set_reg(id, HV_REG_PC, address), "set barrier entry");
+            for (;;) {
+                check(hv_vcpu_run(id), "execute instruction barrier");
+                if (exit->reason == HV_EXIT_REASON_CANCELED) {
+                    if (std::chrono::steady_clock::now() >= impl->deadline)
+                        throw std::runtime_error("Instruction synchronization timed out");
+                    continue;
+                }
+                uint64_t completedPC = 0;
+                check(hv_vcpu_get_reg(id, HV_REG_PC, &completedPC), "get barrier completion");
+                if (exit->reason != HV_EXIT_REASON_EXCEPTION ||
+                    (exit->exception.syndrome >> 26) != 0x16 ||
+                    (exit->exception.syndrome & 0xffff) != 0xfffe || completedPC != address + 12)
+                    throw std::runtime_error("Instruction synchronization did not complete");
+                break;
+            }
+        } catch (...) { restore(); throw; }
+        restore();
+    };
+    for (unsigned cpu = 0; cpu < cpuCount(); ++cpu) {
+        if (!(cpuMask & (1ull << cpu)) || !cpuOnline(cpu)) continue;
+        hv_vcpu_t id = cpu ? impl->secondary[cpu - 1]->id : impl->vcpu;
+        // Reuse the persistent watchdog, including for WFI or malformed stub
+        // failures. CPU lifetimes remain protected by the normal VM owner.
+        auto disarm = [&] {
+            std::lock_guard lock(impl->mutex);
+            impl->armed = false; impl->active.clear(); impl->changed.notify_one();
+        };
+        {
+            std::lock_guard lock(impl->mutex);
+            impl->active = {id}; impl->deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(250);
+            impl->cancelResult = HV_SUCCESS; ++impl->generation; impl->armed = true;
+            impl->changed.notify_one();
+        }
+        try {
+            bool executed = true;
+            if (cpu) executed = impl->secondary[cpu - 1]->withStoppedContext(execute);
+            else execute(id, impl->exit);
+            disarm();
+            if (executed) ++impl->contextBarriers[cpu];
+        } catch (...) { disarm(); throw; }
+    }
+}
+uint64_t HvfMachine::instructionContextBarriers(unsigned cpu) const {
+    impl->requireOwner();
+    if (cpu >= cpuCount()) throw std::runtime_error("Invalid instruction barrier CPU index");
+    return impl->contextBarriers[cpu];
 }
 
 uint64_t HvfMachine::exits() const {

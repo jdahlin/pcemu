@@ -63,6 +63,24 @@ class WindowsHyperV(unittest.TestCase):
         report['calls'][-1]['failures'] = 2
         self.assertFalse(verify(report, baseline)['verifiedCoreUsage'])
 
+    def test_context_sync_requires_completed_native_barriers(self):
+        report, baseline = fixture()
+        self.assertFalse(verify(report, baseline)['contextSyncObserved'])
+        for row in report['calls']:
+            row['failures'] = 0
+        report.update(failures=0, contextSyncRequests=4, contextSyncTargetMask=1,
+                      instructionContextBarriers=[4])
+        self.assertTrue(verify(report, baseline)['contextSyncObserved'])
+        self.assertEqual(verify(report, baseline)['unsupportedCalls'], [])
+        for change in (dict(contextSyncRequests=0), dict(contextSyncRequests=5),
+                       dict(instructionContextBarriers=[0]), dict(instructionContextBarriers=[3]),
+                       dict(instructionContextBarriers=[False]), dict(instructionContextBarriers=[]),
+                       dict(contextSyncTargetMask=0), dict(contextSyncTargetMask=2)):
+            self.assertFalse(verify(dict(report, **change), baseline)['contextSyncObserved'])
+        report['calls'][-1]['failures'] = 1
+        report['failures'] = 1
+        self.assertFalse(verify(report, baseline)['contextSyncObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

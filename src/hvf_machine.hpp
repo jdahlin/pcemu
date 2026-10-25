@@ -50,6 +50,11 @@ class HvfMachine {
     uint64_t cpuPC(unsigned cpu) const;
     void setPC(uint64_t value);
     Exit run(std::chrono::milliseconds budget = std::chrono::milliseconds(1000));
+    // All requested online vCPUs execute DSB SY; ISB while the normal guest
+    // context is preserved. Throws on incomplete execution; never acknowledges
+    // a barrier based solely on stopping a host thread.
+    void synchronizeInstructionContext(uint64_t cpuMask);
+    uint64_t instructionContextBarriers(unsigned cpu) const;
     uint64_t exits() const;
     static bool supported();
 

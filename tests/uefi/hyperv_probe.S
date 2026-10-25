@@ -120,7 +120,7 @@ efi_main:
     cbnz x16, failed
     // Allocate two physical pages; buffers must not straddle a 4 KiB page.
     mov x0, #0
-    mov x1, #2
+    mov x1, #1 // EfiLoaderCode: this fixture also executes self-modified code.
     mov x2, #2
     add x3, sp, #48
     ldr x8, [x20, #40] // AllocatePages
@@ -247,6 +247,43 @@ efi_main:
     cmp x0, x8
     b.ne failed
     cmp x15, x21
+    b.ne failed
+    // The platform must execute a real instruction barrier while preserving
+    // the firmware's enabled MMU and vector base.
+    mrs x25, sctlr_el1
+    tbz x25, #0, failed
+    add x24, x21, #1536
+    ldr w8, =0xd2800029 // mov x9,#1
+    str w8, [x24]
+    ldr w8, =0xd65f03c0 // ret
+    str w8, [x24, #4]
+    dc cvau, x24
+    dsb ish
+    ic ivau, x24
+    dsb ish
+    isb
+    blr x24
+    cmp x9, #1
+    b.ne failed
+    ldr w8, =0xd2800049 // mov x9,#2
+    str w8, [x24]
+    dc cvau, x24
+    dsb ish
+    ic ivau, x24
+    dsb ish
+    ldr x0, =0x10019
+    mov x1, #1
+    mov x2, #0
+    hvc #1
+    cbnz x0, failed
+    mrs x8, sctlr_el1
+    cmp x8, x25
+    b.ne failed
+    mrs x8, vbar_el1
+    cmp x8, x22
+    b.ne failed
+    blr x24
+    cmp x9, #2
     b.ne failed
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.

@@ -58,7 +58,7 @@ class ArmVirtMachine {
     std::string framebuffer() const { return ramfb.mode(); }
     void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
     std::string cpuState() const;
-    std::string hypervReport() const { return hyperv.report(); }
+    std::string hypervReport() const;
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
     Config config;

@@ -95,6 +95,15 @@ class HvfSecondary {
         dispatch([&] { check(hv_vcpu_get_sys_reg(id, static_cast<hv_sys_reg_t>(encoding), &value)); });
         finish(); return value;
     }
+    bool withStoppedContext(const std::function<void(hv_vcpu_t, hv_vcpu_exit_t *)> &action) {
+        // A never-started or powered-off VP has no old instruction stream.
+        if (!online || needsStart) return false;
+        std::exception_ptr error;
+        dispatch([&] { try { action(id, exit); } catch (...) { error = std::current_exception(); } });
+        finish();
+        if (error) std::rethrow_exception(error);
+        return true;
+    }
     void beginRun(unsigned index, std::function<void(bool)> leave) {
         dispatch([this, index, leave = std::move(leave)] {
             try {

@@ -172,6 +172,23 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
+    if (code == 0x19) {
+        if (!guestId) return accessDenied;
+        // Windows HvlSyncContext's fixed two-word fast input: bit 0 selects
+        // all VPs, otherwise the second word is the VP mask. Ex/slow layouts
+        // are not accepted on the strength of this observed fast ABI.
+        if (control != 0x10019 || vp >= cpus) return invalidInput;
+        unsigned in = smccc ? 2 : 1;
+        auto flags = r[in], targets = r[in + 1];
+        if (flags > 1 || (flags && targets)) return invalidParameter;
+        const uint64_t valid = (1ull << cpus) - 1;
+        if (targets & ~valid) return invalidVp;
+        if (flags) targets = valid;
+        if (!contextSynchronizer) return invalidCode;
+        if (!contextSynchronizer(targets)) return 0x71; // HV_STATUS_OPERATION_FAILED
+        ++contextSyncRequests; contextSyncTargetMask = targets;
+        return 0;
+    }
     if (code == 0x8001) {
         if (!guestId) return accessDenied;
         if ((control & ~uint64_t(0x1ffff)) || vp >= cpus) return invalidInput;
@@ -266,6 +283,8 @@ std::string ArmHyperV::report() const {
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"crash\":" << crashReport()
+      << ",\"contextSyncRequests\":" << contextSyncRequests
+      << ",\"contextSyncTargetMask\":" << contextSyncTargetMask
       << ",\"uidQueries\":" << uidQueries << ",\"smcccVersionQueries\":" << versionQueries
       << ",\"smcccCalls\":" << smcccCalls << ",\"legacyCalls\":" << legacyCalls
       << ",\"disabledCalls\":" << disabledCalls << ",\"failures\":" << failures

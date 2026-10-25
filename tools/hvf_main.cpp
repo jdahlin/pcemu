@@ -208,6 +208,77 @@ void selfTest() {
             previous = vm.reg(0); absoluteBefore = before; absoluteAfter = after;
         }
     }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true, {}, 2);
+        // Both VPs repeatedly call a shared code page, exiting after each call.
+        // Wait for one host mailbox phase per call: a fast VP must not keep
+        // exiting and canceling the other VP before its first instruction.
+        code(vm, std::array<uint32_t, 9>{0xd2800024, 0x91400405, 0xf94000a6,
+            0xeb0400df, 0x54ffffa1, 0xd63f0000, 0x91000484, 0xd4000002, 0x17fffff9});
+        const auto function = HvfMachine::ramBase + 0x1000;
+        const std::array<uint32_t, 2> oldCode{0xd2800023, 0xd65f03c0}; // mov x3,#1; ret
+        vm.writeMemory(function, {reinterpret_cast<const uint8_t *>(oldCode.data()), sizeof(oldCode)});
+        vm.setReg(0, function);
+        require(vm.startCPU(1, HvfMachine::ramBase, function) == 0, "Barrier secondary start failed");
+        uint64_t phase = 0;
+        auto observe = [&](uint64_t expected) {
+            ++phase;
+            vm.writeMemory(function + 0x1000, {reinterpret_cast<const uint8_t *>(&phase), sizeof(phase)});
+            unsigned seen = 0;
+            for (unsigned attempt = 0; attempt < 16 && seen != 3; ++attempt) {
+                auto exit = vm.run(std::chrono::milliseconds(100));
+                if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+                require(exit.exceptionClass() == 0x16, "Unexpected code synchronization guest exit");
+                require(vm.reg(3) == expected, "Target VP executed stale instructions");
+                seen |= 1u << exit.cpu;
+            }
+            require(seen == 3, "Both barrier VPs did not execute shared code");
+        };
+        observe(1);
+        auto pc0 = vm.cpuPC(0), pc1 = vm.cpuPC(1);
+        auto selected = vm.currentCPU();
+        std::array<uint64_t, 31> registers;
+        for (unsigned i = 0; i < 31; ++i) registers[i] = vm.reg(i);
+        const auto sctlr = vm.systemReg(0xc080), vbar = vm.systemReg(0xc600);
+        const uint32_t newInstruction = 0xd2800043; // mov x3,#2
+        vm.writeMemory(function, {reinterpret_cast<const uint8_t *>(&newInstruction), 4});
+        vm.synchronizeInstructionContext(3);
+        require(vm.instructionContextBarriers(0) == 1 && vm.instructionContextBarriers(1) == 1,
+                "Real instruction barriers did not execute on both VPs");
+        require(vm.currentCPU() == selected && vm.cpuPC(0) == pc0 && vm.cpuPC(1) == pc1,
+                "Instruction barrier changed guest PCs or selected CPU");
+        for (unsigned i = 0; i < 31; ++i)
+            require(vm.reg(i) == registers[i], "Instruction barrier changed guest GPRs");
+        require(vm.systemReg(0xc080) == sctlr && vm.systemReg(0xc600) == vbar,
+                "Instruction barrier did not restore MMU/vector state");
+        observe(2);
+        vm.synchronizeInstructionContext(2);
+        require(vm.instructionContextBarriers(0) == 1 && vm.instructionContextBarriers(1) == 2,
+                "Instruction barrier ignored the target mask");
+        vm.synchronizeInstructionContext(0);
+        rejects([&] { vm.synchronizeInstructionContext(4); }, "Invalid barrier CPU mask accepted");
+        require(vm.instructionContextBarriers(1) == 2, "Empty/rejected barrier changed counters");
+        // Unexpected EL1 exceptions must hit the private vector guard and
+        // restore guest exception registers before reporting failure.
+        const uint32_t breakpoint = 0xd4200000, restoreBarrier = 0xd5033f9f;
+        vm.writeMemory(0x3fff0000, {reinterpret_cast<const uint8_t *>(&breakpoint), 4});
+        const auto oldElr = vm.systemReg(0xc201), oldEsr = vm.systemReg(0xc290);
+        for (auto mask : {1u, 2u})
+            rejects([&] { vm.synchronizeInstructionContext(mask); }, "Faulting instruction barrier acknowledged");
+        require(vm.systemReg(0xc201) == oldElr && vm.systemReg(0xc290) == oldEsr,
+                "Faulting instruction barrier corrupted exception context");
+        vm.writeMemory(0x3fff0000, {reinterpret_cast<const uint8_t *>(&restoreBarrier), 4});
+        // Exercise real cancellation and rollback on each vCPU owner thread.
+        const uint32_t infiniteLoop = 0x14000000, barrier = 0xd5033f9f;
+        vm.writeMemory(0x3fff0000, {reinterpret_cast<const uint8_t *>(&infiniteLoop), 4});
+        for (auto mask : {1u, 2u})
+            rejects([&] { vm.synchronizeInstructionContext(mask); }, "Incomplete instruction barrier acknowledged");
+        vm.writeMemory(0x3fff0000, {reinterpret_cast<const uint8_t *>(&barrier), 4});
+        vm.synchronizeInstructionContext(3);
+        require(vm.instructionContextBarriers(0) == 2 && vm.instructionContextBarriers(1) == 3,
+                "Barrier did not recover after canceled maintenance");
+        observe(2);
+    }
     for (bool gic : {false, true}) {
         uint64_t sleep = 0;
         HvfMachine vm(2 * 1024 * 1024, gic, [&] { return sleep; });
@@ -281,6 +352,9 @@ void selfTest() {
         for (unsigned i = 0; i < 10; ++i) vm.run(std::chrono::milliseconds(2));
         vm.readMemory(mailbox + 32, {reinterpret_cast<uint8_t *>(&last), sizeof(last)});
         require(last > first, "Watchdog cancellations starved a CPU beside an idle secondary");
+        vm.synchronizeInstructionContext(3);
+        require(vm.instructionContextBarriers(0) == 1 && vm.instructionContextBarriers(1) == 1,
+                "Instruction synchronization did not cover the WFI secondary");
     }
     {
         uint64_t sleep = 0;

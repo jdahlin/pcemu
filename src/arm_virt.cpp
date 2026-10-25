@@ -73,6 +73,10 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
+    hyperv.setContextSynchronizer([this](uint64_t targets) {
+        vm.synchronizeInstructionContext(targets);
+        return true;
+    });
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
     validateCpuTables(tables, c.cpus, c.hyperv);
@@ -224,6 +228,15 @@ std::string ArmVirtMachine::cpuState() const {
     }
     if (nvme) output << ' ' << nvme->diagnostics();
     return output.str();
+}
+std::string ArmVirtMachine::hypervReport() const {
+    auto report = hyperv.report(); report.resize(report.find_last_of('}'));
+    report += ",\"instructionContextBarriers\":[";
+    for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
+        if (cpu) report += ',';
+        report += std::to_string(vm.instructionContextBarriers(cpu));
+    }
+    return report + "]}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {
     bool level = rtc.irq();
