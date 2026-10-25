@@ -196,3 +196,20 @@ uses a compressed child of `win95.qcow2`. Its external desktop checkpoint
 adds only about 10 MiB, by snapshotting a small session child rather than
 copying the complete Office installation. Successful restore-test disks and
 the temporary desktop session disk were removed.
+
+### Persistent writable-overlay index
+
+A clean close now writes a disposable `.pcd.idx` sidecar containing the latest
+block offsets. Reopening an unchanged overlay loads this small index instead
+of scanning every compressed record. The cache checks the disk identity, size,
+nanosecond modification/change timestamps, logical geometry, entry bounds and
+its own checksum. A missing, stale or damaged cache falls back to scanning the
+authoritative `.pcd` records; failed cache writes do not prevent disk shutdown.
+The cache is atomically replaced with private permissions and can be deleted.
+A killed process or externally modified disk may still need one full scan.
+
+On the existing 6.8 GiB Windows 11 overlay, a local offline open/close took
+7.906 seconds without the cache and 0.164 seconds with it. This measures disk
+opening only, not total Windows boot time. No disk conversion or guest-byte
+change was involved. Regression coverage checks clean cached reopen, corrupted
+and stale cache fallback, appended writes, metadata changes and cancellation.

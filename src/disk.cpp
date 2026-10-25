@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <zstd.h>
 namespace pc {
@@ -58,8 +59,9 @@ uint64_t mappedInteger(const uint8_t *p, unsigned bytes) {
     return value;
 }
 } // namespace
-Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
+Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth, OpenProgress progress)
     : path(fs::absolute(name).lexically_normal().string()), floppy(fd), readOnly(ro) {
+    if (progress) progress(0, 0);
     if (depth > 64)
         throw std::runtime_error("COW disk parent chain too deep");
     file.open(path, std::ios::binary | std::ios::in | (ro ? std::ios::openmode(0) : std::ios::out));
@@ -87,7 +89,7 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
         auto parentPath = fs::path(parentName);
         if (parentPath.is_relative())
             parentPath = fs::path(path).parent_path() / parentPath;
-        parent = std::make_unique<Disk>(parentPath.string(), fd, true, depth + 1);
+        parent = std::make_unique<Disk>(parentPath.string(), fd, true, depth + 1, progress);
         if (sectors != parent->sectors)
             throw std::runtime_error("COW parent logical size mismatch");
         heads = parent->heads;
@@ -95,24 +97,28 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
         // Only record headers are needed to rebuild the index. A read-only,
         // constructor-scoped mapping avoids a seek/read syscall for every 4 KiB
         // record without allocating or decompressing the whole disk image.
-        ReadMapping mapping(path, fileBytes);
-        uint64_t at = headerSize;
-        while (at < fileBytes) {
-            if (fileBytes - at < 24)
-                throw std::runtime_error("Truncated COW disk record");
-            auto record = mapping.data + at;
-            auto block = mappedInteger(record, 8);
-            auto size = mappedInteger(record + 8, 4);
-            auto raw = mappedInteger(record + 12, 4);
-            if (block >= (sectors + 7) / 8 || raw != 4096 || !size ||
-                size > ZSTD_compressBound(4096) || fileBytes - at < 24 + size)
-                throw std::runtime_error("Invalid COW block record");
-            if (auto old = blocks.find(block); old != blocks.end())
-                liveBytes -= 24 + old->second.size;
-            blocks[block] = {at, uint32_t(size)};
-            liveBytes += 24 + size;
-            at += 24 + size;
+        if (!loadIndex()) {
+            ReadMapping mapping(path, fileBytes);
+            uint64_t at = headerSize, records = 0;
+            while (at < fileBytes) {
+                if (progress && (records++ % 4096) == 0) progress(at, fileBytes);
+                if (fileBytes - at < 24)
+                    throw std::runtime_error("Truncated COW disk record");
+                auto record = mapping.data + at;
+                auto block = mappedInteger(record, 8);
+                auto size = mappedInteger(record + 8, 4);
+                auto raw = mappedInteger(record + 12, 4);
+                if (block >= (sectors + 7) / 8 || raw != 4096 || !size ||
+                    size > ZSTD_compressBound(4096) || fileBytes - at < 24 + size)
+                    throw std::runtime_error("Invalid COW block record");
+                if (auto old = blocks.find(block); old != blocks.end())
+                    liveBytes -= 24 + old->second.size;
+                blocks[block] = {at, uint32_t(size)};
+                liveBytes += 24 + size;
+                at += 24 + size;
+            }
         }
+        if (progress) progress(fileBytes, fileBytes);
     } else if (!std::memcmp(signature, "QFI\xfb", 4)) {
         if (fd) throw std::runtime_error("QCOW2 cannot be used as a floppy");
         if (!ro) throw std::runtime_error("QCOW2 requires read-only access; create a COW overlay for writes");
@@ -164,6 +170,107 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
             }
         }
     }
+}
+namespace {
+// A cache is usable only for exactly the file that produced it. In particular,
+// same-size overwrites and atomically replaced/compacted disks invalidate it.
+std::array<uint64_t, 7> indexIdentity(const std::string &path) {
+    struct stat info{};
+    if (stat(path.c_str(), &info))
+        throw std::runtime_error("Cannot stat COW disk");
+#ifdef __APPLE__
+    auto modified = info.st_mtimespec, changed = info.st_ctimespec;
+#else
+    auto modified = info.st_mtim, changed = info.st_ctim;
+#endif
+    return {uint64_t(info.st_dev), uint64_t(info.st_ino), uint64_t(info.st_size),
+            uint64_t(modified.tv_sec), uint64_t(modified.tv_nsec),
+            uint64_t(changed.tv_sec), uint64_t(changed.tv_nsec)};
+}
+void appendIndex(std::vector<uint8_t> &bytes, uint64_t value, unsigned width = 8) {
+    for (unsigned i = 0; i < width; ++i) bytes.push_back(value >> (i * 8));
+}
+constexpr size_t indexHeaderBytes = 8 + 7 * 8 + 3 * 8;
+}
+Disk::~Disk() noexcept {
+    if (parent && !readOnly) {
+        try { flush(); saveIndex(); }
+        catch (...) { /* Cache failures must never prevent disk shutdown. */ }
+    }
+}
+bool Disk::loadIndex() {
+    try {
+        std::ifstream input(path + ".idx", std::ios::binary | std::ios::ate);
+        if (!input) return false;
+        auto length = input.tellg();
+        if (length < std::streamoff(indexHeaderBytes + 8) ||
+            uint64_t(length) > indexHeaderBytes + ((sectors + 7) / 8) * 20 + 8)
+            return false;
+        std::vector<uint8_t> bytes(static_cast<size_t>(length));
+        input.seekg(0);
+        input.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
+        if (!input || std::memcmp(bytes.data(), "PCIDX001", 8) ||
+            mappedInteger(bytes.data() + bytes.size() - 8, 8) !=
+                hashBlock(bytes.data(), bytes.size() - 8)) return false;
+        auto identity = indexIdentity(path);
+        size_t at = 8;
+        for (auto field : identity) {
+            if (mappedInteger(bytes.data() + at, 8) != field) return false;
+            at += 8;
+        }
+        if (mappedInteger(bytes.data() + at, 8) != sectors ||
+            mappedInteger(bytes.data() + at + 8, 8) != headerSize) return false;
+        auto count = mappedInteger(bytes.data() + at + 16, 8);
+        if (count != (bytes.size() - indexHeaderBytes - 8) / 20 ||
+            bytes.size() != indexHeaderBytes + count * 20 + 8) return false;
+        decltype(blocks) cached;
+        cached.reserve(count);
+        uint64_t live = 0;
+        for (at = indexHeaderBytes; at < bytes.size() - 8; at += 20) {
+            auto block = mappedInteger(bytes.data() + at, 8);
+            auto offset = mappedInteger(bytes.data() + at + 8, 8);
+            auto size = mappedInteger(bytes.data() + at + 16, 4);
+            if (block >= (sectors + 7) / 8 || offset < headerSize ||
+                offset > fileBytes || fileBytes - offset < 24 + size || !size ||
+                size > ZSTD_compressBound(4096) ||
+                !cached.emplace(block, Block{offset, uint32_t(size)}).second)
+                return false;
+            live += 24 + size;
+        }
+        blocks = std::move(cached);
+        liveBytes = live;
+        return true;
+    } catch (...) { return false; }
+}
+void Disk::saveIndex() {
+    auto identity = indexIdentity(path);
+    std::vector<uint8_t> bytes;
+    bytes.reserve(indexHeaderBytes + blocks.size() * 20 + 8);
+    for (auto c : std::string("PCIDX001")) bytes.push_back(c);
+    for (auto field : identity) appendIndex(bytes, field);
+    appendIndex(bytes, sectors);
+    appendIndex(bytes, headerSize);
+    appendIndex(bytes, blocks.size());
+    for (const auto &[block, entry] : blocks) {
+        appendIndex(bytes, block);
+        appendIndex(bytes, entry.offset);
+        appendIndex(bytes, entry.size, 4);
+    }
+    appendIndex(bytes, hashBlock(bytes.data(), bytes.size()));
+    auto temporary = path + ".idx.tmp.XXXXXX";
+    int fd = mkstemp(temporary.data());
+    if (fd < 0) return;
+    bool success = true;
+    size_t at = 0;
+    while (at < bytes.size()) {
+        auto written = ::write(fd, bytes.data() + at, bytes.size() - at);
+        if (written <= 0) { success = false; break; }
+        at += written;
+    }
+    if (close(fd)) success = false;
+    std::error_code ignored;
+    if (success) fs::rename(temporary, path + ".idx", ignored);
+    fs::remove(temporary, ignored);
 }
 void Disk::createOverlay(const std::string &destination, const std::string &parentName) {
     auto absolute = fs::absolute(parentName).lexically_normal().string();

@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -15,8 +16,10 @@ struct Disk {
     uint64_t sectors = 0;
     unsigned heads = 16, spt = 63;
     bool floppy = false;
+    using OpenProgress = std::function<void(uint64_t indexedBytes, uint64_t totalBytes)>;
     explicit Disk(const std::string &path, bool isFloppy = false, bool readOnly = false,
-                  unsigned depth = 0);
+                  unsigned depth = 0, OpenProgress progress = {});
+    ~Disk() noexcept;
     static void createOverlay(const std::string &path, const std::string &parent);
     bool read(uint64_t lba, unsigned count, uint8_t *data);
     bool write(uint64_t lba, unsigned count, const uint8_t *data);
@@ -41,5 +44,7 @@ struct Disk {
     std::array<uint8_t, 4096> cachedData{};
     void readBlock(uint64_t index, std::array<uint8_t, 4096> &data);
     void compact();
+    bool loadIndex();
+    void saveIndex();
 };
 } // namespace pc
