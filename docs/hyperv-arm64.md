@@ -1210,3 +1210,38 @@ matching the observed Windows configuration and multiclient SINT2/SGI0.
 
 The final RAM-only native run passes all 281 checks with ordinary SINT2/PPI31
 and multiclient SINT2/SGI0 routing. No RAW disk fixture was recreated.
+
+### GPADL assembly and guest-memory mapping
+
+`ArmGpadl` provides the shared-memory foundation for VMBus channels. It collects
+serialized GPA ranges across header/body-sized fragments and validates every
+PFN before exposing a complete mapping. It supports noncontiguous pages,
+nonzero first-page offsets and multiple logical ranges, using the layouts in
+[Microsoft's VMBus protocol definitions](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/devices/vmbus/vmbus_core/src/protocol.rs).
+
+IDs are unique in the table and owned by a channel. Incomplete descriptors
+cannot be read or written. A rejected final fragment leaves the preceding
+fragments intact for retry. Host transfers validate the whole logical span
+before touching memory and walk physical-page/range boundaries; wrong-owner,
+wraparound, out-of-range and overlapping host/guest buffers fail without partial
+writes. The table is limited to 64 descriptors and the wire's 16-bit range-byte
+length; lengths/counts are checked before PFN allocation. Channel cleanup removes
+both pending and ready descriptions. APIs require all VPs stopped, as do the
+existing ARM device models.
+
+The tests independently verify the physical bytes changed by a cross-page write,
+full readback of fragmented ranges, interrupted/retried construction, interleaved
+IDs, real 216/224-byte fragment sizes, channel ownership, resource exhaustion,
+invalid PFNs and integer boundaries. A deterministic malformed-descriptor corpus
+also runs under AddressSanitizer and UndefinedBehaviorSanitizer. Run
+`make test-arm-gpadl`; this diskless portable check is included in `test` and
+`test-hvf`.
+
+This manager is not yet attached to GPADL_HEADER/BODY/TEARDOWN messages in the
+running bus. The wire lifecycle must be coupled to real offered/open channels,
+and ring transport and integration services still remain. The runtime continues
+to report zero offered channels rather than accepting descriptors for fictional
+devices. No Windows installation or RAW disk fixture was recreated for this work.
+
+GPADL foundation validation: all 1,581 checks pass in optimized and
+AddressSanitizer/UndefinedBehaviorSanitizer builds.

@@ -7,7 +7,8 @@
 #include <utility>
 #include <vector>
 namespace pc {
-// VTL0 VMBus control protocol. No channel offers or GPADLs are implemented yet.
+// VTL0 VMBus control protocol. Channel offers and GPADL wire handling are
+// not attached yet; ArmGpadl provides the separate mapping/assembly foundation.
 // Invoked only with guest VPs stopped, like ArmHyperV/SynIC.
 class ArmVmbus {
   public:

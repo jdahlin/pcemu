@@ -248,3 +248,14 @@ test-qcow2-interop: build/qcow2-tests
 	python3 tests/test_qcow2_interop.py
 
 build/pcemu-hvf build/virtio-tests build/vhdx-tests build/nvme-tests build/virtio-rng-tests build/disk-progress-tests: src/qcow2.hpp
+
+# VMBus guest-memory descriptors are portable and require no disk or hypervisor.
+.PHONY: test-arm-gpadl
+test-arm-gpadl: build/arm-gpadl-tests
+	./build/arm-gpadl-tests
+
+build/arm-gpadl-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp tests/arm_gpadl_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp tests/arm_gpadl_test.cpp -o $@
+
+test test-hvf: test-arm-gpadl
