@@ -67,7 +67,7 @@ def verify(report, baseline, kernel_build=26100):
             and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
             'Off-mode Windows baseline unexpectedly used Hyper-V registers')
     unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51, 0x8001)
-                   and not (row.get('code') in (0x2, 0x13, 0xd6, 0x19, 0x1a, 0xb, 0x15) and row.get('failures') == 0)]
+                   and not (row.get('code') in (0x2, 0x13, 0xd6, 0x19, 0x1a, 0xb, 0x15, 0x5c, 0x5d) and row.get('failures') == 0)]
     clock = registers.get(0x90004, {})
     last_time = report.get('referenceTime100ns', 0)
     clock_observed = (not errors and type(clock.get('reads')) is int
@@ -114,7 +114,15 @@ def verify(report, baseline, kernel_build=26100):
                     and type(ipi_native) is list and len(ipi_native) == len(vps)
                     and all(type(n) is int and n >= 0 for n in ipi_native)
                     and any(ipi_targets) and ipi_native == ipi_targets)
-    return {'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
+    def connection_observed(code, counter):
+        row = next((row for row in calls if row.get('code') == code), {})
+        accepted = report.get(counter)
+        return (not errors and type(accepted) is int and accepted > 0
+                and accepted == counts.get(code) and row.get('failures') == 0)
+    message_posts_observed = connection_observed(0x5c, 'postedMessages')
+    event_signals_observed = connection_observed(0x5d, 'signaledEvents')
+    return {'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
+            'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
             'guiBootVerified': False, 'performanceBenefitVerified': False}

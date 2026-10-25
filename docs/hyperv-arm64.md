@@ -721,7 +721,7 @@ page bounds, full queues, FIFO draining, disabled-page retention and backend
 failure rollback. The native two-VP fixture routes an actual event through
 PPI 16 and messages through PPI 31, requiring GIC IAR1/EOIR1 acknowledgments.
 
-SynIC remains unadvertised. Guest connection/port hypercalls and complete ARM response-buffer semantics
+SynIC remains unadvertised. Root port-management hypercalls and complete ARM response-buffer semantics
 still require implementation or applicability verification. Windows SynIC
 consumption has not been established by these host-driven native tests.
 
@@ -809,3 +809,66 @@ checks, plus the CLI, platform and Windows-auditor suites. The extended EFI
 probe passes in both off/basic modes; artifacts for this run are under
 `build/hyperv-research/rollover-rescan-smoke.log` and its reported local
 `build/hyperv-smoke-*` directory.
+
+## Guest messages and event connections
+
+HvCallPostMessage (0x5c) and HvCallSignalEvent (0x5d) now dispatch to explicit
+host-bound endpoints. Bindings are partition-local, unscoped 24-bit connection
+IDs, capped at 64. Duplicate IDs, empty callbacks and invalid flag ranges are
+rejected. Removing an endpoint does not revoke its partition privilege; later
+calls to that ID fail InvalidConnectionId. A callback may remove its own
+binding safely. Message payload spans are borrowed only for the handler call.
+
+PostMessage accepts the 256-byte memory packet in either ARM HVC ABI. It
+validates reserved fields, nonzero guest message types with bit 31 clear,
+payload length up to 240, GPA alignment and page/RAM bounds. Fast PostMessage
+is rejected because the fixed packet exceeds this backend's 128-byte fast
+input area. SignalEvent accepts memory and fast input in both ABIs and checks
+the relative flag against the endpoint's range. Output GPA/pair padding is
+ignored because neither call has an output packet. Rep, variable-header,
+nested and reserved controls fail before invoking an endpoint.
+
+The host callback's status is preserved, including backpressure and SynIC
+errors. A wrong endpoint type fails InvalidPortId. Missing IDs and unsupported
+connection scopes fail InvalidConnectionId. No callback means no fabricated
+success. The implementation follows Microsoft's
+[PostMessage](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallpostmessage)
+and [SignalEvent](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallsignalevent)
+packets and the corresponding OpenVMM types.
+
+Binding the first message/event receiver grants and reports PostMessages
+(privilege bit 36) / SignalEvents (bit 37), respectively. Calls without that
+privilege or guest identity return AccessDenied. Normal VM construction binds
+no endpoints, so these privileges remain off. This does not advertise SynIC,
+create root-partition ports, install a VMBus receiver or claim integration
+services. Root port management, scoped IDs and the VMBus protocol remain
+separate pending work.
+
+Successful handler acceptance increments `postedMessages` / `signaledEvents`.
+The Windows auditor's `messagePostsObserved` / `eventSignalsObserved` gates
+require matching positive, failure-free call and acceptance counts with a
+valid Windows trace. These gates prove accepted requests, not guest handler
+execution, host service completion or a performance benefit.
+
+The native fixture executes an actual fast SMCCC SignalEvent and memory
+legacy PostMessage. Host endpoints route them to a SynIC event bit and message
+slot; the guest must acknowledge both PPI 16 notifications through IAR1/EOIR1.
+Shared RAM is checked for the relative event flag and exact message bytes.
+Portable tests additionally cover all SignalEvent ABI/transports, both memory
+PostMessage ABIs, malformed packets, deleted/wrong-type endpoints, coalescing,
+backpressure, callback self-removal, binding bounds and privilege reporting.
+
+Fast PostMessage rejection is also consistent with OpenVMM's fixed-size
+[hypercall definition](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/imp.rs)
+and [fast-input parser](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/support.rs):
+this is a 256-byte simple input, not a variable-size fast packet. Unaligned
+GPAs fail InvalidAlignment; straddling/unmapped inputs fail InvalidHypercallInput.
+
+Validation passes 1,758 portable Hyper-V checks, 271 native checks and 11
+Windows-auditor tests through `make test-hvf`. The normal off/basic EFI probe
+also passes with no host endpoint bindings. An older native fixture's generic
+HVC assertion failed intermittently during development, outside the new
+connection fixture. The helper now includes caller line, exit reason, PC and
+syndrome for diagnosis. Six repeated native runs and the final complete suite
+pass; no cause or fix for that intermittent assertion is claimed. Logs are
+retained under `build/hyperv-research/connection-*` and `connections-*`.

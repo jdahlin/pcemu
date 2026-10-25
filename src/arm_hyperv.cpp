@@ -57,6 +57,18 @@ void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
     privateInterruptSender = std::move(send);
     synic.setInterruptSender(privateInterruptSender);
 }
+bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
+    if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
+    connections.emplace(id, Connection{std::move(handler), {}, 0});
+    allowPostMessages = true; return true;
+}
+bool ArmHyperV::bindEventConnection(uint32_t id, unsigned flagCount, EventHandler handler) {
+    if (id > 0xffffff || !handler || !flagCount || flagCount > 65536 ||
+        connections.contains(id) || connections.size() >= 64) return false;
+    connections.emplace(id, Connection{{}, std::move(handler), flagCount});
+    allowSignalEvents = true; return true;
+}
+bool ArmHyperV::removeConnection(uint32_t id) { return connections.erase(id) != 0; }
 ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
     auto it = registers.find(name);
     if (it != registers.end()) return &it->second;
@@ -79,7 +91,9 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     if (name == 0x215) { value[0] = (1ull << 63) | (1ull << 62); return 0; }
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
-    case 0x200: value[0] = privileges; value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
+    case 0x200:
+        value[0] = privileges | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
+        value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
     case 0x201: value[0] = 0xffffffff00000000ull | (interruptSender ? 4 : 0); return 0; // Recommend IPIs only with a real interrupt backend
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
@@ -218,6 +232,51 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
+    if (code == 0x5c || code == 0x5d) {
+        if (!guestId || (code == 0x5c ? !allowPostMessages : !allowSignalEvents)) return accessDenied;
+        if (vp >= cpus || (control & ~uint64_t(0x1ffff))) return invalidInput;
+        const bool message = code == 0x5c;
+        const bool fast = control & 0x10000;
+        const size_t size = message ? 256 : 8;
+        const unsigned in = smccc ? 2 : 1;
+        std::array<uint8_t, 256> bytes{};
+        if (fast) {
+            // The fixed PostMessage packet is larger than ARM's 128-byte
+            // fast input area. SignalEvent fits in one register pair.
+            if (message) return invalidInput;
+            put(bytes, 0, r[in], 8);
+        } else {
+            const auto address = r[in];
+            if (address & 7) return invalidAlignment;
+            if (size > 4096 - (address & 4095) || address < base ||
+                address - base > ram.size() || size > ram.size() - (address - base)) return invalidInput;
+            std::copy_n(ram.begin() + size_t(address - base), size, bytes.begin());
+        }
+        const auto id = uint32_t(get(bytes, 0, 4));
+        if (message) {
+            const auto type = uint32_t(get(bytes, 8, 4));
+            const auto length = get(bytes, 12, 4);
+            if (get(bytes, 4, 4) || !type || (type & 0x80000000) || length > 240) return invalidParameter;
+        } else if (get(bytes, 6, 2)) return invalidParameter;
+        auto found = connections.find(id);
+        if (found == connections.end()) return 0x12; // InvalidConnectionId, including unsupported scopes.
+        // Copy callbacks so an endpoint can safely remove its own binding.
+        auto endpoint = found->second;
+        uint16_t status;
+        if (message) {
+            if (!endpoint.message) return 0x11; // InvalidPortId: wrong endpoint type.
+            status = endpoint.message(vp, uint32_t(get(bytes, 8, 4)),
+                std::span<const uint8_t>(bytes).subspan(16, size_t(get(bytes, 12, 4))));
+            if (!status) ++postedMessages;
+        } else {
+            if (!endpoint.event) return 0x11;
+            const auto flag = uint16_t(get(bytes, 4, 2));
+            if (flag >= endpoint.flagCount) return invalidParameter;
+            status = endpoint.event(vp, flag);
+            if (!status) ++signaledEvents;
+        }
+        return status;
+    }
     if (code == 0xd6) {
         // ARM enlightened TLB drain: Windows supplies no input or output
         // parameters, after consulting its partition-info pending-flush word.
@@ -401,6 +460,7 @@ std::string ArmHyperV::report() const {
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"syntheticTimerDeliveries\":" << timers.delivered()
+      << ",\"postedMessages\":" << postedMessages << ",\"signaledEvents\":" << signaledEvents
       << ",\"ipiRequests\":" << ipiRequests << ",\"ipiTargetMask\":" << ipiTargetMask
       << ",\"ipiVector\":" << ipiVector
       << ",\"crash\":" << crashReport()

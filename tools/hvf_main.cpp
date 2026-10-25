@@ -11,6 +11,8 @@
 #include <iterator>
 #include <limits>
 #include <stdexcept>
+#include <source_location>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -53,13 +55,17 @@ template <size_t N> void code(HvfMachine &vm, const std::array<uint32_t, N> &wor
                    {reinterpret_cast<const uint8_t *>(words.data()), sizeof(words)});
     vm.start(HvfMachine::ramBase);
 }
-HvfMachine::Exit hvc(HvfMachine &vm) {
+HvfMachine::Exit hvc(HvfMachine &vm, std::source_location caller = std::source_location::current()) {
     auto exit = vm.run();
     // A watchdog request racing a completed exit may leave one pending cancel.
     for (unsigned retry = 0; retry < 2 && exit.reason == HvfMachine::ExitReason::Canceled; ++retry)
         exit = vm.run();
+    std::ostringstream diagnostic;
+    diagnostic << "Expected an AArch64 HVC exit at test line " << caller.line()
+               << ": reason=" << unsigned(exit.reason) << " pc=0x" << std::hex << exit.pc
+               << " syndrome=0x" << exit.syndrome;
     require(exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16,
-            "Expected an AArch64 HVC exit");
+            diagnostic.str().c_str());
     return exit;
 }
 void selfTest() {
@@ -471,6 +477,69 @@ void selfTest() {
                 "IRQ handler did not ERET to the interrupted guest");
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 5,
                 "Vectored IRQ changed the wrong request counter");
+    }
+    {
+        // An actual guest submits fast SMCCC SignalEvent and memory legacy
+        // PostMessage. Both host endpoints route to its SynIC PPI 16; guest
+        // IAR/EOI and the shared event/message pages must show real effects.
+        HvfMachine vm(2 * 1024 * 1024, true);
+        pc::ArmHyperV hyperv(true, vm.ram(), HvfMachine::ramBase, 1);
+        pc::ArmHyperV::Registers registers{};
+        registers[0] = 0x46000001; registers[1] = 0x100010051;
+        registers[2] = UINT64_MAX; registers[3] = 0xfffffffe;
+        registers[4] = 0x90002; registers[6] = 0x5043454d55;
+        require(hyperv.call(0, registers, 0) && registers[0] == (1ull << 32), "Connection fixture identity failed");
+        auto &synic = hyperv.synicController();
+        require(synic.write(0xa0010, 0, 1) == 0 &&
+                synic.write(0xa0012, 0, HvfMachine::ramBase + 0x19001) == 0 &&
+                synic.write(0xa0013, 0, HvfMachine::ramBase + 0x1a001) == 0 &&
+                synic.write(0xa0002, 0, 16) == 0, "Connection fixture SynIC setup failed");
+        hyperv.setPrivateInterruptSender([&](uint64_t targets, unsigned vector) {
+            vm.sendPrivateInterrupt(targets, vector); return true;
+        });
+        require(hyperv.bindEventConnection(42, 10, [&](unsigned, uint16_t relative) {
+            bool newly = false; return synic.signalEvent(0, 2, 100 + relative, newly);
+        }), "Native event endpoint binding failed");
+        require(hyperv.bindMessageConnection(7, [&](unsigned, uint32_t type, std::span<const uint8_t> payload) {
+            return synic.postMessage(0, 2, type, 0, payload);
+        }), "Native message endpoint binding failed");
+        std::array<uint8_t, 256> packet{};
+        packet[0] = 7; packet[8] = 1; packet[12] = 3;
+        packet[16] = 11; packet[17] = 22; packet[18] = 33;
+        vm.writeMemory(HvfMachine::ramBase + 0x18000, packet);
+        // Group-1 GIC setup, fast event call, IAR/EOI, slow message call,
+        // IAR/EOI, then success/failure HVC markers (DAIF stays masked).
+        code(vm, std::array<uint32_t, 47>{
+            0xd53800a0, 0x92401c00, 0xd2a10161, 0x8b004421, 0x12800002, 0xb9008022,
+            0xb9010022, 0xd2a10003, 0x52800262, 0xb9000062, 0xd2800022, 0xd518cca2,
+            0xd5033fdf, 0xd2801fe2, 0xd5184602, 0xd2800022, 0xd518cce2, 0xd5033fdf,
+            0xd2800020, 0xf2a8c000, 0xd2800ba1, 0xf2a00021, 0xd2800542, 0xf2c00062,
+            0x92800003, 0xd4000002, 0xb5000260, 0xd538cc04, 0xf100409f, 0x54000201,
+            0xd518cc24, 0xd5033fdf, 0xd2800b80, 0xd2900001, 0xf2a80021, 0x92800002,
+            0xd4000022, 0xb5000100, 0xd538cc04, 0xf100409f, 0x540000a1, 0xd518cc24,
+            0xd5033fdf, 0xd4000aa2, 0x14000000, 0xd4000cc2, 0x14000000
+        });
+        bool finished = false;
+        for (unsigned attempt = 0; attempt < 16 && !finished; ++attempt) {
+            auto exit = vm.run(std::chrono::milliseconds(100));
+            if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+            require(exit.exceptionClass() == 0x16, "Unexpected native connection guest exit");
+            auto immediate = unsigned(exit.syndrome & 0xffff);
+            if (immediate <= 1) {
+                for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
+                require(hyperv.call(immediate, registers, 0) && registers[0] == 0,
+                        "Native connection hypercall failed");
+                for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
+            } else {
+                require(immediate == 0x55 && vm.reg(4) == 16, "Native connection guest did not acknowledge both PPIs");
+                finished = true;
+            }
+        }
+        require(finished && vm.privateInterruptRequests(0) == 2, "Native connection delivery did not complete");
+        require(vm.ram()[0x19000 + 512 + 103 / 8] == 128 &&
+                vm.ram()[0x1a000 + 512] == 1 && vm.ram()[0x1a000 + 512 + 4] == 3 &&
+                vm.ram()[0x1a000 + 512 + 16] == 11 && vm.ram()[0x1a000 + 512 + 18] == 33,
+                "Native connection guest RAM effects are incorrect");
     }
     for (bool gic : {false, true}) {
         uint64_t sleep = 0;

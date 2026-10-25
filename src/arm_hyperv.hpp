@@ -28,6 +28,14 @@ class ArmHyperV {
     std::optional<uint64_t> serviceDelay100ns() const;
     bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
     void setPrivateInterruptSender(SoftwareInterruptSender send);
+    // Message payloads are borrowed only for the synchronous handler call.
+    using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
+    using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
+    // Trusted host setup only. IDs are partition-local, unscoped 24-bit IDs;
+    // duplicate bindings and an unbounded number of endpoints are rejected.
+    bool bindMessageConnection(uint32_t id, MessageHandler handler);
+    bool bindEventConnection(uint32_t id, unsigned flagCount, EventHandler handler);
+    bool removeConnection(uint32_t id);
     ArmSynic &synicController() { return synic; }
     std::string report() const;
     // One bounded last-event snapshot, drained by the platform after each HVC.
@@ -38,6 +46,10 @@ class ArmHyperV {
     ArmSynic synic;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;
+    struct Connection { MessageHandler message; EventHandler event; unsigned flagCount = 0; };
+    std::map<uint32_t, Connection> connections;
+    uint64_t postedMessages = 0, signaledEvents = 0;
+    bool allowPostMessages = false, allowSignalEvents = false;
     SoftwareInterruptSender interruptSender;
     uint64_t ipiRequests = 0, ipiTargetMask = 0;
     unsigned ipiVector = 0;

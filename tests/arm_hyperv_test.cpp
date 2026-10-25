@@ -775,5 +775,85 @@ int main() {
     check(orderedWrap.nextDeadline() == UINT64_MAX - 4 && orderedWrap.nextDelay(UINT64_MAX - 9) == 5);
     orderedWrap.service(UINT64_MAX - 4); check(orderedMask == 2 && orderedWrap.nextDeadline() == 10);
     orderedWrap.service(10); check(orderedMask == 3 && orderedWrap.nextDeadline() == 30);
+    std::vector<uint8_t> connectionRam(8192);
+    ArmHyperV connected(true, connectionRam, base, 2);
+    auto connectedWrite = [&](uint32_t reg, uint64_t value) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = reg; r[6] = value;
+        check(connected.call(0, r, 0) && r[0] == one);
+    };
+    auto connectionCall = [&](bool message, bool smccc, bool fast, uint64_t controlExtra = 0, uint64_t input = base) {
+        r.fill(0xabcdef);
+        r[0] = smccc ? 0x46000001 : ((message ? 0x5c : 0x5d) | (fast ? 0x10000 : 0) | controlExtra);
+        if (smccc) r[1] = (message ? 0x5c : 0x5d) | (fast ? 0x10000 : 0) | controlExtra;
+        unsigned start = smccc ? 2 : 1;
+        r[start] = fast ? get(connectionRam, 0) : input;
+        r[start + 1] = UINT64_MAX; // No output buffer; fast pair padding ignored.
+        check(connected.call(smccc ? 0 : 1, r, 1)); return r[0];
+    };
+    check(connectionCall(false, true, true) == 6);
+    connectedWrite(0x90002, 0x1000a000066bbull);
+    check(connectionCall(true, false, false) == 6); // No host endpoints or privilege yet.
+    auto &receiver = connected.synicController();
+    check(receiver.write(0xa0010, 0, 1) == 0 && receiver.write(0xa0012, 0, base + 4096 + 1) == 0);
+    check(receiver.write(0xa0002, 0, 16) == 0);
+    unsigned connectionIrqs = 0;
+    connected.setPrivateInterruptSender([&](uint64_t mask, unsigned vector) {
+        check(mask == 1 && vector == 16); ++connectionIrqs; return true;
+    });
+    check(connected.bindEventConnection(42, 10, [&](unsigned vp, uint16_t relative) {
+        check(vp == 1); bool newly = false;
+        return receiver.signalEvent(0, 2, 100 + relative, newly);
+    }));
+    check(!connected.bindEventConnection(42, 10, [](unsigned, uint16_t) { return 0; }));
+    check(!connected.bindEventConnection(43, 0, [](unsigned, uint16_t) { return 0; }));
+    check(!connected.bindMessageConnection(0x1000000, [](unsigned, uint32_t, std::span<const uint8_t>) { return 0; }));
+    for (bool smccc : {false, true}) for (bool fast : {false, true}) {
+        put(connectionRam, 0, 42 | (3ull << 32));
+        check(connectionCall(false, smccc, fast) == 0);
+        check(connectionRam[4096 + 512 + 103 / 8] & (1 << (103 % 8)));
+    }
+    check(connectionIrqs == 1); // Duplicate accepted event requests coalesce.
+    put(connectionRam, 0, 42 | (10ull << 32)); check(connectionCall(false, true, true) == 5);
+    put(connectionRam, 0, 42 | (1ull << 48)); check(connectionCall(false, true, true) == 5);
+    put(connectionRam, 0, 99); check(connectionCall(false, true, true) == 0x12);
+    put(connectionRam, 0, 0x8000002a); check(connectionCall(false, true, true) == 0x12);
+    check(connected.bindMessageConnection(7, [&](unsigned vp, uint32_t type, std::span<const uint8_t> payload) {
+        check(vp == 1 && type == 1 && payload.size() == 240 && payload[0] == 11 && payload[239] == 22);
+        return uint16_t(0);
+    }));
+    for (bool smccc : {false, true}) {
+        std::fill(connectionRam.begin(), connectionRam.begin() + 256, 0);
+        put(connectionRam, 0, 7, 4); put(connectionRam, 8, 1, 4); put(connectionRam, 12, 240, 4);
+        connectionRam[16] = 11; connectionRam[255] = 22;
+        check(connectionCall(true, smccc, false) == 0);
+        check(connectionCall(true, smccc, true) == 3);
+        for (auto extra : {one, 1ull << 17, 1ull << 31, 1ull << 48})
+            check(connectionCall(true, smccc, false, extra) == 3);
+        check(connectionCall(true, smccc, false, 0, base + 1) == 4);
+        check(connectionCall(true, smccc, false, 0, base + 4096 - 8) == 3);
+        check(connectionCall(true, smccc, false, 0, base + 8192) == 3);
+    }
+    put(connectionRam, 8, 0, 4); check(connectionCall(true, true, false) == 5);
+    put(connectionRam, 8, 0x80000001, 4); check(connectionCall(true, true, false) == 5);
+    put(connectionRam, 8, 1, 4); put(connectionRam, 12, 241, 4); check(connectionCall(true, true, false) == 5);
+    put(connectionRam, 12, 240, 4); put(connectionRam, 4, 1, 4); check(connectionCall(true, true, false) == 5);
+    put(connectionRam, 4, 0, 4); put(connectionRam, 0, 42, 4); check(connectionCall(true, true, false) == 0x11);
+    put(connectionRam, 0, 7); check(connectionCall(false, true, true) == 0x11);
+    check(connected.removeConnection(7) && !connected.removeConnection(7));
+    check(connected.bindMessageConnection(7, [&](unsigned, uint32_t, std::span<const uint8_t>) {
+        check(connected.removeConnection(7)); return uint16_t(0x13);
+    }));
+    put(connectionRam, 8, 1, 4); put(connectionRam, 12, 0, 4);
+    check(connectionCall(true, true, false) == 0x13); // Preserve endpoint backpressure.
+    check(connectionCall(true, true, false) == 0x12); // Callback removed itself safely.
+    check(connected.report().find("\"postedMessages\":2") != std::string::npos);
+    check(connected.report().find("\"signaledEvents\":4") != std::string::npos);
+    for (uint32_t id = 100; id < 163; ++id)
+        check(connected.bindMessageConnection(id, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    check(!connected.bindMessageConnection(163, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
+    r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
+    check(connected.call(0, r, 0) && r[0] == one && r[6] == (features | (1ull << 36) | (1ull << 37)));
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

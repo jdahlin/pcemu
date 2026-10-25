@@ -140,6 +140,24 @@ class WindowsHyperV(unittest.TestCase):
         report['failures'] += 1
         self.assertFalse(verify(report, baseline)['ipiObserved'])
 
+    def test_connection_usage_requires_accepted_requests(self):
+        report, baseline = fixture()
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        report['calls'] += [dict(code=0x5c, count=2, failures=0), dict(code=0x5d, count=3, failures=0)]
+        report.update(legacyCalls=23, postedMessages=2, signaledEvents=3)
+        result = verify(report, baseline)
+        self.assertTrue(result['messagePostsObserved'])
+        self.assertTrue(result['eventSignalsObserved'])
+        self.assertFalse(any(row['code'] in (0x5c, 0x5d) for row in result['unsupportedCalls']))
+        for field, counter in (('messagePostsObserved', 'postedMessages'), ('eventSignalsObserved', 'signaledEvents')):
+            for value in (None, 0, 1, True):
+                self.assertFalse(verify(dict(report, **{counter: value}), baseline)[field])
+            self.assertFalse(verify(dict(report, guestOsId=0x5043454d55), baseline)[field])
+        report['calls'][-1]['failures'] = 1
+        report['failures'] += 1
+        self.assertFalse(verify(report, baseline)['eventSignalsObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),
