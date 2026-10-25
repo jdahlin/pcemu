@@ -532,7 +532,7 @@ int main() {
     check(synic.write(0xa0013, 1, base + 4096 + 1) == 0);
     check(std::all_of(synicRam.begin(), synicRam.begin() + 8192, [](auto b) { return b == 0; }));
     check(synic.write(0xa0010, 1, 1) == 0);
-    for (uint64_t bad : {uint64_t(15), uint64_t(32), 16ull | (1ull << 17), 16ull | (1ull << 20)})
+    for (uint64_t bad : {uint64_t(32), uint64_t(255), 16ull | (1ull << 17), 16ull | (1ull << 20)})
         check(synic.write(0xa0002, 1, bad) == 5);
     check(synic.write(0xa0002, 1, 16) == 0);
     check(synic.signalEvent(1, 2, 0, newly) == 0x71 && !newly && synicRam[512] == 0);
@@ -855,5 +855,24 @@ int main() {
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
     r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
     check(connected.call(0, r, 0) && r[0] == one && r[6] == (features | (1ull << 36) | (1ull << 37)));
+    // ARM SynIC sources may target SGIs as well as PPIs. The controller
+    // must pass the INTID unchanged, including zero, without an APIC offset.
+    std::vector<uint8_t> sgiRam(4096);
+    ArmSynic sgiSynic(sgiRam, base, 1);
+    check(sgiSynic.write(0xa0010, 0, 1) == 0 && sgiSynic.write(0xa0012, 0, base + 1) == 0);
+    unsigned sgiNotifications = 0, expectedIntid = 0;
+    sgiSynic.setInterruptSender([&](uint64_t mask, unsigned intid) {
+        check(mask == 1 && intid == expectedIntid); ++sgiNotifications; return true;
+    });
+    for (unsigned intid = 0; intid < 32; ++intid) {
+        expectedIntid = intid;
+        check(sgiSynic.write(0xa0001, 0, intid) == 0);
+        check(sgiSynic.read(0xa0001, 0, value) == 0 && value == intid);
+        check(sgiSynic.signalEvent(0, 1, intid, newly) == 0 && newly);
+        check(sgiRam[256 + intid / 8] & (1u << (intid % 8)));
+    }
+    check(sgiNotifications == 32);
+    check(sgiSynic.write(0xa0001, 0, 32) == 5);
+    check(sgiSynic.read(0xa0001, 0, value) == 0 && value == 31);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

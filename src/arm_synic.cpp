@@ -55,10 +55,9 @@ uint16_t ArmSynic::write(uint32_t name, unsigned vp, uint64_t value) {
     if (vp >= cpus) return invalidVp;
     auto &v = state[vp];
     if (name >= 0xa0000 && name < 0xa0010) {
-        // ARM uses a per-CPU PPI. AutoEOI/proxy are not implemented; never
+        // ARM uses a private INTID (SGI or PPI). AutoEOI/proxy are not implemented; never
         // silently accept the x64 APIC behavior on the virtual GIC.
         if (value & ~(uint64_t(31) | masked | polling)) return invalidParameter;
-        if (!(value & masked) && (value & 31) < 16) return invalidParameter;
         v.sint[name - 0xa0000] = value;
         return 0;
     }

@@ -699,7 +699,7 @@ The host event path sets one of 2,048 flags per SINT and requests a real GIC
 interrupt only when the bit changes from zero. Masked sources fail without
 changing RAM; polling sources set flags without an interrupt. Failed native
 injection rolls back the newly set bit. ARM SINT routing currently supports
-PPI INTIDs 16..31, consistent with the Linux kernel's
+private INTIDs 0..31 (SGIs and PPIs). PPI routing is also used by the Linux kernel's
 [ARM VMBus interrupt model](https://kernel.org/doc/html/next/virt/hyperv/vmbus.html).
 AutoEOI and proxy modes are rejected: the x64 APIC behavior must not be
 silently applied to an ARM GIC.
@@ -852,7 +852,7 @@ execution, host service completion or a performance benefit.
 
 The native fixture executes an actual fast SMCCC SignalEvent and memory
 legacy PostMessage. Host endpoints route them to a SynIC event bit and message
-slot; the guest must acknowledge both PPI 16 notifications through IAR1/EOIR1.
+slot; the guest must acknowledge both SGI 0 notifications through IAR1/EOIR1.
 Shared RAM is checked for the relative event flag and exact message bytes.
 Portable tests additionally cover all SignalEvent ABI/transports, both memory
 PostMessage ABIs, malformed packets, deleted/wrong-type endpoints, coalescing,
@@ -872,3 +872,25 @@ connection fixture. The helper now includes caller line, exit reason, PC and
 syndrome for diagnosis. Six repeated native runs and the final complete suite
 pass; no cause or fix for that intermittent assertion is claimed. Logs are
 retained under `build/hyperv-research/connection-*` and `connections-*`.
+
+
+## ARM SynIC SGI routing correction
+
+SINT validation now accepts all private GIC INTIDs 0..31, including SGI 0 and
+15, without an APIC-vector offset. The earlier PPI-only restriction was too
+narrow. Microsoft's ARM64 SynIC driver
+[patch cover letter](https://lwn.net/Articles/1056967/) explicitly permits SGI
+or PPI INTIDs; the virtual GIC backend already implements both. Reserved vector
+bits, AutoEOI and proxy flags still fail. The portable fixture checks every
+INTID 0..31, exact readback, flag writes and unchanged callback routing; INTID
+32 must fail without altering the previous SINT value. The native connection
+fixture now receives both guest-triggered notifications on SGI 0, while the
+other SynIC/timer fixtures retain their PPI checks.
+
+The original Windows ARM64 kernel's HalpIsSynicAvailable at RVA 0x486420 tests
+feature bit 2 from HviGetHypervisorFeatures. This establishes the discovery
+gate to exercise in a subsequent isolated Windows run; it is not proof that
+Windows has initialized or consumed SynIC. SIRBP remains unsupported pending
+its actual guest contract. The Linux MSHV root driver uses it for event-ring
+notifications, which alone does not establish a requirement for this Windows
+child guest. SynIC privileges remain off in the normal profile.
