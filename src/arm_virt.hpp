@@ -63,8 +63,8 @@ class ArmVirtMachine {
     std::string cpuState() const;
     std::string hypervReport() const;
     // Call between run slices, with all VPs stopped. Never forces host poweroff.
-    bool requestGuestShutdown() {
-        return hyperv.requestShutdown(ArmHyperVShutdown::Action::PowerOff);
+    bool requestGuestShutdown(ArmHyperVShutdown::Action action = ArmHyperVShutdown::Action::PowerOff) {
+        return hyperv.requestShutdown(action);
     }
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);

@@ -64,6 +64,6 @@ std::optional<uint64_t> ArmHyperVShutdown::delay(uint64_t now) const{
 std::string ArmHyperVShutdown::report() const{
     const char* name=state==State::Closed?"closed":state==State::SendVersion?"send-version":state==State::WaitVersion?"wait-version":state==State::Ready?"ready":state==State::SendRequest?"send-request":state==State::WaitResponse?"wait-response":state==State::Accepted?"accepted":"failed";
     std::ostringstream s;s<<"{\"state\":\""<<name<<"\",\"frameworkMajor\":"<<framework<<",\"shutdownMajor\":"<<(framework?3:0)<<",\"shutdownMinor\":"<<(framework?2:0)
-      <<",\"negotiations\":"<<negotiations<<",\"requests\":"<<requests<<",\"accepted\":"<<accepted<<",\"denied\":"<<denied<<",\"lastStatus\":"<<lastStatus<<",\"rejectedResponses\":"<<rejected<<",\"timeouts\":"<<timeouts<<"}";return s.str();
+      <<",\"requestFlags\":"<<flags<<",\"guestTimeoutSeconds\":"<<guestTimeout<<",\"negotiations\":"<<negotiations<<",\"requests\":"<<requests<<",\"accepted\":"<<accepted<<",\"denied\":"<<denied<<",\"lastStatus\":"<<lastStatus<<",\"rejectedResponses\":"<<rejected<<",\"timeouts\":"<<timeouts<<"}";return s.str();
 }
 }

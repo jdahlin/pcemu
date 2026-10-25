@@ -2070,3 +2070,19 @@ The cleanly stopped test disk was removed and the original basic-profile VM
 restarted on its original overlay. This proves the normal poweroff path; actual
 Windows reboot/hibernate behavior and timesync clock adjustment remain separate
 validation work. No performance benefit is inferred.
+
+### Explicit reboot selection
+
+The UEFI runner accepts `--hyperv-power-action poweroff|reboot` to select the
+operation requested by SIGUSR2. Poweroff remains the default. Selecting reboot
+alone does not queue or send an operation; a later explicit signal is required.
+The platform forwards the selected action to the existing shutdown IC request
+API, with force disabled. Logs distinguish a reboot request from a poweroff
+request. Existing normal-shutdown command lines retain their behavior.
+
+Shutdown JSON now includes requestFlags and guestTimeoutSeconds, enabling the
+audit to distinguish protocol restart bit 1 from ordinary poweroff. Model tests
+check this telemetry against the serialized flags for poweroff, forced reboot
+and hibernate; all 270 checks and 38 integration checks pass. The native runner
+is rebuilt for guest reboot verification. Actual reset and a fresh Windows boot
+remain to be established separately from a successful shutdown-service reply.

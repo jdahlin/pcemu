@@ -31,7 +31,7 @@ int main(){
         check(s.request(Action::PowerOff));check(!s.request(Action::Reboot));
         auto request=s.packet(13);check(request.size()==2104&&get(request,34,2)==2060&&get(request,28,2)==3);
         check(get(request,30,2)==3&&get(request,32,2)==2&&request[40]==1&&request[41]==3);
-        check(get(request,44)==0x80000000&&get(request,48)==0&&get(request,52)==0);
+        check(get(request,44)==0x80000000&&get(request,48)==0&&get(request,52)==0&&has(s,"\"requestFlags\":0"));
         check(std::all_of(request.begin()+56,request.end(),[](auto b){return b==0;}));
         check(s.packet(14)==request&&has(s,"\"requests\":0")); // Backpressure cannot publish twice.
         s.sent(14);check(s.packet(15).empty()&&has(s,"\"requests\":1"));
@@ -39,13 +39,13 @@ int main(){
         for(size_t n=0;n<44;++n){auto cut=ack;cut.resize(n);s.receive(cut,15);check(has(s,"wait-response"));}
         put(ack,36,0x80004005);s.receive(ack,16);check(has(s,"ready")&&has(s,"\"denied\":1"));
         check(s.request(Action::Reboot,true,60));request=s.packet(17);
-        check(get(request,48)==60&&get(request,52)==3&&request[40]==2);
+        check(get(request,48)==60&&get(request,52)==3&&request[40]==2&&has(s,"\"requestFlags\":3"));
         s.sent(17);ack=request;ack[41]=5;s.receive(ack,18);check(has(s,"accepted")&&has(s,"\"accepted\":1"));
         check(!s.request(Action::PowerOff)&&s.packet(19).empty()&&!s.delay(19));
         s.receive(ack,19);check(has(s,"\"accepted\":1"));
         s.closed();check(has(s,"closed")&&!s.request(Action::PowerOff));
         version=negotiate(s,fw);s.receive(version,12);check(s.request(Action::Hibernate));
-        request=s.packet(13);check(get(request,52)==4);s.sent(13);
+        request=s.packet(13);check(get(request,52)==4&&has(s,"\"requestFlags\":4"));s.sent(13);
         ack=request;ack[41]=5;s.receive(ack,13+s.responseTimeout);
         check(has(s,"failed")&&has(s,"\"timeouts\":1")&&s.packet(14+s.responseTimeout).empty());
         check(!s.request(Action::Hibernate)); // An uncertain power operation is never retried automatically.

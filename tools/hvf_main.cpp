@@ -672,6 +672,7 @@ int main(int argc, char **argv) {
     try {
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
+        auto guestPowerAction = pc::ArmHyperVShutdown::Action::PowerOff;
         pc::ArmVirtMachine::Config uefi;
         uefi.firmware = "roms/edk2-arm64.bin";
         uefi.dtb = "build/arm64-fw/pcemu-virt.dtb";
@@ -716,6 +717,13 @@ int main(int argc, char **argv) {
                 auto mode = value();
                 if (mode != "off" && mode != "basic" && mode != "synic" && mode != "vmbus") throw std::runtime_error("Hyper-V must be off, basic, synic or vmbus");
                 uefi.hyperv = mode != "off"; uefi.hypervSynic = mode == "synic" || mode == "vmbus"; uefi.hypervVmbus = mode == "vmbus"; uefiOptions = true;
+            }
+            else if (arg == "--hyperv-power-action") {
+                auto action = value();
+                if (action == "poweroff") guestPowerAction = pc::ArmHyperVShutdown::Action::PowerOff;
+                else if (action == "reboot") guestPowerAction = pc::ArmHyperVShutdown::Action::Reboot;
+                else throw std::runtime_error("Expected --hyperv-power-action poweroff|reboot");
+                uefiOptions = true;
             }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
@@ -762,6 +770,7 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
+                             "      [--hyperv-power-action poweroff|reboot] (SIGUSR2 request; default poweroff)\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -834,8 +843,9 @@ int main(int argc, char **argv) {
                     vm.run(std::chrono::milliseconds(100));
                     if (guestShutdownRequested) {
                         guestShutdownRequested = 0;
-                        std::cerr << (vm.requestGuestShutdown()
-                            ? "Hyper-V guest shutdown requested\n"
+                        std::cerr << (vm.requestGuestShutdown(guestPowerAction)
+                            ? (guestPowerAction == pc::ArmHyperVShutdown::Action::Reboot
+                                ? "Hyper-V guest reboot requested\n" : "Hyper-V guest shutdown requested\n")
                             : "Hyper-V guest shutdown unavailable (channel not ready)\n");
                     }
                     if (captureRequested) {
