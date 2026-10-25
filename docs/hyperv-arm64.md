@@ -924,3 +924,22 @@ VP0 = 1,077,155, VP1 = 68,245. Frozen evidence is
 The host then stopped and flushed that test VM before creating separate APFS
 disk/variable clones for SynIC. This was a host termination, not a clean guest
 shutdown, and establishes no performance benefit.
+
+The isolated SynIC-profile Windows run has now reached the visually verified
+lock screen with two VPs and 8 GiB RAM. Its snapshot has 122,941 successful
+hypercalls and zero failures, including 68,021 fixed IPIs, 53,884 SyncContext
+calls, 1,034 register calls and two extended queries. Core, IPI, SyncContext
+and extended-query auditor gates pass with no unsupported calls.
+
+There are no SINT/SCONTROL/SIFP/SIPP/EOM register calls in the snapshot, and no
+posted messages, signaled events or synthetic timer deliveries. This proves
+boot compatibility with SynIC discovery enabled, not Windows SynIC consumption.
+The current ACPI platform exposes no VMBus device; actual enumeration/startup
+and the bus contact protocol are the next runtime investigation. No conclusion
+that SynIC is unnecessary follows from this absence of use.
+
+Frozen evidence: `build/windows11-hyperv/synic-discovery/core-evidence.json`,
+SHA-256 `b7381ceea53e48e2aeae14142aab0323242f15785ac73cb9c707d296eff0d3ec`.
+The same directory contains the lock-screen image, auditor output and launch
+provenance. Runtime source is commit `25350a3`; the original installed disk
+remains untouched and the test overlay stays on the local SSD.
