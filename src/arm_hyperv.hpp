@@ -5,6 +5,7 @@
 #include "arm_hyperv_timesync.hpp"
 #include "arm_hyperv_shutdown.hpp"
 #include "arm_hyperv_timers.hpp"
+#include "arm_hyperv_reference_clock.hpp"
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -28,6 +29,11 @@ class ArmHyperV {
     void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
     using SoftwareInterruptSender = std::function<bool(uint64_t, unsigned)>;
     void setSoftwareInterruptSender(SoftwareInterruptSender send) { interruptSender = std::move(send); }
+    struct CounterSample { uint64_t value, frequency; };
+    using CounterProvider = std::function<CounterSample()>;
+    // Install once before guest identity/discovery. No provider means no feature.
+    bool enableReferenceClock(CounterProvider provider);
+    void rebaseReferenceClock(bool before);
     void service();
     std::optional<uint64_t> serviceDelay100ns() const;
     bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
@@ -80,6 +86,9 @@ class ArmHyperV {
     bool shutdownEnabled = false;
     ArmHyperVShutdown shutdown;
     std::map<uint32_t, uint32_t> vmbusEventPorts;
+    ArmHyperVReferenceClock referenceClock;
+    CounterProvider counterProvider;
+    ArmHyperVReferenceClock::Sample referenceSample() const;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;
     struct Connection { MessageHandler message; EventHandler event; unsigned flagCount = 0; };

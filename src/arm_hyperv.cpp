@@ -22,7 +22,7 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, size_t size) {
 }
 }
 ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count, Clock source)
-    : enabled(on), synic(memory, start, count), vmbus(memory, start, count), timers(count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
+    : enabled(on), synic(memory, start, count), vmbus(memory, start, count), referenceClock(memory, start), timers(count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
     if (!clock) clock = [] {
         return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count()) / 100;
@@ -36,6 +36,18 @@ ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigne
         return synic.tryPostMessage(vp, unsigned((config >> 16) & 15), 0x80000010, 0, payload) == 0;
     });
     if (!cpus || cpus > 8) throw std::runtime_error("Invalid Hyper-V VP count");
+}
+bool ArmHyperV::enableReferenceClock(CounterProvider provider) {
+    if (!enabled || guestId || counterProvider || !provider || provider().frequency<=10000000) return false;
+    counterProvider=std::move(provider);return true;
+}
+ArmHyperVReferenceClock::Sample ArmHyperV::referenceSample() const {
+    auto sample=counterProvider();return {sample.value,timeNow(),sample.frequency};
+}
+void ArmHyperV::rebaseReferenceClock(bool before) {
+    if (!counterProvider) return;
+    if (before) referenceClock.invalidate();
+    else if (referenceClock.registration()&1) referenceClock.update(referenceSample());
 }
 uint64_t ArmHyperV::timeNow() const {
     auto now = clock();
@@ -211,7 +223,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
         // interrupt-controller/hypercall/VP-index privilege set. On ARM64,
         // interrupt-controller access is the architectural virtual GIC, not
         // the x64-only synthetic EOI/ICR/TPR register interface.
-        value[0] = privileges | (synicAdvertised ? 4 : 0) | (vmbusEnabled ? 0x18 : 0) | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
+        value[0] = privileges | (counterProvider ? 1ull << 9 : 0) | (synicAdvertised ? 4 : 0) | (vmbusEnabled ? 0x18 : 0) | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
         value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
     case 0x201: value[0] = 0xffffffff00000000ull | (interruptSender ? 4 : 0); return 0; // Recommend IPIs only with a real interrupt backend
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
@@ -227,6 +239,10 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
         referenceTime = std::max(referenceTime + 1, elapsed);
         value[0] = referenceTime; return 0;
     }
+    case 0x90017:
+        if (!counterProvider) return invalidParameter;
+        if (!guestId) return accessDenied;
+        value[0]=referenceClock.registration();return 0;
     case 0x90006: value[0] = 0x31237648; return 0; // ARM64 interface version: Hv#1
     case 0x90003:
         if (!guestId) return accessDenied;
@@ -243,6 +259,12 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name==0x90017) {
+        if (!counterProvider) return invalidParameter;
+        if (!guestId) return accessDenied;
+        if (value[1]) return invalidParameter;
+        return referenceClock.configure(value[0], (value[0]&1) ? referenceSample() : ArmHyperVReferenceClock::Sample{}) ? 0 : invalidParameter;
+    }
     if (name >= 0xb0000 && name <= 0xb0007) {
         if (!guestId) return accessDenied;
         if (value[1]) return invalidParameter;
@@ -609,6 +631,8 @@ std::string ArmHyperV::report() const {
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? (vmbusEnabled ? "vmbus" : (synicAdvertised ? "synic" : "basic")) : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
+      << ",\"referenceTscPage\":" << referenceClock.registration()
+      << ",\"referenceTscSequence\":" << referenceClock.sequence()
       << ",\"syntheticTimerDeliveries\":" << timers.delivered()
       << ",\"postedMessages\":" << postedMessages << ",\"signaledEvents\":" << signaledEvents
       << ",\"lastMessagePost\":{\"observed\":" << (lastPost.observed ? "true" : "false")

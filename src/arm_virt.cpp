@@ -79,6 +79,13 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
+    if(c.hyperv) {
+        hyperv.enableReferenceClock([this] {
+            auto sample=vm.virtualCounterSample();
+            return ArmHyperV::CounterSample{sample.value,sample.frequency};
+        });
+        vm.setCounterRebaseHandler([this](bool before) {hyperv.rebaseReferenceClock(before);});
+    }
     hyperv.setPrivateInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendPrivateInterrupt(targets, interrupt);
         return true;
@@ -210,6 +217,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     }
 }
 ArmVirtMachine::~ArmVirtMachine() {
+    vm.setCounterRebaseHandler({});
     if (variableLock >= 0) close(variableLock);
     if (diskLock >= 0) close(diskLock);
     if (extraDiskLock >= 0) close(extraDiskLock);

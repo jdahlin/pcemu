@@ -61,3 +61,23 @@ can vary when a VP completes additional loops before its peer.
 
 This verifies backend/page cooperation, not Windows use: synthetic register
 dispatch and feature discovery remain disconnected.
+
+## Register and platform integration
+
+The model is now bound to `HvRegisterReferenceTsc` (`0x90017`), confirmed by
+[Microsoft OpenVMM's register definitions](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hvdef/src/lib.rs).
+Privilege bit 9 is advertised only after a usable native counter provider is
+installed during platform construction. Portable/default model instances retain
+the prior feature set. Reads/writes require guest identity; the partition-wide
+registration is shared across VPs, validates the upper 128-bit half and rejects
+invalid GPA/reserved-bit changes without altering the old page.
+
+The ARM platform installs the proven HVF provider and connects the pre/post
+sleep callback to page invalidation/republication. The callback is detached
+before the platform's Hyper-V model is destroyed. Reports include
+`referenceTscPage` and `referenceTscSequence`; these identify registration and
+publication only, not actual guest page reads or measured performance.
+
+The core portable suite passes 2,170 checks, including provider gating, invalid
+writes, cross-VP registration, a changed counter mapping and disable. Native
+Windows registration/consumption still needs a fresh boot with this build.

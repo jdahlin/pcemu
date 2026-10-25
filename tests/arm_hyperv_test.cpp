@@ -1114,5 +1114,40 @@ int main() {
     put(ordinaryContact, 12, 1, 4); put(ordinaryContact, 16, 5, 4);
     check(scopedBus.receive(1, ordinaryContact, true) == 0); scopedBus.service();
     check(scopedBus.report().find("\"targetSint\":5") != std::string::npos);
+    {
+        std::vector<uint8_t> ram(16384,0xa5);
+        uint64_t now=0,counter=24000000;
+        ArmHyperV ref(true,ram,base,2,[&]{return now;});
+        auto access=[&](uint32_t name,bool write=false,uint64_t value=0,uint64_t high=0,unsigned vp=0) {
+            ArmHyperV::Registers x{};x[0]=0x46000001;x[1]=one|(write?0x10051:0x10050);
+            x[2]=~0ull;x[3]=0xfffffffe;x[4]=name;x[6]=value;x[7]=high;
+            check(ref.call(0,x,vp));return x;
+        };
+        check(!(access(0x200)[6]&(1ull<<9)));
+        check(access(0x90017)[0]==5);
+        check(!ref.enableReferenceClock([]{return ArmHyperV::CounterSample{0,10000000};}));
+        check(ref.enableReferenceClock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
+        check(!ref.enableReferenceClock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
+        check(access(0x200)[6]&(1ull<<9));
+        check(access(0x90017)[0]==6);
+        check(access(0x90002,true,42)[0]==one);
+        check(access(0x90017)[6]==0);
+        auto prior=ram;
+        check(access(0x90017,true,base+4099)[0]==5 && ram==prior);
+        check(access(0x90017,true,base+4097,1)[0]==5 && ram==prior);
+        check(access(0x90017,true,base+16385)[0]==5 && ram==prior);
+        check(access(0x90017,true,base+4097)[0]==one);
+        check(access(0x90017,false,0,0,1)[6]==base+4097);
+        auto sequence=get(ram,4096,4);check(sequence!=0);
+        auto readPage=[&]{return uint64_t((__uint128_t(counter)*get(ram,4104))>>64)+get(ram,4112);};
+        check(readPage()==0);
+        ref.rebaseReferenceClock(true);check(get(ram,4096,4)==0);
+        counter+=120000000;now+=10000000;
+        ref.rebaseReferenceClock(false);
+        check(get(ram,4096,4)!=sequence && get(ram,4096,4)!=0);
+        check(readPage()==now);
+        check(access(0x90017,true,0)[0]==one && get(ram,4096,4)==0);
+        check(access(0x90017)[6]==0);
+    }
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }
