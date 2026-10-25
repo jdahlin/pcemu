@@ -1,0 +1,34 @@
+#!/bin/sh
+# Start the installed Windows 11 ARM64 guest in SDL.
+set -eu
+cd "$(dirname "$0")"
+
+if [ "${1:-}" = --help ]; then
+    echo 'Usage: ./run11.sh [additional pcemu-hvf options]'
+    echo 'Starts Windows in SDL with 4 GiB RAM, 2 CPUs, USB keyboard/mouse and user networking.'
+    echo 'Click to capture input; Cmd+G releases it. Shut down from Windows before closing.'
+    exit 0
+fi
+
+for file in media/windows11-arm64/system.qcow2 \
+            media/windows11-arm64/system-live.pcd \
+            build/windows11-qcow2/installed-vars.bin; do
+    if [ ! -f "$file" ]; then
+        echo "Missing installed Windows file: $file" >&2
+        exit 1
+    fi
+done
+
+./tools/build.sh pcemu-hvf
+python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus
+mkdir -p build/windows11-sdl
+echo 'Starting Windows: the SDL window may stay black during disk indexing.'
+echo 'Click to capture input; Cmd+G releases it. USB input is still under investigation.'
+exec ./build/pcemu-hvf --machine arm64-uefi --gui --run-forever \
+    --ram-mb 4096 --cpus 2 --hyperv vmbus --network user \
+    --disk-controller virtio --virtio-transport pci \
+    --disk media/windows11-arm64/system.qcow2 \
+    --disk-overlay media/windows11-arm64/system-live.pcd \
+    --vars build/windows11-qcow2/installed-vars.bin --cpu-state \
+    --hyperv-stats build/windows11-sdl/hyperv.json \
+    --framebuffer-ppm build/windows11-sdl/framebuffer.ppm "$@"
