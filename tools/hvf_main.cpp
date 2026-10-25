@@ -1,5 +1,6 @@
 #include "hvf_machine.hpp"
 #include "arm_virt.hpp"
+#include "arm_vmbus.hpp"
 #include "machine_profile.hpp"
 #include <array>
 #include <algorithm>
@@ -500,12 +501,18 @@ void selfTest() {
         require(hyperv.bindEventConnection(42, 10, [&](unsigned, uint16_t relative) {
             bool newly = false; return synic.signalEvent(0, 2, 100 + relative, newly);
         }), "Native event endpoint binding failed");
-        require(hyperv.bindMessageConnection(7, [&](unsigned, uint32_t type, std::span<const uint8_t> payload) {
-            return synic.postMessage(0, 2, type, 0, payload);
-        }), "Native message endpoint binding failed");
+        pc::ArmVmbus bus(vm.ram(), HvfMachine::ramBase, 1);
+        bus.setSender([&](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
+            return synic.postMessage(vp, sint, 1, 0, payload);
+        });
+        auto postBus = [&](unsigned, uint32_t type, std::span<const uint8_t> payload) {
+            auto status = bus.receive(type, payload); bus.service(); return status;
+        };
+        require(hyperv.bindMessageConnection(4, postBus) && hyperv.bindMessageConnection(1, postBus),
+                "Native VMBus connection binding failed");
         std::array<uint8_t, 256> packet{};
-        packet[0] = 7; packet[8] = 1; packet[12] = 3;
-        packet[16] = 11; packet[17] = 22; packet[18] = 33;
+        packet[0] = 4; packet[8] = 1; packet[12] = 40;
+        packet[16] = 14; packet[26] = 6; packet[32] = 2; // Copper contact, VP0/SINT2.
         vm.writeMemory(HvfMachine::ramBase + 0x18000, packet);
         // Group-1 GIC setup, fast event call, IAR/EOI, slow message call,
         // IAR/EOI, then success/failure HVC markers (DAIF stays masked).
@@ -537,8 +544,9 @@ void selfTest() {
         }
         require(finished && vm.privateInterruptRequests(0) == 2, "Native connection delivery did not complete");
         require(vm.ram()[0x19000 + 512 + 103 / 8] == 128 &&
-                vm.ram()[0x1a000 + 512] == 1 && vm.ram()[0x1a000 + 512 + 4] == 3 &&
-                vm.ram()[0x1a000 + 512 + 16] == 11 && vm.ram()[0x1a000 + 512 + 18] == 33,
+                vm.ram()[0x1a000 + 512] == 1 && vm.ram()[0x1a000 + 512 + 4] == 20 &&
+                vm.ram()[0x1a000 + 512 + 16] == 15 && vm.ram()[0x1a000 + 512 + 24] == 1 &&
+                vm.ram()[0x1a000 + 512 + 28] == 1,
                 "Native connection guest RAM effects are incorrect");
     }
     for (bool gic : {false, true}) {

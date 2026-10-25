@@ -295,7 +295,7 @@ The following is a work inventory, not a completion claim:
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Event/message controller, four timers per VP and native PPI delivery tested, still unadvertised; connections, complete ARM semantics and Windows consumption pending. ARM Generic Timer already runs natively. |
-| VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
+| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Runtime ACPI attachment, Windows enumeration, GPADL and service channels remain pending. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
 The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
@@ -841,8 +841,8 @@ Binding the first message/event receiver grants and reports PostMessages
 privilege or guest identity return AccessDenied. Normal VM construction binds
 no endpoints, so these privileges remain off. This does not advertise SynIC,
 create root-partition ports, install a VMBus receiver or claim integration
-services. Root port management, scoped IDs and the VMBus protocol remain
-separate pending work.
+services. Root port management, scoped IDs and VMBus runtime attachment
+remain separate pending work.
 
 Successful handler acceptance increments `postedMessages` / `signaledEvents`.
 The Windows auditor's `messagePostsObserved` / `eventSignalsObserved` gates
@@ -943,3 +943,45 @@ SHA-256 `b7381ceea53e48e2aeae14142aab0323242f15785ac73cb9c707d296eff0d3ec`.
 The same directory contains the lock-screen image, auditor output and launch
 provenance. Runtime source is commit `25350a3`; the original installed disk
 remains untouched and the test overlay stays on the local SSD.
+
+
+## VMBus control server groundwork
+
+`ArmVmbus` now implements the VTL0 control exchange for protocol versions
+5.0, 5.1, 5.2, 5.3 and 6.0: InitiateContact/VersionResponse,
+RequestOffers/AllOffersDelivered, and Unload/UnloadComplete. Unsupported modern
+versions receive VersionSupported=0 so a client can retry. Legacy interrupt-
+page contacts before 5.0 are not implemented. Copper responses report zero
+optional feature flags; client extensions are not falsely negotiated.
+
+The parser validates the outer Hyper-V message type, header padding, packet
+bounds, target VP/SINT/VTL and monitor-page alignment/RAM bounds. An optional
+client GUID requires its full packet. Live reconnection and control requests
+before connection fail. Accepted replies live in a bounded 16-entry FIFO;
+missing or busy SynIC delivery retains them in order for a later service pass.
+Queue exhaustion returns InsufficientBuffers before changing protocol state.
+The report distinguishes connected version, contacts, offer requests, unloads,
+pending replies, accepted reply deliveries and rejected requests.
+
+The offer inventory is explicitly empty. AllOffersDelivered completes that
+empty inventory; it does not fabricate a device, channel, GPADL, ring buffer
+or integration service. The server is not yet attached to the running VM or
+advertised through ACPI. This is a protocol implementation and test gate,
+not a claim of Windows VMBus use.
+
+Layouts and negotiation behavior follow Microsoft's
+[OpenVMM protocol definitions](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_core/src/protocol.rs)
+and [server response logic](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_server/src/channels.rs),
+with a cross-check against the
+[Linux VMBus structures](https://github.com/torvalds/linux/blob/master/include/linux/hyperv.h).
+Tests exercise all supported versions, refusal/fallback, busy delivery, queue
+bounds, unload, malformed targets and monitor buffers. The native connection
+fixture now posts a real Copper contact on bootstrap connection 4, receives
+VersionResponse through SynIC/SGI 0, and checks VersionSupported and returned
+connection ID 1. That returned ID is also bound to the same server. The guest
+acknowledges the notification through IAR1/EOIR1. Guest enumeration through
+ACPI and actual Windows consumption remain the next integration gate.
+
+Validation: `make test-hvf` passes 2,018 portable Hyper-V checks, 271 native
+checks and 12 Windows-auditor tests. The existing off/basic/synic EFI probes
+also pass. Results are retained under `build/hyperv-research/vmbus-control-*`.

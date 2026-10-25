@@ -1,4 +1,5 @@
 #include "arm_hyperv.hpp"
+#include "arm_vmbus.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -893,5 +894,66 @@ int main() {
     check(rejectedProfile);
     profile.advertiseSynic(false);
     check(profile.report().find("\"mode\":\"basic\"") != std::string::npos);
+    std::vector<uint8_t> busRam(16384);
+    ArmVmbus bus(busRam, base, 2);
+    std::vector<uint8_t> contact(40), request(8), response;
+    put(contact, 0, 14, 4); put(contact, 8, 0x60000, 4); put(contact, 12, 1, 4); contact[16] = 2;
+    unsigned busReplies = 0;
+    bool busReady = false;
+    bus.setSender([&](unsigned vp, unsigned sint, std::span<const uint8_t> bytes) {
+        check(vp == 1 && sint == 2);
+        if (!busReady) return uint16_t(0x18);
+        response.assign(bytes.begin(), bytes.end()); ++busReplies; return uint16_t(0);
+    });
+    put(request, 0, 3, 4); check(bus.receive(1, request) == 0x15);
+    check(bus.receive(1, contact) == 0 && bus.needsService());
+    bus.service(); check(busReplies == 0 && bus.needsService());
+    busReady = true; bus.service();
+    check(busReplies == 1 && !bus.needsService() && response.size() == 20);
+    check(get(response, 0) == 15 && response[8] == 1 && response[9] == 0);
+    check(get(response, 12) == 1); // Connection ID 1, features zero.
+    check(bus.receive(1, contact) == 0x15); // No implicit reconnection while live.
+    check(bus.receive(1, request) == 0); bus.service();
+    check(response.size() == 8 && get(response, 0) == 4 && busReplies == 2);
+    put(request, 0, 16, 4); check(bus.receive(1, request) == 0); bus.service();
+    check(get(response, 0) == 17 && busReplies == 3);
+    for (uint32_t version : {0x50000u, 0x50001u, 0x50002u, 0x50003u, 0x60000u}) {
+        put(contact, 8, version, 4);
+        check(bus.receive(1, contact) == 0); bus.service();
+        check(response[8] == 1 && response.size() == (version == 0x60000 ? 20 : 16));
+        check(bus.receive(1, request) == 0); bus.service();
+        check(get(response, 0) == 17);
+    }
+    put(contact, 8, 0x60001, 4); check(bus.receive(1, contact) == 0); bus.service();
+    check(response.size() == 16 && response[8] == 0 &&
+          std::all_of(response.begin() + 12, response.end(), [](uint8_t byte) { return byte == 0; }));
+    put(contact, 8, 0x60000, 4);
+    auto invalidContact = [&](size_t offset, uint64_t value, unsigned bytes, uint16_t status) {
+        auto copy = contact; put(copy, offset, value, bytes);
+        check(bus.receive(1, copy) == status && !bus.needsService());
+    };
+    invalidContact(4, 1, 4, 5); invalidContact(12, 2, 4, 14);
+    invalidContact(16, 16, 1, 5); invalidContact(17, 1, 1, 6);
+    invalidContact(18, 1, 2, 5); invalidContact(24, base + 1, 8, 5);
+    invalidContact(24, base + 16384, 8, 5); invalidContact(24, UINT64_MAX - 4095, 8, 5);
+    check(bus.receive(2, contact) == 5);
+    check(bus.receive(1, std::span<const uint8_t>(contact).first(39)) == 5);
+    put(contact, 20, 8, 4); check(bus.receive(1, contact) == 5); // Missing client GUID.
+    contact.resize(56); check(bus.receive(1, contact) == 0); bus.service();
+    check(response.size() == 20 && get(response, 12) == 1); // No client-ID feature negotiated.
+    check(bus.receive(1, request) == 0); bus.service();
+    put(contact, 20, 0, 4); put(contact, 24, base, 8); put(contact, 32, base, 8);
+    check(bus.receive(1, contact) == 5); // Monitor directions may not alias.
+    put(contact, 32, base + 4096, 8); check(bus.receive(1, contact) == 0); bus.service();
+    check(response[8] == 1);
+    check(bus.receive(1, request) == 0); bus.service();
+    // Keep replies across backend absence and enforce a finite host queue.
+    bus.setSender({}); put(contact, 8, 0x70000, 4);
+    for (unsigned i = 0; i < 16; ++i) check(bus.receive(1, contact) == 0);
+    check(bus.receive(1, contact) == 0x13 && bus.needsService());
+    bus.service(); check(bus.needsService());
+    bus.setSender([](unsigned, unsigned, std::span<const uint8_t>) { return uint16_t(0); });
+    bus.service(); check(!bus.needsService());
+    check(bus.report().find("\"offeredChannels\":0") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }
