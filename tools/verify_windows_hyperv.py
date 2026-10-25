@@ -238,7 +238,7 @@ def verify(report, baseline, kernel_build=26100):
             'syntheticTimerDeliveryObserved': timer_delivery,
             'heartbeatResponseObserved': heartbeat_response,
             'timesyncAcknowledgmentObserved': timesync_ack,
-            'shutdownAcceptedObserved': shutdown_accepted, 'guestPowerOffVerified': False, 'guestClockAdjustmentVerified': False,
+            'shutdownAcceptedObserved': shutdown_accepted, 'guestPowerOffVerified': False, 'guestRebootVerified': False, 'guestClockAdjustmentVerified': False,
             'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
             'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
@@ -257,6 +257,32 @@ def verify_poweroff(result, host_log, runner_exit_code):
             and terminals[0][1].endswith(' state=power-off'))
 
 
+def verify_reboot(before_result, after_result, before, after, host_log):
+    """Require accepted restart, platform reset, then fresh Windows service use."""
+    shutdown = before.get('shutdown', {})
+    fresh = after.get('shutdown', {})
+    if (not before_result.get('shutdownAcceptedObserved') or type(shutdown) is not dict
+            or type(shutdown.get('requestFlags')) is not int or shutdown['requestFlags'] not in (2, 3)
+            or not after_result.get('verifiedCoreUsage')
+            or not after_result.get('heartbeatResponseObserved')
+            or not after_result.get('timesyncAcknowledgmentObserved')
+            or before.get('guestOsId') != after.get('guestOsId')
+            or type(fresh) is not dict or fresh.get('state') != 'ready'
+            or type(fresh.get('frameworkMajor')) is not int or fresh['frameworkMajor'] not in (1, 3)
+            or type(fresh.get('shutdownMajor')) is not int or fresh['shutdownMajor'] != 3
+            or type(fresh.get('shutdownMinor')) is not int or fresh['shutdownMinor'] != 2
+            or type(fresh.get('requestFlags')) is not int or fresh['requestFlags'] != 0
+            or type(fresh.get('requests')) is not int or fresh['requests'] != 0
+            or type(fresh.get('accepted')) is not int or fresh['accepted'] != 0
+            or type(fresh.get('negotiations')) is not int or fresh['negotiations'] <= 0):
+        return False
+    lines = host_log.splitlines()
+    requests = [i for i, line in enumerate(lines) if line == 'Hyper-V guest reboot requested']
+    resets = [i for i, line in enumerate(lines) if line.startswith('UEFI run complete:') and line.endswith(' state=reset-requested')]
+    restarts = [i for i, line in enumerate(lines) if line == 'UEFI restarting after guest reset: reboot=1']
+    return len(requests) == len(resets) == len(restarts) == 1 and requests[0] < resets[0] < restarts[0]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
@@ -264,7 +290,11 @@ def main():
     parser.add_argument('--kernel-build', type=int, default=26100)
     parser.add_argument('--shutdown-host-log', type=Path)
     parser.add_argument('--runner-exit-code', type=int)
+    parser.add_argument('--reboot-report', type=Path, help='Fresh Windows counter snapshot after guest reset')
+    parser.add_argument('--reboot-host-log', type=Path)
     args = parser.parse_args()
+    if (args.reboot_report is None) != (args.reboot_host_log is None):
+        parser.error('Supply both reboot report and reboot host log')
     if (args.shutdown_host_log is None) != (args.runner_exit_code is None):
         parser.error('Supply both shutdown host log and runner exit code')
     raw = {}
@@ -281,8 +311,20 @@ def main():
         result['guestPowerOffVerified'] = verify_poweroff(result, host_raw.decode('utf-8'), args.runner_exit_code)
         result['sha256']['shutdownHostLog'] = hashlib.sha256(host_raw).hexdigest()
         result['runnerExitCode'] = args.runner_exit_code
+    if args.reboot_report is not None:
+        if args.reboot_report.stat().st_size > 1024 * 1024 or args.reboot_host_log.stat().st_size > 4 * 1024 * 1024:
+            parser.error('Expected bounded reboot artifacts')
+        after_raw = args.reboot_report.read_bytes()
+        host_raw = args.reboot_host_log.read_bytes()
+        after = json.loads(after_raw)
+        after_result = verify(after, json.loads(raw['baseline']), args.kernel_build)
+        result['guestRebootVerified'] = verify_reboot(result, after_result, json.loads(raw['report']), after, host_raw.decode('utf-8'))
+        result['sha256']['rebootReport'] = hashlib.sha256(after_raw).hexdigest()
+        result['sha256']['rebootHostLog'] = hashlib.sha256(host_raw).hexdigest()
     print(json.dumps(result, indent=2))
-    return 0 if result['verifiedCoreUsage'] and (args.shutdown_host_log is None or result['guestPowerOffVerified']) else 1
+    success = (result['verifiedCoreUsage'] and (args.shutdown_host_log is None or result['guestPowerOffVerified'])
+               and (args.reboot_report is None or result['guestRebootVerified']))
+    return 0 if success else 1
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from verify_windows_hyperv import verify, verify_poweroff
+from verify_windows_hyperv import verify, verify_poweroff, verify_reboot
 
 
 def fixture():
@@ -359,6 +359,28 @@ class WindowsHyperV(unittest.TestCase):
             changed = deepcopy(report)
             changed['vmbus'][key] = value
             self.assertFalse(verify(changed, baseline)['shutdownAcceptedObserved'])
+
+    def test_reboot_requires_reset_and_fresh_windows_service_use(self):
+        before_result = dict(shutdownAcceptedObserved=True)
+        after_result = dict(verifiedCoreUsage=True, heartbeatResponseObserved=True, timesyncAcknowledgmentObserved=True)
+        before = dict(guestOsId=0x1040a000065f4, shutdown=dict(requestFlags=2))
+        after = dict(guestOsId=before['guestOsId'], shutdown=dict(state='ready', requests=0, accepted=0, negotiations=1, frameworkMajor=3, shutdownMajor=3, shutdownMinor=2, requestFlags=0))
+        log = ('Hyper-V guest reboot requested\nUEFI run complete: exits=123 state=reset-requested\n'
+               'UEFI restarting after guest reset: reboot=1\n')
+        self.assertTrue(verify_reboot(before_result, after_result, before, after, log))
+        for key in after_result:
+            self.assertFalse(verify_reboot(before_result, dict(after_result, **{key: False}), before, after, log))
+        for flags in (0, 1, True, None):
+            self.assertFalse(verify_reboot(before_result, after_result, dict(before, shutdown=dict(requestFlags=flags)), after, log))
+        for key, value in (('state', 'accepted'), ('requests', 1), ('requests', False), ('accepted', 1), ('negotiations', 0), ('shutdownMinor', 1), ('requestFlags', 2), ('frameworkMajor', True)):
+            changed = deepcopy(after)
+            changed['shutdown'][key] = value
+            self.assertFalse(verify_reboot(before_result, after_result, before, changed, log))
+        self.assertFalse(verify_reboot(before_result, after_result, before, dict(after, guestOsId=123), log))
+        self.assertFalse(verify_reboot(dict(shutdownAcceptedObserved=False), after_result, before, after, log))
+        for bad in ('', log + log, log.replace('reset-requested', 'power-off'), log.replace('reboot=1', 'reboot=2'),
+                    log.replace('Hyper-V guest reboot requested\n', '') + 'Hyper-V guest reboot requested\n'):
+            self.assertFalse(verify_reboot(before_result, after_result, before, after, bad))
 
     def test_required_evidence(self):
         report, baseline = fixture()

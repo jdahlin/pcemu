@@ -2086,3 +2086,33 @@ check this telemetry against the serialized flags for poweroff, forced reboot
 and hibernate; all 270 checks and 38 integration checks pass. The native runner
 is rebuilt for guest reboot verification. Actual reset and a fresh Windows boot
 remain to be established separately from a successful shutdown-service reply.
+
+### Verified Windows reboot and fresh integration services
+
+The source from `a01c75d` was booted on a private APFS-cloned Windows write disk,
+8 GiB RAM and two VPs, selecting `--hyperv-power-action reboot`. The pre-request
+snapshot shows the shutdown IC ready with zero requests. One SIGUSR2 was then
+sent. `build/windows11-hyperv/reboot/hyperv.json.boot0.json` records one accepted
+request, status zero, requestFlags=2 (unforced restart), and zero Hyper-V failures.
+
+The same runner reports terminal `state=reset-requested` followed by
+`UEFI restarting after guest reset: reboot=1`. It recreates the platform and boots
+Windows again. `post-reset.json` proves fresh core Windows usage, heartbeat
+responses and timesync acknowledgments after reset. Shutdown renegotiates 3.2
+with requests=0, accepted=0 and requestFlags=0. Thus the operation is not replayed
+into the new boot. No GUI/performance claim is inferred.
+
+The auditor accepts `--reboot-report AFTER --reboot-host-log LOG` alongside the
+pre-reset report and baseline. `guestRebootVerified` requires accepted restart
+flags, an ordered unique request/reset/restart log sequence, the same Windows
+kernel identity, fresh heartbeat/timesync use and a clean renegotiated shutdown
+session. It hashes both the new report and host log. An acknowledgment alone,
+UEFI-only reset, duplicated/reordered records or stale power counters cannot
+pass. Supplying reboot artifacts makes failure of this gate a nonzero CLI exit.
+All 20 auditor tests pass, and `audit.json` verifies the actual run.
+
+After verifying the second Windows boot, SIGTERM was used only to clean up the
+still-running test VM. This is distinct from the earlier guest-triggered reset.
+The test write disk was removed and the original basic-profile VM restarted on
+its original overlay. Actual hibernation and guest wall-clock adjustment remain
+separate verification tasks.
