@@ -21,6 +21,62 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
 }
 int main() {
     try {
+        {
+            CPU c(2 * 1024 * 1024);
+            c.s[CS].big = true;
+            program(c, {0xa1, 0, 0x90, 0, 0, 0xeb, 0xf9});
+            c.write(0x80000, 0x81007, 4);
+            c.write(0x81000, 7, 4);
+            c.write(0x81024, 0x109007, 4);
+            c.write(0x109000, 0x12345678, 4);
+            c.write(0x9000, 0x87654321, 4);
+            c.cr[0] = 0x80000011; c.cr[3] = 0x80000;
+            c.s[CS].selector = 3;
+            Jit jit(c, true, 0);
+            if (jit.enabled()) {
+                check(jit.run() == 2 && c.r[AX] == 0x12345678,
+                      "cold native read uses the correct RAM mapping");
+                auto calls = c.nativeMemoryCalls;
+                check(jit.run() == 2 && c.r[AX] == 0x12345678 && c.nativeMemoryCalls == calls,
+                      "warm native read bypasses the RAM helper");
+                c.a20 = false; c.s[CS].selector = 7;
+                check(jit.run() == 2 && c.r[AX] == 0x87654321,
+                      "running JIT observes A20 invalidation of a warm host mapping");
+                c.a20 = true; c.s[CS].selector = 3;
+                check(jit.run() == 2 && c.r[AX] == 0x12345678,
+                      "reused block refreshes a cache context last used with A20 disabled");
+                c.a20 = false; c.s[CS].selector = 7;
+                check(jit.run() == 2 && c.r[AX] == 0x87654321,
+                      "alternating cached blocks retain distinct A20 assumptions");
+                auto replacement = c.mem;
+                uint32_t value = 0xabcdef01;
+                std::memcpy(replacement.data() + 0x9000, &value, 4);
+                c.mem.swap(replacement);
+                check(jit.run() == 2 && c.r[AX] == value,
+                      "running JIT cannot retain a host pointer into replaced RAM");
+                c.mem.swap(replacement); c.a20 = true; c.s[CS].selector = 3;
+                check(jit.run() == 2 && c.r[AX] == 0x12345678,
+                      "return to old RAM pointer refreshes another block's host cache context");
+                c.mem.swap(replacement); c.a20 = false; c.s[CS].selector = 7;
+                check(jit.run() == 2 && c.r[AX] == 0xabcdef01,
+                      "repeated RAM backing exchanges preserve native loads");
+                c.s[CS].selector = 0;
+                value = 0x109001;
+                std::memcpy(c.mem.data() + 0x81024, &value, 4);
+                c.flushTLB();
+                check(jit.run() == 2 && c.r[AX] == 0xabcdef01,
+                      "supervisor reads a restricted page after permission change");
+                c.s[CS].selector = 3;
+                struct Stop {};
+                bool denied = false;
+                c.observeFault = [&](const Fault &f) {
+                    denied = f.vector == 14 && f.error == 5 && c.ip == 0 && c.cr[2] == 0x9000;
+                    throw Stop{};
+                };
+                try { jit.run(); } catch (const Stop &) {}
+                check(denied, "supervisor host mapping cannot bypass a later user page fault");
+            }
+        }
         // TLB metadata must not leak into high physical-frame bits, even
         // for unknown permissions or a dirty-bit transition on a cached hit.
         {

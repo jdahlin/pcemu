@@ -525,3 +525,58 @@ in `measurements/rejected-cold-memory-layout-2026-10-25.json`. The complete reje
 emitter/relocation/test patch is alongside it. Prevalidating memory access still
 needs a separate experiment that reduces repeated guards rather than only
 changing their placement.
+
+
+## Prevalidated native read cache experiment (2026-10-25)
+
+Four variants of a separate 1,024-entry host-only paged-read cache are rejected.
+Each 16-byte entry held an epoch/page/user comparator and a host-address addend.
+Only complete ordinary-RAM pages qualified; protected, VGA, partial-RAM and
+cross-page accesses retained precise fallback. Writes retained the existing
+permission, dirty-bit, A20 and code-write guards. RAM backing/size, A20 and
+snapshot identity changes invalidated the derived cache; epoch wrap cleared it.
+The cache was excluded from snapshot serialization.
+
+The first variant filled only after successful native RAM read helpers. Three
+alternating four-million-loop RAM sweep pairs showed 1.66–1.67x throughput in
+paged dense 2,048/4,096-node cases and 1.27–1.29x in page-stride 256/1,024-node
+cases, but the small paged case fell to 0.55x baseline throughput. Flat cases
+were approximately neutral. These RAM results apply only to the first variant;
+the later variants were not rerun on that sweep. Guest programs, transcripts
+and instruction counts match. Helper counts are retained in the report and can
+differ because the new cache needs its own warmup.
+
+Each variant then ran five alternating baseline/candidate pairs of the same
+300-million-instruction rtts startup prefix, using private compressed overlays
+and disconnected networking. Ratios greater than one indicate improvement:
+
+| Variant | Process-time throughput ratio | Internal execution ratio | Native memory helpers |
+| --- | ---: | ---: | ---: |
+| Baseline | 1.0000 | 1.0000 | 774,011 |
+| Helper fill | 0.9564 | 0.9557 | 828,601 |
+| Also fill on TLB misses once native reads activate | 0.9718 | 0.9708 | 790,680 |
+| Add per-block cache-context generation checks | 0.9689 | 0.9642 | 790,680 |
+| Load comparator/addend together; omit unused RAM-base setup | 0.9785 | 0.9796 | 790,770 |
+
+The helper counts are implementation counters, not architectural equivalence
+criteria. Captured guest/device fields and total instruction counts match across
+all runs. Native coverage and compilation counts can differ with code size and
+cache recycling. These tests do not establish bytewise RAM equality, desktop
+readiness, application behavior or installer completion. The initial variant
+also passed Win3.11 exact Notepad persistence, and broad core/read/RMW/flag/byte/
+indirect-jump/snapshot checks. Later variants passed core/read checks and the
+bounded rtts comparisons; broad suites were not repeated on every variant.
+An unrelated ARM/HVF guest was observed running during this work (6.3% host CPU
+at one observation), so these are shared-host measurements, not isolated-host
+confidence intervals. Regressions across the repeated startup pairs are enough
+to reject these changes, not to attribute the slowdown to a particular pipeline
+or cache effect.
+
+All production sources are restored. Ten running-JIT checks are retained for
+cold/warm loads, A20 transitions across cached blocks, RAM pointer exchanges,
+and supervisor-to-user fault isolation. They guard the behavior that future
+memory optimizations must preserve without requiring this cache design.
+Raw results, per-variant correctness scope, baseline revision and executable
+hashes are in `measurements/rejected-native-read-cache-2026-10-25.json`;
+four complete prototype patches are alongside it. Successful private disks
+were removed. Neither Office nor installer fixtures were recreated.

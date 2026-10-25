@@ -1,0 +1,273 @@
+diff --git a/src/cpu.cpp b/src/cpu.cpp
+index 231d304..450cb44 100644
+--- a/src/cpu.cpp
++++ b/src/cpu.cpp
+@@ -69,10 +69,37 @@ void CPU::flushTLB() {
+     if (++tlbEpoch == 0) {
+         for (auto &entry : tlb)
+             entry.epoch = 0;
++        nativeReadCache = {};
+         tlbEpoch = 1;
+     }
+     tlbCR3 = cr[3];
+ }
++void CPU::prepareNativeReadCache() {
++    if (nativeReadRam != mem.data() || nativeReadRamSize != mem.size() ||
++        nativeReadExecutionEpoch != executionEpoch || nativeReadA20 != a20) {
++        nativeReadCache = {};
++        nativeReadRam = mem.data();
++        nativeReadRamSize = mem.size();
++        nativeReadExecutionEpoch = executionEpoch;
++        nativeReadA20 = a20;
++    }
++}
++void CPU::rememberNativeRead(uint32_t linear, uint32_t physical) {
++    if (!(cr[0] & 0x80000000u)) return;
++    prepareNativeReadCache();
++    const uint32_t page = linear >> 12, base = physical & ~4095u;
++    const auto index = (page ^ (page >> 10)) & (tlb.size() - 1);
++    const auto &entry = tlb[index];
++    const bool user = cpl() == 3;
++    // A system override must not grant a later ordinary user read permission.
++    // Only whole normal-RAM pages qualify, including when RAM ends mid-page.
++    if (entry.tag != page || entry.epoch != tlbEpoch ||
++        (user && !(entry.permissions & 4)) || uint64_t(base) + 4096 > mem.size() ||
++        (base >= 0xa0000 && base < 0xb0000)) return;
++    nativeReadCache[index] = {
++        (uint64_t(tlbEpoch) << 32) | page | (uint64_t(user) << 20),
++        uint64_t(reinterpret_cast<uintptr_t>(mem.data() + base)) - (linear & ~4095u)};
++}
+ uint32_t CPU::physical(uint32_t a, bool wr) {
+     if (cr[0] & 0x80000000u) {
+         if (tlbCR3 != cr[3])
+diff --git a/src/cpu.hpp b/src/cpu.hpp
+index ee79707..93fe8ce 100644
+--- a/src/cpu.hpp
++++ b/src/cpu.hpp
+@@ -98,6 +98,18 @@ struct CPU {
+     std::array<TLBEntry, 1024> tlb{};
+     uint32_t tlbEpoch = 1, tlbCR3 = 0xffffffffu;
+ 
++    // Derived host-only cache, deliberately excluded from snapshots. A valid
++    // key combines the paging epoch, linear page and effective user context.
++    struct NativeReadEntry { uint64_t key = 0, addend = 0; };
++    std::array<NativeReadEntry, 1024> nativeReadCache{};
++    const uint8_t *nativeReadRam = nullptr;
++    size_t nativeReadRamSize = 0;
++    uint64_t nativeReadExecutionEpoch = 0;
++    bool nativeReadA20 = true;
++    void prepareNativeReadCache();
++    void rememberNativeRead(uint32_t linear, uint32_t physical);
++
++
+     // Internal continuation across host scheduling batches, not a guest snapshot.
+     struct RepeatResume {
+         bool valid = false;
+diff --git a/src/jit.cpp b/src/jit.cpp
+index 08e4270..9f8111b 100644
+--- a/src/jit.cpp
++++ b/src/jit.cpp
+@@ -125,6 +125,7 @@ uint32_t Jit::run() {
+     cacheHits++;
+     profile::event(profile::NativeCall);
+     cpu.nativeFallback = false;
++    if (b.pagedReads) cpu.prepareNativeReadCache();
+     auto n = b.fn(&cpu);
+     cpu.instructions += n;
+     nativeInstructions += n;
+diff --git a/src/jit.hpp b/src/jit.hpp
+index 995fe41..9dc2d00 100644
+--- a/src/jit.hpp
++++ b/src/jit.hpp
+@@ -36,7 +36,7 @@ class Jit {
+         Function fn = nullptr;
+         uint32_t page = 0, generation = 0, cr0 = 0, cr3 = 0, csBase = 0, tlbEpoch = 0;
+         uint64_t executionEpoch = 0;
+-        bool a20 = true, attempted = false;
++        bool a20 = true, attempted = false, pagedReads = false;
+         bool vm = false, watched = false, usesStack = false, stack32 = false;
+         const uint8_t *ram = nullptr;
+         const uint64_t *codeBits = nullptr;
+diff --git a/src/jit_arm64.cpp b/src/jit_arm64.cpp
+index e99825b..bfdd3b7 100644
+--- a/src/jit_arm64.cpp
++++ b/src/jit_arm64.cpp
+@@ -520,6 +520,33 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     compareImmediate(10, 4096 - accessWidth);
+                     guard(0x54000008u); // b.hi slow (cross-page access)
+                 }
++                const bool cachedRead = (block.cr0 & 0x80000000u) && !i.memory.store;
++                if (cachedRead) {
++                    block.pagedReads = true;
++                    static_assert(sizeof(CPU::NativeReadEntry) == 16);
++                    emit(0x530c7d2au); // lsr w10,w9,#12
++                    emit(0x4a4a294bu); // eor w11,w10,w10,lsr #10
++                    emit(0x1200256bu); // and w11,w11,#1023
++                    cpuAddress(12, offsetof(CPU, nativeReadCache));
++                    emit(0x8b2b518cu); // add x12,x12,w11,uxtw #4
++                    const bool user = block.vm || ((block.cr0 & 1) && (cpu.s[CS].selector & 3) == 3);
++                    if (user) {
++                        imm(14, 1u << 20);
++                        emit(0x2a0e014au); // orr w10,w10,w14
++                    }
++                    int epoch = epochRegister;
++                    if (epoch < 0) {
++                        cpuAddress(14, offsetof(CPU, tlbEpoch) & ~4095u);
++                        load(14, 14, offsetof(CPU, tlbEpoch) & 4095u);
++                        epoch = 14;
++                    }
++                    emit(0xaa00814eu | (epoch << 16)); // orr x14,x10,xEpoch,lsl #32
++                    emit(0xf940018du); // ldr x13,[x12,#key]
++                    emit(0xeb0e01bfu); // cmp x13,x14
++                    guard(0x54000001u); // b.ne slow
++                    emit(0xf940058bu); // ldr x11,[x12,#addend]
++                    emit(0x8b29416bu); // add x11,x11,w9,uxtw
++                } else {
+                 if (block.cr0 & 0x80000000u) {
+                     emit(0x530c7d2au); // lsr w10,w9,#12 (page tag)
+                     emit(0x4a4a294bu); // eor w11,w10,w10,lsr #10
+@@ -604,6 +631,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
+                 }
+                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
++                }
+                 if (i.memory.delta) {
+                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
+                          (11 << 5) | 10);
+diff --git a/src/jit_runtime.cpp b/src/jit_runtime.cpp
+index db14ffb..08e1a52 100644
+--- a/src/jit_runtime.cpp
++++ b/src/jit_runtime.cpp
+@@ -65,6 +65,7 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
+             else
+                 value = cpu->mem[physical];
+             cpu->nativeValue = value;
++            cpu->rememberNativeRead(linear, physical);
+         }
+         return cpu->generation[codePage] == codeGeneration ? 1 : 2;
+     } catch (...) {
+diff --git a/tests/jit_jump_test.cpp b/tests/jit_jump_test.cpp
+index 222d4a0..dc089b4 100644
+--- a/tests/jit_jump_test.cpp
++++ b/tests/jit_jump_test.cpp
+@@ -96,7 +96,7 @@ int main() {
+                 c->write(0x81028, 0xa007, 4);
+                 c->write(0x81000 + 0xa0 * 4, 0xa0007, 4);
+                 c->cr[0] = 0x80000011; c->cr[3] = 0x80000;
+-                if (access == 6) c->physical(0x9000);
++                if (access == 6) c->rememberNativeRead(0x9000, c->physical(0x9000));
+                 c->videoRead = [&, c](uint32_t) { ++(c == &ref ? refReads : cpuReads); return uint8_t(0x12); };
+                 std::copy(bytes.begin(), bytes.end(), c->mem.begin());
+             }
+diff --git a/tests/jit_read_test.cpp b/tests/jit_read_test.cpp
+index 30bd8b9..6fe35f1 100644
+--- a/tests/jit_read_test.cpp
++++ b/tests/jit_read_test.cpp
+@@ -156,6 +156,7 @@ int main() {
+                         if (access == 5 || access == 7) {
+                             c->physical(address);
+                             c->physical(address + 3);
++                            if (access == 7) c->rememberNativeRead(address, c->physical(address));
+                         }
+                         c->videoRead = [&, c](uint32_t) {
+                             (c == &ref ? refReads : nativeReads)++;
+diff --git a/tests/test.cpp b/tests/test.cpp
+index 416004b..67d6f30 100644
+--- a/tests/test.cpp
++++ b/tests/test.cpp
+@@ -21,6 +21,79 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
+ }
+ int main() {
+     try {
++        // A host pointer is usable only for a whole ordinary-RAM page and
++        // the privilege context that validated it. Derived state must expire.
++        for (bool user : {false, true})
++        for (unsigned permissions : {0u, 4u})
++        for (uint32_t base : {0x5000u, 0xa0000u, 0xfffff000u}) {
++            CPU c(1024 * 1024);
++            c.cr[0] = 0x80000011;
++            c.s[CS].selector = user ? 3 : 0;
++            c.tlb[9] = {9, c.tlbEpoch, base, 0, uint8_t(permissions), false};
++            c.rememberNativeRead(0x9abc, base | 0xabc);
++            auto &entry = c.nativeReadCache[9];
++            const bool eligible = (!user || permissions) && base == 0x5000;
++            check(bool(entry.key) == eligible, "native read cache excludes denied/device/out-of-RAM pages");
++            if (!eligible) continue;
++            check(entry.key == ((uint64_t(c.tlbEpoch) << 32) | 9 | (uint64_t(user) << 20)) &&
++                      entry.addend + 0x9abc == reinterpret_cast<uintptr_t>(c.mem.data() + base + 0xabc),
++                  "native read key and addend preserve privilege and host address");
++            auto prime = [&] { c.rememberNativeRead(0x9abc, base | 0xabc); };
++            c.a20 = false; c.prepareNativeReadCache();
++            check(!entry.key, "A20 change clears host read mappings");
++            prime(); c.executionEpoch++; c.prepareNativeReadCache();
++            check(!entry.key, "snapshot identity change clears host read mappings");
++            prime(); c.mem.resize(c.mem.size() - 1); c.prepareNativeReadCache();
++            check(!entry.key, "RAM size change clears host read mappings");
++            prime(); auto replacement = c.mem; c.mem.swap(replacement); c.prepareNativeReadCache();
++            check(!entry.key, "RAM pointer change clears host read mappings");
++            prime(); c.tlbEpoch = UINT32_MAX; c.flushTLB();
++            check(!entry.key && c.tlbEpoch == 1, "epoch wrap cannot revive an old host pointer");
++        }
++        {
++            CPU c(2 * 1024 * 1024);
++            c.s[CS].big = true;
++            program(c, {0xa1, 0, 0x90, 0, 0, 0xeb, 0xf9});
++            c.write(0x80000, 0x81007, 4);
++            c.write(0x81000, 7, 4);
++            c.write(0x81024, 0x109007, 4);
++            c.write(0x109000, 0x12345678, 4);
++            c.write(0x9000, 0x87654321, 4);
++            c.cr[0] = 0x80000011; c.cr[3] = 0x80000;
++            c.s[CS].selector = 3;
++            Jit jit(c, true, 0);
++            if (jit.enabled()) {
++                check(jit.run() == 2 && c.r[AX] == 0x12345678,
++                      "cold prevalidated read populates the correct host mapping");
++                auto calls = c.nativeMemoryCalls;
++                check(jit.run() == 2 && c.r[AX] == 0x12345678 && c.nativeMemoryCalls == calls,
++                      "warm prevalidated read bypasses the RAM helper");
++                c.a20 = false;
++                check(jit.run() == 2 && c.r[AX] == 0x87654321 && c.nativeMemoryCalls > calls,
++                      "running JIT observes A20 invalidation of a warm host mapping");
++                auto replacement = c.mem;
++                uint32_t value = 0xabcdef01;
++                std::memcpy(replacement.data() + 0x9000, &value, 4);
++                c.mem.swap(replacement);
++                check(jit.run() == 2 && c.r[AX] == value,
++                      "running JIT cannot retain a host pointer into replaced RAM");
++                c.s[CS].selector = 0;
++                value = 0x109001;
++                std::memcpy(c.mem.data() + 0x81024, &value, 4);
++                c.flushTLB();
++                check(jit.run() == 2 && c.r[AX] == 0xabcdef01,
++                      "supervisor fills a restricted cached read after permission change");
++                c.s[CS].selector = 3;
++                struct Stop {};
++                bool denied = false;
++                c.observeFault = [&](const Fault &f) {
++                    denied = f.vector == 14 && f.error == 5 && c.ip == 0 && c.cr[2] == 0x9000;
++                    throw Stop{};
++                };
++                try { jit.run(); } catch (const Stop &) {}
++                check(denied, "supervisor host mapping cannot bypass a later user page fault");
++            }
++        }
+         // TLB metadata must not leak into high physical-frame bits, even
+         // for unknown permissions or a dirty-bit transition on a cached hit.
+         {
+@@ -936,6 +1009,7 @@ int main() {
+                             c.cr[3] = 0x8000;
+                             c.physical(address, true);
+                             c.s[CS].selector = 3;
++                            if (!store) c.rememberNativeRead(address, c.physical(address));
+                         }
+                         if (tracked)
+                             c.markCode(address);
+@@ -1003,6 +1077,7 @@ int main() {
+                                     entry.permissions |= 0x80; // Unknown bits may only force fallback.
+                                 c.s[CS].selector = 3;
+                                 c.systemAccess = override;
++                                if (!store) c.rememberNativeRead(0x9000, 0x9000);
+                                 bool allowed = override || ((permissions & 4) &&
+                                                             (!store || (permissions & 2)));
+                                 bool faulted = false;
