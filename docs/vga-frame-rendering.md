@@ -58,3 +58,18 @@ A local 120-frame, 640x480 run measures planar rendering at 95.51 → 21.55 ms
 render-only wall timings, not a guest benchmark. The three full Excel CPU
 ratios are 1.274, 1.456 and 1.841; retain the raw variation instead of treating
 the median as a stable expected application gain.
+
+## Monitor shape
+
+The x86 frontend presents classic VGA text and graphics modes in a fixed 4:3
+monitor area, independently of framebuffer dimensions. This includes the Windows
+95 320x400 startup logo, 320x200 graphics, and 640x350/400 text and graphics.
+Mode changes replace the texture without resizing the host window; resizing the
+window preserves the monitor aspect with black borders as needed. VBE modes use
+square pixels, as does the ARM framebuffer. Raw PPM captures retain guest pixel
+dimensions. Presentation policy is passed explicitly rather than inferred from
+resolution, so VBE 640x400 can retain its native aspect.
+
+`make build/frontend-tests && ./build/frontend-tests` uses SDL's dummy video
+driver to check initial window shape, classic mode transitions, and same-size
+VGA/square-pixel policy transitions without a GUI or guest disk.

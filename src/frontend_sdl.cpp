@@ -20,17 +20,22 @@ class SDLFrontend final : public Frontend {
     }
 
   public:
-    SDLFrontend(unsigned w, unsigned h) {
+    SDLFrontend(unsigned w, unsigned h, DisplayShape shape) {
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER))
             throw std::runtime_error(SDL_GetError());
         try {
-            int ww = std::max(w, 960u), wh = uint64_t(ww) * h / w;
+            int ww = std::max(w, 960u);
+            int wh = shape == DisplayShape::ClassicVga ? ww * 3 / 4 : uint64_t(ww) * h / w;
             SDL_Rect bounds{};
             if (!SDL_GetDisplayUsableBounds(0, &bounds)) {
                 double scale = std::min({1.0, double(std::max(bounds.w - 40, 320)) / ww,
                                          double(std::max(bounds.h - 80, 240)) / wh});
                 ww = int(ww * scale);
                 wh = int(wh * scale);
+            }
+            if (shape == DisplayShape::ClassicVga) {
+                ww = std::min(ww / 4, wh / 3) * 4;
+                wh = ww / 4 * 3;
             }
             window = SDL_CreateWindow("PCEmu — click to capture mouse (Cmd+G)",
                                       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, ww, wh,
@@ -90,7 +95,7 @@ class SDLFrontend final : public Frontend {
         }
         return events;
     }
-    void present(std::span<const uint32_t> pixels, unsigned w, unsigned h) override {
+    void present(std::span<const uint32_t> pixels, unsigned w, unsigned h, DisplayShape shape) override {
         if (!texture || w != width || h != height) {
             if (texture)
                 SDL_DestroyTexture(texture);
@@ -100,8 +105,12 @@ class SDLFrontend final : public Frontend {
                 throw std::runtime_error(SDL_GetError());
             width = w;
             height = h;
-            SDL_RenderSetLogicalSize(renderer, w, h);
+
         }
+        // Logical output dimensions describe the monitor, independently of the texture.
+        // Reapply even when only the mode policy changes at the same resolution.
+        SDL_RenderSetLogicalSize(renderer, shape == DisplayShape::ClassicVga ? 4 : w,
+                                 shape == DisplayShape::ClassicVga ? 3 : h);
         SDL_UpdateTexture(texture, nullptr, pixels.data(), w * 4);
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
@@ -109,7 +118,7 @@ class SDLFrontend final : public Frontend {
     }
 };
 } // namespace
-std::unique_ptr<Frontend> createFrontend(unsigned w, unsigned h) {
-    return std::make_unique<SDLFrontend>(w, h);
+std::unique_ptr<Frontend> createFrontend(unsigned w, unsigned h, DisplayShape shape) {
+    return std::make_unique<SDLFrontend>(w, h, shape);
 }
 } // namespace pc

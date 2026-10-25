@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
         unsigned displayHeight = m.vga.graphics ? m.vga.height : 400;
         std::vector<uint32_t> pixels(size_t(displayWidth) * displayHeight);
         std::unique_ptr<Frontend> frontend;
-        if (!headless) frontend = createFrontend(displayWidth, displayHeight);
+        if (!headless) frontend = createFrontend(displayWidth, displayHeight, DisplayShape::ClassicVga);
         struct TraceSample {
             uint32_t ip, base, flags, cr0, cr3, r[8];
             uint16_t cs;
@@ -612,7 +612,9 @@ int main(int argc, char **argv) {
 
                 }
                 display.render(m, pixels, displayWidth, displayHeight, frameTicks);
-                frontend->present(pixels, displayWidth, displayHeight);
+                frontend->present(pixels, displayWidth, displayHeight,
+                                  (m.vga.dispi[4] & 1) ? DisplayShape::SquarePixels
+                                                       : DisplayShape::ClassicVga);
                 if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
         } catch (const std::exception &e) {

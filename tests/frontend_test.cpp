@@ -13,7 +13,37 @@ static void check(bool value, const char *message) {
 int main() {
     try {
         SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
-        auto frontend = createFrontend(640, 400);
+        auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);
+        auto *window = SDL_GetWindowFromID(1);
+        check(window != nullptr, "headless window exists");
+        auto *renderer = SDL_GetRenderer(window);
+        int windowWidth, windowHeight;
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        check(windowWidth * 3 == windowHeight * 4, "classic VGA window starts at 4:3");
+        std::vector<uint32_t> modeFrame;
+        for (auto [w, h] : {std::pair{640u, 400u}, {320u, 200u}, {320u, 400u},
+                            {640u, 350u}, {640u, 480u}}) {
+            modeFrame.assign(w * h, 0xff123456);
+            frontend->present(modeFrame, w, h, DisplayShape::ClassicVga);
+            int logicalWidth, logicalHeight;
+            SDL_RenderGetLogicalSize(renderer, &logicalWidth, &logicalHeight);
+            check(logicalWidth * 3 == logicalHeight * 4, "classic mode retains 4:3 output");
+            int currentWidth, currentHeight;
+            SDL_GetWindowSize(window, &currentWidth, &currentHeight);
+            check(currentWidth == windowWidth && currentHeight == windowHeight,
+                  "mode switches keep window size stable");
+        }
+        // Same texture size: switching policy must still update presentation.
+        modeFrame.assign(640 * 400, 0xff123456);
+        frontend->present(modeFrame, 640, 400, DisplayShape::ClassicVga);
+        frontend->present(modeFrame, 640, 400);
+        int logicalWidth, logicalHeight;
+        SDL_RenderGetLogicalSize(renderer, &logicalWidth, &logicalHeight);
+        check(logicalWidth == 640 && logicalHeight == 400,
+              "VBE and ARM default to square pixels even at a classic resolution");
+        frontend->present(modeFrame, 640, 400, DisplayShape::ClassicVga);
+        SDL_RenderGetLogicalSize(renderer, &logicalWidth, &logicalHeight);
+        check(logicalWidth == 4 && logicalHeight == 3, "same-size return to VGA restores aspect");
         frontend->poll();
         std::vector<uint32_t> frame(640 * 400, 0xff123456);
         frontend->present(frame, 640, 400);

@@ -13,15 +13,18 @@ struct FrontendEvent {
     uint8_t button = 0; // Left=1, right=2, middle=4.
     int x = 0, y = 0;   // Relative motion in guest pixels; positive Y is down.
 };
+enum class DisplayShape { SquarePixels, ClassicVga };
 class Frontend {
   public:
     virtual ~Frontend() = default;
     virtual std::vector<FrontendEvent> poll() = 0;
     // Pixels are borrowed only for this call, in 0xAARRGGBB format.
-    virtual void present(std::span<const uint32_t> pixels, unsigned width, unsigned height) = 0;
+    virtual void present(std::span<const uint32_t> pixels, unsigned width, unsigned height,
+                         DisplayShape shape = DisplayShape::SquarePixels) = 0;
     virtual bool capturePointer(bool enabled) = 0;
 };
 // Each frontend executable supplies one factory. The machine and execution
 // engines do not depend on a GUI toolkit or own its event loop.
-std::unique_ptr<Frontend> createFrontend(unsigned width, unsigned height);
+std::unique_ptr<Frontend> createFrontend(unsigned width, unsigned height,
+                                         DisplayShape shape = DisplayShape::SquarePixels);
 } // namespace pc
