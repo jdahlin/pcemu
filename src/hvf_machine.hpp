@@ -63,6 +63,10 @@ class HvfMachine {
     // pending bits. Delivery/coalescing follows the guest's GIC configuration.
     void sendSoftwareInterrupt(uint64_t cpuMask, unsigned interrupt);
     uint64_t softwareInterruptRequests(unsigned cpu) const;
+    // Edge-pend an SGI or PPI (INTID 0..31) on selected VPs. This does not
+    // model an asserted level source or replace the architectural timer.
+    void sendPrivateInterrupt(uint64_t cpuMask, unsigned interrupt);
+    uint64_t privateInterruptRequests(unsigned cpu) const;
     uint64_t exits() const;
     static bool supported();
 

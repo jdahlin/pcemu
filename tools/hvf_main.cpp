@@ -356,12 +356,12 @@ void selfTest() {
         // acknowledges the interrupt, making routing and EOI observable.
         code(vm, std::array<uint32_t, 42>{
             0xd53800a0, 0x92401c00, 0xd2a10161, 0x8b004421, // MPIDR -> GICR SGI frame
-            0x12800002, 0xb9008022, 0x529fffe2, 0xb9010022, // Group 1, enable SGIs
+            0x12800002, 0xb9008022, 0x12800002, 0xb9010022, // Group 1, enable SGIs and PPIs
             0xd2a10003, 0x52800262, 0xb9000062, 0xd2800022, // enable distributor
             0xd518cca2, 0xd5033fdf, 0xd2801fe2, 0xd5184602, // SRE, PMR=255
             0xd2800022, 0xd518cce2, 0xd5033fdf, 0xd2a80025, // Group-1 enable, mailbox
             0xd2800028, 0xf94000a9, 0xeb08013f, 0x54ffffc1, // wait for phase
-            0xf100191f, 0x54000120, 0xd538cc04, 0xd4000002, // phase 6 -> IRQ wait; otherwise IAR/HVC
+            0xf100211f, 0x54000120, 0xd538cc04, 0xd4000002, // phase 8 -> IRQ wait; otherwise IAR/HVC
             0xf10ff09f, 0x54000062, 0xd518cc24, 0xd5033fdf, // skip spurious EOI
             0x91000508, 0x17fffff4, 0xd282000a, 0xf2a8000a, // next phase; vector base
             0xd518c00a, 0xd5033fdf, 0xd50342ff, 0xd5033fdf, // VBAR; unmask IRQ
@@ -402,6 +402,16 @@ void selfTest() {
         rejects([&] { vm.sendSoftwareInterrupt(3, 16); }, "Non-SGI vector accepted");
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
                 "Empty/rejected SGI request changed counters");
+        vm.sendPrivateInterrupt(2, 16);
+        acknowledge(1023, 16);
+        vm.sendPrivateInterrupt(3, 31);
+        acknowledge(31, 31);
+        require(vm.privateInterruptRequests(0) == 2 && vm.privateInterruptRequests(1) == 6,
+                "PPI target request counters are incorrect");
+        rejects([&] { vm.sendPrivateInterrupt(3, 32); }, "Shared interrupt accepted as private");
+        rejects([&] { vm.sendPrivateInterrupt(4, 16); }, "Invalid PPI target accepted");
+        require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
+                "PPI requests changed Hyper-V IPI counters");
         vm.sendSoftwareInterrupt(2, 0); // The SGI ID observed in real Windows.
         ++phase;
         vm.writeMemory(HvfMachine::ramBase + 0x10000,

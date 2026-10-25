@@ -48,7 +48,7 @@ struct HvfMachine::Impl {
     hv_vcpu_exit_t *exit = nullptr;
     uint64_t exitCount = 0;
     bool contextRomMapped = false;
-    std::array<uint64_t, 8> contextBarriers{}, translationFlushes{}, softwareInterrupts{};
+    std::array<uint64_t, 8> contextBarriers{}, translationFlushes{}, softwareInterrupts{}, privateInterrupts{};
     std::mutex mutex;
     std::condition_variable changed;
     std::thread watchdog;
@@ -545,25 +545,37 @@ uint64_t HvfMachine::translationContextFlushes(unsigned cpu) const {
 }
 
 void HvfMachine::sendSoftwareInterrupt(uint64_t cpuMask, unsigned interrupt) {
+    if (interrupt >= 16) throw std::runtime_error("Invalid GIC software interrupt");
+    sendPrivateInterrupt(cpuMask, interrupt);
+    for (unsigned cpu = 0; cpu < cpuCount(); ++cpu) if (cpuMask & (1ull << cpu))
+        ++impl->softwareInterrupts[cpu];
+}
+
+void HvfMachine::sendPrivateInterrupt(uint64_t cpuMask, unsigned interrupt) {
     impl->requireOwner();
-    if (!impl->gicEnabled) throw std::runtime_error("GIC software interrupts require GICv3");
-    if (interrupt >= 16 || (cpuMask & ~((1ull << cpuCount()) - 1)))
-        throw std::runtime_error("Invalid GIC software interrupt or target mask");
+    if (!impl->gicEnabled) throw std::runtime_error("GIC private interrupts require GICv3");
+    if (interrupt >= 32 || (cpuMask & ~((1ull << cpuCount()) - 1)))
+        throw std::runtime_error("Invalid GIC private interrupt or target mask");
     {
         std::lock_guard lock(impl->mutex);
         if (!impl->active.empty() || impl->armed)
-            throw std::runtime_error("GIC software interrupts require stopped vCPUs");
+            throw std::runtime_error("GIC private interrupts require stopped vCPUs");
     }
     for (unsigned cpu = 0; cpu < cpuCount(); ++cpu) if (cpuMask & (1ull << cpu)) {
-        if (cpu) impl->secondary[cpu - 1]->sendSoftwareInterrupt(interrupt);
+        if (cpu) impl->secondary[cpu - 1]->sendPrivateInterrupt(interrupt);
         else if (__builtin_available(macOS 15.0, *)) {
             uint64_t pending = 0;
             auto reg = static_cast<hv_gic_redistributor_reg_t>(0x10200); // GICR_ISPENDR0
-            check(hv_gic_get_redistributor_reg(impl->vcpu, reg, &pending), "get primary pending SGIs");
-            check(hv_gic_set_redistributor_reg(impl->vcpu, reg, pending | (1ull << interrupt)), "pend primary SGI");
-        } else throw std::runtime_error("GIC software interrupts require macOS 15");
-        ++impl->softwareInterrupts[cpu];
+            check(hv_gic_get_redistributor_reg(impl->vcpu, reg, &pending), "get primary pending private interrupts");
+            check(hv_gic_set_redistributor_reg(impl->vcpu, reg, pending | (1ull << interrupt)), "pend primary private interrupt");
+        } else throw std::runtime_error("GIC private interrupts require macOS 15");
+        ++impl->privateInterrupts[cpu];
     }
+}
+uint64_t HvfMachine::privateInterruptRequests(unsigned cpu) const {
+    impl->requireOwner();
+    if (cpu >= cpuCount()) throw std::runtime_error("Invalid private interrupt CPU index");
+    return impl->privateInterrupts[cpu];
 }
 uint64_t HvfMachine::softwareInterruptRequests(unsigned cpu) const {
     impl->requireOwner();

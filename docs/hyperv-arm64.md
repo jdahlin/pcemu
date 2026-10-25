@@ -667,3 +667,20 @@ directory. The run uses a separate local SSD overlay and no installation ISO.
 These counters prove Windows consumption and native pending requests, not an
 exact count of handler invocations or a performance benefit. Ex IPI, TLB
 hypercalls and reference-counter reads were not observed in this snapshot.
+
+## Private-interrupt backend for further enlightenments
+
+The native backend can now edge-pend any private GIC INTID 0..31 on selected
+VPs through GICR_ISPENDR0. The SGI-only IPI API retains its 0..15 bounds and
+separate request counters. The broader API is a prerequisite for ARM SynIC
+and direct synthetic-timer interrupts; it does not advertise those interfaces
+or model a continuously asserted level source. The architectural virtual
+timer remains managed by its existing backend.
+
+The two-VP native fixture enables private interrupts, injects PPI 16 into VP1
+only and PPI 31 into both VPs, and requires the exact IAR1/EOIR1 acknowledgments.
+It checks that PPI requests leave the Hyper-V IPI counters unchanged and that
+INTID 32 and nonexistent VP targets fail. Existing pending-SGI preservation,
+coalescing and actual IRQ-handler/ERET checks still pass. `make test-hvf`
+passes with 242 native checks and 1,241 portable Hyper-V checks. This is native
+backend evidence; Windows SynIC/timer consumption remains unverified.
