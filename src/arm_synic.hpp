@@ -16,6 +16,9 @@ class ArmSynic {
     uint16_t read(uint32_t name, unsigned vp, uint64_t &value) const;
     uint16_t write(uint32_t name, unsigned vp, uint64_t value);
     uint16_t signalEvent(unsigned vp, unsigned sint, unsigned flag, bool &newlySignaled);
+    // Dedicated timer buffers remain owned by the timer until a slot is free.
+    uint16_t tryPostMessage(unsigned vp, unsigned sint, uint32_t type,
+                            uint64_t sender, std::span<const uint8_t> payload);
     uint16_t postMessage(unsigned vp, unsigned sint, uint32_t type,
                          uint64_t sender, std::span<const uint8_t> payload);
   private:

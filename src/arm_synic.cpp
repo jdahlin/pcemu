@@ -111,6 +111,20 @@ uint16_t ArmSynic::drain(unsigned vp, unsigned sint) {
     queue.pop_front();
     return 0;
 }
+uint16_t ArmSynic::tryPostMessage(unsigned vp, unsigned sint, uint32_t type,
+                                 uint64_t sender, std::span<const uint8_t> payload) {
+    if (vp >= cpus) return invalidVp;
+    if (sint >= 16 || !type || payload.size() > 240) return invalidParameter;
+    auto &v = state[vp];
+    auto memory = page(v.messages);
+    if (!(v.control & 1) || memory.empty()) return invalidState;
+    auto slot = memory.subspan(sint * 256, 256);
+    if (!v.queue[sint].empty() || slot[0] || slot[1] || slot[2] || slot[3]) {
+        slot[5] |= 1;
+        return 0x14; // NotAcknowledged: caller retains its dedicated buffer.
+    }
+    return postMessage(vp, sint, type, sender, payload);
+}
 uint16_t ArmSynic::postMessage(unsigned vp, unsigned sint, uint32_t type,
                               uint64_t sender, std::span<const uint8_t> payload) {
     if (vp >= cpus) return invalidVp;

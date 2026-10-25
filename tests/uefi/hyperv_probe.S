@@ -413,6 +413,40 @@ efi_main:
     b.ne failed
     msr icc_eoir1_el1, x9
     isb
+    // Program an already-due direct synthetic timer through the public
+    // SMCCC register ABI. The VM loop must pend SGI 9 before guest resumption.
+    ldr w8, [x27, #0x80]
+    orr w8, w8, #0x200
+    str w8, [x27, #0x80]
+    mov w8, #0x200
+    str w8, [x27, #0x100]
+    strb wzr, [x27, #0x409]
+    ldr w4, =0xb0001
+    mov x6, #1
+    bl crash_write
+    ldr w4, =0xb0000
+    mov x6, #0x1091
+    bl crash_write
+    mrs x9, icc_iar1_el1
+    cmp x9, #9
+    b.ne failed
+    msr icc_eoir1_el1, x9
+    isb
+    // Read back through the legacy ABI: one-shot Enabled must be cleared.
+    ldr x0, =0x100010050
+    mov x1, #-1
+    ldr w2, =0xfffffffe
+    ldr w3, =0xb0000
+    mov x4, #0
+    hvc #1
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    mov x8, #0x1090
+    cmp x15, x8
+    b.ne failed
+    cbnz x16, failed
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

@@ -361,7 +361,7 @@ void selfTest() {
             0xd518cca2, 0xd5033fdf, 0xd2801fe2, 0xd5184602, // SRE, PMR=255
             0xd2800022, 0xd518cce2, 0xd5033fdf, 0xd2a80025, // Group-1 enable, mailbox
             0xd2800028, 0xf94000a9, 0xeb08013f, 0x54ffffc1, // wait for phase
-            0xf100211f, 0x54000120, 0xd538cc04, 0xd4000002, // phase 8 -> IRQ wait; otherwise IAR/HVC
+            0xf100251f, 0x54000120, 0xd538cc04, 0xd4000002, // phase 9 -> IRQ wait; otherwise IAR/HVC
             0xf10ff09f, 0x54000062, 0xd518cc24, 0xd5033fdf, // skip spurious EOI
             0x91000508, 0x17fffff4, 0xd282000a, 0xf2a8000a, // next phase; vector base
             0xd518c00a, 0xd5033fdf, 0xd50342ff, 0xd5033fdf, // VBAR; unmask IRQ
@@ -417,11 +417,26 @@ void selfTest() {
         require(synic.signalEvent(1, 2, 2047, newly) == 0 && newly &&
                 vm.ram()[0x1a000 + 767] == 128, "Native SynIC flag was not deposited");
         acknowledge(1023, 16);
-        const std::array<uint8_t, 3> message{1, 2, 3};
+        pc::ArmHyperVTimers syntheticTimers(2);
+        syntheticTimers.setDelivery([&](unsigned cpu, unsigned timer, uint64_t config, uint64_t expiration, uint64_t now) {
+            if (config & 0x1000) {
+                require(cpu == 1 && timer == 1 && expiration == 200 && now == 200, "Native direct timer expired incorrectly");
+                vm.sendPrivateInterrupt(1ull << cpu, unsigned((config >> 4) & 31));
+                return true;
+            }
+            const std::array<uint64_t, 3> message{timer, expiration, now};
+            require(timer == 0 && expiration == 100 && now == 100, "Native timer expired early");
+            return synic.tryPostMessage(cpu, 3, 0x80000010, 0,
+                {reinterpret_cast<const uint8_t *>(message.data()), sizeof(message)}) == 0;
+        });
         for (unsigned cpu = 0; cpu < 2; ++cpu)
-            require(synic.postMessage(cpu, 3, 1, 0, message) == 0 &&
-                    vm.ram()[0x19000 + cpu * 0x2000 + 3 * 256 + 16] == 1,
-                    "Native SynIC message was not deposited");
+            require(syntheticTimers.write(0xb0001, cpu, 100, 0) == 0 &&
+                    syntheticTimers.write(0xb0000, cpu, 0x30001, 0) == 0,
+                    "Native timer programming failed");
+        syntheticTimers.service(99);
+        require(syntheticTimers.delivered() == 0, "Native timer fired before its deadline");
+        syntheticTimers.service(100);
+        require(syntheticTimers.delivered() == 2, "Native timer messages were not delivered");
         acknowledge(31, 31);
         require(vm.privateInterruptRequests(0) == 2 && vm.privateInterruptRequests(1) == 6,
                 "PPI target request counters are incorrect");
@@ -429,6 +444,13 @@ void selfTest() {
         rejects([&] { vm.sendPrivateInterrupt(4, 16); }, "Invalid PPI target accepted");
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
                 "PPI requests changed Hyper-V IPI counters");
+        require(syntheticTimers.write(0xb0003, 1, 200, 100) == 0 &&
+                syntheticTimers.write(0xb0002, 1, 0x1111, 100) == 0,
+                "Native direct timer programming failed");
+        syntheticTimers.service(200);
+        acknowledge(1023, 17);
+        require(syntheticTimers.delivered() == 3 && vm.privateInterruptRequests(1) == 7,
+                "Native direct timer did not pend its target PPI");
         vm.sendSoftwareInterrupt(2, 0); // The SGI ID observed in real Windows.
         ++phase;
         vm.writeMemory(HvfMachine::ramBase + 0x10000,

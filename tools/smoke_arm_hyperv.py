@@ -38,8 +38,8 @@ def main():
         if mode == 'basic':
             names = {r['name']: r for r in report['registers']}
             calls = {r['code']: r for r in report['calls']}
-            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 9
-                    or report['smcccCalls'] != 20 or report['failures'] != 1
+            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 10
+                    or report['smcccCalls'] != 22 or report['failures'] != 1
                     or calls[0x19]['count'] != 2 or calls[0x19]['failures'] != 0
                     or calls[0x1a]['count'] != 2 or calls[0x1a]['failures'] != 0
                     or calls[0x2]['count'] != 1 or calls[0x2]['failures'] != 0
@@ -48,6 +48,10 @@ def main():
                     or calls[0x15]['count'] != 1 or calls[0x15]['failures'] != 0
                     or report['ipiRequests'] != 2 or report['ipiTargetRequests'] != [2]
                     or report['softwareInterruptRequests'] != [2]
+                    or report['privateInterruptRequests'] != [3]
+                    or report['syntheticTimerDeliveries'] != 1
+                    or names[0xb0000]['reads'] != 1 or names[0xb0000]['writes'] != 1
+                    or names[0xb0001]['writes'] != 1
                     or calls[0xd6]['count'] != 1 or calls[0xd6]['failures'] != 0
                     or report['tlbFlushRequests'] != 3 or report['translationContextFlushes'] != [3]
                     or report['contextSyncRequests'] != 4

@@ -607,5 +607,109 @@ int main() {
         fastRead(0xa0010, smccc, 1);
         check(r[0] == one && r[smccc ? 6 : 15] == 1);
     }
+    ArmHyperVTimers timerModel(2);
+    check(!timerModel.nextDeadline());
+    for (unsigned vp = 0; vp < 2; ++vp) for (uint32_t reg = 0xb0000; reg <= 0xb0007; ++reg)
+        check(timerModel.read(reg, vp, value) == 0 && value == 0);
+    unsigned timerSignals = 0;
+    uint64_t expectedExpiration = 100, expectedDelivery = 100;
+    timerModel.setDelivery([&](unsigned vp, unsigned timer, uint64_t config, uint64_t expiration, uint64_t now) {
+        check(vp == 1 && timer == 3 && (config & 0x1000));
+        check(expiration == expectedExpiration && now == expectedDelivery);
+        ++timerSignals; return true;
+    });
+    check(timerModel.write(0xb0006, 1, 0x1108, 10) == 0); // Direct PPI 16, AutoEnable.
+    check(timerModel.write(0xb0007, 1, 100, 10) == 0);
+    timerModel.service(99); check(timerSignals == 0);
+    check(timerModel.nextDeadline() == 100);
+    timerModel.service(100); check(timerSignals == 1 && !timerModel.nextDeadline());
+    check(timerModel.read(0xb0006, 1, value) == 0 && !(value & 1));
+    timerModel.service(200); check(timerSignals == 1);
+    check(timerModel.write(0xb0006, 1, 0x110a, 200) == 0); // Periodic + AutoEnable.
+    check(timerModel.write(0xb0007, 1, 50, 200) == 0);
+    expectedExpiration = 250; expectedDelivery = 399;
+    timerModel.service(399); check(timerSignals == 2 && timerModel.nextDeadline() == 400);
+    expectedExpiration = expectedDelivery = 400;
+    timerModel.service(400); check(timerSignals == 3 && timerModel.nextDeadline() == 450);
+    check(timerModel.write(0xb0007, 1, 0, 401) == 0 && !timerModel.nextDeadline());
+    check(timerModel.read(0xb0006, 1, value) == 0 && !(value & 1));
+    for (uint64_t invalid : {1ull << 9, 1ull << 13, 1ull << 20, 1ull << 63})
+        check(timerModel.write(0xb0006, 1, invalid, 0) == 5);
+    check(timerModel.write(0xb0006, 2, 0, 0) == 14);
+    check(timerModel.write(0xb0008, 1, 0, 0) == 5);
+    check(timerModel.write(0xb0006, 1, 1, 0) == 0); // SINT 0 disables message timers.
+    check(timerModel.read(0xb0006, 1, value) == 0 && !(value & 1));
+    check(timerModel.write(0xb0006, 1, 0x1108, 0) == 0);
+    check(timerModel.write(0xb0007, 1, 50, 0) == 0);
+    timerModel.setDelivery([](unsigned, unsigned, uint64_t, uint64_t, uint64_t) { return false; });
+    timerModel.service(60);
+    check(timerModel.delivered() == 3 && timerModel.nextDeadline() == 50);
+    check(timerModel.read(0xb0006, 1, value) == 0 && !(value & 1)); // Expired even if busy.
+    expectedExpiration = 50; expectedDelivery = 70;
+    timerModel.setDelivery([&](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == expectedExpiration && now == expectedDelivery); return true;
+    });
+    timerModel.service(70); check(timerModel.delivered() == 4 && !timerModel.nextDeadline());
+    // Integrated timer registers share the partition clock and SynIC pages.
+    uint64_t timerClock = 1000;
+    std::vector<uint8_t> timerRam(8192);
+    ArmHyperV timerHv(true, timerRam, base, 2, [&] { return timerClock; });
+    auto timerWrite = [&](uint32_t name, uint64_t low, uint64_t high = 0) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name; r[6] = low; r[7] = high;
+        check(timerHv.call(0, r, 0)); return r[0];
+    };
+    check(timerWrite(0xb0000, 0) == 6);
+    check(timerWrite(0x90002, 0x1000a000066bbull) == one);
+    check(timerWrite(0xb0000, 0, 1) == 5);
+    check(timerWrite(0xa0010, 1) == one);
+    check(timerWrite(0xa0013, base + 1) == one);
+    check(timerWrite(0xa0002, 31) == one);
+    unsigned timerIrqs = 0;
+    timerHv.setPrivateInterruptSender([&](uint64_t mask, unsigned vector) {
+        check(mask == 1 && vector == 31); ++timerIrqs; return true;
+    });
+    check(timerWrite(0xb0000, 0x20008) == one);
+    check(timerWrite(0xb0001, 100) == one);
+    check(timerHv.timerDelay100ns() == 100);
+    timerClock = 1099; timerHv.serviceTimers(); check(timerIrqs == 0);
+    timerClock = 1100; timerHv.serviceTimers(); check(timerIrqs == 1 && !timerHv.timersActive());
+    check(get(timerRam, 512) == 0x0000001880000010ull);
+    check(get(timerRam, 512 + 16) == 0 && get(timerRam, 512 + 24) == 100 && get(timerRam, 512 + 32) == 100);
+    check(timerWrite(0xb0003, 120) == one);
+    check(timerWrite(0xb0002, 0x20001) == one);
+    timerClock = 1120; timerHv.serviceTimers();
+    check(timerIrqs == 1 && timerHv.timersActive() && timerRam[517] == 1);
+    put(timerRam, 512, 0, 4); // Free slot for timer 1's dedicated pending message.
+    timerClock = 1125; timerHv.serviceTimers();
+    check(timerIrqs == 2 && !timerHv.timersActive());
+    check(get(timerRam, 512 + 16) == 1 && get(timerRam, 512 + 24) == 120 && get(timerRam, 512 + 32) == 125);
+    check(timerHv.report().find("\"syntheticTimerDeliveries\":2") != std::string::npos);
+    ArmHyperVTimers allTimers(2);
+    unsigned firedMask = 0;
+    allTimers.setDelivery([&](unsigned vp, unsigned timer, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == 500 && now == 500);
+        firedMask |= 1u << (vp * 4 + timer); return true;
+    });
+    for (unsigned vp = 0; vp < 2; ++vp) for (unsigned timer = 0; timer < 4; ++timer) {
+        check(allTimers.write(0xb0001 + timer * 2, vp, 500, 0) == 0);
+        check(allTimers.write(0xb0000 + timer * 2, vp, 0x1101, 0) == 0);
+    }
+    allTimers.service(499); check(firedMask == 0);
+    allTimers.service(500); check(firedMask == 255 && allTimers.delivered() == 8 && !allTimers.nextDeadline());
+    allTimers.setDelivery([](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == 1100 && now == 1250); return true;
+    });
+    check(allTimers.write(0xb0000, 0, 0x1106, 1000) == 0);
+    check(allTimers.write(0xb0001, 0, 100, 1000) == 0);
+    check(allTimers.write(0xb0000, 0, 0x1107, 1000) == 0);
+    check(allTimers.nextDeadline() == 1100 && !allTimers.nextDeadline(false));
+    allTimers.service(1250); check(allTimers.nextDeadline() == 1300);
+    check(allTimers.write(0xb0000, 0, 0, 1250) == 0 && !allTimers.nextDeadline());
+    check(allTimers.write(0xb0001, 0, UINT64_MAX, 10) == 0);
+    check(allTimers.write(0xb0000, 0, 0x1103, 10) == 0);
+    auto beforeOverflow = allTimers.delivered();
+    allTimers.service(UINT64_MAX);
+    check(allTimers.delivered() == beforeOverflow && !allTimers.nextDeadline());
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

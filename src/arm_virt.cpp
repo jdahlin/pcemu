@@ -73,7 +73,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
-    hyperv.synicController().setInterruptSender([this](uint64_t targets, unsigned interrupt) {
+    hyperv.setPrivateInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendPrivateInterrupt(targets, interrupt);
         return true;
     });
@@ -258,6 +258,11 @@ std::string ArmVirtMachine::hypervReport() const {
         if (cpu) report += ',';
         report += std::to_string(vm.softwareInterruptRequests(cpu));
     }
+    report += "],\"privateInterruptRequests\":[";
+    for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
+        if (cpu) report += ',';
+        report += std::to_string(vm.privateInterruptRequests(cpu));
+    }
     return report + "]}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {
@@ -269,6 +274,11 @@ void ArmVirtMachine::updateRtcInterrupt() {
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
     updateRtcInterrupt();
+    hyperv.serviceTimers();
+    if (auto delay = hyperv.timerDelay100ns()) {
+        auto milliseconds = *delay / 10000 + (*delay % 10000 != 0);
+        slice = std::min(slice, std::chrono::milliseconds(std::max(uint64_t(1), milliseconds)));
+    }
     slice = std::min(slice, std::chrono::milliseconds(1000));
     if (gateway) {
         gateway->pump(net->outgoing, [this](const uint8_t *data, size_t size) { net->receive(data, size); }, 0, net->resetCount);

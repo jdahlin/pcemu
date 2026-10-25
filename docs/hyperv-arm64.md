@@ -294,7 +294,7 @@ The following is a work inventory, not a completion claim:
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Initial event/message controller and native PPI delivery tested, still unadvertised; connections, EOI rescanning and timers pending. ARM Generic Timer already runs natively. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP and native PPI delivery tested, still unadvertised; connections, EOI rescanning and Windows consumption pending. ARM Generic Timer already runs natively. |
 | VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
@@ -725,3 +725,51 @@ SynIC remains unadvertised. Guest connection/port hypercalls, GIC-EOI-triggered
 queue rescanning, timer producers and complete ARM response-buffer semantics
 still require implementation or applicability verification. Windows SynIC
 consumption has not been established by these host-driven native tests.
+
+
+## Synthetic timer implementation
+
+Four per-VP synthetic timers now back ARM registers 0xb0000..0xb0007.
+Configuration/count writes implement one-shot absolute deadlines, periodic
+intervals, AutoEnable and zero-count cancellation. Message mode with SINT 0
+is disabled as specified. Reserved configuration bits, including the ARM
+vector field's upper three bits, fail before state changes. A one-shot clears
+Enabled on expiration even when its notification must wait for delivery.
+Counts and deadlines use the partition reference counter's 100 ns time base.
+
+Direct mode requests the configured GIC INTID 0..31 through the real private
+interrupt backend. Message mode uses the standard 24-byte payload (timer
+index, reserved zero, scheduled expiration and actual delivery time). Each
+pending expiration stays owned by its timer while the SynIC slot is occupied;
+it is not repeatedly appended to the generic message queue. A full slot gets
+MessagePending. Freeing the slot permits a later service pass to deliver it.
+Successful delivery increments `syntheticTimerDeliveries`; this counts native
+pending requests or deposited messages, not guest handler invocations.
+
+The VM loop services timers only with all VPs stopped. A non-lazy deadline
+shortens the next run slice, rounded up to milliseconds, with a 1 ms retry
+budget for blocked delivery. Lazy timers do not force a shorter slice; they
+are serviced when the VM loop next regains control. Signals never precede
+scheduled expiration. Missed periodic intervals coalesce into one delivery
+and retain the original phase for the next deadline. Unrepresentable future intervals are left unscheduled
+rather than shortened into an early expiration; full reference-clock rollover
+semantics remain unverified and must be resolved before feature advertisement.
+
+`make test-hvf` passes 1,558 portable Hyper-V checks and 259 native checks.
+Portable tests cover all eight VP/timer combinations, no-early delivery,
+periodic catch-up, lazy scheduling, cancellation, invalid register fields,
+backpressure and the exact timer-message payload. Native tests require timer
+messages to produce PPI 31 on both VPs and a direct timer to produce PPI 17
+only on VP1, acknowledged through IAR1/EOIR1. The EFI probe programs an expired
+direct timer through SMCCC SetVpRegisters, acknowledges SGI 9, and reads its
+disabled configuration through legacy GetVpRegisters. The probe requires one
+timer delivery and three total private GIC requests (two IPIs plus the timer).
+
+The register layout and timing behavior follow Microsoft's
+[timer contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/timers)
+and OpenVMM's ARM vector and TimerMessagePayload definitions. Microsoft
+recommends the architectural Generic Timer on ARM64; that existing timer
+continues to run independently. Synthetic timer privileges/direct-mode
+features remain unadvertised. Actual Windows timer consumption, rollover,
+full SynIC integration and applicable reset/suspend behavior still require
+verification before this facility is considered complete.

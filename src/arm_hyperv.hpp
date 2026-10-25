@@ -1,5 +1,6 @@
 #pragma once
 #include "arm_synic.hpp"
+#include "arm_hyperv_timers.hpp"
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -23,6 +24,10 @@ class ArmHyperV {
     void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
     using SoftwareInterruptSender = std::function<bool(uint64_t, unsigned)>;
     void setSoftwareInterruptSender(SoftwareInterruptSender send) { interruptSender = std::move(send); }
+    void serviceTimers();
+    std::optional<uint64_t> timerDelay100ns() const;
+    bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
+    void setPrivateInterruptSender(SoftwareInterruptSender send);
     ArmSynic &synicController() { return synic; }
     std::string report() const;
     // One bounded last-event snapshot, drained by the platform after each HVC.
@@ -31,6 +36,8 @@ class ArmHyperV {
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
     ArmSynic synic;
+    ArmHyperVTimers timers;
+    SoftwareInterruptSender privateInterruptSender;
     SoftwareInterruptSender interruptSender;
     uint64_t ipiRequests = 0, ipiTargetMask = 0;
     unsigned ipiVector = 0;
@@ -57,6 +64,7 @@ class ArmHyperV {
     uint32_t lastRegister = 0;
     std::map<uint32_t, Counts> registers;
     std::map<uint16_t, uint64_t> calls, callFailures;
+    uint64_t timeNow() const;
     uint64_t invoke(Registers &r, bool smccc, unsigned vp);
     uint16_t readRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> &value);
     uint16_t writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value);

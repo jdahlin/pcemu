@@ -22,13 +22,38 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, size_t size) {
 }
 }
 ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count, Clock source)
-    : enabled(on), synic(memory, start, count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
+    : enabled(on), synic(memory, start, count), timers(count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
     if (!clock) clock = [] {
         return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count()) / 100;
     };
     clockOrigin = clock();
+    timers.setDelivery([this](unsigned vp, unsigned timer, uint64_t config, uint64_t expiration, uint64_t now) {
+        if (config & 0x1000)
+            return privateInterruptSender && privateInterruptSender(1ull << vp, unsigned((config >> 4) & 31));
+        std::array<uint8_t, 24> payload{};
+        put(payload, 0, timer, 4); put(payload, 8, expiration, 8); put(payload, 16, now, 8);
+        return synic.tryPostMessage(vp, unsigned((config >> 16) & 15), 0x80000010, 0, payload) == 0;
+    });
     if (!cpus || cpus > 8) throw std::runtime_error("Invalid Hyper-V VP count");
+}
+uint64_t ArmHyperV::timeNow() const {
+    auto now = clock();
+    return std::max(referenceTime, now >= clockOrigin ? now - clockOrigin : 0);
+}
+void ArmHyperV::serviceTimers() {
+    if (enabled) timers.service(timeNow());
+}
+std::optional<uint64_t> ArmHyperV::timerDelay100ns() const {
+    if (!enabled) return {};
+    auto deadline = timers.nextDeadline(false);
+    if (!deadline) return {};
+    auto now = timeNow();
+    return *deadline > now ? *deadline - now : 0;
+}
+void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
+    privateInterruptSender = std::move(send);
+    synic.setInterruptSender(privateInterruptSender);
 }
 ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
     auto it = registers.find(name);
@@ -38,6 +63,10 @@ ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
 }
 uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> &value) {
     value = {};
+    if (name >= 0xb0000 && name <= 0xb0007) {
+        if (!guestId) return accessDenied;
+        return timers.read(name, vp, value[0]);
+    }
     if (name >= 0xa0000 && name <= 0xa0015) {
         if (!guestId) return accessDenied;
         return synic.read(name, vp, value[0]);
@@ -79,6 +108,11 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name >= 0xb0000 && name <= 0xb0007) {
+        if (!guestId) return accessDenied;
+        if (value[1]) return invalidParameter;
+        return timers.write(name, vp, value[0], timeNow());
+    }
     if (name >= 0xa0000 && name <= 0xa0015) {
         if (!guestId) return accessDenied;
         if (value[1]) return invalidParameter;
@@ -364,6 +398,7 @@ std::string ArmHyperV::report() const {
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
+      << ",\"syntheticTimerDeliveries\":" << timers.delivered()
       << ",\"ipiRequests\":" << ipiRequests << ",\"ipiTargetMask\":" << ipiTargetMask
       << ",\"ipiVector\":" << ipiVector
       << ",\"crash\":" << crashReport()
