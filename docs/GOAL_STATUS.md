@@ -996,3 +996,18 @@ observe 5.18% less process CPU at the median, with reductions ranging from
 This is a small validated improvement, not Rosetta parity. See
 `pic-idle-polling.md` and `measurements/pic-idle-excel-2026-10-25.json`.
 The broader performance goal remains active.
+
+
+## Render complete VGA frames without per-pixel palette expansion (25 October)
+
+The post-PIC task host profile points to capture/video/control (18.5%) as well
+as dispatch (22.8%) and polling (16.6%). The frame renderer now snapshots the
+DAC palette per frame and shares planar byte loads across eight pixels. GUI
+and capture use it; packed non-8-bit formats keep the pixel reference path.
+It matches 1,014,127 reference pixels, passes ASan/UBSan and 708 component
+checks, and passes headless Win3.11 and both Win95 application/restart/readback
+gates. Successful private disks are removed. A RAM-only rendering run records
+4.43× planar, 4.28× indexed VGA and 8.00× VBE 8-bit speedups. Three whole-task
+Excel CPU ratios improve but vary widely under host load; this establishes
+cheaper presentation, not faster x86 execution or Rosetta parity. The goal
+remains active. See `vga-frame-rendering.md` and its raw measurements.

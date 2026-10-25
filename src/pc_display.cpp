@@ -54,11 +54,16 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
     std::ofstream f(framePath, std::ios::binary);
     f << "P6\n" << width << ' ' << height << "\n255\n";
     std::vector<uint8_t> rgb(size_t(width) * height * 3);
+    std::vector<uint32_t> graphics;
+    if (m.vga.graphics) {
+        graphics.resize(size_t(width) * height);
+        m.vga.render(graphics, width, height);
+    }
     for (unsigned y = 0; y < height; y++)
         for (unsigned x = 0; x < width; x++) {
             uint32_t px;
             if (m.vga.graphics)
-                px = m.vga.pixel(x, y);
+                px = graphics[size_t(y) * width + x];
             else {
                 auto off =
                     0xb8000 + m.activePage * 4096 + ((y / 16) * m.columns + x / 8) * 2;
@@ -76,12 +81,12 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
 void PcDisplay::render(Machine &m, std::span<uint32_t> pixels, unsigned displayWidth,
                        unsigned displayHeight, uint64_t frameTicks) const {
     auto &c = m.cpu;
+    if (m.vga.graphics) {
+        m.vga.render(pixels, displayWidth, displayHeight);
+        return;
+    }
     for (unsigned y = 0; y < displayHeight; y++)
         for (unsigned x = 0; x < displayWidth; x++) {
-            if (m.vga.graphics) {
-                pixels[y * displayWidth + x] = m.vga.pixel(x, y);
-                continue;
-            }
             unsigned col = x / 8, row = y / 16;
             uint32_t px = palette[0];
             if (col < m.columns && row < m.rows) {

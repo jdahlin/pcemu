@@ -1,5 +1,6 @@
 #include "vga.hpp"
 #include <algorithm>
+#include <stdexcept>
 namespace pc {
 VGA::VGA() {
     mode(3, true);
@@ -335,5 +336,57 @@ uint32_t VGA::pixel(unsigned x, unsigned y) const {
     auto expand = [](uint8_t v) { return uint32_t((v << 2) | (v >> 4)); };
     return 0xff000000 | (expand(dac[color][0]) << 16) | (expand(dac[color][1]) << 8) |
            expand(dac[color][2]);
+}
+void VGA::render(std::span<uint32_t> pixels, unsigned frameWidth, unsigned frameHeight) const {
+    if (frameHeight && frameWidth > pixels.size() / frameHeight)
+        throw std::invalid_argument("VGA frame buffer is too small");
+    // Snapshot the palette once per frame, rather than expanding DAC components
+    // and decoding display mode for every pixel. Other packed formats retain
+    // the reference pixel path.
+    const bool packed = dispi[4] & 1;
+    if (packed && dispi[3] != 8) {
+        for (unsigned y = 0; y < frameHeight; ++y)
+            for (unsigned x = 0; x < frameWidth; ++x)
+                pixels[size_t(y) * frameWidth + x] = pixel(x, y);
+        return;
+    }
+    std::array<uint32_t, 256> colors;
+    for (unsigned i = 0; i < colors.size(); ++i) {
+        unsigned index = i & dacMask;
+        auto expand = [&](uint8_t v) -> uint32_t {
+            return packed && (dispi[4] & 0x20) ? v : unsigned((v << 2) | (v >> 4));
+        };
+        colors[i] = 0xff000000 | (expand(dac[index][0]) << 16) |
+                    (expand(dac[index][1]) << 8) | expand(dac[index][2]);
+    }
+    const unsigned start = (crtc[12] << 8) | crtc[13];
+    const bool indexed = gfx[5] & 0x40;
+    const unsigned stride = crtc[0x13] ? crtc[0x13] * 2 : width / (indexed ? 4 : 8);
+    for (unsigned y = 0; y < frameHeight; ++y) {
+        auto row = pixels.subspan(size_t(y) * frameWidth, frameWidth);
+        std::fill(row.begin(), row.end(), 0xff000000);
+        if (y >= height) continue;
+        unsigned end = std::min(frameWidth, width);
+        if (packed) {
+            uint64_t at = (uint64_t(y) + dispi[9]) * dispi[6] + dispi[8];
+            for (unsigned x = 0; x < end && at + x < vram.size(); ++x)
+                row[x] = colors[vram[at + x]];
+        } else if (indexed) {
+            for (unsigned x = 0; x < end; ++x)
+                row[x] = colors[planes[x & 3][(start + y * stride + x / 4) & 65535]];
+        } else {
+            for (unsigned x = 0; x < end; x += 8) {
+                unsigned at = (start + y * stride + x / 8) & 65535;
+                const uint8_t p0 = planes[0][at], p1 = planes[1][at],
+                              p2 = planes[2][at], p3 = planes[3][at];
+                for (unsigned bit = 0; bit < 8 && x + bit < end; ++bit) {
+                    unsigned shift = 7 - bit;
+                    unsigned color = ((p0 >> shift) & 1) | (((p1 >> shift) & 1) << 1) |
+                                     (((p2 >> shift) & 1) << 2) | (((p3 >> shift) & 1) << 3);
+                    row[x + bit] = colors[attr[color] & 63];
+                }
+            }
+        }
+    }
 }
 } // namespace pc

@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <span>
 namespace pc {
 struct VGA {
     std::array<std::array<uint8_t, 65536>, 4> planes{};
@@ -33,5 +34,7 @@ struct VGA {
     uint8_t in(uint16_t port);
     void out(uint16_t port, uint8_t value);
     uint32_t pixel(unsigned x, unsigned y) const;
+    // Render a capture or frontend frame from a stable device state.
+    void render(std::span<uint32_t> pixels, unsigned frameWidth, unsigned frameHeight) const;
 };
 } // namespace pc
