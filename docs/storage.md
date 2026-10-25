@@ -160,3 +160,21 @@ also reside under /Volumes/data/pcemu/recovered; local media paths are symlinks.
 The DOS QCOW2 base is about 9 MiB; the installed Win3.11 compressed child about
 13 MiB. Retain all parents. Recovery evidence:
 `measurements/recovered-dos-win311-2026-10-25.json`.
+
+## QCOW2 recovery on the external NAS
+
+`tools/convert_qcow2.py` streams an offline PCEmu disk through a private
+read-only NBD socket into QCOW2, without a raw staging copy. Only empty QCOW2
+metadata is created locally. The destination uses `file.locking=off` because
+the SMB volume does not implement QEMU's byte-range locks. Conversion checks
+QCOW2 structure and compares every logical byte before publishing the output.
+Existing destination files are rejected; publication uses an exclusive empty
+reservation followed by atomic replacement, avoiding unsupported SMB hard links.
+
+The recovered Win3.11 installation was flattened on 2026-10-25 to
+`/Volumes/data/pcemu/recovered/win311.qcow2`: 41,353,216 bytes for a
+2,147,475,456-byte guest disk. Structural validation and full logical comparison
+passed, followed by a headless cold boot, Notepad save, DOS return and exact
+file readback (`build/win311-smoke-cemoypbn/result.json`). Successful temporary
+writable overlays were removed. Writable runs use small zstd PCEmu overlays
+above the immutable QCOW2 base.

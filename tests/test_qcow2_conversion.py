@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='pcemu-convert-test-') as directory:
     writer.stdin.close()
     assert writer.wait() == 0
     original = overlay.read_bytes()
-    output = root / 'result.qcow2'
+    output = root / 'result, NAS.qcow2'
     command = ['python3', 'tools/convert_qcow2.py', str(overlay), str(output), '--size', '16384']
     subprocess.run(command, check=True)
     subprocess.run(['./build/qcow2-tests', str(output)], check=True)

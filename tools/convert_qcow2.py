@@ -9,6 +9,7 @@ import fcntl
 import os
 from pathlib import Path
 import socket
+import shutil
 import struct
 import subprocess
 import tempfile
@@ -98,11 +99,20 @@ def convert(source, destination, size):
                 worker.start()
                 url = 'nbd:unix:' + address
                 try:
-                    subprocess.run(['qemu-img', 'convert', '-p', '-f', 'raw', '-O', 'qcow2',
-                                    '-o', 'compat=1.1,cluster_size=65536', url, str(partial)], check=True)
-                    subprocess.run(['qemu-img', 'check', str(partial)], check=True)
-                    subprocess.run(['qemu-img', 'compare', '-p', '-f', 'raw', '-F', 'qcow2',
-                                    url, str(partial)], check=True)
+                    # Create only empty metadata locally: NAS file locking may be
+                    # unsupported, while the actual guest data stays at destination.
+                    empty = Path(directory) / 'empty.qcow2'
+                    subprocess.run(['qemu-img', 'create', '-q', '-f', 'qcow2',
+                                    '-o', 'compat=1.1,cluster_size=65536', str(empty), str(size)], check=True)
+                    shutil.copyfile(empty, partial)
+                    target = ('driver=qcow2,file.driver=file,file.filename=' +
+                              str(partial).replace(',', ',,') + ',file.locking=off')
+                    subprocess.run(['qemu-img', 'convert', '-p', '-n', '-f', 'raw',
+                                    '--target-image-opts', url, target], check=True)
+                    subprocess.run(['qemu-img', 'check', '--image-opts', target], check=True)
+                    subprocess.run(['qemu-img', 'compare', '-p', '--image-opts',
+                                    'driver=raw,file.driver=nbd,file.server.type=unix,file.server.path=' + address,
+                                    target], check=True)
                 finally:
                     stopping.set()
                     worker.join(timeout=60)
@@ -110,9 +120,16 @@ def convert(source, destination, size):
                     raise RuntimeError('Disk reader did not stop')
                 if errors:
                     raise errors[0]
-        # A hard link publishes atomically without overwriting any existing file.
-        os.link(partial, destination)
-        partial.unlink()
+        # Reserve the destination exclusively, then atomically replace our own
+        # empty reservation. SMB supports this even when hard links and macOS
+        # exclusive rename are unavailable. Existing destinations are untouched.
+        with destination.open('xb'):
+            pass
+        try:
+            os.replace(partial, destination)
+        except BaseException:
+            destination.unlink()
+            raise
     except BaseException:
         partial.unlink(missing_ok=True)
         raise
