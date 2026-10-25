@@ -1310,3 +1310,41 @@ malformed descriptors, alias rejection, multiple aligned GPA ranges and GPADL
 reuse. The existing 1,581 GPADL checks still pass. This portable diskless target
 is included in `test` and `test-hvf`. Channel offers/open/close and GPADL wire
 messages are not yet connected to this ring engine.
+
+### Controlled interrupt-routing experiments
+
+Changing only the VMBus ACPI interrupt resource from PPI16 to PPI31 did not
+change the restored Windows driver's selection: unmasked SINT2 still contains
+8, with its version reply unconsumed. The valid evidence is
+`build/windows11-hyperv/ppi31/evidence.json`. The first attempt is excluded:
+it incorrectly supplied an already-checksummed SSDT to the firmware table loader.
+The corrected attempt clears the input checksum, as the normal builder does,
+so firmware recomputes it after loading.
+
+A second, isolated diagnostic enabled only architectural SGI8 before pending
+it. IGROUPR0 was already 0xffffffff; no group or priority was changed. Windows
+then reported bugcheck 0x5c (HAL_INITIALIZATION_FAILED), subtype 0x203, with
+interrupt 8. The GIC snapshot shows bit8 enabled and active, so real guest
+acknowledgement occurred, but the ordinary GIC handler was unregistered. This
+rules out forcibly enabling SGI8 as a solution. The experimental change was
+never applied to production sources and was removed from the isolated source
+before rebuilding the normal runner. Evidence, binary/source hashes and its
+explicit diagnostic-only status are in `build/windows11-hyperv/sint8-enable/`.
+The earlier disabled-bit observation is therefore a symptom, not proof that
+ordinary SGI delivery is the correct Windows SynIC transport.
+
+The cached original Windows kernel's public symbols/disassembly further show
+HvlRegisterInterruptCallback returning callback-index+5, while
+HvlpSintInterruptRoutine dispatches KINTERRUPT vectors starting at 0x300.
+The ARM64 VMBus driver uses that enlightened callback path. Its logical vector
+must not be assumed equivalent to a registered ordinary GIC interrupt solely
+because it fits in five bits. The separate synthetic VBAR was rechecked too:
+its IRQ entries enter the crash-dump path, and its synchronous entries dispatch
+synthetic syndrome classes; it is not an established replacement transport.
+The precise hardware/HAL routing contract remains under investigation.
+
+All experimental VMs were stopped and their temporary native disk clones
+removed after evidence capture. The original verified QCOW2/PCD installation
+was restarted with `--hyperv basic`; no experimental interrupt-enable code is
+in that executable. The latest PID/session is in
+`build/windows11-qcow2/launch.json` and must be revalidated before use.
