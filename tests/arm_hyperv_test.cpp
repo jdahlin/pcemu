@@ -2,11 +2,12 @@
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <source_location>
 #include <vector>
 using namespace pc;
 static unsigned checks = 0;
-static void check(bool value) {
-    if (!value) throw std::runtime_error("Hyper-V check " + std::to_string(checks + 1));
+static void check(bool value, std::source_location location = std::source_location::current()) {
+    if (!value) throw std::runtime_error("Hyper-V check " + std::to_string(checks + 1) + " at line " + std::to_string(location.line()));
     ++checks;
 }
 static void put(std::vector<uint8_t> &b, size_t at, uint64_t value, size_t size = 8) {
@@ -508,5 +509,103 @@ int main() {
     check(interrupts.report().find("\"ipiTargetRequests\":[9,17]") != std::string::npos);
     r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x201;
     check(interrupts.call(1, r, 0) && r[15] == 0xffffffff00000004ull); // Real backend enables IPI recommendation.
+    // SynIC state, message ownership and event coalescing. Guest RAM is only
+    // touched while all VPs are stopped, including the injection callback.
+    std::vector<uint8_t> zeroBaseRam(4096, 0xaa);
+    ArmSynic zeroBaseSynic(zeroBaseRam, 0, 1);
+    check(zeroBaseSynic.write(0xa0012, 0, 1) == 0 && zeroBaseRam[0] == 0);
+    std::vector<uint8_t> synicRam(5 * 4096, 0xaa);
+    ArmSynic synic(synicRam, base, 2);
+    uint64_t value = 99;
+    bool newly = true;
+    for (unsigned vp = 0; vp < 2; ++vp) {
+        check(synic.read(0xa0010, vp, value) == 0 && value == 0);
+        check(synic.read(0xa0011, vp, value) == 0 && value == 1);
+        for (unsigned sint = 0; sint < 16; ++sint)
+            check(synic.read(0xa0000 + sint, vp, value) == 0 && value == 0x10000);
+    }
+    check(synic.signalEvent(1, 2, 0, newly) == 0x18 && !newly);
+    check(synic.write(0xa0011, 0, 1) == 5); // Read-only version.
+    check(synic.write(0xa0015, 0, 1) == 5); // No fake response-buffer support.
+    check(synic.write(0xa0010, 0, 2) == 5);
+    check(synic.write(0xa0012, 1, base + 1) == 0);
+    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0);
+    check(std::all_of(synicRam.begin(), synicRam.begin() + 8192, [](auto b) { return b == 0; }));
+    check(synic.write(0xa0010, 1, 1) == 0);
+    for (uint64_t bad : {uint64_t(15), uint64_t(32), 16ull | (1ull << 17), 16ull | (1ull << 20)})
+        check(synic.write(0xa0002, 1, bad) == 5);
+    check(synic.write(0xa0002, 1, 16) == 0);
+    check(synic.signalEvent(1, 2, 0, newly) == 0x71 && !newly && synicRam[512] == 0);
+    unsigned notifications = 0;
+    synic.setInterruptSender([&](uint64_t targets, unsigned vector) {
+        check(targets == 2 && vector == 16);
+        check(synicRam[512] != 0 || synicRam[4096 + 512] != 0);
+        ++notifications; return true;
+    });
+    check(synic.signalEvent(1, 2, 0, newly) == 0 && newly);
+    check(synic.signalEvent(1, 2, 0, newly) == 0 && !newly && notifications == 1);
+    check(synic.signalEvent(1, 2, 2047, newly) == 0 && newly && synicRam[767] == 128);
+    synicRam[512] &= ~1; // Guest clears a flag after servicing it.
+    check(synic.signalEvent(1, 2, 0, newly) == 0 && newly && notifications == 3);
+    check(synic.write(0xa0012, 1, base + 1) == 0 && synicRam[512] == 1);
+    auto before = synicRam;
+    for (auto bad : {base - 4096 + 1, base + 5 * 4096 + 1, base + 3})
+        check(synic.write(0xa0012, 1, bad) == 5 && synicRam == before);
+    check(synic.signalEvent(2, 2, 0, newly) == 14 && !newly);
+    check(synic.signalEvent(1, 16, 0, newly) == 5);
+    check(synic.signalEvent(1, 2, 2048, newly) == 5);
+    check(synic.write(0xa0002, 1, 16 | 0x10000) == 0);
+    check(synic.signalEvent(1, 2, 1, newly) == 0x18 && synicRam[512] == 1);
+    check(synic.write(0xa0002, 1, 16 | 0x50000) == 0); // Polling overrides mask.
+    check(synic.signalEvent(1, 2, 1, newly) == 0 && newly && notifications == 3);
+    check(synic.write(0xa0002, 1, 16) == 0);
+    const std::array<uint8_t, 3> payload{11, 22, 33};
+    check(synic.postMessage(1, 2, 0x80000010, 0x12345678, payload) == 0);
+    const size_t slot = 4096 + 512;
+    check(get(synicRam, slot) == 0x0000000380000010ull);
+    check(get(synicRam, slot + 8) == 0x12345678 && synicRam[slot + 16] == 11);
+    check(notifications == 4);
+    for (unsigned i = 0; i < 16; ++i)
+        check(synic.postMessage(1, 2, 1 + i, i, payload) == 0);
+    check(synicRam[slot + 5] == 1 && notifications == 4);
+    check(synic.postMessage(1, 2, 99, 99, payload) == 0x13);
+    check(synic.write(0xa0014, 1, 0) == 0 && notifications == 4); // Occupied slot retained.
+    for (unsigned i = 0; i < 16; ++i) {
+        put(synicRam, slot, 0, 4); // Guest releases slot before EOM.
+        check(synic.write(0xa0014, 1, 0) == 0);
+        check(synicRam[slot] == i + 1 && get(synicRam, slot + 8) == i);
+        check(synicRam[slot + 5] == (i != 15));
+    }
+    check(notifications == 20);
+    check(synic.read(0xa0014, 1, value) == 0 && value == 0);
+    check(synic.write(0xa0014, 1, 1) == 5);
+    put(synicRam, slot, 0, 4);
+    synic.setInterruptSender([](uint64_t, unsigned) { return false; });
+    auto empty = synicRam;
+    check(synic.postMessage(1, 2, 77, 0, payload) == 0x71 && synicRam == empty);
+    check(synic.write(0xa0002, 1, 16 | 0x10000) == 0);
+    check(synic.postMessage(1, 2, 78, 0, payload) == 0 && synicRam[slot] == 78);
+    check(synic.postMessage(1, 2, 79, 0, payload) == 0);
+    check(synic.write(0xa0013, 1, base + 4096) == 0);
+    put(synicRam, slot, 0, 4);
+    check(synic.write(0xa0014, 1, 0) == 0 && synicRam[slot] == 0); // Disabled page defers queue.
+    check(synic.postMessage(1, 2, 80, 0, payload) == 0x18);
+    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0);
+    check(synic.write(0xa0014, 1, 0) == 0 && synicRam[slot] == 79);
+    check(synic.postMessage(1, 2, 0, 0, payload) == 5);
+    check(synic.postMessage(1, 2, 1, 0, std::span<const uint8_t>(synicRam).first(241)) == 5);
+    fastWrite(0x1000a000066bbull); check(r[0] == one);
+    // ARM Get/SetVpRegisters delegates to this controller without advertising
+    // the incomplete feature. Both HVC register layouts remain valid.
+    for (bool smccc : {false, true}) {
+        r = {}; r[0] = smccc ? 0x46000001 : one | 0x10051;
+        unsigned start = smccc ? 2 : 1;
+        if (smccc) r[1] = one | 0x10051;
+        r[start] = uint64_t(-1); r[start + 1] = 0xfffffffe;
+        r[start + 2] = 0xa0010; r[start + 4] = 1;
+        check(hv.call(smccc ? 0 : 1, r, 1) && r[0] == one);
+        fastRead(0xa0010, smccc, 1);
+        check(r[0] == one && r[smccc ? 6 : 15] == 1);
+    }
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

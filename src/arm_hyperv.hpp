@@ -1,4 +1,5 @@
 #pragma once
+#include "arm_synic.hpp"
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -22,12 +23,14 @@ class ArmHyperV {
     void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
     using SoftwareInterruptSender = std::function<bool(uint64_t, unsigned)>;
     void setSoftwareInterruptSender(SoftwareInterruptSender send) { interruptSender = std::move(send); }
+    ArmSynic &synicController() { return synic; }
     std::string report() const;
     // One bounded last-event snapshot, drained by the platform after each HVC.
     std::string takeCrashReport();
   private:
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
+    ArmSynic synic;
     SoftwareInterruptSender interruptSender;
     uint64_t ipiRequests = 0, ipiTargetMask = 0;
     unsigned ipiVector = 0;

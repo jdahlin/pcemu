@@ -402,9 +402,26 @@ void selfTest() {
         rejects([&] { vm.sendSoftwareInterrupt(3, 16); }, "Non-SGI vector accepted");
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
                 "Empty/rejected SGI request changed counters");
-        vm.sendPrivateInterrupt(2, 16);
+        pc::ArmSynic synic(vm.ram(), HvfMachine::ramBase, 2);
+        synic.setInterruptSender([&](uint64_t targets, unsigned vector) {
+            vm.sendPrivateInterrupt(targets, vector); return true;
+        });
+        for (unsigned cpu = 0; cpu < 2; ++cpu) {
+            require(synic.write(0xa0010, cpu, 1) == 0 &&
+                    synic.write(0xa0012, cpu, HvfMachine::ramBase + 0x18001 + cpu * 0x2000) == 0 &&
+                    synic.write(0xa0013, cpu, HvfMachine::ramBase + 0x19001 + cpu * 0x2000) == 0 &&
+                    synic.write(0xa0002, cpu, 16) == 0 && synic.write(0xa0003, cpu, 31) == 0,
+                    "Native SynIC configuration failed");
+        }
+        bool newly = false;
+        require(synic.signalEvent(1, 2, 2047, newly) == 0 && newly &&
+                vm.ram()[0x1a000 + 767] == 128, "Native SynIC flag was not deposited");
         acknowledge(1023, 16);
-        vm.sendPrivateInterrupt(3, 31);
+        const std::array<uint8_t, 3> message{1, 2, 3};
+        for (unsigned cpu = 0; cpu < 2; ++cpu)
+            require(synic.postMessage(cpu, 3, 1, 0, message) == 0 &&
+                    vm.ram()[0x19000 + cpu * 0x2000 + 3 * 256 + 16] == 1,
+                    "Native SynIC message was not deposited");
         acknowledge(31, 31);
         require(vm.privateInterruptRequests(0) == 2 && vm.privateInterruptRequests(1) == 6,
                 "PPI target request counters are incorrect");

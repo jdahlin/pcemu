@@ -292,9 +292,9 @@ The following is a work inventory, not a completion claim:
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
 | SyncContext / SyncContextEx | Fixed/Ex, fast/memory inputs implemented with real per-VP barriers. Windows fixed-path and native Ex tests pass; Windows Ex use remains unobserved. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
-| Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows IPI/TLB use and ARM list applicability still need verification. |
+| Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
+| SynIC and synthetic timers | Initial event/message controller and native PPI delivery tested, still unadvertised; connections, EOI rescanning and timers pending. ARM Generic Timer already runs natively. |
 | VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
@@ -684,3 +684,44 @@ INTID 32 and nonexistent VP targets fail. Existing pending-SGI preservation,
 coalescing and actual IRQ-handler/ERET checks still pass. `make test-hvf`
 passes with 242 native checks and 1,241 portable Hyper-V checks. This is native
 backend evidence; Windows SynIC/timer consumption remains unverified.
+
+## SynIC event and message controller
+
+An initial VTL0 ARM SynIC controller now backs Get/SetVpRegisters for SINT0..15,
+SCONTROL, SVERSION, SIFP, SIPP and EOM. Each VP has independent state and starts
+disabled with masked SINTs. Page enables require a mapped, aligned 4 KiB RAM
+page; a newly installed mapping is cleared, while rewriting the same mapping
+retains pending data. Disabled mappings retain their backing RAM. Reserved
+fields, version writes and unsupported SIRBP fail rather than acknowledging
+an unused response buffer. Identity is required through the hypercall path.
+
+The host event path sets one of 2,048 flags per SINT and requests a real GIC
+interrupt only when the bit changes from zero. Masked sources fail without
+changing RAM; polling sources set flags without an interrupt. Failed native
+injection rolls back the newly set bit. ARM SINT routing currently supports
+PPI INTIDs 16..31, consistent with the Linux kernel's
+[ARM VMBus interrupt model](https://kernel.org/doc/html/next/virt/hyperv/vmbus.html).
+AutoEOI and proxy modes are rejected: the x64 APIC behavior must not be
+silently applied to an ARM GIC.
+
+The host message path writes the 16-byte header and up to 240 payload bytes
+into the selected 256-byte guest slot before requesting its interrupt. An
+occupied slot retains its contents and receives MessagePending; up to 16
+additional messages per SINT are retained in FIFO order. A new post or EOM
+attempts delivery after the guest clears MessageType. EOM with an occupied
+slot leaves it intact, and a masked source can still receive a message in
+RAM. Disabled pages defer queued messages. Failed immediate injection restores
+the previous slot and removes the newly posted message so callers can retry.
+The layouts and register names follow Microsoft's OpenVMM hvdef types and
+[SynIC documentation](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/inter-partition-communication).
+
+`make test-hvf` passes 1,441 portable Hyper-V checks and 247 native checks.
+Tests cover duplicate events, flag 2,047, per-VP routing, polling/masking,
+page bounds, full queues, FIFO draining, disabled-page retention and backend
+failure rollback. The native two-VP fixture routes an actual event through
+PPI 16 and messages through PPI 31, requiring GIC IAR1/EOIR1 acknowledgments.
+
+SynIC remains unadvertised. Guest connection/port hypercalls, GIC-EOI-triggered
+queue rescanning, timer producers and complete ARM response-buffer semantics
+still require implementation or applicability verification. Windows SynIC
+consumption has not been established by these host-driven native tests.

@@ -22,7 +22,7 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, size_t size) {
 }
 }
 ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count, Clock source)
-    : enabled(on), ram(memory), base(start), cpus(count), clock(std::move(source)) {
+    : enabled(on), synic(memory, start, count), ram(memory), base(start), cpus(count), clock(std::move(source)) {
     if (!clock) clock = [] {
         return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count()) / 100;
@@ -38,6 +38,10 @@ ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
 }
 uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> &value) {
     value = {};
+    if (name >= 0xa0000 && name <= 0xa0015) {
+        if (!guestId) return accessDenied;
+        return synic.read(name, vp, value[0]);
+    }
     if (name >= 0x210 && name <= 0x214) {
         value[0] = crashParameters[vp][name - 0x210]; return 0;
     }
@@ -75,6 +79,11 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name >= 0xa0000 && name <= 0xa0015) {
+        if (!guestId) return accessDenied;
+        if (value[1]) return invalidParameter;
+        return synic.write(name, vp, value[0]);
+    }
     if (name >= 0x210 && name <= 0x214) {
         if (value[1]) return invalidParameter;
         crashParameters[vp][name - 0x210] = value[0]; return 0;

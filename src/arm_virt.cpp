@@ -73,6 +73,10 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
+    hyperv.synicController().setInterruptSender([this](uint64_t targets, unsigned interrupt) {
+        vm.sendPrivateInterrupt(targets, interrupt);
+        return true;
+    });
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;
