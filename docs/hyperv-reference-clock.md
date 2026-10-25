@@ -81,3 +81,19 @@ publication only, not actual guest page reads or measured performance.
 The core portable suite passes 2,170 checks, including provider gating, invalid
 writes, cross-VP registration, a changed counter mapping and disable. Native
 Windows registration/consumption still needs a fresh boot with this build.
+
+The fresh four-GiB Windows run registers page GPA `0x4000e000`: register
+`0x90017` has one successful read and write, `referenceTscPage=0x4000e001`,
+and publication sequence 1. Its core, heartbeat, timesync and VMBus audits
+pass with zero Hyper-V failures. Evidence is retained in
+`build/windows11-hyperv/reference-clock/{hyperv.json,audit.json,host.log,launch.json}`.
+This proves Windows registration; it does not directly observe individual
+intercept-free page reads or establish a performance gain.
+
+The original EFI ABI probe now permits optional privilege bit 9 while retaining
+all existing mandatory-feature checks. Its basic/synic/vmbus cases still test
+the same ABI independently of Windows.
+
+All four EFI profiles (off/basic/synic/vmbus) pass after this update. The
+artifacts are in the isolated source build's `hyperv-smoke-cfina80m` directory.
+Channel, timesync and shutdown regressions also pass (281, 32 and 38 checks).

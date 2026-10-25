@@ -40,6 +40,7 @@ efi_main:
     b.ne failed
     ldr x8, =0x001a000000000062
     bic x9, x6, #0x1c // Optional SynIC, timers and native GIC access.
+    bic x9, x9, #0x200 // Optional native reference-clock page.
     bic x9, x9, #0x3000000000 // Optional VMBus grants PostMessage/SignalEvent.
     cmp x9, x8
     b.ne failed
