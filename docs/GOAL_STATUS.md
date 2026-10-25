@@ -1066,3 +1066,28 @@ includes agent/wizard delays, so this is functional evidence only. The separate
 unachieved. Concurrent ARM/HVF/frontend work is outside this frozen executable.
 The broader performance goal stays active. See `fresh-win95-validation.md` and
 `measurements/fresh-win95-memory-call-2026-10-25.json`.
+
+
+## Current Office host and guest profiling (26 October)
+
+Three uninstrumented host-stack runs each cover loaded Excel recalculation and
+warm Word launch, with separate matched-source guest-counter runs. Expected
+pixels pass throughout. Sample accounting excludes verified attachment waits,
+keeps unresolved frames explicit, recognizes batched VGA presentation, and
+retains per-run/source-site detail. Six analyzer tests and actual accounting
+total checks pass; all raw traces/counters are zstd round-trip verified.
+
+Excel's 30,726 task samples show dispatch 27.1%, generated code/helpers 23.4%,
+polling 16.9%, interpreter 9.8%, capture/control 11.0%, compilation 0.8%. Word's
+short warm launch has 2,470 samples: interpretation 28.9%, dispatch 22.9%,
+compilation 9.8%. These are wall-stack shares with separate process CPU totals,
+not exact per-function CPU durations or new speedup evidence. Generated ARM64
+is not yet mapped back to guest instructions. Host/run spread and Word's short
+shutdown margins are reported. About 3.87 guest instructions per Excel dispatch
+support investigating dispatch/poll amortization before more isolated opcodes.
+
+The new Word launch checkpoint retains only about 15 MiB compressed state plus
+a 137 KiB child externally; no Office reinstall or large raw disk is made.
+Per-run and probe overlays are removed. The 2× stretch target remains unproven.
+See `office-current-profiling.md` and
+`measurements/office-host-profile-2026-10-26.json`.
