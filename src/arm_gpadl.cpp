@@ -76,6 +76,11 @@ const ArmGpadl::Descriptor *ArmGpadl::find(uint32_t channel, uint32_t id) const 
     auto it = descriptors.find(id);
     return it != descriptors.end() && it->second.channel == channel && it->second.ready ? &it->second : nullptr;
 }
+std::optional<size_t> ArmGpadl::remainingBytes(uint32_t id) const {
+    auto it = descriptors.find(id);
+    if (it == descriptors.end()) return {};
+    return it->second.expectedBytes - it->second.encoded.size();
+}
 std::optional<uint32_t> ArmGpadl::owner(uint32_t id) const {
     auto it = descriptors.find(id);
     if (it == descriptors.end()) return {};

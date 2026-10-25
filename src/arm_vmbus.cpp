@@ -152,6 +152,20 @@ bool ArmVmbus::needsService() const {
 uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input) {
     if (kind != 5 && kind != 7 && kind != 8 && kind != 9 && kind != 11) return reject(5);
     if (input.size() < 12) return reject(5);
+    // Windows posts full 240-byte channel envelopes, including dirty unused
+    // bytes. Decode only declared data; keep compact-message validation strict.
+    if (input.size() == 240) {
+        if (kind == 5) input = input.first(148);
+        else if (kind == 7) input = input.first(12);
+        else if (kind == 11) input = input.first(16);
+        else if (kind == 8) {
+            size_t bytes = size_t(get(input, 16, 2));
+            input = input.first(20 + std::min(bytes, size_t(216)));
+        } else if (kind == 9) {
+            auto remaining = gpadls.remainingBytes(uint32_t(get(input, 12, 4)));
+            if (remaining && *remaining) input = input.first(16 + std::min(*remaining, size_t(224)));
+        }
+    }
     uint32_t id = uint32_t(get(input, 8, 4));
     if (kind == 9) {
         if (input.size() <= 16 || ((input.size() - 16) & 7)) return reject(5);

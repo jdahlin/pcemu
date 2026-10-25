@@ -20,6 +20,7 @@ class ArmGpadl {
     Result remove(uint32_t channel, uint32_t id);
     void clearChannel(uint32_t channel);
     std::optional<uint32_t> owner(uint32_t id) const;
+    std::optional<size_t> remainingBytes(uint32_t id) const;
     std::optional<uint64_t> byteSize(uint32_t channel, uint32_t id) const;
     // Transfer buffers must not overlap guest RAM.
     bool read(uint32_t channel, uint32_t id, uint64_t offset, std::span<uint8_t> out) const;

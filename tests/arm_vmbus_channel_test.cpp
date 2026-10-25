@@ -196,5 +196,51 @@ int main() {
     check(guestRx.pop(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     check((integratedRam[8192+512] & (1u<<7))!=0);
     post(msg(7,12)); check(signal(16)==0x15);
+    {
+        std::vector<uint8_t> memory(40*4096);
+        ArmVmbus padded(memory,base,1);
+        std::vector<std::vector<uint8_t>> responses;
+        padded.setSender([&](unsigned,unsigned,std::span<const uint8_t> p) {
+            responses.emplace_back(p.begin(),p.end()); return uint16_t(0);
+        });
+        padded.setEventSender([](unsigned,unsigned,unsigned){return uint16_t(0);});
+        check(padded.addChannel(offer,echo));
+        check(padded.receive(1,contact)==0); padded.service();
+        check(padded.receive(1,msg(3))==0); padded.service();
+        auto envelope=[](std::vector<uint8_t> v) { v.resize(240,0xa5); return v; };
+        auto rangeHeader=[&](unsigned id,unsigned pages) {
+            auto v=msg(8,28+pages*8); put(v,12,id); put(v,16,8+pages*8,2); put(v,18,1,2);
+            put(v,20,pages*4096);
+            for(unsigned i=0;i<pages;++i) put(v,28+i*8,(base>>12)+i,8);
+            return v;
+        };
+        auto complete=rangeHeader(100,12);
+        check(padded.receive(1,envelope(complete))==0); padded.service();
+        check(get(responses.back(),0)==10 && get(responses.back(),16)==0);
+        auto request=msg(5,148); put(request,12,1); put(request,16,100); put(request,20,0); put(request,24,6);
+        check(padded.receive(1,envelope(request))==0); padded.service();
+        check(get(responses.back(),0)==6 && get(responses.back(),16)==0);
+        check(padded.receive(1,envelope(msg(7,12)))==0);
+        auto teardown=msg(11,16); put(teardown,12,100);
+        check(padded.receive(1,envelope(teardown))==0); padded.service();
+        check(get(responses.back(),0)==12 && get(responses.back(),8)==100);
+        auto large=rangeHeader(101,30); // 248 range bytes: 216 header + 32 body.
+        auto first=std::vector<uint8_t>(large.begin(),large.begin()+236);
+        auto before=responses.size();
+        check(padded.receive(1,envelope(first))==0); padded.service();
+        check(responses.size()==before); // Trailing envelope bytes are not PFNs.
+        auto last=msg(9,48); put(last,12,101);
+        std::copy(large.begin()+236,large.end(),last.begin()+16);
+        check(padded.receive(1,envelope(last))==0); padded.service();
+        check(get(responses.back(),0)==10 && get(responses.back(),16)==0);
+        // No access is gained through padding or an out-of-RAM PFN.
+        auto invalid=rangeHeader(102,12); put(invalid,28,0xffffffffffffffffull,8);
+        check(padded.receive(1,envelope(invalid))==0); padded.service();
+        check(get(responses.back(),16)==0xc000000d);
+        auto compact=complete; compact.push_back(0xa5);
+        check(padded.receive(1,compact)==5); // Arbitrary compact oversizing is still invalid.
+        auto unknown=msg(9,240); put(unknown,12,999);
+        check(padded.receive(1,unknown)==5);
+    }
     std::cout << checks << " VMBus channel checks passed\n";
 }

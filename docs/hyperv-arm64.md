@@ -1848,3 +1848,21 @@ run has one Hyper-V failure; it must not be presented as successful integration.
 The next fix must decode declared GPADL data within the fixed Windows envelope
 while preserving bounds/fragmentation validation. The stopped run's counters
 and message prefix retain the evidence; the original basic VM is restored.
+
+### Fixed Windows channel envelopes
+
+The channel decoder now recognizes the full 240-byte envelopes actually posted
+by Windows. For GPADL Header it consumes the lesser of declared range bytes and
+216 complete bytes available after the header; the final four envelope bytes
+are not descriptor data. GPADL Body consumes at most the descriptor's remaining
+bytes (and at most 224 per message). Fixed Open/Close/Teardown messages use their
+known structure sizes inside the full envelope. Unused bytes need not be zero.
+Compact messages retain exact-size/alignment validation; the underlying GPADL
+collector still validates declared lengths, range count, PFNs, ownership and
+completion before permitting memory access.
+
+All 265 channel checks pass, including complete/fragmented full envelopes with
+dirty padding, Open/Close/Teardown, out-of-RAM PFNs, unknown GPADLs and malformed
+compact lengths. The same suite passes AddressSanitizer/UBSan; 1,581 GPADL,
+4,352 ring and 189 heartbeat regression checks pass. Actual Windows validation
+of this decoder change remains a separate gate.
