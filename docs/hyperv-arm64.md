@@ -2185,3 +2185,25 @@ PCEMU_PROBE_LOGON_DOMAIN_OK, followed by successful staging. Evidence is the
 second staging report under `build/windows11-hyperv/clock-adjustment/reports/`.
 The subsequent guest run must still establish that the diagnostic actually
 executes; this staging result is not clock-adjustment evidence.
+
+The second clock-probe run returned a fresh guest report after a longer startup
+wait (`build/windows11-hyperv/clock-adjustment/guest-report2.json`). It fails with
+“Unexpected host time endpoint” before recording a clock sample or stepping time.
+The host server records the matching GET /probe and subsequent report POSTs.
+This proves execution of the diagnostic in this run, but does not isolate whether
+the explicit local domain or the longer wait resolved the prior launch ambiguity.
+
+The endpoint has no Content-Type header, and an actual PowerShell request on the
+Mac confirms its Content is System.Byte[]. The clock probe now decodes UTF-8
+byte arrays before exact marker validation, while continuing to accept text.
+The mocked correction path exercises a binary response, and a wrong marker is
+rejected before any clock/registry mutation. The corrected probe still requires
+another actual guest run; this result is not clock-adjustment evidence.
+
+During later cleanup, the native test runner was found to have exited with code
+1 and `Unhandled ARM platform exit: reason=3 ec=0 esr=0 pc=7ffb7c86af60 ipa=0`.
+The requested cleanup poweroff was not logged as processed; no graceful-shutdown
+success is claimed. This native-exit issue is retained separately in host2.log
+and must be investigated rather than attributed to clock stepping (the probe
+had stopped before that step). Temporary secret-bearing staging media were
+removed and the original basic-profile VM was restored on its original disk.

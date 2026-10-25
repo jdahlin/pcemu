@@ -11,7 +11,9 @@ $vmicPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\VMICT
 function Read-ClockSample {
     $timer = [Diagnostics.Stopwatch]::StartNew()
     $response = Invoke-WebRequest -Uri 'http://10.0.2.2:8080/probe' -UseBasicParsing -TimeoutSec 5
-    if ($response.Content -notmatch 'PCEMU_WINDOWS_HTTP_OK') { throw 'Unexpected host time endpoint.' }
+    $content = $response.Content
+    if ($content -is [byte[]]) { $content = [Text.Encoding]::UTF8.GetString($content) }
+    if (([string]$content).Trim() -ne 'PCEMU_WINDOWS_HTTP_OK') { throw 'Unexpected host time endpoint.' }
     $hostUtc = [DateTimeOffset]::ParseExact([string]$response.Headers['Date'], 'r', [Globalization.CultureInfo]::InvariantCulture).UtcDateTime
     $script:lastHostUtc = $hostUtc
     $script:lastHostTick = [Diagnostics.Stopwatch]::GetTimestamp()
