@@ -274,8 +274,8 @@ void ArmVirtMachine::updateRtcInterrupt() {
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
     updateRtcInterrupt();
-    hyperv.serviceTimers();
-    if (auto delay = hyperv.timerDelay100ns()) {
+    hyperv.service();
+    if (auto delay = hyperv.serviceDelay100ns()) {
         auto milliseconds = *delay / 10000 + (*delay % 10000 != 0);
         slice = std::min(slice, std::chrono::milliseconds(std::max(uint64_t(1), milliseconds)));
     }

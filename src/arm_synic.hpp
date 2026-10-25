@@ -13,6 +13,10 @@ class ArmSynic {
     using Interrupt = std::function<bool(uint64_t, unsigned)>;
     ArmSynic(std::span<uint8_t> ram, uint64_t base, unsigned cpus);
     void setInterruptSender(Interrupt send) { interrupt = std::move(send); }
+    // Rescan after a stopped execution slice: GIC EOI is handled natively
+    // and need not cause a host exit. Occupied slots are never overwritten.
+    uint16_t service();
+    bool needsService() const;
     uint16_t read(uint32_t name, unsigned vp, uint64_t &value) const;
     uint16_t write(uint32_t name, unsigned vp, uint64_t value);
     uint16_t signalEvent(unsigned vp, unsigned sint, unsigned flag, bool &newlySignaled);

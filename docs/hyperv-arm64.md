@@ -294,7 +294,7 @@ The following is a work inventory, not a completion claim:
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Event/message controller, four timers per VP and native PPI delivery tested, still unadvertised; connections, EOI rescanning and Windows consumption pending. ARM Generic Timer already runs natively. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP and native PPI delivery tested, still unadvertised; connections, complete ARM semantics and Windows consumption pending. ARM Generic Timer already runs natively. |
 | VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
@@ -721,8 +721,7 @@ page bounds, full queues, FIFO draining, disabled-page retention and backend
 failure rollback. The native two-VP fixture routes an actual event through
 PPI 16 and messages through PPI 31, requiring GIC IAR1/EOIR1 acknowledgments.
 
-SynIC remains unadvertised. Guest connection/port hypercalls, GIC-EOI-triggered
-queue rescanning, timer producers and complete ARM response-buffer semantics
+SynIC remains unadvertised. Guest connection/port hypercalls and complete ARM response-buffer semantics
 still require implementation or applicability verification. Windows SynIC
 consumption has not been established by these host-driven native tests.
 
@@ -751,25 +750,62 @@ shortens the next run slice, rounded up to milliseconds, with a 1 ms retry
 budget for blocked delivery. Lazy timers do not force a shorter slice; they
 are serviced when the VM loop next regains control. Signals never precede
 scheduled expiration. Missed periodic intervals coalesce into one delivery
-and retain the original phase for the next deadline. Unrepresentable future intervals are left unscheduled
-rather than shortened into an early expiration; full reference-clock rollover
-semantics remain unverified and must be resolved before feature advertisement.
+and retain the original phase for the next deadline. The scheduler extends
+sampled 64-bit reference times with an internal epoch. Periodic deadlines can
+cross UINT64_MAX without being shortened, dropped or sorted ahead of earlier
+deadlines. Guest-visible expiration/delivery values retain their 64-bit ABI.
+Sampling must occur at least once per complete counter cycle; backwards clock
+steps are interpreted as wraps under the monotonic clock contract.
 
-`make test-hvf` passes 1,558 portable Hyper-V checks and 259 native checks.
+`make test-hvf` passes 1,596 portable Hyper-V checks and 259 native checks.
 Portable tests cover all eight VP/timer combinations, no-early delivery,
 periodic catch-up, lazy scheduling, cancellation, invalid register fields,
 backpressure and the exact timer-message payload. Native tests require timer
 messages to produce PPI 31 on both VPs and a direct timer to produce PPI 17
 only on VP1, acknowledged through IAR1/EOIR1. The EFI probe programs an expired
 direct timer through SMCCC SetVpRegisters, acknowledges SGI 9, and reads its
-disabled configuration through legacy GetVpRegisters. The probe requires one
-timer delivery and three total private GIC requests (two IPIs plus the timer).
+disabled configuration through legacy GetVpRegisters. Its message-timer
+checks and complete delivery totals are described below.
 
 The register layout and timing behavior follow Microsoft's
 [timer contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/timers)
 and OpenVMM's ARM vector and TimerMessagePayload definitions. Microsoft
 recommends the architectural Generic Timer on ARM64; that existing timer
 continues to run independently. Synthetic timer privileges/direct-mode
-features remain unadvertised. Actual Windows timer consumption, rollover,
-full SynIC integration and applicable reset/suspend behavior still require
-verification before this facility is considered complete.
+features remain unadvertised. Actual Windows timer consumption, full SynIC
+integration and applicable reset/suspend behavior still require verification
+before this facility is considered complete.
+
+
+## Timer rollover and SynIC rescanning
+
+The scheduler now uses an internal 128-bit timeline while exposing 64-bit
+registers and payloads. Relative wake budgets use the same epoch-aware order;
+a wrapped low deadline is not mistaken for an overdue timer. Tests cover a
+UINT64_MAX-length period, deadlines on either side of rollover, blocked
+pre-wrap delivery completed after wrap, missed-period phase retention, and
+ordering across VPs. This proves scheduler arithmetic with injected samples;
+it does not claim a real partition has run through an entire counter cycle.
+
+SynIC queues are now rescanned between stopped execution slices as well as on
+EOM and posting. The native GIC consumes EOI without a hypervisor trap, so a
+nonempty, enabled message queue requests a maximum 1 ms run slice. After the
+guest clears MessageType, the next service pass deposits the queued message
+and pends its interrupt. This is polling after native EOI, not synchronous EOI
+interception or a hard wall-clock latency guarantee. Disabled pages stop
+forcing short slices; failed injection preserves the slot and queue for retry.
+A failed target does not prevent rescanning other queues.
+
+The extended EFI probe allocates a separate third page for SynIC messages.
+Two already-due timers target the same PPI/SINT. It verifies the first message
+and MessagePending, acknowledges PPI 16, clears MessageType and spins without
+HVC/EOM. The second timer message and a second PPI 16 must arrive through the
+normal VM run loop. Together with its direct timer, the probe requires three
+successful timer deliveries and five private GIC requests (two IPIs and three
+timers). Full SynIC/Windows advertisement remains pending.
+
+Validation: `make test-hvf` passes 1,596 portable Hyper-V checks and 259 native
+checks, plus the CLI, platform and Windows-auditor suites. The extended EFI
+probe passes in both off/basic modes; artifacts for this run are under
+`build/hyperv-research/rollover-rescan-smoke.log` and its reported local
+`build/hyperv-smoke-*` directory.

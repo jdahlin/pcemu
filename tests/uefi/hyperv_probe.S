@@ -118,10 +118,10 @@ efi_main:
     b.ne failed
     cbnz x15, failed
     cbnz x16, failed
-    // Allocate two physical pages; buffers must not straddle a 4 KiB page.
+    // Allocate three physical pages; keep the SynIC page separate from buffers.
     mov x0, #0
     mov x1, #1 // EfiLoaderCode: this fixture also executes self-modified code.
-    mov x2, #2
+    mov x2, #3
     add x3, sp, #48
     ldr x8, [x20, #40] // AllocatePages
     blr x8
@@ -447,6 +447,73 @@ efi_main:
     cmp x15, x8
     b.ne failed
     cbnz x16, failed
+    // Two already-due message timers share one SynIC slot. The second must
+    // wait until the guest clears MessageType, then arrive without EOM/HVC.
+    ldr w8, [x27, #0x80]
+    orr w8, w8, #0x10000
+    str w8, [x27, #0x80]
+    mov w8, #0x10000
+    str w8, [x27, #0x100]
+    strb wzr, [x27, #0x410]
+    ldr w4, =0xa0010
+    mov x6, #1
+    bl crash_write
+    ldr w4, =0xa0013
+    add x6, x21, #8192
+    orr x6, x6, #1
+    bl crash_write
+    ldr w4, =0xa0002
+    mov x6, #16
+    bl crash_write
+    ldr w4, =0xb0003
+    mov x6, #1
+    bl crash_write
+    ldr w4, =0xb0002
+    ldr x6, =0x20001
+    bl crash_write
+    ldr w4, =0xb0005
+    mov x6, #2
+    bl crash_write
+    ldr w4, =0xb0004
+    ldr x6, =0x20001
+    bl crash_write
+    add x25, x21, #8192
+    add x25, x25, #512
+    ldr w8, [x25]
+    ldr w9, =0x80000010
+    cmp w8, w9
+    b.ne failed
+    ldr w8, [x25, #16]
+    cmp w8, #1
+    b.ne failed
+    ldrb w8, [x25, #5]
+    tbz w8, #0, failed
+    mrs x9, icc_iar1_el1
+    cmp x9, #16
+    b.ne failed
+    msr icc_eoir1_el1, x9
+    isb
+    str wzr, [x25]
+    dsb ishst
+    mov x24, #0x1000000
+wait_timer_message:
+    ldr w8, [x25]
+    cbnz w8, timer_message_arrived
+    subs x24, x24, #1
+    b.ne wait_timer_message
+    b failed
+timer_message_arrived:
+    ldr w9, =0x80000010
+    cmp w8, w9
+    b.ne failed
+    ldr w8, [x25, #16]
+    cmp w8, #2
+    b.ne failed
+    mrs x9, icc_iar1_el1
+    cmp x9, #16
+    b.ne failed
+    msr icc_eoir1_el1, x9
+    isb
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

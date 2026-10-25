@@ -24,8 +24,8 @@ class ArmHyperV {
     void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
     using SoftwareInterruptSender = std::function<bool(uint64_t, unsigned)>;
     void setSoftwareInterruptSender(SoftwareInterruptSender send) { interruptSender = std::move(send); }
-    void serviceTimers();
-    std::optional<uint64_t> timerDelay100ns() const;
+    void service();
+    std::optional<uint64_t> serviceDelay100ns() const;
     bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
     void setPrivateInterruptSender(SoftwareInterruptSender send);
     ArmSynic &synicController() { return synic; }

@@ -20,6 +20,22 @@ std::span<uint8_t> ArmSynic::page(uint64_t reg) const {
         4096 > ram.size() - (address - base)) return {};
     return ram.subspan(size_t(address - base), 4096);
 }
+bool ArmSynic::needsService() const {
+    for (unsigned vp = 0; vp < cpus; ++vp) {
+        const auto &v = state[vp];
+        if (!(v.control & 1) || page(v.messages).empty()) continue;
+        for (const auto &queue : v.queue) if (!queue.empty()) return true;
+    }
+    return false;
+}
+uint16_t ArmSynic::service() {
+    uint16_t firstError = 0;
+    for (unsigned vp = 0; vp < cpus; ++vp) for (unsigned sint = 0; sint < 16; ++sint) {
+        auto status = drain(vp, sint);
+        if (status && !firstError) firstError = status;
+    }
+    return firstError;
+}
 uint16_t ArmSynic::read(uint32_t name, unsigned vp, uint64_t &value) const {
     value = 0;
     if (vp >= cpus) return invalidVp;

@@ -671,17 +671,17 @@ int main() {
     });
     check(timerWrite(0xb0000, 0x20008) == one);
     check(timerWrite(0xb0001, 100) == one);
-    check(timerHv.timerDelay100ns() == 100);
-    timerClock = 1099; timerHv.serviceTimers(); check(timerIrqs == 0);
-    timerClock = 1100; timerHv.serviceTimers(); check(timerIrqs == 1 && !timerHv.timersActive());
+    check(timerHv.serviceDelay100ns() == 100);
+    timerClock = 1099; timerHv.service(); check(timerIrqs == 0);
+    timerClock = 1100; timerHv.service(); check(timerIrqs == 1 && !timerHv.timersActive());
     check(get(timerRam, 512) == 0x0000001880000010ull);
     check(get(timerRam, 512 + 16) == 0 && get(timerRam, 512 + 24) == 100 && get(timerRam, 512 + 32) == 100);
     check(timerWrite(0xb0003, 120) == one);
     check(timerWrite(0xb0002, 0x20001) == one);
-    timerClock = 1120; timerHv.serviceTimers();
+    timerClock = 1120; timerHv.service();
     check(timerIrqs == 1 && timerHv.timersActive() && timerRam[517] == 1);
     put(timerRam, 512, 0, 4); // Free slot for timer 1's dedicated pending message.
-    timerClock = 1125; timerHv.serviceTimers();
+    timerClock = 1125; timerHv.service();
     check(timerIrqs == 2 && !timerHv.timersActive());
     check(get(timerRam, 512 + 16) == 1 && get(timerRam, 512 + 24) == 120 && get(timerRam, 512 + 32) == 125);
     check(timerHv.report().find("\"syntheticTimerDeliveries\":2") != std::string::npos);
@@ -710,6 +710,70 @@ int main() {
     check(allTimers.write(0xb0000, 0, 0x1103, 10) == 0);
     auto beforeOverflow = allTimers.delivered();
     allTimers.service(UINT64_MAX);
-    check(allTimers.delivered() == beforeOverflow && !allTimers.nextDeadline());
+    check(allTimers.delivered() == beforeOverflow && allTimers.nextDeadline() == 9);
+    allTimers.setDelivery([](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == 9 && now == 9); return true;
+    });
+    allTimers.service(8); check(allTimers.delivered() == beforeOverflow);
+    allTimers.service(9); check(allTimers.delivered() == beforeOverflow + 1);
+    ArmHyperVTimers wrapped(1);
+    unsigned wrappedSignals = 0;
+    bool acceptWrapped = false;
+    wrapped.setDelivery([&](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == 10 && (now == 10 || now == 59));
+        if (acceptWrapped) ++wrappedSignals;
+        return acceptWrapped;
+    });
+    check(wrapped.write(0xb0001, 0, 20, UINT64_MAX - 9) == 0);
+    check(wrapped.write(0xb0000, 0, 0x1103, UINT64_MAX - 9) == 0);
+    check(wrapped.nextDeadline() == 10 && wrapped.nextDelay(UINT64_MAX - 9) == 20);
+    wrapped.service(UINT64_MAX); check(wrappedSignals == 0 && wrapped.nextDelay(UINT64_MAX) == 11);
+    wrapped.service(5); check(wrappedSignals == 0 && wrapped.nextDelay(5) == 5);
+    wrapped.service(10); check(wrappedSignals == 0 && wrapped.nextDelay(10) == 0);
+    acceptWrapped = true;
+    wrapped.service(59); check(wrappedSignals == 1 && wrapped.nextDeadline() == 70 && wrapped.nextDelay(59) == 11);
+    // Draining after a guest EOI/slot release must not require a new post or
+    // an EOM hypercall. Disabled mappings stop forcing host polling.
+    check(synic.postMessage(1, 2, 80, 0, payload) == 0 && synic.needsService());
+    check(synic.service() == 0 && synicRam[slot] == 79); // Still occupied.
+    put(synicRam, slot, 0, 4);
+    check(synic.service() == 0 && synicRam[slot] == 80 && !synic.needsService());
+    check(synic.postMessage(1, 2, 81, 0, payload) == 0);
+    check(synic.write(0xa0013, 1, base + 4096) == 0 && !synic.needsService());
+    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0 && synic.needsService());
+    put(synicRam, slot, 0, 4);
+    check(synic.service() == 0 && synicRam[slot] == 81 && !synic.needsService());
+    check(synic.postMessage(1, 2, 82, 0, payload) == 0);
+    check(synic.write(0xa0002, 1, 16) == 0);
+    put(synicRam, slot, 0, 4);
+    auto beforeRescanFailure = synicRam;
+    check(synic.service() == 0x71 && synic.needsService() && synicRam == beforeRescanFailure);
+    synic.setInterruptSender([](uint64_t, unsigned) { return true; });
+    check(synic.service() == 0 && synicRam[slot] == 82 && !synic.needsService());
+    ArmHyperVTimers crossing(1);
+    bool acceptCrossing = false;
+    crossing.setDelivery([&](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == UINT64_MAX - 10 && (now == UINT64_MAX - 10 || now == 5));
+        return acceptCrossing;
+    });
+    check(crossing.write(0xb0001, 0, 10, UINT64_MAX - 20) == 0);
+    check(crossing.write(0xb0000, 0, 0x1103, UINT64_MAX - 20) == 0);
+    crossing.service(UINT64_MAX - 10);
+    check(crossing.delivered() == 0);
+    acceptCrossing = true;
+    crossing.service(5);
+    check(crossing.delivered() == 1 && crossing.nextDeadline() == 9 && crossing.nextDelay(5) == 4);
+    ArmHyperVTimers orderedWrap(2);
+    unsigned orderedMask = 0;
+    orderedWrap.setDelivery([&](unsigned vp, unsigned, uint64_t, uint64_t expiration, uint64_t) {
+        check(expiration == (vp ? UINT64_MAX - 4 : 10)); orderedMask |= 1u << vp; return true;
+    });
+    check(orderedWrap.write(0xb0001, 0, 20, UINT64_MAX - 9) == 0);
+    check(orderedWrap.write(0xb0000, 0, 0x1103, UINT64_MAX - 9) == 0);
+    check(orderedWrap.write(0xb0001, 1, UINT64_MAX - 4, UINT64_MAX - 9) == 0);
+    check(orderedWrap.write(0xb0000, 1, 0x1101, UINT64_MAX - 9) == 0);
+    check(orderedWrap.nextDeadline() == UINT64_MAX - 4 && orderedWrap.nextDelay(UINT64_MAX - 9) == 5);
+    orderedWrap.service(UINT64_MAX - 4); check(orderedMask == 2 && orderedWrap.nextDeadline() == 10);
+    orderedWrap.service(10); check(orderedMask == 3 && orderedWrap.nextDeadline() == 30);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

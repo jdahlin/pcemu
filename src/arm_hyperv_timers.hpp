@@ -17,13 +17,20 @@ class ArmHyperVTimers {
     uint16_t write(uint32_t name, unsigned vp, uint64_t value, uint64_t now);
     void service(uint64_t now);
     std::optional<uint64_t> nextDeadline(bool includeLazy = true) const;
+    std::optional<uint64_t> nextDelay(uint64_t now, bool includeLazy = true) const;
     uint64_t delivered() const { return deliveries; }
   private:
-    struct Timer { uint64_t config = 0, count = 0, deadline = 0; bool armed = false; };
+    using Time = __uint128_t;
+    struct Timer { uint64_t config = 0, count = 0; Time deadline = 0; bool armed = false; };
+    Time lastSample = 0;
+    bool sampled = false;
+    Time project(uint64_t now) const;
+    Time observe(uint64_t now);
+    std::optional<Time> deadline(bool includeLazy) const;
     std::array<std::array<Timer, 4>, 8> timers;
     unsigned cpus;
     Deliver delivery;
     uint64_t deliveries = 0;
-    static void arm(Timer &timer, uint64_t now);
+    static void arm(Timer &timer, Time now);
 };
 }

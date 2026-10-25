@@ -41,15 +41,17 @@ uint64_t ArmHyperV::timeNow() const {
     auto now = clock();
     return std::max(referenceTime, now >= clockOrigin ? now - clockOrigin : 0);
 }
-void ArmHyperV::serviceTimers() {
-    if (enabled) timers.service(timeNow());
+void ArmHyperV::service() {
+    if (enabled) {
+        synic.service(); // A false injection keeps the queued message for retry.
+        timers.service(timeNow());
+    }
 }
-std::optional<uint64_t> ArmHyperV::timerDelay100ns() const {
+std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     if (!enabled) return {};
-    auto deadline = timers.nextDeadline(false);
-    if (!deadline) return {};
-    auto now = timeNow();
-    return *deadline > now ? *deadline - now : 0;
+    auto delay = timers.nextDelay(timeNow(), false);
+    if (synic.needsService()) return std::min(delay.value_or(10000), uint64_t(10000));
+    return delay;
 }
 void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
     privateInterruptSender = std::move(send);

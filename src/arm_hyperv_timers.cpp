@@ -5,16 +5,22 @@ namespace pc {
 ArmHyperVTimers::ArmHyperVTimers(unsigned count) : cpus(count) {
     if (!count || count > timers.size()) throw std::runtime_error("Invalid synthetic timer VP count");
 }
-void ArmHyperVTimers::arm(Timer &timer, uint64_t now) {
+ArmHyperVTimers::Time ArmHyperVTimers::project(uint64_t now) const {
+    auto epoch = lastSample & ~Time(UINT64_MAX);
+    if (sampled && now < uint64_t(lastSample)) epoch += Time(1) << 64;
+    return epoch | now;
+}
+ArmHyperVTimers::Time ArmHyperVTimers::observe(uint64_t now) {
+    lastSample = project(now); sampled = true;
+    return lastSample;
+}
+void ArmHyperVTimers::arm(Timer &timer, Time now) {
     if (!(timer.config & 0x1000) && !(timer.config & 0xf0000)) timer.config &= ~uint64_t(1);
     timer.armed = (timer.config & 1) && timer.count;
     if (timer.armed) {
         if (timer.config & 2) {
-            // Never shorten an unrepresentable future interval to UINT64_MAX.
-            // Counter-rollover scheduling requires a separate extended epoch.
-            if (now > UINT64_MAX - timer.count) { timer.armed = false; return; }
             timer.deadline = now + timer.count;
-        } else timer.deadline = timer.count;
+        } else timer.deadline = (now & ~Time(UINT64_MAX)) | timer.count;
     }
 }
 uint16_t ArmHyperVTimers::read(uint32_t name, unsigned vp, uint64_t &value) const {
@@ -38,32 +44,43 @@ uint16_t ArmHyperVTimers::write(uint32_t name, unsigned vp, uint64_t value, uint
         if (value & ~uint64_t(0xf11ff)) return 5;
         timer.config = value;
     }
-    arm(timer, now);
+    arm(timer, observe(now));
     return 0;
 }
 void ArmHyperVTimers::service(uint64_t now) {
+    const auto current = observe(now);
     for (unsigned vp = 0; vp < cpus; ++vp) for (unsigned index = 0; index < 4; ++index) {
         auto &timer = timers[vp][index];
-        if (!timer.armed || now < timer.deadline) continue;
+        if (!timer.armed || current < timer.deadline) continue;
         if (!(timer.config & 2)) timer.config &= ~uint64_t(1);
         // A missing/busy backend retains this expiration for a later attempt.
-        if (!delivery || !delivery(vp, index, timer.config, timer.deadline, now)) continue;
+        if (!delivery || !delivery(vp, index, timer.config, uint64_t(timer.deadline), now)) continue;
         ++deliveries;
         if (!(timer.config & 2)) { timer.config &= ~uint64_t(1); timer.armed = false; }
         else {
             // Coalesce missed periods, retaining the original phase. One
             // notification per service pass prevents an unbounded catch-up.
-            auto remainder = (now - timer.deadline) % timer.count;
+            auto remainder = (current - timer.deadline) % timer.count;
             auto advance = timer.count - remainder;
-            if (now > UINT64_MAX - advance) timer.armed = false;
-            else timer.deadline = now + advance;
+            timer.deadline = current + advance;
         }
     }
 }
-std::optional<uint64_t> ArmHyperVTimers::nextDeadline(bool includeLazy) const {
-    std::optional<uint64_t> deadline;
+std::optional<ArmHyperVTimers::Time> ArmHyperVTimers::deadline(bool includeLazy) const {
+    std::optional<Time> result;
     for (unsigned vp = 0; vp < cpus; ++vp) for (auto &timer : timers[vp])
-        if (timer.armed && (includeLazy || !(timer.config & 4)) && (!deadline || timer.deadline < *deadline)) deadline = timer.deadline;
-    return deadline;
+        if (timer.armed && (includeLazy || !(timer.config & 4)) && (!result || timer.deadline < *result))
+            result = timer.deadline;
+    return result;
+}
+std::optional<uint64_t> ArmHyperVTimers::nextDeadline(bool includeLazy) const {
+    auto value = deadline(includeLazy);
+    return value ? std::optional<uint64_t>(uint64_t(*value)) : std::nullopt;
+}
+std::optional<uint64_t> ArmHyperVTimers::nextDelay(uint64_t now, bool includeLazy) const {
+    auto value = deadline(includeLazy);
+    if (!value) return {};
+    auto current = project(now);
+    return *value > current ? uint64_t(*value - current) : 0;
 }
 }
