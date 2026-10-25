@@ -17,7 +17,7 @@ function Start-Service {
     param($Name)
     if ($Name -ne 'vmicheartbeat') { throw 'Unexpected service mutation' }
     $global:pcemuProbeStarts++
-    if ($global:pcemuProbeFailStart) { throw 'Mock activation denied' }
+    if ($global:pcemuProbeFailStart) { throw [InvalidOperationException]::new('Mock activation denied', [ComponentModel.Win32Exception]::new(5)) }
     $global:pcemuProbeState = 'Running'
 }
 function Get-Service {
@@ -49,6 +49,10 @@ try {
     $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
     if ($LASTEXITCODE -ne 1 -or $r.activation.succeeded -or $r.activation.error -ne 'Mock activation denied') {
         throw 'Failed activation not preserved in report and exit status'
+    }
+    $native = @($r.activation.errors | Where-Object { $_.nativeErrorCode -eq 5 })
+    if ($native.Count -ne 1 -or $r.activation.errors.Count -lt 2 -or -not $r.activation.errorId) {
+        throw 'Wrapped native service error was lost'
     }
     Write-Output 'Hyper-V service probe: parser, observation, activation and failure checks passed'
 } finally { Remove-Item -LiteralPath $path -ErrorAction SilentlyContinue }

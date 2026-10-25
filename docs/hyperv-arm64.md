@@ -1745,3 +1745,20 @@ a service-start error with its underlying Win32 status. The test overlay is
 retained for that offline inspection; the secret-bearing staging WIM/FAT image
 and private staging command were removed. The ordinary basic-profile VM was
 restarted on the original disk. No heartbeat or performance success is claimed.
+
+The stopped service-test disk's System.evtx was subsequently extracted through
+NTFS. Its persisted records contain no heartbeat/vmicheartbeat/icsvc or Hyper-V
+match; the two candidate Integration Admin log paths are absent. This does not
+prove that SCM emitted no event: abrupt host stop and guest log buffering limit
+offline evidence. The existing report's generic Start-Service message is
+insufficient to distinguish an authorization failure from service initialization
+failure.
+
+The runtime probe now records whether its Windows token is elevated, separately
+from activation success, and preserves up to eight nested activation exceptions
+with type, message, HRESULT and Win32 NativeErrorCode where applicable. It also
+records PowerShell's FullyQualifiedErrorId. A failed privilege query has its own
+error and does not replace the service error. The mocked test now verifies a
+wrapped Win32 access-denied error survives serialization; this is test data,
+not a claim that the actual guest failed with access denied. The improved
+error capture remains to be run inside Windows.
