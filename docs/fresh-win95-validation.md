@@ -39,3 +39,39 @@ interrupted run and independent cold boot; elapsed installation time includes
 agent input and pause delays and is not a performance score.
 
 [Commands, manifests, reset/application evidence, screenshots and compressed logs](measurements/fresh-win95-setup-fetch-tlb-2026-10-25.json).
+
+## Uninterrupted run with native memory-indirect CALL
+
+The frozen x86 candidate containing `1c5a879` now passes a fresh OSR2
+installation from clean recovered DOS through application persistence in one
+PID. It includes the PIC-idle and frame-rendering changes. Other in-progress
+ARM/HVF/frontend changes in the shared checkout are not part of this frozen
+executable; the precise executable identity and command are in the evidence.
+
+The first staging attempt reports a file-readback mismatch and then times out
+closing `disk-tool` over SMB. That process is later confirmed absent. Before
+booting, a separate read-only reopen verifies all 56 staged source files byte
+for byte. The agent drives the normal Setup wizard through the virtual guest
+keyboard, using the previously supplied OEM fields without committing them.
+Network-adapter detection is enabled. The automated finish chain then observes
+file copying, acknowledges the specific Finish screen and verifies firmware
+reset 0→1. Known first-boot networking, clock, printer and explicit Setup-restart
+screens are handled; Explorer appears after reset 2.
+
+Calculator computes 2+2, its result is copied into Notepad with a fresh marker,
+and the file is saved. A guest-requested restart advances reset 2→3 and returns
+to Explorer. The guest receives `quit`; PID absence and the normal
+`stopped=budget/quit` trailer are observed before read-only FAT inspection.
+All 38 expected bytes match exactly. The 154,663,677-byte compressed test child
+is removed, leaving the existing DOS, Win95 and Office parents intact. No raw
+multi-GiB disk is created. This run has no guest-process interruption or manual
+recovery after boot. Wizard input was agent-driven; the post-copy/restart/file
+verification chain was scripted.
+
+The detached launcher cannot supply a process exit code, so none is claimed.
+The separate normal-quit, PID-absence and exact-file gates provide the stopping
+and persistence evidence. Elapsed time includes wizard and observation delays
+and is not a performance comparison. This closes the fresh-installer gate for
+this native CALL candidate; it does not establish the twofold performance target.
+
+[Reset/application results, manifest, compressed logs and screenshots](measurements/fresh-win95-memory-call-2026-10-25.json).

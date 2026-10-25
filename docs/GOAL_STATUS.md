@@ -1047,3 +1047,22 @@ variation; the median ratio 1.068 is exploratory, not a stable general gain.
 Fresh Setup was not repeated under this lowering and remains a final gate.
 The full goal stays active. See `memory-indirect-call.md` and
 `measurements/native-memory-call-2026-10-25.json`.
+
+
+## Fresh installer gate closed for native memory CALL (25 October)
+
+The frozen x86 candidate with `1c5a879` completes fresh OSR2 Setup and application
+persistence without interrupting or replacing its guest process. Initial SMB
+staging readback/close fails; after the tool exits, an independent read-only
+reopen verifies all 56 sources before boot. Agent-driven wizard inputs and the
+scripted finish chain observe firmware resets 0→1→2→3, Explorer, Calculator,
+clipboard, Notepad save and a guest-requested restart. After quit, PID absence,
+a normal log trailer and exact 38-byte read-only FAT content are verified. The
+154.7 MB compressed test child is removed. No raw large fixture is created.
+
+The detached launcher's exit code is unavailable and is not inferred. Timing
+includes agent/wizard delays, so this is functional evidence only. The separate
+2× useful-work stretch target is anchored in `performance-targets.md` but remains
+unachieved. Concurrent ARM/HVF/frontend work is outside this frozen executable.
+The broader performance goal stays active. See `fresh-win95-validation.md` and
+`measurements/fresh-win95-memory-call-2026-10-25.json`.

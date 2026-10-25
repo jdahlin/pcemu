@@ -83,3 +83,9 @@ with guest restart and exact stopped-guest FAT readback. All successful private
 compressed disks are removed. Fresh Setup is not rerun in this iteration; its
 previous evidence predates this new lowering. It remains a final compatibility
 gate before declaring the full goal achieved.
+
+The subsequent fresh Setup gate is now complete: the frozen candidate installs
+OSR2 from clean DOS, handles first-boot configuration, runs Calculator/Notepad,
+restarts to Explorer and passes exact stopped-guest 38-byte FAT readback in the
+same guest process. All three firmware resets are observed and the private
+compressed child is removed. See [the fresh-run evidence](fresh-win95-validation.md#uninterrupted-run-with-native-memory-indirect-call).

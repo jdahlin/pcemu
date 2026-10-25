@@ -1,0 +1,334 @@
+{
+  "scope": "Fresh Setup, firmware resets, desktop, Calculator/clipboard/Notepad, guest-requested restart and exact stopped-guest read-only FAT readback; functional validation, not timing score",
+  "run": {
+    "pid": 50232,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/memory-call/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--no-network",
+      "--steps",
+      "0",
+      "--disk",
+      "/Volumes/data/pcemu/validation/win95-setup-memory-call-20261025.pcd",
+      "--type",
+      "cd win95\nsetup /is\n",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-memory-call/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-memory-call/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-memory-call/state.json"
+    ],
+    "emulatorSha256": "f6cd1657efe65efa799838685d60f4c5526756d29c2335722c9372542a5821fc",
+    "startedUnix": 1792968267.550474,
+    "scope": "Fresh memory-indirect CALL candidate Setup; staged source independently verified after initial SMB timeout; installation pending"
+  },
+  "staging": {
+    "scope": "Independent stopped-tool read-only reopen verifies all 56 staged source files after initial SMB readback/close timeout; not installation completion",
+    "disk": "/Volumes/data/pcemu/validation/win95-setup-memory-call-20261025.pcd",
+    "parent": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+    "compressedBytes": 81999324,
+    "files": {
+      "FORMAT.COM": {
+        "bytes": 49543,
+        "sha256": "723fef3871f9f8f71cdd1ee83c9582396703e5878029be27f69164ba17d54f9d"
+      },
+      "MINI.CAB": {
+        "bytes": 441905,
+        "sha256": "4325b841b6cfe2589eff41becdb7ac8ed7966dca16bf243097e79fe2cefafb99"
+      },
+      "MSINFO.INF": {
+        "bytes": 6551,
+        "sha256": "e435cb8988e6b193945334977a63f2e3a8064d7857e2abb3887fa4c6279a77bb"
+      },
+      "OEMSETUP.BIN": {
+        "bytes": 3270,
+        "sha256": "4583be690659c5180cccd57c0dc527ee7ac3570b39db2a0d441fdd935e875482"
+      },
+      "OEMSETUP.EXE": {
+        "bytes": 78672,
+        "sha256": "89eee8739e2d050cd26588024b51453a4399dbcedacc6260a57be6ed51d460c4"
+      },
+      "PRECOPY1.CAB": {
+        "bytes": 480768,
+        "sha256": "ec8a17fcf9e7bc016da3b7b90dd32058b8936d04985fb2128662a80fc0932850"
+      },
+      "PRECOPY2.CAB": {
+        "bytes": 1237083,
+        "sha256": "bac1a80d253c87c8d9d3da14156280919caa319acf2d621e94acbe70c190e433"
+      },
+      "SETUP25I.EXE": {
+        "bytes": 1950007,
+        "sha256": "463d7126bc1cc26a5e2d4e6147b47df611ab383ea484c30d8525943f9fa2239e"
+      },
+      "SETUP32.EXE": {
+        "bytes": 6729752,
+        "sha256": "ba734894c7f3dc439419537af83d2ae90e7ec874d7a112507c4418a9d46f75d3"
+      },
+      "SUHELPER.BIN": {
+        "bytes": 1472,
+        "sha256": "4f10d714bd0b57323a296d5cdee063c00590ab0122e7b9f107925b3818f3f549"
+      },
+      "SWINST4.EXE": {
+        "bytes": 1009600,
+        "sha256": "6031b3f31ed9150826d6e63c1103e098ca8fdda54d45751ed2c13f80c8f25f36"
+      },
+      "cs3kit.exe": {
+        "bytes": 5783436,
+        "sha256": "41a42ad9c0f7308d12f248d949d9bb4302249aac195473a31fa4381f188a20a7"
+      },
+      "deltemp.com": {
+        "bytes": 496,
+        "sha256": "d3f83a6d8bc0ff8de83f8b6c79ddf5b3b3a9a4ff59c2b98732a1795d4c021dae"
+      },
+      "dossetup.bin": {
+        "bytes": 72358,
+        "sha256": "d2d1cbd0b5ac55b1eafacff8638ee60a6324a04b800a20da7eb3f592a76d11a4"
+      },
+      "extract.exe": {
+        "bytes": 46656,
+        "sha256": "31f98c4ee68fa3193544c635ad9e698aa1402c367590d6b28746b624b8b2e05f"
+      },
+      "layout.inf": {
+        "bytes": 54600,
+        "sha256": "dde271c8ac4dfb848e6eaea7353b46f78da6d3ed29a9844ef98c47e65c3530b8"
+      },
+      "layout1.inf": {
+        "bytes": 5739,
+        "sha256": "ec04c873b7a5cab952efdd9aed1b19d5070005a53cafd76326087d6ac5d408c5"
+      },
+      "readme.txt": {
+        "bytes": 3728,
+        "sha256": "43b018a2ace818fb9fabb2bb41311de1d9670edfffda8295f538e8eba73258e2"
+      },
+      "save32.com": {
+        "bytes": 920,
+        "sha256": "db9ef59b6389216a69e19db459b0147f423f3a4371a7b501aab3319607a6c0f4"
+      },
+      "scandisk.exe": {
+        "bytes": 142353,
+        "sha256": "4d2ad0ddf11e3844f886774b1748039d3e363446020dd261c435322b19111eb3"
+      },
+      "scandisk.pif": {
+        "bytes": 995,
+        "sha256": "e1511c5509fa654fef06da6f94f15622a901c83f06e812cd1385a683db3bcf6b"
+      },
+      "scanprog.exe": {
+        "bytes": 4438,
+        "sha256": "8d74a5b88694829be6ea9ccca6dd13a276d308b5425eae6807393b4d91a39141"
+      },
+      "setup.exe": {
+        "bytes": 5184,
+        "sha256": "116357c466abea55f29ce1e3705d17243daf0b2a780becc8295aa872a7b29c59"
+      },
+      "setup.txt": {
+        "bytes": 33963,
+        "sha256": "80a68f118ea029d910a5edea15f9d66c3d51c0bed90fd1c9bd95633dbd8e1f75"
+      },
+      "smartdrv.exe": {
+        "bytes": 44867,
+        "sha256": "929c4564933121678e97b2202f649516c01ea394669053abae18f54132eb9068"
+      },
+      "wb16off.exe": {
+        "bytes": 537,
+        "sha256": "ae703bc45dae6035c36a696cfbda415e4fa3777ed42b80066e5bd8c0570f55bc"
+      },
+      "win95_02.cab": {
+        "bytes": 464896,
+        "sha256": "f5bc434d150c0d2bc15b2a0f1f9f85623a665ebb86733b4558131599f0826e93"
+      },
+      "win95_03.cab": {
+        "bytes": 1716224,
+        "sha256": "f453fa7e4dd331b2c663f248f54ad1ad1b2478f34cf75646054c9d0b9c26a255"
+      },
+      "win95_04.cab": {
+        "bytes": 1716224,
+        "sha256": "ef1f5149331efe197ddc30fcc950704ee9cb29d3fc66b0af5c77e5d835363281"
+      },
+      "win95_05.cab": {
+        "bytes": 1716224,
+        "sha256": "275fc50645011137090ed469bdca0971005a89f5a1bec1b0547740cee9e4ebf9"
+      },
+      "win95_06.cab": {
+        "bytes": 1716224,
+        "sha256": "01aa27f21593ccb7e722b557832d7f9f1e3cf34d55876250e68d0cfaef637a6e"
+      },
+      "win95_07.cab": {
+        "bytes": 1716224,
+        "sha256": "30c0e3c637a9615b9ba8d8e8763e21e33b7bf576dbae19d336a1e53927cf866c"
+      },
+      "win95_08.cab": {
+        "bytes": 1716224,
+        "sha256": "0ad819846ca9a8b9247ffd1dd186d2f5bee3ca27087ffb49e92a3d0d63f2fb9c"
+      },
+      "win95_09.cab": {
+        "bytes": 1716224,
+        "sha256": "5b96dc950432776b4f26d56852c32123912421233d7dc5fa2f007a25732aec32"
+      },
+      "win95_10.cab": {
+        "bytes": 1716224,
+        "sha256": "d8c299b618f3326ee6a104bab971f9434a8c7f4b1a87140558a2893e484e3e7b"
+      },
+      "win95_11.cab": {
+        "bytes": 1716224,
+        "sha256": "f9e74ad0b7d024859232fd20b34178f0945c05252bf01e8d8d0d4317cdadad04"
+      },
+      "win95_12.cab": {
+        "bytes": 1716224,
+        "sha256": "94885f269eb96748f574e572cf1bd0dab55253280d1911d4adb3bf33a50b8273"
+      },
+      "win95_13.cab": {
+        "bytes": 1716224,
+        "sha256": "e9a430559f39b5d0601ea450eb636862a638bcb91d1e94c7718ecc4315b85e4f"
+      },
+      "win95_14.cab": {
+        "bytes": 1716224,
+        "sha256": "a88c24d3acdd764d67b018cf4152ad2e5a47fafb943d5683967518a936a4fa1d"
+      },
+      "win95_15.cab": {
+        "bytes": 1716224,
+        "sha256": "b496d105870c89971269641a12e527afd9d795bc1da43d515d61ed63f446df5c"
+      },
+      "win95_16.cab": {
+        "bytes": 1716224,
+        "sha256": "d7821bfbec60a84303c53c5b2d2bdceb8b977a067c1ef3d708e3cf5e11bfa095"
+      },
+      "win95_17.cab": {
+        "bytes": 1716224,
+        "sha256": "5bd906530b35c5b4518b7273a42f338d8668f8401812c9ebb785a028964feb3a"
+      },
+      "win95_18.cab": {
+        "bytes": 1716224,
+        "sha256": "f5d0e449c7ce2e0329fa04d0671eb4b8fd6d531c6abdbb86f8aa99b135360672"
+      },
+      "win95_19.cab": {
+        "bytes": 1716224,
+        "sha256": "79529f29fd8dfccf684a81ac8e00f03de99b16ce428f6cf3382f28ae6b7edf80"
+      },
+      "win95_20.cab": {
+        "bytes": 1716224,
+        "sha256": "5c3a60febc28ce5fb0505cbb12b71a97898f2120b3dabc8d12aa65901fec1ed4"
+      },
+      "win95_21.cab": {
+        "bytes": 1716224,
+        "sha256": "732a14e71ad119467aaafc408589d2d584cbafef2215835dcaed0e7759cdb836"
+      },
+      "win95_22.cab": {
+        "bytes": 1716224,
+        "sha256": "1444bb0e8c51ed0952ccd195ea2db4f4597ac806616d0566c1ada3db8db53b22"
+      },
+      "win95_23.cab": {
+        "bytes": 1716224,
+        "sha256": "af8de2e0f5a5b7572d60314cc1b39bc3625e7d0ef4cccd730775fd5b778df7e8"
+      },
+      "win95_24.cab": {
+        "bytes": 1716224,
+        "sha256": "fea9b0d012e4b7803ebfe8a899cec077c8616b8bf138c4582ef935018a03ef63"
+      },
+      "win95_25.cab": {
+        "bytes": 1716224,
+        "sha256": "1a557915ded9a4353b403d60e02cb8de75da902a1852bfaac069eb0bad00c5a1"
+      },
+      "win95_26.cab": {
+        "bytes": 1716224,
+        "sha256": "ef5ba4402110b75e93e7cd41ea956d291020d18712fb446e7391802df8fede7f"
+      },
+      "win95_27.cab": {
+        "bytes": 1716224,
+        "sha256": "8aca77b97c77e0347ad4ba6ac2046187f9523c532b4fd231927e559c82e5a624"
+      },
+      "win95_28.cab": {
+        "bytes": 1426482,
+        "sha256": "b3731fad97917bd1e6a9df593c8c9587beeafadef666f8fcacf27d6dccd44b56"
+      },
+      "winsetup.bin": {
+        "bytes": 159824,
+        "sha256": "bd32f5cb04553fac253a8fafba3cff1672815cae97c8d136c0b18eb1c0fa66a4"
+      },
+      "wowkit.exe": {
+        "bytes": 19687469,
+        "sha256": "3ed6ef6ab0b1c5c457ca241de4b2f237179481d8ba2f83a1ce0f70c7dd470974"
+      },
+      "xmsmmgr.exe": {
+        "bytes": 14144,
+        "sha256": "0615bf1d7e98968a31b94b7247aa07437399b646145cba5fabd5bdd0b888adfd"
+      }
+    }
+  },
+  "setupReboot": {
+    "scope": "Setup copy phase through first firmware reboot; not installation completion",
+    "pid": 50232,
+    "beforeResets": 0,
+    "afterResets": 1,
+    "instructions": 28379797617,
+    "finishAcknowledged": true
+  },
+  "applications": {
+    "scope": "applications and guest restart; caller verified exact stopped-guest read-only FAT readback",
+    "beforeInstructions": 30720568161,
+    "afterInstructions": 31666121518,
+    "beforeResets": 2,
+    "afterResets": 3,
+    "applications": {
+      "file": "C:\\PBB84C2A.TXT",
+      "fatName": "PBB84C2ATXT",
+      "expectedContents": " 4\r\nPCEMU Win95 applications BB84C2A0.",
+      "scope": "Calculator 2+2 copied through clipboard into a newly saved Notepad file; offline readback pending"
+    },
+    "offlineReadback": {
+      "verified": true,
+      "bytes": 38,
+      "sha256": "5d04a0ca8cead955ce651e644e7eafc94c7f9307fd289bc9fc8a772214f16fa8"
+    }
+  },
+  "verifiedBytes": 38,
+  "verifiedSha256": "5d04a0ca8cead955ce651e644e7eafc94c7f9307fd289bc9fc8a772214f16fa8",
+  "pidAbsentBeforeReadback": true,
+  "exitStatus": "unavailable: guest was launched by an earlier detached parent",
+  "privateDiskBytesBeforeRemoval": 154663677,
+  "privateDiskRemoved": true,
+  "evidenceFiles": {
+    "guestLog": {
+      "file": "fresh-win95-memory-call-2026-10-25.guest-log.zst",
+      "sha256": "1afd3e3a953804d600ba489eb68333b6288994e64f7405e3b2627f3625e4dae0",
+      "zstdRoundTripVerified": true
+    },
+    "finalizeLog": {
+      "file": "fresh-win95-memory-call-2026-10-25.finalize-log.zst",
+      "sha256": "482d0cff11422b05806e6a5472d5d2de770f29cb1560359905fe18a89108cb1a",
+      "zstdRoundTripVerified": true
+    },
+    "prepareLog": {
+      "file": "fresh-win95-memory-call-2026-10-25.prepare-log.zst",
+      "sha256": "d326434b1703f55890cec9a49faa8882d9c5c4a9d47877579aabb27c4b7049e6",
+      "zstdRoundTripVerified": true
+    },
+    "setupFinish": {
+      "file": "fresh-win95-memory-call-2026-10-25.setupFinish.png",
+      "sha256": "8f76e72889c3bbe31658c4b4a59b594c2986ae92fd2e59e13841703dabf9a6b4"
+    },
+    "desktop": {
+      "file": "fresh-win95-memory-call-2026-10-25.desktop.png",
+      "sha256": "f0399c7d83aaa3b50900d4434d0480f2b9b4b2f7a8d9e5e445fe1c4378576b96"
+    },
+    "notepad": {
+      "file": "fresh-win95-memory-call-2026-10-25.notepad.png",
+      "sha256": "b66f5f5fc7ca0896b332b8b503ec27e3982b058fb6e6924f42c6fc8b1d0bf4e9"
+    }
+  },
+  "limitations": [
+    "Initial SMB staging readback/close failed; after disk-tool process exited, independent read-only reopening verified all 56 source files before boot.",
+    "One guest PID ran from DOS Setup through all three resets and application verification without interruption.",
+    "No exit code is available from the earlier detached launcher; PID disappearance, normal budget/quit trailer, and exact read-only stopped-guest file contents are separately verified.",
+    "Elapsed time includes wizard inputs and observation; not a performance benchmark."
+  ],
+  "exitEvidence": {
+    "pidAbsent": true,
+    "normalQuitTrailerObserved": true
+  }
+}
