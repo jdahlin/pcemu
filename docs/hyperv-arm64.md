@@ -1092,3 +1092,18 @@ Actual Windows consumption must still be checked after this advertisement change
 
 Validation of the WinHv prerequisite change: 2,075 isolated portable checks,
 270 native HVF checks, and EFI probes for all four profiles passed.
+
+The next Windows boot passed the WinHv prerequisite and read SynIC version and
+SIPP, then attempted a SIPP write. That write failed and Windows reported a
+0x7e / access-violation bugcheck through the implemented crash enlightenment.
+The frozen failure is `build/windows11-hyperv/vmbus-winhv/failed-sipp.json`;
+this profile is still experimental and has not reached successful VMBus
+negotiation. The default/basic paths are unaffected by this opt-in change.
+
+To diagnose the actual page-register request, bounded register counters now
+include `lastWriteLow`, `lastWriteHigh`, `lastWriteVp` and `lastWriteStatus` for
+SynIC and synthetic timer registers. Failed writes are retained as well as
+successful replacements. Only one last value per existing counter is stored;
+the 128-register bound remains, and no guest message payload or RAM contents
+are added. Tests cover a rejected out-of-RAM SIPP mapping followed by a valid
+replacement and verify that both the target VP and resulting status update.

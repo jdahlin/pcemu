@@ -464,8 +464,14 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         std::array<uint64_t, 2> value{};
         uint16_t status;
         if (write) {
+            const bool synthetic = (name >= 0xa0000 && name <= 0xa0015) || (name >= 0xb0000 && name <= 0xb0007);
+            if (counters && synthetic) {
+                counters->lastWrite = {get(input, at + 16, 8), get(input, at + 24, 8)};
+                counters->lastWriteVp = vp;
+            }
             status = get(input, at + 4, 4) || get(input, at + 8, 8) ? invalidParameter :
                 writeRegister(name, vp, {get(input, at + 16, 8), get(input, at + 24, 8)});
+            if (counters && synthetic) counters->lastWriteStatus = status;
         } else status = readRegister(name, vp, value);
         if (status) { if (counters) ++counters->failures; return (uint64_t(i) << 32) | status; }
         if (!write) {
@@ -517,7 +523,11 @@ std::string ArmHyperV::report() const {
     s << "],\"registers\":["; comma = false;
     for (auto [name, n] : registers) {
         if (comma) s << ','; comma = true;
-        s << "{\"name\":" << name << ",\"reads\":" << n.reads << ",\"writes\":" << n.writes << ",\"failures\":" << n.failures << '}';
+        s << "{\"name\":" << name << ",\"reads\":" << n.reads << ",\"writes\":" << n.writes << ",\"failures\":" << n.failures;
+        if (n.writes && ((name >= 0xa0000 && name <= 0xa0015) || (name >= 0xb0000 && name <= 0xb0007)))
+            s << ",\"lastWriteLow\":" << n.lastWrite[0] << ",\"lastWriteHigh\":" << n.lastWrite[1]
+              << ",\"lastWriteVp\":" << n.lastWriteVp << ",\"lastWriteStatus\":" << n.lastWriteStatus;
+        s << '}';
     }
     s << "],\"vps\":[";
     for (unsigned vp = 0; vp < cpus; ++vp) {

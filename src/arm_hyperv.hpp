@@ -45,7 +45,13 @@ class ArmHyperV {
     // One bounded last-event snapshot, drained by the platform after each HVC.
     std::string takeCrashReport();
   private:
-    struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
+    struct Counts {
+        uint64_t reads = 0, writes = 0, failures = 0;
+        // One last write per bounded SynIC/timer register counter, no payloads.
+        std::array<uint64_t, 2> lastWrite{};
+        unsigned lastWriteVp = 0;
+        uint16_t lastWriteStatus = 0;
+    };
     bool enabled;
     bool synicAdvertised = false;
     ArmSynic synic;
