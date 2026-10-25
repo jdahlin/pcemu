@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")"
-make -s
+./tools/build.sh
 if [[ ! -f media/win95.raw ]]; then
   echo 'No Windows 95 working disk. See README.md for current media requirements.' >&2
   exit 1
@@ -12,7 +12,7 @@ magic=$(od -An -tx1 -N4 "$disk" | tr -d ' \n')
 if [[ "$magic" == 514649fb ]]; then
   disk=media/win95-working.pcd
   if [[ ! -e "$disk" ]]; then
-    make -s build/disk-tool
+    ./tools/build.sh disk-tool
     ./build/disk-tool overlay "$disk" media/win95.raw
   fi
 fi

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")"
-make -s
+./tools/build.sh
 point=build/snapshots/office97-networked
 if [[ ! -f "$point/state.bin" ]]; then point=build/snapshots/office97-integrated; fi
 if [[ ! -f "$point/state.bin" ]]; then point=build/snapshots/office97-desktop; fi

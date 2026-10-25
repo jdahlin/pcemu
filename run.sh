@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")"
-make -s
+./tools/build.sh
 disk=media/win311.raw
 if [[ ! -f "$disk" ]]; then disk=media/dos.raw; fi
 if [[ ! -f "$disk" ]]; then

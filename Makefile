@@ -1,58 +1,14 @@
-CXX := clang++
-CPPFLAGS := -Isrc $(shell pkg-config --cflags libzstd)
-SDL_CFLAGS = $(shell pkg-config --cflags sdl2)
-SDL_LIBS = $(shell pkg-config --libs sdl2)
-CXXFLAGS := -std=c++20 -O3 -g -Wall -Wextra -Wpedantic
-LDLIBS = $(SDL_LIBS) $(shell pkg-config --libs libzstd)
-SESSION := src/pc_display.cpp src/session_diagnostics.cpp src/cpu_benchmarks.cpp
-HEADERS := $(wildcard src/*.hpp)
-PS2_TEST_SUPPORT := tests/ps2_test_support.hpp
-JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
-	src/jit_runtime.cpp src/jit_arm64.cpp
-CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/i8042.cpp src/pc_input.cpp src/cmos_rtc.cpp src/disk.cpp src/pc_bios_disk.cpp src/ata.cpp src/pic.cpp src/i8259_pair.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/vga_pci.cpp src/host_keyboard.cpp src/ne2000.cpp
+# Compatibility aliases. Compilation and dependency tracking are handled by Ninja.
+.DEFAULT_GOAL := all
+# Ninja owns parallelism; never start competing Ninja writers via make -j.
+.NOTPARALLEL:
+.PHONY: FORCE
+FORCE:
+build/%: FORCE
+	@./tools/build.sh $*
+
 .PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf smoke-guest-memory
 all: build/pcemu
-build/pcemu-profile: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
-	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
-build/disk-tool: $(CORE) $(HEADERS) tools/disk_tool.cpp src/machine.hpp src/cpu.hpp src/profile.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/disk_tool.cpp $(shell pkg-config --libs libzstd) -o $@
-build/pcemu: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
-build/tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp src/profile.hpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/snapshot-tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/snapshot_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/snapshot_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-byte-tests: $(CORE) $(HEADERS) tests/jit_bytes_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_bytes_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-stack-tests: $(CORE) $(HEADERS) tests/jit_stack_test.cpp src/cpu.hpp src/machine.hpp src/jit.hpp src/ata.hpp src/vga.hpp src/pic.hpp src/pit.hpp src/profile.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_stack_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-flags-tests: $(CORE) $(HEADERS) tests/jit_flags_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_flags_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/integration-tests: $(CORE) $(HEADERS) $(PS2_TEST_SUPPORT) tests/integration_test.cpp src/machine.hpp src/mouse.hpp src/vga.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/integration_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/network-tests: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/network-tests-sanitize: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/memory-bench: $(CORE) $(HEADERS) tools/memory_bench.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/memory_bench.cpp $(shell pkg-config --libs libzstd) -o $@
-build/guest-bench: $(CORE) $(HEADERS) tools/guest_bench.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
-build/guest-bench-profile: $(CORE) $(HEADERS) tools/guest_bench.cpp
-	$(CXX) $(CPPFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-jump-tests: $(CORE) $(HEADERS) tests/jit_jump_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_jump_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-rmw-tests: $(CORE) $(HEADERS) tests/jit_rmw_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_rmw_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/jit-read-tests: $(CORE) $(HEADERS) tests/jit_read_test.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_read_test.cpp $(shell pkg-config --libs libzstd) -o $@
-build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tests/frontend_test.cpp
-	$(CXX) -Isrc $(SDL_CFLAGS) $(CXXFLAGS) src/frontend_sdl.cpp tests/frontend_test.cpp $(SDL_LIBS) -o $@
-build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
 smoke-guest-memory: build/memory-bench
 	python3 tools/smoke_guest_memory.py
 
@@ -105,10 +61,6 @@ smoke-guest-profile: build/guest-bench-profile build/guest-bench build/disk-tool
 smoke-win95: build/pcemu build/disk-tool
 	python3 tools/smoke_win95.py
 
-ARM_BUS := src/mmio_space.cpp src/pci_ecam.cpp
-ARM_BUS_HEADERS := src/mmio_space.hpp src/pci_ecam.hpp
-ARM_DEVICES := src/arm_gic_ns.cpp src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv_shutdown.cpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
-ARM_DEVICE_HEADERS := src/arm_gic_ns.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_vmbus.hpp src/arm_hyperv_timers.hpp src/arm_synic.hpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv_shutdown.hpp src/arm_hyperv_reference_clock.hpp src/arm_hyperv_kvp_codec.hpp src/arm_hyperv_kvp.hpp src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
 
 # Optional ARM64 hypervisor runner. No GUI or x86 core; shared COW storage.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
@@ -127,12 +79,6 @@ test-hvf: build/arm-hyperv-tests build/device-bus-tests build/virtio-rng-tests b
 	python3 -m unittest discover -s tests -p test_arm_acpi.py
 	python3 -m unittest discover -s tests -p test_arm_platform.py
 	python3 -m unittest discover -s tests -p test_windows_hyperv.py
-build/pcemu-hvf: src/hvf_secondary.hpp src/virtio_rng.cpp src/virtio_rng.hpp src/nvme.cpp src/nvme.hpp src/network.cpp src/network.hpp src/ne2000.cpp src/virtio_net.cpp src/virtio_net.hpp src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_virt.hpp src/arm_ramfb.cpp src/arm_ramfb.hpp $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) src/hvf_machine.cpp src/hvf_machine.hpp src/machine_profile.hpp tools/hvf_main.cpp platform/macos/hypervisor.entitlements
-	@test "$$(uname -s)-$$(uname -m)" = Darwin-arm64 || { echo 'HVF requires Apple Silicon macOS'; exit 1; }
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/hvf_machine.cpp src/arm_virt.cpp src/arm_virt_devices.cpp src/arm_ramfb.cpp $(ARM_BUS) src/arm_fw_cfg.cpp $(ARM_DEVICES) src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp src/virtio_net.cpp src/virtio_rng.cpp src/network.cpp src/ne2000.cpp src/nvme.cpp tools/hvf_main.cpp $(shell pkg-config --libs libzstd) -framework Hypervisor -o $@
-	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
-
 .PHONY: firmware-arm64 smoke-uefi
 firmware-arm64: acpi-arm64 build/arm64-fw/pcemu-virt.dtb
 	python3 tools/fetch_arm64_uefi.py
@@ -158,18 +104,6 @@ smoke-windows-loader: build/pcemu-hvf firmware-arm64
 smoke-arm-hyperv: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_arm_hyperv.py
 
-build/arm-hyperv-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv_shutdown.cpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv_shutdown.hpp src/arm_hyperv_reference_clock.hpp src/arm_hyperv_kvp_codec.hpp src/arm_hyperv_kvp.hpp src/arm_hyperv.hpp tests/arm_hyperv_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv_shutdown.cpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp src/arm_hyperv.cpp tests/arm_hyperv_test.cpp -o $@
-
-build/arm-device-tests: src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_devices_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_fw_cfg.cpp $(ARM_DEVICES) tests/arm_devices_test.cpp -o $@
-
-build/virtio-tests: src/vhdx.hpp src/virtio_pci.cpp src/virtio_pci.hpp src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp tests/virtio_blk_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp tests/virtio_blk_test.cpp $(shell pkg-config --libs libzstd) -o $@
-
 .PHONY: smoke-virtio
 smoke-virtio: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_virtio.py
@@ -178,33 +112,19 @@ smoke-virtio: build/pcemu-hvf firmware-arm64
 test-vhdx: build/vhdx-tests
 	./build/vhdx-tests
 
-build/vhdx-tests: src/disk.cpp src/disk.hpp src/vhdx.hpp tests/vhdx_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/disk.cpp tests/vhdx_test.cpp $(shell pkg-config --libs libzstd) -o $@
-
 .PHONY: smoke-vhdx
 smoke-vhdx: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_vhdx.py
 
 .PHONY: test-virtio-net
-build/virtio-net-tests: src/virtio_net.cpp src/virtio_net.hpp tests/virtio_net_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/virtio_net.cpp tests/virtio_net_test.cpp -o $@
 test-virtio-net: build/virtio-net-tests
 	./build/virtio-net-tests
 
 .PHONY: test-nvme smoke-nvme
 test-nvme: build/nvme-tests
 	./build/nvme-tests
-build/nvme-tests: src/nvme.cpp src/nvme.hpp src/disk.cpp src/disk.hpp src/vhdx.hpp tests/nvme_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/nvme.cpp src/disk.cpp tests/nvme_test.cpp $(shell pkg-config --libs libzstd) -o $@
 smoke-nvme: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_vhdx.py --disk-controller nvme
-
-build/virtio-rng-tests: src/disk.cpp src/disk.hpp src/virtio_blk.cpp src/virtio_blk.hpp src/virtio_rng.cpp src/virtio_rng.hpp src/virtio_pci.cpp src/virtio_pci.hpp tests/virtio_rng_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/disk.cpp src/virtio_blk.cpp src/virtio_rng.cpp src/virtio_pci.cpp tests/virtio_rng_test.cpp $(shell pkg-config --libs libzstd) -o $@
 
 .PHONY: smoke-arm-integration
 smoke-arm-integration: build/pcemu-hvf firmware-arm64
@@ -214,31 +134,10 @@ smoke-arm-integration: build/pcemu-hvf firmware-arm64
 smoke-arm-reboot: build/pcemu-hvf firmware-arm64
 	python3 tools/smoke_arm_reboot.py
 
-build/device-bus-tests: $(ARM_BUS) $(ARM_BUS_HEADERS) src/arm_ramfb.cpp src/arm_ramfb.hpp src/arm_fw_cfg.cpp src/arm_fw_cfg.hpp tests/device_bus_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) $(ARM_BUS) src/arm_ramfb.cpp src/arm_fw_cfg.cpp tests/device_bus_test.cpp -o $@
-
-build/pc-component-tests: $(CORE) $(HEADERS) src/pc_display.cpp tests/pc_components_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/pc_display.cpp tests/pc_components_test.cpp $(shell pkg-config --libs libzstd) -o $@
-
-build/i8042-tests: src/i8042.cpp src/i8042.hpp src/pc_input.cpp src/pc_input.hpp src/mouse.cpp src/mouse.hpp tests/i8042_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/i8042.cpp src/pc_input.cpp src/mouse.cpp tests/i8042_test.cpp -o $@
-
 # This target intentionally does not link CPU, JIT, Machine, HVF or a frontend.
-HARDWARE_MODELS := src/ata.cpp src/disk.cpp src/pic.cpp src/i8259_pair.cpp src/pit.cpp src/vga.cpp src/pci.cpp src/vga_pci.cpp src/ne2000.cpp src/network.cpp src/i8042.cpp src/mouse.cpp src/cmos_rtc.cpp $(ARM_BUS) $(ARM_DEVICES) src/arm_fw_cfg.cpp src/arm_ramfb.cpp src/virtio_blk.cpp src/virtio_net.cpp src/virtio_rng.cpp src/virtio_pci.cpp src/nvme.cpp
-build/hardware-device-tests: $(HARDWARE_MODELS) $(HEADERS) tests/hardware_devices_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(HARDWARE_MODELS) tests/hardware_devices_test.cpp $(shell pkg-config --libs libzstd) -o $@
-
 .PHONY: test-qcow2
 test-qcow2: build/qcow2-tests
 	./build/qcow2-tests
-
-build/qcow2-tests: src/disk.cpp src/disk.hpp src/qcow2.hpp src/vhdx.hpp tests/qcow2_test.cpp
-	@mkdir -p build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/disk.cpp tests/qcow2_test.cpp $(shell pkg-config --libs libzstd) -o $@
 
 # Keep the format checks in both regular and HVF validation suites.
 test test-hvf: test-qcow2
@@ -247,16 +146,11 @@ test test-hvf: test-qcow2
 test-qcow2-interop: build/qcow2-tests
 	python3 tests/test_qcow2_interop.py
 
-build/pcemu-hvf build/virtio-tests build/vhdx-tests build/nvme-tests build/virtio-rng-tests build/disk-progress-tests: src/qcow2.hpp
 
 # VMBus guest-memory descriptors are portable and require no disk or hypervisor.
 .PHONY: test-arm-gpadl
 test-arm-gpadl: build/arm-gpadl-tests
 	./build/arm-gpadl-tests
-
-build/arm-gpadl-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp tests/arm_gpadl_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp tests/arm_gpadl_test.cpp -o $@
 
 test test-hvf: test-arm-gpadl
 
@@ -265,10 +159,6 @@ test test-hvf: test-arm-gpadl
 test-arm-vmbus-ring: build/arm-vmbus-ring-tests
 	./build/arm-vmbus-ring-tests
 
-build/arm-vmbus-ring-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp tests/arm_vmbus_ring_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp tests/arm_vmbus_ring_test.cpp -o $@
-
 test test-hvf: test-arm-vmbus-ring
 
 # Registered VMBus channel lifecycle and real Hyper-V/SynIC dispatch, diskless.
@@ -276,35 +166,19 @@ test test-hvf: test-arm-vmbus-ring
 test-arm-vmbus-channel: build/arm-vmbus-channel-tests
 	./build/arm-vmbus-channel-tests
 
-build/arm-vmbus-channel-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp src/arm_vmbus.cpp src/arm_vmbus.hpp src/arm_hyperv_timers.cpp src/arm_hyperv_timers.hpp src/arm_synic.cpp src/arm_synic.hpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv_shutdown.cpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp src/arm_hyperv.cpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv_timesync.hpp src/arm_hyperv_shutdown.hpp src/arm_hyperv_reference_clock.hpp src/arm_hyperv_kvp_codec.hpp src/arm_hyperv_kvp.hpp src/arm_hyperv.hpp tests/arm_vmbus_channel_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv_timesync.cpp src/arm_hyperv_shutdown.cpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp src/arm_hyperv.cpp tests/arm_vmbus_channel_test.cpp -o $@
-
 test test-hvf: test-arm-vmbus-channel
 
 .PHONY: test-arm-hyperv-heartbeat
 test-arm-hyperv-heartbeat: build/arm-hyperv-heartbeat-tests
 	./build/arm-hyperv-heartbeat-tests
 
-build/arm-hyperv-heartbeat-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_hyperv_heartbeat_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_heartbeat_test.cpp -o $@
-
 test test-hvf: test-arm-hyperv-heartbeat
 
 .PHONY: test-arm-gic-ns test-arm-hvf-gic
 test-arm-gic-ns: build/arm-gic-ns-tests
 	./build/arm-gic-ns-tests
-build/arm-gic-ns-tests: src/arm_gic_ns.cpp src/arm_gic_ns.hpp tests/arm_gic_ns_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_gic_ns.cpp tests/arm_gic_ns_test.cpp -o $@
 test test-hvf: test-arm-gic-ns
 
-build/pcemu-hvf: src/hvf_gic_bootstrap.hpp
-build/arm-hvf-gic-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_secondary.hpp src/hvf_gic_bootstrap.hpp src/arm_gic_ns.cpp src/arm_gic_ns.hpp tests/arm_hvf_gic_test.cpp platform/macos/hypervisor.entitlements
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_gic_ns.cpp tests/arm_hvf_gic_test.cpp -framework Hypervisor -o $@
-	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
 test-arm-hvf-gic: build/arm-hvf-gic-tests
 	./build/arm-hvf-gic-tests
 test-hvf: test-arm-hvf-gic
@@ -312,82 +186,50 @@ test-hvf: test-arm-hvf-gic
 .PHONY: test-arm-hyperv-timesync
 test-arm-hyperv-timesync: build/arm-hyperv-timesync-tests
 	./build/arm-hyperv-timesync-tests
-build/arm-hyperv-timesync-tests: src/arm_hyperv_timesync.cpp src/arm_hyperv_timesync.hpp src/arm_vmbus.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp tests/arm_hyperv_timesync_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_timesync.cpp tests/arm_hyperv_timesync_test.cpp -o $@
 test test-hvf: test-arm-hyperv-timesync
 
 .PHONY: test-arm-hyperv-timesync-integration
 test-arm-hyperv-timesync-integration: build/arm-hyperv-timesync-integration-tests
 	./build/arm-hyperv-timesync-integration-tests
-build/arm-hyperv-timesync-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_hyperv_timesync_integration_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_timesync_integration_test.cpp -o $@
 test test-hvf: test-arm-hyperv-timesync-integration
 
 .PHONY: test-arm-hyperv-shutdown
 test-arm-hyperv-shutdown: build/arm-hyperv-shutdown-tests
 	./build/arm-hyperv-shutdown-tests
-build/arm-hyperv-shutdown-tests: src/arm_hyperv_shutdown.cpp src/arm_hyperv_shutdown.hpp src/arm_vmbus.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp tests/arm_hyperv_shutdown_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_shutdown.cpp tests/arm_hyperv_shutdown_test.cpp -o $@
 test test-hvf: test-arm-hyperv-shutdown
 
 .PHONY: test-arm-hyperv-shutdown-integration
 test-arm-hyperv-shutdown-integration: build/arm-hyperv-shutdown-integration-tests
 	./build/arm-hyperv-shutdown-integration-tests
-build/arm-hyperv-shutdown-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_hyperv_shutdown_integration_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_shutdown_integration_test.cpp -o $@
 test test-hvf: test-arm-hyperv-shutdown-integration
 
 # Portable reference-clock page contract; native advertisement is separate.
 .PHONY: test-arm-hyperv-reference-clock
 test-arm-hyperv-reference-clock: build/arm-hyperv-reference-clock-tests
 	./build/arm-hyperv-reference-clock-tests
-build/arm-hyperv-reference-clock-tests: src/arm_hyperv_reference_clock.cpp src/arm_hyperv_reference_clock.hpp tests/arm_hyperv_reference_clock_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_reference_clock.cpp tests/arm_hyperv_reference_clock_test.cpp -o $@
 test test-hvf: test-arm-hyperv-reference-clock
 
 .PHONY: test-arm-hvf-reference-counter
-build/arm-hvf-reference-counter-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_secondary.hpp src/hvf_gic_bootstrap.hpp src/arm_gic_ns.cpp src/arm_gic_ns.hpp tests/arm_hvf_reference_counter_test.cpp platform/macos/hypervisor.entitlements
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_gic_ns.cpp tests/arm_hvf_reference_counter_test.cpp -framework Hypervisor -o $@
-	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
 test-arm-hvf-reference-counter: build/arm-hvf-reference-counter-tests
 	./build/arm-hvf-reference-counter-tests
 test-hvf: test-arm-hvf-reference-counter
 
 .PHONY: test-arm-hvf-reference-page
-build/arm-hvf-reference-page-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_secondary.hpp src/hvf_gic_bootstrap.hpp src/arm_gic_ns.cpp src/arm_gic_ns.hpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_reference_clock.hpp tests/arm_hvf_reference_page_test.cpp platform/macos/hypervisor.entitlements
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_gic_ns.cpp src/arm_hyperv_reference_clock.cpp tests/arm_hvf_reference_page_test.cpp -framework Hypervisor -o $@
-	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
 test-arm-hvf-reference-page: build/arm-hvf-reference-page-tests
 	./build/arm-hvf-reference-page-tests
 test-hvf: test-arm-hvf-reference-page
 
 .PHONY: test-arm-hyperv-kvp-codec
-build/arm-hyperv-kvp-codec-tests: src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp_codec.hpp tests/arm_hyperv_kvp_codec_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_kvp_codec.cpp tests/arm_hyperv_kvp_codec_test.cpp -o $@
 test-arm-hyperv-kvp-codec: build/arm-hyperv-kvp-codec-tests
 	./build/arm-hyperv-kvp-codec-tests
 test test-hvf: test-arm-hyperv-kvp-codec
 
 .PHONY: test-arm-hyperv-kvp
-build/arm-hyperv-kvp-tests: src/arm_hyperv_kvp.cpp src/arm_hyperv_kvp.hpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp_codec.hpp src/arm_vmbus.hpp tests/arm_hyperv_kvp_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp tests/arm_hyperv_kvp_test.cpp -o $@
 test-arm-hyperv-kvp: build/arm-hyperv-kvp-tests
 	./build/arm-hyperv-kvp-tests
 test test-hvf: test-arm-hyperv-kvp
 
 .PHONY: test-arm-hyperv-kvp-integration
-build/arm-hyperv-kvp-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm_hyperv_kvp_integration_test.cpp
-	@mkdir -p build
-	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_kvp_integration_test.cpp -o $@
 test-arm-hyperv-kvp-integration: build/arm-hyperv-kvp-integration-tests
 	./build/arm-hyperv-kvp-integration-tests
 test test-hvf: test-arm-hyperv-kvp-integration

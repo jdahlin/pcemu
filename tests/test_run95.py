@@ -13,10 +13,10 @@ class Run95Test(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             shutil.copy(source, root / 'run95.sh')
-            for name in ('media', 'build', 'bin'):
+            for name in ('media', 'build', 'bin', 'tools'):
                 (root / name).mkdir()
             scripts = {
-                'bin/make': '#!/bin/sh\nexit 0\n',
+                'tools/build.sh': '#!/bin/sh\nexit 0\n',
                 'build/disk-tool': '#!/bin/sh\necho created >> calls\nprintf PCEMU > "$2"\n',
                 'build/pcemu': '#!/bin/sh\nprintf "%s\\n" "$@" > args\n',
             }
