@@ -40,7 +40,7 @@ function Get-Service {
         param($State, $Timeout)
         if ($global:pcemuProbeWaitFail) {
             $global:pcemuProbeState = 'Stopped'
-            throw [System.ServiceProcess.TimeoutException]::new('Mock stopped before Running')
+            throw [System.TimeoutException]::new('Mock stopped before Running')
         }
         if ($State.ToString() -ne 'Running' -or $Timeout.TotalSeconds -ne 15) { throw 'Unbounded service wait' }
     }
@@ -80,7 +80,7 @@ try {
     & $probe -OutputPath $path -StartHeartbeat
     $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
     if ($r.activation.succeeded -or $r.after.state -ne 'Stopped' -or
-        -not @($r.activation.errors | Where-Object { $_.type -eq 'System.ServiceProcess.TimeoutException' }).Count) {
+        -not @($r.activation.errors | Where-Object { $_.type -eq 'System.TimeoutException' }).Count) {
         throw 'Accepted Start followed by Stopped was incorrectly reported as Running'
     }
     $global:pcemuProbeEventsFail = $true
