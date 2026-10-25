@@ -335,29 +335,66 @@ int main() {
                 for (bool immediate : {false, true})
                     for (unsigned dst = 0; dst < 8; ++dst)
                         for (unsigned src = 0; src < 8; ++src)
-                            for (unsigned count = 0; count < 256; ++count) {
-                                std::vector<uint8_t> code = {0x04, 1};
-                                if ((width == 4) != code32) code.push_back(0x66);
-                                code.insert(code.end(), {0x0f, uint8_t(immediate ? 0xac : 0xad),
-                                                         uint8_t(0xc0 | (src << 3) | dst)});
-                                if (immediate) code.push_back(count);
-                                code.insert(code.end(), {0x73, 0});
-                                for (auto c : {&reference, &actual}) {
-                                    c->s[CS].big = code32;
-                                    for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
-                                }
-                                for (uint32_t pattern : {0u, 0xffffffffu, 0x80008000u, 0x12345678u}) {
+                            for (unsigned count = 0; count < 256; ++count)
+                                for (bool dead : {false, true}) {
+                                    std::vector<uint8_t> code = {0x04, 1};
+                                    if ((width == 4) != code32) code.push_back(0x66);
+                                    code.insert(code.end(), {0x0f, uint8_t(immediate ? 0xac : 0xad),
+                                                             uint8_t(0xc0 | (src << 3) | dst)});
+                                    if (immediate) code.push_back(count);
+                                    if (dead) code.insert(code.end(), {0x85, 0xf6});
+                                    code.insert(code.end(), {0x73, 0});
                                     for (auto c : {&reference, &actual}) {
-                                        c->ip = c->instructions = 0;
-                                        c->flags = 0x202 | ((count & 1) ? 0xcd5 : 0);
-                                        for (unsigned n = 0; n < 8; ++n) c->r[n] = pattern ^ (n * 0x10101u);
-                                        c->set(CX, count, 1);
+                                        c->s[CS].big = code32;
+                                        for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
                                     }
-                                    reference.step(); reference.step(); reference.step();
-                                    check(jit.run() == 3, "ADD/SHRD/JNC execute natively");
-                                    equal(reference, actual);
+                                    for (uint32_t pattern : {0u, 0xffffffffu, 0x80008000u, 0x12345678u}) {
+                                        for (auto c : {&reference, &actual}) {
+                                            c->ip = c->instructions = 0;
+                                            c->flags = 0x202 | ((count & 1) ? 0xcd5 : 0);
+                                            for (unsigned n = 0; n < 8; ++n) c->r[n] = pattern ^ (n * 0x10101u);
+                                            c->set(CX, count, 1);
+                                        }
+                                        for (unsigned k = 0; k < (dead ? 4u : 3u); ++k) reference.step();
+                                        check(jit.run() == (dead ? 4u : 3u), "SHRD with live/dead flags executes natively");
+                                        equal(reference, actual);
+                                    }
                                 }
-                            }
+        // A faulting load observes SHRD flags even if the following XOR would
+        // overwrite them. Include runtime/immediate zeros and 16-bit overshifts.
+        for (unsigned width : {2u, 4u})
+            for (bool immediate : {false, true})
+                for (unsigned count = 0; count < 256; ++count) {
+                    CPU a(65536), b(65536);
+                    std::vector<uint8_t> code = {0x04, 1};
+                    if (width == 2) code.push_back(0x66);
+                    code.insert(code.end(), {0x0f, uint8_t(immediate ? 0xac : 0xad), 0xd0});
+                    if (immediate) code.push_back(count);
+                    const auto faultIP = code.size();
+                    code.insert(code.end(), {0x64,0x8b,0x1d,0,0,0,0, 0x33,0xf6});
+                    for (auto c : {&a, &b}) {
+                        c->s[CS].big = true;
+                        c->cr[0] = 0x11;
+                        c->s[FS].unusable = true;
+                        std::copy(code.begin(), code.end(), c->mem.begin());
+                        for (unsigned n = 0; n < 8; ++n) c->r[n] = 0x123456ffu ^ n;
+                        c->set(CX, count, 1);
+                    }
+                    struct Stop {};
+                    unsigned faults = 0;
+                    auto observe = [&](CPU &c, const Fault &f) {
+                        check(f.vector == 13 && c.ip == faultIP, "fault observes exact SHRD boundary");
+                        ++faults;
+                        throw Stop{};
+                    };
+                    a.observeFault = [&](const Fault &f) { observe(a, f); };
+                    b.observeFault = [&](const Fault &f) { observe(b, f); };
+                    try { for (unsigned n = 0; n < 3; ++n) a.step(); } catch (const Stop &) {}
+                    Jit precise(b, true, 0, 65536);
+                    try { precise.run(); } catch (const Stop &) {}
+                    check(faults == 2, "both engines expose the fault before flag overwrite");
+                    equal(a, b);
+                }
         // Exhaust byte multiplication inputs, including AL/AH overlap and
         // arbitrary upper GPR halves. ADD produces pending flags before MUL;
         // a carry branch observes the resulting CF without a helper call.

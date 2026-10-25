@@ -864,3 +864,12 @@ The rtts zero parent is now a 196,616-byte QCOW2 container; its complete logical
 image hash remains unchanged. Evidence:
 `docs/measurements/recovered-dos-win311-2026-10-25.json`.
 Fresh Win95 Setup and recovery/replacement of the separate Office parent remain.
+
+## SHRD flag-work experiment rejected (25 October)
+
+Six balanced-order Excel pairs did not establish a gain from removing
+unobserved SHRD flag calculations. Runtime code is restored to the verified
+CL-shift baseline. Extended SHRD/precise-fault tests pass 91,745,234 checks,
+and the core suite passes 352,644. All twelve application runs matched the
+required result pixels. The complete performance goal remains active.
+See `measurements/rejected-shrd-dead-flags-2026-10-25.json`.

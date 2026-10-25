@@ -1,0 +1,40 @@
+diff --git a/src/jit_arm64.cpp b/src/jit_arm64.cpp
+index bfca7dd..1c431eb 100644
+--- a/src/jit_arm64.cpp
++++ b/src/jit_arm64.cpp
+@@ -457,6 +457,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+             continue;
+         }
+         if (i.kind == Kind::DoubleShift) {
++            if (!neededFlags[n]) {
++                if (i.immediate) imm(9, i.imm);
++                else bits(9, 20 + CX, 0, 5);
++                extract(11, 20 + i.dst, i.w, 0);
++                extract(12, 20 + i.src, i.w, 0);
++                emit(0xaa000000u | (12 << 16) | ((i.w * 8) << 10) | (11 << 5) | 13);
++                emit(0x9ac02400u | (9 << 16) | (13 << 5) | 13);
++                insert(20 + i.dst, 13, i.w, 0);
++                dirtyRegisters |= 1u << i.dst;
++                continue;
++            }
+             finishFlags(last, -1, 0);
+             last = -1;
+             if (i.immediate) imm(9, i.imm);
+diff --git a/src/jit_flags.cpp b/src/jit_flags.cpp
+index 9616b1e..2e31e13 100644
+--- a/src/jit_flags.cpp
++++ b/src/jit_flags.cpp
+@@ -31,9 +31,10 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
+             continue;
+         }
+         if (i.kind == Kind::DoubleShift) {
+-            // Runtime-zero counts and preserved flags require exact input state.
+-            neededFlags[n] = true;
+-            liveFlags = arithmeticFlags;
++            neededFlags[n] = liveFlags & arithmeticFlags;
++            // Immediate zero was decoded as NOP; a runtime zero can preserve
++            // every incoming flag, whereas a known nonzero count replaces them.
++            if (i.immediate) liveFlags &= ~arithmeticFlags;
+             continue;
+         }
+         unsigned written = 0;

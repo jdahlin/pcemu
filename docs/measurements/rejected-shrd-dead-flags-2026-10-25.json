@@ -1,0 +1,508 @@
+{
+  "scope": "Rejected elimination of unobserved SHRD flags; differential correctness and twelve exact-pixel Excel runs passed, but six balanced-order timing pairs did not show a useful application gain. Production lowering restored.",
+  "decision": "reject runtime change; retain extended SHRD and precise-fault regressions",
+  "initialThreePairs": {
+    "scope": "Three alternating matched-source pairs testing elimination of unobserved SHRD flags in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.",
+    "pairs": [
+      {
+        "pair": 1,
+        "runs": {
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 32772.452375,
+                "taskResponseMs": 10379.445040999997,
+                "instructions": 1403171397,
+                "nativeInstructions": 1362387631,
+                "compiledBlocks": 31053,
+                "executionWallMs": 8810.554499
+              }
+            ],
+            "medianRestoreReadyMs": 32772.452375,
+            "medianTaskResponseMs": 10379.445040999997
+          },
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 1509.8694580000001,
+                "taskResponseMs": 9034.416208,
+                "instructions": 1402814901,
+                "nativeInstructions": 1362104813,
+                "compiledBlocks": 31041,
+                "executionWallMs": 7881.391593
+              }
+            ],
+            "medianRestoreReadyMs": 1509.8694580000001,
+            "medianTaskResponseMs": 9034.416208
+          }
+        },
+        "responseRatio": 1.1488783339214514,
+        "executionWallRatio": 1.1178932546411287
+      },
+      {
+        "pair": 2,
+        "runs": {
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 463.930959,
+                "taskResponseMs": 8998.194833,
+                "instructions": 1403351826,
+                "nativeInstructions": 1362546008,
+                "compiledBlocks": 31063,
+                "executionWallMs": 7829.305875
+              }
+            ],
+            "medianRestoreReadyMs": 463.930959,
+            "medianTaskResponseMs": 8998.194833
+          },
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 464.416375,
+                "taskResponseMs": 8901.018792,
+                "instructions": 1403040959,
+                "nativeInstructions": 1362298098,
+                "compiledBlocks": 31049,
+                "executionWallMs": 7727.683574
+              }
+            ],
+            "medianRestoreReadyMs": 464.416375,
+            "medianTaskResponseMs": 8901.018792
+          }
+        },
+        "responseRatio": 0.989200496010198,
+        "executionWallRatio": 0.987020266850923
+      },
+      {
+        "pair": 3,
+        "runs": {
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 489.33087500000005,
+                "taskResponseMs": 8659.912833,
+                "instructions": 1403097995,
+                "nativeInstructions": 1362340031,
+                "compiledBlocks": 30951,
+                "executionWallMs": 7593.865735
+              }
+            ],
+            "medianRestoreReadyMs": 489.33087500000005,
+            "medianTaskResponseMs": 8659.912833
+          },
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 1028.423959,
+                "taskResponseMs": 8980.550417,
+                "instructions": 1403320811,
+                "nativeInstructions": 1362515755,
+                "compiledBlocks": 30946,
+                "executionWallMs": 7854.731022
+              }
+            ],
+            "medianRestoreReadyMs": 1028.423959,
+            "medianTaskResponseMs": 8980.550417
+          }
+        },
+        "responseRatio": 0.964296444080639,
+        "executionWallRatio": 0.9667887689254601
+      }
+    ],
+    "loadBefore": [
+      4.154296875,
+      3.25390625,
+      3.08935546875
+    ],
+    "startedUnix": 1792945282.778074,
+    "binaries": {
+      "baseline": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+      "candidate": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769"
+    },
+    "loadAfter": [
+      3.51708984375,
+      3.31103515625,
+      3.12744140625
+    ],
+    "finishedUnix": 1792945376.5009012,
+    "medianPairedResponseRatio": 0.989200496010198,
+    "medianPairedExecutionWallRatio": 0.987020266850923
+  },
+  "oppositeOrderConfirmation": {
+    "scope": "Three alternating matched-source pairs testing elimination of unobserved SHRD flags in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.",
+    "pairs": [
+      {
+        "pair": 1,
+        "runs": {
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 11746.604374999999,
+                "taskResponseMs": 8738.876208,
+                "instructions": 1403132601,
+                "nativeInstructions": 1362361362,
+                "compiledBlocks": 31037,
+                "executionWallMs": 7638.07061
+              }
+            ],
+            "medianRestoreReadyMs": 11746.604374999999,
+            "medianTaskResponseMs": 8738.876208
+          },
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 492.428125,
+                "taskResponseMs": 8674.951042,
+                "instructions": 1403106828,
+                "nativeInstructions": 1362314448,
+                "compiledBlocks": 31049,
+                "executionWallMs": 7618.476316
+              }
+            ],
+            "medianRestoreReadyMs": 492.428125,
+            "medianTaskResponseMs": 8674.951042
+          }
+        },
+        "responseRatio": 0.992684967211061,
+        "executionWallRatio": 0.9974346539852164
+      },
+      {
+        "pair": 2,
+        "runs": {
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 469.0745,
+                "taskResponseMs": 8739.224083,
+                "instructions": 1403059387,
+                "nativeInstructions": 1362313659,
+                "compiledBlocks": 30904,
+                "executionWallMs": 7618.962508
+              }
+            ],
+            "medianRestoreReadyMs": 469.0745,
+            "medianTaskResponseMs": 8739.224083
+          },
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 627.846833,
+                "taskResponseMs": 8757.919458,
+                "instructions": 1403320811,
+                "nativeInstructions": 1362515755,
+                "compiledBlocks": 30946,
+                "executionWallMs": 7664.94816
+              }
+            ],
+            "medianRestoreReadyMs": 627.846833,
+            "medianTaskResponseMs": 8757.919458
+          }
+        },
+        "responseRatio": 0.997865317774426,
+        "executionWallRatio": 0.9940005266780565
+      },
+      {
+        "pair": 3,
+        "runs": {
+          "candidate": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 547.2961670000001,
+                "taskResponseMs": 8731.739166000001,
+                "instructions": 1402926400,
+                "nativeInstructions": 1362200087,
+                "compiledBlocks": 31046,
+                "executionWallMs": 7683.750421
+              }
+            ],
+            "medianRestoreReadyMs": 547.2961670000001,
+            "medianTaskResponseMs": 8731.739166000001
+          },
+          "baseline": {
+            "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+            "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+            "jit": true,
+            "profiled": false,
+            "followJumps": true,
+            "traces": false,
+            "emulatorSha256": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+            "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+            "restoreTimeoutSeconds": 90.0,
+            "guestProfiled": false,
+            "frontend": "headless",
+            "hostInputSuppressed": false,
+            "emulator": "/Users/johandahlin/dev/pcemu/build/cl-shift/pcemu-candidate",
+            "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+            "samples": [
+              {
+                "restoreReadyMs": 495.05304199999995,
+                "taskResponseMs": 8712.711875,
+                "instructions": 1403435418,
+                "nativeInstructions": 1362558944,
+                "compiledBlocks": 31143,
+                "executionWallMs": 7658.19189
+              }
+            ],
+            "medianRestoreReadyMs": 495.05304199999995,
+            "medianTaskResponseMs": 8712.711875
+          }
+        },
+        "responseRatio": 0.997820904789038,
+        "executionWallRatio": 0.996673690632878
+      }
+    ],
+    "loadBefore": [
+      4.806640625,
+      3.6259765625,
+      3.25927734375
+    ],
+    "startedUnix": 1792945518.759663,
+    "binaries": {
+      "baseline": "2eff0b8873fc8d207557432d0ac366a67633d4ed5d73d97a6451ea9fc3e8909d",
+      "candidate": "25cd6d83de6437785092d566a16a2328be397a61268655c3b442a9197d82f769"
+    },
+    "loadAfter": [
+      3.541015625,
+      3.49169921875,
+      3.2353515625
+    ],
+    "finishedUnix": 1792945586.9466329,
+    "medianPairedResponseRatio": 0.997820904789038,
+    "medianPairedExecutionWallRatio": 0.996673690632878
+  },
+  "combinedMedianResponseRatio": 0.9952529360000495,
+  "combinedMedianExecutionWallRatio": 0.9953371086554672,
+  "pairsFavoringCandidate": 1,
+  "pairsFavoringBaseline": 5,
+  "sourceProvenance": "Both executables use the frozen CL-shift whole-machine source and headers; candidate differs only in jit_flags.cpp and jit_arm64.cpp. See docs/measurements/excel-cl-shift-2026-10-25.json.",
+  "candidateSourceHashes": {
+    "jit_flags.cpp": "2b403705c5d1a3e1cc156dc5b442ede976fb4cf8051dfa75432a8676464ab6af",
+    "jit_arm64.cpp": "bbdb93f7334380f51c8224d3964f2caf9f4e556f9092183eba25d825137cff55"
+  },
+  "restoredSourceHashes": {
+    "jit_flags.cpp": "5f0d9c03a41f7756664854102b9cdb8d755db76448fca978d1e892607d34838f",
+    "jit_arm64.cpp": "1073a2c9b5669be0047cb5fcaa7261f9afbafa963adc8e294c2e49478c6ee3e1"
+  },
+  "candidateBuildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/shrd-dead/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/shrd-dead/pcemu-candidate"
+  ],
+  "rejectedPatch": "docs/measurements/rejected-shrd-dead-flags-2026-10-25.patch",
+  "candidateFlagChecks": 91745234,
+  "restoredFlagChecks": 91745234,
+  "restoredCoreChecks": 352644,
+  "checkpointUnchanged": true,
+  "successfulPrivateDisksRemoved": true,
+  "notes": [
+    "Ratios are baseline/candidate; values above one favor the candidate.",
+    "The first baseline was noticeably slower; no sample is removed from the report.",
+    "Later confirmation response ratios are 0.9927 to 0.9979; cause is not established.",
+    "No host-time category or microarchitectural explanation is inferred from fewer emitted instructions.",
+    "No new ISA or native coverage was introduced by this experiment.",
+    "Production runtime matches the previously boot/application-validated CL-shift implementation byte-for-byte."
+  ]
+}

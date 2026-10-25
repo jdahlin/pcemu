@@ -1814,3 +1814,31 @@ clipboard/Notepad/restart checks pass. Successful private disks are removed
 and the reusable checkpoint hashes remain unchanged.
 
 [Final/prototype timings, hashes, counters and system checks](measurements/excel-cl-shift-2026-10-25.json).
+
+## Rejected SHRD dead-flag experiment (25 October)
+
+An experiment propagated SHRD flag liveness through runtime-zero counts and
+removed its flag calculation when a later instruction overwrote every output.
+Known nonzero immediate counts killed incoming arithmetic-flag dependencies;
+runtime counts retained them. The flag-free path computed only the shifted
+register value, including masked zeros and 16-bit oversized counts.
+
+Six alternating pairs, balanced across both execution orders, do not establish
+a useful Excel gain. One pair favors the candidate by 14.9%; the other five
+favor the baseline. Combined median response ratio is **0.9953**, execution-
+batch wall-time ratio **0.9953**. The second three-pair confirmation has
+response ratios 0.9927 to 0.9979. Every sample remains included. Timing
+variation and one slower initial baseline are visible; the cause is unknown.
+Fewer emitted instructions alone are insufficient evidence for retaining it.
+
+Production emitter and liveness sources are restored byte-for-byte to the
+verified CL-shift baseline. New tests remain: all SHRD aliases, count bytes,
+code/operand sizes and live/overwritten flags, plus exact flags/GPR/IP/count
+state at a faulting FS load before a later overwrite. The restored flag suite
+passes **91,745,234** checks and the core suite 352,644. Both candidate and
+baseline completed all twelve exact-pixel application runs; successful private
+disks were removed and checkpoint hashes remain unchanged. No runtime speedup
+or new native coverage is claimed.
+
+[All samples, source hashes and decision](measurements/rejected-shrd-dead-flags-2026-10-25.json),
+[rejected patch](measurements/rejected-shrd-dead-flags-2026-10-25.patch).
