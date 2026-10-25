@@ -181,3 +181,14 @@ remaining cleanup requirement. The generated key is logged for recovery.
 The controller passes 22 diskless checks under ASan/UBSan (including collision,
 denied write, wrong value and lost SET response), and native CLI checks reject
 non-VMBus or conflicting probe modes. Actual Windows verification is pending.
+
+The first native round-trip attempt timed out on raw GET preflight. It sent no
+SET (zero mutation acknowledgments), reported no cleanup requirement and shut
+down with exit zero. This does not establish raw GET compatibility with the
+installed Windows service. The probe now follows the Microsoft host's read
+pattern: enumerate External by index, with a 128-entry cap, for preflight,
+readback and removal checks. It aborts before SET if absence cannot be established.
+After SET, a failed/capped readback still proceeds to explicit DELETE; uncertain
+channel operations are not retried. The 22 controller sanitizer checks pass
+with enumeration-based lookup. Actual Windows round-trip verification remains
+pending the corrected run.

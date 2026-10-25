@@ -5,7 +5,7 @@ using namespace pc;using C=ArmHyperVKvpCodec;
 struct Mock {
  bool exists=false,wrong=false,deny=false,blocked=false,loseSet=false;unsigned sets=0,deletes=0,gets=0;
  std::optional<ArmHyperVKvp::Result> result;
- bool getGuestKvp(C::Pool p,const std::u16string &key){if(blocked)return false;++gets;std::optional<C::Record> record;if(exists){record=C::Record{};record->key=key;record->value.text=wrong?u"wrong":u"PCEmu disposable KVP roundtrip";}result=ArmHyperVKvp::Result{p,0,exists?0u:0x80070002u,record,C::Operation::Get};return true;}
+ bool enumerateGuestKvp(C::Pool p,uint32_t index){if(blocked)return false;++gets;std::optional<C::Record> record;if(exists && index==0){record=C::Record{};record->key=u"Disposable";record->value.text=wrong?u"wrong":u"PCEmu disposable KVP roundtrip";}result=ArmHyperVKvp::Result{p,index,record?0u:0x80070103u,record,C::Operation::Enumerate};return true;}
  bool setGuestKvp(C::Pool p,const std::u16string&,const C::Value&){if(blocked)return false;++sets;if(!deny)exists=true;if(!loseSet)result=ArmHyperVKvp::Result{p,0,deny?0x80070005u:0u,{},C::Operation::Set};return true;}
  bool deleteGuestKvp(C::Pool p,const std::u16string&){if(blocked)return false;++deletes;exists=false;result=ArmHyperVKvp::Result{p,0,0,{},C::Operation::Delete};return true;}
  auto takeGuestKvpResult(){return std::exchange(result,{});}
