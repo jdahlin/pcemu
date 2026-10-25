@@ -33,6 +33,8 @@ int main() {
     check(offer.channel==1 && offer.connection==16 && offer.flags==0x11 && offer.userData[0]==4);
     const std::array<uint8_t,16> guid={0x39,0x4f,0x16,0x57,0x15,0x91,0x78,0x4e,0xab,0x55,0x38,0x2f,0x3b,0xd5,0x42,0x2d};
     check(offer.interfaceId==guid);
+    const std::array<uint8_t,16> instance={0x91,0x9e,0x14,0xfd,0xe0,0x82,0x7d,0x4a,0xaf,0xa6,0x2a,0x41,0x66,0xcb,0xd7,0xc0};
+    check(offer.instanceId==instance && offer.instanceId!=offer.interfaceId);
     h.opened(100); auto request=h.packet(100);
     check(request.size()==72 && get(request,0,2)==6 && get(request,2,2)==2 && get(request,4,2)==9);
     check(get(request,16)==1 && get(request,20)==44 && get(request,34,2)==24 && request[41]==3);

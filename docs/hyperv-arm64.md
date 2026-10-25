@@ -1814,3 +1814,24 @@ its own diagnostic provider, rather than another privilege check. A mocked
 regression covers an accepted Start followed by Stopped/timeout and ensures this
 is not reported as successful activation. The original basic VM was restored,
 and temporary secret-bearing staging media removed after this run.
+
+### Heartbeat instance GUID correction
+
+Analysis of the installed `icsvc.dll` (SHA-256
+`840d2e110844a68bbc62508f2a82e512b07997920f410e4fba344cd6ab35ec81`)
+and its matching Microsoft public PDB identifies a concrete offer mismatch.
+`ICFeatureTransportGen` at RVA 0x28d78 looks up the interface and instance GUIDs
+in separate tables. Heartbeat index 1 selects interface
+`57164f39-9115-4e78-ab55-382f3bd5422d` and instance
+`fd149e91-82e0-4a7d-afa6-2a4166cbd7c0`. The client transport stores the second
+GUID at object offset 0x78; `ClientNotification` at RVA 0x2a860 compares it with
+the notification GUID before calling VmbusPipeClientOpenChannel. The previous
+host offer reused the interface GUID as its instance, so it could enumerate a
+device interface yet fail this client selection.
+
+The host now offers the expected distinct instance GUID. The guest diagnostic's
+exact device-instance query is updated accordingly. A regression checks both
+GUIDs and their inequality; all 189 heartbeat checks pass. This is an observed
+Windows client requirement, not a claim that all VMBus devices require fixed
+instance IDs. Runtime heartbeat verification with the corrected offer is the
+next gate; the earlier failed service runs all used the old instance GUID.

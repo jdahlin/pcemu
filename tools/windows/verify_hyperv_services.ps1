@@ -91,7 +91,7 @@ try {
 } catch { $report.events.error = $_.Exception.Message }
 $report.trigger = Read-NativeCommand 'sc.exe' @('qtriggerinfo', 'vmicheartbeat')
 # The device instance uses the interface GUID and our deterministic instance GUID.
-$instance = 'VMBUS\{57164f39-9115-4e78-ab55-382f3bd5422d}\{57164f39-9115-4e78-ab55-382f3bd5422d}'
+$instance = 'VMBUS\{57164f39-9115-4e78-ab55-382f3bd5422d}\{fd149e91-82e0-4a7d-afa6-2a4166cbd7c0}'
 $report.device = Read-NativeCommand 'pnputil.exe' @('/enum-devices', '/instanceid', $instance, '/properties', '/services', '/interfaces')
 $report.channelUseVerified = $false # Must be correlated with host GPADL/ring/heartbeat counters.
 $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputPath -Encoding UTF8
