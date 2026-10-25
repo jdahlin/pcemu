@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <span>
+#include <string>
 #include <utility>
 namespace pc {
 // VTL0 ARM SynIC. All calls require stopped vCPUs, including RAM updates.
@@ -17,6 +18,8 @@ class ArmSynic {
     // and need not cause a host exit. Occupied slots are never overwritten.
     uint16_t service();
     bool needsService() const;
+    // Bounded metadata only; never exposes arbitrary message payloads.
+    std::string report() const;
     uint16_t read(uint32_t name, unsigned vp, uint64_t &value) const;
     uint16_t write(uint32_t name, unsigned vp, uint64_t value);
     uint16_t signalEvent(unsigned vp, unsigned sint, unsigned flag, bool &newlySignaled);

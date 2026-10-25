@@ -1,6 +1,7 @@
 #include "arm_synic.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <sstream>
 namespace pc {
 namespace {
 constexpr uint16_t invalidParameter = 5, invalidVp = 14, insufficientBuffers = 0x13,
@@ -157,4 +158,44 @@ uint16_t ArmSynic::postMessage(unsigned vp, unsigned sint, uint32_t type,
     if (status) queue.pop_back(); // Failed posting is safe for a caller to retry.
     return status;
 }
+std::string ArmSynic::report() const {
+    std::ostringstream out;
+    out << "{\"vps\":[";
+    for (unsigned vp = 0; vp < cpus; ++vp) {
+        if (vp) out << ',';
+        const auto &v = state[vp];
+        const auto memory = page(v.messages);
+        out << "{\"index\":" << vp << ",\"control\":" << v.control
+            << ",\"eventPage\":" << v.events << ",\"messagePage\":" << v.messages
+            << ",\"sints\":[";
+        for (unsigned sint = 0; sint < 16; ++sint) {
+            if (sint) out << ',';
+            out << "{\"index\":" << sint << ",\"config\":" << v.sint[sint]
+                << ",\"queued\":" << v.queue[sint].size();
+            if (!memory.empty()) {
+                const auto slot = memory.subspan(sint * 256, 256);
+                auto u32 = [&](size_t at) {
+                    uint32_t value = 0;
+                    for (unsigned i = 0; i < 4; ++i) value |= uint32_t(slot[at + i]) << (8 * i);
+                    return value;
+                };
+                out << ",\"slotType\":" << u32(0) << ",\"payloadBytes\":" << unsigned(slot[4])
+                    << ",\"messageFlags\":" << unsigned(slot[5]);
+                // Decode only our version response metadata, bounded by the
+                // declared payload. Stale bytes in a guest-cleared slot are ignored.
+                if (u32(0) == 1 && slot[4] >= 16 && slot[4] <= 240 && u32(16) == 15) {
+                    out << ",\"vmbusVersionReply\":{\"supported\":" << unsigned(slot[24])
+                        << ",\"connectionState\":" << unsigned(slot[25])
+                        << ",\"connectionId\":" << u32(28);
+                    if (slot[4] >= 20) out << ",\"features\":" << u32(32);
+                    out << '}';
+                }
+            }
+            out << '}';
+        }
+        out << "]}";
+    }
+    return out.str() + "]}";
+}
+
 }

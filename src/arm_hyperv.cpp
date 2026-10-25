@@ -571,6 +571,7 @@ std::string ArmHyperV::report() const {
           << ",\"syntheticVector\":" << syntheticVectors[vp] << '}';
     }
     s << ']';
+    if (synicAdvertised) s << ",\"synic\":" << synic.report();
     if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
     return s.str() + "}\n";
 }

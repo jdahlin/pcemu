@@ -1196,20 +1196,12 @@ and all 13 Windows-auditor tests pass.
 
 ### Current local media availability
 
-The installed Windows disk, its sparse RAW parent and all dependent Hyper-V
-COW branches were subsequently removed by the separate, explicitly requested
-RAW/dependent disk cleanup described in [storage.md](storage.md). The running
-contact experiment exited before those files disappeared. No completed QCOW2
-replacement exists. The SINT2 routing fix is committed and model/native-tested,
-but its attempted Windows launch stopped at the missing base-disk check.
-The earlier screenshots and counter snapshots remain historical evidence;
-none imply that a Windows installation is still available to boot locally.
-A new large Windows fixture is awaiting the user's preference. Native validation
-continues using RAM-only guests, including ordinary-connection SINT2/PPI31
-matching the observed Windows configuration and multiclient SINT2/SGI0.
-
-The final RAM-only native run passes all 281 checks with ordinary SINT2/PPI31
-and multiclient SINT2/SGI0 routing. No RAW disk fixture was recreated.
+Windows 11 ARM64 has been recreated on a local standalone QCOW2 base and a
+native writable overlay, following the user's explicit request. Installed boot,
+local account logon and VirtIO storage/network/RNG I/O are verified; see
+[the restoration record](windows-arm64-qcow2.md). Historical RAW/COW experiment
+branches remain removed. The new VMBus experiment uses a private filesystem
+clone of the stopped, verified writable overlay.
 
 ### GPADL assembly and guest-memory mapping
 
@@ -1245,3 +1237,14 @@ devices. No Windows installation or RAW disk fixture was recreated for this work
 
 GPADL foundation validation: all 1,581 checks pass in optimized and
 AddressSanitizer/UndefinedBehaviorSanitizer builds.
+
+### SynIC delivery diagnostics
+
+SynIC-enabled reports now include bounded per-VP snapshots of control/page
+registers, all 16 SINT configurations, queue lengths and visible slot headers.
+An occupied VMBus VERSION_RESPONSE slot additionally decodes only its support,
+connection-state, connection-ID and optional feature fields. Reporting never
+acknowledges messages, drains queues or exposes arbitrary payloads. Unmapped,
+guest-cleared, truncated and oversized slots do not expose response fields.
+This separates accepted host queueing from guest consumption when diagnosing
+VMBus startup. All VPs must be stopped when collecting a snapshot.

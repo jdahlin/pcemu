@@ -515,6 +515,36 @@ int main() {
     std::vector<uint8_t> zeroBaseRam(4096, 0xaa);
     ArmSynic zeroBaseSynic(zeroBaseRam, 0, 1);
     check(zeroBaseSynic.write(0xa0012, 0, 1) == 0 && zeroBaseRam[0] == 0);
+    {
+        std::vector<uint8_t> memory(8192);
+        ArmSynic diagnostic(memory, base, 2);
+        check(diagnostic.report().find("\"slotType\"") == std::string::npos);
+        check(diagnostic.write(0xa0010, 0, 1) == 0);
+        check(diagnostic.write(0xa0013, 0, base + 1) == 0);
+        check(diagnostic.write(0xa0002, 0, 0x10008) == 0);
+        std::array<uint8_t, 20> versionReply{};
+        versionReply[0] = 15; versionReply[8] = 1; versionReply[12] = 7;
+        const auto before = memory;
+        check(diagnostic.postMessage(0, 2, 1, 0, versionReply) == 0);
+        const auto posted = memory;
+        const auto snapshot = diagnostic.report();
+        check(snapshot.find("\"config\":65544,\"queued\":0,\"slotType\":1,\"payloadBytes\":20") != std::string::npos);
+        check(snapshot.find("\"vmbusVersionReply\":{\"supported\":1,\"connectionState\":0,\"connectionId\":7,\"features\":0}") != std::string::npos);
+        check(memory == posted && memory != before); // Reporting does not acknowledge a slot.
+        check(diagnostic.postMessage(0, 2, 1, 0, versionReply) == 0);
+        check(diagnostic.report().find("\"config\":65544,\"queued\":1") != std::string::npos);
+        memory[512] = 0; // Guest consumes the visible message; stale payload is private.
+        check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
+        check(diagnostic.service() == 0);
+        memory[516] = 15; // Truncated payload cannot expose response fields.
+        check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
+        memory[516] = 241;
+        check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
+        memory[516] = 20; memory[512] = 2; // Arbitrary payloads are never decoded.
+        check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
+        check(diagnostic.write(0xa0013, 0, 0) == 0);
+        check(diagnostic.report().find("\"slotType\"") == std::string::npos);
+    }
     std::vector<uint8_t> synicRam(5 * 4096, 0xaa);
     ArmSynic synic(synicRam, base, 2);
     uint64_t value = 99;
