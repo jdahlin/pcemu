@@ -44,7 +44,12 @@ The first native correction reached the lock screen with 14 xHCI commands and
 66 transfer TRBs, but user testing still found no input. This exposed the
 Configure Endpoint bug above. Those counters were not proof of functional HID
 input. Previously descriptor enumeration retried through 48 commands and 120
-transfer TRBs. Native acceptance for the complete correction is recorded below.
+transfer TRBs. Native acceptance for the complete correction delivered Enter make/break and
+mouse motion as three reports, with both devices at configuration 1 and no
+controller error (12 commands, 98 transfer TRBs). Windows re-armed both IN
+endpoints afterward. The VM then powered off cleanly through the guest shutdown
+service. Evidence is under `build/windows11-usb-inline-fixed/`. Interactive SDL
+acceptance is a separate user check.
 
 ## Startup profiling
 
