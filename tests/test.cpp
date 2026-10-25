@@ -21,6 +21,25 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
 }
 int main() {
     try {
+        // TLB metadata must not leak into high physical-frame bits, even
+        // for unknown permissions or a dirty-bit transition on a cached hit.
+        {
+            CPU c(65536);
+            c.cr[0] = 0x80000011; c.cr[3] = c.tlbCR3 = 0;
+            for (auto base : {0u, 0x1000u, 0xa0000u, 0x100000u, 0x12345000u, 0xfffff000u})
+            for (unsigned permissions = 0; permissions < 256; ++permissions)
+            for (bool dirty : {false, true}) {
+                auto &entry = c.tlb[9];
+                entry = {9, c.tlbEpoch, base, 0x100, uint8_t(permissions), dirty};
+                check(entry.base == base && entry.permissions == permissions && entry.dirty == dirty,
+                      "TLB frame and metadata retain every bit");
+                check(c.physical(0x9abc) == (base | 0xabc),
+                      "TLB metadata cannot change a physical address");
+                entry.dirty = true;
+                check(entry.dirty && entry.base == base && entry.permissions == permissions,
+                      "dirty update preserves frame and permissions");
+            }
+        }
         // Translation hits and slow revalidation must agree on permissions,
         // A20, CR2, page-table writes and code generation side effects.
         for (bool a20 : {false, true})

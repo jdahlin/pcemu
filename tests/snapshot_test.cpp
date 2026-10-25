@@ -1,6 +1,7 @@
 #include "jit.hpp"
 #include "machine.hpp"
 #include "ps2_test_support.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
@@ -221,6 +222,11 @@ int main() {
         check(fs::file_size(root / "point/state.bin") < 100000,
               "zero RAM pages and zstd keep state compact");
         auto first = unpack(root / "point/state.bin");
+        std::array<uint8_t, 18> legacyTlb = {0x19,0,0,0, 0,0,0,0,
+                                           0,0x50,0,0, 0,0x1a,0,0, 6,1};
+        for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
+        check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
+              "TLB snapshot retains its legacy 18-byte record");
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
         ps2State(m).keyboardReplies.clear();
@@ -229,6 +235,9 @@ int main() {
               "CPU RAM and cache identity restore");
         check(m.disk->isOverlay() && fs::file_size(m.disk->path) < 1024,
               "restore allocates only an empty compressed delta");
+        check(m.cpu.tlb[17].base == 0x5000 && m.cpu.tlb[17].pteAddress == 0x1a00 &&
+                  m.cpu.tlb[17].permissions == 6 && m.cpu.tlb[17].dirty,
+              "legacy snapshot fields restore frame/permission/dirty state");
         m.saveSnapshot((root / "roundtrip").string());
         auto second = unpack(root / "roundtrip/state.bin");
         check(first.size() == second.size() &&

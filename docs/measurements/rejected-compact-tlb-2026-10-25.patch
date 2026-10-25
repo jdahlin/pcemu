@@ -1,0 +1,175 @@
+diff --git a/src/cpu.cpp b/src/cpu.cpp
+index 231d304..b41c26b 100644
+--- a/src/cpu.cpp
++++ b/src/cpu.cpp
+@@ -118,14 +118,14 @@ uint32_t CPU::physical(uint32_t a, bool wr) {
+             entry = {page,          tlbEpoch, pte & ~4095u, pteAddress, uint8_t(permissions),
+                      bool(pte & 64)};
+         }
+-        if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) && user())
++        if ((!(entry.permissions() & 4) || (wr && !(entry.permissions() & 2))) && user())
+             fault(true);
+-        if (wr && !entry.dirty) {
++        if (wr && !entry.dirty()) {
+             written(entry.pteAddress, 1);
+             mem[entry.pteAddress] |= 64;
+-            entry.dirty = true;
++            entry.setDirty();
+         }
+-        a = entry.base | (a & 4095);
++        a = entry.base() | (a & 4095);
+     }
+     if (!a20)
+         a &= ~(1u << 20);
+@@ -1060,9 +1060,9 @@ void CPU::stepImpl() {
+                         uint32_t page = dst >> 12;
+                         const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                         ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&
+-                                entry.tag == page && entry.dirty &&
+-                                (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);
+-                        physicalStart = entry.base | (dst & 4095);
++                                entry.tag == page && entry.dirty() &&
++                                (cpl() != 3 || systemAccess || (entry.permissions() & 6) == 6);
++                        physicalStart = entry.base() | (dst & 4095);
+                     }
+                     uint32_t bytes = elements * bw;
+                     ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&
+@@ -1105,11 +1105,11 @@ void CPU::stepImpl() {
+                             const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                             unsigned permissions = write ? 6 : 4;
+                             if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||
+-                                (write && !entry.dirty) ||
++                                (write && !entry.dirty()) ||
+                                 (cpl() == 3 && !systemAccess &&
+-                                 (entry.permissions & permissions) != permissions))
++                                 (entry.permissions() & permissions) != permissions))
+                                 return false;
+-                            physicalStart = entry.base | (linear & 4095);
++                            physicalStart = entry.base() | (linear & 4095);
+                         }
+                         if (uint64_t(physicalStart) + bytes > mem.size() ||
+                             (physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000))
+diff --git a/src/cpu.hpp b/src/cpu.hpp
+index ee79707..6f2e184 100644
+--- a/src/cpu.hpp
++++ b/src/cpu.hpp
+@@ -90,10 +90,18 @@ struct CPU {
+     void step();
+     std::string location() const;
+ 
+-    struct TLBEntry {
+-        uint32_t tag = 0, epoch = 0, base = 0, pteAddress = 0;
+-        uint8_t permissions = 0;
+-        bool dirty = false;
++    struct alignas(8) TLBEntry {
++        uint32_t tag = 0, epoch = 0, frameFlags = 0, pteAddress = 0;
++        TLBEntry() = default;
++        constexpr TLBEntry(uint32_t tag, uint32_t epoch, uint32_t base, uint32_t pte,
++                           uint8_t permissions, bool dirty)
++            : tag(tag), epoch(epoch),
++              frameFlags((base >> 12) | (uint32_t(permissions) << 20) | (uint32_t(dirty) << 28)),
++              pteAddress(pte) {}
++        constexpr uint32_t base() const { return frameFlags << 12; }
++        constexpr uint8_t permissions() const { return (frameFlags >> 20) & 255; }
++        constexpr bool dirty() const { return frameFlags & (1u << 28); }
++        void setDirty() { frameFlags |= 1u << 28; }
+     };
+     std::array<TLBEntry, 1024> tlb{};
+     uint32_t tlbEpoch = 1, tlbCR3 = 0xffffffffu;
+diff --git a/src/jit_arm64.cpp b/src/jit_arm64.cpp
+index e99825b..9fbdb98 100644
+--- a/src/jit_arm64.cpp
++++ b/src/jit_arm64.cpp
+@@ -524,12 +524,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     emit(0x530c7d2au); // lsr w10,w9,#12 (page tag)
+                     emit(0x4a4a294bu); // eor w11,w10,w10,lsr #10
+                     emit(0x1200256bu); // and w11,w11,#1023
+-                    emit(0x0b0b096bu); // add w11,w11,w11,lsl #2
+-                    static_assert(sizeof(CPU::TLBEntry) == 20);
+-                    static_assert(offsetof(CPU::TLBEntry, permissions) == 16);
+-                    static_assert(offsetof(CPU::TLBEntry, dirty) == 17);
++                    static_assert(sizeof(CPU::TLBEntry) == 16);
++                    static_assert(alignof(CPU::TLBEntry) == 8);
++                    static_assert(offsetof(CPU::TLBEntry, frameFlags) == 8);
+                     cpuAddress(12, offsetof(CPU, tlb));
+-                    emit(0x8b2b498cu); // add x12,x12,w11,uxtw #2
++                    emit(0x8b2b518cu); // add x12,x12,w11,uxtw #4
+                     // The little-endian tag/epoch pair forms one 64-bit key.
+                     // A stale epoch or colliding page tag must both miss.
+                     static_assert(std::endian::native == std::endian::little);
+@@ -545,30 +544,28 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     emit(0xaa00814eu | (epoch << 16)); // orr x14,x10,xEpoch,lsl #32
+                     emit(0xeb0e01bfu); // cmp x13,x14
+                     guard(0x54000001u); // b.ne slow
++                    load(13, 12, offsetof(CPU::TLBEntry, frameFlags));
+                     bool user = block.vm || ((block.cr0 & 1) && (cpu.s[CS].selector & 3) == 3);
+                     if (user) {
+                         // User-accessible pages are also valid during a system
+                         // access override. Other pages conservatively take the
+                         // helper, which applies the override before faulting.
+                         if (i.memory.store) {
+-                            static_assert(offsetof(CPU::TLBEntry, dirty) ==
+-                                          offsetof(CPU::TLBEntry, permissions) + 1);
+-                            static_assert(sizeof(bool) == 1);
+-                            emit(0x7940218du); // ldrh w13,[x12,#permissions]: dirty:permissions
+-                            compareImmediate(13, 0x106); // writable + user + dirty
++                            // Bits 20..27 are permissions; bit 28 is dirty.
++                            // Unknown permission bits still force replay.
++                            emit(0x531471aeu); // ubfx w14,w13,#20,#9
++                            compareImmediate(14, 0x106); // writable + user + dirty
+                             guard(0x54000001u); // b.ne slow
+                         } else {
+-                            emit(0x3940418du); // ldrb w13,[x12,#permissions]
+-                            guard(0x3610000du); // tbz w13,#2,slow (not user-readable)
++                            guard(0x36b0000du); // tbz w13,#22,slow (not user-readable)
+                         }
+                     }
+                     if (i.memory.store && !user) {
+-                        emit(0x3940458du);  // ldrb w13,[x12,#dirty]
+-                        guard(0x3400000du); // cbz w13,slow
++                        guard(0x36e0000du); // tbz w13,#28,slow (not dirty)
+                     }
+-                    emit(0x12002d2eu); // and w14,w9,#4095
+-                    load(13, 12, offsetof(CPU::TLBEntry, base));
+-                    emit(0x2a0e01a9u); // orr w9,w13,w14
++                    // Insert the 20-bit physical frame over the linear page,
++                    // preserving its low 12 offset bits and dropping flags.
++                    emit(0x33144da9u); // bfi w9,w13,#12,#20
+                 }
+                 if (!block.a20) {
+                     imm(10, 1u << 20);
+diff --git a/src/snapshot.cpp b/src/snapshot.cpp
+index 46357df..aa40864 100644
+--- a/src/snapshot.cpp
++++ b/src/snapshot.cpp
+@@ -172,8 +172,19 @@ class SnapshotCodec {
+         a(c.cr, c.dr, c.gdtBase, c.idtBase, c.ldtBase, c.gdtLimit, c.idtLimit, c.ldtLimit,
+           c.ldtSelector, c.trSelector, c.trBase, c.trLimit, c.tr32, c.halted, c.a20, c.instructions,
+           c.interruptBlockedThrough, c.systemAccess);
+-        for (auto &e : c.tlb)
+-            a(e.tag, e.epoch, e.base, e.pteAddress, e.permissions, e.dirty);
++        for (auto &e : c.tlb) {
++            // Preserve the established on-disk fields independently of the
++            // compact host cache representation and its alignment/padding.
++            auto base = e.base();
++            auto permissions = e.permissions();
++            auto dirty = e.dirty();
++            a(e.tag, e.epoch, base, e.pteAddress, permissions, dirty);
++            if constexpr (A::loading) {
++                if (base & 4095)
++                    throw std::runtime_error("Invalid snapshot TLB page base");
++                e = CPU::TLBEntry(e.tag, e.epoch, base, e.pteAddress, permissions, dirty);
++            }
++        }
+         a(c.tlbEpoch, c.tlbCR3);
+         auto &r = c.repeatResume;
+         a(r.valid, r.selector, r.base, r.ip, r.initialFlags, r.lastFlags, r.ax, r.cx, r.si, r.di);
+@@ -266,7 +277,7 @@ class SnapshotCodec {
+             m.ps2.state_.mouse.reportedButtons > 7)
+             throw std::runtime_error("Invalid snapshot mouse state");
+         for (auto &e : m.cpu.tlb)
+-            if (e.permissions & ~6u)
++            if (e.permissions() & ~6u)
+                 throw std::runtime_error("Invalid snapshot TLB permissions");
+     }
+ 

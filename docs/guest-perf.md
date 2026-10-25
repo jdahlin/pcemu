@@ -438,3 +438,59 @@ checks do not repeat the OSR2 installer. Local runtime evidence is under
 `build/win95-smoke-l3it_1hz/`, `build/guest-perf-smoke-3is59fzo/`,
 `build/guest-profile-smoke-1m6278zl/` and
 `build/rep-fill-matrix-compare-check/`. Successful private disks are removed.
+
+
+## Compact TLB experiment and QEMU comparison (2026-10-25)
+
+The 16-byte packed TLB experiment is rejected. Three alternating pairs of
+CPU-only RAM sweeps improved native paged dense cases by 3.6–12.2% and paged
+page-stride cases by 2.8–14.1%, but most paged interpreter cases lost 1–3%.
+Three CoreMark pairs were essentially neutral (median throughput ratio 1.0018).
+Five bounded rtts startup pairs lost 1.23% median process throughput and 1.84%
+median internal execution throughput. These run 300 million guest instructions;
+they measure an early startup prefix, not time to an Explorer desktop.
+
+An initial sixth pair completed both guests, then failed an overly strict check
+on JIT implementation counters. Its process timings were not preserved. Both
+states are retained in the report: guest/device fields agree while compilation
+and native/helper counts differ. Including this pair, the six internal timing
+ratios have a median of 0.9678. The five fully recorded pairs also compare guest
+state while retaining, rather than requiring equality of, implementation counters.
+This is not bytewise RAM equivalence or proof of an identical execution path.
+
+The candidate passed 352,634 core checks, 255,535 JIT-read checks, 947,820 RMW
+checks, 237,430 flag checks, 2,957,189 byte checks, 17,861 indirect-jump checks,
+and 2,898 snapshot checks. Headless RAM JIT/interpreter/QEMU validation,
+CoreMark/microbenchmark validation, Win3.11 Notepad persistence, and both rtts
+and installed OSR2 application/restart/persistence checks passed. The installer
+was not rerun. This correctness evidence does not establish a performance win.
+
+Raw paired results, executable provenance and the initial diagnostic states are
+in `measurements/rejected-compact-tlb-2026-10-25.json`; the rejected production
+patch is alongside it. Production sources retain the original 20-byte TLB.
+The additional exhaustive frame/metadata checks and snapshot-format guards are
+retained for future memory-path changes.
+
+Inspection of official QEMU v10.2.2 sources suggests a more substantial change:
+
+* Its [fast TLB layout](https://github.com/qemu/qemu/blob/v10.2.2/include/exec/tlb-common.h)
+  has separate read/write/code comparator tags and a host-address addend.
+  On a 64-bit host this entry is 32 bytes: smaller entries alone do not explain
+  its performance.
+* [TLB filling](https://github.com/qemu/qemu/blob/v10.2.2/accel/tcg/cputlb.c#L997)
+  resolves mappings and encodes permissions, MMIO and dirty-tracking cases into
+  comparator/slow flags. Fast-path tables are separated by MMU context.
+* The [AArch64 fast path](https://github.com/qemu/qemu/blob/v10.2.2/tcg/aarch64/tcg-target.c.inc#L1640)
+  loads the comparator/addend, combines alignment/page-crossing requirements
+  with the tag comparison, branches to an out-of-line slow stub on failure,
+  then performs the host access using the addend and guest address.
+* [x86 translation](https://github.com/qemu/qemu/blob/v10.2.2/target/i386/tcg/translate.c#L627)
+  specializes segment address generation using translation-block state.
+
+Our current path repeats physical-address reconstruction, permission, A20,
+RAM-bounds, VGA and code-bitmap checks and embeds helper/replay code between
+hot accesses. A next experiment should independently implement prevalidated
+ordinary-RAM mappings and access-specific fast tags, preserving precise fallback
+and invalidating on mapping, privilege, A20, backing-memory and code-watch changes.
+Cold fallback placement can be changed separately to measure its contribution.
+This remains a software MMU; it does not require host virtual-memory remapping.
