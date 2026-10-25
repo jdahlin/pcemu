@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Stage ISO9660 8.3 files into an offline, disposable FAT16 raw disk copy.
+"""Stage ISO9660 8.3 files into an offline private FAT16 raw or compressed disk.
 
-Reads file payloads directly from the ISO without an extracted directory copy.
-Use disk-tool import-diff afterwards to retain only compressed changed blocks.
+Reads payloads directly from the ISO without an extracted directory copy.
+Compressed COW children are edited directly; their parents remain immutable.
 """
 import argparse
+from contextlib import ExitStack
+from cow_file import CowFile
 import struct
 from pathlib import Path
 from fat_stage import Writer
@@ -57,66 +59,70 @@ def main():
     p.add_argument('--directory', default='OFFICE97')
     p.add_argument('--verify-only', action='store_true')
     a = p.parse_args()
-    iso, disk = ISO(a.iso), Writer(a.disk)
-    target = Writer.entry(a.directory, 16, 0, 0)[:11].decode('ascii')
-    existing = next((e for e in disk.entries() if e[1] == target), None)
-    if existing and not a.verify_only:
-        p.error('Destination directory already exists')
-    if a.verify_only and not existing:
-        p.error('Destination directory missing')
-    files, total = 0, 0
-    verified = 0
+    with ExitStack() as resources:
+        iso = ISO(a.iso)
+        resources.callback(iso.f.close)
+        with a.disk.open('rb') as probe:
+            compressed = probe.read(8) == b'PCEMUCOW'
+        handle = resources.enter_context(CowFile(a.disk) if compressed else a.disk.open('r+b'))
+        disk = Writer(handle)
+        target = Writer.entry(a.directory, 16, 0, 0)[:11].decode('ascii')
+        existing = next((e for e in disk.entries() if e[1] == target), None)
+        if existing and not a.verify_only:
+            p.error('Destination directory already exists')
+        if a.verify_only and not existing:
+            p.error('Destination directory missing')
+        files, total = 0, 0
+        verified = 0
 
-    def directory(record, parent):
-        nonlocal files, total
-        children = list(iso.children(record))
-        size = ((len(children) + 3) * 32 + disk.cluster_bytes - 1) // disk.cluster_bytes * disk.cluster_bytes
-        cluster = disk.allocate(bytes(size))
-        entries = disk.entry('.          ', 16, cluster, 0) + disk.entry('..         ', 16, parent, 0)
-        for child in children:
-            if child[3]:
-                start = directory(child, cluster)
-            else:
-                start = disk.allocate(iso.read(child))
-                files += 1
-                total += child[2]
-            entries += disk.entry(child[0], 16 if child[3] else 32, start, 0 if child[3] else child[2])
-        entries = entries.ljust(size, b'\0')
-        for index, c in enumerate(disk.chain(cluster)):
-            disk.f.seek(disk.database + (c - 2) * disk.cluster_bytes)
-            disk.f.write(entries[index * disk.cluster_bytes:(index + 1) * disk.cluster_bytes])
-        return cluster
+        def directory(record, parent):
+            nonlocal files, total
+            children = list(iso.children(record))
+            size = ((len(children) + 3) * 32 + disk.cluster_bytes - 1) // disk.cluster_bytes * disk.cluster_bytes
+            cluster = disk.allocate(bytes(size))
+            entries = disk.entry('.          ', 16, cluster, 0) + disk.entry('..         ', 16, parent, 0)
+            for child in children:
+                if child[3]:
+                    start = directory(child, cluster)
+                else:
+                    start = disk.allocate(iso.read(child))
+                    files += 1
+                    total += child[2]
+                entries += disk.entry(child[0], 16 if child[3] else 32, start, 0 if child[3] else child[2])
+            entries = entries.ljust(size, b'\0')
+            for index, c in enumerate(disk.chain(cluster)):
+                disk.f.seek(disk.database + (c - 2) * disk.cluster_bytes)
+                disk.f.write(entries[index * disk.cluster_bytes:(index + 1) * disk.cluster_bytes])
+            return cluster
 
-    if a.verify_only:
-        start = existing[2]
-    else:
-        start = directory(iso.root, 0)
-        disk.root_entry(disk.entry(a.directory, 16, start, 0))
-        disk.commit()
-    # Read every staged directory and payload back through the FAT chains.
-    def verify(record, cluster):
-        nonlocal verified
-        data = disk.read_file(cluster, sum(1 for _ in disk.chain(cluster)) * disk.cluster_bytes)
-        found = {}
-        for at in range(0, len(data), 32):
-            entry = data[at:at + 32]
-            if not entry[0]:
-                break
-            found[entry[:11]] = entry
-        for child in iso.children(record):
-            key = bytes(disk.entry(child[0], 16 if child[3] else 32, 0, 0)[:11])
-            entry = found[key]
-            c = struct.unpack_from('<H', entry, 26)[0]
-            if child[3]:
-                verify(child, c)
-            else:
-                if disk.read_file(c, child[2]) != iso.read(child):
-                    raise ValueError('Read-back differs: ' + child[0])
-                verified += 1
-    verify(iso.root, start)
-    disk.f.close()
-    iso.f.close()
-    print(f'Verified {verified} files in C:\\{a.directory}; staged {files} files, {total:,} bytes')
+        if a.verify_only:
+            start = existing[2]
+        else:
+            start = directory(iso.root, 0)
+            disk.root_entry(disk.entry(a.directory, 16, start, 0))
+            disk.commit()
+        # Read every staged directory and payload back through the FAT chains.
+        def verify(record, cluster):
+            nonlocal verified
+            data = disk.read_file(cluster, sum(1 for _ in disk.chain(cluster)) * disk.cluster_bytes)
+            found = {}
+            for at in range(0, len(data), 32):
+                entry = data[at:at + 32]
+                if not entry[0]:
+                    break
+                found[entry[:11]] = entry
+            for child in iso.children(record):
+                key = bytes(disk.entry(child[0], 16 if child[3] else 32, 0, 0)[:11])
+                entry = found[key]
+                c = struct.unpack_from('<H', entry, 26)[0]
+                if child[3]:
+                    verify(child, c)
+                else:
+                    if disk.read_file(c, child[2]) != iso.read(child):
+                        raise ValueError('Read-back differs: ' + child[0])
+                    verified += 1
+        verify(iso.root, start)
+        print(f'Verified {verified} files in C:\\{a.directory}; staged {files} files, {total:,} bytes')
 
 
 if __name__ == '__main__':

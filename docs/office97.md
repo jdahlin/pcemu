@@ -1,12 +1,14 @@
 # Office 97 on Windows 95
 
-Current local availability (2026-10-25): cleanup removed the installed Office
-checkpoints and the installer ISO. The retained `media/office97-base/disk.raw`
-is a pre-Office Win95 baseline; it boots Explorer but does not contain Word or
-Excel. The historical installation and measurements below do not establish
-that Office is currently runnable. The user requested disk-light testing, so
-current work uses RAM-only benchmarks and existing OS images rather than
-recreating the Office installation or large startup fixtures.
+Current local availability (2026-10-25): the English Professional SR-1 ISO was
+restored from WinWorld to `/Volumes/data/pcemu/media/office97/`. Its archive
+SHA-512 matched the published checksum; the extracted ISO has SHA-256
+`4e0fabcf43b4f2ac7d2e71a2b51b15226fb8e954a3fee2125e04756d2fef8ee4`.
+The media-directory ISO is a symlink to that external volume. Installed Office
+checkpoints remain absent; historical measurements below do not establish
+that Office is currently runnable. The retained `media/office97-base/disk.raw`
+is a pre-Office Win95 baseline. New large media/disk data belongs on the external
+volume.
 
 The supplied Office 97 Professional SR-1 media installs through Microsoft's
 normal Setup in the independent Windows 95 OSR2 installation. Word edits and
@@ -135,3 +137,14 @@ frontend and identifies decoder exceptions and repeated interrupt-priority
 scans. Removing those costs gives unprofiled alternating-pair SDL medians of
 2.524 → 2.209 s for Word and 1.210 → 1.023 s for Excel. Earlier tables above
 are retained as headless measurements of the preceding versions.
+
+
+## Direct compressed installer staging
+
+`tools/stage_iso.py ISO PRIVATE.pcd` detects PCEMUCOW disks and writes through
+`CowFile`, keeping the parent immutable. Create a new private child with
+`build/disk-tool overlay PRIVATE.pcd IMMUTABLE-PARENT` first. No raw staging
+copy or extracted ISO tree is required. `--verify-only` rereads the staged
+payloads against the ISO. Both forms must be used only with offline disks.
+`python3 tests/test_stage_iso.py` covers raw/COW payload verification, duplicate
+staging rejection and unchanged parent bytes using tiny synthetic media.
