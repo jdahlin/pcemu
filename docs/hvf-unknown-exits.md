@@ -107,3 +107,17 @@ this gate in `clock-adjustment/audit-clock3.json`; 22 auditor tests pass.
 ```sh
 python3 tools/verify_windows_hyperv.py build/windows11-hyperv/clock-adjustment/clock-success-hyperv3.json --baseline build/windows11-hyperv/off/hyperv.json --clock-report build/windows11-hyperv/clock-adjustment/guest-report3.json
 ```
+
+The clock-probe guest later powered off through Hyper-V and the supervisor
+recorded runner exit code zero. `clock-adjustment/audit-final3.json` passes
+both explicit clock and poweroff gates against the final counter snapshot.
+
+A fresh four-GiB Windows launch using the typed-counter build now passes
+`vmbusControlObserved` and `vmbusOffersConsumedObserved` with active integration
+channels. Its snapshot contains one contact reply, three offer replies, one
+all-offers-delivered reply, zero unload replies and six channel lifecycle
+replies: exactly 11 total publications. All three channels are open, heartbeat
+and timesync pass their gates, and failures/unsupported calls are zero.
+Evidence is `build/windows11-hyperv/typed-counters/{hyperv.json,audit.json,host.log,launch.json}`.
+This validates the new counters in actual Windows, without changing the
+separate GUI, performance, clock or power gates for this fresh boot.
