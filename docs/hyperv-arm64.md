@@ -1876,3 +1876,28 @@ so the decoder now accepts that known size for Copper while ignoring those
 unnegotiated fields and retaining legacy connection/SINT/event routing. A
 regression uses dirty extension bytes and rejects an incomplete 155-byte form.
 This compatibility does not advertise or implement interrupt redirection.
+
+### Verified Windows heartbeat over the channel rings
+
+With the distinct heartbeat instance GUID, fixed GPADL envelopes and Copper
+open-size handling, Windows now opens the channel and completes real integration
+service traffic. The final stopped snapshot is
+`build/windows11-hyperv/services/hyperv-open156.json`; its independent audit is
+`audit-open156.json`, with binary/source context in `launch.json`.
+
+The final snapshot records one open channel, one GPADL, framework and heartbeat
+version 3, 17 probes and 17 accepted responses, responsive=true, application
+state 3, no rejected responses or timeouts, and zero Hyper-V failures/channel
+faults. The audit confirms core usage, accepted SignalEvent calls, synthetic
+timer delivery and `heartbeatResponseObserved=true`. Thus the host has observed
+actual guest processing and correlated replies, not merely an offered device or
+a host-sent probe. No service-start override was needed in this final boot.
+
+The audit's earlier bootstrap-only VMBus/offer gates conservatively remain false
+once channel I/O is active: they lack typed lifecycle-reply accounting. The
+separate heartbeat gate explicitly requires channel opens, bidirectional
+packets, event signals and valid correlated service replies. Those gates were
+not relaxed for this result. GUI boot and performance benefit remain unverified.
+The test VM was stopped, its cloned writable disk removed, and the original
+basic-profile VM restored. Time synchronization, shutdown and other relevant
+integration services still require implementation and guest verification.
