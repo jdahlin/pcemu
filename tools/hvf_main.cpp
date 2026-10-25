@@ -481,7 +481,7 @@ void selfTest() {
     }
     for (bool multiclient : {false, true}) {
         // An actual guest submits fast SMCCC SignalEvent and memory legacy
-        // PostMessage. Both host endpoints route to its SynIC SGI 0; guest
+        // PostMessage. Both host endpoints route to SynIC SGI0 or Windows-style PPI31; guest
         // IAR/EOI and the shared event/message pages must show real effects.
         HvfMachine vm(2 * 1024 * 1024, true);
         pc::ArmHyperV hyperv(true, vm.ram(), HvfMachine::ramBase, 1);
@@ -494,7 +494,7 @@ void selfTest() {
         require(synic.write(0xa0010, 0, 1) == 0 &&
                 synic.write(0xa0012, 0, HvfMachine::ramBase + 0x19001) == 0 &&
                 synic.write(0xa0013, 0, HvfMachine::ramBase + 0x1a001) == 0 &&
-                synic.write(0xa0002, 0, 0) == 0, "Connection fixture SynIC setup failed");
+                synic.write(0xa0002, 0, multiclient ? 0 : 31) == 0, "Connection fixture SynIC setup failed");
         hyperv.setPrivateInterruptSender([&](uint64_t targets, unsigned vector) {
             vm.sendPrivateInterrupt(targets, vector); return true;
         });
@@ -514,9 +514,9 @@ void selfTest() {
             0xb9010022, 0xd2a10003, 0x52800262, 0xb9000062, 0xd2800022, 0xd518cca2,
             0xd5033fdf, 0xd2801fe2, 0xd5184602, 0xd2800022, 0xd518cce2, 0xd5033fdf,
             0xd2800020, 0xf2a8c000, 0xd2800ba1, 0xf2a00021, 0xd2800542, 0xf2c00062,
-            0x92800003, 0xd4000002, 0xb5000260, 0xd538cc04, 0xf100009f, 0x54000201,
+            0x92800003, 0xd4000002, 0xb5000260, 0xd538cc04, multiclient ? 0xf100009fu : 0xf1007c9fu, 0x54000201,
             0xd518cc24, 0xd5033fdf, 0xd2800b80, 0xd2900001, 0xf2a80021, 0x92800002,
-            0xd4000022, 0xb5000100, 0xd538cc04, 0xf100009f, 0x540000a1, 0xd518cc24,
+            0xd4000022, 0xb5000100, 0xd538cc04, multiclient ? 0xf100009fu : 0xf1007c9fu, 0x540000a1, 0xd518cc24,
             0xd5033fdf, 0xd4000aa2, 0x14000000, 0xd4000cc2, 0x14000000
         });
         bool finished = false;
@@ -532,7 +532,7 @@ void selfTest() {
                 hyperv.service();
                 for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
             } else {
-                require(immediate == 0x55 && vm.reg(4) == 0, "Native connection guest did not acknowledge both SGIs");
+                require(immediate == 0x55 && vm.reg(4) == (multiclient ? 0 : 31), "Native connection guest did not acknowledge both private interrupts");
                 finished = true;
             }
         }

@@ -294,8 +294,8 @@ The following is a work inventory, not a completion claim:
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Direct-timer feature advertisement, complete ARM semantics and Windows consumption remain pending. ARM Generic Timer already runs natively. |
-| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Opt-in runtime/ACPI attachment is implemented and native/EFI-tested. Windows enumeration, GPADL and service channels remain pending. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Windows SynIC page/control/SINT configuration is observed. Direct-timer feature advertisement, complete ARM semantics and Windows reply/timer consumption remain pending. ARM Generic Timer already runs natively. |
+| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Opt-in runtime/ACPI attachment is implemented and native/EFI-tested. Windows ACPI binding and a Copper contact are observed; reply consumption, GPADL, rings and service channels remain pending. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
 The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
@@ -1193,3 +1193,20 @@ implied by this routing correction.
 
 Routing validation: 2,119 portable Hyper-V checks, 281 native HVF checks,
 and all 13 Windows-auditor tests pass.
+
+### Current local media availability
+
+The installed Windows disk, its sparse RAW parent and all dependent Hyper-V
+COW branches were subsequently removed by the separate, explicitly requested
+RAW/dependent disk cleanup described in [storage.md](storage.md). The running
+contact experiment exited before those files disappeared. No completed QCOW2
+replacement exists. The SINT2 routing fix is committed and model/native-tested,
+but its attempted Windows launch stopped at the missing base-disk check.
+The earlier screenshots and counter snapshots remain historical evidence;
+none imply that a Windows installation is still available to boot locally.
+A new large Windows fixture is awaiting the user's preference. Native validation
+continues using RAM-only guests, including ordinary-connection SINT2/PPI31
+matching the observed Windows configuration and multiclient SINT2/SGI0.
+
+The final RAM-only native run passes all 281 checks with ordinary SINT2/PPI31
+and multiclient SINT2/SGI0 routing. No RAW disk fixture was recreated.
