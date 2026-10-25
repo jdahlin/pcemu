@@ -1256,3 +1256,29 @@ an interrupt. Native fixtures verify two-VP pending SGIs, repeatable reads,
 subsequent guest acknowledgement and invalid CPU rejection. All 284 native
 checks pass with this diagnostic, alongside 2,136 model checks and all 13
 Windows-auditor tests.
+
+### Restored Windows: delivery stops at a disabled GIC source
+
+The new QCOW2 Windows run accepts the ordinary-connection Copper contact and
+queues its successful 20-byte response to VP0/SINT2. No hypercalls fail, but
+Windows does not request offers. The SynIC snapshot proves that the response
+remains visible and unconsumed (supported=1, connectionState=0, connectionId=1,
+features=0); this is stronger evidence than the host queue acceptance counter.
+Both VPs have SCONTROL enabled and distinct valid message/event pages. Windows
+programs SINT2 to unmasked INTID8. The native GIC snapshot on VP0 reports
+ISENABLER0=0x08000007, ISPENDR0=0x00000100 and ISACTIVER0=0: interrupt 8 is
+pending, disabled and inactive. VP1 has the same enable bitmap and no pending
+interrupt. Thus the host's pending-bit update occurs, but this run cannot prove
+guest receipt or a completed VMBus handshake. It does not justify overriding
+the guest's GIC masks or claiming synthetic channels work.
+
+The stopped-VP evidence is
+`build/windows11-hyperv/qcow2-vmbus/gic-disabled-evidence.json`; source hashes,
+PID/session and SHA256 are recorded in that directory's `launch.json`. The
+isolated build combines committed source d69f09a with diagnostics 84c5a86 and
+c88fed9. The Windows auditor deliberately remains unsuccessful: this boot did
+not repeat the required Hv#1 interface register read, and no offer request was
+observed. Earlier Windows core-use evidence remains historical, not a substitute
+for this run. Next investigate the Windows ARM64 SynIC/GIC source configuration
+and driver startup path; GPADL wire handling, rings, offered channels and
+integration services remain unfinished.
