@@ -1664,3 +1664,30 @@ keeps heartbeat response, GUI boot and performance benefit unverified. Consuming
 an offer is not proof of binding a service driver. The test VM was stopped, its
 cloned overlay removed, and the original basic-profile VM restarted on its
 original writable overlay. No installation or guest disk conversion was needed.
+
+### Heartbeat PnP and service investigation
+
+A second integrated Windows run reproduced the consumed offer and zero channel
+opens. After stopping that VM, its private overlay was inspected through
+`CowFile`/NTFS without expanding the QCOW2 base. Evidence is retained under
+`build/windows11-hyperv/pnp/`: final counters, offline SYSTEM hive and transaction
+logs, INF files, a bounded registry summary and file hashes. The cloned overlay
+was then removed and the original basic-profile VM restored.
+
+The persisted registry contains the exact heartbeat GUID under `Enum\VMBUS`,
+with a class-driver entry and the description from `wvmic_heartbeat.inf`.
+That ARM64 inbox INF matches our interface GUID and installs a null service;
+it sets channel access rights for the heartbeat service identity. The absence
+of an associated kernel service on this device therefore does not establish a
+missing driver. `Services\vmicheartbeat` exists with Start=3, a TriggerInfo
+child, and Parameters selecting `icsvc.dll` / `HeartbeatServiceMain` under the
+ICService svchost group.
+
+These are persisted installation/configuration observations, not evidence of a
+running service or an opened channel. The offline hive was read with hivex's
+unsafe flag; transaction logs are retained but were not replayed. The next
+runtime check must establish whether user mode and the service control manager
+reach heartbeat activation and whether the service opens the device interface.
+Do not infer that changing offer flags or installing another kernel driver is
+required solely from zero GPADLs. The captured setupapi log contains no useful
+new heartbeat error and does not resolve the runtime activation question.
