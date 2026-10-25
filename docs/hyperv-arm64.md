@@ -1639,5 +1639,28 @@ Validation of this integration:
 - Existing Hyper-V, GPADL, ring, channel and heartbeat regression suites pass.
 
 The Windows observations above belong to the earlier isolated prototype.
-A Windows run with this integrated implementation remains to be verified.
+The integrated implementation was subsequently verified with Windows as
+described below.
 Heartbeat channel opening, GUI boot and performance benefit remain unproven.
+
+### Windows verification of the integrated GIC view
+
+A separate APFS-cloned writable overlay was booted with the integrated source
+from commit `a594538`, 8 GiB RAM, two VPs and the VMBus profile. The relevant
+source files were compared byte-for-byte with that commit before launch.
+`build/windows11-hyperv/gic-integrated/launch.json` records the source comparison
+and executable SHA-256; `hyperv.json` and `audit.json` retain the final counters
+and independent usage audit against the existing off-mode baseline.
+
+Windows kernel 26100 successfully contacts VMBus version 6.0, requests offers,
+and consumes all three control replies including the heartbeat offer. The audit
+also observes synthetic timer delivery, IPIs, context synchronization, extended
+capability queries and reference-counter reads. There are zero Hyper-V failures,
+unsupported call attempts, channel faults or crash notifications. This reproduces
+the successful prototype observations in the integrated implementation.
+
+Heartbeat still has zero channel opens, GPADLs and responses. The audit therefore
+keeps heartbeat response, GUI boot and performance benefit unverified. Consuming
+an offer is not proof of binding a service driver. The test VM was stopped, its
+cloned overlay removed, and the original basic-profile VM restarted on its
+original writable overlay. No installation or guest disk conversion was needed.
