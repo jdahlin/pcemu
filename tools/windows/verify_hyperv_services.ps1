@@ -6,6 +6,7 @@ param(
     [switch]$StartHeartbeat
 )
 $ErrorActionPreference = 'Stop'
+$probeStarted = Get-Date
 if (Test-Path 'HKLM:\SYSTEM\CurrentControlSet\Control\MiniNT') {
     throw 'Run this probe in installed Windows, not WinPE.'
 }
@@ -73,6 +74,21 @@ $report.services = @(foreach ($name in @('vmicheartbeat', 'vmictimesync', 'vmics
 })
 $report.processes = @(Get-Process -Name services, wininit, winlogon, explorer -ErrorAction SilentlyContinue |
     Select-Object ProcessName, Id, SessionId)
+$report.controllerStatus = Read-NativeCommand 'sc.exe' @('queryex', 'vmicheartbeat')
+$report.serviceConfiguration = Read-NativeCommand 'sc.exe' @('qc', 'vmicheartbeat')
+$report.events = @{ records = @(); error = $null }
+try {
+    # Read live events before guest log buffers can be lost on host stop. Bound
+    # both the time interval and count; retain XML to avoid localized rendering.
+    $events = @(Get-WinEvent -FilterHashtable @{
+        LogName = 'System'; ProviderName = 'Service Control Manager'
+        StartTime = $probeStarted.AddMinutes(-1)
+    } -MaxEvents 64 -ErrorAction Stop)
+    $report.events.records = @($events | ForEach-Object {
+        $xml = $_.ToXml()
+        if ($xml -match 'vmicheartbeat|Hyper-V Heartbeat') { $xml }
+    })
+} catch { $report.events.error = $_.Exception.Message }
 $report.trigger = Read-NativeCommand 'sc.exe' @('qtriggerinfo', 'vmicheartbeat')
 # The device instance uses the interface GUID and our deterministic instance GUID.
 $instance = 'VMBUS\{57164f39-9115-4e78-ab55-382f3bd5422d}\{57164f39-9115-4e78-ab55-382f3bd5422d}'

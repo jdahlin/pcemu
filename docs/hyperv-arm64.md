@@ -1787,3 +1787,10 @@ nested native errors from the controller. Cross-platform mocks cover an already
 running service as well as successful start and wrapped native failure. The
 actual Windows result above precedes this direct-controller change; the new
 path still requires a guest run.
+
+The runtime probe also captures `sc queryex` and `sc qc`, plus up to 64 live
+System/Service Control Manager events since one minute before the probe began.
+Only heartbeat-matching event XML is retained. Query errors are saved separately
+and do not prevent the main service report from being written. This avoids
+relying solely on persisted EVTX buffers after stopping the VM. Mocked tests
+cover event retention and nonfatal event-log failure; guest validation is pending.
