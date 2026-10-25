@@ -1,0 +1,91 @@
+{
+  "scope": "Fresh Windows 95 OSR2 installation, QCOW2 consolidation and independent cold boot/application/restart validation",
+  "disk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+  "virtualBytes": 2147475456,
+  "fileBytes": 212402176,
+  "sha256": "d008061f676ac38d59ec1dbb14cdcc5f620ccf894b5e1def58003cbdba91dac3",
+  "setupRun": {
+    "pid": 29058,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/win95-fresh-recovered/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--no-network",
+      "--steps",
+      "0",
+      "--disk",
+      "/Volumes/data/pcemu/recovered/win95-fresh.pcd",
+      "--type",
+      "cd win95\nsetup /is\n",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-fresh-recovered/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-fresh-recovered/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-fresh-recovered/state.json"
+    ],
+    "emulatorSha256": "404c65184b15eaa1602f96ddc3387d22835aafb5dee7bb6e71f22c927bd65648"
+  },
+  "firstReboot": {
+    "scope": "Setup copy phase through first firmware reboot; not installation completion",
+    "pid": 29058,
+    "beforeResets": 0,
+    "afterResets": 1,
+    "instructions": 37524412143,
+    "finishAcknowledged": true
+  },
+  "desktop": {
+    "scope": "desktop bootstrap only",
+    "instructions": 40562115307,
+    "resets": 2
+  },
+  "validation": {
+    "pid": 30339,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-fp246h5o/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-fp246h5o/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-fp246h5o/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-fp246h5o/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "404c65184b15eaa1602f96ddc3387d22835aafb5dee7bb6e71f22c927bd65648",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "a5c1b0f3179a07a6cb583e13d57988c19ba67543",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 557366192,
+      "afterInstructions": 1589910941,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\PB504C3A.TXT",
+        "fatName": "PB504C3ATXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications B504C3A1.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "6d6c38ed40d3ce42c3f8b5d35db7b4ec22e97e7de688fb66938214f6670a35c7"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  }
+}

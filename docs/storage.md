@@ -178,3 +178,13 @@ passed, followed by a headless cold boot, Notepad save, DOS return and exact
 file readback (`build/win311-smoke-cemoypbn/result.json`). Successful temporary
 writable overlays were removed. Writable runs use small zstd PCEmu overlays
 above the immutable QCOW2 base.
+
+The fresh Windows 95 OSR2 installation also completed both Setup reboots and
+reached Explorer. `/Volumes/data/pcemu/recovered/win95.qcow2` is a standalone
+212,402,176-byte QCOW2 base (2,147,475,456 guest bytes), structurally checked
+and byte-compared against the installed compressed disk. An independent
+headless cold boot verified Calculator 2+2, clipboard transfer to Notepad,
+exact saved-file readback and a firmware restart to Explorer. See
+[recovery evidence](measurements/recovered-win95-qcow2-2026-10-25.json).
+`media/win95.raw` now points to this external QCOW2; writable validation uses
+small disposable compressed children.
