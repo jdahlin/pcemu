@@ -426,3 +426,42 @@ successful extended-capability queries. All 51773 hypercalls have zero failures.
 consumption of the fixed path; no Ex call or performance improvement is implied.
 Evidence: `build/windows11-hyperv/sync-context/core-evidence.json`, SHA-256
 `36da58a21e54b2e2644f6e5dca4bb01f7f9427fe93f69fe67ece76f1c7e9059b`.
+
+
+## Two-VP Windows and translation-maintenance backend
+
+Windows with two VPs and 8 GiB reached the lock screen and passed the core and
+SyncContext usage audit. The frozen snapshot records 53004 successful fixed
+SyncContext calls, with **50897 VP0 and 36109 VP1** completed barriers, 1048
+register calls and two successful extended queries. All 54054 calls have zero
+failures. Both VPs opted into TLBI control and registered their synthetic vector.
+The Ex path remains unobserved in Windows. This is compatibility and actual
+multi-VP use evidence, not a performance comparison against the one-VP off run.
+Evidence: `build/windows11-hyperv/sync-ex-smp/core-evidence.json`, SHA-256
+`77666f81f8b86eb39530d317c6ac72174a25144df6bec711f986dc71353dc5a5`.
+
+The HVF backend also provides `flushTranslationContext(mask)`. It uses the
+same saved-context/owner-thread/watchdog mechanism as SyncContext, but executes
+`DSB SY; TLBI VMALLE1IS; DSB SY; ISB` before its separate completion sentinel.
+This conservatively invalidates all stage-1 EL0/EL1 translations, including
+all ASIDs/global entries; the shareable TLBI can evict translations beyond
+the requested VP mask. Each selected online VP completes maintenance before
+return. `translationContextFlushes` counts completed executions separately
+from instruction-only barriers. No stage-2 flush is implied.
+
+A real two-VP test installs 4 KiB translation tables, enables the MMU and
+primes a globally mapped virtual alias. The host changes the alias PTE to a
+different physical page without any guest TLBI. After backend maintenance,
+both VPs must read the new physical-page value. Tests also check preserved
+TTBR/TCR state, target masks, distinct counters, an invalid mask and a corrupted
+completion sentinel with recovery. The native self-test now has 193 checks.
+
+This backend primitive is groundwork for the Hyper-V TLB hypercalls. Their
+input parsing, flags, repetition semantics and guest advertisement/consumption
+are still pending. The current Windows binary was launched before this backend
+change and does not claim Hyper-V TLB-flush use.
+
+Architecture reference: Arm's [TLB maintenance description](https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/Learn%20the%20Architecture/LearnTheArchitecture-MemoryManagement-101811_0100_00_en.pdf)
+and Microsoft's [address-space flush contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddressspace).
+The latter explicitly allows global entries to be invalidated even when only
+non-global mappings are requested.

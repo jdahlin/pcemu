@@ -236,6 +236,11 @@ std::string ArmVirtMachine::hypervReport() const {
         if (cpu) report += ',';
         report += std::to_string(vm.instructionContextBarriers(cpu));
     }
+    report += "],\"translationContextFlushes\":[";
+    for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
+        if (cpu) report += ',';
+        report += std::to_string(vm.translationContextFlushes(cpu));
+    }
     return report + "]}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {

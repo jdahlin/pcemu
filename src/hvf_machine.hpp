@@ -55,10 +55,15 @@ class HvfMachine {
     // a barrier based solely on stopping a host thread.
     void synchronizeInstructionContext(uint64_t cpuMask);
     uint64_t instructionContextBarriers(unsigned cpu) const;
+    // Conservative full EL1 translation invalidation, including all ASIDs and
+    // global mappings, on every selected online VP before returning.
+    void flushTranslationContext(uint64_t cpuMask);
+    uint64_t translationContextFlushes(unsigned cpu) const;
     uint64_t exits() const;
     static bool supported();
 
   private:
+    void runMaintenance(uint64_t cpuMask, bool flushTranslations);
     struct Impl;
     std::unique_ptr<Impl> impl;
 };

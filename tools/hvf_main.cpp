@@ -279,6 +279,75 @@ void selfTest() {
                 "Barrier did not recover after canceled maintenance");
         observe(2);
     }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true, {}, 2);
+        // Both VPs install shared 4 KiB translation tables (39-bit VA,
+        // TTBR0 only, MAIR normal WBWA), then load one alias per mailbox phase.
+        // There is no guest TLBI after changing the alias PTE.
+        code(vm, std::array<uint32_t, 24>{
+            0xd2a80401, 0x91402805, 0xd2800026, 0xd2801fe3, // alias, mailbox, phase, MAIR
+            0xd518a203, 0xd5182000, 0xd286a323, 0xf2a01003, // MAIR/TTBR0, TCR=0x803519
+            0xd5182043, 0xd5033f9f, 0xd5033fdf, 0xd5381003, // TCR, DSB/ISB, SCTLR
+            0xb2400063, 0xb27e0063, 0xb2740063, 0xd5181003, // enable MMU/data/icache
+            0xd5033fdf, 0xf94000a7, 0xeb0600ff, 0x54ffffc1, // ISB; wait for host phase
+            0xf9400024, 0x910004c6, 0xd4000002, 0x17fffffa}); // load alias; next phase; HVC; repeat
+        constexpr auto base = HvfMachine::ramBase;
+        auto write64 = [&](uint64_t at, uint64_t value) {
+            vm.writeMemory(at, {reinterpret_cast<const uint8_t *>(&value), sizeof(value)});
+        };
+        auto table = [&](uint64_t at, const std::array<uint64_t, 512> &entries) {
+            vm.writeMemory(at, {reinterpret_cast<const uint8_t *>(entries.data()), sizeof(entries)});
+        };
+        std::array<uint64_t, 512> entries{};
+        entries[1] = (base + 0x11000) | 3; table(base + 0x10000, entries); // L1
+        entries.fill(0);
+        entries[0] = (base + 0x12000) | 3; entries[1] = (base + 0x13000) | 3;
+        table(base + 0x11000, entries); // L2: identity and alias L3 tables
+        for (unsigned i = 0; i < 512; ++i) entries[i] = (base + i * 4096) | 0x703;
+        table(base + 0x12000, entries);
+        write64(base + 0x13000, (base + 0x18000) | 0x703); // VA 0x40200000 -> data A
+        write64(base + 0x18000, 11); write64(base + 0x19000, 22);
+        vm.setReg(0, base + 0x10000);
+        require(vm.startCPU(1, base, base + 0x10000) == 0, "TLB secondary start failed");
+        uint64_t phase = 0;
+        auto observe = [&](uint64_t expected) {
+            write64(base + 0x1a000, ++phase);
+            unsigned seen = 0;
+            for (unsigned attempt = 0; attempt < 16 && seen != 3; ++attempt) {
+                auto exit = vm.run(std::chrono::milliseconds(100));
+                if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+                require(exit.exceptionClass() == 0x16, "Unexpected translated guest exit");
+                require(vm.reg(4) == expected, "Guest observed a stale/wrong translation");
+                require(vm.systemReg(0xc080) & 1, "Translation test did not enable the MMU");
+                seen |= 1u << exit.cpu;
+            }
+            require(seen == 3, "Both VPs did not observe the translation");
+        };
+        observe(11);
+        auto tcr = vm.systemReg(0xc102), ttbr = vm.systemReg(0xc100);
+        write64(base + 0x13000, (base + 0x19000) | 0x703); // Change alias to data B.
+        vm.flushTranslationContext(3);
+        require(vm.translationContextFlushes(0) == 1 && vm.translationContextFlushes(1) == 1,
+                "Translation maintenance did not execute on both VPs");
+        require(vm.instructionContextBarriers(0) == 0 && vm.instructionContextBarriers(1) == 0,
+                "Translation flushes were mislabeled as SyncContext requests");
+        require(vm.systemReg(0xc102) == tcr && vm.systemReg(0xc100) == ttbr,
+                "Translation flush changed guest translation controls");
+        observe(22);
+        vm.flushTranslationContext(2);
+        require(vm.translationContextFlushes(0) == 1 && vm.translationContextFlushes(1) == 2,
+                "Translation maintenance ignored its target mask");
+        vm.flushTranslationContext(0);
+        rejects([&] { vm.flushTranslationContext(4); }, "Invalid translation flush mask accepted");
+        // A flush that does not reach its matching completion sentinel must fail.
+        uint32_t wrong = 0xd41fffa2, correct = 0xd41fffc2;
+        vm.writeMemory(0x3fff0110, {reinterpret_cast<const uint8_t *>(&wrong), 4});
+        rejects([&] { vm.flushTranslationContext(2); }, "Incomplete translation maintenance acknowledged");
+        require(vm.translationContextFlushes(1) == 2, "Failed flush incremented completion counter");
+        vm.writeMemory(0x3fff0110, {reinterpret_cast<const uint8_t *>(&correct), 4});
+        vm.flushTranslationContext(3);
+        observe(22);
+    }
     for (bool gic : {false, true}) {
         uint64_t sleep = 0;
         HvfMachine vm(2 * 1024 * 1024, gic, [&] { return sleep; });

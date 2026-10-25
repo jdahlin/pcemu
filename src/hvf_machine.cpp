@@ -48,7 +48,7 @@ struct HvfMachine::Impl {
     hv_vcpu_exit_t *exit = nullptr;
     uint64_t exitCount = 0;
     bool contextRomMapped = false;
-    std::array<uint64_t, 8> contextBarriers{};
+    std::array<uint64_t, 8> contextBarriers{}, translationFlushes{};
     std::mutex mutex;
     std::condition_variable changed;
     std::thread watchdog;
@@ -427,7 +427,9 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     return impl->pending.empty() ? primary : takePending();
 }
 
-void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
+void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) { runMaintenance(cpuMask, false); }
+void HvfMachine::flushTranslationContext(uint64_t cpuMask) { runMaintenance(cpuMask, true); }
+void HvfMachine::runMaintenance(uint64_t cpuMask, bool flushTranslations) {
     impl->requireOwner();
     if (cpuMask & ~((1ull << cpuCount()) - 1))
         throw std::runtime_error("Invalid instruction synchronization CPU mask");
@@ -448,9 +450,16 @@ void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
         words[0] = 0xd5033f9f; // DSB SY
         words[1] = 0xd5033fdf; // ISB
         words[2] = 0xd41fffc2; // HVC #0xfffe: completed barrier.
+        words[64] = 0xd5033f9f; // DSB SY
+        words[65] = 0xd508831f; // TLBI VMALLE1IS: all stage-1 EL0/EL1 translations.
+        words[66] = 0xd5033f9f; // DSB SY: wait for invalidation completion.
+        words[67] = 0xd5033fdf; // ISB
+        words[68] = 0xd41fffc2; // HVC #0xfffe: completed flush.
         mapROM(address, {reinterpret_cast<const uint8_t *>(words.data()), sizeof(words)});
         impl->contextRomMapped = true;
     }
+    const uint64_t entry = address + (flushTranslations ? 0x100 : 0);
+    const uint64_t completion = entry + (flushTranslations ? 20 : 12);
     auto execute = [&](hv_vcpu_t id, hv_vcpu_exit_t *exit) {
         constexpr std::array<hv_sys_reg_t, 7> names{
             HV_SYS_REG_SCTLR_EL1, HV_SYS_REG_VBAR_EL1, HV_SYS_REG_ELR_EL1,
@@ -477,7 +486,7 @@ void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
             check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_VBAR_EL1, address + 0x800), "set barrier vectors");
             check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_SCTLR_EL1, saved[0] & ~uint64_t(1)), "set barrier physical execution");
             check(hv_vcpu_set_reg(id, HV_REG_CPSR, 0x3c5), "set barrier EL1h and DAIF");
-            check(hv_vcpu_set_reg(id, HV_REG_PC, address), "set barrier entry");
+            check(hv_vcpu_set_reg(id, HV_REG_PC, entry), "set barrier entry");
             for (;;) {
                 check(hv_vcpu_run(id), "execute instruction barrier");
                 if (exit->reason == HV_EXIT_REASON_CANCELED) {
@@ -489,7 +498,7 @@ void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
                 check(hv_vcpu_get_reg(id, HV_REG_PC, &completedPC), "get barrier completion");
                 if (exit->reason != HV_EXIT_REASON_EXCEPTION ||
                     (exit->exception.syndrome >> 26) != 0x16 ||
-                    (exit->exception.syndrome & 0xffff) != 0xfffe || completedPC != address + 12)
+                    (exit->exception.syndrome & 0xffff) != 0xfffe || completedPC != completion)
                     throw std::runtime_error("Instruction synchronization did not complete");
                 break;
             }
@@ -516,7 +525,10 @@ void HvfMachine::synchronizeInstructionContext(uint64_t cpuMask) {
             if (cpu) executed = impl->secondary[cpu - 1]->withStoppedContext(execute);
             else execute(id, impl->exit);
             disarm();
-            if (executed) ++impl->contextBarriers[cpu];
+            if (executed) {
+                if (flushTranslations) ++impl->translationFlushes[cpu];
+                else ++impl->contextBarriers[cpu];
+            }
         } catch (...) { disarm(); throw; }
     }
 }
@@ -524,6 +536,12 @@ uint64_t HvfMachine::instructionContextBarriers(unsigned cpu) const {
     impl->requireOwner();
     if (cpu >= cpuCount()) throw std::runtime_error("Invalid instruction barrier CPU index");
     return impl->contextBarriers[cpu];
+}
+
+uint64_t HvfMachine::translationContextFlushes(unsigned cpu) const {
+    impl->requireOwner();
+    if (cpu >= cpuCount()) throw std::runtime_error("Invalid translation flush CPU index");
+    return impl->translationFlushes[cpu];
 }
 
 uint64_t HvfMachine::exits() const {
