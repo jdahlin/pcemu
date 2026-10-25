@@ -782,3 +782,16 @@ with identical guest results and 50M native instructions versus 40M previously.
 This is not a measured Office speedup. Evidence:
 `docs/measurements/native-byte-multiply-2026-10-25.json`.
 Fresh Windows Setup and representative Office host timing remain unverified.
+
+## Excel recalculation completion gate (25 October)
+
+A small external snapshot now separates loaded-application recalculation from
+startup. Changing D1 from 3 to 4 updates 4,096 dependent formulas and a SUM
+marker from 25,200,640 to 33,591,296. An independent snapshot restore reached
+the exact new-total pixels; a no-input negative stayed at the exact old pixels
+and failed as intended. Successful/negative temporary restore children were
+removed. Added a validated restore-only timeout option for network storage;
+it does not extend the task-completion timeout. One positive task observation
+is 12.58s end-to-end / 11.04s execution batches, not a comparative speedup.
+Evidence: `docs/measurements/excel-dependent-recalc-2026-10-25.json`.
+Paired JIT timings and fresh Windows installation remain outstanding.

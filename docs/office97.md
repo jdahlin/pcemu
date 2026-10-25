@@ -169,3 +169,29 @@ boundaries and validated completion, plus an idle baseline; do not infer a
 speedup from diagnostic counts alone. The saved workbook has an offline
 compound-file header/hash check; its full formula range has not been parsed
 from BIFF or reopened after this new save.
+
+## Reproducible dependent recalculation task
+
+`/Volumes/data/pcemu/snapshots/excel-dependent-recalc` retains a compressed
+13 MiB RAM snapshot plus a small disk child. Excel is already loaded, D1 is 3,
+B1:B4096 contain `=ROW()*$D$1+7`, and C1 contains `=SUM(B1:B4096)`. The task
+changes D1 to 4 and waits for C1's exact rendered total to change from
+25,200,640 to 33,591,296. This dependency requires recalculation, rather than
+merely detecting an already-visible Ready label.
+
+```sh
+python3 tools/bench_snapshot_task.py \
+  /Volumes/data/pcemu/snapshots/excel-dependent-recalc \
+  --task docs/measurements/excel-dependent-recalc-2026-10-25.task.json \
+  --restore-timeout 90 --repeat 3 --output build/excel-recalc-new
+```
+
+The restore timeout accommodates the SMB-mounted external volume separately
+from the task's 30-second completion timeout. One independent positive run
+passed at 12.58 seconds end-to-end task response (11.04 seconds execution
+batches). This is a single observation, not an optimization speedup. A no-input
+negative stayed at the exact old-total pixels and was rejected; its owned guest
+and restore child were cleaned up. Task timing includes control/capture/poll
+work and starts with a cold JIT cache. Boot, load and restore are outside it.
+Evidence: `measurements/excel-dependent-recalc-2026-10-25.json`. Paired baseline/
+candidate timings and steady-state cache measurements remain to be collected.

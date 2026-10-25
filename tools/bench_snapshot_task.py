@@ -18,6 +18,7 @@ from pathlib import Path
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('snapshot', type=Path)
 p.add_argument('--task', type=Path, required=True)
+p.add_argument('--restore-timeout', type=float, default=10, help='seconds to wait for initial snapshot pixels; separate from task completion timeout')
 p.add_argument('--repeat', type=int, default=5)
 p.add_argument('--output', type=Path, required=True)
 p.add_argument('--no-jit', action='store_true')
@@ -34,6 +35,8 @@ p.set_defaults(jit_follow_jumps=None)
 a = p.parse_args()
 if a.jit_follow_jumps and a.no_jit:
     p.error('--jit-follow-jumps requires JIT execution')
+if not 0 < a.restore_timeout <= 3600:
+    p.error('--restore-timeout must be positive and at most 3600 seconds')
 if not 1 <= a.repeat <= 100:
     p.error('--repeat must be 1..100')
 if not 0 <= a.sample_wait_ms <= 10000:
@@ -117,7 +120,7 @@ for index in range(a.repeat):
             time.sleep(.005)
         raise RuntimeError('Expected framebuffer state not observed before timeout')
     try:
-        initial = observe(before)
+        initial = observe(before, a.restore_timeout)
         restore_ms = (time.perf_counter()-started)*1000
         if host_input_suppressed and initial.get('hostInput') != 0:
             raise RuntimeError('Automated GUI did not disable physical host input')
@@ -141,7 +144,7 @@ for index in range(a.repeat):
             # Counter baseline excludes sampler attachment and idle guest work.
             if a.sample_wait_ms:
                 send('profile-wait '+str(a.sample_wait_ms))
-            initial = observe(before)
+            initial = observe(before, a.restore_timeout)
         if a.guest_profile:
             send('profile-start')
         began = time.perf_counter()
@@ -197,7 +200,7 @@ if hashlib.sha256(engine.read_bytes()).hexdigest() != engine_hash or \
 report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profiled':a.sample,
         'followJumps':follow_jumps_mode, 'traces':trace_mode,
         'emulatorSha256':engine_hash,
-        'taskSha256':task_hash,
+        'taskSha256':task_hash, 'restoreTimeoutSeconds':a.restore_timeout,
         'guestProfiled':a.guest_profile,
         'frontend':'SDL' if a.gui else 'headless',
         'hostInputSuppressed':bool(host_input_suppressed),
