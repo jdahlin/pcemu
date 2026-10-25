@@ -1,0 +1,333 @@
+{
+  "scope": "Three alternating matched-source pairs with process CPU accounting testing inline empty-request PIC polling in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.",
+  "pairs": [
+    {
+      "pair": 1,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 33588.9445,
+              "taskResponseMs": 9401.396790999996,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 8741.204292,
+                "systemMs": 524.63675,
+                "totalMs": 9265.841042
+              },
+              "instructions": 1403484272,
+              "nativeInstructions": 1371059988,
+              "compiledBlocks": 31121,
+              "executionWallMs": 8002.653223
+            }
+          ],
+          "medianRestoreReadyMs": 33588.9445,
+          "medianTaskResponseMs": 9401.396790999996,
+          "medianProcessCpuMs": 9265.841042
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/pic-idle/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 843.320416,
+              "taskResponseMs": 8240.329667,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 7642.4645,
+                "systemMs": 398.074875,
+                "totalMs": 8040.539375
+              },
+              "instructions": 1403374657,
+              "nativeInstructions": 1370968335,
+              "compiledBlocks": 31122,
+              "executionWallMs": 7166.941509
+            }
+          ],
+          "medianRestoreReadyMs": 843.320416,
+          "medianTaskResponseMs": 8240.329667,
+          "medianProcessCpuMs": 8040.539375
+        }
+      },
+      "responseRatio": 1.1409005672005714,
+      "executionWallRatio": 1.1166064649684306,
+      "processCpuRatio": 1.152390481515427
+    },
+    {
+      "pair": 2,
+      "runs": {
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/pic-idle/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 523.587417,
+              "taskResponseMs": 7859.580875000001,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 7459.067459,
+                "systemMs": 362.585625,
+                "totalMs": 7821.653084
+              },
+              "instructions": 1403685409,
+              "nativeInstructions": 1371202394,
+              "compiledBlocks": 31131,
+              "executionWallMs": 6895.83479
+            }
+          ],
+          "medianRestoreReadyMs": 523.587417,
+          "medianTaskResponseMs": 7859.580875000001,
+          "medianProcessCpuMs": 7821.653084
+        },
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 434.502084,
+              "taskResponseMs": 8334.621875,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 7836.396792,
+                "systemMs": 412.368125,
+                "totalMs": 8248.764917
+              },
+              "instructions": 1403426311,
+              "nativeInstructions": 1370976834,
+              "compiledBlocks": 31136,
+              "executionWallMs": 7246.16492
+            }
+          ],
+          "medianRestoreReadyMs": 434.502084,
+          "medianTaskResponseMs": 8334.621875,
+          "medianProcessCpuMs": 8248.764917
+        }
+      },
+      "responseRatio": 1.0604410092033056,
+      "executionWallRatio": 1.0508031501143316,
+      "processCpuRatio": 1.0546063381248272
+    },
+    {
+      "pair": 3,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 390.523666,
+              "taskResponseMs": 8595.733708,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 7921.399209,
+                "systemMs": 459.674666,
+                "totalMs": 8381.073875
+              },
+              "instructions": 1402830750,
+              "nativeInstructions": 1370531518,
+              "compiledBlocks": 31150,
+              "executionWallMs": 7342.708502
+            }
+          ],
+          "medianRestoreReadyMs": 390.523666,
+          "medianTaskResponseMs": 8595.733708,
+          "medianProcessCpuMs": 8381.073875
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+          "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/pic-idle/pcemu",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+          "samples": [
+            {
+              "restoreReadyMs": 554.69425,
+              "taskResponseMs": 8322.451084,
+              "processCpuTime": {
+                "status": "available",
+                "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                "userMs": 7821.255292,
+                "systemMs": 439.547458,
+                "totalMs": 8260.80275
+              },
+              "instructions": 1402830750,
+              "nativeInstructions": 1370531518,
+              "compiledBlocks": 31150,
+              "executionWallMs": 7216.305025
+            }
+          ],
+          "medianRestoreReadyMs": 554.69425,
+          "medianTaskResponseMs": 8322.451084,
+          "medianProcessCpuMs": 8260.80275
+        }
+      },
+      "responseRatio": 1.032836795463465,
+      "executionWallRatio": 1.0175163711292818,
+      "processCpuRatio": 1.0145592539417552
+    }
+  ],
+  "loadBefore": [
+    3.44482421875,
+    3.45361328125,
+    3.3349609375
+  ],
+  "startedUnix": 1792966109.005376,
+  "binaries": {
+    "baseline": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+    "candidate": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0"
+  },
+  "medianPairedProcessCpuRatio": 1.0546063381248272,
+  "loadAfter": [
+    4.21484375,
+    3.77783203125,
+    3.4736328125
+  ],
+  "finishedUnix": 1792966197.489991,
+  "medianPairedResponseRatio": 1.0604410092033056,
+  "medianPairedExecutionWallRatio": 1.0508031501143316,
+  "frozenSourceDifferences": [
+    "i8259_pair.hpp",
+    "i8259_pair.cpp"
+  ],
+  "interpretation": "Exploratory three-pair result; median baseline/candidate CPU ratio 1.0546 (~5.18% less CPU), individual reductions 13.22%, 5.18%, 1.44%. First baseline restore was cold (33.6 s vs <0.85 s subsequently); restores excluded from measured task interval, cache and host-load effects remain. No isolated guest-CPU or Rosetta parity claim.",
+  "validation": {
+    "picDifferentialChecks": 2172864,
+    "coreChecks": 354948,
+    "dos": "6.22 ready marker; private 82-byte child removed",
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Volumes/data/pcemu/recovered/win311.qcow2",
+      "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+      "gitCommit": "89cda467a78bf3dc20e8d7d5c7b9869ecb446aed",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 4767,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rtts": {
+      "sourceDisk": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+      "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 512943184,
+        "afterInstructions": 1660926283,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P5169FEF.TXT",
+          "fatName": "P5169FEFTXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 5169FEFF.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "616ace90204dc9e4b329b2c7c8997b369f3b69eeb5fd545eecd680a0fc9836cd"
+        }
+      },
+      "privateDiskRemoved": true
+    },
+    "osr2": {
+      "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+      "emulatorSha256": "e955080fb99c55fe051e9a91b2ee7a6a901dbfb18602786779ee92a04591acb0",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 508674361,
+        "afterInstructions": 1353637025,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P90AFE7D.TXT",
+          "fatName": "P90AFE7DTXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 90AFE7D0.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "b6a7719471147b507a4d7ace5f71508009aea5f2905f403d071565abe2a5c8d1"
+        }
+      },
+      "privateDiskRemoved": true
+    }
+  }
+}

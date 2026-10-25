@@ -982,3 +982,17 @@ pass. This is interrupted-run plus cold-boot evidence, not an uninterrupted
 single-process install or a timing benchmark. The broader performance goal stays
 active. See `fresh-win95-validation.md` and
 `measurements/fresh-win95-setup-fetch-tlb-2026-10-25.json`.
+
+
+## Empty-request PIC polling (25 October)
+
+An inline zero-IRR path preserves cascade and compatibility mirrors, leaving
+all pending requests on the original algorithm. Differential validation passes
+2,172,864 checks; the frozen candidate passes 354,948 core checks, DOS, Win3.11
+and both rtts/installed OSR2 application-save/restart/readback gates headlessly.
+Successful private compressed disks are removed. Three alternating Excel pairs
+observe 5.18% less process CPU at the median, with reductions ranging from
+1.44% to 13.22%; cold-cache and host-load effects limit the exact claim.
+This is a small validated improvement, not Rosetta parity. See
+`pic-idle-polling.md` and `measurements/pic-idle-excel-2026-10-25.json`.
+The broader performance goal remains active.
