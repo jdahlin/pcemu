@@ -49,7 +49,46 @@ def send(*commands, settle=.25):
 def normalize(text):
     return re.sub('[^a-z0-9]', '', text.lower())
 
-def observe(application=False):
+def read_blue_titles(pixels, width, height):
+    # Selected Win95 title text can be omitted/misread by both sparse and
+    # whole-window OCR. Find actual blue title bands, then read their bright
+    # glyphs against white. This is a second pixel reading, not a fuzzy token.
+    bands, current = [], []
+    for y in range(height):
+        count, left, right = 0, width, 0
+        for x in range(width):
+            at = (y*width+x)*3
+            if pixels[at] < 40 and pixels[at+1] < 40 and pixels[at+2] >= 100:
+                count += 1
+                left = min(left, x)
+                right = max(right, x)
+        if count >= 64:
+            current.append((y, left, right, count))
+        else:
+            if 8 <= len(current) <= 24:
+                bands.append(current)
+            current = []
+    if 8 <= len(current) <= 24:
+        bands.append(current)
+    text = ''
+    for index, band in enumerate(sorted(bands, key=lambda b: -sum(r[3] for r in b))[:2]):
+        x0, x1 = min(r[1] for r in band), max(r[2] for r in band)+1
+        y0, y1 = band[0][0], band[-1][0]+1
+        body = bytearray()
+        for y in range(y0, y1):
+            row = bytearray()
+            for x in range(x0, x1):
+                pixel = pixels[(y*width+x)*3:(y*width+x)*3+3]
+                row.extend((b'\0\0\0' if min(pixel)>230 else b'\xff\xff\xff')*4)
+            body.extend(row*4)
+        crop = a.output / f'ocr-title-{index}.ppm'
+        crop.write_bytes(f'P6\n{(x1-x0)*4} {(y1-y0)*4}\n255\n'.encode()+body)
+        result = subprocess.run(['tesseract', str(crop), 'stdout', '--psm', '7'],
+                                check=True, text=True, capture_output=True)
+        text += normalize(result.stdout)
+    return text
+
+def observe(application=False, expected=()):
     send(settle=0)
     state = json.loads(Path(str(a.memory) + '.json').read_text())
     result = subprocess.run(['tesseract', str(a.frame), 'stdout', '--psm', '11'],
@@ -76,6 +115,8 @@ def observe(application=False):
             result = subprocess.run(['tesseract', str(crop), 'stdout', '--psm', '6'],
                                     check=True, text=True, capture_output=True)
             text += normalize(result.stdout)
+    if application and any(normalize(token) not in text for token in expected):
+        text += read_blue_titles(pixels, width, height)
     if width >= 640 and height >= 480:
         # Confirm the central desktop is actually unobscured, rather than
         # mistaking visible icons behind an unrecognized modal for readiness.
@@ -165,7 +206,7 @@ def desktop(timeout):
 def wait_text(*tokens, absent=(), timeout=30):
     end = time.monotonic() + timeout
     while time.monotonic() < end:
-        _, text = observe(application=True)
+        _, text = observe(application=True, expected=tokens)
         if all(normalize(token) in text for token in tokens) and not any(
                 normalize(token) in text for token in absent):
             return
