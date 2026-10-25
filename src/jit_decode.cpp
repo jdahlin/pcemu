@@ -358,7 +358,20 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xac || extended == 0xad) {
+                if (extended == 0xba || extended == 0xa3 || extended == 0xab ||
+                    extended == 0xb3 || extended == 0xbb) {
+                    auto m = byte();
+                    // Memory bit strings have different index/address semantics.
+                    if ((m >> 6) != 3) { pos = begin; break; }
+                    i.kind = Kind::BitTest;
+                    i.dst = m & 7;
+                    i.src = (m >> 3) & 7;
+                    i.immediate = extended == 0xba;
+                    i.op = i.immediate ? i.src : extended == 0xa3 ? 4
+                           : extended == 0xab ? 5 : extended == 0xb3 ? 6 : 7;
+                    if (i.op < 4) { pos = begin; break; }
+                    if (i.immediate) i.imm = byte() & (w * 8 - 1);
+                } else if (extended == 0xac || extended == 0xad) {
                     auto m = byte();
                     if ((m >> 6) != 3) { pos = begin; break; }
                     i.kind = Kind::DoubleShift;

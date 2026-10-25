@@ -2,37 +2,31 @@
 
 Updated 2026-10-25. Work remains in progress.
 
-- MS-DOS 6.22: boots the supplied VHD converted to a private raw image.
-- Windows 3.11: standard-mode Program Manager, Notepad, and Calculator run.
-  The independent full installer on `media/win311-install.raw` has copied all
-  files, configured printers, and created Program Manager groups. Setup reports
-  completion, and a cold reboot to standard-mode Program Manager is verified.
-  Evidence: `build/win311-setup-complete.png`, `build/win311-cold.png`.
-- Windows 95 OSR2 installer: first-stage file copying completed on
-  `media/win95-install-v2.raw`, and Setup reached its restart request.
-  The missing firmware reset-vector entry prevented automatic reboot. After
-  stopping that instance, a private clone `media/win95-phase2.raw` cold-booted
-  the installed system into graphical setup startup (`build/phase2.png`).
-  Final setup completed and reached Explorer/Welcome
-  (`build/win95-installed-desktop.png`). Calculator evaluates 2+2 as 4
-  (`build/win95-installed-calculator.png`). Notepad saved exact file contents
-  on FAT: `PCEMU installed Windows 95 passed.` in C:\PCEMU95.TXT
-  (`build/win95-installed-notepad.png`). The completed disk cold-boots under the reset-capable binary
-  (`build/win95-installed-cold.png`), without installer media or a setup command.
-- rtts/win95: downloaded disk matches the repository's SHA-256 LFS pointer.
-  Normal boot reaches Explorer. Calculator evaluates 2+2 as 4 and
-  Notepad saved exact file contents on the FAT disk. Evidence:
-  `build/rtts-calculator.png`, `build/rtts-notepad.png`, `media/rtts-v4.raw`.
-  The optimized backend passes a same-process guest restart and exact file
-  survival (`build/rtts-optimized-restart/result.json`). Clean shutdown reaches
-  the complete safe-to-turn-off screen (`build/shutdown-optimized.png`), with
-  real-mode terminal spin and interrupts disabled. Startup hardware warnings
-  still require dismissal.
+- MS-DOS 6.22: recovered external QCOW2 base with a small compressed working
+  child; real boot prints the version and ready marker. No multi-GiB raw copy.
+- Windows 3.11: original unattended Setup /h completed from 460 verified source
+  files. Its standalone external QCOW2 passes cold boot, Notepad save, return
+  to DOS and exact file readback.
+- Windows 95 OSR2: fresh Setup completed both firmware reboots to Explorer,
+  then was consolidated to standalone external QCOW2 with full byte comparison.
+  Independent cold boot, Calculator/clipboard/Notepad, exact file persistence
+  and guest restart pass, including under the native bit-test candidate. See
+  `measurements/recovered-win95-qcow2-2026-10-25.json`.
+- rtts/win95: recovered logical disk matches the original Git LFS SHA-256.
+  Its compressed image and tiny QCOW2 zero parent live externally. Current
+  candidate passes Calculator/clipboard/Notepad persistence and firmware restart.
+- Office 97: reinstalled on a compressed child of the recovered Win95 QCOW2.
+  Word text and Excel formula/result survive save, restart and reopen. A compact
+  external desktop checkpoint restores independently. Earlier performance
+  checkpoints with missing parents still need rebuilding. See
+  `measurements/office97-qcow2-recovery-2026-10-25.json`.
 - Performance: native AArch64 register operations, direct branches and guarded
-  8/16/32-bit RAM MOVs are accelerated, including paging. Latest synthetic memory
-  loops reach 2,078 million guest instructions/s flat and 923 million/s paged.
-  Indirect control flow and many instruction forms remain interpreted.
-  Application performance comparable to Rosetta has not been demonstrated.
+  RAM moves support paged guests. Register BT/BTS/BTR/BTC now join native MUL
+  and SHRD; targeted bit-test kernels improve 6.88x over the previous JIT.
+  This is not an application speedup. Many instruction forms remain interpreted,
+  and Rosetta-class application performance has not been demonstrated. Work
+  continues; the full goal is not complete. See
+  `measurements/native-bit-test-2026-10-25.json`.
 
 The implementation now includes original ATA PIO, dual 8259 PICs, an
 instruction-clocked 8254 PIT, VM86 transitions, paging permissions and a software

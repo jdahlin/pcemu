@@ -30,6 +30,8 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
         unsigned written = 0;
         if (i.kind == Kind::Alu || i.kind == Kind::Test)
             written = i.kind == Kind::Alu && i.op >= 8 ? arithmeticFlags & ~CF : arithmeticFlags;
+        else if (i.kind == Kind::BitTest)
+            written = CF;
         else if (i.kind == Kind::Multiply || i.kind == Kind::MultiplyByte)
             written = CF | OF;
         else if (i.kind == Kind::Shift)

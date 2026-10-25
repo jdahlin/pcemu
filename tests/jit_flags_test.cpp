@@ -24,6 +24,39 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Bit tests preserve all flags except CF, including pending ADD flags.
+        // Exercise every immediate byte and all source/destination aliases;
+        // register indices include negative and high-bit-set values.
+        for (bool code32 : {false, true})
+            for (unsigned width : {2u, 4u})
+                for (bool immediate : {false, true})
+                    for (unsigned kind = 4; kind < 8; ++kind)
+                        for (unsigned dst = 0; dst < 8; ++dst)
+                            for (unsigned src = 0; src < (immediate ? 1u : 8u); ++src)
+                                for (unsigned index = 0; index < 256; ++index) {
+                                    std::vector<uint8_t> code = {0x04, 1};
+                                    if ((width == 4) != code32) code.push_back(0x66);
+                                    const uint8_t operations[] = {0xa3, 0xab, 0xb3, 0xbb};
+                                    code.insert(code.end(), {0x0f, immediate ? uint8_t(0xba) : operations[kind - 4],
+                                        uint8_t(0xc0 | ((immediate ? kind : src) << 3) | dst)});
+                                    if (immediate) code.push_back(index);
+                                    code.insert(code.end(), {0x73, 0});
+                                    for (auto c : {&reference, &actual}) {
+                                        c->s[CS].big = code32;
+                                        for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                                    }
+                                    for (uint32_t pattern : {0u, 0xffffffffu, 0x80018001u}) {
+                                        for (auto c : {&reference, &actual}) {
+                                            c->ip = c->instructions = 0;
+                                            c->flags = 0x202 | ((index & 1) ? 0xcd5 : 0);
+                                            for (unsigned n = 0; n < 8; ++n) c->r[n] = pattern ^ (n * 0x10101u);
+                                            if (!immediate) c->r[src] = (pattern & ~255u) | index;
+                                        }
+                                        reference.step(); reference.step(); reference.step();
+                                        check(jit.run() == 3, "ADD/BT-family/JNC execute natively");
+                                        equal(reference, actual);
+                                    }
+                                }
         // SHRD register forms: all register overlaps, full CL/immediate byte
         // range (including masked zero and 16-bit overshifts), and pending flags.
         for (bool code32 : {false, true})

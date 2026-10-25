@@ -1572,3 +1572,31 @@ comparisons, skips rebuilding that executable, rejects QEMU/custom-runner
 combinations and checks the executable hash before/after measurement. The
 temporary baseline executable was removed after validation; tests use RAM and
 only the existing tiny successful QEMU boot fixture, removed by the wrapper.
+
+## Native register bit tests (25 October)
+
+BT, BTS, BTR and BTC register destinations now emit AArch64 instructions for
+both immediate and register indices, with 16/32-bit operand-size overrides.
+The index is captured before an aliased destination changes, and is reduced
+modulo the operand width. CF receives the original selected bit; every other
+flag is preserved exactly as in the interpreter. Flag liveness tracks this
+partial write. Memory bit strings and reserved immediate-group encodings
+retain the interpreter path.
+
+Differential tests cover every immediate byte, all register overlaps, negative
+and high-bit-set register indices, pending ADD flags, preserved upper GPR
+halves and a following carry branch. The flag suite passes 25,862,006 checks;
+the core suite passes 352,644. Frozen-candidate headless Win3.11 file save/exit,
+rtts and fresh OSR2 Calculator/clipboard/Notepad/restart checks pass. Excel
+reopens the recovered workbook with A1's formula and result intact.
+
+Five alternating RAM-only kernel pairs give a median paired throughput ratio
+of **6.8838x**. The candidate executes all 40 million guest instructions
+natively; baseline/candidate AX, BX, CX, flags and instruction counts match.
+Owned build and integration processes had exited before these final pairs;
+earlier overlapping calibration runs were excluded. This is a targeted bit-test
+kernel result, not an Office or Rosetta comparison. The earlier Excel profile
+identified opcode 0F BA among frequent fallbacks, but memory forms remain
+interpreted and application impact has not been measured.
+
+[Samples, frozen-source/binary hashes, build commands, kernel and integration evidence](measurements/native-bit-test-2026-10-25.json).

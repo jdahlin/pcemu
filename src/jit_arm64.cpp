@@ -350,6 +350,31 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             dirtyRegisters |= 1u << i.dst;
             continue;
         }
+        if (i.kind == Kind::BitTest) {
+            if (neededFlags[n]) {
+                finishFlags(last, -1, 0);
+                last = -1;
+            }
+            // Capture the index before modifying an aliased destination.
+            if (i.immediate) imm(9, i.imm);
+            else bits(9, 20 + i.src, 0, i.w == 2 ? 4 : 5);
+            extract(11, 20 + i.dst, i.w, 0);
+            if (neededFlags[n]) {
+                emit(0x1ac02400u | (9 << 16) | (11 << 5) | 13); // lsrv w13,w11,w9
+                load(12, 19, offsetof(CPU, flags));
+                flagBit(13, 0); // Preserve the reference's other flags verbatim.
+                store(12, 19, offsetof(CPU, flags));
+            }
+            if (i.op != 4) {
+                imm(10, 1);
+                emit(0x1ac02000u | (9 << 16) | (10 << 5) | 10); // lslv w10,w10,w9
+                auto op = i.op == 5 ? 0x2a000000u : i.op == 6 ? 0x0a200000u : 0x4a000000u;
+                emit(op | (10 << 16) | (11 << 5) | 11); // orr / bic / eor
+                insert(20 + i.dst, 11, i.w, 0);
+                dirtyRegisters |= 1u << i.dst;
+            }
+            continue;
+        }
         if (i.kind == Kind::DoubleShift) {
             finishFlags(last, -1, 0);
             last = -1;
