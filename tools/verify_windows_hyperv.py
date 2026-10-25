@@ -15,7 +15,7 @@ def verify(report, baseline, kernel_build=26100):
     def require(value, message):
         if not value:
             errors.append(message)
-    require(report.get('schema') == 1 and report.get('mode') == 'basic', 'Expected basic-mode counters')
+    require(report.get('schema') == 1 and report.get('mode') in ('basic', 'synic'), 'Expected enabled Hyper-V counters')
     identity = report.get('guestOsId', 0)
     require(type(identity) is int and identity >= 0, 'Invalid guest identity')
     identity = identity if type(identity) is int and identity >= 0 else 0

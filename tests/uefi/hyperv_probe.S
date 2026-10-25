@@ -39,7 +39,8 @@ efi_main:
     cmp x0, x8
     b.ne failed
     ldr x8, =0x001a000000000062
-    cmp x6, x8
+    bic x9, x6, #4 // Optional SynIC profile adds only privilege bit 2.
+    cmp x9, x8
     b.ne failed
     cmp x7, #256 // ARM64 feature bit 72, not x64 CPUID EDX:10.
     b.ne failed

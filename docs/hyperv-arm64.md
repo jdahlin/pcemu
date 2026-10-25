@@ -894,3 +894,33 @@ Windows has initialized or consumed SynIC. SIRBP remains unsupported pending
 its actual guest contract. The Linux MSHV root driver uses it for event-ring
 notifications, which alone does not establish a requirement for this Windows
 child guest. SynIC privileges remain off in the normal profile.
+
+## Isolated SynIC discovery profile
+
+`--hyperv synic` explicitly adds AccessSynicRegs (privilege bit 2) to the basic
+profile. It requires a real private-interrupt backend and matching Hyper-V
+FADT assets. `--hyperv basic` keeps its established discovery mask. Statistics
+identify the new mode as `synic`; the Windows auditor can audit its core
+register use without claiming SynIC delivery or GUI boot from that alone.
+Synthetic timer privileges, direct-timer features, root ports and VMBus remain
+unadvertised. No guest-to-host message/event endpoints are installed implicitly.
+
+This profile permits an isolated Windows compatibility run to discover its
+actual SynIC register requirements. It is not a claim that all ARM-specific
+SynIC facilities are complete. Model checks cover the exact added privilege,
+reporting, absent-backend rejection and refusal to remove a live advertised
+backend. The EFI smoke probe exercises off/basic/synic modes.
+
+Validation passes 1,928 portable Hyper-V checks, 271 native checks, 12 Windows
+auditor tests and all three EFI modes. Windows compatibility/consumption with
+this discovery profile remains a separate runtime gate.
+
+Before starting that experiment, the basic-profile Windows run accumulated
+1,145,400 successful IPI requests and 71,917 SyncContext requests, with zero
+Hyper-V failures. Model/native IPI target counts remain identical:
+VP0 = 1,077,155, VP1 = 68,245. Frozen evidence is
+`build/windows11-hyperv/ipi-enabled/soak-evidence.json`, SHA-256
+`8436aa466c89b4de58ba99035e940e7d78acf1f7f395453a8c5ac23fe0740219`.
+The host then stopped and flushed that test VM before creating separate APFS
+disk/variable clones for SynIC. This was a host termination, not a clean guest
+shutdown, and establishes no performance benefit.

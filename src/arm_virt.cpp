@@ -77,6 +77,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         vm.sendPrivateInterrupt(targets, interrupt);
         return true;
     });
+    hyperv.advertiseSynic(c.hypervSynic);
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;

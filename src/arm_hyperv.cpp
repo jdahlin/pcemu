@@ -54,8 +54,14 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     return delay;
 }
 void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
+    if (synicAdvertised && !send) throw std::runtime_error("Cannot remove an advertised SynIC interrupt backend");
     privateInterruptSender = std::move(send);
     synic.setInterruptSender(privateInterruptSender);
+}
+void ArmHyperV::advertiseSynic(bool advertise) {
+    if (advertise && (!enabled || !privateInterruptSender))
+        throw std::runtime_error("SynIC advertisement requires enabled Hyper-V and a private interrupt backend");
+    synicAdvertised = advertise;
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -92,7 +98,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
     case 0x200:
-        value[0] = privileges | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
+        value[0] = privileges | (synicAdvertised ? 4 : 0) | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
         value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
     case 0x201: value[0] = 0xffffffff00000000ull | (interruptSender ? 4 : 0); return 0; // Recommend IPIs only with a real interrupt backend
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
@@ -456,7 +462,7 @@ std::string ArmHyperV::takeCrashReport() {
 }
 std::string ArmHyperV::report() const {
     std::ostringstream s;
-    s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
+    s << "{\"schema\":1,\"mode\":\"" << (enabled ? (synicAdvertised ? "synic" : "basic") : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"syntheticTimerDeliveries\":" << timers.delivered()

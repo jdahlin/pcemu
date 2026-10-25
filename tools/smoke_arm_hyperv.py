@@ -21,7 +21,7 @@ def main():
     create(disk, probe)
     platform(1, ROOT / 'build/arm64-fw/cpus1-hyperv', hyperv=True)
     summary = {}
-    for mode in ('off', 'basic'):
+    for mode in ('off', 'basic', 'synic'):
         stats = directory / f'{mode}.json'
         result = subprocess.run([str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
             '--vars', str(directory / f'{mode}-vars.bin'), '--disk', str(disk),
@@ -29,13 +29,13 @@ def main():
             cwd=ROOT, capture_output=True, timeout=35)
         (directory / f'{mode}-serial.log').write_bytes(result.stdout)
         (directory / f'{mode}-host.log').write_bytes(result.stderr)
-        marker = b'PCEMU_HYPERV_PROBE_OK' if mode == 'basic' else b'PCEMU_HYPERV_DISABLED'
+        marker = b'PCEMU_HYPERV_PROBE_OK' if mode != 'off' else b'PCEMU_HYPERV_DISABLED'
         if result.returncode or marker not in result.stdout or b'state=power-off' not in result.stderr:
             raise RuntimeError(f'{mode} guest probe failed: inspect {directory}')
         report = json.loads(stats.read_text())
         if report['mode'] != mode or report['uidQueries'] != 1:
             raise RuntimeError(f'{mode} invalid discovery counters')
-        if mode == 'basic':
+        if mode != 'off':
             names = {r['name']: r for r in report['registers']}
             calls = {r['code']: r for r in report['calls']}
             if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 10

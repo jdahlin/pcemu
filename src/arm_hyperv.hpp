@@ -28,6 +28,7 @@ class ArmHyperV {
     std::optional<uint64_t> serviceDelay100ns() const;
     bool timersActive() const { return enabled && timers.nextDeadline().has_value(); }
     void setPrivateInterruptSender(SoftwareInterruptSender send);
+    void advertiseSynic(bool advertise);
     // Message payloads are borrowed only for the synchronous handler call.
     using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
     using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
@@ -43,6 +44,7 @@ class ArmHyperV {
   private:
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
+    bool synicAdvertised = false;
     ArmSynic synic;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;

@@ -158,6 +158,15 @@ class WindowsHyperV(unittest.TestCase):
         report['failures'] += 1
         self.assertFalse(verify(report, baseline)['eventSignalsObserved'])
 
+    def test_synic_profile_keeps_core_audit_separate_from_delivery_proof(self):
+        report, baseline = fixture()
+        report['mode'] = 'synic'
+        result = verify(report, baseline)
+        self.assertTrue(result['verifiedCoreUsage'])
+        self.assertFalse(result['messagePostsObserved'])
+        self.assertFalse(result['eventSignalsObserved'])
+        self.assertFalse(result['guiBootVerified'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

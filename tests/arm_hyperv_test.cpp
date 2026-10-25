@@ -874,5 +874,24 @@ int main() {
     check(sgiNotifications == 32);
     check(sgiSynic.write(0xa0001, 0, 32) == 5);
     check(sgiSynic.read(0xa0001, 0, value) == 0 && value == 31);
+    ArmHyperV profile(true, sgiRam, base, 1), disabledProfile(false, sgiRam, base, 1);
+    bool rejectedProfile = false;
+    try { profile.advertiseSynic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    check(rejectedProfile);
+    disabledProfile.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
+    rejectedProfile = false;
+    try { disabledProfile.advertiseSynic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    check(rejectedProfile);
+    profile.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
+    profile.advertiseSynic(true);
+    r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
+    r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
+    check(profile.call(0, r, 0) && r[0] == one && r[6] == (features | 4));
+    check(profile.report().find("\"mode\":\"synic\"") != std::string::npos);
+    rejectedProfile = false;
+    try { profile.setPrivateInterruptSender({}); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    check(rejectedProfile);
+    profile.advertiseSynic(false);
+    check(profile.report().find("\"mode\":\"basic\"") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

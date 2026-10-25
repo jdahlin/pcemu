@@ -702,8 +702,8 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--hyperv") {
                 auto mode = value();
-                if (mode != "off" && mode != "basic") throw std::runtime_error("Hyper-V must be off or basic");
-                uefi.hyperv = mode == "basic"; uefiOptions = true;
+                if (mode != "off" && mode != "basic" && mode != "synic") throw std::runtime_error("Hyper-V must be off, basic or synic");
+                uefi.hyperv = mode != "off"; uefi.hypervSynic = mode == "synic"; uefiOptions = true;
             }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
@@ -749,7 +749,7 @@ int main(int argc, char **argv) {
                              "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
-                             "      [--ram-mb 256..16384 --hyperv off|basic --hyperv-stats FILE]\n"
+                             "      [--ram-mb 256..16384 --hyperv off|basic|synic --hyperv-stats FILE]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
