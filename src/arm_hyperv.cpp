@@ -472,8 +472,10 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
                 counters->lastWritePadding = get(input, at + 8, 8);
                 counters->lastWriteFast = fast;
             }
-            status = get(input, at + 4, 4) || get(input, at + 8, 8) ? invalidParameter :
-                writeRegister(name, vp, {get(input, at + 16, 8), get(input, at + 24, 8)});
+            // Windows WinHv reuses register-association buffers without
+            // initializing the 12 alignment bytes. Like OpenVMM, consume only
+            // the name and value; header/VTL and register bits stay validated.
+            status = writeRegister(name, vp, {get(input, at + 16, 8), get(input, at + 24, 8)});
             if (counters && synthetic) counters->lastWriteStatus = status;
         } else status = readRegister(name, vp, value);
         if (status) { if (counters) ++counters->failures; return (uint64_t(i) << 32) | status; }

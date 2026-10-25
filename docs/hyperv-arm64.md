@@ -1117,3 +1117,25 @@ register validation from rejection of the surrounding ABI record. The normal
 reserved-field validation remains unchanged while this is investigated.
 Model checks cover nonzero association padding and verify its exact bounded
 snapshot; 2,089 Hyper-V checks pass.
+
+### Register-association padding compatibility
+
+The complete failed SIPP record in
+`build/windows11-hyperv/vmbus-padding/failed-sipp.json` has a valid GPA and
+zero high register value, but name padding 1164730734 and 64-bit padding
+8318822883701712246. It is a memory-form hypercall, not a fast-input layout
+issue. The parser rejected those alignment bytes before invoking SynIC.
+The media's WinHv register-list builder writes the register name and 128-bit
+value without initializing the twelve intervening bytes of its reused buffer.
+[Microsoft OpenVMM's ARM HVF handler](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vmm_core/virt_hvf/src/hypercall.rs)
+also consumes only name/value and ignores the association padding.
+
+The parser now follows that behavior for memory and fast SetVpRegisters.
+This is deliberately narrower than ignoring reserved register bits: partition,
+VP, VTL, call layout, register-specific reserved bits, high value halves, and
+GPA bounds remain validated. Invalid register values still fail, including the
+same SIPP value when it lies outside the model test's small RAM region.
+Tests exercise nonzero padding in both ABIs and both input forms, while retaining
+negative high-value checks. The native EFI probe uses dirty association padding
+for its SynIC/timer setup and requires actual guest delivery and successful
+SIPP status with those exact padding values in the host counters.

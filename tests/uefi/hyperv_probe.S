@@ -577,7 +577,9 @@ crash_write:
     ldr x1, =0x100010051
     mov x2, #-1
     ldr w3, =0xfffffffe
-    mov x5, #0
+    // WinHv-style reusable association buffer: padding is not register state.
+    movk x4, #0xbeef, lsl #32
+    ldr x5, =0x737475767778797a
     mov x7, #0
     hvc #0
     mov x8, #1

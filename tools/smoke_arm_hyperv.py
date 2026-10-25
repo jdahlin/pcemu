@@ -53,6 +53,9 @@ def main():
                     or report['syntheticTimerDeliveries'] != 3
                     or names[0xb0000]['reads'] != 1 or names[0xb0000]['writes'] != 1
                     or names[0xb0001]['writes'] != 1
+                    or names[0xa0013].get('lastWriteNamePadding') != 0xbeef
+                    or names[0xa0013].get('lastWritePadding') != 0x737475767778797a
+                    or names[0xa0013].get('lastWriteStatus') != 0
                     or calls[0xd6]['count'] != 1 or calls[0xd6]['failures'] != 0
                     or report['tlbFlushRequests'] != 3 or report['translationContextFlushes'] != [3]
                     or report['contextSyncRequests'] != 4

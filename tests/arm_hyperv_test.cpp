@@ -140,7 +140,7 @@ int main() {
     put(memory, 0, uint64_t(-1)); put(memory, 8, 0); memoryRead(one | 0x50); check(r[0] == 14);
     put(memory, 8, 0xfffffffe); put(memory, 12, 1, 4); memoryRead(one | 0x50); check(r[0] == 5);
     put(memory, 12, 0, 4);
-    // Slow SetVpRegisters, read-only protection and reserved association bytes.
+    // Slow SetVpRegisters, read-only protection and ignored association padding.
     put(memory, 16, 0x90002, 4); put(memory, 20, 0, 4); put(memory, 24, 0);
     put(memory, 32, 321); put(memory, 40, 0);
     r = {}; r[0] = one | 0x51; r[1] = base;
@@ -151,7 +151,7 @@ int main() {
     check(hv.call(1, r, 0) && r[0] == 5);
     put(memory, 16, 0x90002, 4); put(memory, 24, 1);
     r = {}; r[0] = one | 0x51; r[1] = base;
-    check(hv.call(1, r, 0) && r[0] == 5);
+    check(hv.call(1, r, 0) && r[0] == one);
     r = {}; r[0] = 0x46000001; r[1] = 0xdead;
     check(hv.call(0, r, 0) && r[0] == 2);
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
@@ -1039,7 +1039,24 @@ int main() {
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
     r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0xa0013 | (0xbeefull << 32);
     r[5] = 0x11223344; r[6] = base + 1;
-    check(pageDiagnostic.call(0, r, 0) && r[0] == 5);
+    check(pageDiagnostic.call(0, r, 0) && r[0] == one);
     check(pageDiagnostic.report().find("\"lastWriteNamePadding\":48879,\"lastWritePadding\":287454020,\"lastWriteFast\":true") != std::string::npos);
+    for (bool smccc : {false, true}) for (bool fast : {false, true}) {
+        std::fill(busRam.begin(), busRam.begin() + 256, 0);
+        put(busRam, 0, UINT64_MAX); put(busRam, 8, 0xfffffffe, 4);
+        put(busRam, 16, 0xa0013, 4); put(busRam, 20, 0x4567, 4);
+        put(busRam, 24, 0x737475767778797aull); put(busRam, 32, base + 4096 + 1);
+        r = {}; r[0] = smccc ? 0x46000001 : (one | 0x51 | (fast ? 0x10000 : 0));
+        if (smccc) r[1] = one | 0x51 | (fast ? 0x10000 : 0);
+        unsigned start = smccc ? 2 : 1;
+        if (fast) for (unsigned i = 0; i < 6; ++i) r[start + i] = get(busRam, i * 8);
+        else r[start] = base;
+        check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == one);
+        check(pageDiagnostic.synicController().read(0xa0013, 0, value) == 0 && value == base + 4096 + 1);
+        // Padding tolerance does not permit nonzero bits beyond a 64-bit register.
+        if (fast) r[start + 5] = 1; else put(busRam, 40, 1);
+        r[0] = smccc ? 0x46000001 : (one | 0x51 | (fast ? 0x10000 : 0));
+        check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == 5);
+    }
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }
