@@ -169,3 +169,40 @@ stopped; their diagnostic reports remain. The default Hyper-V mode remains off.
 - [Microsoft OpenVMM ARM64 ABI](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/aarch64.rs)
 - [Microsoft OpenVMM parameter parsing](https://github.com/microsoft/openvmm/blob/main/vm/hv1/hv1_hypercall/src/support.rs)
 - [Microsoft mu_msvm ARM64 guest register identifiers](https://github.com/microsoft/mu_msvm/blob/main/MsvmPkg/Include/Hv/HvGuestHypercall.h)
+
+## SyncContext investigation, 2026-10-25
+
+SyncContext remains unsupported. Microsoft's [OpenVMM WHP definitions](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/whp/src/abi.rs)
+identify SyncContext/Ex as a separate ARM64 facility. The WHP synthetic-feature
+bit (39) is not a TLFS partition privilege and must not be copied into this
+implementation's privilege mask.
+
+Inspection of the unmodified Windows kernel with its matching public PDB
+narrows the observed operation down to instruction-context synchronization:
+
+- `KeSweepIcacheCompleteBatch` calls `HvlSyncContext` after cache maintenance
+  and DSB/ISB. Its alternative path dispatches work through the kernel's IPI
+  machinery. This supports a cross-processor instruction-synchronization
+  interpretation; it is not an idle/yield operation.
+- `HvlSyncContext(NULL)` constructs fast hypercall 0x10019 with first input 1
+  and second input 0. A non-null argument is converted into a VP affinity mask.
+- The helper used by `HvlpFastSyncContextEx` and `HvlpSlowSyncContextEx` is
+  `HvlpAffinityToHvProcessorSet`. It serializes a processor set, not an ARM
+  register context. The slow path falls back to 0x19 if that set cannot fit.
+
+These are observations of this kernel, not a complete specification of flags,
+completion guarantees or all supported input layouts. Merely stopping host
+vCPU threads or issuing a host memory fence does not establish the required
+instruction synchronization on every target guest VP. Before accepting this
+call, the backend needs a justified guest execution synchronization mechanism
+and a test that replaces executable guest instructions, synchronizes the target
+VPs and checks that they execute the new code, including a multi-VP case.
+
+Research artifacts are ignored under `build/hyperv-research/kernel/`.
+The source kernel came from image 1 of the existing installation WinPE WIM;
+its matching Microsoft symbol identifier is
+`ntkrnlmp.pdb/7A9F162A39E89C67CD02CF2126D51A651`.
+Relevant kernel RVAs are `KeSweepIcacheCompleteBatch` 0x259b30,
+`HvlSyncContext` 0x454178, `HvlpAffinityToHvProcessorSet` 0x23c810,
+`HvlpFastSyncContextEx` 0x626078 and `HvlpSlowSyncContextEx` 0x626100.
+These addresses are version-specific and are not runtime dependencies.
