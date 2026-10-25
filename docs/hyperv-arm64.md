@@ -1716,3 +1716,32 @@ The PowerShell parser and mocked control-flow test
 covering observation without activation, successful activation and reported
 activation failure. This is not yet an execution of the probe inside Windows;
 that runtime service activation check remains outstanding.
+
+### Actual installed-Windows service probe
+
+The probe from `660f74c` was staged through the existing WinPE tooling into a
+private APFS clone, using temporary autologon and a one-shot logon command. The
+command disables autologon and removes DefaultPassword before executing the
+probe. The original Windows disk was not modified. The ISO share had to be
+reconnected before staging; it remains at the documented SMB destination.
+
+`build/windows11-hyperv/services/service-report.json` is the actual guest report,
+received through the existing loopback HTTP endpoint. It establishes:
+
+- Explorer, services, wininit and winlogon are running.
+- The VMBus kernel driver is Running with exit code zero.
+- The heartbeat device is Started with its enabled device interface, the exact
+  advertised GUID and the inbox `wvmic_heartbeat.inf` driver selection.
+- SCM's heartbeat trigger is device-interface arrival for that same GUID.
+- `vmicheartbeat` is Stopped before and after the explicit Start-Service attempt;
+  activation fails with “Failed to start service”. Its reported service exit
+  codes remain zero, so those fields do not identify the underlying cause.
+- Host counters still show zero channel opens, GPADLs and heartbeat replies.
+
+This disproves a general failure to reach user mode or create the device
+interface in this run. It does not establish the service's internal failure
+reason. The next diagnostic source is the stopped test disk's SCM/event logs or
+a service-start error with its underlying Win32 status. The test overlay is
+retained for that offline inspection; the secret-bearing staging WIM/FAT image
+and private staging command were removed. The ordinary basic-profile VM was
+restarted on the original disk. No heartbeat or performance success is claimed.
