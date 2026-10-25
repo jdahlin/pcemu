@@ -288,14 +288,14 @@ The following is a work inventory, not a completion claim:
 | Facility | Current evidence / remaining work |
 | --- | --- |
 | Discovery, identity and VP registers | Native EFI and actual Windows register use verified. |
-| Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
-| Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
+| Partition reference counter | Rate/ABI tested; repeated Windows reads observed, including in the isolated GIC-proxy boot. |
+| Crash enlightenment | Model/native notification and logging tested; actual Windows failure notifications captured in controlled SGI-enable and EL2-ID experiments. |
 | SyncContext / SyncContextEx | Fixed/Ex, fast/memory inputs implemented with real per-VP barriers. Windows fixed-path and native Ex tests pass; Windows Ex use remains unobserved. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Windows SynIC page/control/SINT configuration is observed. Direct-timer feature advertisement, complete ARM semantics and Windows reply/timer consumption remain pending. ARM Generic Timer already runs natively. |
-| VMBus / integration services | Contact/version, channel offers, GPADL lifecycle and ring transport are implemented and model tested. Opt-in runtime/ACPI attachment is native/EFI-tested. A host heartbeat IC is registered in the runtime, with negotiation, periodic probes and response/timeout diagnostics. Windows ACPI binding and a Copper contact are observed; Windows reply consumption, channel opening and service use remain unverified. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Windows SynIC page/control/SINT configuration is observed. An isolated GIC adapter demonstrates Windows message consumption and synthetic timer programming/delivery. Production GIC integration, direct-timer feature advertisement and complete ARM semantics remain pending. ARM Generic Timer already runs natively. |
+| VMBus / integration services | Contact/version, channel offers, GPADL lifecycle and ring transport are implemented and model tested. Opt-in runtime/ACPI attachment is native/EFI-tested. A host heartbeat IC is registered in the runtime, with negotiation, periodic probes and response/timeout diagnostics. Windows ACPI binding and Copper negotiation/offer consumption are observed with an isolated GIC adapter; production GIC integration, channel opening and service use remain unverified. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
 The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
@@ -1475,8 +1475,10 @@ probes, response evidence, timeout recovery and unload cleanup. Existing 2,136
 Hyper-V, 247 channel, 1,581 GPADL and 4,352 ring checks pass. An isolated native
 build including the platform registration passes all 284 headless self-tests.
 These tests establish the host implementation; Windows heartbeat use is still
-unverified because its initial VMBus control reply remains unconsumed in the
-observed ARM64 boot. The known Windows installation remains on its basic profile.
+unverified. The original production GIC policy leaves the initial VMBus control
+reply unconsumed; the later isolated adapter below demonstrates consumption,
+but does not yet establish a heartbeat channel. The known Windows installation
+remains on its basic profile.
 
 Protocol references are Microsoft's
 [IC header/version definitions](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic_protocol/src/lib.rs),
@@ -1548,3 +1550,65 @@ and the original QCOW2/PCD installation restarted with the original `basic`
 runner. Its stopped-VP capture shows zero crash notifications and zero Hyper-V
 failures. Current PID/session is recorded in `build/windows11-qcow2/launch.json`.
 No production CPU-identification or GIC policy was changed by this experiment.
+
+
+### Isolated native GIC nonsecure-view experiment
+
+A subsequent diagnostic snapshot keeps Apple's native interrupt state and CPU
+interface, but moves its distributor to a reserved high GPA. Guest distributor
+accesses trap through an adapter. It presents SecurityExtn=1, exposes the
+nonsecure affinity-routing CTLR view, hides secure group assignment registers
+and assigns all SPIs to native Group 1. PFR0.EL2 identification is 1 on both VPs,
+while VM EL2 execution remains disabled. The matching private interrupts must
+also be assigned to Group 1 before firmware starts. A tiny guest bootstrap does
+that on each VP and verifies readback: the host redistributor API denies those
+accesses before the guest has initialized the bank. This is still isolated
+experimental code, not a production security-state implementation.
+
+The first two attempts are excluded from Windows inference. The first used an
+incorrect CTLR group-enable translation. In affinity-routing mode, the NS
+EnableGrp1A alias is bit 1, not bit 0, as confirmed against
+[QEMU's GICv3 distributor](https://github.com/qemu/qemu/blob/master/hw/intc/arm_gicv3_dist.c).
+The second corrected that translation but omitted private Group 1 setup;
+UEFI's timer remained pending and Windows was never reached. The third includes
+both fixes and reaches Windows. A fourth repeats it with the corrected heartbeat
+interface-enumeration offer flag from 4bfdf9a.
+
+Both Windows attempts demonstrate the previously missing control path:
+
+- Copper contact and version reply complete, followed by RequestOffers.
+- The heartbeat channel offer and AllOffersDelivered are delivered; the target
+  SINT2 queue and message slot are empty after guest consumption.
+- SGI8 is enabled by the guest's normal HAL initialization, without a forced
+  interrupt-enable workaround. Per-VP private enables include the synthetic
+  interrupt lines, and no SINT8 interrupt remains stuck pending.
+- Windows repeatedly programs timer 0 in direct mode and successful synthetic
+  timer deliveries accumulate. Reference-counter reads, context synchronization,
+  IPIs and capability queries are also observed, with zero Hyper-V failures and
+  no guest crash notification in these runs.
+
+The final snapshots, source/executable hashes and auditable results are in
+`build/windows11-hyperv/gic-proxy/`. `attempt3-audit.json` and
+`attempt4-audit.json` record verified core use, consumed VMBus offers and
+synthetic timer delivery. Heartbeat responses remain false: neither attempt
+opened the channel or created a GPADL. Framebuffer capture is black, so there is
+no GUI-boot claim. Network packet traffic is present, but this experiment does
+not independently establish DHCP/HTTP or a performance benefit.
+
+The usage auditor now accounts for an offer request producing multiple host
+replies instead of requiring one guest PostMessage per host reply. Exact reply
+accounting remains conservative: without typed lifecycle-reply counters, it
+accepts the bootstrap exchange only before channel I/O and requires all supplied
+channel counters to agree. `vmbusOffersConsumedObserved` additionally requires
+the configured target SynIC message page, an unmasked SINT, an empty host queue
+and a guest-cleared message slot. Host queue acceptance alone is insufficient.
+Separate timer-delivery and heartbeat-response gates require actual successful
+programming/delivery or correlated service responses. All 17 auditor tests pass,
+including malformed evidence, pending slots, extra replies and host-only probes.
+
+The diagnostic VM is stopped and its cloned writable disk removed. The original
+Windows VM is restarted on the unchanged basic-profile runner. The adapter's
+register semantics, initialization, native regression tests and guest service
+opening must be completed before production integration. The isolated source
+and binaries remain under `build/hyperv-research/gic-proxy-source/` for the next
+implementation step; no GIC or CPU policy was changed in production sources.

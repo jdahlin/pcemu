@@ -23,6 +23,24 @@ def fixture():
     return report, baseline
 
 
+def offered_fixture():
+    report, baseline = fixture()
+    for row in report['calls']:
+        row['failures'] = 4 if row['code'] == 0x19 else 0
+    report['calls'].append(dict(code=0x5c, count=2, failures=0))
+    report.update(mode='vmbus', legacyCalls=20, postedMessages=2, privateInterruptRequests=[2])
+    for name in (0xa0010, 0xa0013, 0xa0002):
+        report['registers'].append(dict(name=name, reads=0, writes=1, failures=0))
+    report['vmbus'] = dict(connected=True, version=0x60000, contacts=1, offerRequests=1,
+                          unloads=0, deliveredReplies=4, pendingReplies=0, channelOffers=2,
+                          rejectedMessages=0, targetVp=0, targetSint=2, offeredChannels=2,
+                          channelOpens=0, channelCloses=0, gpadls=0,
+                          packetsReceived=0, packetsSent=0, channelFaults=0)
+    report['synic'] = dict(vps=[dict(index=0, control=1, messagePage=0x40001001,
+        sints=[dict(index=2, config=8, slotType=0, queued=0)])])
+    return report, baseline
+
+
 class WindowsHyperV(unittest.TestCase):
     def test_core_use_does_not_hide_unsupported_calls_or_claim_boot(self):
         report, baseline = fixture()
@@ -195,6 +213,77 @@ class WindowsHyperV(unittest.TestCase):
             changed = deepcopy(report)
             changed['registers'] = [row for row in changed['registers'] if row['name'] != name]
             self.assertFalse(verify(changed, baseline)['vmbusControlObserved'])
+
+    def test_offers_are_host_replies_not_extra_guest_posts(self):
+        report, baseline = offered_fixture()
+        result = verify(report, baseline)
+        self.assertTrue(result['vmbusControlObserved'])
+        self.assertTrue(result['vmbusOffersConsumedObserved'])
+        self.assertEqual(report['postedMessages'], 2)
+        self.assertEqual(report['vmbus']['deliveredReplies'], 4)
+        for key, value in (('deliveredReplies', 3), ('channelOffers', True), ('channelOffers', 9),
+                           ('offeredChannels', 3), ('channelOpens', 1), ('gpadls', 1),
+                           ('packetsReceived', 1), ('packetsSent', 1), ('channelFaults', 1)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['vmbusControlObserved'], (key, value))
+
+    def test_accepted_synic_queue_is_not_guest_consumption(self):
+        report, baseline = offered_fixture()
+        for key, value in (('slotType', 1), ('queued', 1), ('slotType', False),
+                           ('config', 0x10008), ('config', -131073), ('config', None)):
+            changed = deepcopy(report)
+            changed['synic']['vps'][0]['sints'][0][key] = value
+            result = verify(changed, baseline)
+            self.assertTrue(result['vmbusControlObserved'])
+            self.assertFalse(result['vmbusOffersConsumedObserved'])
+        for change in ({}, dict(vps=[]), dict(vps=[dict(index=True)]), dict(vps=None)):
+            self.assertFalse(verify(dict(report, synic=change), baseline)['vmbusOffersConsumedObserved'])
+        for key, value in (('control', True), ('control', 0), ('messagePage', 0), ('messagePage', 0x40001003)):
+            changed = deepcopy(report)
+            changed['synic']['vps'][0][key] = value
+            self.assertFalse(verify(changed, baseline)['vmbusOffersConsumedObserved'])
+        duplicate = deepcopy(report)
+        duplicate['synic']['vps'] *= 2
+        self.assertFalse(verify(duplicate, baseline)['vmbusOffersConsumedObserved'])
+
+    def test_timer_delivery_needs_programming_and_successful_delivery(self):
+        report, baseline = fixture()
+        report['syntheticTimerDeliveries'] = 10
+        self.assertFalse(verify(report, baseline)['syntheticTimerDeliveryObserved'])
+        for name in (0xb0000, 0xb0001):
+            report['registers'].append(dict(name=name, reads=0, writes=2, failures=0))
+        self.assertTrue(verify(report, baseline)['syntheticTimerDeliveryObserved'])
+        for value in (0, True, -1, '10'):
+            self.assertFalse(verify(dict(report, syntheticTimerDeliveries=value), baseline)['syntheticTimerDeliveryObserved'])
+        report['registers'][-1]['failures'] = 1
+        self.assertFalse(verify(report, baseline)['syntheticTimerDeliveryObserved'])
+
+    def test_heartbeat_needs_real_responses_not_offers_or_host_probes(self):
+        report, baseline = offered_fixture()
+        self.assertFalse(verify(report, baseline)['heartbeatResponseObserved'])
+        report['calls'].append(dict(code=0x5d, count=1, failures=0))
+        report.update(legacyCalls=21, signaledEvents=1)
+        report['vmbus'].update(channelOpens=1, packetsReceived=2, packetsSent=2)
+        report['heartbeat'] = dict(state='ready', frameworkMajor=3, heartbeatMajor=3,
+                                   negotiations=1, probes=1, responses=1, timeouts=0,
+                                   rejectedResponses=0)
+        result = verify(report, baseline)
+        self.assertTrue(result['heartbeatResponseObserved'])
+        self.assertFalse(result['guiBootVerified'])
+        for malformed in (None, [], True):
+            self.assertFalse(verify(dict(report, heartbeat=malformed), baseline)['heartbeatResponseObserved'])
+        for key, value in (('negotiations', 0), ('responses', 0), ('responses', True),
+                           ('probes', 0), ('frameworkMajor', True), ('heartbeatMajor', 2),
+                           ('state', 'closed'), ('timeouts', -1)):
+            changed = deepcopy(report)
+            changed['heartbeat'][key] = value
+            self.assertFalse(verify(changed, baseline)['heartbeatResponseObserved'], (key, value))
+        for key, value in (('packetsReceived', 1), ('packetsSent', 1), ('channelOpens', 0), ('connected', False)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['heartbeatResponseObserved'])
+        self.assertFalse(verify(dict(report, signaledEvents=0), baseline)['heartbeatResponseObserved'])
 
     def test_required_evidence(self):
         report, baseline = fixture()

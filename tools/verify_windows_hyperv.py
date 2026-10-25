@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Audit actual Windows use of the initial ARM64 Hyper-V register subset.
+"""Audit actual Windows ARM64 use of implemented Hyper-V interfaces.
 
-This does not prove GUI boot, performance benefit, SyncContext or other optional
-services. Unsupported call attempts remain visible even when core use passes.
+Core use, consumed VMBus offers, timer delivery and heartbeat responses have
+separate evidence gates. These counters do not prove GUI boot or a performance
+benefit. Unsupported call attempts remain visible even when core use passes.
 """
 import argparse
 import hashlib
@@ -36,7 +37,7 @@ def verify(report, baseline, kernel_build=26100):
         require(type(row.get(operation)) is int and row[operation] > 0 and row.get('failures') == 0,
                 f'Unverified successful {operation} of register {name:#x}')
     page = report.get('partitionInfoPage', 0)
-    require(type(page) is int and page > 4096 and page & 4095 == 1, 'Partition info page is not enabled')
+    require(type(page) is int and 4096 < page < (1 << 64) and page & 4095 == 1, 'Partition info page is not enabled')
     vps = report.get('vps', [])
     require(bool(vps) and vps[0].get('index') == 0 and vps[0].get('tlbiControl') == 1,
             'Boot VP has not opted into TLBI control')
@@ -130,6 +131,26 @@ def verify(report, baseline, kernel_build=26100):
     synic_configured = all(registers.get(name, {}).get('writes', 0) > 0
                            and registers.get(name, {}).get('failures') == 0
                            for name in (0xa0010, 0xa0013))
+    # One incoming RequestOffers produces N offers plus AllOffersDelivered.
+    # Older empty-inventory snapshots have no channel counters. Without typed
+    # reply counters, conservatively audit only snapshots before channel I/O.
+    bootstrap_replies = None
+    if bus_counts_valid:
+        offers = bus.get('channelOffers', 0)
+        inventory = bus.get('offeredChannels', 0)
+        channels_valid = (type(offers) is int and 0 <= offers <= 8 * bus['offerRequests']
+                          and type(inventory) is int and 0 <= inventory <= min(offers, 8))
+        if 'channelOffers' not in bus:
+            channels_valid = channels_valid and inventory == 0 and all(
+                key not in bus or (type(bus[key]) is int and bus[key] == 0)
+                for key in ('channelOpens', 'channelCloses', 'gpadls', 'packetsReceived',
+                            'packetsSent', 'channelFaults'))
+        else:
+            channels_valid = channels_valid and all(type(bus.get(key)) is int and bus[key] == 0
+                for key in ('channelOpens', 'channelCloses', 'gpadls', 'packetsReceived',
+                            'packetsSent', 'channelFaults'))
+        if channels_valid:
+            bootstrap_replies = bus['contacts'] + bus['offerRequests'] + bus['unloads'] + offers
     vmbus_observed = False
     if bus_counts_valid and message_posts_observed and report.get('mode') == 'vmbus':
         vp, sint = bus['targetVp'], bus['targetSint']
@@ -139,13 +160,52 @@ def verify(report, baseline, kernel_build=26100):
                           (0x50000, 0x50001, 0x50002, 0x50003, 0x60000)
                           and bus['contacts'] > 0 and bus['offerRequests'] > 0
                           and bus['rejectedMessages'] == 0 and bus['pendingReplies'] == 0
-                          and bus['deliveredReplies'] == bus['contacts'] + bus['offerRequests'] + bus['unloads']
-                          and report['postedMessages'] >= bus['deliveredReplies']
+                          and bootstrap_replies is not None and bus['deliveredReplies'] == bootstrap_replies
+                          and report['postedMessages'] >= bus['contacts'] + bus['offerRequests'] + bus['unloads']
                           and 0 <= vp < len(vps) and 0 <= sint < 16 and synic_configured
                           and sint_row.get('writes', 0) > 0 and sint_row.get('failures') == 0
                           and type(private_irqs) is list and len(private_irqs) == len(vps)
                           and type(private_irqs[vp]) is int and private_irqs[vp] > 0)
+    offers_consumed = False
+    synic = report.get('synic', {})
+    if vmbus_observed and type(synic) is dict and type(synic.get('vps')) is list:
+        targets = [row for row in synic['vps'] if type(row) is dict and type(row.get('index')) is int and row['index'] == bus['targetVp']]
+        if len(targets) == 1 and type(targets[0].get('sints')) is list:
+            slots = [row for row in targets[0]['sints'] if type(row) is dict and type(row.get('index')) is int and row['index'] == bus['targetSint']]
+            if len(slots) == 1:
+                slot = slots[0]
+                page = targets[0].get('messagePage')
+                config = slot.get('config')
+                offers_consumed = (type(targets[0].get('control')) is int and targets[0]['control'] == 1 and
+                    type(page) is int and 4096 < page < (1 << 64) and page & 4095 == 1 and
+                    type(config) is int and 0 <= config < (1 << 64) and not config & 0x10000 and
+                    type(slot.get('slotType')) is int and slot['slotType'] == 0 and
+                    type(slot.get('queued')) is int and slot['queued'] == 0)
+    timer_delivery = (not errors and type(report.get('syntheticTimerDeliveries')) is int
+                      and report['syntheticTimerDeliveries'] > 0
+                      and any(registers.get(0xb0000 + 2 * i, {}).get('writes', 0) > 0
+                              and registers.get(0xb0000 + 2 * i, {}).get('failures') == 0
+                              and registers.get(0xb0001 + 2 * i, {}).get('writes', 0) > 0
+                              and registers.get(0xb0001 + 2 * i, {}).get('failures') == 0
+                              for i in range(4)))
+    heartbeat = report.get('heartbeat', {})
+    heartbeat_response = (not errors and type(heartbeat) is dict and type(bus) is dict
+        and report.get('mode') == 'vmbus' and bus.get('connected') is True
+        and heartbeat.get('state') in ('ready', 'wait-heartbeat', 'unresponsive')
+        and all(type(heartbeat.get(k)) is int and heartbeat[k] >= 0
+                for k in ('negotiations', 'probes', 'responses', 'timeouts', 'rejectedResponses'))
+        and 0 < heartbeat['responses'] <= heartbeat['probes'] and heartbeat['negotiations'] > 0
+        and type(heartbeat.get('frameworkMajor')) is int and heartbeat['frameworkMajor'] in (1, 3)
+        and type(heartbeat.get('heartbeatMajor')) is int and heartbeat['heartbeatMajor'] in (1, 3)
+        and all(type(bus.get(k)) is int and bus[k] > 0 for k in
+                ('channelOpens', 'packetsReceived', 'packetsSent'))
+        and bus['packetsReceived'] >= heartbeat['responses'] + 1
+        and bus['packetsSent'] >= heartbeat['probes'] + heartbeat['negotiations']
+        and event_signals_observed)
     return {'vmbusControlObserved': vmbus_observed,
+            'vmbusOffersConsumedObserved': offers_consumed,
+            'syntheticTimerDeliveryObserved': timer_delivery,
+            'heartbeatResponseObserved': heartbeat_response,
             'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
             'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
