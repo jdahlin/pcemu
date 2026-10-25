@@ -37,10 +37,11 @@ across stack helpers. Memory-indirect CALL remains interpreted.
 Expanded tests cover every target register, recently modified targets, SP/ESP
 aliasing, mixed operand/stack widths, paging and stack faults, MMIO replay, and a
 push overwriting the CALL's own code. The stack/JIT suite passes 33,360 checks,
-the core suite 352,644, and flag-liveness tests 91,745,234. This candidate's Windows
-and Excel performance validation is pending: `/Volumes/data` was unmounted and
-the comparison's baseline exited before loading the external snapshot. No
-application speedup is claimed for this change.
+the core suite 352,644, and flag-liveness tests 91,745,234. The first Windows and
+Excel attempt was blocked by the missing `/Volumes/data` mount. After reconnect,
+DOS, Win3.11 Notepad persistence, and both rtts/OSR2 applications and restart pass.
+Successful private disks are removed. The OSR2 check uses the recovered installed
+system; it does not rerun Setup under this candidate.
 
 [Native register CALL build and validation evidence](measurements/native-register-call-2026-10-25.json).
 
@@ -56,3 +57,22 @@ It does not establish application performance. A 17-iteration interpreter
 cross-check also passes in all eight modes. No guest disk was allocated.
 
 [Complete kernel, build commands, hashes and paired RAM results](measurements/native-register-call-ram-2026-10-25.json).
+
+
+After reconnect, all six matched Excel runs produce the expected recalculated
+pixels. Three paired observations have median baseline/candidate ratios of
+1.010 for response and 1.023 for execution wall time. A separate ARM guest was
+running, and variation is substantial; these results do not establish a reliable
+application speedup. Native instruction coverage rises from 97.09% to 97.69%.
+The instrumented diagnostic records 32,601,844 interpreted attempts and only
+52,681 FF register-operand attempts; remaining FF work is primarily memory forms.
+
+A separate uninstrumented host sample excludes 8,263 attachment-barrier samples
+and retains 7,754 task samples. Main-thread wall-stack shares are approximately
+28.5% JIT dispatch/cache/validation, 17.9% generated code/helpers, 16.9% device
+polling, 12.3% other main-loop work, 11.5% interpreter, 10.9% capture/control,
+1.2% compilation and 0.7% disk/compression. These are sampled attribution under
+the task harness, not isolated CPU timings or a general application profile.
+Dispatch validation and polling now warrant investigation alongside memory CALL.
+
+[Windows validation, complete paired Excel results and compressed profiles](measurements/excel-register-call-2026-10-25.json).

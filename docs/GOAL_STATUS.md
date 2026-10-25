@@ -908,3 +908,21 @@ These are shared-host microbenchmark observations, not Windows/Excel results.
 No guest disk was allocated. Source, commands, hashes and raw results are in
 `measurements/native-register-call-ram-2026-10-25.json`. Windows integration
 validation remains pending on the missing external volume.
+
+
+## External media reconnected; native register CALL integration verified (25 October)
+
+The SMB volume is back. Frozen native-register-CALL candidate boots DOS and
+passes Win3.11 exact Notepad persistence, rtts Win95 Calculator/clipboard/Notepad
+and restart, and the recovered OSR2 system's same application/restart checks.
+All successful private disks are removed. This OSR2 check is an installed-system
+regression check, not a fresh Setup run with the latest candidate.
+
+Six Excel recalculation runs match expected pixels. Three matched pairs observe
+median response/execution-wall ratios of 1.010/1.023; shared-host variability
+prevents claiming a reliable application gain. Native coverage is 97.09% versus
+97.69%; the diagnostic interpreter count is 32.6 million. Host wall-stack sampling
+now attributes 28.5% to dispatch/cache checks, 17.9% native/helpers, 16.9% device
+polling and 11.5% interpreter. The goal remains active; application speed and
+fresh-installer validation for subsequent runtime changes remain separate gates.
+See `measurements/excel-register-call-2026-10-25.json` and `near-call.md`.
