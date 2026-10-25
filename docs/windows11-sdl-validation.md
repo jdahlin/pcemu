@@ -63,8 +63,10 @@ waiting for a Metal drawable. That renderer shares the VM thread, so compositor
 waits also stall guest execution. macOS now uses SDL's software renderer; a
 subsequent three-second sample put 1,939 of 2,434 main-thread samples in VM
 execution instead. These are sampled stacks, not a measured total-boot speedup.
-Windows still took roughly three minutes to reach the lock screen in the latest
-run; its remaining boot delay is unresolved.
+Before the final HID corrections, one GUI run took roughly three minutes to
+reach the lock screen. The corrected production SDL run reached it within about
+40 seconds, including the launcher build check and platform-table generation.
+This is a single observation; repeated cold-boot performance is not yet measured.
 
 Local diagnostic outputs are ignored under `build/windows11-usb-debug/`,
 `build/windows11-usb-software/`, and `build/windows11-usb-evaluate-fixed/`.
