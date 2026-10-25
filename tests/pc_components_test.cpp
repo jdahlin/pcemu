@@ -35,6 +35,29 @@ int main() {
     rtc.reset(); check(rtc.state.index == 0 && rtc.now() == 1007);
     rtc.select(0x7f); check(rtc.readData() == 0);
 
+    // A single temporary boot sector is enough to exercise firmware handoff.
+    auto bootPath = std::filesystem::temp_directory_path() /
+                    ("pcemu-bios-" + std::to_string(getpid()) + ".img");
+    std::vector<char> sector(512, 0);
+    sector[0] = char(0xf4); // HLT: the disk itself prints nothing.
+    sector[510] = char(0x55); sector[511] = char(0xaa);
+    { std::ofstream file(bootPath, std::ios::binary); file.write(sector.data(), sector.size()); }
+    {
+        Machine bootMachine(bootPath.string(), bootPath.string(), 2 * 1024 * 1024);
+        for (bool floppy : {false, true}) {
+            bootMachine.boot(floppy);
+            auto text = bootMachine.text();
+            check(text.find("PCEmu BIOS") == 0);
+            check(text.find("System memory: 2048 KB") != std::string::npos);
+            check(text.find("Hard disk: detected") != std::string::npos);
+            check(text.find(floppy ? "Booting from floppy disk" : "Booting from hard disk") != std::string::npos);
+            check(bootMachine.cpu.ip == 0x7c00);
+            check(bootMachine.cpu.r[DX] == (floppy ? 0u : 0x80u));
+            check(bootMachine.cpu.read(0x7c00, 1) == 0xf4);
+            check(bootMachine.cpu.read(0x450, 2) == 0x0900);
+        }
+    }
+    std::filesystem::remove(bootPath);
     Machine machine("", "", 2 * 1024 * 1024);
     PcDisplay display;
     std::vector<uint8_t> rom(2048);

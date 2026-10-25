@@ -259,6 +259,18 @@ int main(int argc, char **argv) {
         std::vector<uint32_t> pixels(size_t(displayWidth) * displayHeight);
         std::unique_ptr<Frontend> frontend;
         if (!headless) frontend = createFrontend(displayWidth, displayHeight, DisplayShape::ClassicVga);
+        if (frontend && snapshotPath.empty()) {
+            // Present firmware text before executing the disk boot sector.
+            // Keep event handling live while giving the user time to read it.
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
+            while (std::chrono::steady_clock::now() < deadline) {
+                for (const auto &event : frontend->poll())
+                    if (event.kind == FrontendEvent::Kind::Quit) return 0;
+                display.render(m, pixels, displayWidth, displayHeight, 0);
+                frontend->present(pixels, displayWidth, displayHeight, DisplayShape::ClassicVga);
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            }
+        }
         struct TraceSample {
             uint32_t ip, base, flags, cr0, cr3, r[8];
             uint16_t cs;

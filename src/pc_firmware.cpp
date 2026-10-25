@@ -108,6 +108,23 @@ void Machine::boot(bool fd) {
         throw std::runtime_error("Cannot read boot sector");
     if (cpu.read(0x7dfe, 2) != 0xaa55)
         throw std::runtime_error("Invalid boot signature");
+    // Firmware output is real text video memory, visible to DOS and captures.
+    columns = 80;
+    rows = 25;
+    activePage = 0;
+    cursor = 0;
+    for (unsigned i = 0; i < columns * rows; ++i)
+        cpu.write(0xb8000 + i * 2, 0x0720, 2);
+    const std::string banner =
+        "PCEmu BIOS\r\n"
+        "IBM PC compatible firmware\r\n\r\n"
+        "System memory: " + std::to_string(cpu.mem.size() / 1024) + " KB\r\n"
+        "VGA display initialized\r\n"
+        "Hard disk: " + (disk ? std::string("detected") : std::string("none")) + "\r\n"
+        "Floppy drive: " + (floppy ? std::string("detected") : std::string("none")) +
+        "\r\n\r\nBooting from " + (fd ? "floppy disk" : "hard disk") + "...\r\n";
+    for (unsigned char ch : banner)
+        character(ch, 7, true);
     for (unsigned seg = 0; seg < 6; seg++)
         cpu.segment(seg, 0);
     cpu.ip = 0x7c00;

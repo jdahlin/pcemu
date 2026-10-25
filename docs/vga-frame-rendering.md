@@ -73,3 +73,13 @@ resolution, so VBE 640x400 can retain its native aspect.
 `make build/frontend-tests && ./build/frontend-tests` uses SDL's dummy video
 driver to check initial window shape, classic mode transitions, and same-size
 VGA/square-pixel policy transitions without a GUI or guest disk.
+
+## BIOS startup text
+
+Cold boots display a PCEmu BIOS banner in guest text video memory, reporting
+configured RAM, attached drives and the selected boot drive. The GUI shows it
+for 1.5 seconds before executing the disk boot sector, with the window still
+responsive to close events. Headless runs have no presentation delay and snapshot
+restores resume directly. This is the emulator's own firmware banner, not a
+third-party BIOS or a BIOS setup utility. The component tests exercise hard-disk
+and floppy boot handoff using a temporary 512-byte image.
