@@ -1,10 +1,13 @@
 """The usage audit must reject synthetic probes and incomplete Windows traces."""
 from copy import deepcopy
+import json
+import subprocess
+import tempfile
 from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from verify_windows_hyperv import verify
+from verify_windows_hyperv import verify, verify_poweroff
 
 
 def fixture():
@@ -310,6 +313,52 @@ class WindowsHyperV(unittest.TestCase):
             self.assertFalse(verify(changed, baseline)['timesyncAcknowledgmentObserved'])
         self.assertFalse(verify(dict(report, signaledEvents=0), baseline)['timesyncAcknowledgmentObserved'])
         self.assertFalse(verify(dict(report, guestOsId=0), baseline)['timesyncAcknowledgmentObserved'])
+
+    def test_shutdown_acceptance_is_not_terminal_poweroff(self):
+        report, baseline = offered_fixture()
+        self.assertFalse(verify(report, baseline)['shutdownAcceptedObserved'])
+        report['calls'].append(dict(code=0x5d, count=1, failures=0))
+        report.update(legacyCalls=21, signaledEvents=1)
+        report['vmbus'].update(channelOpens=1, gpadls=1, packetsReceived=2, packetsSent=2)
+        report['shutdown'] = dict(state='accepted', frameworkMajor=3, shutdownMajor=3, shutdownMinor=2,
+            negotiations=1, requests=1, accepted=1, denied=0, timeouts=0, rejectedResponses=0, lastStatus=0)
+        result = verify(report, baseline)
+        self.assertTrue(result['shutdownAcceptedObserved'])
+        self.assertFalse(result['guestPowerOffVerified'])
+        for malformed in (None, [], True):
+            self.assertFalse(verify(dict(report, shutdown=malformed), baseline)['shutdownAcceptedObserved'])
+        for key, value in (('requests', 0), ('accepted', 0), ('accepted', True), ('accepted', 2),
+                           ('denied', 1), ('lastStatus', 1), ('negotiations', 0), ('frameworkMajor', True),
+                           ('shutdownMinor', 1), ('state', 'ready'), ('timeouts', -1)):
+            changed = deepcopy(report)
+            changed['shutdown'][key] = value
+            self.assertFalse(verify(changed, baseline)['shutdownAcceptedObserved'], (key, value))
+        log = 'Hyper-V guest shutdown requested\nUEFI run complete: exits=123 state=power-off\n'
+        self.assertTrue(verify_poweroff(result, log, 0))
+        for bad in ('', log.replace('power-off', 'reset-requested'),
+                    log.replace('requested', 'unavailable'), log + log,
+                    'UEFI run complete: state=power-off\nHyper-V guest shutdown requested\n'):
+            self.assertFalse(verify_poweroff(result, bad, 0))
+        for code in (1, -15, False, None):
+            self.assertFalse(verify_poweroff(result, log, code))
+        self.assertFalse(verify_poweroff(dict(result, shutdownAcceptedObserved=False), log, 0))
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            for name, data in (('report.json', report), ('baseline.json', baseline)):
+                (directory / name).write_text(json.dumps(data))
+            command = [sys.executable, str(Path(__file__).resolve().parents[1] / 'tools/verify_windows_hyperv.py'),
+                       str(directory / 'report.json'), '--baseline', str(directory / 'baseline.json'),
+                       '--shutdown-host-log', str(directory / 'host.log'), '--runner-exit-code', '0']
+            for host_log, expected in ((log, 0), (log.replace('power-off', 'reset-requested'), 1)):
+                (directory / 'host.log').write_text(host_log)
+                completed = subprocess.run(command, capture_output=True, text=True, timeout=5)
+                self.assertEqual(completed.returncode, expected, completed.stderr)
+                self.assertEqual(json.loads(completed.stdout)['guestPowerOffVerified'], expected == 0)
+
+        for key, value in (('gpadls', 0), ('packetsReceived', 1), ('packetsSent', 1), ('connected', False)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['shutdownAcceptedObserved'])
 
     def test_required_evidence(self):
         report, baseline = fixture()

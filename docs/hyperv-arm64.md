@@ -2037,3 +2037,36 @@ channel and leaves the runner alive; evidence is in
 `build/hyperv-research/shutdown-signal/`. This does not prove an actual Windows
 shutdown. The next gate is Windows negotiation, an explicit request on a private
 test disk, a valid guest acknowledgment and independently observed poweroff.
+
+### Verified Windows controlled poweroff
+
+The integrated shutdown source from `b00b4cb` was booted on a separate APFS-cloned
+write overlay with 8 GiB RAM and two VPs. Relevant source files were compared
+against the commit; executable hash and launch/request context are retained in
+`build/windows11-hyperv/shutdown/launch.json`. `before-request.json` records the
+ready shutdown channel (framework 3, service 3.2) and zero power requests while
+heartbeat and timesync were responding.
+
+One explicit SIGUSR2 was sent after that readiness check. Windows acknowledged
+exactly one shutdown request, status zero, then powered off through the guest
+platform path. The runner exited normally with code 0; `host.log` contains one
+host-request diagnostic followed by `UEFI run complete ... state=power-off`.
+No SIGTERM/SIGINT was sent to the test process. Final `hyperv.json` retains one
+accepted request, no denial/rejected response/timeout, and zero Hyper-V failures
+or channel faults. Heartbeat, timesync and core-usage evidence also pass.
+
+The auditor distinguishes `shutdownAcceptedObserved` from
+`guestPowerOffVerified`. The former needs negotiated shutdown versions, typed
+request/response counters and real channel/event/packet evidence. The latter
+additionally requires `--shutdown-host-log LOG --runner-exit-code 0`, one ordered
+request/terminal record, and terminal power-off rather than reset or host
+interruption. The host log is hashed alongside the counter snapshots. When
+these optional shutdown arguments are supplied, unverified poweroff produces
+nonzero exit status. All 19 auditor tests pass, including malformed counters,
+acknowledgment alone, reordered/duplicate/missing records, restart state and
+abnormal exit. `audit.json` records both shutdown gates true for this actual run.
+
+The cleanly stopped test disk was removed and the original basic-profile VM
+restarted on its original overlay. This proves the normal poweroff path; actual
+Windows reboot/hibernate behavior and timesync clock adjustment remain separate
+validation work. No performance benefit is inferred.

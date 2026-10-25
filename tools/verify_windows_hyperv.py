@@ -216,11 +216,29 @@ def verify(report, baseline, kernel_build=26100):
         and bus['packetsReceived'] >= timesync['acknowledgments'] + timesync['negotiations']
         and bus['packetsSent'] >= timesync['samples'] + timesync['negotiations']
         and event_signals_observed)
+    shutdown = report.get('shutdown', {})
+    shutdown_accepted = (not errors and type(shutdown) is dict
+        and report.get('mode') == 'vmbus' and bus.get('connected') is True
+        and shutdown.get('state') == 'accepted'
+        and all(type(shutdown.get(k)) is int and shutdown[k] >= 0
+                for k in ('negotiations', 'requests', 'accepted', 'denied', 'timeouts', 'rejectedResponses', 'lastStatus'))
+        and shutdown['negotiations'] > 0 and shutdown['accepted'] > 0
+        and shutdown['requests'] >= shutdown['accepted'] + shutdown['denied']
+        and shutdown['lastStatus'] == 0
+        and type(shutdown.get('frameworkMajor')) is int and shutdown['frameworkMajor'] in (1, 3)
+        and type(shutdown.get('shutdownMajor')) is int and shutdown['shutdownMajor'] == 3
+        and type(shutdown.get('shutdownMinor')) is int and shutdown['shutdownMinor'] == 2
+        and all(type(bus.get(k)) is int and bus[k] > 0 for k in
+                ('channelOpens', 'gpadls', 'packetsReceived', 'packetsSent'))
+        and bus['packetsReceived'] >= shutdown['accepted'] + shutdown['denied'] + shutdown['negotiations']
+        and bus['packetsSent'] >= shutdown['requests'] + shutdown['negotiations']
+        and event_signals_observed)
     return {'vmbusControlObserved': vmbus_observed,
             'vmbusOffersConsumedObserved': offers_consumed,
             'syntheticTimerDeliveryObserved': timer_delivery,
             'heartbeatResponseObserved': heartbeat_response,
-            'timesyncAcknowledgmentObserved': timesync_ack, 'guestClockAdjustmentVerified': False,
+            'timesyncAcknowledgmentObserved': timesync_ack,
+            'shutdownAcceptedObserved': shutdown_accepted, 'guestPowerOffVerified': False, 'guestClockAdjustmentVerified': False,
             'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
             'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
@@ -228,12 +246,27 @@ def verify(report, baseline, kernel_build=26100):
             'guiBootVerified': False, 'performanceBenefitVerified': False}
 
 
+def verify_poweroff(result, host_log, runner_exit_code):
+    """Require a guest acceptance plus the same runner's terminal power state."""
+    if not result.get('shutdownAcceptedObserved') or type(runner_exit_code) is not int or runner_exit_code != 0:
+        return False
+    lines = host_log.splitlines()
+    requests = [i for i, line in enumerate(lines) if line == 'Hyper-V guest shutdown requested']
+    terminals = [(i, line) for i, line in enumerate(lines) if line.startswith('UEFI run complete:')]
+    return (len(requests) == 1 and len(terminals) == 1 and requests[0] < terminals[0][0]
+            and terminals[0][1].endswith(' state=power-off'))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
     parser.add_argument('--baseline', type=Path, required=True)
     parser.add_argument('--kernel-build', type=int, default=26100)
+    parser.add_argument('--shutdown-host-log', type=Path)
+    parser.add_argument('--runner-exit-code', type=int)
     args = parser.parse_args()
+    if (args.shutdown_host_log is None) != (args.runner_exit_code is None):
+        parser.error('Supply both shutdown host log and runner exit code')
     raw = {}
     for name, path in (('report', args.report), ('baseline', args.baseline)):
         if path.stat().st_size > 1024 * 1024:
@@ -241,8 +274,15 @@ def main():
         raw[name] = path.read_bytes()
     result = verify(json.loads(raw['report']), json.loads(raw['baseline']), args.kernel_build)
     result['sha256'] = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
+    if args.shutdown_host_log is not None:
+        if args.shutdown_host_log.stat().st_size > 4 * 1024 * 1024:
+            parser.error('Expected bounded shutdown host log')
+        host_raw = args.shutdown_host_log.read_bytes()
+        result['guestPowerOffVerified'] = verify_poweroff(result, host_raw.decode('utf-8'), args.runner_exit_code)
+        result['sha256']['shutdownHostLog'] = hashlib.sha256(host_raw).hexdigest()
+        result['runnerExitCode'] = args.runner_exit_code
     print(json.dumps(result, indent=2))
-    return 0 if result['verifiedCoreUsage'] else 1
+    return 0 if result['verifiedCoreUsage'] and (args.shutdown_host_log is None or result['guestPowerOffVerified']) else 1
 
 
 if __name__ == '__main__':
