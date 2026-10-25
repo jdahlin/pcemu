@@ -64,7 +64,14 @@ class SDLFrontend final : public Frontend {
                 desktopWidth = w;
                 desktopHeight = h;
             }
+            #ifdef __APPLE__
+            // Metal nextDrawable can block for a second when this window is
+            // occluded. Rendering shares the VM thread: never stall guest CPUs
+            // behind the compositor. The software surface has no drawable pool.
+            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+#else
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+#endif
             if (!renderer)
                 renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
             if (!renderer)
