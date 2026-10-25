@@ -1835,3 +1835,16 @@ GUIDs and their inequality; all 189 heartbeat checks pass. This is an observed
 Windows client requirement, not a claim that all VMBus devices require fixed
 instance IDs. Runtime heartbeat verification with the corrected offer is the
 next gate; the earlier failed service runs all used the old instance GUID.
+
+The corrected instance offer was subsequently booted with the existing Windows
+installation. `build/windows11-hyperv/services/hyperv-instance.json` captures a
+new guest GPADL Header (message kind 8), channel 1, GPADL 1, declared range bytes
+0x68, one range, byte count 0xc000, and a 240-byte PostMessage payload. This is
+new channel-setup activity absent in all runs with the reused interface GUID.
+The current decoder rejects it with status 5 before creating a descriptor:
+240-20 is not a multiple of eight and the supplied buffer extends past the
+declared range bytes. Heartbeat still has no open channel or response, and this
+run has one Hyper-V failure; it must not be presented as successful integration.
+The next fix must decode declared GPADL data within the fixed Windows envelope
+while preserving bounds/fragmentation validation. The stopped run's counters
+and message prefix retain the evidence; the original basic VM is restored.
