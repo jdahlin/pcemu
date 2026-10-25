@@ -35,3 +35,17 @@ reference counter pass their observation gates. Evidence is retained under
 This is startup evidence, not a long-duration stability result. The unknown
 exit has not yet recurred; actual clock correction remains unverified. The
 runner's separate native self-test passes all 284 checks.
+
+The four-GiB run subsequently accepted an explicit Hyper-V shutdown request
+and reached terminal `state=power-off` without reproducing the unknown exit.
+The detached launch did not retain its process exit code, so no new complete
+shutdown audit is claimed from that run.
+
+The corrected clock probe (`276eaa3`) was staged through WinPE at four GiB.
+The new staging report contains `PCEMU_PROBE_LOGON_DOMAIN_OK` and
+`PCEMU_SERVICE_STAGE_OK`. Temporary secret-bearing WIM, boot disk, staging
+overlay and generated credential command were removed after WinPE stopped.
+The next installed-Windows run uses the same private test overlay, four GiB
+and VMBus. Its `clock-adjustment/launch3.json` records the probe hash; the
+supervisor saves the actual runner exit code to `exit3.json`. This staging
+result does not establish clock adjustment; a fresh guest report is required.
