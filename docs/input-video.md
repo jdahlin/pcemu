@@ -6,6 +6,28 @@ The Windows display driver is the external, MIT-licensed VMDisp9x guest driver;
 no emulator implementation is linked or copied from the products named in its
 compatibility list.
 
+`./run95.sh` prefers the persistent `media/win95-svga.pcd` disk, configured with
+VMDisp9x at 1024×768 in 32-bit colour. It cold boots normally, including the BIOS
+screen. `./run95.sh --vga` selects the original working disk. If the SVGA disk is
+absent, the launcher uses the original disk until the driver is installed.
+
+To configure a new SVGA disk, shut down the original guest first, then stage the
+pinned driver:
+
+```sh
+cp media/win95-working.pcd media/win95-svga-base.pcd
+chmod a-w media/win95-svga-base.pcd
+python3 tools/stage_display_driver.py media/win95-svga-base.pcd media/win95-svga.pcd
+```
+
+This preserves the existing compressed working overlay as an immutable parent;
+the VGA fallback can continue writing its own disk independently. Keep the base
+and all its parents. For a pristine QCOW2 installation, stage directly from the
+read-only `media/win95.raw` base instead. Boot it with `./run95.sh`, install the compatible adapter using the steps below,
+restart, and select True Color (32 bit) and 1024×768 in Display Settings. These
+settings persist in the guest disk; merely changing the host framebuffer cannot
+make the stock Windows VGA driver render more colours.
+
 The configured Windows 95/Office desktop is available through `./run-office97.sh`.
 It restores `build/snapshots/office97-integrated` into a private writable delta.
 The original VGA benchmark desktop remains available with `--vga`.

@@ -25,8 +25,8 @@ class Run95Test(unittest.TestCase):
                 path.write_text(text)
                 path.chmod(0o755)
             env = dict(os.environ, PATH=str(root / 'bin') + ':' + os.environ['PATH'])
-            def run():
-                subprocess.run(['bash', str(root / 'run95.sh'), '--headless', '--steps', '1'],
+            def run(*options):
+                subprocess.run(['bash', str(root / 'run95.sh'), *options, '--headless', '--steps', '1'],
                                env=env, check=True)
                 args = (root / 'args').read_text().splitlines()
                 self.assertEqual(args[-3:], ['--headless', '--steps', '1'])
@@ -44,6 +44,15 @@ class Run95Test(unittest.TestCase):
             for signature in (bytes(4), b'PCEM'):
                 base.write_bytes(signature + bytes(508))
                 self.assertEqual(run(), 'media/win95.raw')
+            svga = root / 'media/win95-svga.pcd'
+            svga.write_bytes(b'configured SVGA disk')
+            self.assertEqual(run(), 'media/win95-svga.pcd')
+            self.assertEqual(run('--vga'), 'media/win95.raw')
+            self.assertNotIn('--vga', (root / 'args').read_text().splitlines())
+            base.write_bytes(b'QFI\xfb' + bytes(508))
+            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
+            self.assertEqual(run(), 'media/win95-svga.pcd')
+            self.assertEqual(svga.read_bytes(), b'configured SVGA disk')
 
 
 if __name__ == '__main__':

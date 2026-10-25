@@ -1,0 +1,19 @@
+{
+  "machine": "win95",
+  "driver": "VMDisp9x 1.2025.0.119b",
+  "driverArchiveSha256": "e0d698a6089347a6a619ed439c092f247392fbafac6b342f4651c1380911fb23",
+  "mode": {
+    "width": 1024,
+    "height": 768,
+    "bpp": 32
+  },
+  "validation": [
+    "headless driver installation",
+    "guest restart after driver installation",
+    "guest restart after colour-depth change",
+    "default launcher cold boot to unobscured Explorer",
+    "normal shutdown through shared close request and explicit disk flush"
+  ],
+  "diskPolicy": "persistent compressed overlay; existing working disk preserved",
+  "evidence": "build/svga-default/cold-verification"
+}

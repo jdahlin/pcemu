@@ -76,11 +76,12 @@ def observe(application=False):
             result = subprocess.run(['tesseract', str(crop), 'stdout', '--psm', '6'],
                                     check=True, text=True, capture_output=True)
             text += normalize(result.stdout)
+    if width >= 640 and height >= 480:
         # Confirm the central desktop is actually unobscured, rather than
         # mistaking visible icons behind an unrecognized modal for readiness.
         samples = [pixels[(y*width+x)*3:(y*width+x)*3+3]
                    for y in range(90, 400, 10) for x in range(130, 600, 10)]
-        if sum(pixel == bytes([85, 170, 170]) for pixel in samples) > len(samples)*.95:
+        if sum(pixel in (bytes([85, 170, 170]), bytes([0, 128, 128])) for pixel in samples) > len(samples)*.95:
             text += 'unobscureddesktop'
             if not application and 'mycomputer' not in text:
                 # Fresh Setup leaves My Computer selected. Sparse OCR can

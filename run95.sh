@@ -2,11 +2,16 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 ./tools/build.sh
-if [[ ! -f media/win95.raw ]]; then
+disk=media/win95.raw
+if [[ ${1:-} == --vga ]]; then
+  shift
+elif [[ -f media/win95-svga.pcd ]]; then
+  disk=media/win95-svga.pcd
+fi
+if [[ ! -f "$disk" ]]; then
   echo 'No Windows 95 working disk. See README.md for current media requirements.' >&2
   exit 1
 fi
-disk=media/win95.raw
 # Detect the contents, including when the historical .raw name is a symlink.
 magic=$(od -An -tx1 -N4 "$disk" | tr -d ' \n')
 if [[ "$magic" == 514649fb ]]; then
