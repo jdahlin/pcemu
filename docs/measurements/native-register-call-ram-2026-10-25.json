@@ -1,0 +1,710 @@
+{
+  "scope": "RAM-only register CALL/RET checksum loop, no guest OS or devices; not an application speedup or Rosetta comparison",
+  "startedUnix": 1792948065.6064079,
+  "loadBefore": [
+    3.3447265625,
+    3.1591796875,
+    3.08837890625
+  ],
+  "hostContention": "Separate Windows ARM64 HVF guest was running at start; host not isolated",
+  "pairs": [
+    {
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.376055
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.469345
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.357935
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.445986
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.333032
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.425531
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.319442
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.409283
+        }
+      ],
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.208331
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.262561
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.219412
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.251739
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.212764
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.248638
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.221958
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.277379
+        }
+      ],
+      "ratios": [
+        1.8050842169432297,
+        1.7875655561945607,
+        1.6313373926676755,
+        1.7716206070573095,
+        1.565264800436164,
+        1.7114479685325654,
+        1.4392002090485587,
+        1.4755370810335318
+      ]
+    },
+    {
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.215877
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.258952
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.213424
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.252751
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.220398
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.284876
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.244789
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.261755
+        }
+      ],
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.321476
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.408186
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.324161
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.413897
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.319114
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.407645
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.314941
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.406251
+        }
+      ],
+      "ratios": [
+        1.4891628103040155,
+        1.576299854799345,
+        1.5188591723517504,
+        1.6375681995323461,
+        1.4478988012595395,
+        1.43095592468302,
+        1.286581504887883,
+        1.5520276594525413
+      ]
+    },
+    {
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.309087
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.396518
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.311083
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 38528,
+          "seconds": 0.396703
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.311947
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.470794
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.366113
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 39999972,
+          "checksum": 10000000,
+          "seconds": 0.470603
+        }
+      ],
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.239794
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.258968
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.216844
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 38528,
+          "seconds": 0.263902
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.217055
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.258537
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.21311
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 10000000,
+          "instructions": 50000000,
+          "native": 49999965,
+          "checksum": 10000000,
+          "seconds": 0.259194
+        }
+      ],
+      "ratios": [
+        1.288968864942409,
+        1.5311467053844492,
+        1.4345935326778698,
+        1.5032208926040724,
+        1.437179516712354,
+        1.8209927399173038,
+        1.7179531697245556,
+        1.8156400225313858
+      ]
+    }
+  ],
+  "source": "#include \"jit.hpp\"\n#include <algorithm>\n#include <chrono>\n#include <iostream>\n#include <stdexcept>\nusing namespace pc;\nint main(int argc,char **argv) {\n try {\n  unsigned loops=argc>1?std::stoul(argv[1]):1000000;\n  bool enabled=argc<3 || std::string(argv[2])!=\"interpreter\";\n  if(!loops || loops>10000000) throw std::runtime_error(\"Invalid loop count\");\n  std::cout << \"[\";\n  bool first=true;\n  for(bool code32:{false,true}) for(bool stack32:{false,true}) for(bool paging:{false,true}) {\n   CPU c(1024*1024);\n   c.cr[0]=0x11;\n   c.s[CS].big=code32; c.s[CS].limit=code32?UINT32_MAX:65535;\n   c.s[SS].big=stack32; c.s[SS].base=0x10000; c.s[SS].limit=UINT32_MAX;\n   c.r[AX]=0x100; c.r[CX]=loops; c.r[DX]=0; c.r[SP]=0x7000;\n   std::vector<uint8_t> code={0xff,0xd0};\n   if(!code32) code.push_back(0x66);\n   code.insert(code.end(),{0x83,0xe9,1,0x75,uint8_t(-int(code.size()+5))});\n   auto end=code.size(); code.push_back(0xf4);\n   std::copy(code.begin(),code.end(),c.mem.begin());\n   c.mem[0x100]=0x83;c.mem[0x101]=0xc2;c.mem[0x102]=1;c.mem[0x103]=0xc3;\n   if(paging) {\n    c.write(0x80000,0x81007,4);\n    for(unsigned p=0;p<256;++p)c.write(0x81000+4*p,(p<<12)|7,4);\n    c.cr[3]=0x80000;c.cr[0]|=0x80000000;c.flushTLB();\n   }\n   Jit jit(c,enabled);\n   auto start=std::chrono::steady_clock::now();\n   while(c.ip!=end && c.instructions<=uint64_t(loops)*5)jit.run();\n   double sec=std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();\n   if(c.ip!=end || c.r[CX] || c.r[DX]!=(code32?loops:loops&65535) || c.r[SP]!=0x7000 || c.instructions!=uint64_t(loops)*5)\n    throw std::runtime_error(\"CALL/RET count, stack, destination or checksum mismatch\");\n   if(!first)std::cout << \",\";first=false;\n   std::cout << \"{\\\"code32\\\":\"<<code32<<\",\\\"stack32\\\":\"<<stack32<<\",\\\"paging\\\":\"<<paging<<\",\\\"loops\\\":\"<<loops<<\",\\\"instructions\\\":\"<<c.instructions<<\",\\\"native\\\":\"<<jit.nativeInstructions<<\",\\\"checksum\\\":\"<<c.r[DX]<<\",\\\"seconds\\\":\"<<sec<<\"}\"<<std::flush;\n  }\n  std::cout << \"]\\n\";\n }catch(const std::exception &e){std::cerr<<e.what()<<'\\n';return 1;}\n}\n",
+  "commands": {
+    "baseline": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Ibuild/reg-call/limit-fix/source",
+      "build/reg-call/limit-fix/source/cpu.cpp",
+      "build/reg-call/limit-fix/source/jit.cpp",
+      "build/reg-call/limit-fix/source/jit_decode.cpp",
+      "build/reg-call/limit-fix/source/jit_flags.cpp",
+      "build/reg-call/limit-fix/source/jit_runtime.cpp",
+      "build/reg-call/limit-fix/source/jit_arm64.cpp",
+      "build/reg-call/ram.cpp",
+      "-o",
+      "build/reg-call/ram-baseline"
+    ],
+    "candidate": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Ibuild/reg-call/native/source",
+      "build/reg-call/native/source/cpu.cpp",
+      "build/reg-call/native/source/jit.cpp",
+      "build/reg-call/native/source/jit_decode.cpp",
+      "build/reg-call/native/source/jit_flags.cpp",
+      "build/reg-call/native/source/jit_runtime.cpp",
+      "build/reg-call/native/source/jit_arm64.cpp",
+      "build/reg-call/ram.cpp",
+      "-o",
+      "build/reg-call/ram-candidate"
+    ]
+  },
+  "binarySha256": {
+    "baseline": "8e545d151f3544f29331fc0ca25b28d81c25eaf6c09c3837f5253cdd740927e1",
+    "candidate": "f30c240df77eda321a8aea9aff97fefcf56a5b42ab9dad804cc3b10e49abc7bd"
+  },
+  "medianPairedRatioByCase": [
+    1.4891628103040155,
+    1.576299854799345,
+    1.5188591723517504,
+    1.6375681995323461,
+    1.4478988012595395,
+    1.7114479685325654,
+    1.4392002090485587,
+    1.5520276594525413
+  ],
+  "diagnosticInterpreter": [
+    {
+      "code32": 0,
+      "stack32": 0,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 3.583e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 0,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 2.667e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 1,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.583e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 1,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 2.417e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 0,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.75e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 0,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 2.209e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 1,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.667e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 1,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.709e-06
+    }
+  ],
+  "loadAfter": [
+    3.80712890625,
+    3.267578125,
+    3.12744140625
+  ],
+  "finishedUnix": 1792948080.505672,
+  "sourceSnapshotDifference": [
+    "jit_arm64.cpp",
+    "jit_decode.cpp",
+    "jit_ir.hpp"
+  ],
+  "sourceHashes": {
+    "baseline": {
+      "cpu.cpp": "7d611a82be43fd544cbaa753a5bb080786ce70794746638dde6f9e8c99a5bb44",
+      "jit.cpp": "ae4c4496b305e63b1e84616aa585a55ee8a719329e67910fdc76180db83b1b0c",
+      "jit_decode.cpp": "fce1a2c95a7f9ad013fae3c1edde2641da01f72052d6f41d49173e4834f57fb5",
+      "jit_flags.cpp": "5f0d9c03a41f7756664854102b9cdb8d755db76448fca978d1e892607d34838f",
+      "jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+      "jit_arm64.cpp": "e2044529ecde183f28d1c94e84a0eff436a9d8483646f00656e8eeece13a67dc",
+      "jit_ir.hpp": "3755fe0586ae06605794929c75067f97890a6a56bc74c1c34b8c126fedf2f1b5"
+    },
+    "candidate": {
+      "cpu.cpp": "7d611a82be43fd544cbaa753a5bb080786ce70794746638dde6f9e8c99a5bb44",
+      "jit.cpp": "ae4c4496b305e63b1e84616aa585a55ee8a719329e67910fdc76180db83b1b0c",
+      "jit_decode.cpp": "439f7b5a6bc570aff5fbb6c06320ca4de4ee7760b28683d1a31394cea891af6f",
+      "jit_flags.cpp": "5f0d9c03a41f7756664854102b9cdb8d755db76448fca978d1e892607d34838f",
+      "jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+      "jit_arm64.cpp": "f548ee88f6176ed4d9ecc1ef0e0b82d41e1a5d146224f986945b34dc195405a4",
+      "jit_ir.hpp": "7acd9336c89cb1c457dc58e44eb5081b37e1d97c57f59d78003d66f0fffbd72c"
+    }
+  },
+  "baselineCommit": "2f3664b",
+  "candidateCommit": "a9ecc39",
+  "checksPerMeasuredRun": "Each of 8 cases checks destination IP, exactly 50,000,000 guest instructions, zero remaining iterations, final DX/EDX checksum, and restored SP/ESP; no disk or device model.",
+  "medianWholeMatrixRatio": 1.5735403682881224
+}

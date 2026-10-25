@@ -43,3 +43,16 @@ the comparison's baseline exited before loading the external snapshot. No
 application speedup is claimed for this change.
 
 [Native register CALL build and validation evidence](measurements/native-register-call-2026-10-25.json).
+
+
+A subsequent RAM-only loop checks register CALL, an increment, RET, decrement
+and conditional branch with 16/32-bit code, 16/32-bit stacks, and flat/paged RAM.
+Each measured case executes 10 million calls and validates 50 million guest
+instructions, the exact checksum, destination and restored stack pointer. Three
+alternating baseline/candidate pairs observed per-case median speed ratios of
+1.44–1.71x (whole-matrix median 1.57x). This isolates a CALL-heavy path, excludes
+devices and guest OS work, and ran alongside another ARM guest on a shared host.
+It does not establish application performance. A 17-iteration interpreter
+cross-check also passes in all eight modes. No guest disk was allocated.
+
+[Complete kernel, build commands, hashes and paired RAM results](measurements/native-register-call-ram-2026-10-25.json).

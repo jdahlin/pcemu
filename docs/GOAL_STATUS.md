@@ -895,3 +895,16 @@ Application/performance validation is pending because the external /Volumes/data
 volume disappeared before the matched Excel baseline loaded its snapshot. No
 application timing result was produced. See `near-call.md` and
 `measurements/native-register-call-2026-10-25.json`. The overall goal remains active.
+
+
+## Disk-free register CALL measurement (25 October)
+
+With /Volumes/data still unavailable, a RAM-only CALL/RET loop now supplies
+matched-source evidence for the native register CALL path. Three alternating
+pairs across 16/32-bit code and stacks, flat/paged RAM, check exact 50-million
+instruction counts, destinations, checksums and restored stack pointers. The
+per-case median speed ratios are 1.44–1.71x; whole-matrix median is 1.57x.
+These are shared-host microbenchmark observations, not Windows/Excel results.
+No guest disk was allocated. Source, commands, hashes and raw results are in
+`measurements/native-register-call-ram-2026-10-25.json`. Windows integration
+validation remains pending on the missing external volume.
