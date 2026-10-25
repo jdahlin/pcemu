@@ -1,0 +1,10 @@
+{
+  "scope": "Real no-input negative task times out; detached guest survives failed harness exit and responds to a new capture; exact before pixels remain; stopped explicitly and private child removed",
+  "pid": 42891,
+  "liveStatus": "42891     1 Rs",
+  "freshCapture": true,
+  "beforeMatches": true,
+  "afterMatches": false,
+  "explicitQuitVerified": true,
+  "privateDiskRemoved": true
+}

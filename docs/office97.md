@@ -236,3 +236,11 @@ The initial observed NAS restore took about 29 seconds; restore readiness has
 its own timeout and is excluded from task response timing. This fixture
 validation is not a speedup comparison.
 [Recovery and positive/negative evidence](measurements/excel-recovered-task-2026-10-25.json).
+
+Snapshot-task guests start in a separate process session so a failing
+benchmark parent cannot lose the live guest through terminal process-group
+cleanup. A real no-input negative run verified that the guest survives the
+failed harness exit, responds to a new capture, and still shows the exact
+initial result pixels. It was then stopped through its control file and its
+owned temporary disk removed. This changes failure handling, not task timing.
+[Failure-preservation check](measurements/snapshot-failure-preservation-2026-10-25.json).

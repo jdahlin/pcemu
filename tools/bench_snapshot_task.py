@@ -95,7 +95,9 @@ for index in range(a.repeat):
     elif a.jit_follow_jumps is False:
         command.append('--jit-basic-blocks')
     started = time.perf_counter()
-    child = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
+    # Preserve a failed guest when the invoking terminal cleans up its group.
+    child = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT,
+                             start_new_session=True)
     sampler = None
     sampler_log = None
     def send(*commands):
