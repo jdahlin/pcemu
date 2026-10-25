@@ -1107,3 +1107,13 @@ successful replacements. Only one last value per existing counter is stored;
 the 128-register bound remains, and no guest message payload or RAM contents
 are added. Tests cover a rejected out-of-RAM SIPP mapping followed by a valid
 replacement and verify that both the target VP and resulting status update.
+
+A second instrumented boot recorded the failing SIPP value as `0x7ffff001`
+(enable bit plus GPA `0x7ffff000`), high value zero, VP0, status 5. The address
+is inside the configured 8 GiB guest RAM; it is not evidence of a missing RAM
+page. The register counter now additionally retains the association's two
+padding fields and whether the hypercall used fast input, to distinguish
+register validation from rejection of the surrounding ABI record. The normal
+reserved-field validation remains unchanged while this is investigated.
+Model checks cover nonzero association padding and verify its exact bounded
+snapshot; 2,089 Hyper-V checks pass.

@@ -468,6 +468,9 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
             if (counters && synthetic) {
                 counters->lastWrite = {get(input, at + 16, 8), get(input, at + 24, 8)};
                 counters->lastWriteVp = vp;
+                counters->lastWriteNamePadding = uint32_t(get(input, at + 4, 4));
+                counters->lastWritePadding = get(input, at + 8, 8);
+                counters->lastWriteFast = fast;
             }
             status = get(input, at + 4, 4) || get(input, at + 8, 8) ? invalidParameter :
                 writeRegister(name, vp, {get(input, at + 16, 8), get(input, at + 24, 8)});
@@ -526,7 +529,9 @@ std::string ArmHyperV::report() const {
         s << "{\"name\":" << name << ",\"reads\":" << n.reads << ",\"writes\":" << n.writes << ",\"failures\":" << n.failures;
         if (n.writes && ((name >= 0xa0000 && name <= 0xa0015) || (name >= 0xb0000 && name <= 0xb0007)))
             s << ",\"lastWriteLow\":" << n.lastWrite[0] << ",\"lastWriteHigh\":" << n.lastWrite[1]
-              << ",\"lastWriteVp\":" << n.lastWriteVp << ",\"lastWriteStatus\":" << n.lastWriteStatus;
+              << ",\"lastWriteVp\":" << n.lastWriteVp << ",\"lastWriteStatus\":" << n.lastWriteStatus
+              << ",\"lastWriteNamePadding\":" << n.lastWriteNamePadding << ",\"lastWritePadding\":" << n.lastWritePadding
+              << ",\"lastWriteFast\":" << (n.lastWriteFast ? "true" : "false");
         s << '}';
     }
     s << "],\"vps\":[";

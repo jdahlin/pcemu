@@ -1035,5 +1035,11 @@ int main() {
     check(diagnosticWrite(0xa0013, base + 1, 0, 0) == one);
     check(pageDiagnostic.report().find("\"lastWriteLow\":" + std::to_string(base + 1)) != std::string::npos);
     check(pageDiagnostic.report().find("\"lastWriteVp\":0,\"lastWriteStatus\":0") != std::string::npos);
+    check(diagnosticWrite(0xa0013, 0x7ffff001, 0, 0) == 5); // Outside this tiny test RAM.
+    r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
+    r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0xa0013 | (0xbeefull << 32);
+    r[5] = 0x11223344; r[6] = base + 1;
+    check(pageDiagnostic.call(0, r, 0) && r[0] == 5);
+    check(pageDiagnostic.report().find("\"lastWriteNamePadding\":48879,\"lastWritePadding\":287454020,\"lastWriteFast\":true") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

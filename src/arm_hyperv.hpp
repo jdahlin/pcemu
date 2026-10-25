@@ -49,7 +49,10 @@ class ArmHyperV {
         uint64_t reads = 0, writes = 0, failures = 0;
         // One last write per bounded SynIC/timer register counter, no payloads.
         std::array<uint64_t, 2> lastWrite{};
+        uint64_t lastWritePadding = 0;
+        uint32_t lastWriteNamePadding = 0;
         unsigned lastWriteVp = 0;
+        bool lastWriteFast = false;
         uint16_t lastWriteStatus = 0;
     };
     bool enabled;
