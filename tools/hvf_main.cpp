@@ -504,7 +504,7 @@ void selfTest() {
         hyperv.advertiseSynic(true);
         hyperv.enableVmbus();
         std::array<uint8_t, 256> packet{};
-        packet[0] = 4; packet[8] = 1; packet[12] = 40;
+        packet[0] = 4; packet[4] = 0xa5; packet[8] = 1; packet[12] = 40;
         packet[16] = 14; packet[26] = 6; packet[32] = 2; // Copper contact, VP0/SINT2.
         vm.writeMemory(HvfMachine::ramBase + 0x18000, packet);
         // Group-1 GIC setup, fast event call, IAR/EOI, slow message call,

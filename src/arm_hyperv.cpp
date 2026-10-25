@@ -255,7 +255,14 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
     auto code = uint16_t(lastControl);
     if (calls.contains(code) || calls.size() < 128) ++calls[code]; else ++omittedCounters;
     if (!enabled) { ++disabledCalls; lastResult = uint64_t(-1); return false; }
+    if (code == 0x5c) {
+        lastPost = {};
+        lastPost.observed = true; lastPost.control = lastControl;
+        lastPost.address = (lastControl & 0x10000) ? 0 : r[immediate ? 1 : 2];
+        lastPost.vp = vp;
+    }
     lastResult = invoke(r, !immediate, vp);
+    if (code == 0x5c) lastPost.status = uint16_t(lastResult);
     if (uint16_t(lastResult)) {
         ++failures;
         if (calls.contains(code)) ++callFailures[code];
@@ -290,7 +297,20 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         if (message) {
             const auto type = uint32_t(get(bytes, 8, 4));
             const auto length = get(bytes, 12, 4);
-            if (get(bytes, 4, 4) || !type || (type & 0x80000000) || length > 240) return invalidParameter;
+            lastPost.packetObserved = true; lastPost.connectionId = id;
+            lastPost.reserved = uint32_t(get(bytes, 4, 4));
+            lastPost.type = type; lastPost.size = uint32_t(length);
+            // Only the bounded VMBus control prefix, never generic payloads.
+            if (vmbusEnabled && ((id & 0xffffff) == 1 || (id & 0xffffff) == 4) && type == 1 && length <= 240) {
+                constexpr char hex[] = "0123456789abcdef";
+                for (size_t i = 0; i < std::min<size_t>(size_t(length), 56); ++i) {
+                    auto b = bytes[16 + i];
+                    lastPost.vmbusPrefixHex += hex[b >> 4]; lastPost.vmbusPrefixHex += hex[b & 15];
+                }
+            }
+            // WinHv's reusable PostMessage buffer leaves this alignment word
+            // untouched, just like register-association padding.
+            if (!type || (type & 0x80000000) || length > 240) return invalidParameter;
         } else if (get(bytes, 6, 2)) return invalidParameter;
         auto found = connections.find(id);
         if (found == connections.end()) return 0x12; // InvalidConnectionId, including unsupported scopes.
@@ -506,6 +526,13 @@ std::string ArmHyperV::report() const {
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"syntheticTimerDeliveries\":" << timers.delivered()
       << ",\"postedMessages\":" << postedMessages << ",\"signaledEvents\":" << signaledEvents
+      << ",\"lastMessagePost\":{\"observed\":" << (lastPost.observed ? "true" : "false")
+      << ",\"packetObserved\":" << (lastPost.packetObserved ? "true" : "false")
+      << ",\"control\":" << lastPost.control << ",\"address\":" << lastPost.address
+      << ",\"vp\":" << lastPost.vp << ",\"status\":" << lastPost.status
+      << ",\"connectionId\":" << lastPost.connectionId << ",\"reserved\":" << lastPost.reserved
+      << ",\"messageType\":" << lastPost.type << ",\"payloadBytes\":" << lastPost.size
+      << ",\"vmbusPrefixHex\":\"" << lastPost.vmbusPrefixHex << "\"}"
       << ",\"ipiRequests\":" << ipiRequests << ",\"ipiTargetMask\":" << ipiTargetMask
       << ",\"ipiVector\":" << ipiVector
       << ",\"crash\":" << crashReport()

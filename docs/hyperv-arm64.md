@@ -1139,3 +1139,29 @@ Tests exercise nonzero padding in both ABIs and both input forms, while retainin
 negative high-value checks. The native EFI probe uses dirty association padding
 for its SynIC/timer setup and requires actual guest delivery and successful
 SIPP status with those exact padding values in the host counters.
+
+### PostMessage buffer compatibility and diagnostics
+
+With register padding accepted, Windows reached the lock screen and successfully
+configured SIPP, SIFP, SCONTROL and SINT2 on both VPs. Its one initial
+PostMessage request was rejected before entering the VMBus server. The frozen
+counters and screenshot are under `build/windows11-hyperv/vmbus-compatible/`.
+This proves real SynIC setup, not yet successful VMBus negotiation.
+
+The same WinHv reusable-buffer behavior occurs in `WinHvPostMessage2`: it writes
+the connection ID, type, length and payload but leaves the alignment word at
+offset 4 untouched. OpenVMM's
+[PostMessage dispatcher](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/hv1/hv1_hypercall/src/imp.rs)
+also ignores that word. The decoder now tolerates it while preserving connection,
+message type, length, privilege, control-bit, GPA/alignment and endpoint checks.
+SignalEvent's separate reserved bits remain checked.
+
+A single `lastMessagePost` snapshot retains control, VP, input address, status,
+and the decoded header when readable. Only VMBus-control messages on connections
+1/4 retain a prefix, capped at 56 payload bytes; generic message contents are
+excluded. Fast or invalid memory requests show no decoded packet. Tests cover
+both outcomes and a real native guest receives the VMBus version reply after
+posting a packet with nonzero alignment padding.
+
+PostMessage compatibility validation: 2,108 portable checks, 270 native checks
+and all 13 Windows-auditor tests pass.

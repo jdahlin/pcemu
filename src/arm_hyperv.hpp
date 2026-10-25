@@ -65,6 +65,14 @@ class ArmHyperV {
     struct Connection { MessageHandler message; EventHandler event; unsigned flagCount = 0; };
     std::map<uint32_t, Connection> connections;
     uint64_t postedMessages = 0, signaledEvents = 0;
+    struct PostSnapshot {
+        bool observed = false, packetObserved = false;
+        uint64_t control = 0, address = 0;
+        unsigned vp = 0;
+        uint16_t status = 0;
+        uint32_t connectionId = 0, reserved = 0, type = 0, size = 0;
+        std::string vmbusPrefixHex;
+    } lastPost;
     bool allowPostMessages = false, allowSignalEvents = false;
     SoftwareInterruptSender interruptSender;
     uint64_t ipiRequests = 0, ipiTargetMask = 0;

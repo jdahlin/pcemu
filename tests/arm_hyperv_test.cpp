@@ -828,7 +828,9 @@ int main() {
         put(connectionRam, 0, 7, 4); put(connectionRam, 8, 1, 4); put(connectionRam, 12, 240, 4);
         connectionRam[16] = 11; connectionRam[255] = 22;
         check(connectionCall(true, smccc, false) == 0);
+        check(connected.report().find("\"connectionId\":7,\"reserved\":0,\"messageType\":1,\"payloadBytes\":240,\"vmbusPrefixHex\":\"\"") != std::string::npos);
         check(connectionCall(true, smccc, true) == 3);
+        check(connected.report().find("\"packetObserved\":false") != std::string::npos);
         for (auto extra : {one, 1ull << 17, 1ull << 31, 1ull << 48})
             check(connectionCall(true, smccc, false, extra) == 3);
         check(connectionCall(true, smccc, false, 0, base + 1) == 4);
@@ -838,7 +840,7 @@ int main() {
     put(connectionRam, 8, 0, 4); check(connectionCall(true, true, false) == 5);
     put(connectionRam, 8, 0x80000001, 4); check(connectionCall(true, true, false) == 5);
     put(connectionRam, 8, 1, 4); put(connectionRam, 12, 241, 4); check(connectionCall(true, true, false) == 5);
-    put(connectionRam, 12, 240, 4); put(connectionRam, 4, 1, 4); check(connectionCall(true, true, false) == 5);
+    put(connectionRam, 12, 240, 4); put(connectionRam, 4, 1, 4); check(connectionCall(true, true, false) == 0);
     put(connectionRam, 4, 0, 4); put(connectionRam, 0, 42, 4); check(connectionCall(true, true, false) == 0x11);
     put(connectionRam, 0, 7); check(connectionCall(false, true, true) == 0x11);
     check(connected.removeConnection(7) && !connected.removeConnection(7));
@@ -848,7 +850,7 @@ int main() {
     put(connectionRam, 8, 1, 4); put(connectionRam, 12, 0, 4);
     check(connectionCall(true, true, false) == 0x13); // Preserve endpoint backpressure.
     check(connectionCall(true, true, false) == 0x12); // Callback removed itself safely.
-    check(connected.report().find("\"postedMessages\":2") != std::string::npos);
+    check(connected.report().find("\"postedMessages\":3") != std::string::npos);
     check(connected.report().find("\"signaledEvents\":4") != std::string::npos);
     for (uint32_t id = 100; id < 163; ++id)
         check(connected.bindMessageConnection(id, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
@@ -986,7 +988,8 @@ int main() {
         check(integrated.call(0, r, 0) && r[0] == one);
         auto post = [&](uint32_t connection, uint32_t kind, unsigned bytes) {
             std::fill(integratedRam.begin(), integratedRam.begin() + 256, 0);
-            put(integratedRam, 0, connection, 4); put(integratedRam, 8, 1, 4);
+            put(integratedRam, 0, connection, 4); put(integratedRam, 4, 0xfeedbeef, 4);
+            put(integratedRam, 8, 1, 4);
             put(integratedRam, 12, bytes, 4); put(integratedRam, 16, kind, 4);
             if (kind == 14) {
                 put(integratedRam, 24, 0x60000, 4); put(integratedRam, 28, 1, 4);
@@ -1000,6 +1003,7 @@ int main() {
             integrated.service();
         };
         post(4, 14, 40);
+        check(integrated.report().find("\"vmbusPrefixHex\":\"0e00000000000000000006000100000002") != std::string::npos);
         const size_t slot = 4096 + 2 * 256;
         check(notifications == 1 && get(integratedRam, slot, 4) == 1);
         check(integratedRam[slot + 4] == 20 && get(integratedRam, slot + 16, 4) == 15);
