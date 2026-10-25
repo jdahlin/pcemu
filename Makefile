@@ -233,3 +233,8 @@ test test-hvf: test-arm-hyperv-kvp
 test-arm-hyperv-kvp-integration: build/arm-hyperv-kvp-integration-tests
 	./build/arm-hyperv-kvp-integration-tests
 test test-hvf: test-arm-hyperv-kvp-integration
+
+.PHONY: test-hyperv-kvp-roundtrip
+test-hyperv-kvp-roundtrip: build/hyperv-kvp-roundtrip-tests
+	./build/hyperv-kvp-roundtrip-tests
+test test-hvf: test-hyperv-kvp-roundtrip

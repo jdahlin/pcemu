@@ -548,4 +548,9 @@ pcemu_program(arm-hyperv-kvp-integration-tests
     tests/arm_hyperv_kvp_integration_test.cpp
 )
 
+pcemu_program(hyperv-kvp-roundtrip-tests
+  SOURCES
+    tests/hyperv_kvp_roundtrip_test.cpp
+)
+
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT pcemu)
