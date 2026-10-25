@@ -232,3 +232,11 @@ This does not provide a reference TSC page or synthetic timer interrupts.
 Contract sources: Microsoft's [timer specification](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/timers),
 [register identifiers](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_register_name)
 and [ARM64 early-register access rules](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallgetvpregisters).
+
+Windows validation with the counter advertised reached the lock screen on an
+independent local APFS disk clone, using 8 GiB and one VP. The snapshot under
+`build/windows11-hyperv/reference-clock/core-evidence.json` passes the core
+usage audit and records no reads of 0x90004 (`referenceCounterObserved: false`).
+Disk and network activity continued. This validates compatibility during this
+boot, not Windows use of the new clock or a performance gain. Evidence SHA-256:
+`4a8dc5d18ce22e675fa5e5aa400684c5d42889e345e5f7d5496bdcff6c0c5db0`.
