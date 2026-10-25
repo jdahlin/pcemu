@@ -30,6 +30,9 @@ class ArmHyperVKvp {
     uint8_t transaction=0;
     ArmHyperVKvpCodec::Pool pool=ArmHyperVKvpCodec::Pool::Auto;
     uint32_t index=0,lastStatus=0;
+    uint32_t versionReserved=0;
+    uint16_t versionBodySize=0,versionFrameworkCount=0,versionServiceCount=0;
+    uint32_t versionFramework=0,versionService=0;
     uint64_t since=0,negotiations=0,requests=0,responses=0,records=0,ends=0,rejected=0,timeouts=0;
     std::optional<Result> result;
     void expire(uint64_t now);

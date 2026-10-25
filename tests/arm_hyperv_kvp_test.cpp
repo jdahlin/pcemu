@@ -20,6 +20,8 @@ int main(){
   auto version=negotiate(k,fw);
   for(size_t n=0;n<version.size();++n){k.receive(std::span<const uint8_t>(version).first(n),1);check(has(k,"wait-version"));}
   auto bad=version;put(bad,56,5);k.receive(bad,1);check(has(k,"wait-version"));
+  bad=version;put(bad,48,0x12345678);k.receive(bad,1);
+  check(has(k,"wait-version") && has(k,"\"reserved\":305419896"));
   k.receive(version,1);check(has(k,"ready") && !k.delay(1));check(!k.takeResult());
   check(k.enumerate(C::Pool::Auto,7));check(!k.enumerate(C::Pool::Auto,8));
   auto query=k.packet(2);check(query.size()==2624 && query[44]==3 && query[45]==2 && query[48]==7 && query[40]==1);

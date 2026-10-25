@@ -12,7 +12,7 @@ ArmVmbus::Offer ArmHyperVKvp::offer(){
  o.interfaceId={0xe7,0xf4,0xa0,0xa9,0x45,0x5a,0x96,0x4d,0xb8,0x27,0x8a,0x84,0x1e,0x8c,0x03,0xe6};
  o.instanceId={0x19,0xf9,0x2f,0x24,0xdb,0x07,0x80,0x41,0x9c,0x2e,0xb8,0x6c,0xb6,0x8c,0x8c,0x55};return o;
 }
-void ArmHyperVKvp::opened(uint64_t now){state=State::SendVersion;framework=0;transaction=0;since=now;result.reset();lastStatus=0;}
+void ArmHyperVKvp::opened(uint64_t now){state=State::SendVersion;framework=0;transaction=0;since=now;result.reset();lastStatus=0;versionReserved=versionBodySize=versionFrameworkCount=versionServiceCount=versionFramework=versionService=0;}
 void ArmHyperVKvp::closed(){state=State::Closed;framework=0;result.reset();}
 bool ArmHyperVKvp::enumerate(ArmHyperVKvpCodec::Pool requested,uint32_t at){
  if(state!=State::Ready || result || unsigned(requested)>3)return false;
@@ -50,6 +50,11 @@ void ArmHyperVKvp::receive(std::span<const uint8_t> p,uint64_t now){
  if(length>h.size()-20 || h[16]!=transaction || h[17]!=5 || get(h,18,2))return fail();
  auto body=h.subspan(20,size_t(length));auto status=uint32_t(get(h,12,4));
  if(state==State::WaitVersion && get(h,4,2)==0){
+  versionBodySize=uint16_t(body.size());
+  if(body.size()>=16){
+   versionFrameworkCount=uint16_t(get(body,0,2));versionServiceCount=uint16_t(get(body,2,2));
+   versionReserved=uint32_t(get(body,4,4));versionFramework=uint32_t(get(body,8,4));versionService=uint32_t(get(body,12,4));
+  }
   if(status){state=State::Failed;lastStatus=status;return;}
   if(body.size()<16 || get(body,0,2)!=1 || get(body,2,2)!=1 || get(body,4,4) ||
      get(body,10,2) || get(body,12,2)!=4 || get(body,14,2))return fail();
@@ -71,6 +76,8 @@ std::string ArmHyperVKvp::report() const{
  const char *name=state==State::Closed?"closed":state==State::SendVersion?"send-version":state==State::WaitVersion?"wait-version":state==State::Ready?"ready":state==State::SendQuery?"send-query":state==State::WaitResponse?"wait-response":"failed";
  std::ostringstream s;s<<"{\"state\":\""<<name<<"\",\"frameworkMajor\":"<<framework<<",\"kvpMajor\":"<<(framework?4:0)
  <<",\"negotiations\":"<<negotiations<<",\"requests\":"<<requests<<",\"responses\":"<<responses<<",\"records\":"<<records
+ <<",\"versionReply\":{\"bodyBytes\":"<<versionBodySize<<",\"frameworkCount\":"<<versionFrameworkCount
+ <<",\"serviceCount\":"<<versionServiceCount<<",\"reserved\":"<<versionReserved<<",\"framework\":"<<versionFramework<<",\"service\":"<<versionService<<'}'
  <<",\"endOfPool\":"<<ends<<",\"lastStatus\":"<<lastStatus<<",\"resultPending\":"<<(result?"true":"false")
  <<",\"rejectedResponses\":"<<rejected<<",\"timeouts\":"<<timeouts<<'}';return s.str();
 }

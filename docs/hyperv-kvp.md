@@ -75,3 +75,20 @@ end-of-pool, timeout and close. Timesync/shutdown regressions pass 32/38 checks,
 the core Hyper-V suite passes 2,170 checks, and the isolated native runner
 compiles. Windows channel negotiation and returned guest values remain separate
 verification steps.
+
+## First bounded Windows negotiation run
+
+The native Windows test used four GiB and an explicit startup/shutdown budget.
+All four channels opened, but KVP rejected one version reply and did not become
+ready. No KVP enumeration or guest mutation was requested. The test was stopped
+after this protocol mismatch; Hyper-V poweroff completed with runner exit zero.
+Evidence is retained under `build/windows11-hyperv/kvp-negotiation/`. An earlier
+supervisor attempt sent SIGUSR1 before runner initialization and terminated it;
+the corrected supervisor waits for initial statistics before requesting capture.
+That failed launch is not guest protocol evidence. No VM is left running.
+
+The KVP model now records bounded numeric negotiation fields (body length,
+counts, reserved word and selected versions) for the next investigation. It
+does not log KVP key/value contents or relax validation. The cause of the actual
+reply rejection is not yet established; these added fields need a new native
+build/run before claiming compatibility.
