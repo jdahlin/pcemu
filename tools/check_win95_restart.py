@@ -61,7 +61,7 @@ def observe(application=False):
     # Tesseract's sparse-layout pass rejects text inside some bordered Win95
     # modals. Read their interiors separately in this fixed VGA fixture.
     if (width, height) == (640, 480):
-        regions = [(180, 228, 505, 275), (40, 265, 402, 415), (180, 170, 480, 270),
+        regions = [(180, 228, 505, 275), (0, 255, 402, 415), (180, 170, 480, 270),
                    (55, 80, 375, 140), (25, 26, 410, 50)]
         if application:
             regions.append((0, 0, width, height))
@@ -82,6 +82,23 @@ def observe(application=False):
                    for y in range(90, 400, 10) for x in range(130, 600, 10)]
         if sum(pixel == bytes([85, 170, 170]) for pixel in samples) > len(samples)*.95:
             text += 'unobscureddesktop'
+            if not application and 'mycomputer' not in text:
+                # Fresh Setup leaves My Computer selected. Sparse OCR can
+                # discard its white-on-teal label and dotted selection border.
+                # Read the actual bright glyphs as black-on-white, retaining
+                # both icon-name checks and the independent clear-desktop gate.
+                body = bytearray()
+                for y in range(35, 55):
+                    row = bytearray()
+                    for x in range(75):
+                        pixel = pixels[(y*width+x)*3:(y*width+x)*3+3]
+                        row.extend((b'\0\0\0' if min(pixel) > 230 else b'\xff\xff\xff')*4)
+                    body.extend(row*4)
+                crop = a.output / 'ocr-selected-icon.ppm'
+                crop.write_bytes(b'P6\n300 80\n255\n' + body)
+                result = subprocess.run(['tesseract', str(crop), 'stdout', '--psm', '7'],
+                                        check=True, text=True, capture_output=True)
+                text += normalize(result.stdout)
     return state, text
 
 def screenshot(name):
@@ -106,6 +123,17 @@ def desktop(timeout):
             action = 'date/time properties'
         elif 'displayadapter' in text and 'hardwareinstallationwizard' in text:
             action = 'display warning'
+        elif 'networkpasswordformicrosoft' in text and 'enter' in text:
+            # A fresh install with networking can ask for a network login
+            # before Explorer. Cancel this known guest-only dialog; validation
+            # does not need credentials or a connection to a remote share.
+            action = 'network logon'
+        elif 'youmustinstallaprinterbeforeyoucanprint' in text:
+            action = 'printer setup'
+        elif 'configuringyoursystem' in text and 'clickok' in text and 'yourcomputernow' in text:
+            # The first-boot configuration explicitly asks to restart before
+            # Explorer. Do not acknowledge unrelated or unknown restart screens.
+            action = 'setup restart'
         elif 'colorpalette' in text and 'desktoparea' in text:
             action = 'display properties'
         elif 'welcometowindows' in text:
@@ -129,7 +157,7 @@ def desktop(timeout):
             send('scan 38', settle=.15)
             send('key 0f09', settle=.2)
             send('scan b8', settle=.2)
-        send('key 1c0d' if action in ('mouse warning', 'network warning', 'clock warning')
+        send('key 1c0d' if action in ('mouse warning', 'network warning', 'clock warning', 'setup restart')
              else 'key 011b', settle=.8)
     raise RuntimeError('Desktop not verified before timeout; live guest left intact')
 
@@ -223,7 +251,8 @@ last_shortcut = time.monotonic()
 end = time.monotonic() + 30
 while time.monotonic() < end:
     _, text = observe()
-    if 'restartthecomputer' in text and 'areyousure' in text:
+    # Fresh Setup's small MS Sans Serif can render "Are" as "Ale" in OCR.
+    if 'restartthecomputer' in text and re.search(r'a[rl]eyousure', text):
         break
     if 'welcometowindows' in text:
         send('key 011b', settle=.5)

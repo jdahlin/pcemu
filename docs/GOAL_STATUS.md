@@ -961,3 +961,24 @@ has extra observed instructions; this is not isolated guest CPU time or a genera
 application claim. No emulator binary changed or large fixture was created.
 The goal remains active. See `host-cpu-timing.md` and
 `measurements/process-cpu-excel-2026-10-25.json`.
+
+
+## Fresh OSR2 Setup with fetch-TLB candidate and first-boot automation (25 October)
+
+The frozen fetch-TLB candidate now has fresh Setup evidence: all 56 source files
+are staged/read back on a small compressed DOS child; file copying and two
+firmware resets are observed. Network login, printer setup and the explicit
+post-configuration restart are handled as known first-boot screens. The desktop
+check retains both icon names and a clear-desktop pixel gate, adding a small
+selected-label OCR fallback and full Recycle Bin crop. The observed Are/Ale
+restart-question OCR variation is accepted with the actual restart-option text.
+
+The original guest PID disappeared during the requested pause; cause is unknown.
+After verifying it absent, a tiny child cold-boots the same installed disk and
+runs Calculator/clipboard/Notepad. The restart check resumes after OCR correction;
+exact stopped-guest readback matches 38 bytes. Both temporary install/resume
+children are removed. The rtts applications/restart regression and syntax checks
+pass. This is interrupted-run plus cold-boot evidence, not an uninterrupted
+single-process install or a timing benchmark. The broader performance goal stays
+active. See `fresh-win95-validation.md` and
+`measurements/fresh-win95-setup-fetch-tlb-2026-10-25.json`.

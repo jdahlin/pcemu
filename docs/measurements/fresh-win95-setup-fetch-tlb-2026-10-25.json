@@ -1,0 +1,592 @@
+{
+  "scope": "Fresh Windows 95 OSR2 Setup on a compressed child of existing recovered MS-DOS, through two firmware resets; cold-boot/application/restart/exact file validation after original PID disappeared during pause. Initial wizard driven via private guest control; no uninterrupted single-process completion claim.",
+  "setupRun": {
+    "pid": 18250,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--no-network",
+      "--steps",
+      "0",
+      "--disk",
+      "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-20261025.pcd",
+      "--type",
+      "cd win95\nsetup /is\n",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/state.json"
+    ],
+    "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+    "startedUnix": 1792959064.421338,
+    "scope": "Fresh Setup on a private compressed child of recovered DOS; installation completion pending"
+  },
+  "setupReboot": {
+    "scope": "Setup copy phase through first firmware reboot; not installation completion",
+    "pid": 18250,
+    "beforeResets": 0,
+    "afterResets": 1,
+    "instructions": 32619945958,
+    "finishAcknowledged": true
+  },
+  "postSecondResetState": {
+    "ip": 3221238138,
+    "flags": 70,
+    "cr0": 2147483669,
+    "cr3": 4792320,
+    "cr2": 704512,
+    "gdtBase": 3221601296,
+    "gdtLimit": 503,
+    "idtBase": 2148151296,
+    "idtLimit": 767,
+    "trBase": 3221270172,
+    "trSelector": 24,
+    "ldtBase": 2148085760,
+    "registers": [
+      0,
+      53,
+      3238030060,
+      3243376872,
+      3236933116,
+      3236933488,
+      0,
+      3238030296
+    ],
+    "segments": [
+      {
+        "selector": 48,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      },
+      {
+        "selector": 40,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      },
+      {
+        "selector": 48,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      },
+      {
+        "selector": 48,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      },
+      {
+        "selector": 48,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      },
+      {
+        "selector": 48,
+        "base": 0,
+        "limit": 4294967295,
+        "big": 1,
+        "unusable": 0
+      }
+    ],
+    "instructions": 52414979674,
+    "resets": 2,
+    "resetRequested": 0,
+    "nativeInstructions": 38156977880,
+    "executionWallNs": 1211403598241,
+    "nativeMemoryCalls": 302570769,
+    "executionEpoch": 0,
+    "machineProfile": "win95",
+    "machinePlatform": "pc-legacy-v1",
+    "executionBackend": "jit",
+    "jitFollowJumps": 1,
+    "jitTraces": 0,
+    "ramBytes": 67108864,
+    "disk": "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-20261025.pcd",
+    "compiledBlocks": 654350,
+    "cacheRecycles": 30,
+    "halted": 0,
+    "waitingKey": 0,
+    "hostInput": 1,
+    "network": {
+      "isr": 66,
+      "imr": 27,
+      "command": 18,
+      "current": 77,
+      "boundary": 76,
+      "transmitted": 8,
+      "received": 0,
+      "dropped": 0
+    },
+    "mouse": {
+      "enabled": 1,
+      "id": 0,
+      "pendingPackets": 0,
+      "auxOutput": 0
+    },
+    "video": {
+      "graphics": 1,
+      "width": 640,
+      "height": 480,
+      "memoryMode": 6,
+      "shiftMode": 0,
+      "dispiEnabled": 0,
+      "bpp": 8,
+      "crtc": [
+        95,
+        79,
+        80,
+        130,
+        84,
+        128,
+        11,
+        62,
+        0,
+        64,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        234,
+        140,
+        223,
+        40,
+        0,
+        231,
+        4,
+        227,
+        255,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "pic": [
+      {
+        "irr": 0,
+        "isr": 0,
+        "mask": 240,
+        "base": 80,
+        "autoEOI": 0
+      },
+      {
+        "irr": 4,
+        "isr": 0,
+        "mask": 47,
+        "base": 88,
+        "autoEOI": 0
+      }
+    ],
+    "pit0": {
+      "reload": 16384,
+      "loadedAt": 11768833613,
+      "mode": 2,
+      "nullCount": 0,
+      "writeHigh": 0,
+      "value": 7863
+    },
+    "keyboard": {
+      "full": 0,
+      "data": 85,
+      "pendingScans": 0,
+      "pendingReplies": 0,
+      "commandByte": 71
+    }
+  },
+  "coldBootCompletion": {
+    "run": {
+      "pid": 32888,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--no-network",
+        "--steps",
+        "0",
+        "--disk",
+        "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-resume-1.pcd",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/resume-1/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/resume-1/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-setup-fetch-tlb/resume-1/state.json"
+      ],
+      "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+      "startedUnix": 1792965019.293962,
+      "scope": "Cold boot the existing fresh installation in a small child after the original process was verified absent; no Setup restart",
+      "parentDisk": "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-20261025.pcd",
+      "privateDisk": "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-resume-1.pcd"
+    },
+    "restart": {
+      "scope": "guest restart and desktop; no file assertion",
+      "beforeInstructions": 28013684494,
+      "afterInstructions": 28444901226,
+      "beforeResets": 0,
+      "afterResets": 1
+    },
+    "applications": {
+      "file": "C:\\P09ABD59.TXT",
+      "fatName": "P09ABD59TXT",
+      "expectedContents": " 4\r\nPCEMU Win95 applications 09ABD593.",
+      "scope": "Calculator 2+2, clipboard, fresh Notepad save and exact stopped-guest FAT readback after a resumed guest restart",
+      "verifiedBytes": 38,
+      "verifiedSha256": "10cb304732eaff482b2e96a8d3ff940f765f77121aab18c10b8d1e07bb0b95c0"
+    },
+    "guestAbsentAfterQuit": true,
+    "privateDiskBytes": 1587973,
+    "parentDiskBytes": 153280001,
+    "scope": "Cold boot the existing fresh installation after original PID disappeared, applications, resumed restart after OCR correction, exact persisted file; not an uninterrupted single-process install claim",
+    "staging": {
+      "scope": "Windows 95 installer source staged on clean DOS; not installation success",
+      "disk": "/Volumes/data/pcemu/validation/win95-setup-fetch-tlb-20261025.pcd",
+      "parent": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+      "source": "/Users/johandahlin/dev/pcemu/media/win95-install/win95",
+      "compressedBytes": 81999324,
+      "files": {
+        "FORMAT.COM": {
+          "bytes": 49543,
+          "sha256": "723fef3871f9f8f71cdd1ee83c9582396703e5878029be27f69164ba17d54f9d"
+        },
+        "MINI.CAB": {
+          "bytes": 441905,
+          "sha256": "4325b841b6cfe2589eff41becdb7ac8ed7966dca16bf243097e79fe2cefafb99"
+        },
+        "MSINFO.INF": {
+          "bytes": 6551,
+          "sha256": "e435cb8988e6b193945334977a63f2e3a8064d7857e2abb3887fa4c6279a77bb"
+        },
+        "OEMSETUP.BIN": {
+          "bytes": 3270,
+          "sha256": "4583be690659c5180cccd57c0dc527ee7ac3570b39db2a0d441fdd935e875482"
+        },
+        "OEMSETUP.EXE": {
+          "bytes": 78672,
+          "sha256": "89eee8739e2d050cd26588024b51453a4399dbcedacc6260a57be6ed51d460c4"
+        },
+        "PRECOPY1.CAB": {
+          "bytes": 480768,
+          "sha256": "ec8a17fcf9e7bc016da3b7b90dd32058b8936d04985fb2128662a80fc0932850"
+        },
+        "PRECOPY2.CAB": {
+          "bytes": 1237083,
+          "sha256": "bac1a80d253c87c8d9d3da14156280919caa319acf2d621e94acbe70c190e433"
+        },
+        "SETUP25I.EXE": {
+          "bytes": 1950007,
+          "sha256": "463d7126bc1cc26a5e2d4e6147b47df611ab383ea484c30d8525943f9fa2239e"
+        },
+        "SETUP32.EXE": {
+          "bytes": 6729752,
+          "sha256": "ba734894c7f3dc439419537af83d2ae90e7ec874d7a112507c4418a9d46f75d3"
+        },
+        "SUHELPER.BIN": {
+          "bytes": 1472,
+          "sha256": "4f10d714bd0b57323a296d5cdee063c00590ab0122e7b9f107925b3818f3f549"
+        },
+        "SWINST4.EXE": {
+          "bytes": 1009600,
+          "sha256": "6031b3f31ed9150826d6e63c1103e098ca8fdda54d45751ed2c13f80c8f25f36"
+        },
+        "CS3KIT.EXE": {
+          "bytes": 5783436,
+          "sha256": "41a42ad9c0f7308d12f248d949d9bb4302249aac195473a31fa4381f188a20a7"
+        },
+        "DELTEMP.COM": {
+          "bytes": 496,
+          "sha256": "d3f83a6d8bc0ff8de83f8b6c79ddf5b3b3a9a4ff59c2b98732a1795d4c021dae"
+        },
+        "DOSSETUP.BIN": {
+          "bytes": 72358,
+          "sha256": "d2d1cbd0b5ac55b1eafacff8638ee60a6324a04b800a20da7eb3f592a76d11a4"
+        },
+        "EXTRACT.EXE": {
+          "bytes": 46656,
+          "sha256": "31f98c4ee68fa3193544c635ad9e698aa1402c367590d6b28746b624b8b2e05f"
+        },
+        "LAYOUT.INF": {
+          "bytes": 54600,
+          "sha256": "dde271c8ac4dfb848e6eaea7353b46f78da6d3ed29a9844ef98c47e65c3530b8"
+        },
+        "LAYOUT1.INF": {
+          "bytes": 5739,
+          "sha256": "ec04c873b7a5cab952efdd9aed1b19d5070005a53cafd76326087d6ac5d408c5"
+        },
+        "README.TXT": {
+          "bytes": 3728,
+          "sha256": "43b018a2ace818fb9fabb2bb41311de1d9670edfffda8295f538e8eba73258e2"
+        },
+        "SAVE32.COM": {
+          "bytes": 920,
+          "sha256": "db9ef59b6389216a69e19db459b0147f423f3a4371a7b501aab3319607a6c0f4"
+        },
+        "SCANDISK.EXE": {
+          "bytes": 142353,
+          "sha256": "4d2ad0ddf11e3844f886774b1748039d3e363446020dd261c435322b19111eb3"
+        },
+        "SCANDISK.PIF": {
+          "bytes": 995,
+          "sha256": "e1511c5509fa654fef06da6f94f15622a901c83f06e812cd1385a683db3bcf6b"
+        },
+        "SCANPROG.EXE": {
+          "bytes": 4438,
+          "sha256": "8d74a5b88694829be6ea9ccca6dd13a276d308b5425eae6807393b4d91a39141"
+        },
+        "SETUP.EXE": {
+          "bytes": 5184,
+          "sha256": "116357c466abea55f29ce1e3705d17243daf0b2a780becc8295aa872a7b29c59"
+        },
+        "SETUP.TXT": {
+          "bytes": 33963,
+          "sha256": "80a68f118ea029d910a5edea15f9d66c3d51c0bed90fd1c9bd95633dbd8e1f75"
+        },
+        "SMARTDRV.EXE": {
+          "bytes": 44867,
+          "sha256": "929c4564933121678e97b2202f649516c01ea394669053abae18f54132eb9068"
+        },
+        "WB16OFF.EXE": {
+          "bytes": 537,
+          "sha256": "ae703bc45dae6035c36a696cfbda415e4fa3777ed42b80066e5bd8c0570f55bc"
+        },
+        "WIN95_02.CAB": {
+          "bytes": 464896,
+          "sha256": "f5bc434d150c0d2bc15b2a0f1f9f85623a665ebb86733b4558131599f0826e93"
+        },
+        "WIN95_03.CAB": {
+          "bytes": 1716224,
+          "sha256": "f453fa7e4dd331b2c663f248f54ad1ad1b2478f34cf75646054c9d0b9c26a255"
+        },
+        "WIN95_04.CAB": {
+          "bytes": 1716224,
+          "sha256": "ef1f5149331efe197ddc30fcc950704ee9cb29d3fc66b0af5c77e5d835363281"
+        },
+        "WIN95_05.CAB": {
+          "bytes": 1716224,
+          "sha256": "275fc50645011137090ed469bdca0971005a89f5a1bec1b0547740cee9e4ebf9"
+        },
+        "WIN95_06.CAB": {
+          "bytes": 1716224,
+          "sha256": "01aa27f21593ccb7e722b557832d7f9f1e3cf34d55876250e68d0cfaef637a6e"
+        },
+        "WIN95_07.CAB": {
+          "bytes": 1716224,
+          "sha256": "30c0e3c637a9615b9ba8d8e8763e21e33b7bf576dbae19d336a1e53927cf866c"
+        },
+        "WIN95_08.CAB": {
+          "bytes": 1716224,
+          "sha256": "0ad819846ca9a8b9247ffd1dd186d2f5bee3ca27087ffb49e92a3d0d63f2fb9c"
+        },
+        "WIN95_09.CAB": {
+          "bytes": 1716224,
+          "sha256": "5b96dc950432776b4f26d56852c32123912421233d7dc5fa2f007a25732aec32"
+        },
+        "WIN95_10.CAB": {
+          "bytes": 1716224,
+          "sha256": "d8c299b618f3326ee6a104bab971f9434a8c7f4b1a87140558a2893e484e3e7b"
+        },
+        "WIN95_11.CAB": {
+          "bytes": 1716224,
+          "sha256": "f9e74ad0b7d024859232fd20b34178f0945c05252bf01e8d8d0d4317cdadad04"
+        },
+        "WIN95_12.CAB": {
+          "bytes": 1716224,
+          "sha256": "94885f269eb96748f574e572cf1bd0dab55253280d1911d4adb3bf33a50b8273"
+        },
+        "WIN95_13.CAB": {
+          "bytes": 1716224,
+          "sha256": "e9a430559f39b5d0601ea450eb636862a638bcb91d1e94c7718ecc4315b85e4f"
+        },
+        "WIN95_14.CAB": {
+          "bytes": 1716224,
+          "sha256": "a88c24d3acdd764d67b018cf4152ad2e5a47fafb943d5683967518a936a4fa1d"
+        },
+        "WIN95_15.CAB": {
+          "bytes": 1716224,
+          "sha256": "b496d105870c89971269641a12e527afd9d795bc1da43d515d61ed63f446df5c"
+        },
+        "WIN95_16.CAB": {
+          "bytes": 1716224,
+          "sha256": "d7821bfbec60a84303c53c5b2d2bdceb8b977a067c1ef3d708e3cf5e11bfa095"
+        },
+        "WIN95_17.CAB": {
+          "bytes": 1716224,
+          "sha256": "5bd906530b35c5b4518b7273a42f338d8668f8401812c9ebb785a028964feb3a"
+        },
+        "WIN95_18.CAB": {
+          "bytes": 1716224,
+          "sha256": "f5d0e449c7ce2e0329fa04d0671eb4b8fd6d531c6abdbb86f8aa99b135360672"
+        },
+        "WIN95_19.CAB": {
+          "bytes": 1716224,
+          "sha256": "79529f29fd8dfccf684a81ac8e00f03de99b16ce428f6cf3382f28ae6b7edf80"
+        },
+        "WIN95_20.CAB": {
+          "bytes": 1716224,
+          "sha256": "5c3a60febc28ce5fb0505cbb12b71a97898f2120b3dabc8d12aa65901fec1ed4"
+        },
+        "WIN95_21.CAB": {
+          "bytes": 1716224,
+          "sha256": "732a14e71ad119467aaafc408589d2d584cbafef2215835dcaed0e7759cdb836"
+        },
+        "WIN95_22.CAB": {
+          "bytes": 1716224,
+          "sha256": "1444bb0e8c51ed0952ccd195ea2db4f4597ac806616d0566c1ada3db8db53b22"
+        },
+        "WIN95_23.CAB": {
+          "bytes": 1716224,
+          "sha256": "af8de2e0f5a5b7572d60314cc1b39bc3625e7d0ef4cccd730775fd5b778df7e8"
+        },
+        "WIN95_24.CAB": {
+          "bytes": 1716224,
+          "sha256": "fea9b0d012e4b7803ebfe8a899cec077c8616b8bf138c4582ef935018a03ef63"
+        },
+        "WIN95_25.CAB": {
+          "bytes": 1716224,
+          "sha256": "1a557915ded9a4353b403d60e02cb8de75da902a1852bfaac069eb0bad00c5a1"
+        },
+        "WIN95_26.CAB": {
+          "bytes": 1716224,
+          "sha256": "ef5ba4402110b75e93e7cd41ea956d291020d18712fb446e7391802df8fede7f"
+        },
+        "WIN95_27.CAB": {
+          "bytes": 1716224,
+          "sha256": "8aca77b97c77e0347ad4ba6ac2046187f9523c532b4fd231927e559c82e5a624"
+        },
+        "WIN95_28.CAB": {
+          "bytes": 1426482,
+          "sha256": "b3731fad97917bd1e6a9df593c8c9587beeafadef666f8fcacf27d6dccd44b56"
+        },
+        "WINSETUP.BIN": {
+          "bytes": 159824,
+          "sha256": "bd32f5cb04553fac253a8fafba3cff1672815cae97c8d136c0b18eb1c0fa66a4"
+        },
+        "WOWKIT.EXE": {
+          "bytes": 19687469,
+          "sha256": "3ed6ef6ab0b1c5c457ca241de4b2f237179481d8ba2f83a1ce0f70c7dd470974"
+        },
+        "XMSMMGR.EXE": {
+          "bytes": 14144,
+          "sha256": "0615bf1d7e98968a31b94b7247aa07437399b646145cba5fabd5bdd0b888adfd"
+        }
+      }
+    },
+    "privateDisksRemoved": true
+  },
+  "rttsVerifierRegression": {
+    "pid": 37260,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/fetch-tlb/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-4h__17gr/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-4h__17gr/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-4h__17gr/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-4h__17gr/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "722e9c1636f29e27f0c40f3597060bcedfdafd4fecddc3f3b3bc2612b920c2e6",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "3f95bddc8966131453d32fe36c89e807ad9b2c1d",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 488436725,
+      "afterInstructions": 1539839536,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\P8354729.TXT",
+        "fatName": "P8354729TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications 83547296.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "c0b7d6fbe73e868473ea1a0a3971662ec39fec6b47fe7bbcaf49cf771ee5c011"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "checkerSha256": "0236f2f104c6bfcc043a644fe253d51c02d35f0dbe0a278e9b30fa85771856f5",
+  "logs": {
+    "setup-check.log": "Setup copying: 15%\nSetup copying: 18%\nSetup copying: 20%\nSetup copying: 2%\nSetup copying: 28%\nSetup copying: 2%\nSetup copying: 28%\nSetup copying: 30%\nSetup copying: 38%\nSetup copying: 36%\nSetup copying: 38%\nSetup copying: 39%\nSetup copying: 4%\nSetup copying: 45%\nSetup copying: 48%\nSetup copying: 46%\nAcknowledged Setup Finish/restart screen\nPASS: Setup rebooted through firmware in the same process\n",
+    "desktop-check.log": "",
+    "desktop-updated.log": "Handling network logon\nHandling clock warning\n",
+    "desktop-final.log": "Handling printer setup\n",
+    "desktop-complete.log": "Handling setup restart\nTraceback (most recent call last):\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 213, in <module>\n    first = desktop(a.timeout)\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 96, in desktop\n    state, text = observe()\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 53, in observe\n    send(settle=0)\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 44, in send\n    os.kill(a.pid, 0)\nProcessLookupError: [Errno 3] No such process\n",
+    "resume-1/check.log": "",
+    "resume-1/check-final.log": "Handling network logon\nHandling welcome\n",
+    "resume-1/check-complete.log": "Explorer ready; initial reset count 0\nChecking Calculator and clipboard transfer\nSaving a fresh Notepad file\nTraceback (most recent call last):\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 266, in <module>\n    raise RuntimeError('Restart dialog not verified; live guest left intact')\nRuntimeError: Restart dialog not verified; live guest left intact\n",
+    "resume-1/restart-check.log": "Explorer ready; initial reset count 0\nGuest Restart requested\nFirmware reset observed: 1\nHandling network logon\nHandling welcome\nPASS: Explorer returned after guest restart. Evidence: build/win95-setup-fetch-tlb/resume-1/restart-verification\n"
+  },
+  "remainingLimitations": [
+    "Original PID was verified absent after pause; its log ends without a normal exit marker. Cause is not established.",
+    "Observer scripts were replaced while the same live guest remained intact to handle new known dialogs and OCR variants.",
+    "Calculator and Notepad completed before restart-dialog OCR timed out. Restart was resumed after the observed OCR r/l correction, and saved contents were verified offline after guest exit.",
+    "This functional validation is not an installation-time benchmark or evidence of Rosetta parity."
+  ],
+  "storage": {
+    "initialStagedBytes": 81999324,
+    "finalInstallBytes": 153280001,
+    "finalResumeChildBytes": 1587973,
+    "privateDisksRemoved": true,
+    "parent": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+    "largeRawStagingCopies": false
+  },
+  "setup-logArchive": {
+    "path": "fresh-win95-setup-fetch-tlb-2026-10-25.setup-log.zst",
+    "sourceBytes": 182155,
+    "compressedBytes": 18052,
+    "sourceSha256": "05723b297209a1603a8d3e883630544314658207f1fbcde96c08c59fd5ea0c2c"
+  },
+  "resume-logArchive": {
+    "path": "fresh-win95-setup-fetch-tlb-2026-10-25.resume-log.zst",
+    "sourceBytes": 173486,
+    "compressedBytes": 13948,
+    "sourceSha256": "97d6dc7af0b56462c2ac79ed6941d09305e1ee65c2c9f342a716c8d02425bbe1"
+  },
+  "screenshots": {
+    "setup-finish": {
+      "path": "fresh-win95-setup-fetch-tlb-2026-10-25.setup-finish.png",
+      "sha256": "8f76e72889c3bbe31658c4b4a59b594c2986ae92fd2e59e13841703dabf9a6b4"
+    },
+    "desktop": {
+      "path": "fresh-win95-setup-fetch-tlb-2026-10-25.desktop.png",
+      "sha256": "85d89f398ea0f588879da8894796db36e1bafb1387675d4b07431b3f2e034ee0"
+    }
+  }
+}
