@@ -285,6 +285,32 @@ class WindowsHyperV(unittest.TestCase):
             self.assertFalse(verify(changed, baseline)['heartbeatResponseObserved'])
         self.assertFalse(verify(dict(report, signaledEvents=0), baseline)['heartbeatResponseObserved'])
 
+    def test_timesync_ack_requires_guest_channel_responses(self):
+        report, baseline = offered_fixture()
+        self.assertFalse(verify(report, baseline)['timesyncAcknowledgmentObserved'])
+        report['calls'].append(dict(code=0x5d, count=1, failures=0))
+        report.update(legacyCalls=21, signaledEvents=1)
+        report['vmbus'].update(channelOpens=1, gpadls=1, packetsReceived=2, packetsSent=2)
+        report['timesync'] = dict(state='ready', frameworkMajor=3, timesyncMajor=4,
+            negotiations=1, samples=1, acknowledgments=1, timeouts=0, rejectedResponses=0)
+        self.assertTrue(verify(report, baseline)['timesyncAcknowledgmentObserved'])
+        self.assertFalse(verify(report, baseline)['guestClockAdjustmentVerified'])
+        for malformed in (None, [], True):
+            self.assertFalse(verify(dict(report, timesync=malformed), baseline)['timesyncAcknowledgmentObserved'])
+        for key, value in (('acknowledgments', 0), ('acknowledgments', True), ('acknowledgments', 2),
+                           ('samples', 0), ('negotiations', 0), ('frameworkMajor', True),
+                           ('timesyncMajor', 3), ('state', 'closed'), ('timeouts', -1)):
+            changed = deepcopy(report)
+            changed['timesync'][key] = value
+            self.assertFalse(verify(changed, baseline)['timesyncAcknowledgmentObserved'], (key, value))
+        for key, value in (('channelOpens', 0), ('gpadls', 0), ('packetsReceived', 1),
+                           ('packetsSent', 1), ('connected', False)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['timesyncAcknowledgmentObserved'])
+        self.assertFalse(verify(dict(report, signaledEvents=0), baseline)['timesyncAcknowledgmentObserved'])
+        self.assertFalse(verify(dict(report, guestOsId=0), baseline)['timesyncAcknowledgmentObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

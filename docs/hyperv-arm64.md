@@ -1953,3 +1953,27 @@ in all four Hyper-V modes. The fixture must set a
 Guest OS ID before PostMessage, matching the existing privilege contract.
 Actual Windows timesync negotiation/acknowledgments and clock policy remain to
 be validated; no guest clock adjustment is established by these tests.
+
+### Windows timesync v4 acknowledgments
+
+The integrated source from `2d3029b` was booted on a separate APFS-cloned Windows
+write overlay, 8 GiB RAM and two VPs. Relevant source files were checked against
+the commit before launch; executable hash, PID and context are retained in
+`build/windows11-hyperv/timesync/launch.json`. Final counters and the independent
+audit are `hyperv.json` and `audit.json` in that directory.
+
+Windows opens both service channels and creates two GPADLs. Timesync negotiates
+framework 3 / service 4, publishes 16 initial/periodic time messages and receives
+16 matching acknowledgments, with no rejected responses or timeouts. Heartbeat
+continues responding concurrently. Hyper-V failures and channel faults remain
+zero. The new `timesyncAcknowledgmentObserved` audit gate passes, requiring
+Windows identity/core evidence, negotiated versions, positive bounded counters,
+channel/GPADL and bidirectional packet evidence, and accepted SignalEvent calls.
+Malformed evidence, host-only samples and missing guest responses are rejected
+by the 18-test auditor suite.
+
+`guestClockAdjustmentVerified` deliberately remains false: an accepted message
+does not prove that Windows changed its wall clock or selected VMIC as its time
+provider. That requires guest-side time/provider measurements. No GUI/performance
+claim is added. The test VM was stopped, its cloned disk removed, and the
+original basic-profile VM restarted on its original overlay.

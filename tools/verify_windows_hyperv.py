@@ -202,10 +202,25 @@ def verify(report, baseline, kernel_build=26100):
         and bus['packetsReceived'] >= heartbeat['responses'] + 1
         and bus['packetsSent'] >= heartbeat['probes'] + heartbeat['negotiations']
         and event_signals_observed)
+    timesync = report.get('timesync', {})
+    timesync_ack = (not errors and type(timesync) is dict
+        and report.get('mode') == 'vmbus' and bus.get('connected') is True
+        and timesync.get('state') in ('ready', 'wait-sample')
+        and all(type(timesync.get(k)) is int and timesync[k] >= 0
+                for k in ('negotiations', 'samples', 'acknowledgments', 'timeouts', 'rejectedResponses'))
+        and timesync['negotiations'] > 0 and 0 < timesync['acknowledgments'] <= timesync['samples']
+        and type(timesync.get('frameworkMajor')) is int and timesync['frameworkMajor'] in (1, 3)
+        and type(timesync.get('timesyncMajor')) is int and timesync['timesyncMajor'] == 4
+        and all(type(bus.get(k)) is int and bus[k] > 0 for k in
+                ('channelOpens', 'gpadls', 'packetsReceived', 'packetsSent'))
+        and bus['packetsReceived'] >= timesync['acknowledgments'] + timesync['negotiations']
+        and bus['packetsSent'] >= timesync['samples'] + timesync['negotiations']
+        and event_signals_observed)
     return {'vmbusControlObserved': vmbus_observed,
             'vmbusOffersConsumedObserved': offers_consumed,
             'syntheticTimerDeliveryObserved': timer_delivery,
             'heartbeatResponseObserved': heartbeat_response,
+            'timesyncAcknowledgmentObserved': timesync_ack, 'guestClockAdjustmentVerified': False,
             'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
             'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
