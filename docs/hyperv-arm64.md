@@ -1691,3 +1691,28 @@ reach heartbeat activation and whether the service opens the device interface.
 Do not infer that changing offer flags or installing another kernel driver is
 required solely from zero GPADLs. The captured setupapi log contains no useful
 new heartbeat error and does not resolve the runtime activation question.
+
+### Runtime service probe
+
+Run `tools/windows/verify_hyperv_services.ps1` inside installed Windows to capture
+SCM service state and exit codes, core user-mode processes, the heartbeat service
+trigger, and the exact heartbeat device's properties/services/interfaces. It
+writes `C:\PCEMU\HYPERV-SERVICES.JSON` by default; `-OutputPath` selects another
+existing directory. The default observes state without starting a service.
+Use `-StartHeartbeat` for an explicit activation experiment: the report records
+before/after state, success or the activation error, with a 15-second running-state
+wait. A failed activation still saves the report and returns exit code 1.
+The VMBus kernel driver is queried through Win32_SystemDriver, while the VMIC
+user-mode services use Win32_Service. WinPE is rejected.
+
+Service Running does not prove channel use. Correlate the report with host
+channel opens, GPADLs, packets, and valid heartbeat responses. The script leaves
+`channelUseVerified` false; the existing host usage auditor remains the evidence
+gate. Upload the saved JSON using the existing guest HTTP helper if needed:
+`C:\PCEMU\HTTP.EXE post C:\PCEMU\HYPERV-SERVICES.JSON`.
+
+The PowerShell parser and mocked control-flow test
+`tests/windows_hyperv_services_test.ps1` pass under PowerShell 7.6.8 on the Mac,
+covering observation without activation, successful activation and reported
+activation failure. This is not yet an execution of the probe inside Windows;
+that runtime service activation check remains outstanding.

@@ -1,0 +1,54 @@
+# Cross-platform control-flow checks with mocked Windows service/PnP APIs.
+$ErrorActionPreference = 'Stop'
+$probe = Join-Path $PSScriptRoot '../tools/windows/verify_hyperv_services.ps1'
+$tokens = $null; $errors = $null
+[System.Management.Automation.Language.Parser]::ParseFile($probe, [ref]$tokens, [ref]$errors) | Out-Null
+if ($errors.Count) { throw ($errors | Out-String) }
+$global:pcemuProbeState = 'Stopped'; $global:pcemuProbeStarts = 0; $global:pcemuProbeFailStart = $false
+function Test-Path { param($Path) return $false }
+function Get-CimInstance {
+    param($ClassName, $Filter)
+    $expected = if ($Filter -eq "Name='vmbus'") { 'Win32_SystemDriver' } else { 'Win32_Service' }
+    if ($ClassName -ne $expected) { throw 'Unexpected CIM query' }
+    [pscustomobject]@{ State = $global:pcemuProbeState; StartMode = 'Manual'; ProcessId = 0; ExitCode = 0; ServiceSpecificExitCode = 0 }
+}
+function Get-Process { param($Name, $ErrorAction) return @() }
+function Start-Service {
+    param($Name)
+    if ($Name -ne 'vmicheartbeat') { throw 'Unexpected service mutation' }
+    $global:pcemuProbeStarts++
+    if ($global:pcemuProbeFailStart) { throw 'Mock activation denied' }
+    $global:pcemuProbeState = 'Running'
+}
+function Get-Service {
+    param($Name)
+    $s = [pscustomobject]@{}
+    $s | Add-Member ScriptMethod WaitForStatus {
+        param($State, $Timeout)
+        if ($State.ToString() -ne 'Running' -or $Timeout.TotalSeconds -ne 15) { throw 'Unbounded service wait' }
+    }
+    return $s
+}
+function sc.exe { $global:LASTEXITCODE = 0; 'Mock trigger information' }
+function pnputil.exe { $global:LASTEXITCODE = 0; 'Mock device information' }
+$path = Join-Path ([IO.Path]::GetTempPath()) ('pcemu-hyperv-' + [guid]::NewGuid() + '.json')
+try {
+    & $probe -OutputPath $path
+    $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    if ($global:pcemuProbeStarts -ne 0 -or $r.activation.attempted -or $r.startRequested -or $r.channelUseVerified) {
+        throw 'Read-only probe mutated service or claimed channel use'
+    }
+    if ($r.schema -ne 1 -or $r.services.Count -ne 4 -or $r.after.state -ne 'Stopped') { throw ('Incomplete state report: ' + ($r | ConvertTo-Json -Depth 8)) }
+    & $probe -OutputPath $path -StartHeartbeat
+    $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    if ($global:pcemuProbeStarts -ne 1 -or -not $r.activation.succeeded -or $r.after.state -ne 'Running' -or $r.channelUseVerified) {
+        throw 'Successful activation report incorrect'
+    }
+    $global:pcemuProbeState = 'Stopped'; $global:pcemuProbeFailStart = $true
+    & $probe -OutputPath $path -StartHeartbeat
+    $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 1 -or $r.activation.succeeded -or $r.activation.error -ne 'Mock activation denied') {
+        throw 'Failed activation not preserved in report and exit status'
+    }
+    Write-Output 'Hyper-V service probe: parser, observation, activation and failure checks passed'
+} finally { Remove-Item -LiteralPath $path -ErrorAction SilentlyContinue }
