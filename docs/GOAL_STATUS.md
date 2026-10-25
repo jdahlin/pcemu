@@ -795,3 +795,17 @@ it does not extend the task-completion timeout. One positive task observation
 is 12.58s end-to-end / 11.04s execution batches, not a comparative speedup.
 Evidence: `docs/measurements/excel-dependent-recalc-2026-10-25.json`.
 Paired JIT timings and fresh Windows installation remain outstanding.
+
+## Controlled Excel byte-MUL comparison (25 October)
+
+Three alternating pairs from a shared frozen source tree verify exact dependent
+SUM completion on both JITs. Median response throughput ratio is 0.998856 and
+execution-batch ratio 0.991684: no demonstrated application speedup from byte
+MUL, despite the focused kernel improvement. All six temporary restore disks
+are removed. Separate task-scoped host/opcode profiling identifies ADC, SHRD CL,
+bit tests, variable shifts and LAHF as substantial fallbacks; interpreter,
+dispatch and polling account for about 28.5%, 23.8% and 16.0% of main-thread
+samples. These differ from the earlier broad interaction profile. Evidence:
+`docs/measurements/excel-byte-mul-comparison-2026-10-25.json` plus compressed
+raw profiles. Further code lowering/block-boundary work and current-binary fresh
+Windows installation remain outstanding; broad performance completion is unproven.

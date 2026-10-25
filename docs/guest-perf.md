@@ -668,3 +668,30 @@ This compares the focused kernel, not Excel or general emulator performance.
 The comparison shares current CPU/support sources; source/executable hashes,
 loop source, paired data and guest validation are recorded in
 `measurements/native-byte-multiply-2026-10-25.json`.
+
+## Byte MUL measured in loaded Excel (25 October)
+
+Three alternating baseline/candidate pairs use the independent snapshot task
+that changes D1 from 3 to 4 and waits for the 4,096-row dependent SUM to become
+33,591,296. Both executables share a frozen whole-machine source/header tree;
+the baseline substitutes only pre-byte-MUL decoder, liveness and emitter files.
+All six headless runs reach the expected exact pixels and discard their own
+restore disks. The immutable snapshot remains on /Volumes/data.
+
+Median candidate throughput relative to baseline is 0.998856 for response and
+0.991684 for execution batches: this does not demonstrate an Excel speedup.
+The focused MUL-loop's 4.49x improvement must not be generalized to application
+performance. Three pairs and the observed variation do not resolve a small
+regression or gain reliably. Restore latency, sometimes tens of seconds on SMB,
+is reported separately and excluded from the task interval.
+
+A separate pre-byte-MUL diagnostic task run shows leading fallbacks ADC (13),
+SHRD CL (0F AD), FF group, bit tests (0F BA), variable shifts (D3), and LAHF
+(9F). Its 10,800 main-thread host samples attribute 28.5% to interpreter work,
+23.8% dispatch/cache/validation, 16.0% polling and 11.5% native code/helpers.
+Capture/control work is 9.3%; the fixture measures headless execution with
+completion probes, not normal GUI rendering. Attachment waits are excluded.
+These task-scoped results replace broad launch/interaction intervals as the
+basis for choosing the next Excel optimization. Raw compressed host/guest
+profiles, source hashes, complete paired results and category summaries:
+`measurements/excel-byte-mul-comparison-2026-10-25.json` and adjacent zstd files.
