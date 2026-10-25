@@ -1337,3 +1337,32 @@ not a claim of native Intel-hardware conformance. Intel's [page-fault definition
 defines W/R from the access causing the fault. No broad page-fault policy was
 changed. Temporary baseline binaries, debug symbols and the frozen source tree
 were removed; no new installer or Office fixture was created.
+
+
+## Windows host profiles after memory INC/DEC lowering (25 October)
+
+Fresh headless rtts and installed OSR2 runs both pass cold boot to Explorer,
+Calculator 2+2, clipboard transfer to Notepad, a fresh save, guest restart,
+and exact 38-byte stopped-guest FAT readback. Both private compressed disks
+were removed. These validate installed guests; they do not repeat OSR2 Setup.
+
+The main-thread wall-stack profiles contain 29,592 / 26,729 samples after
+excluding attachment barriers. Interpreter including MMU/fault work accounts
+for 53.2% / 54.9%, JIT dispatch/cache/validation 18.1% / 16.8%, device polling
+10.4% / 10.1%, generated code/helpers 7.8% / 7.5%, and disk/compression
+0.3% / 0.3%. CPU::physical self samples are 11.0% in both; these overlap
+the categories and must not be added to them. Unknown generated frames and
+unwind attribution limit symbol precision.
+
+These runs include observer-driven dialogs, applications, capture and restart.
+They are workload profiles, not isolated startup timings, matched before/after
+measurements, or proof of a Windows speedup. Each run records its own binary
+hash; the binary was rebuilt between runs, so their absolute timings must not
+be compared. The agreement supports prioritizing frequent Windows interpreter
+fallbacks alongside dispatch/block linking and cheaper software-MMU paths.
+High native coverage in CoreMark alone does not establish Windows coverage.
+
+[Complete profiles, binary hashes and verification results](measurements/win95-post-rmw-2026-10-25.json)
+include SHA-256 references to the two committed zstd-compressed raw sample
+traces. The sample-accounting unit tests pass all four cases. No Office or
+installer fixture was created.
