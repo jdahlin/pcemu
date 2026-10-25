@@ -1366,3 +1366,51 @@ High native coverage in CoreMark alone does not establish Windows coverage.
 include SHA-256 references to the two committed zstd-compressed raw sample
 traces. The sample-accounting unit tests pass all four cases. No Office or
 installer fixture was created.
+
+
+## Matched CoreMark workload against QEMU TCG (25 October)
+
+Three alternating pairs compare the identical 11,992-byte, 15,000-iteration
+CoreMark COM on the same Apple Silicon host. QEMU 10.2.2 uses one 486-model
+CPU, single-thread TCG, 16 MiB RAM, no display or network, and a tiny original
+BIOS loader. PCEMU uses its headless minimal-DOS benchmark runner and default
+JIT jump joining. Both execute the same flat 32-bit protected-mode workload
+with paging disabled; boot/loading is outside the timed interval.
+
+PCEMU intervals are 15.8339 / 15.5941 / 15.6074 seconds, versus QEMU
+38.0099 / 38.8826 / 38.3661 seconds. Paired throughput ratios are
+**2.4005 / 2.4934 / 2.4582**, median **2.4582x in PCEMU's favor**. These
+three pairs support a narrow flat integer workload result on this host.
+
+QEMU receives the unchanged guest's 0xe7 start/stop markers through a Unix
+socket; the host timestamps receipt. PCEMU timestamps inside its port handler.
+Transport/scheduling error is not calibrated. The long compute intervals help
+reduce its relative impact, but these are different timing mechanisms. QEMU
+lacks the custom 0xe8 guest clock, so the unchanged guest reports zero guest
+ticks and fails upstream duration validation. Canonical seed/list/matrix/state
+CRCs and the exact iteration count are independently checked; other reported
+guest errors are rejected. This is a matched workload comparison, **not an
+official CoreMark score**.
+
+[All paired timings, versions/hashes, host load and guest transcripts](measurements/qemu-coremark-2026-10-25.json)
+are retained. The initial QEMU probe is excluded from the paired aggregate.
+This result does not establish performance relative to QEMU for Windows,
+paging, devices, or other instruction mixes. No confidence interval is claimed.
+Successful QEMU disks (a tiny COM plus sparse 1 MiB tail) and PCEMU compressed
+DOS children are removed; no installed VM or Office fixture is created.
+
+To reproduce each engine's measurement, alternate these commands with a fresh
+output directory for each run:
+
+```sh
+python3 tools/bench_guest_perf.py --suite coremark --iterations 15000 --output build/pcemu-comparison-run
+python3 tools/bench_qemu_coremark.py --program build/pcemu-comparison-run/program/PCBENCH.COM --iterations 15000 --output build/qemu-comparison-run
+```
+
+The original QEMU-only BIOS loader is `tests/guest_perf/qemu_boot.asm`; it loads
+the COM from LBA 1 without a DOS installation and the host stops QEMU after
+the guest's completion marker. QEMU's [debug console implementation](https://github.com/qemu/qemu/blob/master/hw/char/debugcon.c)
+and [character-device documentation](https://www.qemu.org/docs/master/system/qemu-manpage.html)
+describe the configurable I/O port and Unix socket backend used here. Seven
+validator tests cover canonical checks, wrong/missing CRCs, iteration mismatch,
+other guest errors and the specific unavailable-clock diagnostic.

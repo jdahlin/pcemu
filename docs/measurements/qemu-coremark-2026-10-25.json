@@ -1,0 +1,472 @@
+{
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "pcemu",
+        "qemu"
+      ],
+      "qemuSecondsOverPcemuSeconds": 2.400533250067737,
+      "results": {
+        "pcemu": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.833939292,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "da98c94a5fe2d040870b2cdc32cb9dfae9b8c442f5ffb490ab62138e970e7f21",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "f5abb668361325e76f34a0439e06dcb5d6d6bf21",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.9365234375,
+              2.91064453125,
+              2.9267578125
+            ],
+            "loadAverageAfter": [
+              2.8017578125,
+              2.8818359375,
+              2.9150390625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 947.3321656335172,
+          "publishedScoreEligible": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 15834\nTotal time (secs): 15\nIterations/Sec   : 1000\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nCorrect operation validated. See README.md for run and reporting rules.\n"
+        },
+        "qemu": {
+          "scope": "Time the unchanged PCEMU CoreMark COM under headless QEMU TCG.\n\nQEMU lacks PCEMU's host-clock port 0xe8. Fixed iterations and canonical CRCs\nare checked, but upstream duration validation is unavailable: no official score.\nSocket receipt timestamps bracket guest port 0xe7 markers, excluding BIOS/load.\n",
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "16",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/1-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-qemu-nk1vfwl3/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/1-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "qemuSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "programSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              2.8017578125,
+              2.8818359375,
+              2.9150390625
+            ],
+            "loadAfter": [
+              2.87939453125,
+              2.89453125,
+              2.9169921875
+            ]
+          },
+          "iterations": 15000,
+          "hostSeconds": 38.00989775,
+          "iterationsPerHostSecond": 394.6340529158619,
+          "markerReceiptNanoseconds": [
+            127319083,
+            38137216833,
+            38138728291
+          ],
+          "crcValidated": true,
+          "publishedScoreEligible": false,
+          "upstreamDurationClockAvailable": false,
+          "guestSha256": "ee8a3fee83d1c4755da9c577873468aaa98dbec96dc5ff9fbcb2399a991d5f1b",
+          "privateDiskRemoved": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 0\nTotal time (secs): 0\nERROR! Must execute for at least 10 secs for a valid result!\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nErrors detected\n"
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "qemu",
+        "pcemu"
+      ],
+      "qemuSecondsOverPcemuSeconds": 2.493426875357601,
+      "results": {
+        "qemu": {
+          "scope": "Time the unchanged PCEMU CoreMark COM under headless QEMU TCG.\n\nQEMU lacks PCEMU's host-clock port 0xe8. Fixed iterations and canonical CRCs\nare checked, but upstream duration validation is unavailable: no official score.\nSocket receipt timestamps bracket guest port 0xe7 markers, excluding BIOS/load.\n",
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "16",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/2-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-qemu-p724rjvd/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/2-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "qemuSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "programSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              2.87939453125,
+              2.89453125,
+              2.9169921875
+            ],
+            "loadAfter": [
+              2.98291015625,
+              2.9208984375,
+              2.92333984375
+            ]
+          },
+          "iterations": 15000,
+          "hostSeconds": 38.882635,
+          "iterationsPerHostSecond": 385.7763240582846,
+          "markerReceiptNanoseconds": [
+            80229041,
+            38962864041,
+            38964395000
+          ],
+          "crcValidated": true,
+          "publishedScoreEligible": false,
+          "upstreamDurationClockAvailable": false,
+          "guestSha256": "ee8a3fee83d1c4755da9c577873468aaa98dbec96dc5ff9fbcb2399a991d5f1b",
+          "privateDiskRemoved": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 0\nTotal time (secs): 0\nERROR! Must execute for at least 10 secs for a valid result!\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nErrors detected\n"
+        },
+        "pcemu": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.594054666,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "da98c94a5fe2d040870b2cdc32cb9dfae9b8c442f5ffb490ab62138e970e7f21",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "f5abb668361325e76f34a0439e06dcb5d6d6bf21",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.98291015625,
+              2.9208984375,
+              2.92333984375
+            ],
+            "loadAverageAfter": [
+              2.82568359375,
+              2.890625,
+              2.91162109375
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 961.9050542835901,
+          "publishedScoreEligible": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 15594\nTotal time (secs): 15\nIterations/Sec   : 1000\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nCorrect operation validated. See README.md for run and reporting rules.\n"
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "pcemu",
+        "qemu"
+      ],
+      "qemuSecondsOverPcemuSeconds": 2.4582005417005797,
+      "results": {
+        "pcemu": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.607402166,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "da98c94a5fe2d040870b2cdc32cb9dfae9b8c442f5ffb490ab62138e970e7f21",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "f5abb668361325e76f34a0439e06dcb5d6d6bf21",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.82568359375,
+              2.890625,
+              2.91162109375
+            ],
+            "loadAverageAfter": [
+              2.7158203125,
+              2.86279296875,
+              2.9013671875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 961.0824300200838,
+          "publishedScoreEligible": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 15608\nTotal time (secs): 15\nIterations/Sec   : 1000\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nCorrect operation validated. See README.md for run and reporting rules.\n"
+        },
+        "qemu": {
+          "scope": "Time the unchanged PCEMU CoreMark COM under headless QEMU TCG.\n\nQEMU lacks PCEMU's host-clock port 0xe8. Fixed iterations and canonical CRCs\nare checked, but upstream duration validation is unavailable: no official score.\nSocket receipt timestamps bracket guest port 0xe7 markers, excluding BIOS/load.\n",
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "16",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/3-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-qemu-ndslnbet/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/qemu-coremark-comparison/3-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "qemuSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "programSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              2.7158203125,
+              2.86279296875,
+              2.9013671875
+            ],
+            "loadAfter": [
+              2.95068359375,
+              2.8955078125,
+              2.9111328125
+            ]
+          },
+          "iterations": 15000,
+          "hostSeconds": 38.366124459,
+          "iterationsPerHostSecond": 390.96990408895135,
+          "markerReceiptNanoseconds": [
+            78121041,
+            38444245500,
+            38445820250
+          ],
+          "crcValidated": true,
+          "publishedScoreEligible": false,
+          "upstreamDurationClockAvailable": false,
+          "guestSha256": "ee8a3fee83d1c4755da9c577873468aaa98dbec96dc5ff9fbcb2399a991d5f1b",
+          "privateDiskRemoved": true,
+          "guestTranscript": "2K performance run parameters for coremark.\nCoreMark Size    : 666\nTotal ticks      : 0\nTotal time (secs): 0\nERROR! Must execute for at least 10 secs for a valid result!\nIterations       : 15000\nCompiler version : Clang 21.0.0 (clang-2100.1.1.101)\nCompiler flags   : --target=i386-none-elf -march=i386 -mno-sse -mno-mmx -msoft-float -O2 -ffreestanding -fno-builtin -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -DITERATIONS=15000\nMemory location  : STATIC, 32-bit protected mode, paging disabled\nseedcrc          : 0xe9f5\n[0]crclist       : 0xe714\n[0]crcmatrix     : 0x1fd7\n[0]crcstate      : 0x8e3a\n[0]crcfinal      : 0x65c5\nErrors detected\n"
+        }
+      }
+    }
+  ],
+  "medianPcemuThroughputOverQemu": 2.4582005417005797,
+  "scope": "Three alternating pairs on one ARM host: unchanged 15000-iteration CoreMark COM, paging disabled. PCEMU boots minimal DOS; QEMU uses a tiny BIOS COM loader. Timed computation excludes boot/load. This is not an official CoreMark score or evidence for Windows/paged-memory performance.",
+  "clockLimit": "QEMU has no PCEMU 0xe8 guest clock; its canonical CRCs and iteration count pass, but the unchanged guest explicitly reports the missing >=10-second clock validation. QEMU host socket receipt timestamps bracket 0xe7 start/stop markers; PCEMU times inside the port handler. Scheduling/transport error has not been calibrated. Long intervals reduce its relative impact.",
+  "hostCpu": "Apple M4",
+  "hostPlatform": "macOS-26.6.2-arm64-arm-64bit",
+  "sourceSha256": {
+    "tools/bench_qemu_coremark.py": "53fe03d5d479fde62f00751fab4a92b30487f93d745615630859747424723f82",
+    "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd"
+  }
+}
