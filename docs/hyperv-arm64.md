@@ -59,7 +59,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 921 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 930 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -559,3 +559,22 @@ completed barriers. The core/SyncContext auditor passes. No reference-counter
 reads, IPI hypercalls or TLB hypercalls were observed in that binary.
 Frozen evidence: `build/windows11-hyperv/sync-ex-smp/soak-evidence.json`, SHA-256
 `5628a10a1fe1eee2694a7bc52b3e1f7be2c8c76f2b7e295db62369b97a58c437`.
+
+
+## Diagnostic Windows IPI recommendation probe
+
+`--hyperv-probe-ipi` is an explicit diagnostic experiment, requiring
+`--hyperv basic`. It sets only the synthetic-cluster-IPI recommendation in
+HvRegisterFeaturesInfo and captures the two fixed fast 0xb input words in
+`ipiProbe`. IPI requests still return the normal unsupported-call error;
+this option does not claim implemented IPI delivery and may prevent a guest
+from booting. Use an independent test disk/variable clone, not the working OS.
+Normal basic mode leaves this recommendation off and does not collect inputs.
+
+The purpose is to observe which interrupt number Windows ARM64 supplies,
+without guessing an APIC-vector-to-GIC offset from the generic x64-oriented
+table. The original HvlSendSyntheticClusterIpi routine supplies a 32-bit first
+word and a VP mask to fast 0xb; the vector's meaning is the remaining question.
+The bounded report stores only those defined input words, count and enabled
+state. This experiment must be replaced or disabled once the vector contract
+and actual delivery path are verified.

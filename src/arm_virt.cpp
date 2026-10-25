@@ -73,6 +73,8 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
+    if (c.hypervIpiProbe && !c.hyperv) throw std::runtime_error("IPI probe requires --hyperv basic");
+    hyperv.setIpiProbe(c.hypervIpiProbe);
     hyperv.setContextSynchronizer([this](uint64_t targets) {
         vm.synchronizeInstructionContext(targets);
         return true;

@@ -560,6 +560,7 @@ int main(int argc, char **argv) {
                 if (mode != "off" && mode != "basic") throw std::runtime_error("Hyper-V must be off or basic");
                 uefi.hyperv = mode == "basic"; uefiOptions = true;
             }
+            else if (arg == "--hyperv-probe-ipi") { uefi.hypervIpiProbe = true; uefiOptions = true; }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
                 auto mode = value();
@@ -605,6 +606,7 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic --hyperv-stats FILE]\n"
+                             "      [--hyperv-probe-ipi (diagnostic; unsupported IPI calls still fail)]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -621,6 +623,7 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
+            if (uefi.hypervIpiProbe && !uefi.hyperv) throw std::runtime_error("IPI probe requires --hyperv basic");
             if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes || uefi.hyperv) {
                 auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
                 if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)

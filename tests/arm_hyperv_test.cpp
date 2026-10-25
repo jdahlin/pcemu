@@ -434,5 +434,22 @@ int main() {
     check(flushCall(false, true, true, 7, 1) == 0x71);
     check(flushing.report().find("\"tlbFlushRequests\":74") != std::string::npos);
     check(flushing.report().find("\"contextSyncRequests\":0") != std::string::npos);
+    ArmHyperV probing(true, memory, base, 1);
+    auto probeFeatures = [&] {
+        r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x201;
+        check(probing.call(1, r, 0) && r[0] == one);
+        return r[15];
+    };
+    check(probeFeatures() == 0xffffffff00000000ull);
+    probing.setIpiProbe(true);
+    check(probeFeatures() == 0xffffffff00000004ull);
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90002; r[5] = 456;
+    check(probing.call(1, r, 0) && r[0] == one);
+    r = {}; r[0] = 0x1000b; r[1] = 5; r[2] = 1;
+    check(probing.call(1, r, 0) && r[0] == 2); // Probe does not fake IPI support.
+    check(probing.report().find("\"ipiProbe\":{\"enabled\":true,\"requests\":1,\"input0\":5,\"input1\":1}") != std::string::npos);
+    probing.setIpiProbe(false);
+    check(probeFeatures() == 0xffffffff00000000ull);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

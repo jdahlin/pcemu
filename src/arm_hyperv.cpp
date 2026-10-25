@@ -45,7 +45,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
     case 0x200: value[0] = privileges; value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
-    case 0x201: value[0] = 0xffffffff00000000ull; return 0; // No scheduling/flush recommendations
+    case 0x201: value[0] = 0xffffffff00000000ull | (ipiProbe ? 4 : 0); return 0; // No scheduling/flush recommendations
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
     case 0x204: case 0x205: case 0x206: case 0x207: case 0x208: case 0x209: return 0;
@@ -173,6 +173,13 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
+    if (ipiProbe && code == 0xb && (control & 0x10000)) {
+        // Observe the real Windows ARM64 fixed IPI input. Do not acknowledge
+        // unsupported delivery or infer an APIC-to-GIC vector offset.
+        ++ipiProbeRequests;
+        unsigned in = smccc ? 2 : 1;
+        ipiProbeInput0 = r[in]; ipiProbeInput1 = r[in + 1];
+    }
     if (code == 0x2 || code == 0x13 || code == 0x19 || code == 0x1a) {
         if (!guestId) return accessDenied;
         const bool flush = code == 0x2 || code == 0x13;
@@ -331,6 +338,9 @@ std::string ArmHyperV::report() const {
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
+      << ",\"ipiProbe\":{\"enabled\":" << (ipiProbe ? "true" : "false")
+      << ",\"requests\":" << ipiProbeRequests << ",\"input0\":" << ipiProbeInput0
+      << ",\"input1\":" << ipiProbeInput1 << '}'
       << ",\"crash\":" << crashReport()
       << ",\"tlbFlushRequests\":" << tlbFlushRequests
       << ",\"tlbFlushTargetMask\":" << tlbFlushTargetMask
