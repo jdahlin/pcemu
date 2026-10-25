@@ -1640,3 +1640,34 @@ All timing/profile guests and inspector sessions are stopped, and their owned
 private disk children are removed. The reusable compressed checkpoint is
 retained externally.
 [Paired runs, host/guest profiles, hashes and hot-code evidence](measurements/excel-bit-test-comparison-2026-10-25.json).
+
+## Admit the hot two-SHRD fragment (25 October)
+
+The profiler-identified Excel sequence contains two adjacent register SHRDs
+followed by an unsupported CL shift. The JIT now admits exactly this two-operation
+kind of fragment after its usual eight-visit warmup. Other short-fragment
+thresholds and instruction lowering remain unchanged.
+
+Three alternating matched-source pairs favor the candidate on the restored
+Excel task: median paired response ratio **1.0446**, execution-batch wall-time
+ratio **1.0457**. Response ratios range from 1.0418 to 1.0535. Native coverage
+rises from approximately 88.97% to 90.16%. These are modest observed gains on
+one workload with three pairs and no confidence interval, not general emulator
+performance or Rosetta parity. No compiler or integration guest ran alongside
+the timing pairs.
+
+A separate instrumented run confirms the mechanism: interpreted SHRD CL
+attempts fall from **16,764,960 to 54**; total interpreted attempts fall from
+155,012,297 to 138,198,971. The remaining warmup/other-site attempts are not
+claimed eliminated. Diagnostic timings are excluded from the paired scores.
+The reusable checkpoint's files still match their original hashes.
+
+The normal-warmup regression covers both code sizes, both operand sizes, all
+256 CL byte values and exact GPR/flags/IP/instruction state against the
+interpreter, including zero and oversized counts. The flag suite passes
+25,952,090 checks and the core suite 352,644. Frozen-candidate headless Win3.11
+Notepad save/exit and both Win95 Calculator/clipboard/Notepad/restart checks
+pass; successful private children are removed. A delayed Welcome popup in the
+first OSR2 attempt was addressed separately in the unattended checker.
+
+[Pairs, hashes, builds, guest counters and integration evidence](measurements/excel-shrd-pair-2026-10-25.json).

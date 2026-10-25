@@ -24,7 +24,9 @@ Updated 2026-10-25. Work remains in progress.
   RAM moves support paged guests. Register BT/BTS/BTR/BTC now join native MUL
   and SHRD; targeted bit-test kernels improve 6.88x over the previous JIT.
   Three matched Excel recalculation pairs observe a modest 3.6% paired improvement
-  after bit tests, with no general application/Rosetta claim. Many instruction forms remain interpreted,
+  after bit tests. Admitting the measured two-SHRD fragment adds a separately
+  observed 4.5% paired improvement on that task. Neither establishes general
+  application/Rosetta performance. Many instruction forms remain interpreted,
   and Rosetta-class application performance has not been demonstrated. Work
   continues; the full goal is not complete. See
   `measurements/native-bit-test-2026-10-25.json`.

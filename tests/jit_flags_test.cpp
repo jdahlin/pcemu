@@ -24,6 +24,41 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Excel's two SHRDs end at an unsupported variable shift. The normal
+        // warmup policy must admit this expensive pair, not just warmup=0 tests.
+        for (bool code32 : {false, true})
+            for (unsigned width : {2u, 4u}) {
+                CPU a(65536), b(65536);
+                Jit normal(b);
+                std::vector<uint8_t> code;
+                for (uint8_t modrm : {0xf8, 0xd7}) {
+                    if ((width == 4) != code32) code.push_back(0x66);
+                    code.insert(code.end(), {0x0f, 0xad, modrm});
+                }
+                const auto pairEnd = code.size();
+                code.insert(code.end(), {0xd3, 0xea});
+                for (auto c : {&a, &b}) {
+                    c->s[CS].big = code32;
+                    for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                }
+                for (unsigned count = 0; count < 256; ++count)
+                    for (unsigned visit = 0; visit < 8; ++visit) {
+                        for (auto c : {&a, &b}) {
+                            c->ip = c->instructions = 0;
+                            c->flags = 0x202 | ((count & 1) ? 0xcd5 : 0);
+                            for (unsigned n = 0; n < 8; ++n) c->r[n] = 0x87654321u ^ (n * 0x123458u);
+                            c->set(CX, count, 1);
+                        }
+                        auto n = normal.run();
+                        for (unsigned k = 0; k < n; ++k) a.step();
+                        equal(a, b);
+                        if (count || visit == 7) {
+                            check(n == 2 && b.ip == pairEnd, "normal warmup compiles the SHRD pair only");
+                            check(normal.nativeInstructions > 0, "SHRD pair reaches native execution");
+                        } else
+                            check(n == 1 && normal.nativeInstructions == 0, "SHRD pair retains normal warmup");
+                    }
+            }
         // Bit tests preserve all flags except CF, including pending ADD flags.
         // Exercise every immediate byte and all source/destination aliases;
         // register indices include negative and high-bit-set values.
