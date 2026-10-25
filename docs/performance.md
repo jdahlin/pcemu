@@ -1290,3 +1290,50 @@ full captured states and compatibility checks](measurements/lazy-page-permission
 are committed. Each successful boot used a compressed child allocating 397,312
 bytes; all were removed. RAM kernels opened no disk. Temporary baseline source,
 binary/debug files were removed, without creating installer/Office fixtures.
+
+
+## Guarded native memory INC/DEC (25 October)
+
+Memory FE/FF /0 and /1 without LOCK now lower at byte, word and dword widths.
+The existing writable/dirty TLB, ordinary-RAM, A20, page-boundary, code-bitmap
+and watched-write guards remain in place. The inline path loads the original
+operand, updates RAM, and records the original value for flag materialization.
+Carry is published from preceding pending flags before access and preserved by
+INC/DEC. Declined accesses replay with the original IP/flags. The slow path
+probes read translation before write translation, preserving the interpreter's
+callback/dirty-bit ordering for devices and write faults. LOCK-prefixed forms
+retain interpreter fallback. Architectural flag behavior follows INC/DEC in
+the local Intel SDM, Volume 2A pages 3-516 and 3-328.
+
+The new `build/jit-rmw-tests` target is included in `make test` and passes
+947,820 checks: every byte value, wider boundary values, code/address-size
+combinations, all Jcc conditions, preserved carry, warm/cold paging, A20 aliasing,
+permission faults, device/watch callbacks, cross-page replay, code generation
+changes and later fault/invalidation boundaries before flag overwrites. Core,
+read, byte and flag suites pass 343,418 / 243,295 / 2,957,189 / 237,430 checks.
+DOS profile validation retains all CRCs and 64 matching microbenchmark intervals.
+Win3.11 exact file-save and both Win95 Calculator/clipboard/Notepad save/restart/
+exact FAT-readback checks pass headless; successful compressed disks are removed.
+
+At the same 3,975,114 guest instructions in short diagnostic CoreMark, native
+instructions rise 3,823,290 -> 3,880,832, interpreted attempts fall
+151,824 -> 94,282 and dispatches fall 839,456 -> 781,914. Instrumented timing is
+not a benchmark score. Five alternating uninstrumented pairs use the complete
+pre-change source baseline, including its former helper and metadata layout.
+All ten 15,000-iteration runs pass canonical CRCs, upstream duration validation
+and DOS return, with identical COM hash and 5,962,639,001 guest instructions.
+Baseline/candidate interval ratios are 1.14206, 1.16631, 1.15740, 1.16503 and
+1.13867: median paired throughput improves **15.74%**. Median intervals are
+20.9031 s and 18.0480 s. Absolute times vary across pairs; every result and host
+load record is retained. This is one-host flat integer CPU/device work without
+confidence intervals, not Windows application or Rosetta equivalence.
+
+[The complete evidence](measurements/native-memory-incdec-2026-10-25.json)
+retains raw timings, counters, compiler/source/binary hashes and compatibility
+results. A [small original x86 fault probe](measurements/rmw-fault-reference-2026-10-25.c)
+observes macOS Rosetta exception-state error codes 4 / 6 / 4 for load / store /
+INC on a PROT_NONE mapping. This supports the read-fault replay oracle used here,
+not a claim of native Intel-hardware conformance. Intel's [page-fault definition](https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-system-programming-manual-325384.pdf)
+defines W/R from the access causing the fault. No broad page-fault policy was
+changed. Temporary baseline binaries, debug symbols and the frozen source tree
+were removed; no new installer or Office fixture was created.

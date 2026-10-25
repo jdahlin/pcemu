@@ -410,6 +410,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             continue;
         }
         if (i.kind == Kind::Memory) {
+            if (i.memory.delta) {
+                // INC/DEC preserve CF. Publish the preceding flags before any
+                // access or replay, then replace arithmetic flags on success.
+                finishFlags(last, -1, 0);
+                last = -1;
+            }
             const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
             auto metadata = &(*block.memory)[memoryIndex++];
@@ -592,7 +598,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memory.store) {
+                if (i.memory.delta) {
+                    emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
+                         (11 << 5) | 10);
+                    emit((i.memory.delta > 0 ? 0x11000400u : 0x51000400u) | (10 << 5) | 13);
+                    emit((accessWidth == 4 ? 0xb9000000u : accessWidth == 2 ? 0x79000000u : 0x39000000u) |
+                         (11 << 5) | 13);
+                } else if (i.memory.store) {
                     int source = 20 + i.dst;
                     if (i.immediate) {
                         imm(10, i.imm);
@@ -630,7 +642,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
-            if (!i.memory.store) {
+            if (!i.memory.store || i.memory.delta) {
                 load(10, 19, offsetof(CPU, nativeValue));
             }
             finishMove();

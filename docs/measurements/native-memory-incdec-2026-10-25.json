@@ -1,0 +1,5438 @@
+{
+  "scope": "Five alternating headless DOS CoreMark pairs, 15000 iterations each; complete pre-change baseline",
+  "runnerSha256": {
+    "baseline": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+    "candidate": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5"
+  },
+  "signature": [
+    "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8",
+    5962639001,
+    15000
+  ],
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.1420592404925352,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 20.903091292,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5750078631,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.68017578125,
+              2.56591796875,
+              2.5048828125
+            ],
+            "loadAverageAfter": [
+              2.68994140625,
+              2.57666015625,
+              2.5087890625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 717.597210405945,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 18.302983375,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.63427734375,
+              2.56689453125,
+              2.50537109375
+            ],
+            "loadAverageAfter": [
+              2.4931640625,
+              2.53857421875,
+              2.49560546875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 819.5385250957755,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.1663061097856462,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 18.048023791,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.4931640625,
+              2.53857421875,
+              2.49560546875
+            ],
+            "loadAverageAfter": [
+              2.3525390625,
+              2.5029296875,
+              2.48388671875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 831.1159256937618,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 21.049520417,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5750078631,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.3525390625,
+              2.5029296875,
+              2.48388671875
+            ],
+            "loadAverageAfter": [
+              2.1103515625,
+              2.43701171875,
+              2.46044921875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 712.6053089497331,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.1573954650149052,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 21.216889584,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5750078631,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.1103515625,
+              2.43701171875,
+              2.46044921875
+            ],
+            "loadAverageAfter": [
+              1.93017578125,
+              2.36865234375,
+              2.43408203125
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 706.9839309203807,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 18.33158175,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              1.93017578125,
+              2.36865234375,
+              2.43408203125
+            ],
+            "loadAverageAfter": [
+              2.02490234375,
+              2.3662109375,
+              2.43115234375
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 818.2599954856595,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.1650266294109526,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.8502755,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.02490234375,
+              2.3662109375,
+              2.43115234375
+            ],
+            "loadAverageAfter": [
+              2.8720703125,
+              2.548828125,
+              2.49560546875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 946.355790471907,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 18.465993041,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5750078631,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.8720703125,
+              2.548828125,
+              2.49560546875
+            ],
+            "loadAverageAfter": [
+              4.32861328125,
+              2.90771484375,
+              2.62548828125
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 812.3039993947542,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.1386741685278152,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 17.482609792,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5750078631,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 280,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 776416,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "f6f0117e801ac9b0ebe8e91a6ca1b58845fd75bec9947b8d366e5a82169f378d",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              4.32861328125,
+              2.90771484375,
+              2.62548828125
+            ],
+            "loadAverageAfter": [
+              4.14892578125,
+              2.9609375,
+              2.65087890625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 857.9954696960611,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.353478875,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "63261123329169e3baabe356a076d7ddc445949abad623a938c954a2c0555cf5",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              4.14892578125,
+              2.9609375,
+              2.65087890625
+            ],
+            "loadAverageAfter": [
+              3.80126953125,
+              2.94482421875,
+              2.65087890625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 976.9772780567947,
+          "publishedScoreEligible": true
+        }
+      }
+    }
+  ],
+  "medianPairedRatio": 1.1573954650149052,
+  "build": {
+    "baselineCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+    "baselineCommand": [
+      "clang++",
+      "-I/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/src/ne2000.cpp",
+      "tools/guest_bench.cpp",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/rmw-host-timing/baseline"
+    ],
+    "baselineSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "03ef08a76dfac7b4f7477bdb439d69d93d8db58a03e6f055255486c8052ed446",
+      "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "b36dc153a01dc52d16ddd8227aff9875cae0afe0aca830af461ee21ec57c1584",
+      "src/jit_decode.cpp": "e83f2d0539b7e7556c4c793ec1b67a75baa6f9680043d85f9bc8d8e203ded199",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "6636a75fbad624e4b66eb429f5f8873e0786bc04a4d27164819ed7c08d6426fa",
+      "src/jit_runtime.cpp": "098641a5b09cedb18edba4bac15a8dffe3f9fc876a1e38566e2781170d08863f",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "e39b9e46ab7750d42c9ab5cb53a11e09f6805801fc9f516b2ca0cfe9d44a2478",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    },
+    "candidateSourceSha256": {
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/arm_hyperv.cpp": "b8ff90ca0bea4b54cd952ba1c38355d48990b45e1d0200223e5d237c8382fdff",
+      "src/arm_hyperv.hpp": "804e8e2f951434abbfb2fb4cff9eb61ccd19233adb7aac8f12b389f0e55ca3a9",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/arm_ramfb.cpp": "a47630404a795d4f487432514693f0f0a689db9fc0d5beb1e673d3d729c1166b",
+      "src/arm_ramfb.hpp": "f504e9977195dc9596cf4009689ea7cb08af0826135281c143a8de582110da0a",
+      "src/arm_virt.cpp": "83269efe620ad44206fbe3eb5d9ca186cd59c17c59109d0345491d7a618835c4",
+      "src/arm_virt.hpp": "18ed98713f285ec98cbf00f65732de18ff8c2f8b82657c6b21a1a34ec654df24",
+      "src/arm_virt_devices.cpp": "d332c9c69d7d3f8c527febdf55396a2834c60d2888daa75c313385757e18d05b",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/cpu.cpp": "03ef08a76dfac7b4f7477bdb439d69d93d8db58a03e6f055255486c8052ed446",
+      "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/disk.cpp": "1c3ededc11ef97e598c6091dd2f937c064122b7c3e14c2adff44105a393b695f",
+      "src/disk.hpp": "1be5004b84cbe5277148fc89d763f24f538ff26ec422c6eb619b297b7b2fbfc2",
+      "src/frontend.hpp": "fd4cc12887b365f1ce016bb9cf7b55c98912f17aa5783f7e416bcda841fa87c1",
+      "src/frontend_sdl.cpp": "0e3135fe627da9f57b866b6ae983580e5a51dd2fc3e4041b988befcb34551054",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/host_keyboard.cpp": "70eebd8a2ea9d854aca7dd4fc524dfc4d2af6122c287729d82a2e8be847c8298",
+      "src/host_keyboard.hpp": "5aed912a1657f5fe9bf8886bd9cddfc59d9f7b808470a51f470fa8aa7023f0bb",
+      "src/hvf_machine.cpp": "167b39cf74d62ec67b0e81d99593d7a1152057f14ec6390273ac293219fa9caf",
+      "src/hvf_machine.hpp": "ec55a35d9292366cb01d0fc0cb8ea3dfe0217be5efb732362341049f5e79de7d",
+      "src/hvf_secondary.hpp": "574f5026f60aa62dd6f6b524b52b2cd09cc831a1f63e005e786fb11d7c39387f",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+      "src/i8259_pair.cpp": "a9cdd128558d8fe22b50943c59775aaf66be8940ebf23789ec5056838ea7ab82",
+      "src/i8259_pair.hpp": "7dba58593e828ea79f93776cd8772dd07a93f562b2032059fcf6e9832e4b05f7",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+      "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+      "src/jit_arm64.cpp": "026021360d110f9db52c22d70e8c88c01bacbf281d8c57638f4280b29bf059f6",
+      "src/jit_decode.cpp": "e8bfacdccf60dfacf5234ab6aa29cbf45402e4cdfc6b79bbdf86303c0f93b149",
+      "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+      "src/jit_memory.hpp": "37f9bf9bc73815f904d129e7122e3219d3f861134cdaeb864fa71b3c39b7f94c",
+      "src/jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/machine.cpp": "e39b9e46ab7750d42c9ab5cb53a11e09f6805801fc9f516b2ca0cfe9d44a2478",
+      "src/machine.hpp": "bbfbde3a7824027bdde486889c7f7d0ff66b993de5c8b2fa2f6e6e487d8cfd8c",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/main.cpp": "0647503f2ccc992650df1cb3014e63441ad70c7df76966ca36d47010b6953add",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/network.cpp": "49d1748778e8ea2029ba8ab0d742e12bf5ba0874dd41e86fa9dfa04cfe9fa85e",
+      "src/network.hpp": "79dec1bfe3cb4c6b4969966546a47b19374c5d13519acbd6f3dd543742abf535",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/pc_at_io.cpp": "ba06874556ef6311aca1a5bb46fd3b882f2ee9340afd254687ce73adc9f4478a",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/pc_display.cpp": "24b9629a092932c54ca8fd65fd9e02e625b0cb647d87a29fe1aa83f661f1e12d",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/pc_firmware.cpp": "8eebbd1f33089b0c0be6111a8e24dc60086773dfcdb314660cb4528768d3cb1c",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/session_diagnostics.cpp": "c1c4cee3dc38e8b00e38087b7017cd41a99102a8420d260c586e0e055bfb34e7",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/snapshot.cpp": "af46343fcc548b62e1b071d430e5d91aa1b813841953179b1edc9c2979a8f93f",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/vga.cpp": "b94cb89d4052c5f8f8b06d38924ca2ce427729013d303b8b842b7278bb6688f9",
+      "src/vga.hpp": "766017d537264eaa114c3b6c467214335a7631c75bde527ea9d4a04250015e30",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151"
+    }
+  },
+  "date": "2026-10-25",
+  "checks": {
+    "rmwJit": 947820,
+    "core": 343418,
+    "readJit": 243295,
+    "byteJit": 2957189,
+    "flagLiveness": 237430
+  },
+  "compatibility": {
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "33491eb222a5afb2fc0cca17e31e8344f6d1f449811233c61a4e2be5dd19d6a4",
+      "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5670,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rttsApps": {
+      "pid": 73113,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-tjqrqa83/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-tjqrqa83/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-tjqrqa83/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-tjqrqa83/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "33491eb222a5afb2fc0cca17e31e8344f6d1f449811233c61a4e2be5dd19d6a4",
+      "profiled": false,
+      "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 457410387,
+        "afterInstructions": 1543857974,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P97903DA.TXT",
+          "fatName": "P97903DATXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 97903DA9.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "63bd68bbba76b3156a7cafc4e125d917198eae782710aa357298b9902ea0d10e"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    },
+    "osr2Apps": {
+      "pid": 73109,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-7vxfawxg/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-7vxfawxg/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-7vxfawxg/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-7vxfawxg/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "33491eb222a5afb2fc0cca17e31e8344f6d1f449811233c61a4e2be5dd19d6a4",
+      "profiled": false,
+      "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 293661862,
+        "afterInstructions": 1325546747,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P06B309E.TXT",
+          "fatName": "P06B309ETXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 06B309EE.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "3829efb1619272d2cdf0812db5422744cafadc178c7780226058400a2ec5ce9f"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    }
+  },
+  "profiles": {
+    "before": {
+      "coremark": {
+        "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+        "jit": true,
+        "followJumps": true,
+        "traces": false,
+        "profiled": true,
+        "returnedToDos": true,
+        "crcValidated": true,
+        "microValidated": false,
+        "loops": 17,
+        "upstreamValidated": false,
+        "samples": [
+          {
+            "case": 1,
+            "hostSeconds": 0.033331834,
+            "guestInstructions": 3975114,
+            "nativeInstructions": 3823290,
+            "slowMemoryCalls": 0,
+            "compiledBlocks": 280,
+            "cacheRecycles": 0,
+            "residentNativeBytes": 776416,
+            "jitClearedBefore": false,
+            "checksumChecked": false,
+            "checksum": 0,
+            "guestProfile": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-jit/result.json.profile-0.json"
+          }
+        ],
+        "runnerSha256": "15e43fdc83569413aa8f00b7e31d1898c8ceaa725a668cde0e8857edb8901893",
+        "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench-profile",
+        "gitCommit": "6286480674b7741c1326ee46ee61cbaf1a15535b",
+        "gitDirty": true,
+        "host": {
+          "system": "Darwin",
+          "release": "25.6.0",
+          "machine": "arm64",
+          "logicalCpus": 10,
+          "loadAverageBefore": [
+            2.3125,
+            2.79150390625,
+            3.17724609375
+          ],
+          "loadAverageAfter": [
+            2.3125,
+            2.79150390625,
+            3.17724609375
+          ]
+        },
+        "build": {
+          "suite": "coremark",
+          "upstream": "https://github.com/eembc/coremark",
+          "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+          "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+          "flags": [
+            "--target=i386-none-elf",
+            "-march=i386",
+            "-mno-sse",
+            "-mno-mmx",
+            "-msoft-float",
+            "-O2",
+            "-ffreestanding",
+            "-fno-builtin",
+            "-fno-pic",
+            "-fno-pie",
+            "-fno-stack-protector",
+            "-fno-asynchronous-unwind-tables",
+            "-DITERATIONS=10",
+            "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+            "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+          ],
+          "iterations": 10,
+          "comBytes": 11988,
+          "comSha256": "b1e7b5924cf6b0bf1fb51287290e7cbc2bb4c10277b5cec410e4bbaf2a9ecea7"
+        },
+        "iterations": 10,
+        "iterationsPerHostSecond": 300.0134946069874,
+        "publishedScoreEligible": false
+      },
+      "intervalCounters": {
+        "startInstructions": 9971241,
+        "stopInstructions": 13946355,
+        "interpretedAttempts": 151824,
+        "events": {
+          "dispatch": 839456,
+          "fastHit": 837054,
+          "mapHit": 787,
+          "lookupMiss": 1615,
+          "metadataRebuild": 1615,
+          "translate": 392,
+          "interpretedDispatch": 151824,
+          "negativeHit": 140915,
+          "nativeCall": 687632,
+          "nativeReplay": 0,
+          "devicePoll": 839456,
+          "diskReadSectorsIncludingParents": 0,
+          "diskWriteSectors": 0,
+          "cowDecompress": 0,
+          "cowCacheHit": 0
+        },
+        "opcodes": [
+          {
+            "opcode": 1,
+            "attempts": 3740,
+            "registerOperands": 140,
+            "memoryOperands": 3600,
+            "groups": [
+              381,
+              21,
+              7,
+              7,
+              0,
+              0,
+              35,
+              3289
+            ]
+          },
+          {
+            "opcode": 3,
+            "attempts": 70,
+            "registerOperands": 0,
+            "memoryOperands": 70,
+            "groups": [
+              14,
+              7,
+              14,
+              21,
+              0,
+              0,
+              7,
+              7
+            ]
+          },
+          {
+            "opcode": 4,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 9,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 15,
+            "attempts": 13873,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 33,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 36,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 37,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 41,
+            "attempts": 3240,
+            "registerOperands": 0,
+            "memoryOperands": 3240,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3240,
+              0
+            ]
+          },
+          {
+            "opcode": 43,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 7,
+            "groups": [
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 48,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              7,
+              7,
+              0,
+              49,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 49,
+            "attempts": 552,
+            "registerOperands": 552,
+            "memoryOperands": 0,
+            "groups": [
+              154,
+              77,
+              105,
+              62,
+              0,
+              0,
+              98,
+              56
+            ]
+          },
+          {
+            "opcode": 53,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 56,
+            "attempts": 14,
+            "registerOperands": 14,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              14,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 57,
+            "attempts": 224,
+            "registerOperands": 203,
+            "memoryOperands": 21,
+            "groups": [
+              56,
+              28,
+              35,
+              14,
+              0,
+              0,
+              21,
+              70
+            ]
+          },
+          {
+            "opcode": 59,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 42,
+            "groups": [
+              7,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              28
+            ]
+          },
+          {
+            "opcode": 60,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 64,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 65,
+            "attempts": 63,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 66,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 67,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 70,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 71,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 72,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 74,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 79,
+            "attempts": 15,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 80,
+            "attempts": 259,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 81,
+            "attempts": 86,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 82,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 83,
+            "attempts": 56,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 85,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 86,
+            "attempts": 102,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 87,
+            "attempts": 50,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 91,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 93,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 94,
+            "attempts": 57,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 95,
+            "attempts": 43,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 106,
+            "attempts": 23,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 115,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 116,
+            "attempts": 1702,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 117,
+            "attempts": 231,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 118,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 119,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 120,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 126,
+            "attempts": 321,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 127,
+            "attempts": 3310,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 128,
+            "attempts": 1820,
+            "registerOperands": 1806,
+            "memoryOperands": 14,
+            "groups": [
+              1708,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
+              98
+            ]
+          },
+          {
+            "opcode": 129,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              56,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 131,
+            "attempts": 11973,
+            "registerOperands": 11903,
+            "memoryOperands": 70,
+            "groups": [
+              11664,
+              0,
+              0,
+              0,
+              154,
+              21,
+              0,
+              134
+            ]
+          },
+          {
+            "opcode": 132,
+            "attempts": 35,
+            "registerOperands": 35,
+            "memoryOperands": 0,
+            "groups": [
+              14,
+              0,
+              0,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 133,
+            "attempts": 260,
+            "registerOperands": 260,
+            "memoryOperands": 0,
+            "groups": [
+              49,
+              42,
+              42,
+              28,
+              0,
+              0,
+              42,
+              57
+            ]
+          },
+          {
+            "opcode": 136,
+            "attempts": 56,
+            "registerOperands": 21,
+            "memoryOperands": 35,
+            "groups": [
+              21,
+              0,
+              14,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 137,
+            "attempts": 2515,
+            "registerOperands": 1943,
+            "memoryOperands": 572,
+            "groups": [
+              1433,
+              343,
+              210,
+              205,
+              65,
+              0,
+              161,
+              98
+            ]
+          },
+          {
+            "opcode": 139,
+            "attempts": 4304,
+            "registerOperands": 0,
+            "memoryOperands": 4304,
+            "groups": [
+              1041,
+              795,
+              633,
+              1518,
+              0,
+              0,
+              169,
+              148
+            ]
+          },
+          {
+            "opcode": 141,
+            "attempts": 91,
+            "registerOperands": 0,
+            "memoryOperands": 91,
+            "groups": [
+              49,
+              14,
+              7,
+              14,
+              0,
+              0,
+              0,
+              7
+            ]
+          },
+          {
+            "opcode": 144,
+            "attempts": 1657,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 152,
+            "attempts": 40,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 163,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 176,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 184,
+            "attempts": 1924,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 185,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 186,
+            "attempts": 3,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 190,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 191,
+            "attempts": 3275,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 192,
+            "attempts": 42,
+            "registerOperands": 42,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              42,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 193,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              14,
+              98,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 195,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 199,
+            "attempts": 1968,
+            "registerOperands": 0,
+            "memoryOperands": 1968,
+            "groups": [
+              1968,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 208,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 209,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              112,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 232,
+            "attempts": 272,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 233,
+            "attempts": 995,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 235,
+            "attempts": 1255,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 237,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 238,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 247,
+            "attempts": 2152,
+            "registerOperands": 2152,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              2040,
+              112,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 255,
+            "attempts": 88115,
+            "registerOperands": 0,
+            "memoryOperands": 88115,
+            "groups": [
+              36520,
+              2729,
+              0,
+              0,
+              45760,
+              0,
+              3106,
+              0
+            ]
+          },
+          {
+            "opcode": 387,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 388,
+            "attempts": 99,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 389,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 391,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 398,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 415,
+            "attempts": 12960,
+            "registerOperands": 0,
+            "memoryOperands": 12960,
+            "groups": [
+              12960,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 431,
+            "attempts": 49,
+            "registerOperands": 49,
+            "memoryOperands": 0,
+            "groups": [
+              28,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 438,
+            "attempts": 161,
+            "registerOperands": 63,
+            "memoryOperands": 98,
+            "groups": [
+              70,
+              7,
+              42,
+              28,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 439,
+            "attempts": 422,
+            "registerOperands": 245,
+            "memoryOperands": 177,
+            "groups": [
+              245,
+              114,
+              28,
+              7,
+              0,
+              0,
+              21,
+              7
+            ]
+          },
+          {
+            "opcode": 447,
+            "attempts": 119,
+            "registerOperands": 35,
+            "memoryOperands": 84,
+            "groups": [
+              42,
+              35,
+              21,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          }
+        ],
+        "sampledIPs": [
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048643,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048784,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048786,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048963,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049008,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049036,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049202,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049286,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049361,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049385,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049505,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049541,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049552,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049555,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049557,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049574,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049577,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049579,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049632,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049634,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049659,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049662,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049725,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049795,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049880,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049891,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049921,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050032,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050100,
+            "samples": 3
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050102,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050128,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050130,
+            "samples": 6
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050146,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050163,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050199,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050209,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1051711,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053447,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053472,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053499,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053622,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053659,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053742,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053867,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054014,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054046,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054067,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054123,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054129,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054276,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054308,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054343,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054380,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054394,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054407,
+            "samples": 13
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054412,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054439,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054468,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054480,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055863,
+            "samples": 21
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055866,
+            "samples": 18
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055922,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055949,
+            "samples": 28
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055952,
+            "samples": 21
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056007,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056031,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056038,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056083,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056154,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056157,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056203,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056265,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056306,
+            "samples": 169
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056367,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056372,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056377,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056380,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056383,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056410,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056445,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056467,
+            "samples": 9
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056482,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056500,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056510,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056533,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056548,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056550,
+            "samples": 4
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056553,
+            "samples": 6
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056558,
+            "samples": 43
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056563,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056584,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056587,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056589,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056599,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057062,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057096,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057344,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057403,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057436,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057471,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057562,
+            "samples": 1
+          }
+        ]
+      },
+      "validation": {
+        "coremark-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-jit/result.json",
+        "coremark-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/coremark-interpreter/result.json",
+        "micro-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/micro-jit/result.json",
+        "micro-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-83718tmb/micro-interpreter/result.json"
+      }
+    },
+    "after": {
+      "coremark": {
+        "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+        "jit": true,
+        "followJumps": true,
+        "traces": false,
+        "profiled": true,
+        "returnedToDos": true,
+        "crcValidated": true,
+        "microValidated": false,
+        "loops": 17,
+        "upstreamValidated": false,
+        "samples": [
+          {
+            "case": 1,
+            "hostSeconds": 0.014065792,
+            "guestInstructions": 3975114,
+            "nativeInstructions": 3880832,
+            "slowMemoryCalls": 0,
+            "compiledBlocks": 284,
+            "cacheRecycles": 0,
+            "residentNativeBytes": 810592,
+            "jitClearedBefore": false,
+            "checksumChecked": false,
+            "checksum": 0,
+            "guestProfile": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-xx1bn3w1/coremark-jit/result.json.profile-0.json"
+          }
+        ],
+        "runnerSha256": "17bbf6497089ecae70b679f621dcf5b5c9c15d9ced63560452532d684c903274",
+        "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench-profile",
+        "gitCommit": "b1a056c5a246444c6f8497249fe438947e290c3d",
+        "gitDirty": true,
+        "host": {
+          "system": "Darwin",
+          "release": "25.6.0",
+          "machine": "arm64",
+          "logicalCpus": 10,
+          "loadAverageBefore": [
+            2.3935546875,
+            2.6748046875,
+            2.6494140625
+          ],
+          "loadAverageAfter": [
+            2.3935546875,
+            2.6748046875,
+            2.6494140625
+          ]
+        },
+        "build": {
+          "suite": "coremark",
+          "upstream": "https://github.com/eembc/coremark",
+          "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+          "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+          "flags": [
+            "--target=i386-none-elf",
+            "-march=i386",
+            "-mno-sse",
+            "-mno-mmx",
+            "-msoft-float",
+            "-O2",
+            "-ffreestanding",
+            "-fno-builtin",
+            "-fno-pic",
+            "-fno-pie",
+            "-fno-stack-protector",
+            "-fno-asynchronous-unwind-tables",
+            "-DITERATIONS=10",
+            "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+            "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+          ],
+          "iterations": 10,
+          "comBytes": 11988,
+          "comSha256": "b1e7b5924cf6b0bf1fb51287290e7cbc2bb4c10277b5cec410e4bbaf2a9ecea7"
+        },
+        "iterations": 10,
+        "iterationsPerHostSecond": 710.9446805412734,
+        "publishedScoreEligible": false
+      },
+      "intervalCounters": {
+        "startInstructions": 9971241,
+        "stopInstructions": 13946355,
+        "interpretedAttempts": 94282,
+        "events": {
+          "dispatch": 781914,
+          "fastHit": 779561,
+          "mapHit": 738,
+          "lookupMiss": 1615,
+          "metadataRebuild": 1615,
+          "translate": 362,
+          "interpretedDispatch": 94282,
+          "negativeHit": 83373,
+          "nativeCall": 687632,
+          "nativeReplay": 0,
+          "devicePoll": 781914,
+          "diskReadSectorsIncludingParents": 0,
+          "diskWriteSectors": 0,
+          "cowDecompress": 0,
+          "cowCacheHit": 0
+        },
+        "opcodes": [
+          {
+            "opcode": 1,
+            "attempts": 3740,
+            "registerOperands": 140,
+            "memoryOperands": 3600,
+            "groups": [
+              381,
+              21,
+              7,
+              7,
+              0,
+              0,
+              35,
+              3289
+            ]
+          },
+          {
+            "opcode": 3,
+            "attempts": 70,
+            "registerOperands": 0,
+            "memoryOperands": 70,
+            "groups": [
+              14,
+              7,
+              14,
+              21,
+              0,
+              0,
+              7,
+              7
+            ]
+          },
+          {
+            "opcode": 4,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 9,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 15,
+            "attempts": 13873,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 33,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 36,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 37,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 41,
+            "attempts": 3240,
+            "registerOperands": 0,
+            "memoryOperands": 3240,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3240,
+              0
+            ]
+          },
+          {
+            "opcode": 43,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 7,
+            "groups": [
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 48,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              7,
+              7,
+              0,
+              49,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 49,
+            "attempts": 552,
+            "registerOperands": 552,
+            "memoryOperands": 0,
+            "groups": [
+              154,
+              77,
+              105,
+              62,
+              0,
+              0,
+              98,
+              56
+            ]
+          },
+          {
+            "opcode": 53,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 56,
+            "attempts": 14,
+            "registerOperands": 14,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              14,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 57,
+            "attempts": 224,
+            "registerOperands": 203,
+            "memoryOperands": 21,
+            "groups": [
+              56,
+              28,
+              35,
+              14,
+              0,
+              0,
+              21,
+              70
+            ]
+          },
+          {
+            "opcode": 59,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 42,
+            "groups": [
+              7,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              28
+            ]
+          },
+          {
+            "opcode": 60,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 64,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 65,
+            "attempts": 63,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 66,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 67,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 70,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 71,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 72,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 74,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 79,
+            "attempts": 15,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 80,
+            "attempts": 259,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 81,
+            "attempts": 86,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 82,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 83,
+            "attempts": 56,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 85,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 86,
+            "attempts": 102,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 87,
+            "attempts": 50,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 91,
+            "attempts": 42,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 93,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 94,
+            "attempts": 57,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 95,
+            "attempts": 43,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 106,
+            "attempts": 23,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 115,
+            "attempts": 28,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 116,
+            "attempts": 1702,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 117,
+            "attempts": 231,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 118,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 119,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 120,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 126,
+            "attempts": 321,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 127,
+            "attempts": 3310,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 128,
+            "attempts": 147,
+            "registerOperands": 133,
+            "memoryOperands": 14,
+            "groups": [
+              35,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
+              98
+            ]
+          },
+          {
+            "opcode": 129,
+            "attempts": 63,
+            "registerOperands": 63,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              7,
+              0,
+              0,
+              56,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 131,
+            "attempts": 1747,
+            "registerOperands": 1677,
+            "memoryOperands": 70,
+            "groups": [
+              1438,
+              0,
+              0,
+              0,
+              154,
+              21,
+              0,
+              134
+            ]
+          },
+          {
+            "opcode": 132,
+            "attempts": 35,
+            "registerOperands": 35,
+            "memoryOperands": 0,
+            "groups": [
+              14,
+              0,
+              0,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 133,
+            "attempts": 260,
+            "registerOperands": 260,
+            "memoryOperands": 0,
+            "groups": [
+              49,
+              42,
+              42,
+              28,
+              0,
+              0,
+              42,
+              57
+            ]
+          },
+          {
+            "opcode": 136,
+            "attempts": 56,
+            "registerOperands": 21,
+            "memoryOperands": 35,
+            "groups": [
+              21,
+              0,
+              14,
+              21,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 137,
+            "attempts": 2515,
+            "registerOperands": 1943,
+            "memoryOperands": 572,
+            "groups": [
+              1433,
+              343,
+              210,
+              205,
+              65,
+              0,
+              161,
+              98
+            ]
+          },
+          {
+            "opcode": 139,
+            "attempts": 1292,
+            "registerOperands": 0,
+            "memoryOperands": 1292,
+            "groups": [
+              534,
+              203,
+              126,
+              112,
+              0,
+              0,
+              169,
+              148
+            ]
+          },
+          {
+            "opcode": 141,
+            "attempts": 91,
+            "registerOperands": 0,
+            "memoryOperands": 91,
+            "groups": [
+              49,
+              14,
+              7,
+              14,
+              0,
+              0,
+              0,
+              7
+            ]
+          },
+          {
+            "opcode": 144,
+            "attempts": 1657,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 152,
+            "attempts": 40,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 163,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 176,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 184,
+            "attempts": 98,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 185,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 186,
+            "attempts": 3,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 190,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 191,
+            "attempts": 3275,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 192,
+            "attempts": 42,
+            "registerOperands": 42,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              42,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 193,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              14,
+              98,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 195,
+            "attempts": 65,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 199,
+            "attempts": 1968,
+            "registerOperands": 0,
+            "memoryOperands": 1968,
+            "groups": [
+              1968,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 208,
+            "attempts": 7,
+            "registerOperands": 7,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 209,
+            "attempts": 112,
+            "registerOperands": 112,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              112,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 232,
+            "attempts": 272,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 233,
+            "attempts": 49,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 235,
+            "attempts": 309,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 237,
+            "attempts": 2,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 238,
+            "attempts": 1,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 247,
+            "attempts": 2152,
+            "registerOperands": 2152,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              2040,
+              112,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 255,
+            "attempts": 49202,
+            "registerOperands": 0,
+            "memoryOperands": 49202,
+            "groups": [
+              112,
+              224,
+              0,
+              0,
+              45760,
+              0,
+              3106,
+              0
+            ]
+          },
+          {
+            "opcode": 387,
+            "attempts": 7,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 388,
+            "attempts": 99,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 389,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 391,
+            "attempts": 14,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 398,
+            "attempts": 21,
+            "registerOperands": 0,
+            "memoryOperands": 0,
+            "groups": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 415,
+            "attempts": 12960,
+            "registerOperands": 0,
+            "memoryOperands": 12960,
+            "groups": [
+              12960,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "opcode": 431,
+            "attempts": 49,
+            "registerOperands": 49,
+            "memoryOperands": 0,
+            "groups": [
+              28,
+              0,
+              0,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 438,
+            "attempts": 161,
+            "registerOperands": 63,
+            "memoryOperands": 98,
+            "groups": [
+              70,
+              7,
+              42,
+              28,
+              0,
+              0,
+              0,
+              14
+            ]
+          },
+          {
+            "opcode": 439,
+            "attempts": 422,
+            "registerOperands": 245,
+            "memoryOperands": 177,
+            "groups": [
+              245,
+              114,
+              28,
+              7,
+              0,
+              0,
+              21,
+              7
+            ]
+          },
+          {
+            "opcode": 447,
+            "attempts": 119,
+            "registerOperands": 35,
+            "memoryOperands": 84,
+            "groups": [
+              42,
+              35,
+              21,
+              7,
+              0,
+              0,
+              0,
+              14
+            ]
+          }
+        ],
+        "sampledIPs": [
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1048957,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049036,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049202,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049238,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049368,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049370,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049389,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049403,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049486,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049491,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049541,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049552,
+            "samples": 7
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049555,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049557,
+            "samples": 8
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049602,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049657,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049681,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049683,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049716,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049743,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049752,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049755,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049928,
+            "samples": 2
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1049983,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1050021,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1051682,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053360,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053456,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053472,
+            "samples": 12
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053535,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053604,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053659,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053692,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053710,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053719,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053720,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053782,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053867,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1053966,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054123,
+            "samples": 10
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054150,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054163,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054218,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054288,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054343,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054394,
+            "samples": 11
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054407,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054412,
+            "samples": 16
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054439,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054449,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054461,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054462,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1054480,
+            "samples": 14
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055797,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055845,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055900,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1055902,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056083,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056203,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056246,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056306,
+            "samples": 184
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1056496,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057109,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057299,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057330,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057436,
+            "samples": 5
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057467,
+            "samples": 1
+          },
+          {
+            "cr3": 0,
+            "base": 0,
+            "cs": 8,
+            "ip": 1057562,
+            "samples": 1
+          }
+        ]
+      },
+      "validation": {
+        "coremark-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-xx1bn3w1/coremark-jit/result.json",
+        "coremark-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-xx1bn3w1/coremark-interpreter/result.json",
+        "micro-jit": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-xx1bn3w1/micro-jit/result.json",
+        "micro-interpreter": "/Users/johandahlin/dev/pcemu/build/guest-profile-smoke-xx1bn3w1/micro-interpreter/result.json"
+      }
+    }
+  },
+  "limitations": [
+    "Five alternating pairs on one Apple M4; no confidence interval",
+    "Unprofiled CoreMark measures flat integer CPU/device work, not Windows/Rosetta speed",
+    "Profiled short intervals explain coverage; their timings are not performance scores",
+    "Existing Win95 images; no fresh installer/Office fixture created",
+    "Rosetta fault observation is not native Intel-hardware conformance proof"
+  ],
+  "faultReference": {
+    "source": "docs/measurements/rmw-fault-reference-2026-10-25.c",
+    "sha256": "0e65012435df888e7eee2779afc95a5159fbfd92c4bd1ccfe6ad9bc08c3b3ac1",
+    "compilerCommand": [
+      "clang",
+      "-arch",
+      "x86_64",
+      "-O2",
+      "docs/measurements/rmw-fault-reference-2026-10-25.c",
+      "-o",
+      "/tmp/pcemu-rmw-fault-reference"
+    ],
+    "execution": "arch -x86_64 /tmp/pcemu-rmw-fault-reference MODE",
+    "observations": {
+      "r": {
+        "signal": 10,
+        "error": 4
+      },
+      "w": {
+        "signal": 10,
+        "error": 6
+      },
+      "i": {
+        "signal": 10,
+        "error": 4
+      }
+    },
+    "scope": "Rosetta macOS signal exception-state fields for load, store and INC on a PROT_NONE mapping; not native Intel hardware"
+  },
+  "sourceSha256": {
+    "Makefile": "7d8de805021f7fb9f46562b18c7503f13db65abf794ca5bf0c2b5828742cdca3",
+    "src/jit_decode.cpp": "e8bfacdccf60dfacf5234ab6aa29cbf45402e4cdfc6b79bbdf86303c0f93b149",
+    "src/jit_arm64.cpp": "026021360d110f9db52c22d70e8c88c01bacbf281d8c57638f4280b29bf059f6",
+    "src/jit_memory.hpp": "37f9bf9bc73815f904d129e7122e3219d3f861134cdaeb864fa71b3c39b7f94c",
+    "src/jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+    "tests/jit_rmw_test.cpp": "0c6622dbc2c103814233c1a9c617b074aec178bf6a47b86439c63b553e5b3ab0"
+  },
+  "temporaryBaselineAndDebugSymbolsRemoved": true
+}

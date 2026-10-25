@@ -139,13 +139,20 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.imm = 1;
                 if (op == 0xfe || op == 0xff) {
                     auto m = byte();
-                    if ((m >> 6) != 3 || ((m >> 3) & 7) > 1) {
+                    if (((m >> 3) & 7) > 1) {
                         pos = begin;
                         break;
                     }
                     i.w = op == 0xfe ? 1 : w;
-                    i.dst = m & 7;
                     i.op = 8 + ((m >> 3) & 1);
+                    if ((m >> 6) != 3) {
+                        i.kind = Kind::Memory;
+                        i.memoryAlu = true;
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                        i.memory.store = true;
+                        i.memory.delta = i.op == 8 ? 1 : -1;
+                    } else
+                        i.dst = m & 7;
                 } else {
                     i.dst = op & 7;
                     i.op = op < 0x48 ? 8 : 9;

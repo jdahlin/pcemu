@@ -607,3 +607,18 @@ run and the default cold-boot regression pass too. No saved RAM state is used.
 are committed. Successful compressed disks and enlarged OCR scratch are removed.
 This proves more than desktop readiness, while fresh installation and broad
 Rosetta-level speed remain outside this check's evidence.
+
+
+## 25 October: native memory INC/DEC
+
+Guarded native byte/word/dword memory INC/DEC now preserve carry, precise replay,
+device/watch ordering and code invalidation. 947,820 new RMW checks pass alongside
+core/read/byte/flag suites. DOS CRC/profile diagnostics and Win3.11 save-file
+validation pass; both Win95 images calculate 2+2, transfer the result through
+the clipboard into Notepad, save a unique file, restart and match exact stopped-
+guest FAT contents. Five alternating uninstrumented CoreMark pairs against the
+complete pre-change baseline show 15.74% median paired throughput improvement,
+with identical guest work and validated CRCs/durations. This remains a scoped
+flat integer result, not broad Windows/Rosetta performance. [Full evidence](measurements/native-memory-incdec-2026-10-25.json)
+is committed; successful compressed overlays and temporary baseline files are
+removed. Fresh installer validation on this exact binary remains unproven.

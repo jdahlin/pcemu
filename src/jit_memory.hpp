@@ -6,5 +6,6 @@ struct NativeMemoryMove {
     int base = -1, index = -1, scale = 0, segment = DS, reg = 0, width = 4;
     uint32_t displacement = 0, begin = 0, end = 0;
     bool address32 = false, store = false;
+    int delta = 0; // Nonzero for guarded memory INC/DEC; return original value for flags.
 };
 } // namespace pc
