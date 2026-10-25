@@ -358,3 +358,12 @@ build/arm-hvf-reference-counter-tests: src/hvf_machine.cpp src/hvf_machine.hpp s
 test-arm-hvf-reference-counter: build/arm-hvf-reference-counter-tests
 	./build/arm-hvf-reference-counter-tests
 test-hvf: test-arm-hvf-reference-counter
+
+.PHONY: test-arm-hvf-reference-page
+build/arm-hvf-reference-page-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_secondary.hpp src/hvf_gic_bootstrap.hpp src/arm_gic_ns.cpp src/arm_gic_ns.hpp src/arm_hyperv_reference_clock.cpp src/arm_hyperv_reference_clock.hpp tests/arm_hvf_reference_page_test.cpp platform/macos/hypervisor.entitlements
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_gic_ns.cpp src/arm_hyperv_reference_clock.cpp tests/arm_hvf_reference_page_test.cpp -framework Hypervisor -o $@
+	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
+test-arm-hvf-reference-page: build/arm-hvf-reference-page-tests
+	./build/arm-hvf-reference-page-tests
+test-hvf: test-arm-hvf-reference-page

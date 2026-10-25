@@ -60,6 +60,7 @@ struct HvfMachine::Impl {
     hv_return_t cancelResult = HV_SUCCESS;
     std::chrono::steady_clock::time_point deadline;
     SleepTicks sleepTicks;
+    std::function<void(bool)> counterRebase;
     uint64_t sleepBaseline = 0, sleepApplied = 0, nextClockCheck = 0, clockPeriod = 0;
     void cancelLocked() {
         if (active.empty()) return;
@@ -87,9 +88,11 @@ struct HvfMachine::Impl {
         check(hv_vcpu_get_vtimer_offset(vcpu, &offset), "get virtual timer offset");
         // CNTVCT = mach_absolute_time - offset. Unsigned subtraction wraps by
         // design, advancing the virtual counter without moving it backwards.
+        if (counterRebase) counterRebase(true);
         check(hv_vcpu_set_vtimer_offset(vcpu, offset - advance), "resume virtual clock");
         for (auto &cpu : secondary) cpu->setOffset(offset - advance);
         sleepApplied += advance;
+        if (counterRebase) counterRebase(false);
     }
 
     void requireOwner() const {
@@ -386,6 +389,10 @@ void HvfMachine::setPC(uint64_t value) {
         throw std::runtime_error("ARM64 PC must be instruction aligned");
     if (impl->selected) { impl->secondary[impl->selected - 1]->setPC(value); return; }
     check(hv_vcpu_set_reg(impl->vcpu, HV_REG_PC, value), "set PC");
+}
+void HvfMachine::setCounterRebaseHandler(std::function<void(bool)> handler) {
+    impl->requireOwner();
+    impl->counterRebase=std::move(handler);
 }
 HvfMachine::VirtualCounterSample HvfMachine::virtualCounterSample() const {
     impl->requireOwner();

@@ -87,6 +87,9 @@ class HvfMachine {
     };
     // Paired with the offset used by CNTVCT on every VP. All VPs stopped.
     VirtualCounterSample virtualCounterSample() const;
+    // Called with all VPs stopped, before and after a host-sleep offset change.
+    // A failed backend update leaves consumers invalidated; callbacks may throw.
+    void setCounterRebaseHandler(std::function<void(bool before)> handler);
     uint64_t exits() const;
     static bool supported();
 

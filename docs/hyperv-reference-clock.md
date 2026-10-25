@@ -42,3 +42,22 @@ that both VPs and subsequent host samples include the same adjustment. All
 29 native checks pass. This establishes the counter sampling prerequisite;
 shared-page guest reads and atomic rebasing before VP resumption remain to be
 implemented and tested.
+
+## Native shared-page rebasing
+
+The backend now offers `setCounterRebaseHandler`: with all VPs stopped, it
+notifies a consumer immediately before changing virtual-counter offsets and
+after every VP has received the new offset. A failed update leaves the page
+invalidated and aborts the run; no guest executes with a partially updated
+mapping. Consumers must remove borrowed callbacks before their lifetime ends.
+
+`make test-arm-hvf-reference-page` executes sequence/scale/offset loads,
+CNTVCT, UMULH and signed-offset addition in real guest instructions on both
+VPs. An injected five-second counter adjustment invalidates then republishes
+the model page. Guest-computed reference values stay close to the independent
+monotonic domain instead of jumping five seconds, and both VPs observe the
+new publication sequence. The initial native run passes 48 checks; counts
+can vary when a VP completes additional loops before its peer.
+
+This verifies backend/page cooperation, not Windows use: synthetic register
+dispatch and feature discovery remain disconnected.
