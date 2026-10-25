@@ -1165,3 +1165,31 @@ posting a packet with nonzero alignment padding.
 
 PostMessage compatibility validation: 2,108 portable checks, 270 native checks
 and all 13 Windows-auditor tests pass.
+
+### Ordinary versus multiclient VMBus contact routing
+
+The next Windows snapshot accepts one Copper contact with zero hypercall
+failures. Its connection ID is **1**, header padding is `0xffffffff`, and the
+lower target-info bytes are zero. This independently confirms that dirty
+PostMessage alignment padding occurs in the real guest. Frozen evidence:
+`build/windows11-hyperv/vmbus-post/first-contact-evidence.json`, SHA-256
+`ce48215ddd5837adbc3e9627d5da3688e1e8601852bd33229adb9387a86c8433`.
+The server accepted a response into SynIC but there was no request for offers;
+this is not yet a completed Windows control exchange.
+
+The error was interpreting target-info unconditionally. Microsoft's
+[contact handler](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_server/src/channels.rs)
+uses fixed VTL0/SINT2 for the ordinary connection; only the multiclient bootstrap
+makes SINT/VTL target fields meaningful. The runtime now preserves that
+connection context: connection 1 uses ordinary routing, while connection 4
+passes multiclient metadata into the protocol handler. Copper feature flags
+remain meaningful independently of that mode; pre-Copper flags are ignored.
+
+Model tests cover a Windows-style all-zero target-info contact on the ordinary
+connection, ignored unused lower fields, and an explicit multiclient target.
+The native guest exercises both bootstrap paths and must receive/acknowledge
+the reply on SINT2. No synthetic device offers or integration services are
+implied by this routing correction.
+
+Routing validation: 2,119 portable Hyper-V checks, 281 native HVF checks,
+and all 13 Windows-auditor tests pass.

@@ -74,11 +74,12 @@ void ArmHyperV::enableVmbus() {
     vmbus.setSender([this](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
         return synic.postMessage(vp, sint, 1, 0, payload);
     });
-    auto receive = [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
-        return vmbus.receive(type, payload);
-    };
-    bindMessageConnection(4, receive);
-    bindMessageConnection(1, receive);
+    bindMessageConnection(4, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
+        return vmbus.receive(type, payload, true);
+    });
+    bindMessageConnection(1, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
+        return vmbus.receive(type, payload, false);
+    });
     // Grant the implemented event API. No channel event ports exist until an
     // actual channel is offered; unknown connections still fail, never succeed.
     allowSignalEvents = true;

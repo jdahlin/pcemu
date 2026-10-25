@@ -14,7 +14,9 @@ class ArmVmbus {
     using Send = std::function<uint16_t(unsigned, unsigned, std::span<const uint8_t>)>;
     ArmVmbus(std::span<const uint8_t> ram, uint64_t base, unsigned cpus);
     void setSender(Send sender) { send = std::move(sender); }
-    uint16_t receive(uint32_t messageType, std::span<const uint8_t> payload);
+    // Connection 1 is the legacy single-client bus (fixed SINT2).
+    // Bootstrap connection 4 opts into the target-info/multiclient ABI.
+    uint16_t receive(uint32_t messageType, std::span<const uint8_t> payload, bool multiclient = false);
     void service();
     bool needsService() const { return !replies.empty(); }
     std::string report() const;

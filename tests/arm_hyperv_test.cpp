@@ -932,7 +932,7 @@ int main() {
     put(contact, 8, 0x60000, 4);
     auto invalidContact = [&](size_t offset, uint64_t value, unsigned bytes, uint16_t status) {
         auto copy = contact; put(copy, offset, value, bytes);
-        check(bus.receive(1, copy) == status && !bus.needsService());
+        check(bus.receive(1, copy, true) == status && !bus.needsService());
     };
     invalidContact(4, 1, 4, 5); invalidContact(12, 2, 4, 14);
     invalidContact(16, 16, 1, 5); invalidContact(17, 1, 1, 6);
@@ -1062,5 +1062,27 @@ int main() {
         r[0] = smccc ? 0x46000001 : (one | 0x51 | (fast ? 0x10000 : 0));
         check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == 5);
     }
+    ArmVmbus ordinaryBus(busRam, base, 2);
+    unsigned ordinaryReplies = 0;
+    ordinaryBus.setSender([&](unsigned vp, unsigned sint, std::span<const uint8_t> bytes) {
+        check(vp == 0 && sint == 2 && bytes.size() >= 8); ++ordinaryReplies; return uint16_t(0);
+    });
+    std::vector<uint8_t> ordinaryContact(40), ordinaryUnload(8);
+    put(ordinaryContact, 0, 14, 4); put(ordinaryContact, 8, 0x60000, 4);
+    put(ordinaryUnload, 0, 16, 4);
+    check(ordinaryBus.receive(1, ordinaryContact) == 0); ordinaryBus.service();
+    check(ordinaryReplies == 1 && ordinaryBus.report().find("\"targetSint\":2") != std::string::npos);
+    check(ordinaryBus.receive(1, ordinaryUnload) == 0); ordinaryBus.service();
+    // Lower target-info fields are unused on the ordinary connection.
+    put(ordinaryContact, 16, 0xffffffff, 4);
+    check(ordinaryBus.receive(1, ordinaryContact) == 0); ordinaryBus.service();
+    check(ordinaryReplies == 3);
+    ArmVmbus scopedBus(busRam, base, 2);
+    scopedBus.setSender([](unsigned vp, unsigned sint, std::span<const uint8_t>) {
+        check(vp == 1 && sint == 5); return uint16_t(0);
+    });
+    put(ordinaryContact, 12, 1, 4); put(ordinaryContact, 16, 5, 4);
+    check(scopedBus.receive(1, ordinaryContact, true) == 0); scopedBus.service();
+    check(scopedBus.report().find("\"targetSint\":5") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

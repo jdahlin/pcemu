@@ -479,7 +479,7 @@ void selfTest() {
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 5,
                 "Vectored IRQ changed the wrong request counter");
     }
-    {
+    for (bool multiclient : {false, true}) {
         // An actual guest submits fast SMCCC SignalEvent and memory legacy
         // PostMessage. Both host endpoints route to its SynIC SGI 0; guest
         // IAR/EOI and the shared event/message pages must show real effects.
@@ -504,8 +504,8 @@ void selfTest() {
         hyperv.advertiseSynic(true);
         hyperv.enableVmbus();
         std::array<uint8_t, 256> packet{};
-        packet[0] = 4; packet[4] = 0xa5; packet[8] = 1; packet[12] = 40;
-        packet[16] = 14; packet[26] = 6; packet[32] = 2; // Copper contact, VP0/SINT2.
+        packet[0] = multiclient ? 4 : 1; packet[4] = 0xa5; packet[8] = 1; packet[12] = 40;
+        packet[16] = 14; packet[26] = 6; packet[32] = multiclient ? 2 : 0; // Copper contact, VP0.
         vm.writeMemory(HvfMachine::ramBase + 0x18000, packet);
         // Group-1 GIC setup, fast event call, IAR/EOI, slow message call,
         // IAR/EOI, then success/failure HVC markers (DAIF stays masked).

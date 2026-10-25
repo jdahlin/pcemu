@@ -24,7 +24,7 @@ bool ArmVmbus::validPage(uint64_t gpa) const {
                     4096 <= ram.size() - (gpa - base));
 }
 uint16_t ArmVmbus::reject(uint16_t status) { ++rejected; return status; }
-uint16_t ArmVmbus::receive(uint32_t messageType, std::span<const uint8_t> input) {
+uint16_t ArmVmbus::receive(uint32_t messageType, std::span<const uint8_t> input, bool multiclient) {
     if (messageType != 1 || input.size() < 8 || input.size() > 240 || get(input, 4, 4)) return reject(5);
     auto kind = get(input, 0, 4);
     if (kind != 14 && kind != 3 && kind != 16) return reject(5);
@@ -33,13 +33,17 @@ uint16_t ArmVmbus::receive(uint32_t messageType, std::span<const uint8_t> input)
         if (connected) return reject(0x15);
         if (input.size() < 40) return reject(5);
         auto requested = uint32_t(get(input, 8, 4));
-        auto vp = get(input, 12, 4), sint = get(input, 16, 1), vtl = get(input, 17, 1);
-        auto flags = get(input, 20, 4);
+        auto vp = get(input, 12, 4);
+        // The ordinary connection always uses VTL0/SINT2. Only connection 4
+        // makes the lower target-info fields meaningful; Windows sends zero
+        // there on connection 1 even though its active message source is SINT2.
+        auto sint = multiclient ? get(input, 16, 1) : 2;
+        auto vtl = multiclient ? get(input, 17, 1) : 0;
+        auto flags = requested >= 0x60000 ? get(input, 20, 4) : 0;
         if (vp >= cpus) return reject(14);
-        if (sint >= 16 || get(input, 18, 2)) return reject(5);
+        if (sint >= 16 || (multiclient && get(input, 18, 2))) return reject(5);
         if (vtl) return reject(6);
         if (requested < 0x50000) return reject(5); // Legacy interrupt-page ABI is not implemented.
-        if (requested < 0x60000 && flags) return reject(5);
         if ((flags & 8) && input.size() < 56) return reject(5); // Optional client GUID.
         auto monitor1 = get(input, 24, 8), monitor2 = get(input, 32, 8);
         if (!validPage(monitor1) || !validPage(monitor2) || (monitor1 && monitor1 == monitor2)) return reject(5);
