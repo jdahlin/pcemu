@@ -23,9 +23,9 @@ in progress.
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a
 private working copy or a link to a preserved QCOW2 base. Use `./run95.sh` to open it.
-The configured VMDisp9x disk `media/win95-svga.pcd` is selected by default when
-available, providing a 1024×768, 32-bit desktop. Use `./run95.sh --vga` for the
-original VGA disk. Driver setup for a fresh disk is described in
+The monitor-configured VMDisp9x disk `media/win95-monitor.pcd` is selected by default when
+available, providing a 1440×900, 32-bit desktop with a configured monitor profile. Use `./run95.sh --vga` for the
+original VGA disk. The earlier `media/win95-svga.pcd` remains available as a fallback. Driver setup for a fresh disk is described in
 [input and display integration](docs/input-video.md).
 For a QCOW2 base, the launcher creates and reuses `media/win95-working.pcd`,
 a compressed writable overlay that retains Windows changes between runs. Keep

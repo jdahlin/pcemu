@@ -15,6 +15,7 @@ smoke-guest-memory: build/memory-bench
 test: build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
 	python3 -m unittest discover -s tests -p test_guest_memory.py
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
+	python3 -m unittest discover -s tests -p test_display_modes.py
 	./build/hardware-device-tests
 	./build/i8042-tests
 	./build/pc-component-tests

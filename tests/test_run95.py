@@ -53,6 +53,12 @@ class Run95Test(unittest.TestCase):
             self.assertEqual(run('--vga'), 'media/win95-working.pcd')
             self.assertEqual(run(), 'media/win95-svga.pcd')
             self.assertEqual(svga.read_bytes(), b'configured SVGA disk')
+            monitor = root / 'media/win95-monitor.pcd'
+            monitor.write_bytes(b'configured monitor and widescreen modes')
+            self.assertEqual(run(), 'media/win95-monitor.pcd')
+            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
+            self.assertEqual(svga.read_bytes(), b'configured SVGA disk')
+            self.assertEqual(monitor.read_bytes(), b'configured monitor and widescreen modes')
 
 
 if __name__ == '__main__':

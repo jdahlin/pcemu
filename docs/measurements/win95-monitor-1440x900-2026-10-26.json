@@ -1,0 +1,24 @@
+{
+  "guest": "Windows 95 OSR2",
+  "driver": "VMDisp9x 1.2025.0.119b, QEMU STD VGA PCI Adapter",
+  "derivedInfSha256": "9460ece16ba428cc581b3d592a38cbed78e4723ca9ceab698ade918629b77820",
+  "monitor": "Super VGA 1600x1200",
+  "mode": {
+    "width": 1440,
+    "height": 900,
+    "bpp": 32
+  },
+  "validation": [
+    "17 staged driver files read back through compressed-disk implementation",
+    "1440x900 selectable in Display Settings",
+    "mode set without unspecified-monitor warning",
+    "normal Windows shutdown",
+    "cold boot to unobscured Explorer at 1440x900x32",
+    "monitor profile visually verified after cold boot",
+    "subsequent close request completed normal Windows shutdown and disk flush"
+  ],
+  "installationNote": "Restart after adapter reinstall before configuring the monitor; combining these live initially blanked the display, recovered in the private child before final validation.",
+  "diskPolicy": "small persistent compressed child of an immutable compressed copy; active original SVGA disk preserved",
+  "evidenceDirectory": "build/monitor-validation",
+  "unitChecks": "3 display-mode transformation cases and 49 SDL frontend checks"
+}

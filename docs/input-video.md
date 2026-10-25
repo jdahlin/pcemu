@@ -6,10 +6,10 @@ The Windows display driver is the external, MIT-licensed VMDisp9x guest driver;
 no emulator implementation is linked or copied from the products named in its
 compatibility list.
 
-`./run95.sh` prefers the persistent `media/win95-svga.pcd` disk, configured with
-VMDisp9x at 1024×768 in 32-bit colour. It cold boots normally, including the BIOS
-screen. `./run95.sh --vga` selects the original working disk. If the SVGA disk is
-absent, the launcher uses the original disk until the driver is installed.
+`./run95.sh` prefers the persistent `media/win95-monitor.pcd` disk, configured with
+VMDisp9x at 1440×900 in 32-bit colour with a Super VGA 1600x1200 monitor profile. It cold boots normally, including the BIOS
+screen. `./run95.sh --vga` selects the original working disk. If that disk is absent, the launcher falls back to `media/win95-svga.pcd`,
+then the original VGA disk. Existing disks remain available.
 
 To configure a new SVGA disk, shut down the original guest first, then stage the
 pinned driver:
@@ -17,14 +17,15 @@ pinned driver:
 ```sh
 cp media/win95-working.pcd media/win95-svga-base.pcd
 chmod a-w media/win95-svga-base.pcd
-python3 tools/stage_display_driver.py media/win95-svga-base.pcd media/win95-svga.pcd
+python3 tools/stage_display_driver.py media/win95-svga-base.pcd media/win95-monitor.pcd
 ```
 
 This preserves the existing compressed working overlay as an immutable parent;
 the VGA fallback can continue writing its own disk independently. Keep the base
 and all its parents. For a pristine QCOW2 installation, stage directly from the
 read-only `media/win95.raw` base instead. Boot it with `./run95.sh`, install the compatible adapter using the steps below,
-restart, and select True Color (32 bit) and 1024×768 in Display Settings. These
+restart, configure the monitor as described below, and select True Color (32 bit)
+and 1440×900 in Display Settings. These
 settings persist in the guest disk; merely changing the host framebuffer cannot
 make the stock Windows VGA driver render more colours.
 
@@ -170,3 +171,37 @@ guests. Frontend tests cover pacing, repeated requests and rejection of unrelate
 guest code as shutdown completion. A private compressed OSR2 overlay was booted
 to Explorer and shut down through `close`, reaching the safe-to-turn-off screen
 and the logged disk-flush completion.
+
+### Widescreen modes and the guest monitor
+
+The pinned VMDisp9x package omits 1440×900 from its default INF. The staging
+tool now adds that mode to `VM.AddReg` at 8-, 16-, 24- and 32-bit colour without
+changing driver binaries or the pinned archive. All staged files, including the
+derived INF, are read back and verified. The adapter already supports up to
+1920×1200 with 16 MiB of VRAM.
+
+Windows 95 also needs a named monitor profile. In Display Properties → Settings
+→ Advanced Properties → Monitor → Change, select **Standard monitor types →
+Super VGA 1600x1200**. This supplies the virtual monitor's resolution limit and
+removes the unspecified-monitor warning. It is a manual monitor profile; DDC
+and EDID emulation are not required for this setting.
+
+For an existing installation, stage an upgraded driver directory into a new
+compressed child of a stopped, immutable disk:
+
+```sh
+python3 tools/stage_display_driver.py PARENT.pcd DESTINATION.pcd --directory WIDE
+```
+
+Boot the child, reinstall **QEMU STD VGA PCI Adapter** using Have Disk and
+`C:\WIDE`, then restart before changing the monitor. Select the monitor profile
+and 1440×900 in Display Settings. Keep the original disk unchanged until a cold
+boot verifies the new configuration. `python3 tests/test_display_modes.py` checks
+INF section isolation, all four colour depths, idempotence and layout validation.
+
+The configured monitor disk is a child of an immutable compressed copy of the
+previous SVGA working disk (`media/win95-before-monitor.pcd`). Keep that parent
+and its backing chain. An already-running original SVGA guest is left intact;
+close it cleanly and relaunch to use the configured monitor disk. Later changes
+made in the original disk are separate from this upgrade snapshot; it remains
+available with `./run95.sh --disk media/win95-svga.pcd`.
