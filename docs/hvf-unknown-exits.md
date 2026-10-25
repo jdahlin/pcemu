@@ -49,3 +49,21 @@ The next installed-Windows run uses the same private test overlay, four GiB
 and VMBus. Its `clock-adjustment/launch3.json` records the probe hash; the
 supervisor saves the actual runner exit code to `exit3.json`. This staging
 result does not establish clock adjustment; a fresh guest report is required.
+
+## Typed VMBus publication evidence
+
+VMBus now counts successfully published control replies separately for contact,
+channel offers, all-offers-delivered, unload and channel lifecycle replies. A
+blocked sender increments none of these counters. The Windows auditor accepts
+active channel traffic only when all five typed counters are present, their
+sum matches total delivery, each bootstrap category matches its accepted
+requests/offers, and no channel fault is reported. Partial, negative, boolean
+or inconsistent typed counters fail the gate. Older snapshots retain the
+conservative pre-channel bootstrap check. SynIC slot consumption remains a
+separate check; publication alone never proves consumption.
+
+Validation: 281 VMBus channel checks pass under AddressSanitizer/UBSan, including
+backpressure and all reply categories; 21 Windows auditor tests pass, including
+live-channel and inconsistent-counter cases. The already-running clock guest
+uses the preceding binary, so actual Windows typed-counter validation requires
+a subsequent launch.

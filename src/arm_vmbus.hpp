@@ -63,6 +63,7 @@ class ArmVmbus {
     bool connected = false;
     uint32_t version = 0;
     uint64_t contacts = 0, offers = 0, unloads = 0, delivered = 0, rejected = 0;
+    std::array<uint64_t, 5> deliveredTypes{}; // contact, offer, offers-done, unload, channel
     Send send;
     std::vector<uint8_t> offerMessage(const Offer &offer) const;
     void response(uint32_t kind, uint32_t channel, uint32_t id, uint32_t status);

@@ -151,6 +151,26 @@ def verify(report, baseline, kernel_build=26100):
                             'packetsSent', 'channelFaults'))
         if channels_valid:
             bootstrap_replies = bus['contacts'] + bus['offerRequests'] + bus['unloads'] + offers
+    typed_names = ('deliveredContactReplies', 'deliveredOfferReplies',
+                   'deliveredOffersDoneReplies', 'deliveredUnloadReplies', 'deliveredChannelReplies')
+    if bus_counts_valid and any(name in bus for name in typed_names):
+        # New snapshots count only successful SynIC publication, by reply type.
+        # Channel traffic must not masquerade as contact/offer completion.
+        valid = (all(type(bus.get(name)) is int and bus[name] >= 0 for name in typed_names)
+                 and type(bus.get('channelOffers')) is int
+                 and 0 <= bus['channelOffers'] <= 8 * bus['offerRequests']
+                 and type(bus.get('offeredChannels')) is int
+                 and 0 <= bus['offeredChannels'] <= min(bus['channelOffers'], 8)
+                 and all(type(bus.get(k)) is int and bus[k] >= 0 for k in
+                         ('channelOpens', 'channelCloses', 'gpadls', 'packetsReceived', 'packetsSent'))
+                 and type(bus.get('channelFaults')) is int and bus['channelFaults'] == 0)
+        if valid:
+            valid = (sum(bus[name] for name in typed_names) == bus['deliveredReplies']
+                     and bus['deliveredContactReplies'] == bus['contacts']
+                     and bus['deliveredOfferReplies'] == bus['channelOffers']
+                     and bus['deliveredOffersDoneReplies'] == bus['offerRequests']
+                     and bus['deliveredUnloadReplies'] == bus['unloads'])
+        bootstrap_replies = bus['deliveredReplies'] if valid else None
     vmbus_observed = False
     if bus_counts_valid and message_posts_observed and report.get('mode') == 'vmbus':
         vp, sint = bus['targetVp'], bus['targetSint']

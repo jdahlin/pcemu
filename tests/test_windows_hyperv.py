@@ -231,6 +231,27 @@ class WindowsHyperV(unittest.TestCase):
             changed['vmbus'][key] = value
             self.assertFalse(verify(changed, baseline)['vmbusControlObserved'], (key, value))
 
+    def test_typed_replies_allow_live_channels_but_reject_inconsistent_delivery(self):
+        report, baseline = offered_fixture()
+        bus = report['vmbus']
+        bus.update(deliveredContactReplies=1, deliveredOfferReplies=2,
+                   deliveredOffersDoneReplies=1, deliveredUnloadReplies=0,
+                   deliveredChannelReplies=3, deliveredReplies=7,
+                   channelOpens=2, gpadls=2, packetsReceived=10, packetsSent=10)
+        self.assertTrue(verify(report, baseline)['vmbusControlObserved'])
+        self.assertTrue(verify(report, baseline)['vmbusOffersConsumedObserved'])
+        for key, value in (('deliveredReplies', 8), ('deliveredContactReplies', 0),
+                           ('deliveredOfferReplies', 1), ('deliveredOffersDoneReplies', 0),
+                           ('deliveredUnloadReplies', 1), ('deliveredChannelReplies', True),
+                           ('deliveredChannelReplies', -1), ('channelFaults', 1)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['vmbusControlObserved'], (key, value))
+        for key in ('deliveredContactReplies', 'deliveredChannelReplies'):
+            changed = deepcopy(report)
+            del changed['vmbus'][key]
+            self.assertFalse(verify(changed, baseline)['vmbusControlObserved'])
+
     def test_accepted_synic_queue_is_not_guest_consumption(self):
         report, baseline = offered_fixture()
         for key, value in (('slotType', 1), ('queued', 1), ('slotType', False),

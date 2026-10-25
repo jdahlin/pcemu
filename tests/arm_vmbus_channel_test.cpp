@@ -55,12 +55,22 @@ int main() {
     check(get(replies[1],0)==1 && get(replies[1],184)==7 && get(replies[1],190,2)==1);
     check(get(replies[1],192)==16 && replies[1][8]==1 && replies[1][24]==2);
     check(get(replies[2],184)==8 && get(replies[3],0)==4);
+    check(bus.report().find("\"deliveredContactReplies\":1")!=std::string::npos);
+    check(bus.report().find("\"deliveredOfferReplies\":2")!=std::string::npos);
+    check(bus.report().find("\"deliveredOffersDoneReplies\":1")!=std::string::npos);
+    block=true;
+    check(bus.receive(1,msg(3))==0); bus.service();
+    check(bus.report().find("\"deliveredOfferReplies\":2")!=std::string::npos);
+    block=false; bus.service();
+    check(bus.report().find("\"deliveredOfferReplies\":4")!=std::string::npos);
+    replies.resize(4); // Remaining test expectations concern the first inventory.
     auto fragment=header; fragment.resize(36);
     check(bus.receive(1,fragment)==0); bus.service(); check(replies.size()==4);
     auto body=msg(9,40); put(body,8,0xaabbccdd); put(body,12,42);
     std::copy(header.begin()+36,header.end(),body.begin()+16);
     check(bus.receive(1,body)==0); bus.service();
     check(get(replies.back(),0)==10 && get(replies.back(),12)==42 && get(replies.back(),16)==0);
+    check(bus.report().find("\"deliveredChannelReplies\":1")!=std::string::npos);
     check(bus.receive(1,body)==0x15);
     auto open=msg(5,148); put(open,12,100); put(open,16,42); put(open,20,2); put(open,24,2);
     check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
@@ -133,6 +143,7 @@ int main() {
     check(inbound.pop(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     check(events==eventCount); // Disabled interrupt target does not suppress ring traffic.
     check(bus.receive(1,msg(16))==0); bus.service(); check(closes==3);
+    check(bus.report().find("\"deliveredUnloadReplies\":1")!=std::string::npos);
     check(bus.report().find("\"gpadls\":0")!=std::string::npos);
     check(bus.receive(1,body)==0x15);
     check(bus.receive(1,contact)==0); bus.service();

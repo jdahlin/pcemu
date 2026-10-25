@@ -235,6 +235,8 @@ void ArmVmbus::service() {
     while (send && !replies.empty()) {
         auto &reply = replies.front();
         if (send(reply.vp, reply.sint, reply.payload)) break;
+        auto kind = get(reply.payload, 0, 4);
+        ++deliveredTypes[kind == 15 ? 0 : kind == 1 ? 1 : kind == 4 ? 2 : kind == 17 ? 3 : 4];
         replies.pop_front(); ++delivered;
     }
     for (auto &[id, channel] : channels) {
@@ -274,6 +276,11 @@ std::string ArmVmbus::report() const {
         << ",\"targetVp\":" << targetVp << ",\"targetSint\":" << targetSint
         << ",\"contacts\":" << contacts << ",\"offerRequests\":" << offers << ",\"unloads\":" << unloads
         << ",\"deliveredReplies\":" << delivered << ",\"pendingReplies\":" << replies.size()
+        << ",\"deliveredContactReplies\":" << deliveredTypes[0]
+        << ",\"deliveredOfferReplies\":" << deliveredTypes[1]
+        << ",\"deliveredOffersDoneReplies\":" << deliveredTypes[2]
+        << ",\"deliveredUnloadReplies\":" << deliveredTypes[3]
+        << ",\"deliveredChannelReplies\":" << deliveredTypes[4]
         << ",\"rejectedMessages\":" << rejected << ",\"offeredChannels\":" << offered << ",\"openChannels\":" << open
         << ",\"channelOffers\":" << channelOffers << ",\"channelOpens\":" << opens << ",\"channelCloses\":" << closes
         << ",\"gpadls\":" << gpadls.count() << ",\"packetsReceived\":" << packetsIn
