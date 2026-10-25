@@ -3,6 +3,11 @@
 Start the local installation with `./run11.sh` (4 GiB, two CPUs, user networking,
 read-only qcow2 base and writable local `.pcd` overlay). Click to capture the
 mouse; Cmd+G releases it. Shut down in Windows before closing when possible.
+The launcher packages the signed executable inside `build/PCEmu11.app`, then
+executes that bundled binary with the repository as its working directory.
+This matches the native macOS app launch used for the successful interactive
+test and gives SDL a recognizable app identity for window activation and input.
+The command stays in the foreground, preserving terminal signals and logs.
 
 ## USB corrections
 
@@ -49,7 +54,11 @@ mouse motion as three reports, with both devices at configuration 1 and no
 controller error (12 commands, 98 transfer TRBs). Windows re-armed both IN
 endpoints afterward. The VM then powered off cleanly through the guest shutdown
 service. Evidence is under `build/windows11-usb-inline-fixed/`. Interactive SDL
-acceptance is a separate user check.
+acceptance then passed in a native app bundle: a real SDL click captured the
+pointer and Return visibly dismissed the Windows lock screen to the password
+prompt. The user confirmed that both keyboard and mouse work. Earlier counters
+alone had failed to establish this; the screen transition and user test are the
+acceptance evidence.
 
 ## Startup profiling
 

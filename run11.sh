@@ -20,11 +20,11 @@ for file in media/windows11-arm64/system.qcow2 \
 done
 
 ./tools/build.sh pcemu-hvf
+python3 tools/build_hvf_app.py
 python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus
 mkdir -p build/windows11-sdl
-echo 'Starting Windows: the SDL window may stay black during disk indexing.'
-echo 'Click to capture input; Cmd+G releases it. USB input is still under investigation.'
-exec ./build/pcemu-hvf --machine arm64-uefi --gui --run-forever \
+echo 'Starting Windows. Click to capture input; Cmd+G releases it.'
+exec ./build/PCEmu11.app/Contents/MacOS/pcemu-hvf --machine arm64-uefi --gui --run-forever \
     --ram-mb 4096 --cpus 2 --hyperv vmbus --network user \
     --disk-controller virtio --virtio-transport pci \
     --disk media/windows11-arm64/system.qcow2 \
