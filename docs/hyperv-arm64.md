@@ -652,5 +652,18 @@ requires matching model/native request counters. Model tests cover all four
 ABI/transport combinations, SGI 0/15, VTL selection, processor sets, malformed
 inputs, missing/failed backend and preserved argument registers.
 
-Windows boot/consumption with the functional IPI path still requires a new
-run; the earlier probe only established the input, not successful delivery.
+Windows 11 ARM64 has now booted to the visually verified lock screen with
+the functional IPI path, two VPs and 8 GiB RAM. The frozen snapshot records
+65,552 successful fixed IPI calls with SGI 0. Model target requests and native
+GIC requests match exactly: VP0 = 36,346, VP1 = 29,206. There are also 53,388
+successful SyncContext calls, 1,034 register calls and two extended queries;
+all 119,976 hypercalls have zero failures. The auditor passes core usage,
+IPI, SyncContext and extended-query checks with no unsupported calls.
+
+Evidence is `build/windows11-hyperv/ipi-enabled/core-evidence.json`, SHA-256
+`24cba8e4f2d11f62e08cb1d77bbd5069f310d8c4bb8bb5139f1f361fdb846160`.
+The lock-screen capture and launch provenance are in the same ignored local
+directory. The run uses a separate local SSD overlay and no installation ISO.
+These counters prove Windows consumption and native pending requests, not an
+exact count of handler invocations or a performance benefit. Ex IPI, TLB
+hypercalls and reference-counter reads were not observed in this snapshot.
