@@ -5,7 +5,8 @@ namespace pc::jit_detail {
 // Shared decoded operations; no ARM instruction encoding belongs here.
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
-    CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest
+    CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest,
+    LoadFlags
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;

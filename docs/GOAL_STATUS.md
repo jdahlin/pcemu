@@ -26,7 +26,9 @@ Updated 2026-10-25. Work remains in progress.
   Three matched Excel recalculation pairs observe a modest 3.6% paired improvement
   after bit tests. Admitting the measured two-SHRD fragment adds a separately
   observed 4.5% paired improvement on that task. Neither establishes general
-  application/Rosetta performance. Many instruction forms remain interpreted,
+  application/Rosetta performance. Native LAHF adds a separately measured 4.9%
+  paired improvement and raises task native coverage to about 91.4%. Many
+  instruction forms remain interpreted,
   and Rosetta-class application performance has not been demonstrated. Work
   continues; the full goal is not complete. See
   `measurements/native-bit-test-2026-10-25.json`.

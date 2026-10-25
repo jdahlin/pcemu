@@ -1671,3 +1671,33 @@ pass; successful private children are removed. A delayed Welcome popup in the
 first OSR2 attempt was addressed separately in the unattended checker.
 
 [Pairs, hashes, builds, guest counters and integration evidence](measurements/excel-shrd-pair-2026-10-25.json).
+
+## Native LAHF joins the Excel flag sequence (25 October)
+
+LAHF now materializes pending low arithmetic flags and copies the flags byte
+into AH, preserving AL, EAX's upper half and all flags. Flag liveness treats
+LAHF as a consumer: a later flag-writing instruction must not make the
+flags captured in AH disappear. This also joins Excel's preceding XOR with
+the longer native sequence, avoiding its earlier one-instruction fallback.
+
+Three alternating matched-source pairs favor the candidate: median paired
+response ratio **1.0488**, execution-batch wall-time ratio **1.0493**. Response
+ratios span 1.0332 to 1.0722. Native coverage rises from about 90.17% to 91.37%.
+This is a modest observed improvement on the loaded dependent-recalculation
+task, with three pairs and no confidence interval; it is not a general
+application or Rosetta result. Builds and integration guests ran after timing.
+
+Separate instrumented counts show LAHF falling from roughly 8.4 million
+interpreter attempts to **46**, with total interpreted attempts falling from
+138,198,971 to 121,432,549. The adjacent XOR also becomes native. These
+diagnostic timings are excluded from the score. Saved checkpoint hashes
+remain unchanged and all successful private children are removed.
+
+The flag suite passes **37,491,546** checks, including exhaustive byte ADD
+inputs/aliases feeding LAHF before a flag-overwriting XOR, both code sizes,
+exact AH/other-GPR preservation and all externally supplied low flag bytes.
+The core suite passes 352,644 checks. The candidate boots MS-DOS 6.22 to its
+ready marker; headless Win3.11 save/exit and both Win95 Calculator/clipboard/
+Notepad save/restart checks pass.
+
+[Pairs, source/binary hashes, counters and integration evidence](measurements/excel-lahf-2026-10-25.json).

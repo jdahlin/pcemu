@@ -20,6 +20,11 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
+        if (i.kind == Kind::LoadFlags) {
+            // AH observes the low flags even if a later ALU overwrites them.
+            liveFlags |= CF | PF | AF | ZF | SF;
+            continue;
+        }
         if (i.kind == Kind::DoubleShift) {
             // A runtime zero count preserves all flags; a nonzero count
             // materializes the reference's complete arithmetic flags image.

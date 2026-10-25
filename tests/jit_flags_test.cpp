@@ -24,6 +24,49 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // LAHF consumes pending flags even when the following XOR overwrites
+        // them, and changes only AH. Exhaust byte ADD operands/aliases and
+        // preserve externally supplied low flag bits in the flag-only form.
+        for (bool code32 : {false, true})
+            for (unsigned src = 0; src < 8; ++src) {
+                const uint8_t code[] = {0x02, uint8_t(0xc0 | src), 0x9f, 0x33, 0xdb, 0x73, 0};
+                for (auto c : {&reference, &actual}) {
+                    c->s[CS].big = code32;
+                    for (unsigned n = 0; n < sizeof(code); ++n) c->write(n, code[n], 1);
+                }
+                for (unsigned left = 0; left < 256; ++left)
+                    for (unsigned right = 0; right < 256; ++right) {
+                        for (auto c : {&reference, &actual}) {
+                            c->ip = c->instructions = 0;
+                            c->flags = 0x202 | ((right & 1) ? 0xcd5 : 0);
+                            for (unsigned n = 0; n < 8; ++n) c->r[n] = 0xa5b6c7d8u ^ n;
+                            c->set(AX, left, 1); c->set(src, right, 1);
+                        }
+                        reference.step();
+                        auto expectedAH = reference.flags & 255;
+                        reference.step(); reference.step(); reference.step();
+                        check(jit.run() == 4, "ADD/LAHF/XOR/JNC execute natively");
+                        equal(reference, actual);
+                        check(actual.get(4, 1) == expectedAH, "LAHF captures flags before the later XOR");
+                    }
+            }
+        for (bool code32 : {false, true}) {
+            const uint8_t code[] = {0x9f, 0x90, 0x90, 0x73, 0};
+            for (auto c : {&reference, &actual}) {
+                c->s[CS].big = code32;
+                for (unsigned n = 0; n < sizeof(code); ++n) c->write(n, code[n], 1);
+            }
+            for (unsigned low = 0; low < 256; ++low) {
+                for (auto c : {&reference, &actual}) {
+                    c->ip = c->instructions = 0;
+                    c->flags = 0xa0000200u | low;
+                    for (unsigned n = 0; n < 8; ++n) c->r[n] = 0x87654321u ^ n;
+                }
+                for (unsigned n = 0; n < 4; ++n) reference.step();
+                check(jit.run() == 4, "LAHF alone observes supplied low flags natively");
+                equal(reference, actual);
+            }
+        }
         // Excel's two SHRDs end at an unsupported variable shift. The normal
         // warmup policy must admit this expensive pair, not just warmup=0 tests.
         for (bool code32 : {false, true})

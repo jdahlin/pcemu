@@ -298,6 +298,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         // instruction still contributes to the block's guest instruction count.
         if (!neededFlags[n] && (i.kind == Kind::Test || (i.kind == Kind::Alu && i.op == 7)))
             continue;
+        if (i.kind == Kind::LoadFlags) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            load(11, 19, offsetof(CPU, flags));
+            insert(20 + AX, 11, 1, 8);
+            dirtyRegisters |= 1u << AX;
+            continue;
+        }
         if (i.kind == Kind::Shift) {
             if (neededFlags[n]) {
                 finishFlags(last, -1, 0);

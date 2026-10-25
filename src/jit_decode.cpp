@@ -195,6 +195,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.src = m & 7;
                 i.immediate = true;
                 i.imm = op == 0x6b ? uint32_t(int32_t(int8_t(byte()))) : immediate(w);
+            } else if (op == 0x9f) {
+                i.kind = Kind::LoadFlags;
+                i.dst = AX;
+                i.immediate = true;
             } else if (op >= 0xb0 && op <= 0xbf) {
                 i.kind = Kind::Move;
                 i.w = op < 0xb8 ? 1 : w;
