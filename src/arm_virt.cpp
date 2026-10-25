@@ -84,7 +84,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         return true;
     });
     hyperv.advertiseSynic(c.hypervSynic);
-    if (c.hypervVmbus) hyperv.enableVmbus();
+    if (c.hypervVmbus) { hyperv.enableVmbus(); hyperv.enableHeartbeat(); }
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;

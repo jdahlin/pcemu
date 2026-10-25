@@ -1,6 +1,7 @@
 #pragma once
 #include "arm_synic.hpp"
 #include "arm_vmbus.hpp"
+#include "arm_hyperv_heartbeat.hpp"
 #include "arm_hyperv_timers.hpp"
 #include <array>
 #include <cstdint>
@@ -33,7 +34,9 @@ class ArmHyperV {
     // Owns fixed VMBus bootstrap (4) and control (1) message connections.
     void enableVmbus();
     bool offerVmbusChannel(const ArmVmbus::Offer &offer, ArmVmbus::PacketHandler handler,
-                          std::function<void()> closed = {});
+                          std::function<void()> closed = {}, std::function<void()> opened = {});
+    // Registers a real host initiated heartbeat IC in the VMBus inventory.
+    void enableHeartbeat();
     // Message payloads are borrowed only for the synchronous handler call.
     using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
     using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
@@ -61,7 +64,8 @@ class ArmHyperV {
     bool synicAdvertised = false;
     ArmSynic synic;
     ArmVmbus vmbus;
-    bool vmbusEnabled = false;
+    bool vmbusEnabled = false, heartbeatEnabled = false;
+    ArmHyperVHeartbeat heartbeat;
     std::map<uint32_t, uint32_t> vmbusEventPorts;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;

@@ -33,8 +33,11 @@ class ArmVmbus {
     using Event = std::function<uint16_t(unsigned, unsigned, unsigned)>;
     void setEventSender(Event sender) { event = std::move(sender); }
     // Trusted host configuration, before contact. Max eight real backends.
-    bool addChannel(const Offer &offer, PacketHandler handler, std::function<void()> closed = {});
+    bool addChannel(const Offer &offer, PacketHandler handler, std::function<void()> closed = {},
+                    std::function<void()> opened = {});
     uint16_t signalChannel(uint32_t channel);
+    // Host initiated in-band traffic. Full leaves the packet with its caller.
+    uint16_t sendChannelPacket(uint32_t channel, std::span<const uint8_t> packet);
     void service();
     bool needsService() const;
     std::string report() const;
@@ -48,7 +51,7 @@ class ArmVmbus {
     struct Channel {
         Offer offer;
         PacketHandler handler;
-        std::function<void()> closed;
+        std::function<void()> closed, opened;
         bool offered = false, work = false, notification = false;
         uint32_t ringGpadl = 0, vp = 0;
         std::unique_ptr<ArmVmbusRing> rx, tx;

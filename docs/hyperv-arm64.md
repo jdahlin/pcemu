@@ -295,7 +295,7 @@ The following is a work inventory, not a completion claim:
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Windows SynIC page/control/SINT configuration is observed. Direct-timer feature advertisement, complete ARM semantics and Windows reply/timer consumption remain pending. ARM Generic Timer already runs natively. |
-| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Opt-in runtime/ACPI attachment is implemented and native/EFI-tested. Windows ACPI binding and a Copper contact are observed; reply consumption, GPADL, rings and service channels remain pending. |
+| VMBus / integration services | Contact/version, channel offers, GPADL lifecycle and ring transport are implemented and model tested. Opt-in runtime/ACPI attachment is native/EFI-tested. A host heartbeat IC is registered in the runtime, with negotiation, periodic probes and response/timeout diagnostics. Windows ACPI binding and a Copper contact are observed; Windows reply consumption, channel opening and service use remain unverified. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
 The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
@@ -1356,8 +1356,8 @@ The host can register up to eight real channel backends before guest contact
 through `ArmHyperV::offerVmbusChannel`. Each has distinct interface/instance
 GUIDs, a channel ID and a dedicated event connection. RequestOffers advertises
 only registered backends, followed by AllOffersDelivered; no default device or
-integration service is fabricated. The normal runtime inventory remains empty
-until an actual service is registered.
+integration service is fabricated. The transport has no implicit inventory; the opt-in ARM runtime now explicitly
+registers the heartbeat service described below.
 
 GPADL_HEADER/BODY assemble validated mappings and return GPADL_CREATED. OPENCHANNEL
 validates ownership, target VP and both ring partitions before installation.
@@ -1423,3 +1423,63 @@ Reviewed source copies are cached under `build/hyperv-research/` as
 They are reference material only; no third-party source was copied into runtime
 code. Microsoft TLFS remains the contract, with OpenVMM providing the channel
 protocol implementation reference.
+
+
+### Host heartbeat integration component
+
+The ARM platform explicitly calls `enableHeartbeat()` with `--hyperv vmbus`.
+`basic`, `synic` and `off` do not register the service. Its interface GUID is
+57164f39-9115-4e78-ab55-382f3bd5422d, offered on channel 1 / dedicated event
+connection 16 as a message-mode named pipe. This is a real host-side component,
+not an echo handler. Opening its ring starts host-initiated IC version negotiation;
+framework and heartbeat versions 1.0/3.0 are offered. The guest must select one
+supported version of each before probes begin.
+
+Host packets use in-band VMBus data, the message-pipe DATA header and the 20-byte
+IC header with transaction/request flags. Heartbeat probes contain a sequence
+number and a zeroed legacy reserved tail. Only matching successful IC responses
+with the selected versions, response flags and incremented sequence count as
+liveness evidence. Unknown packets, malformed lengths, unsupported selections,
+wrong status and stale responses increment a bounded diagnostic counter without
+marking the guest responsive. A v3 response's application state is reported
+separately; transport responsiveness does not imply application health.
+
+A probe follows successful negotiation, then repeats five seconds after each
+valid response. Thirty seconds without a response clears `responsive`, counts a
+timeout and retires that sequence before retrying. The host retains one logical
+candidate if the output ring is full and counts a probe only after ring
+publication. Negotiation timeout ends the session until close/reopen. Closing,
+unloading or a ring fault resets session state; sequence numbers continue across
+reopen so an old heartbeat reply cannot satisfy a new probe. No host shutdown,
+reset or other corrective action is taken on missed heartbeats.
+
+`ArmVmbus::sendChannelPacket` supplies bounded host-initiated publication;
+open/close callbacks connect component lifetime to the actual channel. Hyper-V's
+existing stopped-VP service loop handles the deadlines, ring notifications and
+retry scheduling. JSON reports include `heartbeat.state`, `responsive`, selected
+versions, application state, negotiation/probe/response counts, rejected responses
+and timeouts. Queued packets and completed negotiation alone never set
+`responsive=true`.
+
+`make test-arm-hyperv-heartbeat` passes 187 checks, including ASan/UBSan. Tests
+use independent guest response fixtures and exercise IC/pipe layouts, selection,
+sequence correlation, malformed/truncated payloads, legacy v1, retained Linux
+negotiation tails, time wraparound, timeout/retry, backpressure, close/reopen and
+stale responses. A complete portable fixture drives the actual component through
+HVC PostMessage/SignalEvent, SynIC, GPADL and shared rings and checks scheduled
+probes, response evidence, timeout recovery and unload cleanup. Existing 2,136
+Hyper-V, 247 channel, 1,581 GPADL and 4,352 ring checks pass. An isolated native
+build including the platform registration passes all 284 headless self-tests.
+These tests establish the host implementation; Windows heartbeat use is still
+unverified because its initial VMBus control reply remains unconsumed in the
+observed ARM64 boot. The known Windows installation remains on its basic profile.
+
+Protocol references are Microsoft's
+[IC header/version definitions](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic_protocol/src/lib.rs),
+[host negotiation implementation](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic/src/common.rs),
+[heartbeat data](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic_protocol/src/heartbeat.rs)
+and [message-pipe framing](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_ring/src/lib.rs),
+with [Linux's guest heartbeat handler](https://github.com/torvalds/linux/blob/master/drivers/hv/hv_util.c)
+providing an independent interoperating peer reference. Microsoft documents the
+Windows service as
+[vmicheartbeat](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/integration-services).

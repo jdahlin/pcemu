@@ -44,6 +44,12 @@ uint64_t ArmHyperV::timeNow() const {
 void ArmHyperV::service() {
     if (enabled) {
         synic.service(); // A false injection keeps the queued message for retry.
+        if (heartbeatEnabled) {
+            auto now=timeNow();
+            auto packet=heartbeat.packet(now);
+            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVHeartbeat::channelId,packet))
+                heartbeat.sent(now);
+        }
         if (vmbusEnabled) vmbus.service();
         timers.service(timeNow());
     }
@@ -51,6 +57,10 @@ void ArmHyperV::service() {
 std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     if (!enabled) return {};
     auto delay = timers.nextDelay(timeNow(), false);
+    if (heartbeatEnabled) {
+        auto next=heartbeat.delay(timeNow());
+        if(next) delay=std::min(delay.value_or(UINT64_MAX), std::max(*next,uint64_t(10000)));
+    }
     if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
     return delay;
 }
@@ -90,16 +100,25 @@ void ArmHyperV::enableVmbus() {
     vmbusEnabled = true;
 }
 bool ArmHyperV::offerVmbusChannel(const ArmVmbus::Offer &offer, ArmVmbus::PacketHandler handler,
-                                 std::function<void()> closed) {
+                                 std::function<void()> closed, std::function<void()> opened) {
     if (!vmbusEnabled || connections.contains(offer.connection)) return false;
     if (!bindEventConnection(offer.connection, 1, [this, id = offer.channel](unsigned, uint16_t) {
             return vmbus.signalChannel(id);
         })) return false;
-    if (!vmbus.addChannel(offer, std::move(handler), std::move(closed))) {
+    if (!vmbus.addChannel(offer, std::move(handler), std::move(closed), std::move(opened))) {
         connections.erase(offer.connection); return false;
     }
     vmbusEventPorts.emplace(offer.connection, offer.channel);
     return true;
+}
+void ArmHyperV::enableHeartbeat() {
+    if(heartbeatEnabled) return;
+    if(!offerVmbusChannel(ArmHyperVHeartbeat::offer(),
+        [this](std::span<const uint8_t> packet) {
+            heartbeat.receive(packet,timeNow()); return std::vector<uint8_t>{};
+        }, [this] {heartbeat.closed();}, [this] {heartbeat.opened(timeNow());}))
+        throw std::runtime_error("Heartbeat requires VMBus and an available channel/connection");
+    heartbeatEnabled=true;
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -589,6 +608,7 @@ std::string ArmHyperV::report() const {
     s << ']';
     if (synicAdvertised) s << ",\"synic\":" << synic.report();
     if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
+    if (heartbeatEnabled) s << ",\"heartbeat\":" << heartbeat.report();
     return s.str() + "}\n";
 }
 } // namespace pc

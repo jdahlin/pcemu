@@ -84,7 +84,8 @@ uint16_t ArmVmbus::receive(uint32_t messageType, std::span<const uint8_t> input,
     }
     return 0;
 }
-bool ArmVmbus::addChannel(const Offer &offer, PacketHandler handler, std::function<void()> closed) {
+bool ArmVmbus::addChannel(const Offer &offer, PacketHandler handler, std::function<void()> closed,
+                          std::function<void()> opened) {
     if (connected || !event || !handler || channels.size() >= 8 || !offer.channel || offer.channel >= 2048 ||
         offer.connection < 16 || offer.connection > 0xffffff || (offer.flags & ~uint16_t(0x11)) ||
         channels.contains(offer.channel) ||
@@ -96,7 +97,7 @@ bool ArmVmbus::addChannel(const Offer &offer, PacketHandler handler, std::functi
             (channel.offer.interfaceId == offer.interfaceId && channel.offer.instanceId == offer.instanceId)) return false;
     }
     Channel channel;
-    channel.offer = offer; channel.handler = std::move(handler); channel.closed = std::move(closed);
+    channel.offer = offer; channel.handler = std::move(handler); channel.closed = std::move(closed); channel.opened = std::move(opened);
     channels.emplace(offer.channel, std::move(channel));
     return true;
 }
@@ -128,6 +129,17 @@ uint16_t ArmVmbus::signalChannel(uint32_t id) {
     if (!connected || it == channels.end() || !it->second.rx) return 0x15;
     it->second.work = true;
     return 0;
+}
+uint16_t ArmVmbus::sendChannelPacket(uint32_t id, std::span<const uint8_t> packet) {
+    auto it=channels.find(id);
+    if(!connected || it==channels.end() || !it->second.tx) return 0x15;
+    auto &channel=it->second;
+    if(!channel.pending.empty()) return 0x13;
+    bool notify=false;
+    auto result=channel.tx->push(packet,notify);
+    if(result==ArmVmbusRing::Result::Full) return 0x13;
+    if(result!=ArmVmbusRing::Result::Ok) { ++faults; close(channel); return 5; }
+    channel.notification |= notify; ++packetsOut; return 0;
 }
 bool ArmVmbus::needsService() const {
     if (!replies.empty()) return true;
@@ -197,7 +209,9 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
         channel.rx = std::move(rx); channel.tx = std::move(tx);
     } catch (const std::runtime_error &) { response(6, id, openId, 0xc000000d); return 0; }
     channel.vp = vp; channel.ringGpadl = gpadl; channel.work = true; ++opens;
-    response(6, id, openId, 0); return 0;
+    response(6, id, openId, 0);
+    if(channel.opened) channel.opened();
+    return 0;
 }
 void ArmVmbus::service() {
     while (send && !replies.empty()) {
