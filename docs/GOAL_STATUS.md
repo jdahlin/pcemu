@@ -827,3 +827,18 @@ recalculation snapshot remain, but cannot replace missing parent content.
 Excel speedup and current runnability are not established. Continue RAM work or
 recover complete guest chains; broad goal and fresh installer validation remain
 active and incomplete.
+
+## Original rtts image recovered independently (25 October)
+
+Recovered the repository's 256 MiB hda.img from its documented download URL.
+Its SHA-256 matches the Git LFS pointer (23158e95d754dd734f7d7dc2e40a4e53e2b31d3bb7e35db93bbb61dc69221161).
+Imported to a 180,006,943-byte compressed disk and verified the complete logical
+SHA-256 before removing the temporary raw download. Both disk and zero parent
+live under /Volumes/data/pcemu/recovered; media/rtts-win95.img is only a symlink.
+SMB reports the 256 MiB zero parent as allocated, so total storage is not just
+the compressed image size. Headless Calculator/clipboard/Notepad exact file
+persistence and one firmware restart back to Explorer pass; the successful
+private child is removed. Evidence:
+`docs/measurements/recovered-rtts-2026-10-25.json`.
+Missing Office/OSR2/DOS/Win3.11 parents and fresh installer validation remain
+unresolved; this recovery restores the original rtts requirement independently.

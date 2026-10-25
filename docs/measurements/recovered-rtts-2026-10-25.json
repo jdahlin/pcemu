@@ -1,0 +1,66 @@
+{
+  "scope": "Recovered original rtts image from repository download, exact Git LFS SHA-256 match, compressed logical readback hash match, headless application/restart/file-persistence validation on current executable",
+  "download": {
+    "source": "https://rtts.eu/download/win95/hda.img",
+    "gitLfsOid": "23158e95d754dd734f7d7dc2e40a4e53e2b31d3bb7e35db93bbb61dc69221161",
+    "sha256": "23158e95d754dd734f7d7dc2e40a4e53e2b31d3bb7e35db93bbb61dc69221161",
+    "bytes": 268435456,
+    "pointerBlob": "d4d13bb9db06de353481612894eb49bd235979f5",
+    "compressedLogicalSha256": "23158e95d754dd734f7d7dc2e40a4e53e2b31d3bb7e35db93bbb61dc69221161",
+    "compressedBytes": 180006943,
+    "zeroParentAllocatedBytes": 268435456,
+    "rawDownloadRemoved": true
+  },
+  "image": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+  "parent": "/Volumes/data/pcemu/recovered/zero-268435456.raw",
+  "workspaceLink": "media/rtts-win95.img",
+  "validation": {
+    "pid": 19736,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-90q82hdq/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-90q82hdq/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-90q82hdq/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-90q82hdq/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "10be2fc6c523a0ca77ebc04463938d985336233ee225e9335bf41f340bbd7d3a",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "1ce481f9fc63f65ee31a2b04fc73ce88ccf5fcbe",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 543402793,
+      "afterInstructions": 1722339082,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\PAA3E08A.TXT",
+        "fatName": "PAA3E08ATXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications AA3E08A1.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "38ca98dc9a4e8b269fcb86d627fa033db0e37bb7c774673a13083db5ab19962f"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "limits": [
+    "Does not recover missing Office/OSR2/DOS/Win3.11 parent disks.",
+    "SMB stat reports 268435456 allocated bytes for zero parent; do not assume its sparse logical contents imply zero physical allocation."
+  ]
+}

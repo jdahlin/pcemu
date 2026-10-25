@@ -139,3 +139,15 @@ APFS sharing means summed file allocations greatly exceeded reclaimed space.
 Original installer archives, the Windows ISO link, source code and diagnostic
 reports were retained. The ignored deletion audit is
 `build/storage-cleanup/remove-all-raw-applied.json`.
+
+## External rtts recovery (25 October)
+
+The original rtts image is now `/Volumes/data/pcemu/recovered/rtts-win95.pcd`.
+Its parent is `/Volumes/data/pcemu/recovered/zero-268435456.raw`; retain both.
+The workspace's media/rtts-win95.img is a symlink, so deleting the local link
+does not remove the external image. All logical bytes were hash-verified against
+the repository's Git LFS SHA-256; the temporary raw download was removed.
+The compressed disk is 180,006,943 bytes. SMB reports the 256 MiB zero parent
+as allocated; storage accounting must include it rather than assuming sparse
+allocation. Missing Office parent data cannot be reconstructed from COW children
+alone; the Office ISO and dependent recalculation snapshot are not substitutes.
