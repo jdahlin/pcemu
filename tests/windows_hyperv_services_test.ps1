@@ -6,6 +6,7 @@ $tokens = $null; $errors = $null
 if ($errors.Count) { throw ($errors | Out-String) }
 $global:pcemuProbeState = 'Stopped'; $global:pcemuProbeStarts = 0; $global:pcemuProbeFailStart = $false
 $global:pcemuProbeEventsFail = $false
+$global:pcemuProbeWaitFail = $false
 function Test-Path { param($Path) return $false }
 function Get-CimInstance {
     param($ClassName, $Filter)
@@ -37,6 +38,10 @@ function Get-Service {
     }
     $s | Add-Member ScriptMethod WaitForStatus {
         param($State, $Timeout)
+        if ($global:pcemuProbeWaitFail) {
+            $global:pcemuProbeState = 'Stopped'
+            throw [System.ServiceProcess.TimeoutException]::new('Mock stopped before Running')
+        }
         if ($State.ToString() -ne 'Running' -or $Timeout.TotalSeconds -ne 15) { throw 'Unbounded service wait' }
     }
     return $s
@@ -70,6 +75,13 @@ try {
     $native = @($r.activation.errors | Where-Object { $_.nativeErrorCode -eq 5 })
     if ($native.Count -ne 1 -or $r.activation.errors.Count -lt 2 -or -not $r.activation.errorId) {
         throw 'Wrapped native service error was lost'
+    }
+    $global:pcemuProbeFailStart = $false; $global:pcemuProbeWaitFail = $true
+    & $probe -OutputPath $path -StartHeartbeat
+    $r = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+    if ($r.activation.succeeded -or $r.after.state -ne 'Stopped' -or
+        -not @($r.activation.errors | Where-Object { $_.type -eq 'System.ServiceProcess.TimeoutException' }).Count) {
+        throw 'Accepted Start followed by Stopped was incorrectly reported as Running'
     }
     $global:pcemuProbeEventsFail = $true
     & $probe -OutputPath $path

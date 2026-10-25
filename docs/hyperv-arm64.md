@@ -1794,3 +1794,23 @@ Only heartbeat-matching event XML is retained. Query errors are saved separately
 and do not prevent the main service report from being written. This avoids
 relying solely on persisted EVTX buffers after stopping the VM. Mocked tests
 cover event retention and nonfatal event-log failure; guest validation is pending.
+
+### Accepted start followed by clean stopped status
+
+The direct-controller/live-event probe was executed inside Windows; its fresh
+report is `build/windows11-hyperv/services/service-report4.json`. It confirms an
+elevated token, a successful return from ServiceController.Start, and a timeout
+from the subsequent 15-second WaitForStatus(Running). Both CIM and `sc queryex`
+then report Stopped, PID zero, WIN32_EXIT_CODE=0 and SERVICE_EXIT_CODE=0. The
+bounded live SCM query succeeds but returns no heartbeat-matching events.
+
+This is stronger evidence than the previous generic StartServiceFailed message:
+SCM accepted the start request, while the requested Running state was not
+observed and the final state is a clean stop. It does not identify which internal
+initialization condition caused the exit. A transient Running state between
+polls also cannot be excluded. No host channel open or heartbeat response was
+observed. Investigation now needs the service's internal initialization path or
+its own diagnostic provider, rather than another privilege check. A mocked
+regression covers an accepted Start followed by Stopped/timeout and ensures this
+is not reported as successful activation. The original basic VM was restored,
+and temporary secret-bearing staging media removed after this run.
