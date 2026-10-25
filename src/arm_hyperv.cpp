@@ -59,6 +59,12 @@ void ArmHyperV::service() {
                     timesync.sent(now);
             }
         }
+        if (shutdownEnabled) {
+            auto now=timeNow();
+            auto packet=shutdown.packet(now);
+            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVShutdown::channelId,packet))
+                shutdown.sent(now);
+        }
         if (vmbusEnabled) vmbus.service();
         timers.service(timeNow());
     }
@@ -72,6 +78,10 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     }
     if (timesyncEnabled) {
         auto next=timesync.delay(timeNow());
+        if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
+    }
+    if (shutdownEnabled) {
+        auto next=shutdown.delay(timeNow());
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
@@ -146,6 +156,18 @@ void ArmHyperV::enableTimeSync(Clock source) {
         },[this]{timesync.closed();},[this]{timesync.opened(timeNow());}))
         throw std::runtime_error("Timesync requires VMBus and an available channel/connection");
     utcClock=std::move(source);timesyncEnabled=true;
+}
+void ArmHyperV::enableShutdown() {
+    if(shutdownEnabled) return;
+    if(!offerVmbusChannel(ArmHyperVShutdown::offer(),
+        [this](std::span<const uint8_t> packet) {
+            shutdown.receive(packet,timeNow()); return std::vector<uint8_t>{};
+        },[this]{shutdown.closed();},[this]{shutdown.opened(timeNow());}))
+        throw std::runtime_error("Shutdown requires VMBus and an available channel/connection");
+    shutdownEnabled=true;
+}
+bool ArmHyperV::requestShutdown(ArmHyperVShutdown::Action action,bool force,uint32_t seconds) {
+    return enabled && shutdownEnabled && shutdown.request(action,force,seconds);
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
@@ -635,6 +657,7 @@ std::string ArmHyperV::report() const {
     s << ']';
     if (synicAdvertised) s << ",\"synic\":" << synic.report();
     if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
+    if (shutdownEnabled) s << ",\"shutdown\":" << shutdown.report();
     if (timesyncEnabled) s << ",\"timesync\":" << timesync.report();
     if (heartbeatEnabled) s << ",\"heartbeat\":" << heartbeat.report();
     return s.str() + "}\n";

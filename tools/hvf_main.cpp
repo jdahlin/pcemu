@@ -26,6 +26,8 @@ using pc::HvfMachine;
 namespace {
 volatile std::sig_atomic_t interrupted = 0;
 void interrupt(int) { interrupted = 1; }
+volatile std::sig_atomic_t guestShutdownRequested = 0;
+void requestGuestShutdown(int) { guestShutdownRequested = 1; }
 volatile std::sig_atomic_t captureRequested = 0;
 void requestCapture(int) { captureRequested = 1; }
 class SerialTerminal {
@@ -791,6 +793,7 @@ int main(int argc, char **argv) {
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
             std::signal(SIGUSR1, requestCapture);
+            std::signal(SIGUSR2, requestGuestShutdown);
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
             bool matched = untilText.empty(), finished = false, restart;
             bool stdinOpen = serialStdio, commandSent = shellCommand.empty();
@@ -829,6 +832,12 @@ int main(int argc, char **argv) {
                         }
                     }
                     vm.run(std::chrono::milliseconds(100));
+                    if (guestShutdownRequested) {
+                        guestShutdownRequested = 0;
+                        std::cerr << (vm.requestGuestShutdown()
+                            ? "Hyper-V guest shutdown requested\n"
+                            : "Hyper-V guest shutdown unavailable (channel not ready)\n");
+                    }
                     if (captureRequested) {
                         captureRequested = 0;
                         saveHypervStats(hypervStatsPath);

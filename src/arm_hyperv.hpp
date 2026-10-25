@@ -3,6 +3,7 @@
 #include "arm_vmbus.hpp"
 #include "arm_hyperv_heartbeat.hpp"
 #include "arm_hyperv_timesync.hpp"
+#include "arm_hyperv_shutdown.hpp"
 #include "arm_hyperv_timers.hpp"
 #include <array>
 #include <cstdint>
@@ -40,6 +41,10 @@ class ArmHyperV {
     void enableHeartbeat();
     // UTC clock returns FILETIME; reference time remains the monotonic Clock.
     void enableTimeSync(Clock utcClock = {});
+    void enableShutdown();
+    // Trusted host request, with all VPs stopped. Acceptance is not poweroff.
+    bool requestShutdown(ArmHyperVShutdown::Action action, bool force = false,
+                         uint32_t timeoutSeconds = 0);
     // Message payloads are borrowed only for the synchronous handler call.
     using MessageHandler = std::function<uint16_t(unsigned, uint32_t, std::span<const uint8_t>)>;
     using EventHandler = std::function<uint16_t(unsigned, uint16_t)>;
@@ -72,6 +77,8 @@ class ArmHyperV {
     bool timesyncEnabled = false;
     ArmHyperVTimeSync timesync;
     Clock utcClock;
+    bool shutdownEnabled = false;
+    ArmHyperVShutdown shutdown;
     std::map<uint32_t, uint32_t> vmbusEventPorts;
     ArmHyperVTimers timers;
     SoftwareInterruptSender privateInterruptSender;

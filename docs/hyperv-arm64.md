@@ -2008,3 +2008,32 @@ The model is included in `test` and `test-hvf`. Production registration, the
 host request path, Windows service negotiation and actual controlled shutdown
 still require integration and guest verification. Guest hibernation policy is
 not established by model support for the protocol flag.
+
+### Integrated shutdown service and explicit host request
+
+The VMBus runtime now offers the shutdown service alongside heartbeat and
+timesync. `ArmHyperV::requestShutdown` accepts one explicit host request only
+after version negotiation, retaining force=false by default. Scheduling,
+ring-backpressure retries, status replies and close/unload use the same stopped-VP
+service path as the other integration components. JSON includes request,
+acceptance, denial, status and timeout counters. Negotiation alone never sends
+a power operation.
+
+For the headless UEFI runner, `kill -USR2 PID` requests a normal guest poweroff
+through this channel. The signal handler sets a flag only; the request is handled
+between VM run slices with the VPs stopped. It does not replace SIGTERM/SIGINT or
+force termination. An unavailable/not-ready channel emits a diagnostic and the
+VM keeps running. A queued/accepted request also leaves the runner alive until
+the guest actually powers off through the platform power path. No automatic
+request is scheduled on boot, negotiation or timeout.
+
+Validation: 270 shutdown model checks, 38 HVC/SynIC/GPADL/ring integration checks
+(including no implicit request, full ring, guest denial and acceptance), with
+sanitizers on the integration suite. Timesync integration (32), heartbeat (189)
+and Hyper-V (2,136) regression checks pass. The isolated native runner builds,
+and EFI smoke checks pass in all four modes.
+A real HVF basic-mode signal probe confirms SIGUSR2 reports the unavailable
+channel and leaves the runner alive; evidence is in
+`build/hyperv-research/shutdown-signal/`. This does not prove an actual Windows
+shutdown. The next gate is Windows negotiation, an explicit request on a private
+test disk, a valid guest acknowledgment and independently observed poweroff.
