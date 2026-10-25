@@ -10,7 +10,7 @@ PS2_TEST_SUPPORT := tests/ps2_test_support.hpp
 JIT_CORE := src/jit.cpp src/jit_decode.cpp src/jit_flags.cpp \
 	src/jit_runtime.cpp src/jit_arm64.cpp
 CORE := src/cpu.cpp src/machine.cpp src/pc_at_io.cpp src/pc_firmware.cpp src/pc_bios.cpp src/pc_bios_video.cpp src/i8042.cpp src/pc_input.cpp src/cmos_rtc.cpp src/disk.cpp src/pc_bios_disk.cpp src/ata.cpp src/pic.cpp src/i8259_pair.cpp src/pit.cpp src/vga.cpp $(JIT_CORE) src/snapshot.cpp src/mouse.cpp src/pci.cpp src/vga_pci.cpp src/host_keyboard.cpp src/ne2000.cpp
-.PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf
+.PHONY: firmware all test clean run dos bench app app95 smoke-win311 smoke-reset smoke-guest-perf smoke-guest-memory
 all: build/pcemu
 build/pcemu-profile: $(CORE) $(SESSION) $(HEADERS) src/network.cpp src/frontend_sdl.cpp src/main.cpp src/profile.hpp src/cpu.hpp src/machine.hpp src/jit.hpp src/vga.hpp src/ata.hpp src/pic.hpp src/pit.hpp
 	$(CXX) $(CPPFLAGS) $(SDL_CFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) $(SESSION) src/main.cpp src/network.cpp src/frontend_sdl.cpp $(LDLIBS) -o $@
@@ -36,6 +36,8 @@ build/network-tests: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/network-tests-sanitize: $(CORE) $(HEADERS) src/network.cpp tests/network_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -O1 -fsanitize=address,undefined -fno-omit-frame-pointer $(CORE) src/network.cpp tests/network_test.cpp $(shell pkg-config --libs libzstd) -o $@
+build/memory-bench: $(CORE) $(HEADERS) tools/memory_bench.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/memory_bench.cpp $(shell pkg-config --libs libzstd) -o $@
 build/guest-bench: $(CORE) $(HEADERS) tools/guest_bench.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
 build/guest-bench-profile: $(CORE) $(HEADERS) tools/guest_bench.cpp
@@ -51,7 +53,11 @@ build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tes
 build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
+smoke-guest-memory: build/memory-bench
+	python3 tools/smoke_guest_memory.py
+
 test: build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+	python3 -m unittest discover -s tests -p test_guest_memory.py
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
 	./build/hardware-device-tests
 	./build/i8042-tests

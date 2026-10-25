@@ -1454,3 +1454,82 @@ confidence intervals, not Windows startup or Rosetta equivalence.
 [Complete paired evidence, source/binary hashes and guest validation](measurements/native-indirect-jump-2026-10-25.json)
 is committed. The temporary baseline source, binary and debug symbols were
 removed after success. No installer or Office fixture was created.
+
+
+## Dependent-load memory sweep (25 October)
+
+`tools/bench_guest_memory.py` builds an original 32-bit x86 pointer-chasing
+COM and runs it headless. The exact same COM runs in a CPU/JIT-only RAM
+harness, the reference interpreter, or QEMU TCG with a tiny BIOS loader.
+This is inspired by the dependent-load method described by
+[lmbench](https://lmbench.sourceforge.net/man/lat_mem_rd.8.html), not a port
+of its source or a published lmbench result. No installed VM fixture is used.
+
+The guest builds deterministic Fisher-Yates shuffled single-cycle rings of
+16 / 256 / 1,024 / 2,048 / 4,096 nodes. Each node holds its successor's address.
+With 4-byte spacing, spans are 64 bytes to 16 KiB; with 4,096-byte spacing,
+the same node counts touch that many distinct guest pages, spanning up to
+16 MiB. Only four bytes per sparse page are loaded, so spans are not amounts
+of memory transferred. The exact same unrolled loop executes 32 dependent
+`MOV EAX,[EAX]` loads per iteration plus seven final loads, preventing a whole
+number of ring laps from trivially returning the initial pointer.
+
+Each case runs with paging disabled and with supervisor 4 KiB identity paging
+over 64 MiB RAM. Initialization and a warmup of the exact load loop occur
+outside the interval; the timed region includes loop/dispatch/guard costs.
+The host independently generates each ring permutation and checks the final
+pointer, case order and workload count. Metrics are **host ns per logical
+dependent guest load**, not raw host DRAM latency or streaming bandwidth.
+The CPU/JIT harness excludes Machine/device polling; QEMU runs its full PC
+model. These comparisons do not rank overall emulator or Windows performance.
+
+PCEMU timestamps within port handlers; QEMU timestamps Unix-socket receipt
+of the same guest start/stop markers. Transport/scheduling error is not
+calibrated. The default 4,000,000 iterations execute 128,000,007 dependent loads
+per case; intervals below 0.1 seconds are explicitly flagged. The case order
+is fixed and user mode, faults, MMIO, SMC and streaming writes/copies are not
+covered. Existing correctness suites remain necessary for those behaviors.
+
+```sh
+python3 tools/bench_guest_memory.py --backend jit --output build/memory-jit-run
+python3 tools/bench_guest_memory.py --backend qemu --output build/memory-qemu-run
+python3 tools/smoke_guest_memory.py --qemu
+```
+
+`make smoke-guest-memory` checks JIT versus interpreter without requiring QEMU.
+The smoke test verifies identical program hashes, transcripts and JIT/reference
+instruction counts, then replaces a dependent load with NOPs and requires
+rejection of the corrupted guest's results. Six validator unit tests are
+included in `make test`. PCEMU opens no disk; successful QEMU sparse 1 MiB
+boot images allocate only the tiny program and are removed after validation.
+
+Three alternating JIT/QEMU pairs use identical program hashes and guest
+transcripts, with 128,000,007 dependent loads per case. All 120 intervals
+exceed 0.1 seconds and all final pointers match. Median host ns/load:
+
+| Working set | Paging | PCEMU CPU/JIT | QEMU TCG PC |
+| --- | --- | ---: | ---: |
+| Dense 16 KiB / 4 pages | Off | 2.27 | 2.67 |
+| Dense 16 KiB / 4 pages | On | 5.77 | 2.67 |
+| One pointer/page, 256 pages | On | 10.36 | 69.45 |
+| One pointer/page, 1,024 pages | On | 11.96 | 68.83 |
+| One pointer/page, 2,048 pages | On | 20.24 | 72.12 |
+| One pointer/page, 4,096 pages | On | 33.01 | 82.25 |
+
+These results expose a weakness that CoreMark coverage hides: the dense paged
+case is slower than QEMU here even with zero slow-memory calls. Inline native
+translation guards are therefore a useful optimization target. At 1,024 sparse
+pages occasional data/code TLB collisions invoke the helper; above the
+1,024-entry software TLB capacity nearly every sparse load invokes it. Larger
+spans also exercise the host memory hierarchy, so the entire slowdown must not
+be attributed to software TLB misses. All measured JIT intervals exceed
+99.99998% native instruction coverage, but accesses completed by C++ native
+helpers count as native too. Coverage is not host time or helper-free execution.
+
+[Full paired results, raw transcripts, source/binary hashes and smoke evidence](measurements/guest-memory-sweep-2026-10-25.json)
+are committed, including all timings and host-load observations. Three pairs
+on one host without confidence intervals support these specific harness
+results. The earlier one-million-iteration calibration is excluded. Both
+QEMU-inclusive smoke and `make smoke-guest-memory` pass exact results, matching
+JIT/reference instruction counts, native execution and corrupted-kernel
+rejection. No production CPU/JIT behavior changed in this benchmark addition.

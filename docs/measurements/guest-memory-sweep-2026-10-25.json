@@ -1,0 +1,4427 @@
+{
+  "scope": "Three alternating same-host identical-guest-program pairs. PCEMU CPU/JIT-only RAM harness versus QEMU full PC TCG. Supervisor 4KiB identity paging; shuffled dependent pointer loads. Different timing mechanisms; not Windows/application performance or raw host RAM latency.",
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "jit",
+        "qemu"
+      ],
+      "results": {
+        "jit": {
+          "backend": "jit",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "samples": [
+            {
+              "hostSeconds": 0.208518625,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.6290516687237369,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.283414875,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.2141785898496082,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.279503375,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.1836199977707813,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.280444375,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.1909715598687427,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.283577958,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.2154526757174318,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.185828666,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.4517863737304326,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.767485625,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 5.995981117407283,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.023492833,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 7.996037320529208,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.031820125,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 8.061094285721406,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.314692292,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 18.083532542306813,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.221430666,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.729926983519618,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.454121125,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 3.547821095041034,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.448841167,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 3.506571425421875,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.688932125,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 5.382281932218957,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.688195958,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 5.376530627845981,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.220402417,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.7218937886464334,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.171574167,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 9.15292267913704,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.400071042,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 125002,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 10.938054417450148,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.422796708,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 18.928098246119628,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 3.685205541,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 28.790666714572914,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/memory-bench",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/1-jit/MEMORY.COM",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/1-jit/raw.json",
+            "--backend",
+            "jit"
+          ],
+          "runnerSha256": "d4cf963b11367717b19c1b44d986172ccba80e4a72991765a1aaa87a3f84b08e",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              2.6962890625,
+              2.5927734375,
+              2.67529296875
+            ],
+            "loadAfter": [
+              2.60791015625,
+              2.57080078125,
+              2.6650390625
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        },
+        "qemu": {
+          "samples": [
+            {
+              "hostSeconds": 0.213107,
+              "markerReceiptNanoseconds": [
+                129315208,
+                342422208
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.6648983464508718,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.311663375,
+              "markerReceiptNanoseconds": [
+                342899500,
+                654562875
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.4348699840305477,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.314433083,
+              "markerReceiptNanoseconds": [
+                655727208,
+                970160291
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.4565083265972008,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.314511584,
+              "markerReceiptNanoseconds": [
+                971454291,
+                1285965875
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.4571216156261615,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.311113792,
+              "markerReceiptNanoseconds": [
+                1287500916,
+                1598614708
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.430576367077855,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.204681833,
+              "markerReceiptNanoseconds": [
+                1598780500,
+                1803462333
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.5990767328629911,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.838342666,
+              "markerReceiptNanoseconds": [
+                1803969875,
+                2642312541
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 6.549551719946391,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.478748625,
+              "markerReceiptNanoseconds": [
+                2644040500,
+                9122789125
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 50.61522086479261,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.519953834,
+              "markerReceiptNanoseconds": [
+                9124899541,
+                15644853375
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 50.93713654250035,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 7.682263208,
+              "markerReceiptNanoseconds": [
+                15647686625,
+                23329949833
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 60.017678030283236,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.218233,
+              "markerReceiptNanoseconds": [
+                23330147458,
+                23548380458
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.7049452192608083,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.331307875,
+              "markerReceiptNanoseconds": [
+                23548818541,
+                23880126416
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.5883426318875125,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.331491667,
+              "markerReceiptNanoseconds": [
+                23881353833,
+                24212845500
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.589778506808988,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.334215209,
+              "markerReceiptNanoseconds": [
+                24214380916,
+                24548596125
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.611056177520365,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.330791833,
+              "markerReceiptNanoseconds": [
+                24550324958,
+                24881116791
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.584311053982989,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.20989275,
+              "markerReceiptNanoseconds": [
+                24881252375,
+                25091145125
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.6397870196991473,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.772673875,
+              "markerReceiptNanoseconds": [
+                25092172041,
+                33864845916
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 68.53651090034705,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.810099833,
+              "markerReceiptNanoseconds": [
+                33866784375,
+                42676884208
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 68.82890118123197,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.958661167,
+              "markerReceiptNanoseconds": [
+                42679155958,
+                51637817125
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 69.98953653963473,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 10.555853541,
+              "markerReceiptNanoseconds": [
+                51640708000,
+                62196561541
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 82.46760127911556,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "64",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/1-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-mem-l7jgljfm/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/1-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "runnerSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "backend": "qemu",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              2.60791015625,
+              2.57080078125,
+              2.6650390625
+            ],
+            "loadAfter": [
+              3.0517578125,
+              2.669921875,
+              2.69287109375
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "qemu",
+        "jit"
+      ],
+      "results": {
+        "qemu": {
+          "samples": [
+            {
+              "hostSeconds": 0.171517833,
+              "markerReceiptNanoseconds": [
+                90750500,
+                262268333
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.33998299703218,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.342242667,
+              "markerReceiptNanoseconds": [
+                262753416,
+                604996083
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.6737706897156652,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.340656625,
+              "markerReceiptNanoseconds": [
+                606146791,
+                946803416
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.6613797372682955,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.341333459,
+              "markerReceiptNanoseconds": [
+                948196666,
+                1289530125
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.666667502604121,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.341935167,
+              "markerReceiptNanoseconds": [
+                1291108291,
+                1633043458
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.6713683460970437,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.171308542,
+              "markerReceiptNanoseconds": [
+                1633229333,
+                1804537875
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.3383479111840986,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.898259125,
+              "markerReceiptNanoseconds": [
+                1805055208,
+                2703314333
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 7.017649030284819,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.572981583,
+              "markerReceiptNanoseconds": [
+                2705158625,
+                9278140208
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 51.35141580890695,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.637575292,
+              "markerReceiptNanoseconds": [
+                9280363208,
+                15917938500
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 51.85605413287204,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.101412416,
+              "markerReceiptNanoseconds": [
+                15921221375,
+                24022633791
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 63.292281038703386,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.173747625,
+              "markerReceiptNanoseconds": [
+                24022835541,
+                24196583166
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.35740324607951,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.341091875,
+              "markerReceiptNanoseconds": [
+                24197001916,
+                24538093791
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.6647801277073366,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.3414275,
+              "markerReceiptNanoseconds": [
+                24539348125,
+                24880775625
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.6674021978764424,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.3419265,
+              "markerReceiptNanoseconds": [
+                24882313458,
+                25224239958
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.6713006351632465,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.341188,
+              "markerReceiptNanoseconds": [
+                25226023500,
+                25567211500
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.665531104228768,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.175195334,
+              "markerReceiptNanoseconds": [
+                25567351791,
+                25742547125
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.368713472023482,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.889345959,
+              "markerReceiptNanoseconds": [
+                25743584541,
+                34632930500
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 69.44801150674937,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.8956055,
+              "markerReceiptNanoseconds": [
+                34635196708,
+                43530802208
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 69.49691416813751,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 9.441306125,
+              "markerReceiptNanoseconds": [
+                43533265958,
+                52974572083
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 73.76020006780156,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 10.528117333,
+              "markerReceiptNanoseconds": [
+                52977569125,
+                63505686458
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 82.25091216596574,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "64",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/2-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-mem-ivdi0cqq/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/2-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "runnerSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "backend": "qemu",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              3.0517578125,
+              2.669921875,
+              2.69287109375
+            ],
+            "loadAfter": [
+              3.0576171875,
+              2.74609375,
+              2.7177734375
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        },
+        "jit": {
+          "backend": "jit",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "samples": [
+            {
+              "hostSeconds": 0.190772,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.4904061684934127,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.290983833,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.273311070990801,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.289947916,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.2652179698708923,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.291756959,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.279351117535486,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.290225917,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.2673898525646172,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.191786458,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.4983316211849895,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.859307208,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 6.713337195364372,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.06714225,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 8.337048372192669,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.170493708,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 9.144481593661164,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.986490958,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 23.331959333408474,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.224123209,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.7509624745567396,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.460269,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 3.5958513658518783,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.459791916,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 3.592124147305711,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.742582125,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 5.801422534297205,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.738475458,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 5.7693392001142625,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.218623209,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.707993726906593,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.328209167,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 10.376633549715352,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.542867958,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 125002,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 12.053655262690727,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.604541917,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 20.3479826137822,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 4.455361334,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 34.807508518339375,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/memory-bench",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/2-jit/MEMORY.COM",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/2-jit/raw.json",
+            "--backend",
+            "jit"
+          ],
+          "runnerSha256": "d4cf963b11367717b19c1b44d986172ccba80e4a72991765a1aaa87a3f84b08e",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              3.0576171875,
+              2.74609375,
+              2.7177734375
+            ],
+            "loadAfter": [
+              3.1435546875,
+              2.77978515625,
+              2.7294921875
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "jit",
+        "qemu"
+      ],
+      "results": {
+        "jit": {
+          "backend": "jit",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "samples": [
+            {
+              "hostSeconds": 0.196508083,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.5352193144801938,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.291032708,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.273692906907419,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.290810833,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.271959508564714,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.330745958,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.5839526555650894,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.291421917,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.276733602053631,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.194831709,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.522122643321418,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.827145792,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 6.46207614660521,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.110827916,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 8.678342619153138,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.231422084,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 9.620484505129754,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.871664333,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 0,
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 22.434876374655197,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.225267417,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.7599015990678812,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.468217583,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 3.6579496671433778,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.491268833,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000000,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 3.8380375479198214,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.754514042,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 5.894640630761841,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.755120875,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 5.899381513315073,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.226991375,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.773370020206327,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.326441916,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000009,
+              "slowMemoryCalls": 0,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 10.362826902032904,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 1.530261584,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 125002,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 11.955167971201751,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 2.59021,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 20.236014518342955,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 4.2247185,
+              "guestInstructions": 136000015,
+              "nativeInstructions": 136000010,
+              "slowMemoryCalls": 128000001,
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 33.00561147625562,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/Users/johandahlin/dev/pcemu/build/memory-bench",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/3-jit/MEMORY.COM",
+            "/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/3-jit/raw.json",
+            "--backend",
+            "jit"
+          ],
+          "runnerSha256": "d4cf963b11367717b19c1b44d986172ccba80e4a72991765a1aaa87a3f84b08e",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              3.1435546875,
+              2.77978515625,
+              2.7294921875
+            ],
+            "loadAfter": [
+              3.3974609375,
+              2.8583984375,
+              2.75830078125
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        },
+        "qemu": {
+          "samples": [
+            {
+              "hostSeconds": 0.172958458,
+              "markerReceiptNanoseconds": [
+                229277875,
+                402236333
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.3512378792291784,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.346211875,
+              "markerReceiptNanoseconds": [
+                402726916,
+                748938791
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.7047801255198367,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.346916,
+              "markerReceiptNanoseconds": [
+                750083083,
+                1096999083
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.710281101781502,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.375544875,
+              "markerReceiptNanoseconds": [
+                1098519625,
+                1474064500
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.933944175487428,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.347307167,
+              "markerReceiptNanoseconds": [
+                1475719458,
+                1823026625
+              ],
+              "paged": false,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.7133370938018775,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.204337666,
+              "markerReceiptNanoseconds": [
+                1823192125,
+                2027529791
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.596387928322535,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.895398709,
+              "markerReceiptNanoseconds": [
+                2028107916,
+                2923506625
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 6.99530203150692,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.652170291,
+              "markerReceiptNanoseconds": [
+                2925337250,
+                9577507541
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 51.970077556323886,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 6.652091875,
+              "markerReceiptNanoseconds": [
+                9580348791,
+                16232440666
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 51.969464931357386,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 7.874094625,
+              "markerReceiptNanoseconds": [
+                16235450708,
+                24109545333
+              ],
+              "paged": false,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 61.51636089363652,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.188324625,
+              "markerReceiptNanoseconds": [
+                24109890000,
+                24298214625
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 16,
+              "addressSpanBytes": 64,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194340,
+              "nanosecondsPerDependentLoad": 1.471286052351544,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.346601333,
+              "markerReceiptNanoseconds": [
+                24298640250,
+                24645241583
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 256,
+              "addressSpanBytes": 1024,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194316,
+              "nanosecondsPerDependentLoad": 2.7078227659784426,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.344827042,
+              "markerReceiptNanoseconds": [
+                24646463416,
+                24991290458
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 1024,
+              "addressSpanBytes": 4096,
+              "guestPagesTouched": 1,
+              "dependentLoads": 128000007,
+              "finalPointer": 4196340,
+              "nanosecondsPerDependentLoad": 2.6939611182990015,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.344841208,
+              "markerReceiptNanoseconds": [
+                24992731208,
+                25337572416
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 2048,
+              "addressSpanBytes": 8192,
+              "guestPagesTouched": 2,
+              "dependentLoads": 128000007,
+              "finalPointer": 4202344,
+              "nanosecondsPerDependentLoad": 2.694071790167949,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.345113,
+              "markerReceiptNanoseconds": [
+                25339291000,
+                25684404000
+              ],
+              "paged": true,
+              "strideBytes": 4,
+              "nodes": 4096,
+              "addressSpanBytes": 16384,
+              "guestPagesTouched": 4,
+              "dependentLoads": 128000007,
+              "finalPointer": 4194736,
+              "nanosecondsPerDependentLoad": 2.6961951650518268,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 0.213302375,
+              "markerReceiptNanoseconds": [
+                25684529458,
+                25897831833
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 16,
+              "addressSpanBytes": 61444,
+              "guestPagesTouched": 16,
+              "dependentLoads": 128000007,
+              "finalPointer": 4231168,
+              "nanosecondsPerDependentLoad": 1.6664247135548984,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.911579583,
+              "markerReceiptNanoseconds": [
+                25898842083,
+                34810421666
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 256,
+              "addressSpanBytes": 1044484,
+              "guestPagesTouched": 256,
+              "dependentLoads": 128000007,
+              "finalPointer": 4206592,
+              "nanosecondsPerDependentLoad": 69.62171168475014,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 8.797393,
+              "markerReceiptNanoseconds": [
+                34812509791,
+                43609902791
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 1024,
+              "addressSpanBytes": 4190212,
+              "guestPagesTouched": 1024,
+              "dependentLoads": 128000007,
+              "finalPointer": 6279168,
+              "nanosecondsPerDependentLoad": 68.72962905384841,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 9.231545208,
+              "markerReceiptNanoseconds": [
+                43612151750,
+                52843696958
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 2048,
+              "addressSpanBytes": 8384516,
+              "guestPagesTouched": 2048,
+              "dependentLoads": 128000007,
+              "finalPointer": 12427264,
+              "nanosecondsPerDependentLoad": 72.12144299335858,
+              "shortInterval": false
+            },
+            {
+              "hostSeconds": 10.047937708,
+              "markerReceiptNanoseconds": [
+                52847367750,
+                62895305458
+              ],
+              "paged": true,
+              "strideBytes": 4096,
+              "nodes": 4096,
+              "addressSpanBytes": 16773124,
+              "guestPagesTouched": 4096,
+              "dependentLoads": 128000007,
+              "finalPointer": 4636672,
+              "nanosecondsPerDependentLoad": 78.4995090508081,
+              "shortInterval": false
+            }
+          ],
+          "command": [
+            "/opt/homebrew/bin/qemu-system-i386",
+            "-machine",
+            "pc",
+            "-accel",
+            "tcg,thread=single",
+            "-cpu",
+            "486",
+            "-smp",
+            "1",
+            "-m",
+            "64",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+            "-serial",
+            "none",
+            "-nic",
+            "none",
+            "-no-reboot",
+            "-drive",
+            "file=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/3-qemu/boot.raw,format=raw",
+            "-chardev",
+            "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-mem-th6jlw9n/markers",
+            "-device",
+            "isa-debugcon,iobase=0xe7,chardev=markers",
+            "-chardev",
+            "file,id=text,path=/Users/johandahlin/dev/pcemu/build/memory-sweep-comparison/3-qemu/guest.txt",
+            "-device",
+            "isa-debugcon,iobase=0xe9,chardev=text"
+          ],
+          "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+          "runnerSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+          "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+          "backend": "qemu",
+          "loops": 4000000,
+          "guestResultsValidated": true,
+          "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 0040000C \n00000000 00000004 00000400 004007F4 \n00000000 00000004 00000800 00401F68 \n00000000 00000004 00001000 004001B0 \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00403000 \n00000000 00001000 00000400 005FD000 \n00000000 00001000 00000800 00BDA000 \n00000000 00001000 00001000 0046C000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 0040000C \n00000001 00000004 00000400 004007F4 \n00000001 00000004 00000800 00401F68 \n00000001 00000004 00001000 004001B0 \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00403000 \n00000001 00001000 00000400 005FD000 \n00000001 00001000 00000800 00BDA000 \n00000001 00001000 00001000 0046C000 \n",
+          "programSha256": "42fd4d394407717d4b4caba5f524a25c0ab516d56386632577022dd5bae659b6",
+          "host": {
+            "machine": "arm64",
+            "release": "25.6.0",
+            "loadBefore": [
+              3.3974609375,
+              2.8583984375,
+              2.75830078125
+            ],
+            "loadAfter": [
+              4.01953125,
+              3.1279296875,
+              2.86328125
+            ]
+          },
+          "sourceSha256": {
+            "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+            "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+            "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+            "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+            "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+          },
+          "privateDiskRemoved": true
+        }
+      }
+    }
+  ],
+  "summary": [
+    {
+      "paged": false,
+      "strideBytes": 4,
+      "nodes": 16,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 1.5352193144801938,
+      "qemuNanosecondsPerLoad": 1.3512378792291784,
+      "medianPairedPcemuThroughputOverQemu": 0.8990723638689117,
+      "perEngineSamplesNs": {
+        "jit": [
+          1.6290516687237369,
+          1.4904061684934127,
+          1.5352193144801938
+        ],
+        "qemu": [
+          1.6648983464508718,
+          1.33998299703218,
+          1.3512378792291784
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4,
+      "nodes": 256,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 2.273311070990801,
+      "qemuNanosecondsPerLoad": 2.6737706897156652,
+      "medianPairedPcemuThroughputOverQemu": 1.176156982577104,
+      "perEngineSamplesNs": {
+        "jit": [
+          2.2141785898496082,
+          2.273311070990801,
+          2.273692906907419
+        ],
+        "qemu": [
+          2.4348699840305477,
+          2.6737706897156652,
+          2.7047801255198367
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4,
+      "nodes": 1024,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 2.2652179698708923,
+      "qemuNanosecondsPerLoad": 2.6613797372682955,
+      "medianPairedPcemuThroughputOverQemu": 1.1748890273106842,
+      "perEngineSamplesNs": {
+        "jit": [
+          2.1836199977707813,
+          2.2652179698708923,
+          2.271959508564714
+        ],
+        "qemu": [
+          2.4565083265972008,
+          2.6613797372682955,
+          2.710281101781502
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4,
+      "nodes": 2048,
+      "guestPagesTouched": 2,
+      "pcemuNanosecondsPerLoad": 2.279351117535486,
+      "qemuNanosecondsPerLoad": 2.666667502604121,
+      "medianPairedPcemuThroughputOverQemu": 1.1354481163455368,
+      "perEngineSamplesNs": {
+        "jit": [
+          2.1909715598687427,
+          2.279351117535486,
+          2.5839526555650894
+        ],
+        "qemu": [
+          2.4571216156261615,
+          2.666667502604121,
+          2.933944175487428
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4,
+      "nodes": 4096,
+      "guestPagesTouched": 4,
+      "pcemuNanosecondsPerLoad": 2.2673898525646172,
+      "qemuNanosecondsPerLoad": 2.6713683460970437,
+      "medianPairedPcemuThroughputOverQemu": 1.1781689606996744,
+      "perEngineSamplesNs": {
+        "jit": [
+          2.2154526757174318,
+          2.2673898525646172,
+          2.276733602053631
+        ],
+        "qemu": [
+          2.430576367077855,
+          2.6713683460970437,
+          2.7133370938018775
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4096,
+      "nodes": 16,
+      "guestPagesTouched": 16,
+      "pcemuNanosecondsPerLoad": 1.4983316211849895,
+      "qemuNanosecondsPerLoad": 1.596387928322535,
+      "medianPairedPcemuThroughputOverQemu": 1.04879060522946,
+      "perEngineSamplesNs": {
+        "jit": [
+          1.4517863737304326,
+          1.4983316211849895,
+          1.522122643321418
+        ],
+        "qemu": [
+          1.5990767328629911,
+          1.3383479111840986,
+          1.596387928322535
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4096,
+      "nodes": 256,
+      "guestPagesTouched": 256,
+      "pcemuNanosecondsPerLoad": 6.46207614660521,
+      "qemuNanosecondsPerLoad": 6.99530203150692,
+      "medianPairedPcemuThroughputOverQemu": 1.0825161871826339,
+      "perEngineSamplesNs": {
+        "jit": [
+          5.995981117407283,
+          6.713337195364372,
+          6.46207614660521
+        ],
+        "qemu": [
+          6.549551719946391,
+          7.017649030284819,
+          6.99530203150692
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4096,
+      "nodes": 1024,
+      "guestPagesTouched": 1024,
+      "pcemuNanosecondsPerLoad": 8.337048372192669,
+      "qemuNanosecondsPerLoad": 51.35141580890695,
+      "medianPairedPcemuThroughputOverQemu": 6.15942399712878,
+      "perEngineSamplesNs": {
+        "jit": [
+          7.996037320529208,
+          8.337048372192669,
+          8.678342619153138
+        ],
+        "qemu": [
+          50.61522086479261,
+          51.35141580890695,
+          51.970077556323886
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4096,
+      "nodes": 2048,
+      "guestPagesTouched": 2048,
+      "pcemuNanosecondsPerLoad": 9.144481593661164,
+      "qemuNanosecondsPerLoad": 51.85605413287204,
+      "medianPairedPcemuThroughputOverQemu": 5.6707483744970295,
+      "perEngineSamplesNs": {
+        "jit": [
+          8.061094285721406,
+          9.144481593661164,
+          9.620484505129754
+        ],
+        "qemu": [
+          50.93713654250035,
+          51.85605413287204,
+          51.969464931357386
+        ]
+      }
+    },
+    {
+      "paged": false,
+      "strideBytes": 4096,
+      "nodes": 4096,
+      "guestPagesTouched": 4096,
+      "pcemuNanosecondsPerLoad": 22.434876374655197,
+      "qemuNanosecondsPerLoad": 61.51636089363652,
+      "medianPairedPcemuThroughputOverQemu": 2.7419968742565426,
+      "perEngineSamplesNs": {
+        "jit": [
+          18.083532542306813,
+          23.331959333408474,
+          22.434876374655197
+        ],
+        "qemu": [
+          60.017678030283236,
+          63.292281038703386,
+          61.51636089363652
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4,
+      "nodes": 16,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 1.7509624745567396,
+      "qemuNanosecondsPerLoad": 1.471286052351544,
+      "medianPairedPcemuThroughputOverQemu": 0.8360047249975792,
+      "perEngineSamplesNs": {
+        "jit": [
+          1.729926983519618,
+          1.7509624745567396,
+          1.7599015990678812
+        ],
+        "qemu": [
+          1.7049452192608083,
+          1.35740324607951,
+          1.471286052351544
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4,
+      "nodes": 256,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 3.5958513658518783,
+      "qemuNanosecondsPerLoad": 2.6647801277073366,
+      "medianPairedPcemuThroughputOverQemu": 0.7402569779187469,
+      "perEngineSamplesNs": {
+        "jit": [
+          3.547821095041034,
+          3.5958513658518783,
+          3.6579496671433778
+        ],
+        "qemu": [
+          2.5883426318875125,
+          2.6647801277073366,
+          2.7078227659784426
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4,
+      "nodes": 1024,
+      "guestPagesTouched": 1,
+      "pcemuNanosecondsPerLoad": 3.592124147305711,
+      "qemuNanosecondsPerLoad": 2.6674021978764424,
+      "medianPairedPcemuThroughputOverQemu": 0.7385500514929372,
+      "perEngineSamplesNs": {
+        "jit": [
+          3.506571425421875,
+          3.592124147305711,
+          3.8380375479198214
+        ],
+        "qemu": [
+          2.589778506808988,
+          2.6674021978764424,
+          2.6939611182990015
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4,
+      "nodes": 2048,
+      "guestPagesTouched": 2,
+      "pcemuNanosecondsPerLoad": 5.801422534297205,
+      "qemuNanosecondsPerLoad": 2.6713006351632465,
+      "medianPairedPcemuThroughputOverQemu": 0.4604561414671812,
+      "perEngineSamplesNs": {
+        "jit": [
+          5.382281932218957,
+          5.801422534297205,
+          5.894640630761841
+        ],
+        "qemu": [
+          2.611056177520365,
+          2.6713006351632465,
+          2.694071790167949
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4,
+      "nodes": 4096,
+      "guestPagesTouched": 4,
+      "pcemuNanosecondsPerLoad": 5.7693392001142625,
+      "qemuNanosecondsPerLoad": 2.665531104228768,
+      "medianPairedPcemuThroughputOverQemu": 0.4620167079404824,
+      "perEngineSamplesNs": {
+        "jit": [
+          5.376530627845981,
+          5.7693392001142625,
+          5.899381513315073
+        ],
+        "qemu": [
+          2.584311053982989,
+          2.665531104228768,
+          2.6961951650518268
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4096,
+      "nodes": 16,
+      "guestPagesTouched": 16,
+      "pcemuNanosecondsPerLoad": 1.7218937886464334,
+      "qemuNanosecondsPerLoad": 1.6397870196991473,
+      "medianPairedPcemuThroughputOverQemu": 0.9396937438702241,
+      "perEngineSamplesNs": {
+        "jit": [
+          1.7218937886464334,
+          1.707993726906593,
+          1.773370020206327
+        ],
+        "qemu": [
+          1.6397870196991473,
+          1.368713472023482,
+          1.6664247135548984
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4096,
+      "nodes": 256,
+      "guestPagesTouched": 256,
+      "pcemuNanosecondsPerLoad": 10.362826902032904,
+      "qemuNanosecondsPerLoad": 69.44801150674937,
+      "medianPairedPcemuThroughputOverQemu": 6.718409208503933,
+      "perEngineSamplesNs": {
+        "jit": [
+          9.15292267913704,
+          10.376633549715352,
+          10.362826902032904
+        ],
+        "qemu": [
+          68.53651090034705,
+          69.44801150674937,
+          69.62171168475014
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4096,
+      "nodes": 1024,
+      "guestPagesTouched": 1024,
+      "pcemuNanosecondsPerLoad": 11.955167971201751,
+      "qemuNanosecondsPerLoad": 68.82890118123197,
+      "medianPairedPcemuThroughputOverQemu": 5.765629815484185,
+      "perEngineSamplesNs": {
+        "jit": [
+          10.938054417450148,
+          12.053655262690727,
+          11.955167971201751
+        ],
+        "qemu": [
+          68.82890118123197,
+          69.49691416813751,
+          68.72962905384841
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4096,
+      "nodes": 2048,
+      "guestPagesTouched": 2048,
+      "pcemuNanosecondsPerLoad": 20.236014518342955,
+      "qemuNanosecondsPerLoad": 72.12144299335858,
+      "medianPairedPcemuThroughputOverQemu": 3.624939212295273,
+      "perEngineSamplesNs": {
+        "jit": [
+          18.928098246119628,
+          20.3479826137822,
+          20.236014518342955
+        ],
+        "qemu": [
+          69.98953653963473,
+          73.76020006780156,
+          72.12144299335858
+        ]
+      }
+    },
+    {
+      "paged": true,
+      "strideBytes": 4096,
+      "nodes": 4096,
+      "guestPagesTouched": 4096,
+      "pcemuNanosecondsPerLoad": 33.00561147625562,
+      "qemuNanosecondsPerLoad": 82.25091216596574,
+      "medianPairedPcemuThroughputOverQemu": 2.378368572485954,
+      "perEngineSamplesNs": {
+        "jit": [
+          28.790666714572914,
+          34.807508518339375,
+          33.00561147625562
+        ],
+        "qemu": [
+          82.46760127911556,
+          82.25091216596574,
+          78.4995090508081
+        ]
+      }
+    }
+  ],
+  "hostCpu": "Apple M4",
+  "assemblerVersion": "NASM version 3.01 compiled on Oct 11 2025",
+  "compilerVersion": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "compileFlags": "-std=c++20 -O3 -g -Wall -Wextra -Wpedantic; CORE and libzstd from Makefile",
+  "smoke": {
+    "scope": "Short diagnostic sweeps, not benchmark timings",
+    "engines": [
+      "jit",
+      "interpreter",
+      "qemu"
+    ],
+    "sameProgramAndResults": true,
+    "jitInterpreterInstructionCountsMatch": true,
+    "jitExecutesNatively": true,
+    "corruptedGuestRejected": true,
+    "runs": {
+      "jit": {
+        "backend": "jit",
+        "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+        "samples": [
+          {
+            "hostSeconds": 1.2084e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 1.4681083707933422,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.675e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 2.034989673186733,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.875e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 2.2779735147612685,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 4.7e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 5.71012027700158,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.1458e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 2.6069736362531892,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.1875e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.4427165593488034,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 6.2541e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 7.598226217956505,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 8.504434455108735,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.8333e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 9.516826631029037,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000168333,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 20.451099501883125,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.375e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 1.67051391082493,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.5666e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 3.1182116389260113,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.9583e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 3.5940954926497386,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.5e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 9.111894059045074,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 4.2e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 5.102660673065241,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.3e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.5793949702344794,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 8.1417e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 9.89150771473697,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 9.8291e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 10,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 11.941562386101324,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000158125,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 8225,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 19.210909974486697,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000234625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 8225,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 28.50504191471267,
+            "shortInterval": true
+          }
+        ],
+        "command": [
+          "/Users/johandahlin/dev/pcemu/build/memory-bench",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/jit/MEMORY.COM",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/jit/raw.json",
+          "--backend",
+          "jit"
+        ],
+        "runnerSha256": "a1476efa681661c3d4fa8aad00d744b5dcb837c2a4b5ef43a91d5f85ccbcb910",
+        "loops": 257,
+        "guestResultsValidated": true,
+        "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 00400244 \n00000000 00000004 00000400 004008A4 \n00000000 00000004 00000800 00401DD0 \n00000000 00000004 00001000 0040366C \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00491000 \n00000000 00001000 00000400 00629000 \n00000000 00001000 00000800 00B74000 \n00000000 00001000 00001000 0119B000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 00400244 \n00000001 00000004 00000400 004008A4 \n00000001 00000004 00000800 00401DD0 \n00000001 00000004 00001000 0040366C \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00491000 \n00000001 00001000 00000400 00629000 \n00000001 00001000 00000800 00B74000 \n00000001 00001000 00001000 0119B000 \n",
+        "programSha256": "9f00a88d497cfb5e6136c7554f2c68a58a7e4067b648125db6d325e064b2076c",
+        "host": {
+          "machine": "arm64",
+          "release": "25.6.0",
+          "loadBefore": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ],
+          "loadAfter": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ]
+        },
+        "sourceSha256": {
+          "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+          "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d"
+        },
+        "privateDiskRemoved": true
+      },
+      "interpreter": {
+        "backend": "interpreter",
+        "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+        "samples": [
+          {
+            "hostSeconds": 0.000137625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 16.72032559834771,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000139334,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 16.92795529097315,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000135792,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 16.497630907544647,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000143625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 17.449277123071315,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000139375,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 16.93293645972543,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000135167,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 16.421698457052607,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000135625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 16.477341756773175,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000133834,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 16.25974972664318,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000122792,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 14.91823593731017,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000200333,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 24.33884096707569,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000189625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 23.037905479285627,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.00018675,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 22.688616207022232,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000192083,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 23.33653262058073,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000188792,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 22.936702709269834,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000188834,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 22.941805369942898,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000188709,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 22.92661887984449,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000188875,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 22.946786538695175,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000199625,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 24.252824687158302,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.0002215,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 26.910460454379784,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000300125,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 36.462762726278704,
+            "shortInterval": true
+          }
+        ],
+        "command": [
+          "/Users/johandahlin/dev/pcemu/build/memory-bench",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/interpreter/MEMORY.COM",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/interpreter/raw.json",
+          "--backend",
+          "interpreter"
+        ],
+        "runnerSha256": "a1476efa681661c3d4fa8aad00d744b5dcb837c2a4b5ef43a91d5f85ccbcb910",
+        "loops": 257,
+        "guestResultsValidated": true,
+        "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 00400244 \n00000000 00000004 00000400 004008A4 \n00000000 00000004 00000800 00401DD0 \n00000000 00000004 00001000 0040366C \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00491000 \n00000000 00001000 00000400 00629000 \n00000000 00001000 00000800 00B74000 \n00000000 00001000 00001000 0119B000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 00400244 \n00000001 00000004 00000400 004008A4 \n00000001 00000004 00000800 00401DD0 \n00000001 00000004 00001000 0040366C \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00491000 \n00000001 00001000 00000400 00629000 \n00000001 00001000 00000800 00B74000 \n00000001 00001000 00001000 0119B000 \n",
+        "programSha256": "9f00a88d497cfb5e6136c7554f2c68a58a7e4067b648125db6d325e064b2076c",
+        "host": {
+          "machine": "arm64",
+          "release": "25.6.0",
+          "loadBefore": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ],
+          "loadAfter": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ]
+        },
+        "sourceSha256": {
+          "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+          "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d"
+        },
+        "privateDiskRemoved": true
+      },
+      "qemu": {
+        "samples": [
+          {
+            "hostSeconds": 1.8292e-05,
+            "markerReceiptNanoseconds": [
+              81043708,
+              81062000
+            ],
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 2.2223302150407,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.4583e-05,
+            "markerReceiptNanoseconds": [
+              81458833,
+              81483416
+            ],
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 2.9866358887134004,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.425e-05,
+            "markerReceiptNanoseconds": [
+              82488458,
+              82512708
+            ],
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 2.9461790790912405,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.6458e-05,
+            "markerReceiptNanoseconds": [
+              83766375,
+              83792833
+            ],
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 3.2144332401895275,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.4084e-05,
+            "markerReceiptNanoseconds": [
+              85300791,
+              85324875
+            ],
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 2.926011420240554,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.4542e-05,
+            "markerReceiptNanoseconds": [
+              85432166,
+              85446708
+            ],
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.766735512088446,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 5.4834e-05,
+            "markerReceiptNanoseconds": [
+              85880416,
+              85935250
+            ],
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 6.661887984449034,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.00048525,
+            "markerReceiptNanoseconds": [
+              87622625,
+              88107875
+            ],
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 58.95395456202163,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000435625,
+            "markerReceiptNanoseconds": [
+              90094500,
+              90530125
+            ],
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 52.92491799295347,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000502292,
+            "markerReceiptNanoseconds": [
+              93287666,
+              93789958
+            ],
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 61.02441987607824,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.2792e-05,
+            "markerReceiptNanoseconds": [
+              93913791,
+              93926583
+            ],
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 1.5541246507107278,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.4375e-05,
+            "markerReceiptNanoseconds": [
+              94312833,
+              94337208
+            ],
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 2.961365569189649,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.5125e-05,
+            "markerReceiptNanoseconds": [
+              95482041,
+              95507166
+            ],
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 3.0524845097800997,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.9167e-05,
+            "markerReceiptNanoseconds": [
+              96924791,
+              96953958
+            ],
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 3.5435548536022354,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.65e-05,
+            "markerReceiptNanoseconds": [
+              98602958,
+              98629458
+            ],
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 3.2195359008625926,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.2291e-05,
+            "markerReceiptNanoseconds": [
+              98727500,
+              98739791
+            ],
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.4932571983963066,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 5.3625e-05,
+            "markerReceiptNanoseconds": [
+              99177083,
+              99230708
+            ],
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 6.515004252217228,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 6.8875e-05,
+            "markerReceiptNanoseconds": [
+              100568625,
+              100637500
+            ],
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 8.367756044223059,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.2583e-05,
+            "markerReceiptNanoseconds": [
+              102345083,
+              102417666
+            ],
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 8.818248086502248,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000191,
+            "markerReceiptNanoseconds": [
+              104822458,
+              105013458
+            ],
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 23.20495687036812,
+            "shortInterval": true
+          }
+        ],
+        "command": [
+          "/opt/homebrew/bin/qemu-system-i386",
+          "-machine",
+          "pc",
+          "-accel",
+          "tcg,thread=single",
+          "-cpu",
+          "486",
+          "-smp",
+          "1",
+          "-m",
+          "64",
+          "-display",
+          "none",
+          "-monitor",
+          "none",
+          "-serial",
+          "none",
+          "-nic",
+          "none",
+          "-no-reboot",
+          "-drive",
+          "file=/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/qemu/boot.raw,format=raw",
+          "-chardev",
+          "socket,id=markers,path=/var/folders/kb/_sc87w811q13pb5p_1304p5w0000gn/T/pcemu-mem-cps_1uoz/markers",
+          "-device",
+          "isa-debugcon,iobase=0xe7,chardev=markers",
+          "-chardev",
+          "file,id=text,path=/Users/johandahlin/dev/pcemu/build/memory-smoke-o6sud9ep/qemu/guest.txt",
+          "-device",
+          "isa-debugcon,iobase=0xe9,chardev=text"
+        ],
+        "qemuVersion": "QEMU emulator version 10.2.2\nCopyright (c) 2003-2025 Fabrice Bellard and the QEMU Project developers\n",
+        "runnerSha256": "91226ffaa956aff73a84500bfd6aa737defff39244f3545b6f578a5d63cf051d",
+        "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+        "backend": "qemu",
+        "loops": 257,
+        "guestResultsValidated": true,
+        "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 00400244 \n00000000 00000004 00000400 004008A4 \n00000000 00000004 00000800 00401DD0 \n00000000 00000004 00001000 0040366C \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00491000 \n00000000 00001000 00000400 00629000 \n00000000 00001000 00000800 00B74000 \n00000000 00001000 00001000 0119B000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 00400244 \n00000001 00000004 00000400 004008A4 \n00000001 00000004 00000800 00401DD0 \n00000001 00000004 00001000 0040366C \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00491000 \n00000001 00001000 00000400 00629000 \n00000001 00001000 00000800 00B74000 \n00000001 00001000 00001000 0119B000 \n",
+        "programSha256": "9f00a88d497cfb5e6136c7554f2c68a58a7e4067b648125db6d325e064b2076c",
+        "host": {
+          "machine": "arm64",
+          "release": "25.6.0",
+          "loadBefore": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ],
+          "loadAfter": [
+            2.974609375,
+            2.5791015625,
+            2.6904296875
+          ]
+        },
+        "sourceSha256": {
+          "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+          "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d"
+        },
+        "privateDiskRemoved": true
+      }
+    }
+  },
+  "unitValidation": {
+    "tests": 6,
+    "passed": true
+  },
+  "limitations": [
+    "Original pointer-chasing benchmark, not lmbench results or a port of its source.",
+    "PCEMU uses CPU/JIT directly, without Machine/device polling. QEMU runs the full PC model. Ratios apply only to these harnesses, not overall emulator or Windows rankings.",
+    "PCEMU times inside I/O handlers; QEMU uses host socket receipt. Scheduling/transport error is not calibrated; all measured intervals exceed 0.1 seconds.",
+    "Fixed case order, deterministic permutation, supervisor mode, 4KiB identity paging; no user-mode, page-fault, MMIO, SMC or streaming-bandwidth measurement.",
+    "Working-set span is sparse for page-stride rings: only one 32-bit pointer per page is read; this is not DRAM bandwidth.",
+    "Warmup traverses the exact loop before timing; page tables and rings initialize outside intervals; dispatch and native translation guards remain measured.",
+    "Three pairs on one host without confidence intervals; raw timings/load retained. Native coverage is counted instructions, not host time."
+  ],
+  "x86SourceSha256": {
+    "src/cpu.cpp": "03ef08a76dfac7b4f7477bdb439d69d93d8db58a03e6f055255486c8052ed446",
+    "src/cpu.hpp": "a541e98e9834cc7d2fc7b41127b5188e75c0e84b29cce5318bbfb527ec5fbf12",
+    "src/jit.cpp": "1f313daf02131a465e98ca870ebf27203091b22eae4ca1f703997ed62a4f99a9",
+    "src/jit.hpp": "e7d4e26cd01b9d831145129b00b1080df9a907fcf24ad10b2b2514501ff26b23",
+    "src/jit_arm64.cpp": "c4157c77ced5d943749dd9c8c787782e7901d48c9e8ef02695f573d72ba6586b",
+    "src/jit_decode.cpp": "5c0eee13c271b74885f042e3ebc149aef7522ab5845e2f91c63a165203fd7042",
+    "src/jit_flags.cpp": "7b361c4ecfef539b347e06aee2c71f484df3f8314e4168761e7ee83f2a13a4f3",
+    "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+    "src/jit_ir.hpp": "a95082b8023129abf35931da9760e9397a840c94fed2aba17aca1177edeb60ca",
+    "src/jit_memory.hpp": "37f9bf9bc73815f904d129e7122e3219d3f861134cdaeb864fa71b3c39b7f94c",
+    "src/jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+    "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb"
+  },
+  "makeSmoke": {
+    "scope": "Short diagnostic sweeps, not benchmark timings",
+    "engines": [
+      "jit",
+      "interpreter"
+    ],
+    "sameProgramAndResults": true,
+    "jitInterpreterInstructionCountsMatch": true,
+    "jitExecutesNatively": true,
+    "corruptedGuestRejected": true,
+    "runs": {
+      "jit": {
+        "backend": "jit",
+        "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+        "samples": [
+          {
+            "hostSeconds": 1.3458e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 1.635038269955048,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.825e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 2.2172275543676347,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.0708e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 2.5158546956627386,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 4.9834e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 6.054428380512696,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.8084e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 2.197059895516948,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.325e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.6097679504312963,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 6.0792e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 7.385736848499575,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.7e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 9.35487790061961,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.9458e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 9.653505041914713,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000171167,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 20.795407605394242,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.7709e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 2.1515004252217227,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.8208e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 3.4270441015672457,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 2.8584e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8738,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 3.4727250637832583,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 7.8417e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 9.527031952375166,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 4.7083e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 5.720204106426922,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 1.4875e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 1.8071923217106063,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 8.9583e-05,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8747,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 10.883610739885798,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000110334,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 10,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 13.40468958814239,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000156458,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 8225,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 19.008382942534322,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000256833,
+            "guestInstructions": 8753,
+            "nativeInstructions": 8748,
+            "slowMemoryCalls": 8225,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 31.20313449155631,
+            "shortInterval": true
+          }
+        ],
+        "command": [
+          "/Users/johandahlin/dev/pcemu/build/memory-bench",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-__0jt8zn/jit/MEMORY.COM",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-__0jt8zn/jit/raw.json",
+          "--backend",
+          "jit"
+        ],
+        "runnerSha256": "d4cf963b11367717b19c1b44d986172ccba80e4a72991765a1aaa87a3f84b08e",
+        "loops": 257,
+        "guestResultsValidated": true,
+        "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 00400244 \n00000000 00000004 00000400 004008A4 \n00000000 00000004 00000800 00401DD0 \n00000000 00000004 00001000 0040366C \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00491000 \n00000000 00001000 00000400 00629000 \n00000000 00001000 00000800 00B74000 \n00000000 00001000 00001000 0119B000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 00400244 \n00000001 00000004 00000400 004008A4 \n00000001 00000004 00000800 00401DD0 \n00000001 00000004 00001000 0040366C \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00491000 \n00000001 00001000 00000400 00629000 \n00000001 00001000 00000800 00B74000 \n00000001 00001000 00001000 0119B000 \n",
+        "programSha256": "9f00a88d497cfb5e6136c7554f2c68a58a7e4067b648125db6d325e064b2076c",
+        "host": {
+          "machine": "arm64",
+          "release": "25.6.0",
+          "loadBefore": [
+            3.92236328125,
+            3.16748046875,
+            2.88525390625
+          ],
+          "loadAfter": [
+            3.92236328125,
+            3.16748046875,
+            2.88525390625
+          ]
+        },
+        "sourceSha256": {
+          "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+          "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+          "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+          "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+          "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+        },
+        "privateDiskRemoved": true
+      },
+      "interpreter": {
+        "backend": "interpreter",
+        "scope": "Original dependent-load sweep, not an lmbench port or official lmbench score.\n\nSame guest COM for a CPU/JIT-only PCEMU harness and QEMU's full PC TCG.\nSupervisor flat/identity-paged 4KiB RAM, no measured disk activity. QEMU uses\nhost socket-receipt timing; PCEMU timestamps in its port handler. Reported\nns/load includes guest execution, guards and dispatch, not raw host DRAM latency.\n",
+        "samples": [
+          {
+            "hostSeconds": 0.000139541,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 16.953104118576114,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000140583,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 17.07969870003645,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000137209,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 16.669784959300205,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000140916,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 17.12015550965861,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000139875,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 16.99368242011906,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000141125,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 17.145547321103148,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.00014125,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 17.160733811201556,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000143417,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 17.424006803547563,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000135708,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 16.48742558619852,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000207917,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": false,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 25.260235694326326,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000190583,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 16,
+            "addressSpanBytes": 64,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194340,
+            "nanosecondsPerDependentLoad": 23.15429473939983,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000201375,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 256,
+            "addressSpanBytes": 1024,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4194884,
+            "nanosecondsPerDependentLoad": 24.46543554853602,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000186333,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 1024,
+            "addressSpanBytes": 4096,
+            "guestPagesTouched": 1,
+            "dependentLoads": 8231,
+            "finalPointer": 4196516,
+            "nanosecondsPerDependentLoad": 22.637954076053944,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000192125,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 2048,
+            "addressSpanBytes": 8192,
+            "guestPagesTouched": 2,
+            "dependentLoads": 8231,
+            "finalPointer": 4201936,
+            "nanosecondsPerDependentLoad": 23.341635281253797,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000186834,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4,
+            "nodes": 4096,
+            "addressSpanBytes": 16384,
+            "guestPagesTouched": 4,
+            "dependentLoads": 8231,
+            "finalPointer": 4208236,
+            "nanosecondsPerDependentLoad": 22.698821528368363,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000189709,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 16,
+            "addressSpanBytes": 61444,
+            "guestPagesTouched": 16,
+            "dependentLoads": 8231,
+            "finalPointer": 4231168,
+            "nanosecondsPerDependentLoad": 23.048110800631758,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000188916,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 256,
+            "addressSpanBytes": 1044484,
+            "guestPagesTouched": 256,
+            "dependentLoads": 8231,
+            "finalPointer": 4788224,
+            "nanosecondsPerDependentLoad": 22.951767707447456,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000192042,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 1024,
+            "addressSpanBytes": 4190212,
+            "guestPagesTouched": 1024,
+            "dependentLoads": 8231,
+            "finalPointer": 6459392,
+            "nanosecondsPerDependentLoad": 23.331551451828453,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000225167,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 2048,
+            "addressSpanBytes": 8384516,
+            "guestPagesTouched": 2048,
+            "dependentLoads": 8231,
+            "finalPointer": 12009472,
+            "nanosecondsPerDependentLoad": 27.355971327906694,
+            "shortInterval": true
+          },
+          {
+            "hostSeconds": 0.000277583,
+            "guestInstructions": 8753,
+            "nativeInstructions": 0,
+            "slowMemoryCalls": 0,
+            "paged": true,
+            "strideBytes": 4096,
+            "nodes": 4096,
+            "addressSpanBytes": 16773124,
+            "guestPagesTouched": 4096,
+            "dependentLoads": 8231,
+            "finalPointer": 18460672,
+            "nanosecondsPerDependentLoad": 33.72409184789211,
+            "shortInterval": true
+          }
+        ],
+        "command": [
+          "/Users/johandahlin/dev/pcemu/build/memory-bench",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-__0jt8zn/interpreter/MEMORY.COM",
+          "/Users/johandahlin/dev/pcemu/build/memory-smoke-__0jt8zn/interpreter/raw.json",
+          "--backend",
+          "interpreter"
+        ],
+        "runnerSha256": "d4cf963b11367717b19c1b44d986172ccba80e4a72991765a1aaa87a3f84b08e",
+        "loops": 257,
+        "guestResultsValidated": true,
+        "guestTranscript": "00000000 00000004 00000010 00400024 \n00000000 00000004 00000100 00400244 \n00000000 00000004 00000400 004008A4 \n00000000 00000004 00000800 00401DD0 \n00000000 00000004 00001000 0040366C \n00000000 00001000 00000010 00409000 \n00000000 00001000 00000100 00491000 \n00000000 00001000 00000400 00629000 \n00000000 00001000 00000800 00B74000 \n00000000 00001000 00001000 0119B000 \n00000001 00000004 00000010 00400024 \n00000001 00000004 00000100 00400244 \n00000001 00000004 00000400 004008A4 \n00000001 00000004 00000800 00401DD0 \n00000001 00000004 00001000 0040366C \n00000001 00001000 00000010 00409000 \n00000001 00001000 00000100 00491000 \n00000001 00001000 00000400 00629000 \n00000001 00001000 00000800 00B74000 \n00000001 00001000 00001000 0119B000 \n",
+        "programSha256": "9f00a88d497cfb5e6136c7554f2c68a58a7e4067b648125db6d325e064b2076c",
+        "host": {
+          "machine": "arm64",
+          "release": "25.6.0",
+          "loadBefore": [
+            3.92236328125,
+            3.16748046875,
+            2.88525390625
+          ],
+          "loadAfter": [
+            3.92236328125,
+            3.16748046875,
+            2.88525390625
+          ]
+        },
+        "sourceSha256": {
+          "tests/guest_perf/memory32.asm": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d",
+          "tests/guest_perf/dos_loader.asm": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d",
+          "tests/guest_perf/qemu_boot.asm": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd",
+          "tools/memory_bench.cpp": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b",
+          "tools/bench_guest_memory.py": "de5ff75fe3e07c171b2a3745e7968905482a110b22c285fe9e795bf0e5c1ec42"
+        },
+        "privateDiskRemoved": true
+      }
+    }
+  }
+}

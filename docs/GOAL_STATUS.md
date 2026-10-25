@@ -637,3 +637,22 @@ Evidence: `docs/measurements/native-indirect-jump-2026-10-25.json`.
 Indirect calls, far transfers, block linking and broader MMU/flags work remain.
 The broad goal stays active; latest-binary fresh OSR2 installation and Rosetta
 performance equivalence remain unproven.
+
+
+## Memory performance workload (25 October)
+
+Added a disk-light, headless dependent-load sweep with the same guest COM on
+JIT, interpreter and QEMU. Twenty cases cover dense/sparse rings, flat RAM
+and supervisor 4 KiB identity paging, with working sets above the software
+TLB's capacity. Exact final pointers, engine-equivalent instruction counts
+and rejection of a deliberately corrupted guest are verified.
+
+Three paired JIT/QEMU runs show dense 16 KiB costs of 2.27 ns/load flat and
+5.77 ns/load paged in our CPU-only harness, versus QEMU PC TCG 2.67 / 2.67.
+These different harnesses do not establish overall emulator rankings. The
+dense paged case has zero translation-helper calls and high native coverage,
+providing an optimization target for inline MMU guard overhead. Sparse cases
+above 1,024 pages exercise translation-helper pressure.
+Evidence: `docs/measurements/guest-memory-sweep-2026-10-25.json`.
+Streaming reads/writes/copies and user-mode memory workloads remain future
+coverage; the broad boot/correctness/performance goal remains active.
