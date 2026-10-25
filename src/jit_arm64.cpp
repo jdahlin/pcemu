@@ -586,6 +586,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             continue;
         }
         if (i.kind == Kind::Memory) {
+            size_t invalidCall = size_t(-1);
+            if (i.nearCall) {
+                imm(9, i.target);
+                load(10, 19, offsetof(CPU, s) + CS * sizeof(Segment) + offsetof(Segment, limit));
+                emit(0x6b00001fu | (10 << 16) | (9 << 5));
+                invalidCall = code.size(); emit(0x54000008u); // b.hi replay before stack write
+            }
             if (i.memory.delta) {
                 // INC/DEC preserve CF. Publish the preceding flags before any
                 // access or replay, then replace arithmetic flags on success.
@@ -836,6 +843,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             exits.push_back(code.size());
             emit(0x14000000u);
             code[fallback] |= uint32_t(code.size() - fallback) << 5;
+            if (invalidCall != size_t(-1)) {
+                code[invalidCall] |= uint32_t(code.size() - invalidCall) << 5;
+                static_assert(offsetof(CPU, nativeFallback) < 4096);
+                imm(9, 1);
+                emit(0x39000000u | (offsetof(CPU, nativeFallback) << 10) | (19 << 5) | 9);
+            }
             // Declined access: preserve the pre-move destination and replay it.
             flushRegisters(beforeLoad);
             finishFlags(last, -1, 0);

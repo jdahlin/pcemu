@@ -12,6 +12,75 @@ static void check(bool value, const char *message) {
 }
 int main() {
     try {
+        // Target validation precedes stack writes, including stack faults and
+        // MMIO. Exercise direct and indirect near calls in all execution modes.
+        for (unsigned mode = 0; mode < 3; ++mode)
+            for (bool word : {false, true})
+                for (unsigned form = 0; form < 3; ++form)
+                    for (bool native : {false, true}) {
+                        CPU c(1024 * 1024);
+                        c.s[CS].big = true;
+                        c.s[CS].limit = 0x100;
+                        c.cr[0] = mode ? 0x11 : 0x10;
+                        c.flags = 0x202 | (mode == 2 ? 0x20000 : 0);
+                        c.s[SS].big = true;
+                        c.r[SP] = 0xa0004;
+                        c.s[SS].unusable = mode == 1;
+                        std::vector<uint8_t> code = {0x04, 1};
+                        c.r[AX] = 0x123456ff;
+                        unsigned width = word ? 2 : 4;
+                        if (word) code.push_back(0x66);
+                        if (!form) {
+                            code.push_back(0xe8);
+                            auto displacement = 0x101u - (code.size() + width);
+                            for (unsigned n = 0; n < width; ++n) code.push_back(displacement >> (n * 8));
+                        } else if (form == 1) {
+                            code.insert(code.end(), {0xff, 0xd3});
+                            c.r[BX] = 0x101;
+                        } else {
+                            code.insert(code.end(), {0xff, 0x15, 0, 0x40, 0, 0});
+                            c.write(0x4000, 0x101, width);
+                        }
+                        std::copy(code.begin(), code.end(), c.mem.begin());
+                        unsigned writes = 0;
+                        c.videoWrite = [&](uint32_t, uint8_t) { ++writes; };
+                        struct Stop {};
+                        bool fault = false;
+                        c.observeFault = [&](const Fault &f) {
+                            check(f.vector == 13 && f.error == 0 && c.ip == 2 &&
+                                      c.r[AX] == 0x12345600 && (c.flags & 0x8d5) == 0x55,
+                                  "near CALL target limit faults at original IP");
+                            fault = true;
+                            throw Stop{};
+                        };
+                        Jit guarded(c, native, 0, 65536);
+                        try { for (unsigned n = 0; n < 3; ++n) guarded.run(); } catch (const Stop &) {}
+                        check(fault && writes == 0 && c.r[SP] == 0xa0004,
+                              "invalid target precedes stack fault and MMIO without changing SP");
+                    }
+        {
+            CPU c(65536);
+            c.cr[0] = 0x11;
+            c.s[CS].big = c.s[SS].big = true;
+            c.r[SP] = 0x9000;
+            c.s[CS].limit = 0x101;
+            const uint8_t code[] = {0xe8, 0xfc, 0, 0, 0};
+            std::copy(std::begin(code), std::end(code), c.mem.begin());
+            Jit cached(c, true, 0, 65536);
+            check(cached.run() == 1 && c.ip == 0x101 && c.r[SP] == 0x8ffc,
+                  "near CALL initially succeeds within cached CS limit");
+            c.ip = 0; c.r[SP] = 0x9000; c.s[CS].limit = 0x100;
+            c.write(0x8ffc, 0xdeadbeef, 4);
+            struct Stop {};
+            bool fault = false;
+            c.observeFault = [&](const Fault &f) {
+                fault = f.vector == 13 && c.ip == 0;
+                throw Stop{};
+            };
+            try { cached.run(); } catch (const Stop &) {}
+            check(fault && c.r[SP] == 0x9000 && c.read(0x8ffc, 4) == 0xdeadbeef,
+                  "cached near CALL rechecks a changed CS limit before pushing");
+        }
         CPU expected(1024 * 1024), actual(1024 * 1024);
         Jit jit(actual, true, 0, 65536);
         std::mt19937 rng(58031);
@@ -232,6 +301,7 @@ int main() {
                             for (auto c : {&ref, &native}) {
                                 c->cr[0] = 1;
                                 c->s[CS].big = code32;
+                                c->s[CS].limit = UINT32_MAX; // This fixture tests valid wide targets/wraps.
                                 c->s[SS].big = stack32;
                                 c->s[SS].base = 0x10000;
                                 c->r[SP] = (0x7000 + edge) | (stack32 ? 0 : 0xabcd0000u);

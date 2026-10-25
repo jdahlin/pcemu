@@ -1377,8 +1377,11 @@ void CPU::stepImpl() {
     }
     case 0xe8: {
         auto d = signedValue(fetch(w), w);
+        auto target = (ip + d) & (o32 ? 0xffffffffu : 65535u);
+        if (target > s[CS].limit)
+            throw Fault{13, 0, true};
         push(ip, w);
-        rel(d);
+        ip = target;
         break;
     }
     case 0xe9: {
@@ -1492,6 +1495,8 @@ void CPU::stepImpl() {
             flags = (flags & ~CF) | c;
         } else if (op == 0xff) {
             if (g == 2) {
+                if (v > s[CS].limit)
+                    throw Fault{13, 0, true};
                 push(ip, w);
                 ip = v;
             } else if (g == 3 || g == 5) {

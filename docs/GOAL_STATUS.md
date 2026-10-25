@@ -873,3 +873,13 @@ CL-shift baseline. Extended SHRD/precise-fault tests pass 91,745,234 checks,
 and the core suite passes 352,644. All twelve application runs matched the
 required result pixels. The complete performance goal remains active.
 See `measurements/rejected-shrd-dead-flags-2026-10-25.json`.
+
+## Near CALL fault ordering corrected (25 October)
+
+Specification review for native indirect calls found a pre-existing missing
+target-limit check. Direct and indirect near CALL now reject an out-of-limit
+target before stack changes; the native direct path rechecks cached CS limits
+at runtime. Stack/JIT checks (27,641), core checks (352,644), DOS and all three
+Windows application validation paths pass. Native register-indirect CALL work
+continues after this correctness prerequisite. See `near-call.md` and
+`measurements/near-call-target-limit-2026-10-25.json`.
