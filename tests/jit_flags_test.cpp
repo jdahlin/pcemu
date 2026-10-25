@@ -24,6 +24,36 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Exhaust byte multiplication inputs, including AL/AH overlap and
+        // arbitrary upper GPR halves. ADD produces pending flags before MUL;
+        // a carry branch observes the resulting CF without a helper call.
+        for (bool code32 : {false, true})
+            for (unsigned source = 0; source < 8; ++source) {
+                const uint8_t code[] = {0x04, 1, 0xf6, uint8_t(0xe0 | source), 0x73, 0};
+                for (auto c : {&reference, &actual}) {
+                    c->s[CS].big = code32;
+                    for (unsigned n = 0; n < sizeof(code); ++n) c->write(n, code[n], 1);
+                }
+                for (unsigned left = 0; left < 256; ++left)
+                    for (unsigned right = 0; right < 256; ++right) {
+                        for (auto c : {&reference, &actual}) {
+                            c->ip = c->instructions = 0;
+                            c->flags = 0x202 | ((left & 1) ? 0xcd5 : 0);
+                            for (unsigned n = 0; n < 8; ++n) c->r[n] = 0xa5b6c7d8u + n;
+                            c->set(AX, left, 1);
+                            c->set(source, right, 1);
+                        }
+                        reference.step();
+                        auto multiplicand = reference.get(AX, 1);
+                        auto multiplier = reference.get(source, 1);
+                        reference.step();
+                        reference.step();
+                        check(jit.run() == 3, "ADD/MUL byte/JNC execute natively");
+                        equal(reference, actual);
+                        check(actual.get(AX, 2) == multiplicand * multiplier,
+                              "MUL byte commits complete unsigned product to AX");
+                    }
+            }
         // Exhaust every byte value/alias and exercise signed overflow and
         // carry boundaries at both wider sizes, including operand overrides.
         for (bool code32 : {false, true})

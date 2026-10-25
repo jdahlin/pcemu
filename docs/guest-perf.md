@@ -647,3 +647,24 @@ benchmarks. Raw paired results, host disassembly, executable hashes and validati
 evidence are in `measurements/physical-translation-fast-path-2026-10-25.json`;
 the initial automatically inlined patch is alongside it. Successful private disks
 are removed; no Office or installer fixtures were recreated.
+
+## Native unsigned byte multiply (25 October)
+
+Excel's post-load recalculation profile exposed frequent register `F6 /4`
+unsigned byte multiplies. This form now reads AL and any low/high legacy byte
+register directly in ARM64, writes the full product to AX, and sets CF/OF iff
+the upper product byte is nonzero. Other flags and upper EAX bits match the
+interpreter. Operand extraction precedes the AX write, including AL/AH aliases.
+Memory operands and signed/word/dword one-operand forms retain their prior paths.
+
+Exhaustive byte-input/alias/code-size checks plus existing flag cases total
+11,771,766 checks. Core validation passes 352,644 checks; headless Win3.11
+Notepad persistence and rtts Win95 application/clipboard/restart/exact file
+persistence checks pass on the candidate. Their private children are removed.
+Five alternating pairs of a 50-million-instruction RAM-only multiply loop give
+median throughput ratio 4.4878 versus pre-change JIT source files. Native
+coverage rises from 40M to 50M instructions and final guest state matches.
+This compares the focused kernel, not Excel or general emulator performance.
+The comparison shares current CPU/support sources; source/executable hashes,
+loop source, paired data and guest validation are recorded in
+`measurements/native-byte-multiply-2026-10-25.json`.

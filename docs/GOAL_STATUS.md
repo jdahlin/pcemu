@@ -769,3 +769,16 @@ fixture duplication was unnecessary. Evidence and exact control transcript:
 `docs/measurements/office97-excel-steady-use-2026-10-25.json` and adjacent files.
 Full saved formula-range parsing/reopening, fixed completion/timing boundaries,
 and an idle baseline remain. No Rosetta-level or overall performance claim.
+
+## Native byte MUL from Excel coverage (25 October)
+
+Unsigned register byte multiply F6 /4 now runs natively, including legacy high
+byte aliases, complete AX product and CF/OF semantics. Exhaustive differential
+coverage and existing flag tests pass 11,771,766 checks; core passes 352,644.
+Candidate Win3.11 persistence and rtts Win95 application/restart/persistence
+checks pass headlessly with successful private children removed. Five paired
+RAM-only MUL-loop runs show median 4.49x throughput versus old JIT source files,
+with identical guest results and 50M native instructions versus 40M previously.
+This is not a measured Office speedup. Evidence:
+`docs/measurements/native-byte-multiply-2026-10-25.json`.
+Fresh Windows Setup and representative Office host timing remain unverified.

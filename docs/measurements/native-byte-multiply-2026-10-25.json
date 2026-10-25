@@ -1,0 +1,201 @@
+{
+  "baselineRevision": "4243581",
+  "scope": "CPU-only MUL-byte loop; baseline uses pre-change decoder/emitter/liveness files with shared current CPU/support sources. Not an Office/Windows timing comparison.",
+  "sources": {
+    "src/jit_decode.cpp": "c39d52327fa844d22126d109961b2e14bd50f17458de6ee63a39b471cb79da40",
+    "src/jit_arm64.cpp": "bf9b32bdddc3f2461c507e90c9ab496396a9095e56238e58fd6266efb132fc0e",
+    "src/jit_flags.cpp": "57e98405d33557d4a51581d95e5b84fd029a256fe881ce9f349a7596aaf36d05",
+    "src/jit_ir.hpp": "9ba6b8f1eed2599c0d3cad54473b6490e8754b66349f0229448bcdae8fcb9be9",
+    "build/byte-mul-comparison/bench.cpp": "603cc92a9c56ad5f4477cbbe83c256e87cfdf045340c0b20ae643de6f5ee9bc4"
+  },
+  "executables": {
+    "baseline": "6adcceea31e4519ed78380f0ce6c032ae6f1d0d48a03918689a3cd4f035f0308",
+    "candidate": "287701c24832b889940ebad5cd260267821611fd2e22e2455b811e4fbe3bcf2a"
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "results": {
+        "baseline": {
+          "ns": 285594500,
+          "instructions": 50000000,
+          "native": 40000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        },
+        "candidate": {
+          "ns": 64943209,
+          "instructions": 50000000,
+          "native": 50000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        }
+      },
+      "throughputRatio": 4.39760375869323
+    },
+    {
+      "pair": 2,
+      "results": {
+        "candidate": {
+          "ns": 64186917,
+          "instructions": 50000000,
+          "native": 50000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        },
+        "baseline": {
+          "ns": 301347917,
+          "instructions": 50000000,
+          "native": 40000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        }
+      },
+      "throughputRatio": 4.694849528292503
+    },
+    {
+      "pair": 3,
+      "results": {
+        "baseline": {
+          "ns": 286639667,
+          "instructions": 50000000,
+          "native": 40000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        },
+        "candidate": {
+          "ns": 64023833,
+          "instructions": 50000000,
+          "native": 50000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        }
+      },
+      "throughputRatio": 4.477077575158614
+    },
+    {
+      "pair": 4,
+      "results": {
+        "candidate": {
+          "ns": 66993459,
+          "instructions": 50000000,
+          "native": 50000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        },
+        "baseline": {
+          "ns": 300651042,
+          "instructions": 50000000,
+          "native": 40000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        }
+      },
+      "throughputRatio": 4.487767111711608
+    },
+    {
+      "pair": 5,
+      "results": {
+        "baseline": {
+          "ns": 313359333,
+          "instructions": 50000000,
+          "native": 40000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        },
+        "candidate": {
+          "ns": 65019750,
+          "instructions": 50000000,
+          "native": 50000000,
+          "ax": 980,
+          "bx": 10000013,
+          "cx": 0,
+          "flags": 71
+        }
+      },
+      "throughputRatio": 4.819448444511091
+    }
+  ],
+  "medianThroughputRatio": 4.487767111711608,
+  "benchmarkSource": "#include \"cpu.hpp\"\n#include \"jit.hpp\"\n#include <chrono>\n#include <iostream>\nint main() {\n pc::CPU c(65536);c.s[pc::CS].big=true;\n const uint8_t bytes[]={0xb0,7,0xf6,0xe3,0x43,0x49,0x75,0xf8};\n for(unsigned n=0;n<sizeof(bytes);++n)c.write(n,bytes[n],1);\n c.r[pc::CX]=10000000;c.r[pc::BX]=13;\n pc::Jit jit(c,true,0);\n auto start=std::chrono::steady_clock::now();\n do {jit.run();} while(c.ip!=sizeof(bytes));\n auto ns=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-start).count();\n std::cout<<\"{\\\"ns\\\":\"<<ns<<\",\\\"instructions\\\":\"<<c.instructions<<\",\\\"native\\\":\"<<jit.nativeInstructions<<\",\\\"ax\\\":\"<<c.r[pc::AX]<<\",\\\"bx\\\":\"<<c.r[pc::BX]<<\",\\\"cx\\\":\"<<c.r[pc::CX]<<\",\\\"flags\\\":\"<<c.flags<<\"}\\n\";\n}\n",
+  "validation": {
+    "flagLivenessChecks": 11771766,
+    "coreChecks": 352644,
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "6d0dd54f37dc3ce848a616d6be853224fc1b75caf33684b7d7739973b17784aa",
+      "gitCommit": "4243581ddbb7934da86226f1f8d5fa7d3c2024b5",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5670,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "win95": {
+      "pid": 11172,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-75tfogry/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-75tfogry/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-75tfogry/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-75tfogry/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "6d0dd54f37dc3ce848a616d6be853224fc1b75caf33684b7d7739973b17784aa",
+      "profiled": false,
+      "guestProfiled": false,
+      "gitCommit": "4243581ddbb7934da86226f1f8d5fa7d3c2024b5",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 528049080,
+        "afterInstructions": 1688768937,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P797F5A5.TXT",
+          "fatName": "P797F5A5TXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 797F5A5E.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "031f1afdee618ae275aef0e2c247cf10a5d729827a8745e57b732bd649228699"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    }
+  }
+}

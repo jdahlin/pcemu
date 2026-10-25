@@ -317,7 +317,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             } else if (op == 0xf6 || op == 0xf7) {
                 i.w = op == 0xf6 ? 1 : w;
                 auto m = byte();
-                if ((m & 0x38) == 0x18 && (m >> 6) == 3) {
+                if (op == 0xf6 && (m & 0x38) == 0x20 && (m >> 6) == 3) {
+                    i.kind = Kind::MultiplyByte;
+                    i.dst = AX;
+                    i.src = m & 3;
+                    i.srcShift = (m & 4) ? 8 : 0;
+                } else if ((m & 0x38) == 0x18 && (m >> 6) == 3) {
                     i.kind = Kind::Alu;
                     i.op = 5;
                     i.negate = true;

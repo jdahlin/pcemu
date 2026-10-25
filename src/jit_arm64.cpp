@@ -348,6 +348,29 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             dirtyRegisters |= 1u << i.dst;
             continue;
         }
+        if (i.kind == Kind::MultiplyByte) {
+            // MUL r8 reads AL and its byte source before replacing AX. This
+            // matters when the source aliases AL or AH. Preserve every flag
+            // except the architecturally defined CF/OF, matching the reference.
+            finishFlags(last, -1, 0);
+            last = -1;
+            extract(11, 20 + AX, 1, 0);
+            extract(12, 20 + i.src, 1, i.srcShift);
+            emit(0x1b007c00u | (12 << 16) | (11 << 5) | 13); // mul w13,w11,w12
+            if (neededFlags[n]) {
+                emit(0x7100001fu | (255 << 10) | (13 << 5)); // cmp w13,#255
+                emit(0x1a9f97ebu); // cset w11,hi: high product byte nonzero
+                load(12, 19, offsetof(CPU, flags));
+                imm(14, ~(CF | OF));
+                emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+                for (unsigned bit : {0u, 11u})
+                    emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
+                store(12, 19, offsetof(CPU, flags));
+            }
+            insert(20 + AX, 13, 2, 0);
+            dirtyRegisters |= 1u << AX;
+            continue;
+        }
         if (i.kind == Kind::Multiply) {
             if (neededFlags[n]) {
                 finishFlags(last, -1, 0);
