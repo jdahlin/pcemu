@@ -44,6 +44,16 @@ class ArmPlatform(unittest.TestCase):
                                  b'MsHyperV' if enabled else bytes(8))
                 self.assertEqual(manifest['hyperv'], enabled)
 
+    def test_optional_vmbus_assets(self):
+        with self.assertRaises(ValueError):
+            build(2, Path('/unused'), vmbus=True)
+        with tempfile.TemporaryDirectory() as directory:
+            output = build(2, Path(directory), 8192, hyperv=True, vmbus=True)
+            manifest = json.loads((output / 'acpi/manifest.json').read_text())
+            self.assertTrue(manifest['vmbus'])
+            self.assertTrue(manifest['hyperv'])
+            self.assertIn('SSDT', manifest['tableOffsets'])
+
     def test_invalid_memory(self):
         for size in (0, 255, 16385):
             with self.assertRaises(ValueError):

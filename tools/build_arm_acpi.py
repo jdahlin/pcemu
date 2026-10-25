@@ -87,11 +87,24 @@ def dsdt(cpu_count=1):
     return table('DSDT', 2, aml_package(b'\x10', body))
 
 
+def vmbus_ssdt():
+    source = ROOT / 'platform/arm64/vmbus.asl'
+    cached = json.loads((source.parent / 'vmbus-aml.json').read_text())
+    if hashlib.sha256(source.read_bytes()).hexdigest() != cached['sourceSha256']:
+        raise ValueError('VMBus source changed: recompile and update vmbus-aml.json')
+    data = bytes.fromhex(cached['amlHex'])
+    if data[:4] != b'SSDT' or len(data) != struct.unpack_from('<I', data, 4)[0] or sum(data) & 255:
+        raise ValueError('Invalid compiled VMBus SSDT')
+    return data
+
+
 def gas(address):
     return struct.pack('<BBBBQ', 0, 32, 0, 3, address)
 
 
-def build(cpu_count=1, hyperv=False):
+def build(cpu_count=1, hyperv=False, vmbus=False):
+    if vmbus and not hyperv:
+        raise ValueError('VMBus requires Hyper-V identity')
     if not 1 <= cpu_count <= 8:
         raise ValueError('ARM platform supports 1..8 CPUs')
     fadt = bytearray(276 - 36)
@@ -144,6 +157,8 @@ def build(cpu_count=1, hyperv=False):
                ('APIC', table('APIC', 5, madt)), ('GTDT', table('GTDT', 3, gtdt)),
                ('MCFG', table('MCFG', 1, mcfg)), ('SPCR', table('SPCR', 2, spcr)),
                ('DBG2', table('DBG2', 0, dbg2)), ('PPTT', table('PPTT', 3, pptt))]
+    if vmbus:
+        entries.append(('SSDT', vmbus_ssdt()))
     blob = bytearray()
     offsets = {}
     for name, data in entries:
@@ -179,6 +194,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'build/arm64-fw/acpi')
     parser.add_argument('--hyperv', action='store_true')
+    parser.add_argument('--vmbus', action='store_true')
     parser.add_argument('--iasl', type=Path)
     parser.add_argument('--cpus', type=int, default=1, choices=range(1, 9))
     args = parser.parse_args()
@@ -188,10 +204,18 @@ def main():
         subprocess.run([str(args.iasl), '-p', str(prefix), str(ROOT / 'platform/arm64/dsdt.asl')], check=True)
         if prefix.with_suffix('.aml').read_bytes() != dsdt():
             raise ValueError('Recompiled DSDT differs from dsdt-aml.json')
-    blob, rsdp, loader, offsets = build(args.cpus, args.hyperv)
+    if args.iasl and args.vmbus:
+        prefix = args.output / 'checked-vmbus'
+        # Match Microsoft's VMBus namespace: its historical HID is not a
+        # standard-length PNP ID, and fixed resources have no _SRS method.
+        subprocess.run([str(args.iasl), '-vw', '6033', '-vw', '3073', '-vw', '3141',
+                        '-p', str(prefix), str(ROOT / 'platform/arm64/vmbus.asl')], check=True)
+        if prefix.with_suffix('.aml').read_bytes() != vmbus_ssdt():
+            raise ValueError('Recompiled VMBus SSDT differs from vmbus-aml.json')
+    blob, rsdp, loader, offsets = build(args.cpus, args.hyperv, args.vmbus)
     for name, data in [('tables', blob), ('rsdp', rsdp), ('table-loader', loader)]:
         (args.output / name).write_bytes(data)
-    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'hyperv': args.hyperv, 'tableOffsets': offsets,
+    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'hyperv': args.hyperv, 'vmbus': args.vmbus, 'tableOffsets': offsets,
         'tableBytes': len(blob), 'loaderBytes': len(loader)}, indent=2) + '\n')
     print(f'Built ARM ACPI: {len(blob)} table bytes, {len(loader)} loader bytes')
 

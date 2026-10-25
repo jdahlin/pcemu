@@ -985,3 +985,20 @@ ACPI and actual Windows consumption remain the next integration gate.
 Validation: `make test-hvf` passes 2,018 portable Hyper-V checks, 271 native
 checks and 12 Windows-auditor tests. The existing off/basic/synic EFI probes
 also pass. Results are retained under `build/hyperv-research/vmbus-control-*`.
+
+### Optional VMBus firmware namespace
+
+`tools/build_arm_platform.py --cpus 2 --ram-mb 8192 --hyperv --vmbus`
+prepares separate `cpus2-ram8192-hyperv-vmbus` firmware assets. The optional
+SSDT exposes `\_SB.VMOD.VMBS` with the historical `VMBus` hardware ID and an
+edge-triggered, active-high PPI 16. The namespace follows
+[Microsoft OpenVMM's VMBus description](https://github.com/microsoft/openvmm/blob/76420ea20a67ef65c80a62f1fc93de3b8f1eabaa/vm/acpi/src/dsdt.rs).
+The separate module avoids a PCI address collision with the existing boot disk.
+It advertises no synthetic channels or MMIO allocation windows.
+
+This is firmware preparation; the normal runner does not yet attach this bus.
+The checked-in AML is source-hash checked. To verify it with ACPICA, run
+`tools/build_arm_acpi.py --hyperv --vmbus --iasl PATH_TO_IASL`.
+Compilation suppresses only the known diagnostics for the historical short
+hardware ID, simultaneous `_HID`/`_ADR`, and fixed resources with `_DIS` but no
+`_SRS`, matching the reference namespace. All other diagnostics remain enabled.

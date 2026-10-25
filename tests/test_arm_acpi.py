@@ -9,8 +9,8 @@ from build_arm_acpi import build, TABLES, RSDP
 
 
 class ArmAcpi(unittest.TestCase):
-    def relocated(self, cpu_count=1):
-        tables, rsdp, script, _ = build(cpu_count)
+    def relocated(self, cpu_count=1, **options):
+        tables, rsdp, script, _ = build(cpu_count, **options)
         files = {TABLES: bytearray(tables), RSDP: bytearray(rsdp)}
         addresses = {TABLES: 0x4e001000, RSDP: 0x4d000000}
         self.assertEqual(len(script) % 128, 0)
@@ -117,6 +117,33 @@ class ArmAcpi(unittest.TestCase):
         for count in (0, 9):
             with self.assertRaises(ValueError):
                 build(count)
+
+    def test_optional_vmbus_graph(self):
+        from build_arm_acpi import vmbus_ssdt
+        with self.assertRaises(ValueError):
+            build(vmbus=True)
+        for count in (1, 2, 8):
+            files, addresses = self.relocated(count, hyperv=True, vmbus=True)
+            _, _, _, offsets = build(count, hyperv=True, vmbus=True)
+            blob = files[TABLES]
+            ssdt = vmbus_ssdt()
+            start = offsets['SSDT']
+            self.assertEqual(blob[start:start + len(ssdt)], ssdt)
+            self.assertEqual(sum(ssdt) & 255, 0)
+            xsdt = offsets['XSDT']
+            length = struct.unpack_from('<I', blob, xsdt + 4)[0]
+            self.assertEqual(length, 36 + 8 * 8)
+            roots = struct.unpack_from('<8Q', blob, xsdt + 36)
+            self.assertIn(addresses[TABLES] + start, roots)
+            self.assertEqual(sum(blob[xsdt:xsdt + length]) & 255, 0)
+        self.assertNotIn('SSDT', build(hyperv=True)[3])
+        self.assertNotIn('SSDT', build()[3])
+        for name in (b'VMOD', b'VMBS', b'ACPI0004', b'VMBus', b'_STA', b'_DIS', b'_PS0', b'_PS3'):
+            self.assertIn(name, ssdt)
+        # Extended interrupt: consumer, edge, active-high, exclusive, one GSI16.
+        descriptor = bytes([0x89, 6, 0, 3, 1, 16, 0, 0, 0])
+        self.assertEqual(ssdt.count(descriptor), 1)
+        self.assertNotIn(b'PCI0', ssdt)
 
     def test_debug_namespace_bounds(self):
         files, _ = self.relocated()
