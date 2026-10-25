@@ -58,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 262 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 287 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -290,7 +290,7 @@ The following is a work inventory, not a completion claim:
 | Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
 | SyncContext / SyncContextEx | Windows invokes 0x19 frequently; guest instruction synchronization mechanism and multi-VP tests still required. |
-| Extended-capability query 0x8001 | Observed and rejected; supported input/output contract still needs investigation. |
+| Extended-capability query 0x8001 | Native memory and fast ABI verified; Windows success-counter validation pending. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
@@ -301,3 +301,36 @@ The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
 prove any of the unfinished services above. Every enabled feature needs its
 own side-effect tests and guest consumption evidence; performance claims need
 an actual baseline comparison.
+
+
+## Extended capability discovery
+
+HvExtCallQueryCapabilities (0x8001) is supported and advertised with the
+EnableExtendedHypercalls privilege (bit 52). It takes no input and returns an
+8-byte capability bitmap. The bitmap is currently zero: none of the services
+0x8002..0x8006 is provided. Unknown extended services continue to fail.
+
+Both memory and fast transports use the existing ARM64 conventions. In memory
+transport only eight output bytes are written, with the input pointer ignored.
+In fast transport the result is X2/X3 for SMCCC and X15/X16 for legacy calls;
+the unused upper half of the output pair is zeroed. Reserved control bits,
+rep counts/start indices, invalid VP indices and invalid output addresses fail
+without publishing output. Guest identity is required.
+
+Each hypercall counter now includes its failure count. The Windows auditor
+reports `extendedCapabilitiesObserved` only for a valid Windows core trace
+with at least one query and zero query failures. Old snapshots without those
+per-call counters cannot establish successful query consumption.
+
+Sources: Microsoft's [query contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvextcallquerycapabilities)
+and the OpenVMM `HvExtQueryCapabilities` SimpleHypercall<(), u64> definition.
+The native probe validates actual GPA output, preserved adjacent bytes and
+fast legacy output. Model tests additionally cover both transports in both
+ABIs, unused invalid input pointers, malformed controls and failed identity.
+
+The separate Windows run with crash enlightenment enabled reached the lock
+screen and passes the core usage auditor. No crash notification was recorded,
+as expected for a normal boot. This proves compatibility, not an actual Windows
+bugcheck notification. Its frozen report is
+`build/windows11-hyperv/crash-enlightenment/core-evidence.json` (SHA-256
+`e7c20148a37002639814a86f31356877676c6fadd8054b69260a4cbeb5082f0e`).

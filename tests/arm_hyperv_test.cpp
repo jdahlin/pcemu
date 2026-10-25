@@ -19,7 +19,7 @@ static uint64_t get(const std::vector<uint8_t> &b, size_t at) {
 }
 int main() {
     constexpr uint64_t base = 0x140000000ull, one = 1ull << 32;
-    constexpr uint64_t features = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
+    constexpr uint64_t features = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51) | (1ull << 52);
     std::vector<uint8_t> memory(8192);
     ArmHyperV off(false, memory, base, 2), hv(true, memory, base, 2);
     ArmHyperV::Registers r{};
@@ -155,8 +155,40 @@ int main() {
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
     check(!off.call(0, r, 0) && r[0] == 0x46000001);
     check(!hv.call(2, r, 0));
+    // Extended query has no input and exactly eight bytes of output.
+    for (bool smccc : {false, true}) {
+        for (bool fast : {false, true}) {
+            r.fill(0xcccccccccccccccc);
+            r[0] = smccc ? 0x46000001 : (fast ? 0x18001 : 0x8001);
+            if (smccc) r[1] = fast ? 0x18001 : 0x8001;
+            r[smccc ? 2 : 1] = uint64_t(-1); // Unused input must not be dereferenced.
+            r[smccc ? 3 : 2] = base + 8192 - 8;
+            std::fill(memory.begin() + 8176, memory.end(), 0xaa);
+            check(hv.call(smccc ? 0 : 1, r, 1) && r[0] == 0);
+            unsigned out = smccc ? 2 : 15;
+            if (fast) check(r[out] == 0 && r[out + 1] == 0 && get(memory, 8184) == 0xaaaaaaaaaaaaaaaaull);
+            else check(get(memory, 8184) == 0 && get(memory, 8176) == 0xaaaaaaaaaaaaaaaaull);
+        }
+    }
+    for (auto address : {base - 8, base + 1, base + 8192, uint64_t(-8)}) {
+        r = {}; r[0] = 0x8001; r[2] = address;
+        check(hv.call(1, r, 0) && r[0] == 4);
+    }
+    for (auto extra : {1ull << 17, 1ull << 31, 1ull << 32, 1ull << 48, 1ull << 63}) {
+        r = {}; r[0] = 0x18001 | extra; r[15] = 123;
+        check(hv.call(1, r, 0) && r[0] == 3 && r[15] == 123);
+    }
+    r = {}; r[0] = 0x18001;
+    check(hv.call(1, r, 2) && r[0] == 3);
+    for (unsigned code : {0x8002, 0x8003, 0x8004, 0x8005, 0x8006}) {
+        r = {}; r[0] = code;
+        check(hv.call(1, r, 0) && r[0] == 2); // No extended services falsely advertised.
+    }
     fastWrite(0); fastRead(0x90003); check(r[0] == 6);
     fastRead(0x90016); check(r[0] == 6);
+    r = {}; r[0] = 0x18001; r[15] = 123;
+    check(hv.call(1, r, 0) && r[0] == 6 && r[15] == 123);
+    check(hv.report().find("\"code\":32769,\"count\":15,\"failures\":11") != std::string::npos);
     writeVp(0x40400, 0); check(r[0] == one); // Early register may be written without ID
     fastRead(0x40400); check(r[0] == one && r[6] == 0);
     ArmHyperV fresh(true, memory, base, 2);

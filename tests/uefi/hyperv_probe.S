@@ -38,7 +38,7 @@ efi_main:
     lsl x8, x8, #32
     cmp x0, x8
     b.ne failed
-    ldr x8, =0x000a000000000062
+    ldr x8, =0x001a000000000062
     cmp x6, x8
     b.ne failed
     cmp x7, #256 // ARM64 feature bit 72, not x64 CPUID EDX:10.
@@ -127,6 +127,29 @@ efi_main:
     blr x8
     cbnz x0, failed
     ldr x21, [sp, #48]
+    // No-input extended-capability query: use an invalid ignored input GPA.
+    // Output is exactly eight bytes; preserve the surrounding sentinel.
+    mov x8, #-1
+    str x8, [x21, #256]
+    str x8, [x21, #264]
+    ldr w0, =0x46000001
+    mov x1, #0x8001
+    mov x2, #-1
+    add x3, x21, #256
+    hvc #0
+    cbnz x0, failed
+    ldr x8, [x21, #256]
+    cbnz x8, failed
+    ldr x8, [x21, #264]
+    cmn x8, #1
+    b.ne failed
+    ldr x0, =0x18001
+    mov x15, #-1
+    mov x16, #-1
+    hvc #1
+    cbnz x0, failed
+    cbnz x15, failed
+    cbnz x16, failed
     mov x8, #-1
     str x8, [x21]
     ldr w8, =0xfffffffe

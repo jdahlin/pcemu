@@ -52,6 +52,12 @@ def verify(report, baseline, kernel_build=26100):
                 'Invalid or duplicate hypercall code')
         require(type(count) is int and count >= 0, 'Invalid hypercall count')
         counts[code] = count if type(count) is int and count >= 0 else 0
+    if any('failures' in row for row in calls):
+        require(all(type(row.get('failures')) is int and 0 <= row['failures'] <= counts.get(row.get('code'), 0)
+                    for row in calls), 'Invalid per-call failure counts')
+        require(sum(row.get('failures', 0) for row in calls
+                    if type(row.get('failures', 0)) is int) == report.get('failures'),
+                'Per-call and total failures disagree')
     require(counts.get(0x50, 0) > 0 and counts.get(0x51, 0) > 0, 'Missing register hypercall invocations')
     abis = [report.get('smcccCalls'), report.get('legacyCalls')]
     require(all(type(n) is int and n >= 0 for n in abis)
@@ -60,13 +66,15 @@ def verify(report, baseline, kernel_build=26100):
     require(baseline.get('guestOsId') == 0 and baseline.get('smcccCalls') == 0
             and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
             'Off-mode Windows baseline unexpectedly used Hyper-V registers')
-    unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51)]
+    unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51, 0x8001)]
     clock = registers.get(0x90004, {})
     last_time = report.get('referenceTime100ns', 0)
     clock_observed = (not errors and type(clock.get('reads')) is int
                       and clock['reads'] >= 2 and clock.get('failures') == 0
                       and type(last_time) is int and last_time > 0)
-    return {'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
+    extended = next((row for row in calls if row.get('code') == 0x8001), {})
+    query_observed = (not errors and counts.get(0x8001, 0) > 0 and extended.get('failures') == 0)
+    return {'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
             'guiBootVerified': False, 'performanceBenefitVerified': False}
 

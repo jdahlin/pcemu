@@ -49,6 +49,20 @@ class WindowsHyperV(unittest.TestCase):
         report['guestOsId'] = 0x5043454d55
         self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
 
+    def test_extended_query_needs_success_counters(self):
+        report, baseline = fixture()
+        report['calls'].append(dict(code=0x8001, count=1))
+        report['legacyCalls'] += 1
+        self.assertFalse(verify(report, baseline)['extendedCapabilitiesObserved'])
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        self.assertTrue(verify(report, baseline)['extendedCapabilitiesObserved'])
+        report['calls'][-1]['failures'] = 1
+        report['failures'] += 1
+        self.assertFalse(verify(report, baseline)['extendedCapabilitiesObserved'])
+        report['calls'][-1]['failures'] = 2
+        self.assertFalse(verify(report, baseline)['verifiedCoreUsage'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

@@ -10,7 +10,7 @@ namespace {
 constexpr uint32_t uid = 0x8600ff01, function = 0x46000001;
 constexpr uint16_t invalidCode = 2, invalidInput = 3, invalidAlignment = 4,
                    invalidParameter = 5, accessDenied = 6, invalidVp = 14;
-constexpr uint64_t privileges = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
+constexpr uint64_t privileges = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51) | (1ull << 52);
 uint64_t get(std::span<const uint8_t> b, size_t at, size_t size) {
     uint64_t v = 0;
     for (size_t i = 0; i < size; ++i) v |= uint64_t(b[at + i]) << (8 * i);
@@ -162,13 +162,34 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
     if (calls.contains(code) || calls.size() < 128) ++calls[code]; else ++omittedCounters;
     if (!enabled) { ++disabledCalls; lastResult = uint64_t(-1); return false; }
     lastResult = invoke(r, !immediate, vp);
-    if (uint16_t(lastResult)) ++failures;
+    if (uint16_t(lastResult)) {
+        ++failures;
+        if (calls.contains(code)) ++callFailures[code];
+    }
     r[0] = lastResult;
     return true;
 }
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
+    if (code == 0x8001) {
+        if (!guestId) return accessDenied;
+        if ((control & ~uint64_t(0x1ffff)) || vp >= cpus) return invalidInput;
+        if (control & 0x10000) {
+            // No input; one 16-byte output pair. Only its low 8 bytes are
+            // defined. Clear the padding as for GetVpRegisters fast output.
+            unsigned out = smccc ? 2 : 15;
+            r[out] = r[out + 1] = 0;
+        } else {
+            auto address = r[smccc ? 3 : 2];
+            if ((address & 7) || address < base || address - base > ram.size() ||
+                8 > ram.size() - (address - base)) return invalidAlignment;
+            // No 0x8002+ service is currently provided. A zero capability
+            // bitmap is the truthful supported-set response, not a stub action.
+            std::fill_n(ram.begin() + size_t(address - base), 8, uint8_t(0));
+        }
+        return 0;
+    }
     if (code != 0x50 && code != 0x51) return guestId ? invalidCode : accessDenied;
     // Only Fast, Code, RepCount and RepStart are supported. No nested/variable headers.
     constexpr uint64_t allowed = 0x0fff0fff0001ffffull;
@@ -251,7 +272,8 @@ std::string ArmHyperV::report() const {
       << ",\"lastControl\":" << lastControl << ",\"lastResult\":" << lastResult
       << ",\"lastRegister\":" << lastRegister << ",\"omittedCounters\":" << omittedCounters << ",\"calls\":[";
     bool comma = false;
-    for (auto [code, n] : calls) { if (comma) s << ','; comma = true; s << "{\"code\":" << code << ",\"count\":" << n << '}'; }
+    for (auto [code, n] : calls) { if (comma) s << ','; comma = true; s << "{\"code\":" << code << ",\"count\":" << n
+          << ",\"failures\":" << (callFailures.contains(code) ? callFailures.at(code) : 0) << '}'; }
     s << "],\"registers\":["; comma = false;
     for (auto [name, n] : registers) {
         if (comma) s << ','; comma = true;

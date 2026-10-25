@@ -40,7 +40,7 @@ class ArmHyperV {
     uint64_t lastControl = 0, lastResult = 0;
     uint32_t lastRegister = 0;
     std::map<uint32_t, Counts> registers;
-    std::map<uint16_t, uint64_t> calls;
+    std::map<uint16_t, uint64_t> calls, callFailures;
     uint64_t invoke(Registers &r, bool smccc, unsigned vp);
     uint16_t readRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> &value);
     uint16_t writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value);
