@@ -1901,3 +1901,30 @@ not relaxed for this result. GUI boot and performance benefit remain unverified.
 The test VM was stopped, its cloned writable disk removed, and the original
 basic-profile VM restored. Time synchronization, shutdown and other relevant
 integration services still require implementation and guest verification.
+
+### Time synchronization protocol model
+
+`ArmHyperVTimeSync` implements the host timesync-v4 state machine, with separate
+interface `9527e630-d0ae-497b-adce-e80ab0175caf` and instance
+`2dd1ce17-079e-403c-b352-a1921ee207ee`, reserved channel 2 / connection 17.
+It negotiates framework 1/3 and timesync 4, sends a transactional initial SYNC
+then five-second SAMPLE messages, and pairs UTC FILETIME with guest reference
+time. The caller supplies the clock pair; UTC and monotonic reference time must
+not be substituted for each other. No RTC write is involved.
+
+Candidates are rebuilt while unpublished, so backpressure retries can take a
+fresh UTC/reference pair. State advances only on confirmed publication; matching
+transaction IDs, status and negotiated versions are required for acknowledgments.
+Late/duplicate/unsupported replies are rejected, and a timeout stops the session
+until a channel reopen renegotiates. Acknowledgment means protocol processing,
+not proof that Windows adjusted its clock. Guest policy remains authoritative.
+
+The layout and behavior were checked against Microsoft's OpenVMM
+[timesync protocol](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic_protocol/src/timesync.rs)
+and [host implementation](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic/src/timesync.rs).
+All 171 model checks pass normally and under AddressSanitizer/UBSan, including
+truncated packets, version rejection, dirty timing/retry scenarios, transaction
+mismatch, duplicate replies, backward UTC steps and timeouts. The new target is
+included in `test` and `test-hvf`. This commit adds the independently tested model;
+production registration, the actual host FILETIME clock source and Windows
+acknowledgment/time-adjustment validation remain to be connected and verified.

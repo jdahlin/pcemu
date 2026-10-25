@@ -308,3 +308,11 @@ build/arm-hvf-gic-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_seconda
 test-arm-hvf-gic: build/arm-hvf-gic-tests
 	./build/arm-hvf-gic-tests
 test-hvf: test-arm-hvf-gic
+
+.PHONY: test-arm-hyperv-timesync
+test-arm-hyperv-timesync: build/arm-hyperv-timesync-tests
+	./build/arm-hyperv-timesync-tests
+build/arm-hyperv-timesync-tests: src/arm_hyperv_timesync.cpp src/arm_hyperv_timesync.hpp src/arm_vmbus.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp tests/arm_hyperv_timesync_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_timesync.cpp tests/arm_hyperv_timesync_test.cpp -o $@
+test test-hvf: test-arm-hyperv-timesync
