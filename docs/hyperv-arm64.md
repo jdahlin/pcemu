@@ -2,7 +2,8 @@
 
 `--hyperv basic` enables the initial ARM64 discovery/register interface.
 The default is `off`. This independent TLFS subset does not provide VMBus,
-SynIC, synthetic timers, TLB-flush hypercalls or nested virtualization.
+SynIC, synthetic timers or nested virtualization. Address-space TLB-flush
+hypercalls are supported as described below.
 
 Prepare matching firmware assets:
 
@@ -58,7 +59,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 446 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 921 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -291,7 +292,7 @@ The following is a work inventory, not a completion claim:
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
 | SyncContext / SyncContextEx | Fixed/Ex, fast/memory inputs implemented with real per-VP barriers. Windows fixed-path and native Ex tests pass; Windows Ex use remains unobserved. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
-| Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
+| Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes and processor sets implemented with native tests; list variants, IPIs and Windows flush consumption remain pending. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
 | VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
@@ -456,12 +457,54 @@ both VPs must read the new physical-page value. Tests also check preserved
 TTBR/TCR state, target masks, distinct counters, an invalid mask and a corrupted
 completion sentinel with recovery. The native self-test now has 193 checks.
 
-This backend primitive is groundwork for the Hyper-V TLB hypercalls. Their
-input parsing, flags, repetition semantics and guest advertisement/consumption
-are still pending. The current Windows binary was launched before this backend
+This backend primitive is groundwork for the Hyper-V TLB hypercalls. Their input parsing and guest consumption were pending at this checkpoint;
+the following section adds the address-space calls. List/repetition variants
+and guest advertisement/consumption remain pending. The current Windows binary was launched before this backend
 change and does not claim Hyper-V TLB-flush use.
 
 Architecture reference: Arm's [TLB maintenance description](https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/Learn%20the%20Architecture/LearnTheArchitecture-MemoryManagement-101811_0100_00_en.pdf)
 and Microsoft's [address-space flush contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddressspace).
 The latter explicitly allows global entries to be invalidated even when only
 non-global mappings are requested.
+
+
+## Hyper-V address-space flush hypercalls
+
+HvCallFlushVirtualAddressSpace (0x2) and HvCallFlushVirtualAddressSpaceEx
+(0x13) now invoke the verified native translation-maintenance backend. The
+fixed input has AddressSpace, Flags and ProcessorMask. Ex has AddressSpace,
+Flags and HV_VP_SET, with only bank contents counted in the variable header.
+Both ARM64 ABIs support register and memory input. The existing VP-set parser
+is shared with SyncContextEx; its transport/page bounds and input validation
+also apply here.
+
+Flags 0..7 implement ALL_PROCESSORS, ALL_VIRTUAL_ADDRESS_SPACES and
+NON_GLOBAL_MAPPINGS_ONLY. ALL_PROCESSORS ignores processor bits, including
+bits selecting nonexistent VPs, while malformed VP-set syntax still fails.
+Without that flag, nonexistent VP selections fail. Unknown flag/control bits
+fail before dispatch. AddressSpace is recorded for diagnostics, but the native
+backend conservatively invalidates all address spaces and global mappings;
+this covers every requested subset and does not claim selective-flush speed.
+A missing backend or incomplete backend operation cannot return success.
+
+The model reports successful `tlbFlushRequests`, last target mask, requested
+address space and flags. Native `translationContextFlushes` count completed
+maintenance independently. The Windows auditor's `tlbFlushObserved` requires
+successful 0x2/0x13 calls, matching request counts and real native completions.
+No Windows use has yet been observed; the running two-VP Windows instance
+predates this hypercall implementation.
+
+Model tests cover every flag combination in both transports/ABIs, ignored
+invalid masks for ALL_PROCESSORS, sparse/all processor sets, reserved fields,
+input bounds, missing/failed backend and preserved argument registers. The EFI
+probe submits a fixed fast SMCCC call and an Ex memory legacy call with the MMU
+enabled. Both must execute real TLBI and preserve SCTLR, VBAR and the function's
+result; host counters must report two flush requests and two completions.
+The separate two-VP page-remapping test verifies the actual translation effect.
+
+Sources: Microsoft's [fixed address-space contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddressspace),
+[Ex contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddressspaceex)
+and [processor-set encoding](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_vp_set).
+ExProcessorMasks remains unadvertised until the other dependent interfaces
+are implemented and verified. List flushes/repetition semantics and synthetic
+IPIs are still outstanding.

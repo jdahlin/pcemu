@@ -38,10 +38,13 @@ def main():
         if mode == 'basic':
             names = {r['name']: r for r in report['registers']}
             calls = {r['code']: r for r in report['calls']}
-            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 6
-                    or report['smcccCalls'] != 18 or report['failures'] != 1
+            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 7
+                    or report['smcccCalls'] != 19 or report['failures'] != 1
                     or calls[0x19]['count'] != 2 or calls[0x19]['failures'] != 0
                     or calls[0x1a]['count'] != 2 or calls[0x1a]['failures'] != 0
+                    or calls[0x2]['count'] != 1 or calls[0x2]['failures'] != 0
+                    or calls[0x13]['count'] != 1 or calls[0x13]['failures'] != 0
+                    or report['tlbFlushRequests'] != 2 or report['translationContextFlushes'] != [2]
                     or report['contextSyncRequests'] != 4
                     or report['instructionContextBarriers'] != [4]
                     or calls[0x8001]['count'] != 2 or calls[0x8001]['failures'] != 0

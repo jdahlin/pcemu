@@ -77,6 +77,10 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         vm.synchronizeInstructionContext(targets);
         return true;
     });
+    hyperv.setTranslationFlusher([this](uint64_t targets) {
+        vm.flushTranslationContext(targets);
+        return true;
+    });
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
     validateCpuTables(tables, c.cpus, c.hyperv);

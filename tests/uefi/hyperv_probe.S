@@ -322,6 +322,35 @@ efi_main:
     blr x24
     cmp x9, #2
     b.ne failed
+    // Fixed address-space flush: all processors ignores an invalid mask.
+    ldr w0, =0x46000001
+    ldr x1, =0x10002
+    mov x2, #0x1234
+    mov x3, #7
+    mov x4, #-1
+    hvc #0
+    cbnz x0, failed
+    // Ex address-space flush through a real GPA sparse processor set.
+    add x23, x21, #2048
+    mrs x8, ttbr0_el1
+    str x8, [x23]
+    stp xzr, xzr, [x23, #8]
+    mov x8, #1
+    stp x8, x8, [x23, #24]
+    ldr x0, =0x20013
+    mov x1, x23
+    mov x2, #-1
+    hvc #1
+    cbnz x0, failed
+    mrs x8, sctlr_el1
+    cmp x8, x25
+    b.ne failed
+    mrs x8, vbar_el1
+    cmp x8, x22
+    b.ne failed
+    blr x24
+    cmp x9, #2
+    b.ne failed
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

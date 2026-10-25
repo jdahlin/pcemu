@@ -173,14 +173,16 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
-    if (code == 0x19 || code == 0x1a) {
+    if (code == 0x2 || code == 0x13 || code == 0x19 || code == 0x1a) {
         if (!guestId) return accessDenied;
-        const bool extended = code == 0x1a;
+        const bool flush = code == 0x2 || code == 0x13;
+        const bool extended = code == 0x13 || code == 0x1a;
         const uint64_t allowed = extended ? 0x7ffffff : 0x1ffff;
         if ((control & ~allowed) || vp >= cpus) return invalidInput;
         size_t banks = extended ? (control >> 17) & 0x3ff : 0;
         if (banks > 64) return invalidInput;
-        size_t size = extended ? 24 + banks * 8 : 16;
+        size_t prefix = flush ? 16 : 8;
+        size_t size = prefix + (extended ? 16 + banks * 8 : 8);
         unsigned in = smccc ? 2 : 1;
         std::vector<uint8_t> input(size);
         if (control & 0x10000) {
@@ -192,33 +194,45 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
                 address - base > ram.size() || size > ram.size() - (address - base)) return invalidAlignment;
             std::copy_n(ram.begin() + size_t(address - base), size, input.begin());
         }
-        auto flags = get(input, 0, 8);
+        auto flags = get(input, prefix - 8, 8);
+        if (flush && (flags & ~uint64_t(7))) return invalidParameter;
+        const bool allProcessors = flush && (flags & 1);
         uint64_t targets = 0;
         const uint64_t valid = (1ull << cpus) - 1;
         if (!extended) {
-            targets = get(input, 8, 8);
-            if (flags > 1 || (flags && targets)) return invalidParameter;
-            if (flags) targets = valid;
+            targets = get(input, prefix, 8);
+            if (!flush && (flags > 1 || (flags && targets))) return invalidParameter;
+            if (allProcessors || (!flush && flags)) targets = valid;
         } else {
-            // Windows HvlpFast/SlowSyncContextEx: flags followed by HV_VP_SET;
-            // only BankContents belongs to the variable input header.
-            if (flags) return invalidParameter;
-            auto format = get(input, 8, 8), validBanks = get(input, 16, 8);
+            // HV_VP_SET follows the operation's fixed prefix. Only its bank
+            // contents belong to the variable input header.
+            if (!flush && flags) return invalidParameter;
+            auto format = get(input, prefix, 8), validBanks = get(input, prefix + 8, 8);
             if (banks != size_t(std::popcount(validBanks))) return invalidInput;
             if (format == 1) {
                 if (validBanks) return invalidParameter;
                 targets = valid;
             } else if (!format) {
-                size_t at = 24;
+                size_t at = prefix + 16;
                 for (unsigned bank = 0; bank < 64; ++bank) if (validBanks & (1ull << bank)) {
                     auto bits = get(input, at, 8); at += 8;
                     // Empty banks are legal even beyond the configured VP range.
-                    if (bank && bits) return invalidVp;
+                    if (bank && bits && !allProcessors) return invalidVp;
                     if (!bank) targets = bits;
                 }
             } else return invalidParameter;
         }
+        if (allProcessors) targets = valid; // The supplied processor mask is ignored.
         if (targets & ~valid) return invalidVp;
+        if (flush) {
+            if (!translationFlusher) return invalidCode;
+            // The native backend conservatively flushes all ASIDs/global
+            // mappings, which also covers any requested address-space subset.
+            if (!translationFlusher(targets)) return 0x71;
+            ++tlbFlushRequests; tlbFlushTargetMask = targets;
+            tlbFlushAddressSpace = get(input, 0, 8); tlbFlushFlags = flags;
+            return 0;
+        }
         if (!contextSynchronizer) return invalidCode;
         if (!contextSynchronizer(targets)) return 0x71; // HV_STATUS_OPERATION_FAILED
         ++contextSyncRequests; contextSyncTargetMask = targets;
@@ -318,6 +332,10 @@ std::string ArmHyperV::report() const {
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
       << ",\"crash\":" << crashReport()
+      << ",\"tlbFlushRequests\":" << tlbFlushRequests
+      << ",\"tlbFlushTargetMask\":" << tlbFlushTargetMask
+      << ",\"tlbFlushAddressSpace\":" << tlbFlushAddressSpace
+      << ",\"tlbFlushFlags\":" << tlbFlushFlags
       << ",\"contextSyncRequests\":" << contextSyncRequests
       << ",\"contextSyncTargetMask\":" << contextSyncTargetMask
       << ",\"uidQueries\":" << uidQueries << ",\"smcccVersionQueries\":" << versionQueries

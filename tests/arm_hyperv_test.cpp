@@ -378,5 +378,61 @@ int main() {
     put(memory, 4096 - 32, 0); put(memory, 4096 - 24, 0);
     put(memory, 4096 - 16, 1); put(memory, 4096 - 8, 2);
     check(invokeEx(true, false, 1, base + 4096 - 32) == 0 && exTargets == 2);
+    ArmHyperV flushing(true, memory, base, 2);
+    auto flushCall = [&](bool extended, bool smccc, bool fast, uint64_t flags, uint64_t mask,
+                         unsigned banks = 1, uint64_t address = base, uint64_t extra = 0,
+                         uint64_t validBanks = 1, uint64_t format = 0) {
+        std::fill(memory.begin(), memory.end(), 0);
+        put(memory, 0, 0x12345000); put(memory, 8, flags);
+        put(memory, 16, extended ? format : mask);
+        put(memory, 24, validBanks); put(memory, 32, mask);
+        auto control = (extended ? 0x13ull : 2ull) | (fast ? 0x10000 : 0) |
+            (extended ? uint64_t(banks) << 17 : 0) | extra;
+        r.fill(0x7777777777777777);
+        r[0] = smccc ? 0x46000001 : control;
+        if (smccc) r[1] = control;
+        unsigned in = smccc ? 2 : 1;
+        if (fast) for (unsigned i = 0; i < (extended ? 5u : 3u); ++i) r[in + i] = get(memory, i * 8);
+        else { r[in] = address; r[in + 1] = uint64_t(-1); }
+        auto before = r;
+        check(flushing.call(smccc ? 0 : 1, r, 0));
+        check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
+        return r[0];
+    };
+    check(flushCall(false, false, true, 0, 1) == 6); // Identity before any service.
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90002; r[5] = 789;
+    check(flushing.call(1, r, 0) && r[0] == one);
+    check(flushCall(false, true, true, 1, uint64_t(-1)) == 2); // No native backend, no success.
+    unsigned flushCalls = 0;
+    uint64_t flushed = 0;
+    flushing.setTranslationFlusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
+    for (bool extended : {false, true}) for (bool smccc : {false, true}) for (bool fast : {false, true}) {
+        for (unsigned flags = 0; flags < 8; ++flags) {
+            check(flushCall(extended, smccc, fast, flags, flags & 1 ? uint64_t(-1) : 2) == 0);
+            check(flushed == (flags & 1 ? 3u : 2u)); // ALL_PROCESSORS must ignore even an invalid mask.
+        }
+        check(flushCall(extended, smccc, fast, 0, 0) == 0 && flushed == 0);
+        auto before = flushCalls;
+        check(flushCall(extended, smccc, fast, 8, 1) == 5);
+        check(flushCall(extended, smccc, fast, 0, 4) == 14);
+        for (auto bit : {1ull << 27, 1ull << 31, 1ull << 32, 1ull << 48})
+            check(flushCall(extended, smccc, fast, 0, 1, 1, base, bit) == 3);
+        check(flushCalls == before);
+    }
+    check(flushCall(true, true, true, 1, 1, 1, base, 0, 1ull << 63) == 0 && flushed == 3);
+    check(flushCall(true, false, false, 0, 1, 1, base, 0, 1ull << 63) == 14);
+    check(flushCall(true, false, true, 0, 0, 0, base, 0, 0, 1) == 0 && flushed == 3);
+    check(flushCall(true, true, false, 1, 1, 1, base, 0, 1, 2) == 5);
+    auto beforeBadFlush = flushCalls;
+    for (auto address : {base - 8, base + 1, base + 4096 - 16, base + 8192})
+        check(flushCall(false, false, false, 0, 1, 0, address) == 4);
+    check(flushCall(true, true, true, 0, 1, 2) == 3); // Bank mask/length mismatch.
+    check(flushCall(true, true, true, 0, 1, 13) == 3); // 136-byte input exceeds fast registers.
+    check(flushCalls == beforeBadFlush);
+    flushing.setTranslationFlusher([](uint64_t) { return false; });
+    check(flushCall(false, true, true, 7, 1) == 0x71);
+    check(flushing.report().find("\"tlbFlushRequests\":74") != std::string::npos);
+    check(flushing.report().find("\"contextSyncRequests\":0") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

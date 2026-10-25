@@ -93,6 +93,24 @@ class WindowsHyperV(unittest.TestCase):
         report['instructionContextBarriers'] = [4]
         self.assertFalse(verify(report, baseline)['contextSyncObserved'])
 
+    def test_tlb_flush_needs_successful_calls_and_native_completions(self):
+        report, baseline = fixture()
+        self.assertFalse(verify(report, baseline)['tlbFlushObserved'])
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        report['calls'] += [dict(code=0x2, count=2, failures=0), dict(code=0x13, count=1, failures=0)]
+        report.update(legacyCalls=21, tlbFlushRequests=3, tlbFlushTargetMask=1,
+                      tlbFlushFlags=7, translationContextFlushes=[3])
+        self.assertTrue(verify(report, baseline)['tlbFlushObserved'])
+        for change in (dict(tlbFlushRequests=4), dict(tlbFlushTargetMask=0),
+                       dict(tlbFlushTargetMask=2), dict(tlbFlushFlags=8),
+                       dict(translationContextFlushes=[2]), dict(translationContextFlushes=[]),
+                       dict(translationContextFlushes=[False]), dict(guestOsId=0x5043454d55)):
+            self.assertFalse(verify(dict(report, **change), baseline)['tlbFlushObserved'])
+        report['calls'][-1]['failures'] = 1
+        report['failures'] += 1
+        self.assertFalse(verify(report, baseline)['tlbFlushObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

@@ -19,6 +19,7 @@ class ArmHyperV {
     bool call(unsigned immediate, Registers &registers, unsigned vp);
     using ContextSynchronizer = std::function<bool(uint64_t)>;
     void setContextSynchronizer(ContextSynchronizer synchronize) { contextSynchronizer = std::move(synchronize); }
+    void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
     std::string report() const;
     // One bounded last-event snapshot, drained by the platform after each HVC.
     std::string takeCrashReport();
@@ -29,7 +30,8 @@ class ArmHyperV {
     uint64_t base, guestId = 0, partitionInfo = 0;
     unsigned cpus;
     Clock clock;
-    ContextSynchronizer contextSynchronizer;
+    ContextSynchronizer contextSynchronizer, translationFlusher;
+    uint64_t tlbFlushRequests = 0, tlbFlushTargetMask = 0, tlbFlushAddressSpace = 0, tlbFlushFlags = 0;
     uint64_t contextSyncRequests = 0, contextSyncTargetMask = 0;
     uint64_t clockOrigin, referenceTime = 0;
     std::array<uint64_t, 8> tlbiControl{}, syntheticVectors{};

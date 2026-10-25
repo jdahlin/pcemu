@@ -67,7 +67,7 @@ def verify(report, baseline, kernel_build=26100):
             and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
             'Off-mode Windows baseline unexpectedly used Hyper-V registers')
     unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51, 0x8001)
-                   and not (row.get('code') in (0x19, 0x1a) and row.get('failures') == 0)]
+                   and not (row.get('code') in (0x2, 0x13, 0x19, 0x1a) and row.get('failures') == 0)]
     clock = registers.get(0x90004, {})
     last_time = report.get('referenceTime100ns', 0)
     clock_observed = (not errors and type(clock.get('reads')) is int
@@ -86,7 +86,20 @@ def verify(report, baseline, kernel_build=26100):
                      and type(barriers) is list and len(barriers) == len(vps)
                      and all(type(n) is int and n >= 0 for n in barriers)
                      and sum(barriers) >= sync_requests)
-    return {'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
+    flush_calls = [row for row in calls if row.get('code') in (0x2, 0x13)]
+    flush_requests = report.get('tlbFlushRequests', 0)
+    flush_mask = report.get('tlbFlushTargetMask', 0)
+    flush_flags = report.get('tlbFlushFlags', 0)
+    flushes = report.get('translationContextFlushes', [])
+    flush_observed = (not errors and type(flush_requests) is int and flush_requests > 0
+                      and counts.get(0x2, 0) + counts.get(0x13, 0) == flush_requests
+                      and all(row.get('failures') == 0 for row in flush_calls)
+                      and type(flush_mask) is int and 0 < flush_mask < (1 << len(vps))
+                      and type(flush_flags) is int and 0 <= flush_flags <= 7
+                      and type(flushes) is list and len(flushes) == len(vps)
+                      and all(type(n) is int and n >= 0 for n in flushes)
+                      and sum(flushes) >= flush_requests)
+    return {'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
             'guiBootVerified': False, 'performanceBenefitVerified': False}
