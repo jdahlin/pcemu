@@ -66,3 +66,30 @@ not a precise causal slowdown claim. No application improvement was established.
 The runtime source was restored byte-identically. The candidate patch, runner
 source, commands, hashes and raw times remain in
 [the experiment record](measurements/jit-cache-publish-rejected-2026-10-25.json).
+
+
+## Twofold useful-work stretch target
+
+The user considers current Win95 speed usable and identifies another 2× as a
+worthwhile improvement. Treat that as a stretch target on real loaded Win95
+workloads, alongside the existing installer and OS correctness gates. Do not
+claim it from native coverage, a deliberately CALL-heavy loop, or rendering
+throughput alone. The earlier historical-PC references remain proposals rather
+than measured ratings.
+
+Freeze the memory-indirect CALL candidate as the current reproducible reference:
+
+- Source change: `1c5a879`, using the frozen x86-only source set in the measurement record.
+- Executable SHA-256: `f6cd1657efe65efa799838685d60f4c5526756d29c2335722c9372542a5821fc`.
+- Existing loaded Excel task: 4,096 dependent rows; change D1 from 3 to 4 and
+  verify SUM changes from 25,200,640 to 33,591,296. Task SHA-256:
+  `7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47`.
+
+[Complete baseline results](measurements/native-memory-call-2026-10-25.json)
+include every result from both batches. Their large host-dependent spread means
+we must rerun this reference alongside future candidates rather than compare
+a future favorable sample against the old slowest sample. Report process CPU,
+wall response, correctness, native instruction counts, host contention and
+render/capture scope separately. Add other useful-work tasks and a memory kernel
+to prevent optimizing only this calculation. The twofold target is not achieved
+by the measurements currently recorded.
