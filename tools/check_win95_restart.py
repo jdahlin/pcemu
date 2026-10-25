@@ -140,6 +140,12 @@ def wait_text(*tokens, absent=(), timeout=30):
         if all(normalize(token) in text for token in tokens) and not any(
                 normalize(token) in text for token in absent):
             return
+        if 'welcometowindows' in text:
+            # First-boot Welcome can appear after Explorer readiness and cover
+            # the Run dialog. Dismiss this known popup, then verify the target.
+            print('Handling delayed welcome during application check', flush=True)
+            send('key 011b', settle=.8)
+            continue
         time.sleep(.2)
     screenshot('application-failure.png')
     raise RuntimeError('Application text not verified: ' + repr(tokens))
