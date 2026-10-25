@@ -2144,3 +2144,22 @@ PowerShell parsing and mocked observation/correction/failure/cleanup paths pass
 in `tests/windows_hyperv_clock_test.ps1`. These mocks do not establish an actual
 Windows clock adjustment. Running this probe on the private guest and correlating
 its report with live timesync counters is the next validation gate.
+
+The first actual clock-probe attempt was staged into a separate APFS-cloned
+Windows write disk via WinPE. The media/report endpoint was restarted after
+reconnecting the ISO share. WinPE staging reported success. Windows subsequently
+opened all three integration channels; timesync continued acknowledging samples
+with zero Hyper-V failures. However, no new clock-report POST, local
+HYPERV-CLOCK.JSON or HVSVC.LOG was observed. Offline NTFS extraction confirms the
+staged PowerShell file matches the committed probe byte-for-byte.
+
+The persisted SOFTWARE hive still contains the RunOnce command, AutoAdminLogon=1
+and AutoLogonCount=1. This hive was read without transaction-log replay, so it
+is configuration evidence rather than an authoritative live login-state trace.
+Combined with the missing local/HTTP report, the run is inconclusive about the
+clock adjustment; it must not be used to mark guestClockAdjustmentVerified.
+The next action is to diagnose the one-shot guest launch/login path, rather
+than infer a timesync protocol failure. Evidence and the stopped private overlay
+are retained under `build/windows11-hyperv/clock-adjustment/` for that inspection.
+Secret-bearing temporary staging media were removed; extracted registry data
+are restricted to the current user. The original basic-profile VM is restored.
