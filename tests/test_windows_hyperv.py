@@ -122,6 +122,24 @@ class WindowsHyperV(unittest.TestCase):
         report['translationContextFlushes'] = [1]
         self.assertFalse(verify(report, baseline)['tlbFlushObserved'])
 
+    def test_ipi_requires_successful_calls_and_matching_native_requests(self):
+        report, baseline = fixture()
+        self.assertFalse(verify(report, baseline)['ipiObserved'])
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        report['calls'] += [dict(code=0xb, count=2, failures=0), dict(code=0x15, count=1, failures=0)]
+        report.update(legacyCalls=21, ipiRequests=3, ipiTargetMask=1, ipiVector=0,
+                      ipiTargetRequests=[3], softwareInterruptRequests=[3])
+        self.assertTrue(verify(report, baseline)['ipiObserved'])
+        for change in (dict(ipiRequests=2), dict(ipiTargetMask=2), dict(ipiVector=16),
+                       dict(ipiTargetRequests=[0]), dict(ipiTargetRequests=[4]),
+                       dict(softwareInterruptRequests=[2]), dict(softwareInterruptRequests=[True]),
+                       dict(ipiTargetRequests=[]), dict(guestOsId=0x5043454d55)):
+            self.assertFalse(verify(dict(report, **change), baseline)['ipiObserved'])
+        report['calls'][-1]['failures'] = 1
+        report['failures'] += 1
+        self.assertFalse(verify(report, baseline)['ipiObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

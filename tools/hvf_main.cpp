@@ -354,15 +354,22 @@ void selfTest() {
         // Configure Group-1 SGIs in each GICR frame and CPU interface, then
         // read IAR1 once per host phase. DAIF stays masked: software explicitly
         // acknowledges the interrupt, making routing and EOI observable.
-        code(vm, std::array<uint32_t, 32>{
+        code(vm, std::array<uint32_t, 42>{
             0xd53800a0, 0x92401c00, 0xd2a10161, 0x8b004421, // MPIDR -> GICR SGI frame
             0x12800002, 0xb9008022, 0x529fffe2, 0xb9010022, // Group 1, enable SGIs
             0xd2a10003, 0x52800262, 0xb9000062, 0xd2800022, // enable distributor
             0xd518cca2, 0xd5033fdf, 0xd2801fe2, 0xd5184602, // SRE, PMR=255
             0xd2800022, 0xd518cce2, 0xd5033fdf, 0xd2a80025, // Group-1 enable, mailbox
             0xd2800028, 0xf94000a9, 0xeb08013f, 0x54ffffc1, // wait for phase
-            0xd538cc04, 0xd4000002, 0xf10ff09f, 0x54000062, // IAR1; HVC; skip spurious EOI
-            0xd518cc24, 0xd5033fdf, 0x91000508, 0x17fffff6}); // EOI; next phase
+            0xf100191f, 0x54000120, 0xd538cc04, 0xd4000002, // phase 6 -> IRQ wait; otherwise IAR/HVC
+            0xf10ff09f, 0x54000062, 0xd518cc24, 0xd5033fdf, // skip spurious EOI
+            0x91000508, 0x17fffff4, 0xd282000a, 0xf2a8000a, // next phase; vector base
+            0xd518c00a, 0xd5033fdf, 0xd50342ff, 0xd5033fdf, // VBAR; unmask IRQ
+            0xd503207f, 0x17ffffff}); // WFI; repeat
+        const auto vectors = HvfMachine::ramBase + 0x1000;
+        const std::array<uint32_t, 5> irqHandler{0xd538cc04, 0xd518cc24, 0xd5033fdf, 0xd4000aa2, 0xd69f03e0};
+        vm.writeMemory(vectors + 0x280,
+            {reinterpret_cast<const uint8_t *>(irqHandler.data()), sizeof(irqHandler)});
         require(vm.startCPU(1, HvfMachine::ramBase, 0) == 0, "SGI secondary start failed");
         uint64_t phase = 0;
         auto acknowledge = [&](uint64_t primary, uint64_t secondary) {
@@ -395,6 +402,26 @@ void selfTest() {
         rejects([&] { vm.sendSoftwareInterrupt(3, 16); }, "Non-SGI vector accepted");
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
                 "Empty/rejected SGI request changed counters");
+        vm.sendSoftwareInterrupt(2, 0); // The SGI ID observed in real Windows.
+        ++phase;
+        vm.writeMemory(HvfMachine::ramBase + 0x10000,
+            {reinterpret_cast<const uint8_t *>(&phase), sizeof(phase)});
+        bool handled = false;
+        for (unsigned attempt = 0; attempt < 16 && !handled; ++attempt) {
+            auto exit = vm.run(std::chrono::milliseconds(100));
+            if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+            require(exit.exceptionClass() == 0x16 && (exit.syndrome & 0xffff) == 0x55 &&
+                    exit.cpu == 1 && exit.pc == vectors + 0x290 && vm.reg(4) == 0,
+                    "Target VP did not execute its IRQ handler for SGI 0");
+            handled = true;
+        }
+        require(handled, "SGI 0 IRQ handler did not execute");
+        auto resumed = vm.run(std::chrono::milliseconds(2));
+        require(resumed.reason == HvfMachine::ExitReason::Canceled &&
+                vm.cpuPC(1) >= HvfMachine::ramBase + 0x88 && vm.cpuPC(1) < HvfMachine::ramBase + 0xa8,
+                "IRQ handler did not ERET to the interrupted guest");
+        require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 5,
+                "Vectored IRQ changed the wrong request counter");
     }
     for (bool gic : {false, true}) {
         uint64_t sleep = 0;
@@ -560,7 +587,6 @@ int main(int argc, char **argv) {
                 if (mode != "off" && mode != "basic") throw std::runtime_error("Hyper-V must be off or basic");
                 uefi.hyperv = mode == "basic"; uefiOptions = true;
             }
-            else if (arg == "--hyperv-probe-ipi") { uefi.hypervIpiProbe = true; uefiOptions = true; }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
                 auto mode = value();
@@ -606,7 +632,6 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic --hyperv-stats FILE]\n"
-                             "      [--hyperv-probe-ipi (diagnostic; unsupported IPI calls still fail)]\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
                              "      [--cpus 1..8] (build matching assets with tools/build_arm_platform.py)\n"
@@ -623,7 +648,6 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
-            if (uefi.hypervIpiProbe && !uefi.hyperv) throw std::runtime_error("IPI probe requires --hyperv basic");
             if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes || uefi.hyperv) {
                 auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
                 if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)

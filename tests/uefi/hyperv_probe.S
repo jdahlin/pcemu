@@ -357,6 +357,62 @@ efi_main:
     mov x2, #-1
     hvc #1
     cbnz x0, failed
+    // Own the interrupt configuration for this final fixture section. Keep
+    // DAIF.I masked while explicitly acknowledging Group-1 SGIs through IAR.
+    msr daifset, #2
+    ldr x27, =0x080b0000
+    ldr w8, [x27, #0x80]
+    orr w8, w8, #0x20
+    orr w8, w8, #0x80
+    str w8, [x27, #0x80]
+    mov w8, #0xa0
+    str w8, [x27, #0x100]
+    strb wzr, [x27, #0x405]
+    strb wzr, [x27, #0x407]
+    mov x28, #0x08000000
+    ldr w8, [x28]
+    orr w8, w8, #3
+    orr w8, w8, #0x10
+    str w8, [x28]
+    mov x8, #1
+    msr icc_sre_el1, x8
+    isb
+    mov x8, #0xff
+    msr icc_pmr_el1, x8
+    mov x8, #1
+    msr icc_igrpen1_el1, x8
+    mrs x8, icc_ctlr_el1
+    bic x8, x8, #2
+    msr icc_ctlr_el1, x8
+    isb
+    ldr w0, =0x46000001
+    ldr x1, =0x1000b
+    mov x2, #5
+    mov x3, #1
+    hvc #0
+    cbnz x0, failed
+    mrs x9, icc_iar1_el1
+    cmp x9, #5
+    b.ne failed
+    msr icc_eoir1_el1, x9
+    isb
+    // Ex memory input: vector 7, VTL0, sparse VP0 set.
+    add x23, x21, #2560
+    mov x8, #7
+    str x8, [x23]
+    str xzr, [x23, #8]
+    mov x8, #1
+    stp x8, x8, [x23, #16]
+    ldr x0, =0x20015
+    mov x1, x23
+    mov x2, #-1
+    hvc #1
+    cbnz x0, failed
+    mrs x9, icc_iar1_el1
+    cmp x9, #7
+    b.ne failed
+    msr icc_eoir1_el1, x9
+    isb
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

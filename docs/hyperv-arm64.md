@@ -59,7 +59,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 977 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 1241 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -292,7 +292,7 @@ The following is a work inventory, not a completion claim:
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
 | SyncContext / SyncContextEx | Fixed/Ex, fast/memory inputs implemented with real per-VP barriers. Windows fixed-path and native Ex tests pass; Windows Ex use remains unobserved. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
-| Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes and processor sets implemented with native tests; list variants, IPIs and Windows flush consumption remain pending. |
+| Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows IPI/TLB use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
 | VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
@@ -536,7 +536,7 @@ before any write, requires GICv3, runs each redistributor API on its vCPU owner
 thread and preserves other pending bits. It does not rewrite the guest's
 interrupt enables, groups or priority controls. `softwareInterruptRequests`
 counts requests, not guest handler invocations: repeated requests can coalesce.
-This is delivery groundwork, not advertised Hyper-V IPI support.
+At that checkpoint this was delivery groundwork; the functional IPI path below now advertises support.
 
 The real two-VP test configures the GIC in guest code and reads ICC_IAR1_EL1,
 then performs EOI. A targeted SGI 5 must appear only on VP1; SGI 7 must appear
@@ -563,7 +563,7 @@ Frozen evidence: `build/windows11-hyperv/sync-ex-smp/soak-evidence.json`, SHA-25
 
 ## Diagnostic Windows IPI recommendation probe
 
-`--hyperv-probe-ipi` is an explicit diagnostic experiment, requiring
+The historical `--hyperv-probe-ipi` option was an explicit diagnostic experiment, requiring
 `--hyperv basic`. It sets only the synthetic-cluster-IPI recommendation in
 HvRegisterFeaturesInfo and captures the two fixed fast 0xb input words in
 `ipiProbe`. IPI requests still return the normal unsupported-call error;
@@ -576,8 +576,8 @@ without guessing an APIC-vector-to-GIC offset from the generic x64-oriented
 table. The original HvlSendSyntheticClusterIpi routine supplies a 32-bit first
 word and a VP mask to fast 0xb; the vector's meaning is the remaining question.
 The bounded report stores only those defined input words, count and enabled
-state. This experiment must be replaced or disabled once the vector contract
-and actual delivery path are verified.
+state. This experiment has now been removed from the CLI and model; the implementation
+below replaces it. Old probe artifacts remain historical evidence only.
 
 
 The isolated recommendation probe captured two Windows fast 0xb requests.
@@ -612,3 +612,45 @@ GPAs, reserved controls, invalid VP, identity and backend failure. The EFI probe
 executes a legacy memory 0xd6 call alongside fixed/Ex address-space flushes;
 three successful requests must equal three completed native flushes. The
 Windows usage auditor includes 0xd6 in its native-completion check.
+
+
+## Fixed and Ex ARM64 IPI delivery
+
+HvCallSendSyntheticClusterIpi (0xb) and its Ex variant (0x15) now deliver real
+GIC SGIs to the selected VPs. The first input word holds a 32-bit SGI ID and
+HV_INPUT_VTL; current VTL0 and explicit VTL0 are supported. When UseTargetVtl
+is clear, the target nibble is ignored, matching Microsoft's OpenVMM decoder.
+Reserved bits/flags, explicit nonzero VTLs and SGI IDs above 15 fail before
+injection. The fixed VP mask and Ex processor set use the same bounds checks
+as the other interfaces; both HVC ABIs and fast/memory transports work.
+
+ARM [GIC interrupt IDs 0..15 are SGIs](https://developer.arm.com/-/media/Arm%20Developer%20Community/PDF/Learn%20the%20Architecture/GICv3_v4_overview.pdf).
+The original Windows fast 0xb trace supplies ID 0 directly, with no APIC-vector
+offset. This ARM64 implementation deliberately does not apply the generic
+IPI page's x64-oriented 0x10..0xff range. Packet definitions and HV_INPUT_VTL
+semantics are corroborated by Microsoft's OpenVMM hvdef types.
+
+The IPI recommendation (bit 2 of HvRegisterFeaturesInfo) is set only when a
+real software-interrupt backend is installed. The diagnostic probe option
+has been retired. ExProcessorMasks remains off while broader applicability
+and remaining interfaces are assessed. There is no success stub when an
+interrupt backend is missing or reports failure.
+
+`ipiRequests` counts successful calls. `ipiTargetRequests` counts requested
+VP deliveries and is compared against native `softwareInterruptRequests` by
+the Windows auditor's `ipiObserved` gate. These are request counts, not handler
+invocation counts; the GIC may coalesce repeated pending SGIs. The latest
+mask/vector are recorded. A successful hypercall means the interrupt was
+pended through the real GIC API, not that the target handler has finished.
+
+The native two-VP test now also sends SGI 0 to VP1 with interrupts unmasked.
+Only VP1 may enter its architectural IRQ vector; its handler reads IAR1,
+performs EOI and emits a unique HVC marker. It must then ERET to the interrupted
+WFI loop. The native self-test has 228 checks. The EFI probe submits a fixed
+fast IPI and an Ex memory IPI, acknowledges IDs 5/7 through IAR1/EOIR1 and
+requires matching model/native request counters. Model tests cover all four
+ABI/transport combinations, SGI 0/15, VTL selection, processor sets, malformed
+inputs, missing/failed backend and preserved argument registers.
+
+Windows boot/consumption with the functional IPI path still requires a new
+run; the earlier probe only established the input, not successful delivery.

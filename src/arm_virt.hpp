@@ -31,7 +31,6 @@ class ArmVirtMachine {
         std::string extraDisk, extraDiskOverlay;
         bool network = false;
         bool hyperv = false;
-        bool hypervIpiProbe = false;
         uint16_t sshPort = 0;
         std::string networkCapture;
         std::string virtioTransport = "pci";

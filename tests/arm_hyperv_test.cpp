@@ -434,23 +434,6 @@ int main() {
     check(flushCall(false, true, true, 7, 1) == 0x71);
     check(flushing.report().find("\"tlbFlushRequests\":74") != std::string::npos);
     check(flushing.report().find("\"contextSyncRequests\":0") != std::string::npos);
-    ArmHyperV probing(true, memory, base, 1);
-    auto probeFeatures = [&] {
-        r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x201;
-        check(probing.call(1, r, 0) && r[0] == one);
-        return r[15];
-    };
-    check(probeFeatures() == 0xffffffff00000000ull);
-    probing.setIpiProbe(true);
-    check(probeFeatures() == 0xffffffff00000004ull);
-    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
-    r[3] = 0x90002; r[5] = 456;
-    check(probing.call(1, r, 0) && r[0] == one);
-    r = {}; r[0] = 0x1000b; r[1] = 5; r[2] = 1;
-    check(probing.call(1, r, 0) && r[0] == 2); // Probe does not fake IPI support.
-    check(probing.report().find("\"ipiProbe\":{\"enabled\":true,\"requests\":1,\"input0\":5,\"input1\":1}") != std::string::npos);
-    probing.setIpiProbe(false);
-    check(probeFeatures() == 0xffffffff00000000ull);
     auto drainTlb = [&](bool smccc, bool fast, unsigned vp, uint64_t extra = 0) {
         r.fill(0x9999999999999999);
         auto control = uint64_t(0xd6) | (fast ? 0x10000 : 0) | extra;
@@ -475,5 +458,55 @@ int main() {
     ArmHyperV earlyDrain(true, memory, base, 1);
     r = {}; r[0] = 0xd6;
     check(earlyDrain.call(1, r, 0) && r[0] == 6);
+    ArmHyperV interrupts(true, memory, base, 2);
+    auto sendIpi = [&](bool extended, bool smccc, bool fast, uint64_t vector, uint64_t targets,
+                       unsigned banks = 1, uint64_t address = base, uint64_t extra = 0, uint64_t format = 0) {
+        std::fill(memory.begin(), memory.end(), 0);
+        put(memory, 0, vector); put(memory, 8, extended ? format : targets);
+        put(memory, 16, format == 1 ? 0 : 1); put(memory, 24, targets);
+        auto control = (extended ? 0x15ull : 0xbull) | (fast ? 0x10000 : 0) |
+                       (extended ? uint64_t(banks) << 17 : 0) | extra;
+        r.fill(0x5555555555555555); r[0] = smccc ? 0x46000001 : control;
+        if (smccc) r[1] = control;
+        unsigned in = smccc ? 2 : 1;
+        if (fast) for (unsigned i = 0; i < (extended ? 4u : 2u); ++i) r[in + i] = get(memory, i * 8);
+        else { r[in] = address; r[in + 1] = uint64_t(-1); }
+        auto before = r;
+        check(interrupts.call(smccc ? 0 : 1, r, 0));
+        check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
+        return r[0];
+    };
+    check(sendIpi(false, false, true, 0, 2) == 6);
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90002; r[5] = 456;
+    check(interrupts.call(1, r, 0) && r[0] == one);
+    check(sendIpi(false, true, true, 0, 2) == 2);
+    unsigned sends = 0, sentVector = 99;
+    uint64_t sentMask = 0;
+    interrupts.setSoftwareInterruptSender([&](uint64_t mask, unsigned vector) {
+        ++sends; sentMask = mask; sentVector = vector; return true;
+    });
+    for (bool extended : {false, true}) for (bool smccc : {false, true}) for (bool fast : {false, true}) {
+        check(sendIpi(extended, smccc, fast, 0, 2) == 0 && sentMask == 2 && sentVector == 0);
+        check(sendIpi(extended, smccc, fast, 15 | (0x10ull << 32), 1) == 0 && sentMask == 1 && sentVector == 15);
+        check(sendIpi(extended, smccc, fast, 7, 0) == 0 && sentMask == 0);
+        check(sendIpi(extended, smccc, fast, 15 | (0xfull << 32), 2) == 0 && sentMask == 2 && sentVector == 15);
+        auto before = sends;
+        for (auto vector : {uint64_t(16), uint64_t(255), 0x11ull << 32, 1ull << 40})
+            check(sendIpi(extended, smccc, fast, vector, 1) == 5);
+        check(sendIpi(extended, smccc, fast, 0, 4) == 14);
+        check(sendIpi(extended, smccc, fast, 0, 1, 1, base, 1ull << 31) == 3);
+        check(sends == before);
+    }
+    check(sendIpi(true, true, false, 0, 0, 0, base, 0, 1) == 0 && sentMask == 3);
+    check(sendIpi(true, false, true, 0, 1, 2) == 3);
+    check(sendIpi(true, true, true, 0, 1, 14) == 3);
+    check(sendIpi(false, false, false, 0, 1, 0, base + 4096 - 8) == 4);
+    interrupts.setSoftwareInterruptSender([](uint64_t, unsigned) { return false; });
+    check(sendIpi(false, false, true, 0, 1) == 0x71);
+    check(interrupts.report().find("\"ipiRequests\":33") != std::string::npos);
+    check(interrupts.report().find("\"ipiTargetRequests\":[9,17]") != std::string::npos);
+    r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x201;
+    check(interrupts.call(1, r, 0) && r[15] == 0xffffffff00000004ull); // Real backend enables IPI recommendation.
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

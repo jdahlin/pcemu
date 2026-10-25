@@ -45,7 +45,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
     case 0x200: value[0] = privileges; value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
-    case 0x201: value[0] = 0xffffffff00000000ull | (ipiProbe ? 4 : 0); return 0; // No scheduling/flush recommendations
+    case 0x201: value[0] = 0xffffffff00000000ull | (interruptSender ? 4 : 0); return 0; // Recommend IPIs only with a real interrupt backend
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
     case 0x204: case 0x205: case 0x206: case 0x207: case 0x208: case 0x209: return 0;
@@ -173,13 +173,6 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
-    if (ipiProbe && code == 0xb && (control & 0x10000)) {
-        // Observe the real Windows ARM64 fixed IPI input. Do not acknowledge
-        // unsupported delivery or infer an APIC-to-GIC vector offset.
-        ++ipiProbeRequests;
-        unsigned in = smccc ? 2 : 1;
-        ipiProbeInput0 = r[in]; ipiProbeInput1 = r[in + 1];
-    }
     if (code == 0xd6) {
         // ARM enlightened TLB drain: Windows supplies no input or output
         // parameters, after consulting its partition-info pending-flush word.
@@ -192,10 +185,11 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         tlbFlushAddressSpace = 0; tlbFlushFlags = 0;
         return 0;
     }
-    if (code == 0x2 || code == 0x13 || code == 0x19 || code == 0x1a) {
+    if (code == 0x2 || code == 0x13 || code == 0x19 || code == 0x1a || code == 0xb || code == 0x15) {
         if (!guestId) return accessDenied;
         const bool flush = code == 0x2 || code == 0x13;
-        const bool extended = code == 0x13 || code == 0x1a;
+        const bool ipi = code == 0xb || code == 0x15;
+        const bool extended = code == 0x13 || code == 0x1a || code == 0x15;
         const uint64_t allowed = extended ? 0x7ffffff : 0x1ffff;
         if ((control & ~allowed) || vp >= cpus) return invalidInput;
         size_t banks = extended ? (control >> 17) & 0x3ff : 0;
@@ -215,17 +209,21 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         }
         auto flags = get(input, prefix - 8, 8);
         if (flush && (flags & ~uint64_t(7))) return invalidParameter;
+        // ARM64 IPI vectors are GIC SGI IDs. Accept current VTL0 or explicit
+        // VTL0 (UseTargetVtl bit), with all remaining flag/reserved bytes zero.
+        if (ipi && ((flags & ~0x1fffffffffull) || uint32_t(flags) >= 16 ||
+            ((flags & (0x10ull << 32)) && (flags & (0xfull << 32))))) return invalidParameter;
         const bool allProcessors = flush && (flags & 1);
         uint64_t targets = 0;
         const uint64_t valid = (1ull << cpus) - 1;
         if (!extended) {
             targets = get(input, prefix, 8);
-            if (!flush && (flags > 1 || (flags && targets))) return invalidParameter;
-            if (allProcessors || (!flush && flags)) targets = valid;
+            if (!flush && !ipi && (flags > 1 || (flags && targets))) return invalidParameter;
+            if (allProcessors || (!flush && !ipi && flags)) targets = valid;
         } else {
             // HV_VP_SET follows the operation's fixed prefix. Only its bank
             // contents belong to the variable input header.
-            if (!flush && flags) return invalidParameter;
+            if (!flush && !ipi && flags) return invalidParameter;
             auto format = get(input, prefix, 8), validBanks = get(input, prefix + 8, 8);
             if (banks != size_t(std::popcount(validBanks))) return invalidInput;
             if (format == 1) {
@@ -243,6 +241,13 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         }
         if (allProcessors) targets = valid; // The supplied processor mask is ignored.
         if (targets & ~valid) return invalidVp;
+        if (ipi) {
+            if (!interruptSender) return invalidCode;
+            if (!interruptSender(targets, uint32_t(flags))) return 0x71;
+            ++ipiRequests; ipiTargetMask = targets; ipiVector = uint32_t(flags);
+            for (unsigned cpu = 0; cpu < cpus; ++cpu) if (targets & (1ull << cpu)) ++ipiTargetRequests[cpu];
+            return 0;
+        }
         if (flush) {
             if (!translationFlusher) return invalidCode;
             // The native backend conservatively flushes all ASIDs/global
@@ -350,9 +355,8 @@ std::string ArmHyperV::report() const {
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
-      << ",\"ipiProbe\":{\"enabled\":" << (ipiProbe ? "true" : "false")
-      << ",\"requests\":" << ipiProbeRequests << ",\"input0\":" << ipiProbeInput0
-      << ",\"input1\":" << ipiProbeInput1 << '}'
+      << ",\"ipiRequests\":" << ipiRequests << ",\"ipiTargetMask\":" << ipiTargetMask
+      << ",\"ipiVector\":" << ipiVector
       << ",\"crash\":" << crashReport()
       << ",\"tlbFlushRequests\":" << tlbFlushRequests
       << ",\"tlbFlushTargetMask\":" << tlbFlushTargetMask
@@ -368,6 +372,8 @@ std::string ArmHyperV::report() const {
     bool comma = false;
     for (auto [code, n] : calls) { if (comma) s << ','; comma = true; s << "{\"code\":" << code << ",\"count\":" << n
           << ",\"failures\":" << (callFailures.contains(code) ? callFailures.at(code) : 0) << '}'; }
+    s << "],\"ipiTargetRequests\":[";
+    for (unsigned cpu = 0; cpu < cpus; ++cpu) { if (cpu) s << ','; s << ipiTargetRequests[cpu]; }
     s << "],\"registers\":["; comma = false;
     for (auto [name, n] : registers) {
         if (comma) s << ','; comma = true;

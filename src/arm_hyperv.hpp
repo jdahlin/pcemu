@@ -20,16 +20,18 @@ class ArmHyperV {
     using ContextSynchronizer = std::function<bool(uint64_t)>;
     void setContextSynchronizer(ContextSynchronizer synchronize) { contextSynchronizer = std::move(synchronize); }
     void setTranslationFlusher(ContextSynchronizer flush) { translationFlusher = std::move(flush); }
-    // Diagnostic-only recommendation probe: requests still fail normally.
-    void setIpiProbe(bool value) { ipiProbe = value; }
+    using SoftwareInterruptSender = std::function<bool(uint64_t, unsigned)>;
+    void setSoftwareInterruptSender(SoftwareInterruptSender send) { interruptSender = std::move(send); }
     std::string report() const;
     // One bounded last-event snapshot, drained by the platform after each HVC.
     std::string takeCrashReport();
   private:
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
-    bool ipiProbe = false;
-    uint64_t ipiProbeRequests = 0, ipiProbeInput0 = 0, ipiProbeInput1 = 0;
+    SoftwareInterruptSender interruptSender;
+    uint64_t ipiRequests = 0, ipiTargetMask = 0;
+    unsigned ipiVector = 0;
+    std::array<uint64_t, 8> ipiTargetRequests{};
     std::span<uint8_t> ram;
     uint64_t base, guestId = 0, partitionInfo = 0;
     unsigned cpus;
