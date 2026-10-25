@@ -1091,3 +1091,18 @@ a 137 KiB child externally; no Office reinstall or large raw disk is made.
 Per-run and probe overlays are removed. The 2× stretch target remains unproven.
 See `office-current-profiling.md` and
 `measurements/office-host-profile-2026-10-26.json`.
+
+
+## Reject PS/2 predicate ordering shortcut (26 October)
+
+The current host profile points to PS/2 due checking within frequent board polls.
+Moving the no-motion/button-change test earlier preserves 480,000 frozen
+predicate comparisons and 65,564 controller checks. Three-pair RAM gate loops
+show an enabled-idle median ratio of 1.47, but a disabled-idle ratio of 0.83.
+Three alternative condition orderings also fail to improve both cases. No
+application gain is established, so mouse.hpp is restored byte-identically and
+no redundant predicate-only test is retained in the production test suite.
+The kernel, candidate patch, alternatives and all raw measurements remain in
+`measurements/ps2-idle-ordering-rejected-2026-10-26.json`. This motivates testing
+longer execution paths/event-driven polling instead of keeping a local ordering
+change based on one favorable mode. The broader goal remains active.

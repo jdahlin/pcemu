@@ -1,0 +1,174 @@
+{
+  "scope": "Rejected idle PS/2 predicate ordering experiment; semantics pass, local idle gate performance has mode-dependent regressions. No application performance established.",
+  "initial": {
+    "scope": "RAM-only 100 million I8042 pollDue calls per case with compiler memory barrier representing external guest/board mutation. Idle fixtures only; no OS or performance-class claim.",
+    "source": "#include \"i8042.hpp\"\n#include <chrono>\n#include <climits>\n#include <iostream>\n#include <stdexcept>\n#include <string_view>\nusing namespace pc;\nstatic bool reference(const PS2Mouse &m,uint64_t now) {\n    return m.enabled && !m.remote && !m.wrap && m.packets.empty() && now>=m.nextAt &&\n           (m.dx||m.dy||m.wheel||m.buttons!=m.reportedButtons);\n}\nint main(int argc,char **argv) {\n    PS2Mouse m;unsigned checks=0;\n    for(unsigned flags=0;flags<16;++flags) {\n        m.enabled=flags&1;m.remote=flags&2;m.wrap=flags&4;\n        m.packets.clear();if(flags&8)m.packets.push_back(8);\n        for(int dx:{0,1,-1,INT_MIN,INT_MAX})for(int dy:{0,1,-1,INT_MIN,INT_MAX})\n        for(int wheel:{0,1,-1,INT_MIN,INT_MAX})for(unsigned buttons:{0u,1u,7u,255u})\n        for(unsigned reported:{0u,1u,7u,255u})for(uint64_t deadline:std::array<uint64_t,3>{0,4000,UINT64_MAX})\n        for(uint64_t now:std::array<uint64_t,5>{0,3999,4000,4001,UINT64_MAX}) {\n            m.dx=dx;m.dy=dy;m.wheel=wheel;m.buttons=buttons;m.reportedButtons=reported;m.nextAt=deadline;\n            if(m.packetDue(now)!=reference(m,now))throw std::runtime_error(\"mouse sample predicate differs\");\n            ++checks;\n        }\n    }\n    std::cout<<\"Passed \"<<checks<<\" packet deadline comparisons\\n\";\n    if(argc>1 && std::string_view(argv[1])==\"--bench\") {\n        I8042Device c;\n        for(bool enabled:{false,true}) {\n            c.mouse().enabled=enabled;\n            auto begin=std::chrono::steady_clock::now();uint64_t due=0;\n            for(uint64_t now=0;now<100000000;++now) {\n                // Model a separate JIT/board call that can mutate live state;\n                // prevent constant folding the idle fixture out of the loop.\n                asm volatile(\"\" : \"+m\"(c) : : \"memory\");\n                due+=c.pollDue(now);\n            }\n            if(due)throw std::runtime_error(\"idle controller unexpectedly due\");\n            auto ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();\n            std::cout<<\"enabled=\"<<enabled<<\" polls=100000000 ms=\"<<ms<<\" due=\"<<due<<'\\n';\n        }\n    }\n}\n",
+    "pairs": [
+      {
+        "baseline": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=81.293 due=0\nenabled=1 polls=100000000 ms=168.241 due=0\n",
+          "timesMs": {
+            "0": 81.293,
+            "1": 168.241
+          }
+        },
+        "candidate": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=98.2793 due=0\nenabled=1 polls=100000000 ms=116.916 due=0\n",
+          "timesMs": {
+            "0": 98.2793,
+            "1": 116.916
+          }
+        },
+        "ratios": {
+          "0": 0.8271629936314158,
+          "1": 1.4389903862602211
+        }
+      },
+      {
+        "candidate": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=96.5131 due=0\nenabled=1 polls=100000000 ms=114.779 due=0\n",
+          "timesMs": {
+            "0": 96.5131,
+            "1": 114.779
+          }
+        },
+        "baseline": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=81.1564 due=0\nenabled=1 polls=100000000 ms=172.187 due=0\n",
+          "timesMs": {
+            "0": 81.1564,
+            "1": 172.187
+          }
+        },
+        "ratios": {
+          "0": 0.8408848125280404,
+          "1": 1.5001611793098042
+        }
+      },
+      {
+        "baseline": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=86.1985 due=0\nenabled=1 polls=100000000 ms=183.092 due=0\n",
+          "timesMs": {
+            "0": 86.1985,
+            "1": 183.092
+          }
+        },
+        "candidate": {
+          "raw": "Passed 480000 packet deadline comparisons\nenabled=0 polls=100000000 ms=114.594 due=0\nenabled=1 polls=100000000 ms=124.396 due=0\n",
+          "timesMs": {
+            "0": 114.594,
+            "1": 124.396
+          }
+        },
+        "ratios": {
+          "0": 0.7522077944744053,
+          "1": 1.4718479693880833
+        }
+      }
+    ],
+    "startedUnix": 1792970006.6701708,
+    "loadBefore": [
+      3.72900390625,
+      3.66748046875,
+      3.87255859375
+    ],
+    "binarySha256": {
+      "baseline": "d060fee03a2ad870ecc7a6d65f4546157ce0b40a284544ec840c9719660897ae",
+      "candidate": "26fa225dab9108a064166f9e3ebeff9d7f1b27f15be043fd10c67f439d442313"
+    },
+    "medianRatios": {
+      "0": 0.8271629936314158,
+      "1": 1.4718479693880833
+    },
+    "finishedUnix": 1792970008.1268952,
+    "loadAfter": [
+      3.72900390625,
+      3.66748046875,
+      3.87255859375
+    ]
+  },
+  "variants": {
+    "scope": "Follow-up three-pair RAM-only predicate ordering sweep; include baseline each pass; first pass forward and second reverse order. Not application performance.",
+    "passes": [
+      {
+        "baseline": {
+          "0": 123.034,
+          "1": 257.732
+        },
+        "logical-motion-first": {
+          "0": 151.886,
+          "1": 216.055
+        },
+        "flags-first-or": {
+          "0": 139.074,
+          "1": 200.789
+        },
+        "flags-first-logical": {
+          "0": 128.802,
+          "1": 257.283
+        }
+      },
+      {
+        "flags-first-logical": {
+          "0": 137.592,
+          "1": 277.39
+        },
+        "flags-first-or": {
+          "0": 148.396,
+          "1": 223.3
+        },
+        "logical-motion-first": {
+          "0": 150.121,
+          "1": 196.61
+        },
+        "baseline": {
+          "0": 116.998,
+          "1": 240.625
+        }
+      },
+      {
+        "baseline": {
+          "0": 133.023,
+          "1": 270.568
+        },
+        "logical-motion-first": {
+          "0": 163.84,
+          "1": 246.08
+        },
+        "flags-first-or": {
+          "0": 352.367,
+          "1": 280.791
+        },
+        "flags-first-logical": {
+          "0": 168.843,
+          "1": 288.88
+        }
+      }
+    ],
+    "sourceVariants": {
+      "logical-motion-first": "#pragma once\n#include <array>\n#include <cstdint>\n#include <deque>\nnamespace pc {\nstruct PS2Mouse {\n    bool enabled = false, remote = false, wrap = false, scaling2 = false;\n    uint8_t resolution = 2, rate = 100, id = 0, parameter = 0, buttons = 0, reportedButtons = 0,\n            lastSent = 0;\n    std::array<uint8_t, 3> rates{};\n    int32_t dx = 0, dy = 0, wheel = 0;\n    uint64_t nextAt = 0;\n    std::deque<uint8_t> replies, packets;\n    void command(uint8_t value);\n    void motion(int x, int y, uint8_t held, int scroll = 0);\n    bool packetDue(uint64_t instructions) const {\n        return enabled && (dx || dy || wheel || buttons != reportedButtons) &&\n               !remote && !wrap && packets.empty() && instructions >= nextAt;\n    }\n    void poll(uint64_t instructions);\n    void packet(std::deque<uint8_t> &destination);\n    uint8_t status() const;\n    void defaults();\n};\n} // namespace pc\n",
+      "flags-first-or": "#pragma once\n#include <array>\n#include <cstdint>\n#include <deque>\nnamespace pc {\nstruct PS2Mouse {\n    bool enabled = false, remote = false, wrap = false, scaling2 = false;\n    uint8_t resolution = 2, rate = 100, id = 0, parameter = 0, buttons = 0, reportedButtons = 0,\n            lastSent = 0;\n    std::array<uint8_t, 3> rates{};\n    int32_t dx = 0, dy = 0, wheel = 0;\n    uint64_t nextAt = 0;\n    std::deque<uint8_t> replies, packets;\n    void command(uint8_t value);\n    void motion(int x, int y, uint8_t held, int scroll = 0);\n    bool packetDue(uint64_t instructions) const {\n        return enabled && !remote && !wrap &&\n               (uint32_t(dx) | uint32_t(dy) | uint32_t(wheel) | uint32_t(buttons ^ reportedButtons)) &&\n               packets.empty() && instructions >= nextAt;\n    }\n    void poll(uint64_t instructions);\n    void packet(std::deque<uint8_t> &destination);\n    uint8_t status() const;\n    void defaults();\n};\n} // namespace pc\n",
+      "flags-first-logical": "#pragma once\n#include <array>\n#include <cstdint>\n#include <deque>\nnamespace pc {\nstruct PS2Mouse {\n    bool enabled = false, remote = false, wrap = false, scaling2 = false;\n    uint8_t resolution = 2, rate = 100, id = 0, parameter = 0, buttons = 0, reportedButtons = 0,\n            lastSent = 0;\n    std::array<uint8_t, 3> rates{};\n    int32_t dx = 0, dy = 0, wheel = 0;\n    uint64_t nextAt = 0;\n    std::deque<uint8_t> replies, packets;\n    void command(uint8_t value);\n    void motion(int x, int y, uint8_t held, int scroll = 0);\n    bool packetDue(uint64_t instructions) const {\n        return enabled && !remote && !wrap && (dx || dy || wheel || buttons != reportedButtons) &&\n               packets.empty() && instructions >= nextAt;\n    }\n    void poll(uint64_t instructions);\n    void packet(std::deque<uint8_t> &destination);\n    uint8_t status() const;\n    void defaults();\n};\n} // namespace pc\n"
+    },
+    "medianRatios": {
+      "logical-motion-first": {
+        "0": 0.8100417418326904,
+        "1": 1.1928999560297147
+      },
+      "flags-first-or": {
+        "0": 0.7884174775600421,
+        "1": 1.0775862068965516
+      },
+      "flags-first-logical": {
+        "0": 0.8503256003256002,
+        "1": 0.9366103572417612
+      }
+    }
+  },
+  "candidatePatch": "diff --git a/src/mouse.hpp b/src/mouse.hpp\nindex 19ed7c4..f684b84 100644\n--- a/src/mouse.hpp\n+++ b/src/mouse.hpp\n@@ -14,8 +14,13 @@ struct PS2Mouse {\n     void command(uint8_t value);\n     void motion(int x, int y, uint8_t held, int scroll = 0);\n     bool packetDue(uint64_t instructions) const {\n-        return enabled && !remote && !wrap && packets.empty() && instructions >= nextAt &&\n-               (dx || dy || wheel || buttons != reportedButtons);\n+        // Idle mice are checked on every board poll. Test all pending motion\n+        // together before touching queue/deadline state; no cached flag needs\n+        // invalidation when I/O, host input or snapshots change these fields.\n+        if (!enabled) return false;\n+        const uint32_t changed = uint32_t(dx) | uint32_t(dy) | uint32_t(wheel) |\n+                                 uint32_t(buttons ^ reportedButtons);\n+        return changed && !remote && !wrap && packets.empty() && instructions >= nextAt;\n     }\n     void poll(uint64_t instructions);\n     void packet(std::deque<uint8_t> &destination);\n",
+  "testKernel": "#include \"i8042.hpp\"\n#include <chrono>\n#include <climits>\n#include <iostream>\n#include <stdexcept>\n#include <string_view>\nusing namespace pc;\nstatic bool reference(const PS2Mouse &m,uint64_t now) {\n    return m.enabled && !m.remote && !m.wrap && m.packets.empty() && now>=m.nextAt &&\n           (m.dx||m.dy||m.wheel||m.buttons!=m.reportedButtons);\n}\nint main(int argc,char **argv) {\n    PS2Mouse m;unsigned checks=0;\n    for(unsigned flags=0;flags<16;++flags) {\n        m.enabled=flags&1;m.remote=flags&2;m.wrap=flags&4;\n        m.packets.clear();if(flags&8)m.packets.push_back(8);\n        for(int dx:{0,1,-1,INT_MIN,INT_MAX})for(int dy:{0,1,-1,INT_MIN,INT_MAX})\n        for(int wheel:{0,1,-1,INT_MIN,INT_MAX})for(unsigned buttons:{0u,1u,7u,255u})\n        for(unsigned reported:{0u,1u,7u,255u})for(uint64_t deadline:std::array<uint64_t,3>{0,4000,UINT64_MAX})\n        for(uint64_t now:std::array<uint64_t,5>{0,3999,4000,4001,UINT64_MAX}) {\n            m.dx=dx;m.dy=dy;m.wheel=wheel;m.buttons=buttons;m.reportedButtons=reported;m.nextAt=deadline;\n            if(m.packetDue(now)!=reference(m,now))throw std::runtime_error(\"mouse sample predicate differs\");\n            ++checks;\n        }\n    }\n    std::cout<<\"Passed \"<<checks<<\" packet deadline comparisons\\n\";\n    if(argc>1 && std::string_view(argv[1])==\"--bench\") {\n        I8042Device c;\n        for(bool enabled:{false,true}) {\n            c.mouse().enabled=enabled;\n            auto begin=std::chrono::steady_clock::now();uint64_t due=0;\n            for(uint64_t now=0;now<100000000;++now) {\n                // Model a separate JIT/board call that can mutate live state;\n                // prevent constant folding the idle fixture out of the loop.\n                asm volatile(\"\" : \"+m\"(c) : : \"memory\");\n                due+=c.pollDue(now);\n            }\n            if(due)throw std::runtime_error(\"idle controller unexpectedly due\");\n            auto ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();\n            std::cout<<\"enabled=\"<<enabled<<\" polls=100000000 ms=\"<<ms<<\" due=\"<<due<<'\\n';\n        }\n    }\n}\n",
+  "checks": {
+    "frozenPredicateComparisons": 480000,
+    "standaloneI8042DeviceChecks": 65564
+  },
+  "decision": "Restore original runtime. All tested alternatives have disabled-mouse baseline/candidate ratios below one; gains for enabled idle mice alone do not justify adoption. Short synthetic idle loops on shared host; this is rejection of an unsupported broadly beneficial change, not a precise whole-emulator slowdown."
+}
