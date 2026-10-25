@@ -686,3 +686,15 @@ rtts/installed-OSR2 application/restart/persistence checks pass. Existing core,
 native-memory/flags/control-flow and snapshot suites pass. A fresh latest-binary
 OSR2 installation and Rosetta performance equivalence remain unproven; the broad
 goal remains active. Cold-miss guard duplication remains an optimization target.
+
+
+## Slow translation context experiment rejected (25 October)
+
+Passing the cached TLB slot and walk decision into the slow translator was
+neutral on five rtts startup-prefix pairs (median throughput ratio 1.0033).
+Three-pair interpreter RAM measurements improved common paged cases by roughly
+2–6%, but the largest paged-stride case remained neutral. Native RAM results
+were mixed, including a 0.927 ratio for one dense paged case. The experiment
+is rejected and the previously validated CPU implementation is restored.
+Evidence and exact patch: `docs/measurements/rejected-physical-slow-context-2026-10-25.json`
+and the adjacent `.patch`. The broad goal remains active.

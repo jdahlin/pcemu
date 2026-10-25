@@ -1,0 +1,156 @@
+diff --git a/src/cpu.cpp b/src/cpu.cpp
+index dab8231..59246e6 100644
+--- a/src/cpu.cpp
++++ b/src/cpu.cpp
+@@ -75,14 +75,16 @@ void CPU::flushTLB() {
+ }
+ uint32_t CPU::physical(uint32_t a, bool wr) {
+     if (cr[0] & 0x80000000u) {
+-        if (tlbCR3 != cr[3]) return physicalSlow(a, wr);
++        if (tlbCR3 != cr[3]) return physicalSlow(a, wr, nullptr, true);
+         const uint32_t page = a >> 12;
+-        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+-        if (entry.epoch != tlbEpoch || entry.tag != page || (wr && !entry.dirty))
+-            return physicalSlow(a, wr);
++        auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
++        if (entry.epoch != tlbEpoch || entry.tag != page)
++            return physicalSlow(a, wr, &entry, true);
++        if (wr && !entry.dirty)
++            return physicalSlow(a, wr, &entry, false);
+         if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) &&
+             cpl() == 3 && !systemAccess)
+-            return physicalSlow(a, wr);
++            return physicalSlow(a, wr, &entry, false);
+         a = entry.base | (a & 4095);
+     }
+     if (!a20) a &= ~(1u << 20);
+@@ -90,60 +92,64 @@ uint32_t CPU::physical(uint32_t a, bool wr) {
+ }
+ // Keep page walks, dirty-bit writes and exception construction out of the
+ // common cached-translation path. Tail calls preserve precise slow semantics.
+-uint32_t CPU::physicalSlow(uint32_t a, bool wr) {
+-    if (cr[0] & 0x80000000u) {
+-        if (tlbCR3 != cr[3])
+-            flushTLB();
+-        // A user-accessible page also permits supervisor/system accesses.
+-        // Compute privilege only for restricted permissions or a fault report.
+-        auto user = [&] { return cpl() == 3 && !systemAccess; };
+-        auto fault = [&](bool present) -> void {
+-            cr[2] = a;
+-            throw Fault{14, uint32_t((present ? 1 : 0) | (wr ? 2 : 0) | (user() ? 4 : 0)), true};
++uint32_t CPU::physicalSlow(uint32_t a, bool wr, TLBEntry *cached, bool walk) {
++    // Called only with paging enabled. A null entry means CR3 changed before
++    // lookup; flushing makes it a miss.
++    // Otherwise the caller supplies both the slot and whether its key matched.
++    if (!cached) {
++        flushTLB();
++        const auto page = a >> 12;
++        cached = &tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
++    }
++    // A user-accessible page also permits supervisor/system accesses.
++    // Compute privilege only for restricted permissions or a fault report.
++    auto user = [&] { return cpl() == 3 && !systemAccess; };
++    auto fault = [&](bool present) -> void {
++        cr[2] = a;
++        throw Fault{14, uint32_t((present ? 1 : 0) | (wr ? 2 : 0) | (user() ? 4 : 0)), true};
++    };
++    uint32_t page = a >> 12;
++    auto &entry = *cached;
++    if (walk) {
++        auto raw = [&](uint32_t p) {
++            if (uint64_t(p) + 4 > mem.size())
++                throw std::runtime_error("page table outside RAM");
++            uint32_t value;
++            std::memcpy(&value, &mem[p], 4);
++            return value;
+         };
+-        uint32_t page = a >> 12;
+-        auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+-        if (entry.epoch != tlbEpoch || entry.tag != page) {
+-            auto raw = [&](uint32_t p) {
+-                if (uint64_t(p) + 4 > mem.size())
+-                    throw std::runtime_error("page table outside RAM");
+-                uint32_t value;
+-                std::memcpy(&value, &mem[p], 4);
+-                return value;
+-            };
+-            auto pdeAddress = (cr[3] & ~4095u) + (a >> 22) * 4;
+-            if (!a20)
+-                pdeAddress &= ~(1u << 20);
+-            auto pde = raw(pdeAddress);
+-            if (!(pde & 1))
+-                fault(false);
+-            auto pteAddress = (pde & ~4095u) + ((a >> 12) & 1023) * 4;
+-            if (!a20)
+-                pteAddress &= ~(1u << 20);
+-            auto pte = raw(pteAddress);
+-            if (!(pte & 1))
+-                fault(false);
+-            auto permissions = (pde & pte) & 6;
+-            if ((!(permissions & 4) || (wr && !(permissions & 2))) && user())
+-                fault(true);
+-            pde |= 32;
+-            pte |= 32;
+-            written(pdeAddress, 4);
+-            std::memcpy(&mem[pdeAddress], &pde, 4);
+-            written(pteAddress, 4);
+-            std::memcpy(&mem[pteAddress], &pte, 4);
+-            entry = {page,          tlbEpoch, pte & ~4095u, pteAddress, uint8_t(permissions),
+-                     bool(pte & 64)};
+-        }
+-        if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) && user())
++        auto pdeAddress = (cr[3] & ~4095u) + (a >> 22) * 4;
++        if (!a20)
++            pdeAddress &= ~(1u << 20);
++        auto pde = raw(pdeAddress);
++        if (!(pde & 1))
++            fault(false);
++        auto pteAddress = (pde & ~4095u) + ((a >> 12) & 1023) * 4;
++        if (!a20)
++            pteAddress &= ~(1u << 20);
++        auto pte = raw(pteAddress);
++        if (!(pte & 1))
++            fault(false);
++        auto permissions = (pde & pte) & 6;
++        if ((!(permissions & 4) || (wr && !(permissions & 2))) && user())
+             fault(true);
+-        if (wr && !entry.dirty) {
+-            written(entry.pteAddress, 1);
+-            mem[entry.pteAddress] |= 64;
+-            entry.dirty = true;
+-        }
+-        a = entry.base | (a & 4095);
+-    }
++        pde |= 32;
++        pte |= 32;
++        written(pdeAddress, 4);
++        std::memcpy(&mem[pdeAddress], &pde, 4);
++        written(pteAddress, 4);
++        std::memcpy(&mem[pteAddress], &pte, 4);
++        entry = {page,          tlbEpoch, pte & ~4095u, pteAddress, uint8_t(permissions),
++                 bool(pte & 64)};
++    }
++    if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) && user())
++        fault(true);
++    if (wr && !entry.dirty) {
++        written(entry.pteAddress, 1);
++        mem[entry.pteAddress] |= 64;
++        entry.dirty = true;
++    }
++    a = entry.base | (a & 4095);
+     if (!a20)
+         a &= ~(1u << 20);
+     return a;
+diff --git a/src/cpu.hpp b/src/cpu.hpp
+index 49cf97e..a0f59e8 100644
+--- a/src/cpu.hpp
++++ b/src/cpu.hpp
+@@ -108,7 +108,7 @@ struct CPU {
+     } repeatResume;
+ 
+   private:
+-    uint32_t physicalSlow(uint32_t linear, bool write);
++    [[gnu::noinline]] uint32_t physicalSlow(uint32_t linear, bool write, TLBEntry *cached, bool walk);
+     void stepImpl();
+     void ioPermission(uint16_t port, int width);
+     bool descriptorVisible(uint16_t selector, uint32_t high) const;
