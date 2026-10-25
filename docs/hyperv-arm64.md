@@ -47,8 +47,8 @@ timer delivery. State is initialized afresh when the VM is recreated.
 
 The early interface-version register (0x90006) returns `Hv#1`, as specified
 by Microsoft's ARM64 guest header. Feature registers expose guest identity,
-VP index, register access and fast
-output. No timer, SynIC, VMBus, flush or scheduling facilities are advertised.
+VP index, partition reference counter, register access and fast output.
+No synthetic timer, SynIC, VMBus, flush or scheduling facilities are advertised.
 The version is PCEmu interface 1.0 build 1, not a Microsoft release identity.
 Unsupported operations/registers return errors rather than fabricated success.
 
@@ -58,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 138 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 156 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -193,8 +193,11 @@ narrows the observed operation down to instruction-context synchronization:
 These are observations of this kernel, not a complete specification of flags,
 completion guarantees or all supported input layouts. Merely stopping host
 vCPU threads or issuing a host memory fence does not establish the required
-instruction synchronization on every target guest VP. Before accepting this
-call, the backend needs a justified guest execution synchronization mechanism
+instruction synchronization on every target guest VP. [Arm's Issue L.a known issues](https://documentation-service.arm.com/static/67ab274f6dbc975ccea916d7)
+also clarify that HVC entry is not unconditionally an instruction-fetch barrier:
+with FEAT_ExS, the relevant EIS/EOS controls matter. Treating every HVC exit as
+a sufficient synchronization operation would therefore be unjustified.
+Before accepting this call, the backend needs a justified guest execution synchronization mechanism
 and a test that replaces executable guest instructions, synchronizes the target
 VPs and checks that they execute the new code, including a multi-VP case.
 
@@ -206,3 +209,26 @@ Relevant kernel RVAs are `KeSweepIcacheCompleteBatch` 0x259b30,
 `HvlSyncContext` 0x454178, `HvlpAffinityToHvProcessorSet` 0x23c810,
 `HvlpFastSyncContextEx` 0x626078 and `HvlpSlowSyncContextEx` 0x626100.
 These addresses are version-specific and are not runtime dependencies.
+
+
+## Partition reference counter
+
+`HvRegisterTimeRefCount` (0x90004) now provides partition uptime in 100 ns units,
+with the AccessPartitionReferenceCounter privilege (bit 1) advertised. It is
+available before GuestOsId, shared across VPs and read-only; writes fail with
+invalid-parameter status. The clock starts at partition creation and uses
+`steady_clock`, so host wall-clock corrections cannot move it. Equal-resolution
+samples advance one tick to preserve strictly increasing reads across VPs.
+A new VM starts a fresh epoch. WFI does not suspend the clock; explicit VM
+suspend/save/restore is not implemented by this runner.
+
+Deterministic model tests cover exact one-second scaling, VP sharing, both fast
+ABIs, equal/backward source samples, early access, rejected writes and reset.
+The EFI probe reads in both ABIs around a 10 ms EFI Stall and checks the elapsed
+100 ns count. The last returned counter is reported as `referenceTime100ns`;
+register operation counters establish whether Windows actually reads it.
+This does not provide a reference TSC page or synthetic timer interrupts.
+
+Contract sources: Microsoft's [timer specification](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/timers),
+[register identifiers](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_register_name)
+and [ARM64 early-register access rules](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallgetvpregisters).

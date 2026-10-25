@@ -38,7 +38,7 @@ efi_main:
     lsl x8, x8, #32
     cmp x0, x8
     b.ne failed
-    ldr x8, =0x000a000000000060
+    ldr x8, =0x000a000000000062
     cmp x6, x8
     b.ne failed
     cbnz x7, failed
@@ -57,6 +57,41 @@ efi_main:
     cmp x6, x8
     b.ne failed
     cbnz x7, failed
+    // Read the shared clock before identity, in both fast ABIs.
+    ldr w0, =0x46000001
+    ldr x1, =0x100010050
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    ldr w4, =0x90004
+    mov x5, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    cbnz x7, failed
+    mov x23, x6
+    mov x0, #10000 // EFI Stall: at least 10 ms, must advance by 100,000 ticks.
+    ldr x8, [x20, #248]
+    blr x8
+    ldr x0, =0x100010050
+    mov x1, #-1
+    ldr w2, =0xfffffffe
+    ldr w3, =0x90004
+    mov x4, #0
+    hvc #1
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    cbnz x16, failed
+    sub x8, x15, x23
+    ldr x9, =100000
+    cmp x8, x9
+    b.lo failed
+    ldr x9, =10000000 // Generous upper bound: detects nanoseconds used as ticks.
+    cmp x8, x9
+    b.hs failed
     ldr w0, =0x46000001
     ldr x1, =0x100010051
     mov x2, #-1

@@ -33,6 +33,22 @@ class WindowsHyperV(unittest.TestCase):
         self.assertFalse(result['guiBootVerified'])
         self.assertFalse(result['performanceBenefitVerified'])
 
+    def test_reference_counter_requires_successful_windows_reads(self):
+        report, baseline = fixture()
+        self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
+        report['referenceTime100ns'] = 12345
+        self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
+        report['registers'].append(dict(name=0x90004, reads=2, writes=0, failures=0))
+        self.assertTrue(verify(report, baseline)['referenceCounterObserved'])
+        report['registers'][-1]['failures'] = 1
+        self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
+        report['registers'][-1]['failures'] = 0
+        report['referenceTime100ns'] = 0
+        self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
+        report['referenceTime100ns'] = 12345
+        report['guestOsId'] = 0x5043454d55
+        self.assertFalse(verify(report, baseline)['referenceCounterObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

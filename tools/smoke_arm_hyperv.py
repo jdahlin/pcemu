@@ -37,9 +37,11 @@ def main():
             raise RuntimeError(f'{mode} invalid discovery counters')
         if mode == 'basic':
             names = {r['name']: r for r in report['registers']}
-            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 2
-                    or report['smcccCalls'] != 9 or report['failures'] != 1
+            if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 3
+                    or report['smcccCalls'] != 10 or report['failures'] != 1
                     or names[0x90002]['reads'] != 1 or names[0x90002]['writes'] != 1
+                    or names[0x90004]['reads'] != 2 or names[0x90004]['failures']
+                    or report['referenceTime100ns'] <= 0
                     or names[0x90003]['reads'] != 1 or names[0x90006]['reads'] != 1
                     or names[0x90015]['reads'] != 1 or names[0x90015]['writes'] != 1
                     or not report['partitionInfoPage'] & 1

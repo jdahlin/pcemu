@@ -19,7 +19,7 @@ static uint64_t get(const std::vector<uint8_t> &b, size_t at) {
 }
 int main() {
     constexpr uint64_t base = 0x140000000ull, one = 1ull << 32;
-    constexpr uint64_t features = (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
+    constexpr uint64_t features = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
     std::vector<uint8_t> memory(8192);
     ArmHyperV off(false, memory, base, 2), hv(true, memory, base, 2);
     ArmHyperV::Registers r{};
@@ -67,7 +67,7 @@ int main() {
     check(r[0] == one && r[6] == 1);
     fastWrite(42, 1); check(r[0] == 6);
     fastWrite(42, 0, 1); check(r[0] == 5);
-    fastRead(0x90004); check(r[0] == 5); // No reference counter advertised or faked
+    fastRead(0x90004); check(r[0] == one && r[6] > 0 && r[7] == 0);
     fastRead(0x201); check(r[0] == one && r[6] == 0xffffffff00000000ull && r[7] == 0);
     fastRead(0x202); check(r[0] == one && r[6] == 0x200000002ull);
     // The partition info page is allocated by the guest, not a fabricated GPA.
@@ -164,5 +164,31 @@ int main() {
     check(fresh.call(1, r, 0) && r[0] == one && r[15] == 0); // VM recreation resets state
     check(hv.report().find("\"guestOsId\":0") != std::string::npos);
     check(off.report().find("\"disabledCalls\":1") != std::string::npos);
+    uint64_t ticks = 1000;
+    ArmHyperV timed(true, memory, base, 2, [&] { return ticks; });
+    auto timeRead = [&](unsigned vp, bool smccc) {
+        r = {}; r[0] = smccc ? 0x46000001 : one | 0x10050;
+        if (smccc) r[1] = one | 0x10050;
+        unsigned in = smccc ? 2 : 1;
+        r[in] = uint64_t(-1); r[in + 1] = 0xfffffffe; r[in + 2] = 0x90004;
+        check(timed.call(smccc ? 0 : 1, r, vp) && r[0] == one);
+        check(r[smccc ? 7 : 16] == 0);
+        return r[smccc ? 6 : 15];
+    };
+    check(timed.report().find("\"referenceTime100ns\":0") != std::string::npos);
+    ticks += 10000000; // One second is exactly ten million 100 ns units.
+    check(timeRead(0, true) == 10000000); // Early read, no identity.
+    check(timeRead(1, false) == 10000001); // Shared ordering, equal-resolution sample.
+    ticks += 10000000;
+    check(timeRead(1, true) == 20000000); // No per-VP epoch or clock-rate drift.
+    ticks -= 500;
+    check(timeRead(0, false) == 20000001); // Defensive monotonicity for a bad source.
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90004; r[5] = 123;
+    check(timed.call(1, r, 0) && r[0] == 5); // Read-only, no identity needed to reject.
+    ticks += 10000000;
+    check(timeRead(0, true) == 29999500); // Failed write did not alter the epoch.
+    ArmHyperV newClock(true, memory, base, 2, [&] { return ticks; });
+    check(newClock.report().find("\"referenceTime100ns\":0") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

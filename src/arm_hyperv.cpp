@@ -1,5 +1,7 @@
 #include "arm_hyperv.hpp"
 #include <algorithm>
+#include <chrono>
+#include <utility>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -8,7 +10,7 @@ namespace {
 constexpr uint32_t uid = 0x8600ff01, function = 0x46000001;
 constexpr uint16_t invalidCode = 2, invalidInput = 3, invalidAlignment = 4,
                    invalidParameter = 5, accessDenied = 6, invalidVp = 14;
-constexpr uint64_t privileges = (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
+constexpr uint64_t privileges = (1ull << 1) | (1ull << 5) | (1ull << 6) | (1ull << 49) | (1ull << 51);
 uint64_t get(std::span<const uint8_t> b, size_t at, size_t size) {
     uint64_t v = 0;
     for (size_t i = 0; i < size; ++i) v |= uint64_t(b[at + i]) << (8 * i);
@@ -18,8 +20,13 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, size_t size) {
     for (size_t i = 0; i < size; ++i) b[at + i] = uint8_t(v >> (8 * i));
 }
 }
-ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count)
-    : enabled(on), ram(memory), base(start), cpus(count) {
+ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigned count, Clock source)
+    : enabled(on), ram(memory), base(start), cpus(count), clock(std::move(source)) {
+    if (!clock) clock = [] {
+        return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count()) / 100;
+    };
+    clockOrigin = clock();
     if (!cpus || cpus > 8) throw std::runtime_error("Invalid Hyper-V VP count");
 }
 ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
@@ -38,6 +45,15 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
     case 0x204: case 0x205: case 0x206: case 0x207: case 0x208: case 0x209: return 0;
     case 0x90002: value[0] = guestId; return 0;
+    case 0x90004: {
+        // Shared by all VPs, including early reads before GuestOsId. Dispatch
+        // is serialized with all vCPUs stopped. Clamp equal-resolution samples
+        // to maintain the TLFS strictly increasing access order.
+        auto now = clock();
+        auto elapsed = now >= clockOrigin ? now - clockOrigin : 0;
+        referenceTime = std::max(referenceTime + 1, elapsed);
+        value[0] = referenceTime; return 0;
+    }
     case 0x90006: value[0] = 0x31237648; return 0; // ARM64 interface version: Hv#1
     case 0x90003:
         if (!guestId) return accessDenied;
@@ -180,6 +196,7 @@ std::string ArmHyperV::report() const {
     std::ostringstream s;
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
+      << ",\"referenceTime100ns\":" << referenceTime
       << ",\"uidQueries\":" << uidQueries << ",\"smcccVersionQueries\":" << versionQueries
       << ",\"smcccCalls\":" << smcccCalls << ",\"legacyCalls\":" << legacyCalls
       << ",\"disabledCalls\":" << disabledCalls << ",\"failures\":" << failures

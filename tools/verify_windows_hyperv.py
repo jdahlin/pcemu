@@ -61,7 +61,12 @@ def verify(report, baseline, kernel_build=26100):
             and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
             'Off-mode Windows baseline unexpectedly used Hyper-V registers')
     unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51)]
-    return {'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
+    clock = registers.get(0x90004, {})
+    last_time = report.get('referenceTime100ns', 0)
+    clock_observed = (not errors and type(clock.get('reads')) is int
+                      and clock['reads'] >= 2 and clock.get('failures') == 0
+                      and type(last_time) is int and last_time > 0)
+    return {'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
             'guiBootVerified': False, 'performanceBenefitVerified': False}
 

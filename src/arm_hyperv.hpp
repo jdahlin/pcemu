@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <span>
 #include <string>
@@ -10,7 +11,9 @@ namespace pc {
 class ArmHyperV {
   public:
     using Registers = std::array<uint64_t, 18>;
-    ArmHyperV(bool enabled, std::span<uint8_t> ram, uint64_t base, unsigned cpus);
+    // Clock returns monotonic host time in 100 ns units; injectable for rate tests.
+    using Clock = std::function<uint64_t()>;
+    ArmHyperV(bool enabled, std::span<uint8_t> ram, uint64_t base, unsigned cpus, Clock clock = {});
     // False leaves the call to PSCI/the platform's unsupported-call fallback.
     bool call(unsigned immediate, Registers &registers, unsigned vp);
     std::string report() const;
@@ -20,6 +23,8 @@ class ArmHyperV {
     std::span<uint8_t> ram;
     uint64_t base, guestId = 0, partitionInfo = 0;
     unsigned cpus;
+    Clock clock;
+    uint64_t clockOrigin, referenceTime = 0;
     std::array<uint64_t, 8> tlbiControl{}, syntheticVectors{};
     uint64_t uidQueries = 0, versionQueries = 0, smcccCalls = 0, legacyCalls = 0;
     uint64_t disabledCalls = 0, failures = 0, omittedCounters = 0;
