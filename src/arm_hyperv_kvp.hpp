@@ -2,7 +2,7 @@
 #include "arm_hyperv_kvp_codec.hpp"
 #include "arm_vmbus.hpp"
 namespace pc {
-// Host KVP v4 IC. Negotiation is automatic; guest queries are explicit.
+// Host KVP v3/v4 IC. Negotiation is automatic; guest queries are explicit.
 // One outstanding enumeration and one unread result, no mutations or retries.
 class ArmHyperVKvp {
   public:
@@ -26,7 +26,7 @@ class ArmHyperVKvp {
   private:
     enum class State {Closed,SendVersion,WaitVersion,Ready,SendQuery,WaitResponse,Failed};
     State state=State::Closed;
-    uint16_t framework=0;
+    uint16_t framework=0,service=0;
     uint8_t transaction=0;
     ArmHyperVKvpCodec::Pool pool=ArmHyperVKvpCodec::Pool::Auto;
     uint32_t index=0,lastStatus=0;

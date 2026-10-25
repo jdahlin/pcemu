@@ -7,7 +7,7 @@ namespace {
 unsigned checks=0;void check(bool v){++checks;if(!v){std::cerr<<"KVP check "<<checks<<" failed\n";std::exit(1);}}
 void put(std::span<uint8_t> b,size_t at,uint64_t v,unsigned n=4){for(unsigned i=0;i<n;++i)b[at+i]=uint8_t(v>>(8*i));}
 bool has(const ArmHyperVKvp &k,const std::string &s){return k.report().find(s)!=std::string::npos;}
-auto negotiate(ArmHyperVKvp &k,unsigned fw){k.opened(0);auto p=k.packet(0);k.sent(0);put(p,20,36);put(p,34,16,2);put(p,44,1,2);put(p,46,1,2);put(p,52,fw);put(p,56,4);p[41]=5;return p;}
+auto negotiate(ArmHyperVKvp &k,unsigned fw,unsigned service=4){k.opened(0);auto p=k.packet(0);k.sent(0);put(p,20,36);put(p,34,16,2);put(p,44,1,2);put(p,46,1,2);put(p,52,fw);put(p,56,service);p[41]=5;return p;}
 auto answer(std::vector<uint8_t> p){
  C::Value value;value.text=u"Windows 11";auto set=C::request(C::Operation::Set,C::Pool::Auto,0,u"OSName",&value);
  std::copy(set.begin()+4,set.begin()+2576,p.begin()+52);p[41]=5;return p;
@@ -15,9 +15,9 @@ auto answer(std::vector<uint8_t> p){
 }
 int main(){
  auto o=ArmHyperVKvp::offer();check(o.channel==4 && o.connection==19 && o.flags==0x11 && o.userData[0]==4);check(o.interfaceId!=o.instanceId && o.instanceId[0]==0x19 && o.interfaceId[0]==0xe7);
- for(unsigned fw:{1u,3u}){
+ for(unsigned fw:{1u,3u})for(unsigned service:{3u,4u}){
   ArmHyperVKvp k;check(k.packet(0).empty() && !k.delay(0));check(!k.enumerate(C::Pool::Auto,0));
-  auto version=negotiate(k,fw);
+  auto version=negotiate(k,fw,service);
   for(size_t n=0;n<version.size();++n){k.receive(std::span<const uint8_t>(version).first(n),1);check(has(k,"wait-version"));}
   auto bad=version;put(bad,56,5);k.receive(bad,1);check(has(k,"wait-version"));
   bad=version;put(bad,48,0x12345678);k.receive(bad,1);

@@ -92,3 +92,16 @@ counts, reserved word and selected versions) for the next investigation. It
 does not log KVP key/value contents or relax validation. The cause of the actual
 reply rejection is not yet established; these added fields need a new native
 build/run before claiming compatibility.
+
+The bounded diagnostic run returned an eight-byte negotiation body with no
+selected-version entries, rather than a malformed KVP record. It again reached
+Hyper-V poweroff with exit zero (`kvp-diagnostic/result.json`). This motivates
+offering both standard KVP 3.0 and 4.0, as in the Microsoft OpenVMM host, instead
+of offering only 4.0. Their standard enumeration payload is shared; IP exchange
+remains unimplemented. The selected service version is now retained and used
+in subsequent query headers and reply validation. Diagnostic counts/reserved
+fields are also captured for short eight-byte negotiation bodies.
+
+All four framework/service combinations (framework 1/3, KVP 3/4) pass the
+expanded 10,909-check suite, including ASan/UBSan. Actual Windows selection of
+one of these versions still requires the next bounded run.
