@@ -712,3 +712,17 @@ samples excluding profiler attachment waits, interpreter execution accounts for
 fallback instructions and transitions before another TLB hit-path experiment.
 Evidence: `docs/measurements/restored-win95-profile-2026-10-25.json` and adjacent
 compressed raw sample. Fresh installation on this binary remains unverified.
+
+
+## Bounded Win95 interpreter coverage (25 October)
+
+Added diagnostic execution-scoped `--guest-profile FILE` and a headless paired
+normal/instrumented startup check. At 300 million retired instructions, captured
+CPU/device state and all JIT counters match. The interval starts after VGA BIOS
+initialization at instruction 294,669. There are 74,912,417 interpreter attempts,
+including 1,391 native replays. Leading fallbacks include MOV segment (5.68M),
+MOV r,rm (4.16M), far CALL immediate (3.52M), far RET (3.51M), and FF group
+(3.43M). Frequency is not host execution cost; segment/control transitions need
+investigation alongside memory lowering. Both successful compressed children
+were removed. Evidence: `docs/measurements/win95-startup-opcodes-2026-10-25.json`.
+The broad goal remains active, including current-binary fresh installer validation.

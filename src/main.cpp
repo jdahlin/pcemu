@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
     std::string tracePath, dumpPath, framePath, untilText, traceTailPath;
     std::string snapshotPath;
-    std::string stateJsonPath;
+    std::string stateJsonPath, guestProfilePath;
     uint64_t captureEvery = 0;
     uint64_t breakAt = 0x100000000ull, afterBreak = 0;
     try {
@@ -115,6 +115,12 @@ int main(int argc, char **argv) {
                 noJit = true;
             else if (arg == "--verbose")
                 verbose = true;
+            else if (arg == "--guest-profile") {
+                guestProfilePath = value();
+#ifndef PCEMU_PROFILE
+                throw std::runtime_error("--guest-profile requires build/pcemu-profile");
+#endif
+            }
             else if (arg == "--steps")
                 limit = std::stoull(value());
             else if (arg == "--type")
@@ -142,6 +148,7 @@ int main(int argc, char **argv) {
             else if (arg == "--help") {
                 std::cout << "pcemu (Apple Silicon)\n  --disk FILE --floppy FILE [--boot-floppy]\n "
                              " --headless --steps N --type TEXT --trace FILE --verbose --no-jit\n  "
+                             " --guest-profile FILE (diagnostic build only; execution interval)\n  "
                              "--frame FILE.ppm --dump-memory FILE --until-text TEXT\n"
                              "  --break-at LINEAR [--after-break INSTRUCTIONS]\n"
                              "  --benchmark | --benchmark-memory [--benchmark-steps N]\n"
@@ -323,6 +330,9 @@ int main(int argc, char **argv) {
         if (enableNetwork) network = std::make_unique<Network>(networkCapture ? networkCapture : "");
         uint64_t lastFrame = 0;
         std::string lastText;
+#ifdef PCEMU_PROFILE
+        if (!guestProfilePath.empty()) profile::start(c.instructions);
+#endif
         auto started = std::chrono::steady_clock::now();
         try {
             while (!quit && (headless ? (!limit || c.instructions < limit) : true)) {
@@ -616,6 +626,9 @@ int main(int argc, char **argv) {
             std::cout << m.text();
             return 1;
         }
+#ifdef PCEMU_PROFILE
+        if (!guestProfilePath.empty()) profile::stop(guestProfilePath, c.instructions);
+#endif
         saveFrame();
         std::cerr << "PIC mask=" << std::hex << unsigned(m.ports[0x21])
                   << " base=" << unsigned(m.pic.state().picBase[0])

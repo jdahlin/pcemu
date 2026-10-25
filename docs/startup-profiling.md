@@ -363,3 +363,19 @@ include hashes and paths to three committed zstd-compressed raw call trees
 the original stacks. This preserves the evidence independently of local build
 cleanup. Four host-accounting regression tests and the normal unprofiled Win95
 restart path validate the profiling tool changes.
+
+## Bounded whole-machine opcode profiles
+
+Build `make build/pcemu-profile build/pcemu build/disk-tool`, then run
+`python3 tools/smoke_startup_profile.py`. This uses existing rtts media and two
+small private compressed overlays. Both engines stop at 300 million retired
+instructions; captured CPU/device state and JIT counts must agree. Successful
+children are removed. Failures preserve their disks for diagnosis.
+
+`build/pcemu-profile --guest-profile FILE` records interpreter opcode/operand
+attempts and dispatch counters from entry into the execution loop through normal
+exit. VGA BIOS initialization precedes this interval, so startInstructions can
+be nonzero. The normal executable rejects this option. Instrumented timings are
+not benchmarks. Native replay contributes interpreter attempts; faulting dispatch
+can exit before selecting native or interpreted execution. Existing interactive
+profile-start/profile-stop commands can replace the active diagnostic interval.
