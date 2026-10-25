@@ -33,6 +33,7 @@ int main() {
         while(!(done[0]&&done[1]) && std::chrono::steady_clock::now()<deadline) {
             auto exit=vm.run(std::chrono::milliseconds(100));
             if(exit.reason==HvfMachine::ExitReason::Canceled)continue;
+            check(exit.nativeReason==1,"Native exception reason was not preserved");
             if(exit.exceptionClass()==0x24 && (exit.syndrome&(1ull<<24))) {
                 unsigned width=1u<<((exit.syndrome>>22)&3),reg=(exit.syndrome>>16)&31;
                 check(exit.physicalAddress>=ArmGicNonsecureView::guestBase &&

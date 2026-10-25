@@ -138,6 +138,9 @@ class HvfSecondary {
                         check(hv_vcpu_get_reg(id, static_cast<hv_reg_t>(HV_REG_X0 + i), &registers[i]));
                 auto exception = reason == HvfMachine::ExitReason::Exception ? exit->exception : hv_vcpu_exit_exception_t{};
                 result = {reason, exception.syndrome, exception.virtual_address, exception.physical_address, pc, index};
+                result.nativeReason = uint32_t(exit->reason);
+                if (reason == HvfMachine::ExitReason::Unknown)
+                    result.pstateAvailable = hv_vcpu_get_reg(id, HV_REG_CPSR, &result.pstate) == HV_SUCCESS;
             } catch (...) { leave(true); throw; }
         });
     }

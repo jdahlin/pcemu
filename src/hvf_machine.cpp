@@ -426,6 +426,9 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
                 impl->exit->reason == HV_EXIT_REASON_VTIMER_ACTIVATED ? ExitReason::VirtualTimer : ExitReason::Unknown;
             auto exception = reason == ExitReason::Exception ? impl->exit->exception : hv_vcpu_exit_exception_t{};
             primary = {reason, exception.syndrome, exception.virtual_address, exception.physical_address, pc()};
+            primary.nativeReason = uint32_t(impl->exit->reason);
+            if (reason == ExitReason::Unknown)
+                primary.pstateAvailable = hv_vcpu_get_reg(impl->vcpu, HV_REG_CPSR, &primary.pstate) == HV_SUCCESS;
         }
     } catch (...) { failure = std::current_exception(); impl->cancelAll(); }
     // No guest CPU may access RAM while platform code emulates device DMA.

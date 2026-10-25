@@ -20,6 +20,9 @@ class HvfMachine {
         ExitReason reason;
         uint64_t syndrome, virtualAddress, physicalAddress, pc;
         unsigned cpu = 0;
+        uint32_t nativeReason = UINT32_MAX;
+        uint64_t pstate = 0;
+        bool pstateAvailable = false;
         unsigned exceptionClass() const { return unsigned(syndrome >> 26) & 63; }
     };
     // Cumulative system-sleep time in mach_absolute_time ticks. The default

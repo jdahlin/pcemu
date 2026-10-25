@@ -362,9 +362,23 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         }
     }
     std::ostringstream message;
-    message << "Unhandled ARM platform exit: reason=" << unsigned(exit.reason) << std::hex
+    message << "Unhandled ARM platform exit: reason=" << unsigned(exit.reason)
+            << " native_reason=" << exit.nativeReason << " cpu=" << exit.cpu << std::hex
             << " ec=" << exit.exceptionClass() << " esr=" << exit.syndrome
             << " pc=" << exit.pc << " ipa=" << exit.physicalAddress;
+    if (exit.reason == HvfMachine::ExitReason::Unknown) {
+        if (exit.pstateAvailable) message << " pstate=" << exit.pstate;
+        else message << " pstate=unavailable";
+        // All VPs are stopped. Do not replace the original failure if an
+        // optional diagnostic register is unavailable on this HVF version.
+        try {
+            message << " context={" << cpuState()
+                    << " sctlr_el1=0x" << vm.systemReg(0xc080)
+                    << " ttbr0_el1=0x" << vm.systemReg(0xc100)
+                    << " ttbr1_el1=0x" << vm.systemReg(0xc101)
+                    << " tcr_el1=0x" << vm.systemReg(0xc102) << '}';
+        } catch (const std::exception &error) { message << " context_unavailable=" << error.what(); }
+    }
     throw std::runtime_error(message.str());
 }
 } // namespace pc
