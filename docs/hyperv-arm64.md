@@ -59,7 +59,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 930 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 977 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -578,3 +578,37 @@ word and a VP mask to fast 0xb; the vector's meaning is the remaining question.
 The bounded report stores only those defined input words, count and enabled
 state. This experiment must be replaced or disabled once the vector contract
 and actual delivery path are verified.
+
+
+The isolated recommendation probe captured two Windows fast 0xb requests.
+The frozen last input is word 0 = 0, word 1 = 2: vector/TargetVtl/reserved fields
+are zero and the target is VP1. This directly establishes that vector 0 is a
+valid Windows ARM64 request, contradicting an unqualified application of the
+x64 0x10 lower bound. It is consistent with GIC SGI 0 and needs no invented
+vector offset. Delivery is still deliberately rejected in this probe build;
+the captured arguments do not themselves prove delivery. Frozen evidence:
+`build/windows11-hyperv/ipi-probe/input-evidence.json`, SHA-256
+`7302235a91af16987e78b50152d9afadd51857d0bbfb46b9afa0824f9d6f8778`.
+
+## ARM enlightened TLB drain
+
+HvCallFlushTlb (0xd6) now executes a real translation-context flush for the
+calling VP. It has no input/output buffers: both GPA arguments are ignored.
+Fast/memory transports are accepted in both HVC ABIs; nested, variable-header,
+rep and reserved control fields fail. Identity is required, and a missing or
+incomplete native backend cannot produce success. Successful drains share the
+TLB request/native-completion accounting used by 0x2 and 0x13.
+
+Microsoft's mu_msvm HvGuestHypercall.h calls 0xd6 the ARM enlightened TLB flush.
+In the original Windows kernel, the paths at RVAs 0x29c7b0, 0x4353cc and
+0x454148 read the partition-info page's initial word and, if nonzero, invoke
+0xd6 with zero input/output GPAs. This backend queues no asynchronous flush
+work, so that word remains zero; the new call does not fabricate a pending
+queue. Its conservative native TLBI still performs actual invalidation when
+explicitly invoked. No Windows use is claimed while the pending word is zero.
+
+Model tests cover both transports/ABIs, caller-VP targeting, ignored invalid
+GPAs, reserved controls, invalid VP, identity and backend failure. The EFI probe
+executes a legacy memory 0xd6 call alongside fixed/Ex address-space flushes;
+three successful requests must equal three completed native flushes. The
+Windows usage auditor includes 0xd6 in its native-completion check.

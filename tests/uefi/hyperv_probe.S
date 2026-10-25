@@ -351,6 +351,12 @@ efi_main:
     blr x24
     cmp x9, #2
     b.ne failed
+    // ARM-specific pending-TLB drain has no parameter buffers.
+    mov x0, #0xd6
+    mov x1, #-1
+    mov x2, #-1
+    hvc #1
+    cbnz x0, failed
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

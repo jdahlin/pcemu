@@ -111,6 +111,17 @@ class WindowsHyperV(unittest.TestCase):
         report['failures'] += 1
         self.assertFalse(verify(report, baseline)['tlbFlushObserved'])
 
+    def test_arm_tlb_drain_is_a_counted_flush(self):
+        report, baseline = fixture()
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        report['calls'].append(dict(code=0xd6, count=2, failures=0))
+        report.update(legacyCalls=20, tlbFlushRequests=2, tlbFlushTargetMask=1,
+                      tlbFlushFlags=0, translationContextFlushes=[2])
+        self.assertTrue(verify(report, baseline)['tlbFlushObserved'])
+        report['translationContextFlushes'] = [1]
+        self.assertFalse(verify(report, baseline)['tlbFlushObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

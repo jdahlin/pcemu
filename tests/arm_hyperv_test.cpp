@@ -451,5 +451,29 @@ int main() {
     check(probing.report().find("\"ipiProbe\":{\"enabled\":true,\"requests\":1,\"input0\":5,\"input1\":1}") != std::string::npos);
     probing.setIpiProbe(false);
     check(probeFeatures() == 0xffffffff00000000ull);
+    auto drainTlb = [&](bool smccc, bool fast, unsigned vp, uint64_t extra = 0) {
+        r.fill(0x9999999999999999);
+        auto control = uint64_t(0xd6) | (fast ? 0x10000 : 0) | extra;
+        r[0] = smccc ? 0x46000001 : control;
+        if (smccc) r[1] = control;
+        unsigned in = smccc ? 2 : 1;
+        r[in] = uint64_t(-1); r[in + 1] = uint64_t(-1); // Both GPAs are ignored.
+        auto before = r;
+        check(flushing.call(smccc ? 0 : 1, r, vp));
+        check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
+        return r[0];
+    };
+    check(drainTlb(false, false, 0) == 0x71); // Existing deliberately failing callback.
+    flushing.setTranslationFlusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
+    for (bool smccc : {false, true}) for (bool fast : {false, true}) for (unsigned vp : {0, 1})
+        check(drainTlb(smccc, fast, vp) == 0 && flushed == (1ull << vp));
+    auto beforeDrainFailure = flushCalls;
+    for (auto bit : {1ull << 17, 1ull << 27, 1ull << 31, 1ull << 32, 1ull << 48})
+        check(drainTlb(true, false, 0, bit) == 3);
+    check(drainTlb(false, false, 2) == 3 && flushCalls == beforeDrainFailure);
+    check(flushing.report().find("\"tlbFlushRequests\":82") != std::string::npos);
+    ArmHyperV earlyDrain(true, memory, base, 1);
+    r = {}; r[0] = 0xd6;
+    check(earlyDrain.call(1, r, 0) && r[0] == 6);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

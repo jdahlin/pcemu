@@ -180,6 +180,18 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
         unsigned in = smccc ? 2 : 1;
         ipiProbeInput0 = r[in]; ipiProbeInput1 = r[in + 1];
     }
+    if (code == 0xd6) {
+        // ARM enlightened TLB drain: Windows supplies no input or output
+        // parameters, after consulting its partition-info pending-flush word.
+        if (!guestId) return accessDenied;
+        if ((control & ~uint64_t(0x1ffff)) || vp >= cpus) return invalidInput;
+        if (!translationFlusher) return invalidCode;
+        const uint64_t targets = 1ull << vp;
+        if (!translationFlusher(targets)) return 0x71;
+        ++tlbFlushRequests; tlbFlushTargetMask = targets;
+        tlbFlushAddressSpace = 0; tlbFlushFlags = 0;
+        return 0;
+    }
     if (code == 0x2 || code == 0x13 || code == 0x19 || code == 0x1a) {
         if (!guestId) return accessDenied;
         const bool flush = code == 0x2 || code == 0x13;
