@@ -33,3 +33,28 @@ host queries and actual Windows responses. IP configuration exchange and KVP
 
 The Windows test VM remains stopped during this work. Future guest validations
 should use bounded runs and shut the guest down after collecting their evidence.
+
+## Host IC transaction model
+
+`ArmHyperVKvp` provides the standard KVP offer (channel 4, connection 19),
+framework 1.0/3.0 and KVP 4.0 negotiation. It does not offer unsupported KVP 5
+or older service layouts. Opening initiates negotiation only; enumeration is
+an explicit host request. No SET, DELETE or IP configuration is transmitted.
+
+One request may be outstanding, and its bounded result must be drained before
+another request is accepted. Repeated packet construction under backpressure
+does not change state or count a request; `sent` marks actual publication.
+The thirty-second timeout starts at publication and stops the session until
+channel reopen. Requests are never retried automatically.
+
+Receive validation covers the VMBus/pipe envelope, transaction ID, flags,
+framework/service versions and reserved fields before decoding a successful
+record. Guest errors and end-of-pool remain distinct status-bearing results.
+Malformed/duplicate/late replies never produce a record. Reports expose bounded
+state/counters, not key/value contents.
+
+The diskless suite passes 5,439 checks under AddressSanitizer/UBSan, including
+all truncated negotiation/query reply lengths, wrong transaction/version/pool/
+index, explicit guest failure, end-of-pool, timeout and reopen. Channel
+registration/service dispatch and actual Windows queries remain unimplemented;
+this model alone does not add a default VM device. The Windows VM stays stopped.

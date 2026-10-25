@@ -375,3 +375,11 @@ build/arm-hyperv-kvp-codec-tests: src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kv
 test-arm-hyperv-kvp-codec: build/arm-hyperv-kvp-codec-tests
 	./build/arm-hyperv-kvp-codec-tests
 test test-hvf: test-arm-hyperv-kvp-codec
+
+.PHONY: test-arm-hyperv-kvp
+build/arm-hyperv-kvp-tests: src/arm_hyperv_kvp.cpp src/arm_hyperv_kvp.hpp src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp_codec.hpp src/arm_vmbus.hpp tests/arm_hyperv_kvp_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp.cpp tests/arm_hyperv_kvp_test.cpp -o $@
+test-arm-hyperv-kvp: build/arm-hyperv-kvp-tests
+	./build/arm-hyperv-kvp-tests
+test test-hvf: test-arm-hyperv-kvp
