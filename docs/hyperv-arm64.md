@@ -2163,3 +2163,25 @@ than infer a timesync protocol failure. Evidence and the stopped private overlay
 are retained under `build/windows11-hyperv/clock-adjustment/` for that inspection.
 Secret-bearing temporary staging media were removed; extracted registry data
 are restricted to the current user. The original basic-profile VM is restored.
+
+### Explicit local domain for private probe logon
+
+Inspection of the stopped probe disk finds the staged test-account name and
+password consistent with the private local account file, but DefaultDomainName
+is empty. No password is printed or included in tracked files. This does not
+alone prove why Winlogon skipped the diagnostic launch.
+
+`tools/windows/prepare_probe_logon.cmd` provides a WinPE staging step for an
+already-loaded private SOFTWARE hive (HKLM/PCEMU_SOFT) and installed Windows on
+W:. It loads that same disk's SYSTEM hive, resolves Select/Current and reads the
+actual computer name, then sets that name as the explicit local account domain.
+It also enables the one-shot autologon count and ForceAutoLogon for the private
+diagnostic run. The caller stages credentials separately and must remove
+ForceAutoLogon/DefaultPassword and disable autologon before its diagnostic runs.
+The clock-probe private wrapper performs that cleanup before PowerShell starts.
+
+The helper was executed by the actual WinPE staging VM and reported
+PCEMU_PROBE_LOGON_DOMAIN_OK, followed by successful staging. Evidence is the
+second staging report under `build/windows11-hyperv/clock-adjustment/reports/`.
+The subsequent guest run must still establish that the diagnostic actually
+executes; this staging result is not clock-adjustment evidence.
