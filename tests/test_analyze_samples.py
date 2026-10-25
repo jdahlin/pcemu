@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from analyze_samples import category, parse
+from analyze_samples import category, parse, source_site
 
 
 class HostSampleAccounting(unittest.TestCase):
@@ -27,6 +27,20 @@ class HostSampleAccounting(unittest.TestCase):
         self.assertEqual(category({'ancestors': ['main', 'waitForProfiler(unsigned int)'],
                                    'symbol': 'nanosleep'}),
                          'Profiler attachment barrier (excluded)')
+
+    def test_frame_renderer_is_not_other_host_work(self):
+        for function in ('pc::VGA::render(', 'pc::PcDisplay::save(', 'pc::PcDisplay::render('):
+            self.assertEqual(category({'ancestors': [function], 'symbol': 'memcpy'}),
+                             'Capture/video/control output')
+        self.assertEqual(category({'ancestors': ['main'], 'symbol': '???  (in <unknown binary>)'}),
+                         'Unresolved code without JIT ancestry')
+
+    def test_source_sites_ignore_aslr_and_keep_line(self):
+        a = 'pc::Jit::run()  (in pcemu) + 432,548,...  [0x1000,0x2000,...]  jit.cpp:89'
+        b = 'pc::Jit::run()  (in pcemu) + 432,548,...  [0x3000,0x4000,...]  jit.cpp:89'
+        self.assertEqual(source_site(a), 'pc::Jit::run() [jit.cpp:89]')
+        self.assertEqual(source_site(a), source_site(b))
+        self.assertNotEqual(source_site(a), source_site(a.replace(':89', ':90')))
 
     def test_inclusive_frames_do_not_duplicate_samples(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -47,9 +47,19 @@ def category(node):
         return 'JIT dispatch/cache/validation'
     if 'SDL_' in chain or 'SDL2' in chain:
         return 'SDL rendering and window events'
-    if 'pc::VGA::pixel(' in chain or 'main::$_' in chain or '__write' in chain:
+    if any(name in chain for name in ('pc::VGA::pixel(', 'pc::VGA::render(',
+                                      'pc::PcDisplay::save(', 'pc::PcDisplay::render(',
+                                      'main::$_', '__write')):
         return 'Capture/video/control output'
+    if node['symbol'].startswith('???'):
+        return 'Unresolved code without JIT ancestry'
     return 'Main loop/other host work'
+
+
+def source_site(symbol):
+    function = symbol.split('  (in ', 1)[0]
+    location = re.search(r'\s+(\S+\.(?:cpp|c|hpp|mm):[0-9]+)(?:\s|$)', symbol)
+    return function + (' [' + location[1] + ']' if location else '')
 
 
 def main():
@@ -64,7 +74,11 @@ def main():
     total = 0
     excluded = 0
     workers = collections.defaultdict(collections.Counter)
+    sites = collections.Counter()
+    per_file = []
     for path in files:
+        file_groups = collections.Counter()
+        file_excluded = 0
         for n in parse(path):
             own = n['self']
             root = next((s for s in n['ancestors'] + [n['symbol']] if s.startswith('Thread_')), '')
@@ -75,15 +89,24 @@ def main():
                 continue
             if category(n) == 'Profiler attachment barrier (excluded)':
                 excluded += own
+                file_excluded += own
                 continue
             total += own
             groups[category(n)] += own
+            file_groups[category(n)] += own
+            sites[source_site(n['symbol'])] += own
             function = n['symbol'].split('  (in ', 1)[0]
             self_functions[function] += own
             # One inclusive count per function on each leaf's ancestry, even
             # when recursion or compiler-expanded inline frames repeat it.
             for f in set(s.split('  (in ', 1)[0] for s in n['ancestors'] + [n['symbol']]):
                 inclusive_functions[f] += own
+        file_total = sum(file_groups.values())
+        per_file.append({'file': str(path), 'samples': file_total,
+                         'attachmentBarrierSamplesExcluded': file_excluded,
+                         'categories': [{'name': k, 'samples': v,
+                                         'percent': 100*v/file_total if file_total else 0}
+                                        for k, v in file_groups.most_common() if v]})
     def rows(counter):
         return [{'name': k, 'samples': n, 'percent': 100*n/total}
                 for k, n in counter.most_common() if n]
@@ -92,7 +115,8 @@ def main():
     report = {'files': [str(f) for f in files], 'samples': total,'attachmentBarrierSamplesExcluded':excluded,
               'workerThreads':dict(workers),
               'scope': 'main-thread wall-stack samples; attachment barrier excluded; worker blocking stacks reported separately; small attachment/exit margins remain; profiled timings are not benchmarks',
-              'categories': rows(groups), 'selfFunctions': rows(self_functions),
+              'categories': rows(groups), 'perFile': per_file,
+              'selfSites': rows(sites), 'selfFunctions': rows(self_functions),
               'inclusiveFunctions': rows(inclusive_functions)}
     a.output.write_text(json.dumps(report, indent=2)+'\n')
     print(f'{len(files)} traces, {total} samples')
