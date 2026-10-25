@@ -494,3 +494,34 @@ ordinary-RAM mappings and access-specific fast tags, preserving precise fallback
 and invalidating on mapping, privilege, A20, backing-memory and code-watch changes.
 Cold fallback placement can be changed separately to measure its contribution.
 This remains a software MMU; it does not require host virtual-memory remapping.
+
+
+## Isolated cold memory layout experiment (2026-10-25)
+
+The first isolated QEMU-inspired experiment moved all normal-RAM memory
+fallback/replay regions after the native block return and removed the hot
+unconditional branches over them. All existing guards and architectural behavior
+were retained. A relocation pass adjusted B, B.cond, CBZ/CBNZ and TBZ/TBNZ targets;
+six added checks exercised forward/backward relocation and malformed input.
+
+The candidate passed 352,640 core, 255,535 read, 947,820 RMW, 237,430 flag,
+17,861 indirect-jump and 2,957,189 byte checks. Three alternating CPU-only RAM
+sweep pairs used identical programs and matched guest/native instruction counts,
+helper counts and final pointers for all 20 cases. At one million loops each
+interval contains 32,000,007 dependent loads. Some small flat intervals are under
+100 ms, and their apparent gains should not be treated as precise speedups.
+
+The small paged dense case consistently regressed from 1.68–1.76 ns/load to
+5.50–5.81 ns/load, with zero slow-memory helper calls for both engines.
+Paged dense 256/1024-node cases also regress. The experiment is rejected and
+production emitter/test sources restored. This demonstrates that outlining
+fallbacks alone is insufficient with our current guard-heavy memory sequence;
+it does not isolate whether instruction fetch, branch prediction, alignment or
+another microarchitectural effect causes the regression. No Windows speedup is
+claimed, and no new VM disks or installer fixtures were created.
+
+Full samples, runner hashes, paired ratios and correctness counts are recorded
+in `measurements/rejected-cold-memory-layout-2026-10-25.json`. The complete rejected
+emitter/relocation/test patch is alongside it. Prevalidating memory access still
+needs a separate experiment that reduces repeated guards rather than only
+changing their placement.

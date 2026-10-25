@@ -1,0 +1,156 @@
+diff --git a/src/jit_arm64.cpp b/src/jit_arm64.cpp
+index e99825b..481ad83 100644
+--- a/src/jit_arm64.cpp
++++ b/src/jit_arm64.cpp
+@@ -2,6 +2,7 @@
+ #include "jit_ir.hpp"
+ #include "jit_flags.hpp"
+ #include "jit_runtime.hpp"
++#include "jit_layout.hpp"
+ #include <algorithm>
+ #include <bit>
+ #include <cstddef>
+@@ -20,6 +21,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+     const auto &ir = decoded.instructions;
+     auto pos = decoded.end;
+     std::vector<uint32_t> code;
++    std::vector<std::pair<size_t, size_t>> coldRegions;
+     auto emit = [&](uint32_t x) { code.push_back(x); };
+     auto mov = [&](int dst, int src) { emit(0x2a0003e0u | (src << 16) | dst); };
+     auto extract = [&](int dst, int src, int width, int shift) {
+@@ -675,8 +677,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+             exits.push_back(code.size());
+             emit(0x14000000u);
+             code[continuation] |= uint32_t(code.size() - continuation) << 5;
+-            if (fastSuccess != size_t(-1))
++            if (fastSuccess != size_t(-1)) {
+                 code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
++                coldRegions.emplace_back(fastSuccess, code.size());
++            }
+             if (i.memoryAlu)
+                 last = n;
+             continue;
+@@ -734,6 +738,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                  (19 + k * 2));
+     emit(0xa8c77bfdu);
+     emit(0xd65f03c0u); // ldp x29,x30,[sp],#112; ret
++    code = jit_detail::outlineMemoryFallbacks(code, coldRegions);
+     size_t bytes = code.size() * 4;
+     if (bytes > capacity)
+         return block; // Never copy an oversized block beyond the executable arena.
+diff --git a/tests/test.cpp b/tests/test.cpp
+index 416004b..1921247 100644
+--- a/tests/test.cpp
++++ b/tests/test.cpp
+@@ -1,5 +1,6 @@
+ #include "cpu.hpp"
+ #include "jit.hpp"
++#include "jit_layout.hpp"
+ #include "machine.hpp"
+ #include "pc_bios_disk.hpp"
+ #include "ps2_test_support.hpp"
+@@ -8,6 +9,7 @@
+ #include <fstream>
+ #include <iostream>
+ #include <random>
++#include <tuple>
+ using namespace pc;
+ static unsigned checks = 0;
+ static void check(bool b, const char *message) {
+@@ -21,6 +23,29 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
+ }
+ int main() {
+     try {
++        // Exercise forward/backward relocation for every emitted direct-branch
++        // family, including branches from cold code back into the hot stream.
++        for (auto [opcode, bits, shift] : {std::tuple{0x14000000u,26u,0u},
++                                         {0x54000001u,19u,5u},
++                                         {0x35000009u,19u,5u},
++                                         {0xb500000au,19u,5u},
++                                         {0x3610000du,14u,5u}}) {
++            auto branch = [&](int displacement) {
++                return opcode | ((uint32_t(displacement) & ((1u << bits)-1)) << shift);
++            };
++            std::vector<uint32_t> input{branch(3), 0x14000003u, branch(2),
++                                        branch(-3), 0xd503201fu, 0xd65f03c0u};
++            auto output = jit_detail::outlineMemoryFallbacks(input, {{1,4}});
++            check(output == std::vector<uint32_t>{branch(4), 0xd503201fu,
++                      0xd65f03c0u, branch(-2), branch(-4)},
++                  "cold layout relocates direct branches in both directions");
++        }
++        {
++            bool rejected = false;
++            try { jit_detail::outlineMemoryFallbacks({0xd503201fu}, {{0,1}}); }
++            catch (const std::logic_error &) { rejected = true; }
++            check(rejected, "cold layout rejects a non-branch region header");
++        }
+         // TLB metadata must not leak into high physical-frame bits, even
+         // for unknown permissions or a dirty-bit transition on a cached hit.
+         {
+diff --git a/src/jit_layout.hpp b/src/jit_layout.hpp
+new file mode 100644
+index 0000000..749cb83
+--- /dev/null
++++ b/src/jit_layout.hpp
+@@ -0,0 +1,61 @@
++#pragma once
++#include <cstdint>
++#include <cstddef>
++#include <stdexcept>
++#include <utility>
++#include <vector>
++namespace pc::jit_detail {
++// Each range begins with a hot-path B over a self-contained cold region.
++// Remove that B, place the region after the return, and relocate all direct
++// branches. The emitter uses no PC-relative literal loads or ADR instructions.
++inline std::vector<uint32_t> outlineMemoryFallbacks(
++    const std::vector<uint32_t> &code,
++    const std::vector<std::pair<size_t, size_t>> &regions) {
++    std::vector<unsigned char> cold(code.size()), removed(code.size());
++    for (auto [begin, end] : regions) {
++        if (begin >= end || end > code.size() || removed[begin] || cold[begin] ||
++            (code[begin] & 0xfc000000u) != 0x14000000u ||
++            (code[begin] & 0x03ffffffu) != end - begin)
++            throw std::logic_error("invalid JIT cold region");
++        removed[begin] = true;
++        for (size_t n = begin + 1; n < end; ++n) {
++            if (cold[n] || removed[n]) throw std::logic_error("overlapping JIT cold regions");
++            cold[n] = true;
++        }
++    }
++    std::vector<size_t> order, mapping(code.size() + 1);
++    for (bool selectCold : {false, true})
++        for (size_t n = 0; n < code.size(); ++n)
++            if (!removed[n] && bool(cold[n]) == selectCold) {
++                mapping[n] = order.size();
++                order.push_back(n);
++            }
++    mapping[code.size()] = order.size();
++    for (auto it = regions.rbegin(); it != regions.rend(); ++it)
++        mapping[it->first] = mapping[it->second];
++    std::vector<uint32_t> result;
++    result.reserve(order.size());
++    for (auto old : order) {
++        auto word = code[old];
++        unsigned bits = 0, shift = 0;
++        if ((word & 0x7c000000u) == 0x14000000u) bits = 26;
++        else if ((word & 0xff000010u) == 0x54000000u ||
++                 (word & 0x7e000000u) == 0x34000000u) { bits = 19; shift = 5; }
++        else if ((word & 0x7e000000u) == 0x36000000u) { bits = 14; shift = 5; }
++        if (bits) {
++            const uint32_t mask = (1u << bits) - 1;
++            const auto raw = (word >> shift) & mask;
++            const int64_t displacement = int64_t(raw ^ (1u << (bits - 1))) - (1u << (bits - 1));
++            const int64_t target = int64_t(old) + displacement;
++            if (target < 0 || target >= int64_t(code.size()))
++                throw std::logic_error("JIT branch outside block");
++            const int64_t delta = int64_t(mapping[target]) - int64_t(mapping[old]);
++            if (delta < -(int64_t(1) << (bits - 1)) || delta >= (int64_t(1) << (bits - 1)))
++                throw std::logic_error("outlined JIT branch out of range");
++            word = (word & ~(mask << shift)) | ((uint32_t(delta) & mask) << shift);
++        }
++        result.push_back(word);
++    }
++    return result;
++}
++}
