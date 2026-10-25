@@ -168,6 +168,34 @@ class WindowsHyperV(unittest.TestCase):
             self.assertFalse(result['eventSignalsObserved'])
             self.assertFalse(result['guiBootVerified'])
 
+    def test_vmbus_control_requires_negotiation_offers_and_delivery(self):
+        report, baseline = fixture()
+        for row in report['calls']:
+            row['failures'] = 4 if row['code'] == 0x19 else 0
+        report['calls'].append(dict(code=0x5c, count=2, failures=0))
+        report.update(mode='vmbus', legacyCalls=20, postedMessages=2, privateInterruptRequests=[2])
+        for name in (0xa0010, 0xa0013, 0xa0002):
+            report['registers'].append(dict(name=name, reads=0, writes=1, failures=0))
+        report['vmbus'] = dict(connected=True, version=0x60000, contacts=1, offerRequests=1,
+                              unloads=0, deliveredReplies=2, pendingReplies=0,
+                              rejectedMessages=0, targetVp=0, targetSint=2, offeredChannels=0)
+        self.assertTrue(verify(report, baseline)['vmbusControlObserved'])
+        for key, value in (('connected', False), ('version', 0), ('version', 0x60001),
+                           ('contacts', 0), ('offerRequests', 0), ('pendingReplies', 1),
+                           ('rejectedMessages', 1), ('deliveredReplies', 1), ('targetVp', 1),
+                           ('targetSint', 16), ('contacts', True)):
+            changed = deepcopy(report)
+            changed['vmbus'][key] = value
+            self.assertFalse(verify(changed, baseline)['vmbusControlObserved'])
+        for change in (dict(mode='synic'), dict(vmbus=None), dict(postedMessages=0),
+                       dict(privateInterruptRequests=[0]), dict(privateInterruptRequests=[True]),
+                       dict(guestOsId=0x5043454d55)):
+            self.assertFalse(verify(dict(report, **change), baseline)['vmbusControlObserved'])
+        for name in (0xa0010, 0xa0013, 0xa0002):
+            changed = deepcopy(report)
+            changed['registers'] = [row for row in changed['registers'] if row['name'] != name]
+            self.assertFalse(verify(changed, baseline)['vmbusControlObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

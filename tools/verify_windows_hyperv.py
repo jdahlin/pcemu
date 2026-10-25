@@ -121,7 +121,32 @@ def verify(report, baseline, kernel_build=26100):
                 and accepted == counts.get(code) and row.get('failures') == 0)
     message_posts_observed = connection_observed(0x5c, 'postedMessages')
     event_signals_observed = connection_observed(0x5d, 'signaledEvents')
-    return {'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
+    bus = report.get('vmbus', {})
+    if type(bus) is not dict:
+        bus = {}
+    fields = ('contacts', 'offerRequests', 'unloads', 'deliveredReplies', 'pendingReplies',
+              'rejectedMessages', 'targetVp', 'targetSint', 'version')
+    bus_counts_valid = all(type(bus.get(field)) is int and bus[field] >= 0 for field in fields)
+    synic_configured = all(registers.get(name, {}).get('writes', 0) > 0
+                           and registers.get(name, {}).get('failures') == 0
+                           for name in (0xa0010, 0xa0013))
+    vmbus_observed = False
+    if bus_counts_valid and message_posts_observed and report.get('mode') == 'vmbus':
+        vp, sint = bus['targetVp'], bus['targetSint']
+        private_irqs = report.get('privateInterruptRequests', [])
+        sint_row = registers.get(0xa0000 + sint, {})
+        vmbus_observed = (bus.get('connected') is True and bus['version'] in
+                          (0x50000, 0x50001, 0x50002, 0x50003, 0x60000)
+                          and bus['contacts'] > 0 and bus['offerRequests'] > 0
+                          and bus['rejectedMessages'] == 0 and bus['pendingReplies'] == 0
+                          and bus['deliveredReplies'] == bus['contacts'] + bus['offerRequests'] + bus['unloads']
+                          and report['postedMessages'] >= bus['deliveredReplies']
+                          and 0 <= vp < len(vps) and 0 <= sint < 16 and synic_configured
+                          and sint_row.get('writes', 0) > 0 and sint_row.get('failures') == 0
+                          and type(private_irqs) is list and len(private_irqs) == len(vps)
+                          and type(private_irqs[vp]) is int and private_irqs[vp] > 0)
+    return {'vmbusControlObserved': vmbus_observed,
+            'messagePostsObserved': message_posts_observed, 'eventSignalsObserved': event_signals_observed,
             'ipiObserved': ipi_observed, 'tlbFlushObserved': flush_observed, 'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
             'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),

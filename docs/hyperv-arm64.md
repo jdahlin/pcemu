@@ -1009,3 +1009,18 @@ The checked-in AML is source-hash checked. To verify it with ACPICA, run
 Compilation suppresses only the known diagnostics for the historical short
 hardware ID, simultaneous `_HID`/`_ADR`, and fixed resources with `_DIS` but no
 `_SRS`, matching the reference namespace. All other diagnostics remain enabled.
+
+`verify_windows_hyperv.py` reports `vmbusControlObserved` separately from core
+Hyper-V use. It requires a Windows identity and valid core evidence, successful
+PostMessage calls, a supported connected VMBus version, a request for offers,
+fully serviced control replies, successful SynIC control/message/SINT writes,
+and native private-interrupt delivery to the chosen VP. A profile name or a
+single accepted contact is insufficient. This establishes the control exchange;
+it does not establish synthetic device channels or integration services.
+
+Attachment validation: 2,073 portable Hyper-V checks, the native HVF suite
+(including a real guest receiving the attached bus's version reply and
+acknowledging its interrupt), matching/mismatched ACPI CLI checks, and EFI boot
+probes in `off`, `basic`, `synic`, and `vmbus` modes passed. The Windows auditor's
+13 tests include missing negotiation, offers, SynIC configuration, and interrupt
+evidence. Real Windows VMBus discovery remains a separate live experiment.
