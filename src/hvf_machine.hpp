@@ -67,6 +67,12 @@ class HvfMachine {
     // model an asserted level source or replace the architectural timer.
     void sendPrivateInterrupt(uint64_t cpuMask, unsigned interrupt);
     uint64_t privateInterruptRequests(unsigned cpu) const;
+    struct PrivateInterruptState {
+        bool available = false;
+        uint32_t enabled = 0, pending = 0, active = 0;
+    };
+    // Read-only GIC snapshot; all VPs must be stopped. Offline VPs are unavailable.
+    PrivateInterruptState privateInterruptState(unsigned cpu) const;
     uint64_t exits() const;
     static bool supported();
 

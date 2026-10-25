@@ -399,6 +399,14 @@ void selfTest() {
         acknowledge(1023, 5);
         vm.sendSoftwareInterrupt(3, 7);
         vm.sendSoftwareInterrupt(2, 9); // Must preserve SGI 7 while pending SGI 9.
+        const auto gic0 = vm.privateInterruptState(0), gic1 = vm.privateInterruptState(1);
+        require(gic0.available && gic1.available && (gic0.enabled & (1u << 7)) &&
+                (gic0.pending & (1u << 7)) && (gic1.pending & (1u << 7)) &&
+                (gic1.pending & (1u << 9)), "GIC snapshot missed pending SGIs");
+        require(vm.privateInterruptState(0).pending == gic0.pending &&
+                vm.privateInterruptState(1).pending == gic1.pending,
+                "GIC snapshot consumed a pending interrupt");
+        rejects([&] { vm.privateInterruptState(2); }, "Out-of-range GIC snapshot accepted");
         acknowledge(7, 7);
         acknowledge(1023, 9);
         acknowledge(1023, 1023); // EOI removed both requests; no duplicate SGI 5.

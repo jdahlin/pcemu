@@ -271,6 +271,15 @@ std::string ArmVirtMachine::hypervReport() const {
         if (cpu) report += ',';
         report += std::to_string(vm.privateInterruptRequests(cpu));
     }
+    report += "],\"privateInterruptState\":[";
+    for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
+        if (cpu) report += ',';
+        const auto gic = vm.privateInterruptState(cpu);
+        report += "{\"available\":" + std::string(gic.available ? "true" : "false") +
+                  ",\"enabled\":" + std::to_string(gic.enabled) +
+                  ",\"pending\":" + std::to_string(gic.pending) +
+                  ",\"active\":" + std::to_string(gic.active) + '}';
+    }
     return report + "]}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {

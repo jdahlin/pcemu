@@ -572,6 +572,29 @@ void HvfMachine::sendPrivateInterrupt(uint64_t cpuMask, unsigned interrupt) {
         ++impl->privateInterrupts[cpu];
     }
 }
+HvfMachine::PrivateInterruptState HvfMachine::privateInterruptState(unsigned cpu) const {
+    impl->requireOwner();
+    if (cpu >= cpuCount()) throw std::runtime_error("Invalid private interrupt snapshot CPU index");
+    {
+        std::lock_guard lock(impl->mutex);
+        if (!impl->active.empty() || impl->armed)
+            throw std::runtime_error("GIC snapshot requires stopped vCPUs");
+    }
+    PrivateInterruptState result;
+    if (!impl->gicEnabled) return result;
+    auto read = [&](hv_vcpu_t id, hv_vcpu_exit_t *) {
+        if (__builtin_available(macOS 15.0, *)) {
+            uint64_t enabled = 0, pending = 0, active = 0;
+            check(hv_gic_get_redistributor_reg(id, static_cast<hv_gic_redistributor_reg_t>(0x10100), &enabled), "read GICR_ISENABLER0");
+            check(hv_gic_get_redistributor_reg(id, static_cast<hv_gic_redistributor_reg_t>(0x10200), &pending), "read GICR_ISPENDR0");
+            check(hv_gic_get_redistributor_reg(id, static_cast<hv_gic_redistributor_reg_t>(0x10300), &active), "read GICR_ISACTIVER0");
+            result = {true, uint32_t(enabled), uint32_t(pending), uint32_t(active)};
+        }
+    };
+    if (cpu) impl->secondary[cpu - 1]->withStoppedContext(read);
+    else read(impl->vcpu, nullptr);
+    return result;
+}
 uint64_t HvfMachine::privateInterruptRequests(unsigned cpu) const {
     impl->requireOwner();
     if (cpu >= cpuCount()) throw std::runtime_error("Invalid private interrupt CPU index");

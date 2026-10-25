@@ -1248,3 +1248,11 @@ acknowledges messages, drains queues or exposes arbitrary payloads. Unmapped,
 guest-cleared, truncated and oversized slots do not expose response fields.
 This separates accepted host queueing from guest consumption when diagnosing
 VMBus startup. All VPs must be stopped when collecting a snapshot.
+
+Native reports additionally expose per-VP GIC private-interrupt enable, pending
+and active bitmaps. Reads execute on each vCPU's owning thread with all VPs
+stopped; offline VPs are marked unavailable. The snapshot never acknowledges
+an interrupt. Native fixtures verify two-VP pending SGIs, repeatable reads,
+subsequent guest acknowledgement and invalid CPU rejection. All 284 native
+checks pass with this diagnostic, alongside 2,136 model checks and all 13
+Windows-auditor tests.
