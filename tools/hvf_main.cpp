@@ -68,6 +68,7 @@ void selfTest() {
     {
         HvfMachine vm(size_t(8) * 1024 * 1024 * 1024);
         code(vm, std::array<uint32_t, 3>{0xb9000020, 0xb9400022, 0xd4000002});
+        rejects([&] { vm.sendSoftwareInterrupt(1, 1); }, "SGI accepted without a GIC");
         vm.setReg(0, 0x12345678);
         vm.setReg(1, HvfMachine::ramBase + size_t(8) * 1024 * 1024 * 1024 - 4);
         hvc(vm);
@@ -347,6 +348,53 @@ void selfTest() {
         vm.writeMemory(0x3fff0110, {reinterpret_cast<const uint8_t *>(&correct), 4});
         vm.flushTranslationContext(3);
         observe(22);
+    }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true, {}, 2);
+        // Configure Group-1 SGIs in each GICR frame and CPU interface, then
+        // read IAR1 once per host phase. DAIF stays masked: software explicitly
+        // acknowledges the interrupt, making routing and EOI observable.
+        code(vm, std::array<uint32_t, 32>{
+            0xd53800a0, 0x92401c00, 0xd2a10161, 0x8b004421, // MPIDR -> GICR SGI frame
+            0x12800002, 0xb9008022, 0x529fffe2, 0xb9010022, // Group 1, enable SGIs
+            0xd2a10003, 0x52800262, 0xb9000062, 0xd2800022, // enable distributor
+            0xd518cca2, 0xd5033fdf, 0xd2801fe2, 0xd5184602, // SRE, PMR=255
+            0xd2800022, 0xd518cce2, 0xd5033fdf, 0xd2a80025, // Group-1 enable, mailbox
+            0xd2800028, 0xf94000a9, 0xeb08013f, 0x54ffffc1, // wait for phase
+            0xd538cc04, 0xd4000002, 0xf10ff09f, 0x54000062, // IAR1; HVC; skip spurious EOI
+            0xd518cc24, 0xd5033fdf, 0x91000508, 0x17fffff6}); // EOI; next phase
+        require(vm.startCPU(1, HvfMachine::ramBase, 0) == 0, "SGI secondary start failed");
+        uint64_t phase = 0;
+        auto acknowledge = [&](uint64_t primary, uint64_t secondary) {
+            ++phase;
+            vm.writeMemory(HvfMachine::ramBase + 0x10000,
+                {reinterpret_cast<const uint8_t *>(&phase), sizeof(phase)});
+            unsigned seen = 0;
+            for (unsigned attempt = 0; attempt < 16 && seen != 3; ++attempt) {
+                auto exit = vm.run(std::chrono::milliseconds(100));
+                if (exit.reason == HvfMachine::ExitReason::Canceled) continue;
+                require(exit.exceptionClass() == 0x16, "Unexpected SGI guest exit");
+                require(vm.reg(4) == (exit.cpu ? secondary : primary), "SGI delivered to wrong CPU or vector");
+                seen |= 1u << exit.cpu;
+            }
+            require(seen == 3, "Both VPs did not acknowledge the SGI phase");
+        };
+        acknowledge(1023, 1023); // Initial CPU interface has no pending interrupt.
+        vm.sendSoftwareInterrupt(2, 5);
+        vm.sendSoftwareInterrupt(2, 5); // Pending SGIs coalesce, unlike request counters.
+        acknowledge(1023, 5);
+        vm.sendSoftwareInterrupt(3, 7);
+        vm.sendSoftwareInterrupt(2, 9); // Must preserve SGI 7 while pending SGI 9.
+        acknowledge(7, 7);
+        acknowledge(1023, 9);
+        acknowledge(1023, 1023); // EOI removed both requests; no duplicate SGI 5.
+        require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
+                "Software interrupt request counters are incorrect");
+        vm.sendSoftwareInterrupt(0, 15);
+        rejects([&] { vm.sendSoftwareInterrupt(4, 5); }, "Invalid SGI target accepted");
+        rejects([&] { vm.sendSoftwareInterrupt(3, 16); }, "Non-SGI vector accepted");
+        require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
+                "Empty/rejected SGI request changed counters");
     }
     for (bool gic : {false, true}) {
         uint64_t sleep = 0;

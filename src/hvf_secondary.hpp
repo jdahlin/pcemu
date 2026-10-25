@@ -104,6 +104,17 @@ class HvfSecondary {
         if (error) std::rethrow_exception(error);
         return true;
     }
+    void sendSoftwareInterrupt(unsigned interrupt) {
+        dispatch([&] {
+            if (__builtin_available(macOS 15.0, *)) {
+                uint64_t pending = 0;
+                auto reg = static_cast<hv_gic_redistributor_reg_t>(0x10200); // GICR_ISPENDR0
+                check(hv_gic_get_redistributor_reg(id, reg, &pending));
+                check(hv_gic_set_redistributor_reg(id, reg, pending | (1ull << interrupt)));
+            } else throw std::runtime_error("GIC software interrupts require macOS 15");
+        });
+        finish();
+    }
     void beginRun(unsigned index, std::function<void(bool)> leave) {
         dispatch([this, index, leave = std::move(leave)] {
             try {

@@ -508,3 +508,54 @@ and [processor-set encoding](https://learn.microsoft.com/en-us/virtualization/hy
 ExProcessorMasks remains unadvertised until the other dependent interfaces
 are implemented and verified. List flushes/repetition semantics and synthetic
 IPIs are still outstanding.
+
+
+## ARM64 list-flush and IPI investigation
+
+Microsoft explicitly labels [FlushVirtualAddressList](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddresslist)
+and [FlushVirtualAddressListEx](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercalls/hvcallflushvirtualaddresslistex)
+as x64-only. The original ARM64 kernel's HvlFlushRangeListTb (RVA 0x453fc8)
+uses VslpEnterIumSecureMode and VslSlowFlushSecureRangeList (RVAs
+0x23d668/0x23d590), not a verified 0x3/0x14 call sequence. Therefore those list
+contracts must not be copied into ARM64 merely to fill the x64 feature list.
+ARM64 list applicability remains an open investigation; no support is claimed.
+
+HvlSendSyntheticClusterIpi (RVA 0x4d1100) does issue fast 0xb, and its Ex helper
+exists at RVA 0x4d1888. The processor-set transport can reuse the existing
+parser, but the actual ARM64 vector/delivery contract still needs confirmation.
+In particular, the generic IPI page describes vectors 0x10..0xff, whereas GIC
+SGIs have IDs 0..15; inventing an offset between them would be unjustified.
+Microsoft's [ARM64 interrupt controller description](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/virtual-interrupts)
+specifies a virtual GIC. The registered synthetic exception vector is not a
+substitute IRQ injection path: KiSyntheticException (RVA 0x2b6e40) dispatches
+synthetic syndrome classes to VTL/secure/virtualization-fault handlers.
+
+The native backend now provides `sendSoftwareInterrupt(mask, sgi)`, which pends
+GIC SGI IDs 0..15 on the selected configured VPs. It validates the mask and SGI
+before any write, requires GICv3, runs each redistributor API on its vCPU owner
+thread and preserves other pending bits. It does not rewrite the guest's
+interrupt enables, groups or priority controls. `softwareInterruptRequests`
+counts requests, not guest handler invocations: repeated requests can coalesce.
+This is delivery groundwork, not advertised Hyper-V IPI support.
+
+The real two-VP test configures the GIC in guest code and reads ICC_IAR1_EL1,
+then performs EOI. A targeted SGI 5 must appear only on VP1; SGI 7 must appear
+on both VPs; separately queued SGI 9 must survive until the preceding SGI has
+been acknowledged. Repeated pending SGI 5 coalesces and no extra interrupt may
+remain after EOI. Empty/invalid requests cannot change counters, and a VM
+without GIC must reject the API. The native self-test now has 224 checks.
+The test explicitly acknowledges through IAR with DAIF masked; it does not yet
+prove a guest IRQ vector handler or the Hyper-V-to-GIC vector translation.
+
+API authority: Apple's bundled Hypervisor.framework `hv_gic.h` specifies that
+redistributor accesses run on the owning thread and use GICv3 register offsets.
+The implementation accesses GICR_ISPENDR0 through those APIs on both primary
+and secondary threads. Future IPI/SynIC enablement still requires the correct
+guest ABI, interrupt-handler tests and Windows consumption evidence.
+
+A later checkpoint of the existing two-VP Windows run still has zero hypercall
+failures: 154226 successful SyncContext calls, with 111149 VP0 and 108532 VP1
+completed barriers. The core/SyncContext auditor passes. No reference-counter
+reads, IPI hypercalls or TLB hypercalls were observed in that binary.
+Frozen evidence: `build/windows11-hyperv/sync-ex-smp/soak-evidence.json`, SHA-256
+`5628a10a1fe1eee2694a7bc52b3e1f7be2c8c76f2b7e295db62369b97a58c437`.

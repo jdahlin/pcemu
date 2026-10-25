@@ -59,6 +59,10 @@ class HvfMachine {
     // global mappings, on every selected online VP before returning.
     void flushTranslationContext(uint64_t cpuMask);
     uint64_t translationContextFlushes(unsigned cpu) const;
+    // Pend a GIC software-generated interrupt (SGI 0..15), preserving other
+    // pending bits. Delivery/coalescing follows the guest's GIC configuration.
+    void sendSoftwareInterrupt(uint64_t cpuMask, unsigned interrupt);
+    uint64_t softwareInterruptRequests(unsigned cpu) const;
     uint64_t exits() const;
     static bool supported();
 
