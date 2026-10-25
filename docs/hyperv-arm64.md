@@ -290,7 +290,7 @@ The following is a work inventory, not a completion claim:
 | Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
 | SyncContext / SyncContextEx | Windows invokes 0x19 frequently; guest instruction synchronization mechanism and multi-VP tests still required. |
-| Extended-capability query 0x8001 | Native memory and fast ABI verified; Windows success-counter validation pending. |
+| Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
 | SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
@@ -334,3 +334,10 @@ as expected for a normal boot. This proves compatibility, not an actual Windows
 bugcheck notification. Its frozen report is
 `build/windows11-hyperv/crash-enlightenment/core-evidence.json` (SHA-256
 `e7c20148a37002639814a86f31356877676c6fadd8054b69260a4cbeb5082f0e`).
+
+Windows with extended queries enabled reached the lock screen on the local
+8 GiB, one-VP clone. The frozen report under
+`build/windows11-hyperv/extended-query/core-evidence.json` records two 0x8001
+queries with zero failures; `extendedCapabilitiesObserved` is true. Core usage
+also passes, with continued disk/network activity. Report SHA-256:
+`7051fc988ecd62f6b9c61f2fb9afd87204e560c9ea326e8b43aade6349714598`.
