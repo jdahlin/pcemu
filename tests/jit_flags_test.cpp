@@ -24,6 +24,37 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Ordinary flag-producing ALU/Jcc pairs must reach the normal warmed
+        // native path too. Compare both branch outcomes with full prefix state.
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u})
+                for (unsigned op = 0; op < 8; ++op)
+                    for (unsigned cc = 0; cc < 16; ++cc) {
+                        CPU a(65536), b(65536);
+                        Jit normal(b, true, 8, 65536);
+                        unsigned dst = width == 1 ? 7 : BX, src = width == 1 ? 4 : DX;
+                        std::vector<uint8_t> code;
+                        if (width != 1 && (width == 4) != code32) code.push_back(0x66);
+                        code.insert(code.end(), {uint8_t(op * 8 + (width != 1)),
+                                                uint8_t(0xc0 | src << 3 | dst), uint8_t(0x70 | cc), 2});
+                        for (auto c : {&a, &b}) {
+                            c->s[CS].big = code32;
+                            for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                        }
+                        for (unsigned trial = 0; trial < 32; ++trial) {
+                            for (auto c : {&a, &b}) {
+                                c->ip = c->instructions = 0;
+                                c->flags = 0xe96 | (trial & 1);
+                                for (unsigned n = 0; n < 8; ++n) c->r[n] = 0xa5b6c7d8u ^ n;
+                                c->set(dst, trial & 2 ? 0xffffffff : 0x7fff, width);
+                                c->set(src, trial & 4 ? 1 : 0x80000000, width);
+                            }
+                            auto n = normal.run();
+                            for (unsigned k = 0; k < n; ++k) a.step();
+                            equal(a, b);
+                            check(n == (trial < 7 ? 1u : 2u), "ALU/Jcc pair retains warmup then executes natively");
+                        }
+                    }
         auto carryCase = [&](unsigned width, unsigned dst, unsigned src,
                              uint32_t left, uint32_t right, unsigned carry) {
             for (auto c : {&reference, &actual}) {

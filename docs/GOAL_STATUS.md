@@ -30,7 +30,9 @@ Updated 2026-10-25. Work remains in progress.
   paired improvement and raises task native coverage to about 91.4%. Many
   instruction forms remain interpreted. Native ADC/SBB adds an observed 12.0%
   median paired improvement on the same task, with about 94.1% native coverage.
-  Rosetta-class application performance has not been demonstrated. Work
+  Warmed ALU/Jcc pairs add a separately observed 7.5% median paired improvement
+  on this task, with about 96.5% native coverage. Rosetta-class application
+  performance has not been demonstrated. Work
   continues; the full goal is not complete. See
   `measurements/native-bit-test-2026-10-25.json`.
 

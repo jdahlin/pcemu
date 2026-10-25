@@ -1738,3 +1738,41 @@ Notepad/restart checks pass. Successful private disks are removed and the
 reused checkpoint hashes remain unchanged.
 
 [Paired timings, hashes, counters and integration evidence](measurements/excel-carry-2026-10-25.json).
+
+## Warmed flag-producing ALU/branch pairs (25 October)
+
+The two-instruction admission rule now accepts any supported ALU followed by
+a conditional branch after normal warmup. It previously admitted CMP/INC/DEC
+but rejected hot SUB/JNA and OR/JS pairs despite supported native lowering.
+Other short-block admission rules and instruction lowering remain unchanged.
+
+Three alternating pairs favor the candidate: median paired response ratio
+**1.0748**, execution-batch wall-time ratio **1.0763**. Response ratios span
+1.0631 to 1.1944; the first pair is noisier and remains included. Native
+coverage rises from approximately 94.07% to 96.49%. These are observed results
+on one loaded Excel task with three pairs and no confidence interval, not
+general application performance or Rosetta parity. Builds and integration
+guests ran after the timing pairs.
+
+The initial attempt hit the unchanged baseline's 30-second observation limit
+while Excel still showed 75% calculation progress. Its final metadata records
+5.23 seconds of execution-batch time; the latency cause is not established.
+That process was absent when inspected. All initial successful samples and
+the incomplete run diagnostics are retained separately. The complete three-pair
+repeat uses a uniform 120-second observation window for both executables,
+with identical task commands and result pixels. No completion criterion was
+weakened or failed result treated as a successful timing.
+
+A separate instrumented run reduces interpreted attempts from 83,569,194 to
+**49,449,740**. SUB/JNA and OR/JS now run as native pairs. Memory-indirect CALL
+and CL shifts dominate the remaining fallback counts. Diagnostic timings are
+excluded from the score.
+
+Normal-warmup tests exercise all 16 Jcc conditions, all eight ALU groups, both
+code sizes and byte/word/dword operands, comparing full GPR/flags/IP/count
+state against the interpreter. The flag suite passes **82,496,466** checks,
+the core suite 352,644. DOS reaches its ready marker, and headless Win3.11
+save/exit and both Win95 Calculator/clipboard/Notepad/restart checks pass.
+Successful private disks are removed and checkpoint hashes remain unchanged.
+
+[All samples, timeout diagnostics, counters and integration evidence](measurements/excel-flag-pair-2026-10-25.json).

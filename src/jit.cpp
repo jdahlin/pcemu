@@ -160,13 +160,12 @@ Jit::Block Jit::compile(bool translate) {
     auto decoded = decode(block);
     const auto &ir = decoded.instructions;
     // Keep cheap fragments interpreted, but admit measured expensive pairs.
-    const bool shortComparison =
+    const bool flagBranchPair =
         ir.size() == 2 && ir[1].kind == Kind::Branch && ir[1].dst >= 0 &&
-        (ir[0].memoryAlu || ir[0].kind == Kind::Test ||
-         (ir[0].kind == Kind::Alu && (ir[0].op == 7 || ir[0].op == 8 || ir[0].op == 9)));
+        (ir[0].memoryAlu || ir[0].kind == Kind::Test || ir[0].kind == Kind::Alu);
     const bool doubleShiftPair = ir.size() == 2 &&
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
-    if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison && !doubleShiftPair &&
+    if (ir.empty() || (warmup && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump))
         return block;
