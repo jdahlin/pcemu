@@ -285,6 +285,43 @@ efi_main:
     blr x24
     cmp x9, #2
     b.ne failed
+    // SyncContextEx flags + sparse HV_VP_SET, with one variable bank word.
+    ldr w0, =0x46000001
+    ldr x1, =0x3001a
+    mov x2, #0
+    mov x3, #0
+    mov x4, #1
+    mov x5, #1
+    hvc #0
+    cbnz x0, failed
+    add x23, x21, #1024
+    stp xzr, xzr, [x23]
+    mov x8, #1
+    stp x8, x8, [x23, #16]
+    ldr x0, =0x2001a
+    mov x1, x23
+    mov x2, #-1
+    hvc #1
+    cbnz x0, failed
+    // The original fixed input also supports memory transport.
+    mov x8, #1
+    str x8, [x23]
+    str xzr, [x23, #8]
+    ldr w0, =0x46000001
+    mov x1, #0x19
+    mov x2, x23
+    mov x3, #-1
+    hvc #0
+    cbnz x0, failed
+    mrs x8, sctlr_el1
+    cmp x8, x25
+    b.ne failed
+    mrs x8, vbar_el1
+    cmp x8, x22
+    b.ne failed
+    blr x24
+    cmp x9, #2
+    b.ne failed
     // Notify a synthetic crash without stopping the guest. Capture a RAM
     // message now; host diagnostics must survive subsequent guest mutation.
     add x23, x21, #512

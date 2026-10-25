@@ -1,5 +1,6 @@
 #include "arm_hyperv.hpp"
 #include <algorithm>
+#include <bit>
 #include <chrono>
 #include <utility>
 #include <sstream>
@@ -172,18 +173,52 @@ bool ArmHyperV::call(unsigned immediate, Registers &r, unsigned vp) {
 uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     auto control = r[smccc ? 1 : 0];
     auto code = uint16_t(control);
-    if (code == 0x19) {
+    if (code == 0x19 || code == 0x1a) {
         if (!guestId) return accessDenied;
-        // Windows HvlSyncContext's fixed two-word fast input: bit 0 selects
-        // all VPs, otherwise the second word is the VP mask. Ex/slow layouts
-        // are not accepted on the strength of this observed fast ABI.
-        if (control != 0x10019 || vp >= cpus) return invalidInput;
+        const bool extended = code == 0x1a;
+        const uint64_t allowed = extended ? 0x7ffffff : 0x1ffff;
+        if ((control & ~allowed) || vp >= cpus) return invalidInput;
+        size_t banks = extended ? (control >> 17) & 0x3ff : 0;
+        if (banks > 64) return invalidInput;
+        size_t size = extended ? 24 + banks * 8 : 16;
         unsigned in = smccc ? 2 : 1;
-        auto flags = r[in], targets = r[in + 1];
-        if (flags > 1 || (flags && targets)) return invalidParameter;
+        std::vector<uint8_t> input(size);
+        if (control & 0x10000) {
+            if (size > 128) return invalidInput;
+            for (size_t i = 0; i < size; ++i) input[i] = uint8_t(r[in + i / 8] >> ((i % 8) * 8));
+        } else {
+            auto address = r[in];
+            if ((address & 7) || size > 4096 - (address & 4095) || address < base ||
+                address - base > ram.size() || size > ram.size() - (address - base)) return invalidAlignment;
+            std::copy_n(ram.begin() + size_t(address - base), size, input.begin());
+        }
+        auto flags = get(input, 0, 8);
+        uint64_t targets = 0;
         const uint64_t valid = (1ull << cpus) - 1;
+        if (!extended) {
+            targets = get(input, 8, 8);
+            if (flags > 1 || (flags && targets)) return invalidParameter;
+            if (flags) targets = valid;
+        } else {
+            // Windows HvlpFast/SlowSyncContextEx: flags followed by HV_VP_SET;
+            // only BankContents belongs to the variable input header.
+            if (flags) return invalidParameter;
+            auto format = get(input, 8, 8), validBanks = get(input, 16, 8);
+            if (banks != size_t(std::popcount(validBanks))) return invalidInput;
+            if (format == 1) {
+                if (validBanks) return invalidParameter;
+                targets = valid;
+            } else if (!format) {
+                size_t at = 24;
+                for (unsigned bank = 0; bank < 64; ++bank) if (validBanks & (1ull << bank)) {
+                    auto bits = get(input, at, 8); at += 8;
+                    // Empty banks are legal even beyond the configured VP range.
+                    if (bank && bits) return invalidVp;
+                    if (!bank) targets = bits;
+                }
+            } else return invalidParameter;
+        }
         if (targets & ~valid) return invalidVp;
-        if (flags) targets = valid;
         if (!contextSynchronizer) return invalidCode;
         if (!contextSynchronizer(targets)) return 0x71; // HV_STATUS_OPERATION_FAILED
         ++contextSyncRequests; contextSyncTargetMask = targets;

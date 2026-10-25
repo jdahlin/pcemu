@@ -81,6 +81,18 @@ class WindowsHyperV(unittest.TestCase):
         report['failures'] = 1
         self.assertFalse(verify(report, baseline)['contextSyncObserved'])
 
+    def test_extended_context_sync_counts_are_included(self):
+        report, baseline = fixture()
+        for row in report['calls']:
+            row['failures'] = 0
+        report['calls'].append(dict(code=0x1a, count=3, failures=0))
+        report.update(failures=0, legacyCalls=21, contextSyncRequests=7,
+                      contextSyncTargetMask=1, instructionContextBarriers=[7])
+        self.assertTrue(verify(report, baseline)['contextSyncObserved'])
+        self.assertTrue(verify(report, baseline)['contextSyncExObserved'])
+        report['instructionContextBarriers'] = [4]
+        self.assertFalse(verify(report, baseline)['contextSyncObserved'])
+
     def test_required_evidence(self):
         report, baseline = fixture()
         changes = [dict(mode='off'), dict(guestOsId=0x5043454d55),

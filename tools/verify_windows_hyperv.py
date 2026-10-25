@@ -67,7 +67,7 @@ def verify(report, baseline, kernel_build=26100):
             and baseline.get('legacyCalls') == 0 and not baseline.get('registers'),
             'Off-mode Windows baseline unexpectedly used Hyper-V registers')
     unsupported = [row for row in calls if row.get('code') not in (0x50, 0x51, 0x8001)
-                   and not (row.get('code') == 0x19 and row.get('failures') == 0)]
+                   and not (row.get('code') in (0x19, 0x1a) and row.get('failures') == 0)]
     clock = registers.get(0x90004, {})
     last_time = report.get('referenceTime100ns', 0)
     clock_observed = (not errors and type(clock.get('reads')) is int
@@ -75,17 +75,19 @@ def verify(report, baseline, kernel_build=26100):
                       and type(last_time) is int and last_time > 0)
     extended = next((row for row in calls if row.get('code') == 0x8001), {})
     query_observed = (not errors and counts.get(0x8001, 0) > 0 and extended.get('failures') == 0)
-    sync = next((row for row in calls if row.get('code') == 0x19), {})
+    sync_calls = [row for row in calls if row.get('code') in (0x19, 0x1a)]
     barriers = report.get('instructionContextBarriers', [])
     sync_requests = report.get('contextSyncRequests', 0)
     sync_mask = report.get('contextSyncTargetMask', 0)
     sync_observed = (not errors and type(sync_requests) is int and sync_requests > 0
-                     and counts.get(0x19) == sync_requests and sync.get('failures') == 0
+                     and counts.get(0x19, 0) + counts.get(0x1a, 0) == sync_requests
+                     and all(row.get('failures') == 0 for row in sync_calls)
                      and type(sync_mask) is int and 0 < sync_mask < (1 << len(vps))
                      and type(barriers) is list and len(barriers) == len(vps)
                      and all(type(n) is int and n >= 0 for n in barriers)
                      and sum(barriers) >= sync_requests)
-    return {'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
+    return {'contextSyncExObserved': sync_observed and counts.get(0x1a, 0) > 0,
+            'contextSyncObserved': sync_observed, 'extendedCapabilitiesObserved': query_observed, 'referenceCounterObserved': clock_observed, 'verifiedCoreUsage': not errors, 'kernelBuild': kernel_build, 'errors': errors,
             'unsupportedCalls': unsupported, 'totalFailures': report.get('failures'),
             'guiBootVerified': False, 'performanceBenefitVerified': False}
 

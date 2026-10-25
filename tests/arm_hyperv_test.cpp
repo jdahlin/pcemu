@@ -303,12 +303,13 @@ int main() {
     check(sync(1, 0, false) == 0 && synced == 3 && syncCalls == 1);
     check(sync(0, 2, true, 0x10019, 1) == 0 && synced == 2 && syncCalls == 2);
     check(sync(0, 0, true) == 0 && synced == 0 && syncCalls == 3);
-    for (auto bad : {uint64_t(0x19), uint64_t(0x30019), one | 0x10019, (1ull << 48) | 0x10019})
+    for (auto bad : {uint64_t(0x30019), one | 0x10019, (1ull << 48) | 0x10019})
         check(sync(1, 0, false, bad) == 3 && syncCalls == 3);
     check(sync(2, 0, true) == 5 && syncCalls == 3);
     check(sync(1, 1, false) == 5 && syncCalls == 3);
     check(sync(0, 4, true) == 14 && syncCalls == 3);
     check(sync(1, 0, true, 0x10019, 2) == 3 && syncCalls == 3);
+    check(sync(1, 0, false, 0x19) == 4 && syncCalls == 3); // Slow unaligned GPA.
     syncing.setContextSynchronizer([](uint64_t) { return false; });
     check(sync(1, 0, true) == 0x71);
     check(syncing.report().find("\"contextSyncRequests\":3") != std::string::npos);
@@ -316,5 +317,66 @@ int main() {
     ArmHyperV earlySync(true, memory, base, 1);
     r = {}; r[0] = 0x10019; r[1] = 1;
     check(earlySync.call(1, r, 0) && r[0] == 6);
+    ArmHyperV ex(true, memory, base, 2);
+    r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+    r[3] = 0x90002; r[5] = 456;
+    check(ex.call(1, r, 0) && r[0] == one);
+    unsigned exCalls = 0;
+    uint64_t exTargets = 0;
+    ex.setContextSynchronizer([&](uint64_t targets) { ++exCalls; exTargets = targets; return true; });
+    auto invokeEx = [&](bool smccc, bool fast, unsigned banks = 1, uint64_t address = base,
+                        uint64_t extraControl = 0, unsigned vp = 0, uint16_t code = 0x1a) {
+        r.fill(0xcccccccccccccccc);
+        auto control = uint64_t(code) | (fast ? 0x10000 : 0) | (uint64_t(banks) << 17) | extraControl;
+        r[0] = smccc ? 0x46000001 : control;
+        if (smccc) r[1] = control;
+        unsigned in = smccc ? 2 : 1;
+        if (fast) {
+            for (unsigned i = 0; i < std::min(16u, 3 + banks); ++i) r[in + i] = get(memory, i * 8);
+        } else { r[in] = address; r[in + 1] = uint64_t(-1); } // No output: ignored GPA.
+        auto previous = r;
+        check(ex.call(smccc ? 0 : 1, r, vp));
+        check(std::equal(r.begin() + 1, r.end(), previous.begin() + 1));
+        return r[0];
+    };
+    auto setVpSet = [&](uint64_t flags, uint64_t format, uint64_t validBanks, uint64_t contents) {
+        std::fill(memory.begin(), memory.end(), 0);
+        put(memory, 0, flags); put(memory, 8, format); put(memory, 16, validBanks); put(memory, 24, contents);
+    };
+    for (bool smccc : {false, true}) for (bool fast : {false, true}) {
+        setVpSet(0, 0, 1, 2);
+        check(invokeEx(smccc, fast) == 0 && exTargets == 2);
+        setVpSet(0, 1, 0, 0);
+        check(invokeEx(smccc, fast, 0) == 0 && exTargets == 3);
+        setVpSet(0, 0, 0, 0);
+        check(invokeEx(smccc, fast, 0) == 0 && exTargets == 0);
+        // Fixed SyncContext in memory has the same two input words as fast.
+        setVpSet(1, 0, 0, 0);
+        check(invokeEx(smccc, false, 0, base, 0, 0, 0x19) == 0 && exTargets == 3);
+    }
+    unsigned beforeInvalid = exCalls;
+    setVpSet(1, 0, 1, 2); check(invokeEx(true, true) == 5);
+    setVpSet(0, 2, 1, 2); check(invokeEx(true, true) == 5);
+    setVpSet(0, 1, 1, 0); check(invokeEx(false, false) == 5);
+    setVpSet(0, 0, 1, 4); check(invokeEx(false, true) == 14);
+    setVpSet(0, 0, 1ull << 63, 1); check(invokeEx(true, false) == 14);
+    setVpSet(0, 0, 3, 0); check(invokeEx(false, true, 1) == 3); // Truncated bank array.
+    setVpSet(0, 0, 1, 0); check(invokeEx(false, false, 2) == 3); // Excess header bytes.
+    for (auto bit : {1ull << 27, 1ull << 31, 1ull << 32, 1ull << 48, 1ull << 63})
+        check(invokeEx(true, true, 1, base, bit) == 3);
+    for (auto address : {base - 8, base + 1, base + 4096 - 24, base + 8192})
+        check(invokeEx(false, false, 1, address) == 4);
+    check(invokeEx(true, true, 65) == 3);
+    check(invokeEx(false, true, 14) == 3); // Declared input exceeds the fast register window.
+    check(invokeEx(true, false, 1, base, 0, 2) == 3);
+    check(exCalls == beforeInvalid); // No side effects after any malformed input.
+    setVpSet(0, 0, 1ull << 63, 0); // Explicitly empty banks outside the VP range are legal.
+    check(invokeEx(true, true) == 0 && exTargets == 0);
+    setVpSet(0, 0, uint64_t(-1), 1);
+    check(invokeEx(false, false, 64) == 0 && exTargets == 1);
+    setVpSet(0, 0, 1, 2);
+    put(memory, 4096 - 32, 0); put(memory, 4096 - 24, 0);
+    put(memory, 4096 - 16, 1); put(memory, 4096 - 8, 2);
+    check(invokeEx(true, false, 1, base + 4096 - 32) == 0 && exTargets == 2);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

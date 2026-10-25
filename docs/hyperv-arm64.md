@@ -58,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 330 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 446 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -289,7 +289,7 @@ The following is a work inventory, not a completion claim:
 | Discovery, identity and VP registers | Native EFI and actual Windows register use verified. |
 | Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
 | Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
-| SyncContext / SyncContextEx | Fixed fast 0x19 implemented with real per-VP barriers; native MMU-on and multi-VP tests pass. Windows validation and Ex/slow layouts remain. |
+| SyncContext / SyncContextEx | Fixed/Ex, fast/memory inputs implemented with real per-VP barriers. Windows fixed-path and native Ex tests pass; Windows Ex use remains unobserved. |
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
@@ -356,7 +356,7 @@ rather than acknowledging a barrier that did not complete.
 
 This fixed layout is reconstructed from the original Windows HvlSyncContext
 routine described above; it is not a claim to implement the undocumented
-SyncContextEx or slow-call layouts. Those remain unsupported.
+SyncContextEx or slow-call layouts. The follow-up implementation below adds the Ex and memory layouts.
 
 The HVF backend maps a private read/execute-only stub below RAM, at GPA
 0x3fff0000. For each selected online VP it temporarily selects physical EL1h
@@ -388,3 +388,41 @@ Architecture rationale: Arm's [cross-thread self-modifying-code explanation](htt
 requires an instruction synchronization event on executing cores. The explicit
 ISB path avoids depending on undocumented HVF exception-entry EIS/EOS choices
 or mistaking a host memory fence for a guest instruction barrier.
+
+
+## SyncContextEx and memory transport
+
+0x1a accepts a fixed 24-byte input (zero flags and HV_VP_SET's format and
+ValidBanksMask), followed by variable bank-content words. The control's
+10-bit variable-header length must equal popcount(ValidBanksMask). Format 1
+selects all configured VPs with no bank array. Format 0 supports sparse banks;
+zero-valued banks are legal even above this platform's VP range, while nonzero
+bits selecting nonexistent VPs fail. Unknown formats/flags fail before invoking
+the backend. The standard 128-byte fast-input limit and 4 KiB GPA input-page
+bounds apply. Both ARM64 ABIs support memory and fast input. Fixed 0x19 now
+also supports its 16-byte memory input, with the same flags/mask semantics.
+
+These layouts match the original Windows HvlpFastSyncContextEx and
+HvlpSlowSyncContextEx routines (RVAs 0x626078/0x626100), which serialize a VP set
+with HvlpAffinityToHvProcessorSet and put only bank-content length in the
+variable-header field. The [HV_VP_SET specification](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_vp_set)
+and [hypercall header/transport rules](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/hypercall-interface)
+define the common encoding. The ExProcessorMasks recommendation remains off
+until its other dependent TLB/IPI interfaces are ready; implementing this call
+alone does not justify recommending all Ex interfaces.
+
+Model tests cover all four ABI/transport combinations, all/empty/sparse sets,
+64 banks with out-of-range empty entries, malformed lengths and reserved bits,
+invalid VP bits and GPA boundaries above 4 GiB. The native EFI probe executes
+fixed and Ex calls around its self-modified function with MMU enabled; all four
+requests must correspond to four completed native barriers. The Windows audit
+now includes both call codes in its barrier/request comparison.
+
+The separate fixed-SyncContext Windows run reached the lock screen, with disk
+and network traffic continuing. Its frozen snapshot records **50733 successful
+SyncContext calls and 50733 actual VP0 barriers**, 1038 register calls and two
+successful extended-capability queries. All 51773 hypercalls have zero failures.
+`contextSyncObserved` and core usage both pass. This establishes actual Windows
+consumption of the fixed path; no Ex call or performance improvement is implied.
+Evidence: `build/windows11-hyperv/sync-context/core-evidence.json`, SHA-256
+`36da58a21e54b2e2644f6e5dca4bb01f7f9427fe93f69fe67ece76f1c7e9059b`.
