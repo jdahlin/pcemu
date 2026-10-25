@@ -294,8 +294,8 @@ The following is a work inventory, not a completion claim:
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Event/message controller, four timers per VP and native PPI delivery tested, still unadvertised; connections, complete ARM semantics and Windows consumption pending. ARM Generic Timer already runs natively. |
-| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Runtime ACPI attachment, Windows enumeration, GPADL and service channels remain pending. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer features remain unadvertised. Complete ARM semantics and Windows consumption remain pending. ARM Generic Timer already runs natively. |
+| VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Opt-in runtime/ACPI attachment is implemented and native/EFI-tested. Windows enumeration, GPADL and service channels remain pending. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
 The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
@@ -965,9 +965,9 @@ pending replies, accepted reply deliveries and rejected requests.
 
 The offer inventory is explicitly empty. AllOffersDelivered completes that
 empty inventory; it does not fabricate a device, channel, GPADL, ring buffer
-or integration service. The server is not yet attached to the running VM or
-advertised through ACPI. This is a protocol implementation and test gate,
-not a claim of Windows VMBus use.
+or integration service. The server is now attached only in the opt-in `vmbus`
+profile described below. Model/native evidence alone does not establish
+Windows VMBus use.
 
 Layouts and negotiation behavior follow Microsoft's
 [OpenVMM protocol definitions](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_core/src/protocol.rs)
@@ -979,8 +979,9 @@ bounds, unload, malformed targets and monitor buffers. The native connection
 fixture now posts a real Copper contact on bootstrap connection 4, receives
 VersionResponse through SynIC/SGI 0, and checks VersionSupported and returned
 connection ID 1. That returned ID is also bound to the same server. The guest
-acknowledges the notification through IAR1/EOIR1. Guest enumeration through
-ACPI and actual Windows consumption remain the next integration gate.
+acknowledges the notification through IAR1/EOIR1. Optional ACPI attachment is
+implemented below; actual Windows enumeration and consumption remain the next
+integration gate.
 
 Validation: `make test-hvf` passes 2,018 portable Hyper-V checks, 271 native
 checks and 12 Windows-auditor tests. The existing off/basic/synic EFI probes
