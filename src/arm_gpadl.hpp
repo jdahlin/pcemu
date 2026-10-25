@@ -24,6 +24,9 @@ class ArmGpadl {
     // Transfer buffers must not overlap guest RAM.
     bool read(uint32_t channel, uint32_t id, uint64_t offset, std::span<uint8_t> out) const;
     bool write(uint32_t channel, uint32_t id, uint64_t offset, std::span<const uint8_t> in);
+    std::optional<uint64_t> generation(uint32_t channel, uint32_t id) const;
+    // Ring mappings require full pages and no physical aliases, including headers.
+    bool ringMapping(uint32_t channel, uint32_t id, uint64_t offset, uint64_t bytes) const;
     size_t count() const { return descriptors.size(); }
   private:
     struct Range { uint32_t offset, bytes; std::vector<uint64_t> pages; };
@@ -34,9 +37,10 @@ class ArmGpadl {
         std::vector<Range> ranges;
         uint64_t bytes = 0;
         bool ready = false;
+        uint64_t generation = 0;
     };
     std::span<uint8_t> ram;
-    uint64_t base;
+    uint64_t base, nextGeneration = 0;
     std::map<uint32_t, Descriptor> descriptors;
     bool finish(Descriptor &descriptor) const;
     bool aliasesRam(std::span<const uint8_t> bytes) const;

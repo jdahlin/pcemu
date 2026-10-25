@@ -1,6 +1,7 @@
 #include "arm_gpadl.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <set>
 namespace pc {
 namespace {
 uint64_t get(std::span<const uint8_t> bytes, size_t at, unsigned count) {
@@ -20,6 +21,8 @@ ArmGpadl::Result ArmGpadl::begin(uint32_t channel, uint32_t id, uint16_t bytes, 
     if (descriptors.size() >= maxDescriptors) return Result::Limit;
     Descriptor candidate{channel, bytes, ranges, {fragment.begin(), fragment.end()}, {}, 0, false};
     if (candidate.encoded.size() == bytes && !finish(candidate)) return Result::Invalid;
+    if (nextGeneration == UINT64_MAX) return Result::Limit;
+    candidate.generation = ++nextGeneration;
     descriptors.emplace(id, std::move(candidate));
     return Result::Ok;
 }
@@ -82,6 +85,22 @@ std::optional<uint64_t> ArmGpadl::byteSize(uint32_t channel, uint32_t id) const 
     auto descriptor = find(channel, id);
     if (!descriptor) return {};
     return descriptor->bytes;
+}
+std::optional<uint64_t> ArmGpadl::generation(uint32_t channel, uint32_t id) const {
+    auto descriptor = find(channel, id);
+    if (!descriptor) return {};
+    return descriptor->generation;
+}
+bool ArmGpadl::ringMapping(uint32_t channel, uint32_t id, uint64_t offset, uint64_t bytes) const {
+    const auto descriptor = find(channel, id);
+    if (!descriptor || (offset & 4095) || (bytes & 4095) || bytes < 8192 ||
+        offset > descriptor->bytes || bytes > descriptor->bytes - offset) return false;
+    std::set<uint64_t> pages;
+    for (const auto &range : descriptor->ranges) {
+        if (range.offset || (range.bytes & 4095)) return false;
+        for (auto page : range.pages) if (!pages.insert(page).second) return false;
+    }
+    return true;
 }
 std::span<uint8_t> ArmGpadl::piece(const Descriptor &descriptor, uint64_t offset, size_t maximum) const {
     for (const auto &range : descriptor.ranges) {

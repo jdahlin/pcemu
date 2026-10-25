@@ -1282,3 +1282,31 @@ observed. Earlier Windows core-use evidence remains historical, not a substitute
 for this run. Next investigate the Windows ARM64 SynIC/GIC source configuration
 and driver startup path; GPADL wire handling, rings, offered channels and
 integration services remain unfinished.
+
+### VMBus ring transport foundation
+
+`ArmVmbusRing` implements a single shared ring over a validated GPADL mapping:
+a 4 KiB header, circular data, 16-byte packet descriptors, eight-byte alignment
+and the previous-write-index trailer. It handles wrapping across fragmented
+physical pages, reserves space to distinguish full from empty, and publishes
+indices only after packet copies. Empty-to-nonempty notification respects the
+interrupt mask. Pending-send flow-control notifications use the full-to-available
+threshold independently of that mask. These layouts and thresholds follow the
+[Linux VMBus ring implementation](https://github.com/torvalds/linux/blob/master/drivers/hv/ring_buffer.c)
+and [Microsoft's channel protocol](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_core/src/protocol.rs).
+
+Ring construction requires complete page-aligned ranges with unique physical
+pages, so header/data aliases are rejected. Each GPADL has a monotonic generation;
+teardown and ID reuse invalidate old ring objects. Host transfers require every
+VP stopped. Invalid indices, impossible lengths and malformed descriptors leave
+read/write indices and output unchanged. The API reports notification decisions;
+it does not fabricate guest interrupts or imply an attached service.
+
+`make test-arm-vmbus-ring` passes 4,352 checks, also under AddressSanitizer and
+UndefinedBehaviorSanitizer. Tests include independent physical byte/trailer
+oracles across both ring and PFN boundaries, exact-full backpressure, optional
+flow control, masked notifications, 3,000 FIFO operations with repeated wrapping,
+malformed descriptors, alias rejection, multiple aligned GPA ranges and GPADL
+reuse. The existing 1,581 GPADL checks still pass. This portable diskless target
+is included in `test` and `test-hvf`. Channel offers/open/close and GPADL wire
+messages are not yet connected to this ring engine.

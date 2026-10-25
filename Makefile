@@ -259,3 +259,14 @@ build/arm-gpadl-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp tests/arm_gpadl_test.
 	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp tests/arm_gpadl_test.cpp -o $@
 
 test test-hvf: test-arm-gpadl
+
+# VMBus ring transport over validated GPADLs; no guest image is required.
+.PHONY: test-arm-vmbus-ring
+test-arm-vmbus-ring: build/arm-vmbus-ring-tests
+	./build/arm-vmbus-ring-tests
+
+build/arm-vmbus-ring-tests: src/arm_gpadl.cpp src/arm_gpadl.hpp src/arm_vmbus_ring.cpp src/arm_vmbus_ring.hpp tests/arm_vmbus_ring_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_gpadl.cpp src/arm_vmbus_ring.cpp tests/arm_vmbus_ring_test.cpp -o $@
+
+test test-hvf: test-arm-vmbus-ring
