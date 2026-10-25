@@ -1025,3 +1025,11 @@ acknowledging its interrupt), matching/mismatched ACPI CLI checks, and EFI boot
 probes in `off`, `basic`, `synic`, and `vmbus` modes passed. The Windows auditor's
 13 tests include missing negotiation, offers, SynIC configuration, and interrupt
 evidence. Real Windows VMBus discovery remains a separate live experiment.
+
+The isolated committed-source run caught a default-path selection error after
+partial staging alongside concurrent frontend work: the VMBus suffix was applied
+after assigning the ACPI/DTB paths. It is now applied first. A CLI regression
+creates only the `cpus1-hyperv-vmbus` assets in a temporary working directory and
+boots without explicit ACPI/DTB options. All 11 CLI tests pass against the
+isolated source build; the earlier mixed frontend executable is excluded from
+Windows consumption evidence.

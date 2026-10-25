@@ -773,9 +773,9 @@ int main(int argc, char **argv) {
                 if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)
                     directory += "-ram" + std::to_string(uefi.memoryBytes / (1024 * 1024));
                 if (uefi.hyperv) directory += "-hyperv";
+                if (uefi.hypervVmbus) directory += "-vmbus";
                 if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
                 if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
-                if (uefi.hypervVmbus) directory += "-vmbus";
             }
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");

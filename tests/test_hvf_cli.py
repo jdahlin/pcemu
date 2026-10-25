@@ -175,6 +175,27 @@ class HvfCLI(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn('ACPI VMBus does not match', result.stderr)
 
+    @unittest.skipUnless((ROOT / 'roms/edk2-arm64-vars.bin').exists() and
+                         (ROOT / 'build/arm64-fw/pcemu-virt.dtb').exists(), 'Firmware assets absent')
+    def test_vmbus_default_asset_directory(self):
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from build_arm_acpi import build
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'roms').symlink_to(ROOT / 'roms', target_is_directory=True)
+            platform = root / 'build/arm64-fw/cpus1-hyperv-vmbus'
+            acpi = platform / 'acpi'
+            acpi.mkdir(parents=True)
+            tables, rsdp, loader, _ = build(hyperv=True, vmbus=True)
+            for name, contents in (('tables', tables), ('rsdp', rsdp), ('table-loader', loader)):
+                (acpi / name).write_bytes(contents)
+            shutil.copyfile(ROOT / 'build/arm64-fw/pcemu-virt.dtb', platform / 'pcemu-virt.dtb')
+            result = subprocess.run([str(ROOT / 'build/pcemu-hvf'), '--machine', 'arm64-uefi',
+                '--hyperv', 'vmbus', '--vars', str(root / 'vars.bin'), '--timeout-ms', '1'],
+                cwd=root, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):
             result = self.invoke(option)
