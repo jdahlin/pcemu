@@ -170,7 +170,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.dst = op & 7;
                     i.op = op < 0x48 ? 8 : 9;
                 }
-            } else if (op == 0xc0 || op == 0xc1 || op == 0xd0 || op == 0xd1) {
+            } else if (op == 0xc0 || op == 0xc1 || (op >= 0xd0 && op <= 0xd3)) {
                 auto m = byte();
                 if ((m >> 6) != 3 || ((m >> 3) & 7) < 4) {
                     pos = begin;
@@ -180,9 +180,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.w = (op & 1) ? w : 1;
                 i.dst = m & 7;
                 i.op = (m >> 3) & 7;
-                i.immediate = true;
-                i.imm = (op < 0xd0 ? byte() : 1) & 31;
-                if (!i.imm)
+                i.immediate = op < 0xd2;
+                i.src = CX;
+                i.imm = i.immediate ? (op < 0xd0 ? byte() : 1) & 31 : 0;
+                if (i.immediate && !i.imm)
                     i.kind = Kind::Nop; // A masked zero count preserves all flags/GPRs.
             } else if (op == 0x69 || op == 0x6b) {
                 auto m = byte();

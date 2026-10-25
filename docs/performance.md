@@ -1776,3 +1776,41 @@ save/exit and both Win95 Calculator/clipboard/Notepad/restart checks pass.
 Successful private disks are removed and checkpoint hashes remain unchanged.
 
 [All samples, timeout diagnostics, counters and integration evidence](measurements/excel-flag-pair-2026-10-25.json).
+
+## Native register shifts by CL (25 October)
+
+SHL/SAL, SHR and SAR register forms now lower natively at byte, word and dword
+widths. CL is masked to five bits and captured before aliased destinations
+change. Zero counts preserve the destination and flags. Overshifts, CF, AF
+preservation and undefined multi-bit OF match the reference interpreter.
+Rotates and memory forms remain interpreted.
+
+Flag calculation is skipped when output flags are dead. A dword shift then
+maps directly to one ARM variable-shift instruction: its hardware count mask
+already matches x86, including a CX/count/destination overlap. Other widths
+retain explicit extraction and partial-register insertion. An AF-only liveness
+regression verifies preservation of earlier flags through the optimized path.
+
+Three final alternating pairs favor the candidate: median paired response ratio
+**1.0672**, execution-batch wall-time ratio **1.0651**. Response ratios span
+1.0242 to 1.0769. Native coverage rises from about 96.49% to 97.10%. An earlier
+three-pair prototype without the one-instruction path observed a 1.0452 response
+ratio; those samples remain separate because its code differs. No own compiler
+or integration guest ran alongside the final timing pairs. These are observed
+results on one task with three pairs and no confidence interval, not general
+application performance or Rosetta parity.
+
+A separate instrumented run reduces register D3 attempts from **8,405,817 to
+3,066**; remaining attempts include rotates, short fragments and other sites.
+Memory D3 forms remain interpreted. Total interpreted attempts fall from
+49,449,740 to **41,016,136**. Diagnostic latencies are excluded from scores.
+
+The flag suite passes **86,490,066** checks, including every CL byte, all
+register aliases, both code sizes and operand overrides, live/dead output
+flags, zero counts, overshifts and AF-only dependencies. Full GPR/flags/IP/count
+state matches the interpreter. The core suite passes 352,644 checks. DOS boots
+to its ready marker; headless Win3.11 save/exit and both Win95 Calculator/
+clipboard/Notepad/restart checks pass. Successful private disks are removed
+and the reusable checkpoint hashes remain unchanged.
+
+[Final/prototype timings, hashes, counters and system checks](measurements/excel-cl-shift-2026-10-25.json).

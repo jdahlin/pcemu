@@ -32,7 +32,9 @@ Updated 2026-10-25. Work remains in progress.
   median paired improvement on the same task, with about 94.1% native coverage.
   Warmed ALU/Jcc pairs add a separately observed 7.5% median paired improvement
   on this task, with about 96.5% native coverage. Rosetta-class application
-  performance has not been demonstrated. Work
+  performance has not been demonstrated. Native CL shifts add a separately
+  observed 6.7% paired improvement and raise this task to about 97.1% native
+  coverage. Work
   continues; the full goal is not complete. See
   `measurements/native-bit-test-2026-10-25.json`.
 

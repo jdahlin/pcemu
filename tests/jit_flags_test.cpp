@@ -24,6 +24,62 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        // Runtime shifts capture CL before an aliased destination changes.
+        // Include all count bytes, high-byte destinations, overshifts and
+        // pending ADD flags that must survive a masked-zero count.
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u})
+                for (unsigned op : {4u, 5u, 6u, 7u})
+                    for (unsigned dst = 0; dst < 8; ++dst)
+                        for (bool dead : {false, true}) {
+                            std::vector<uint8_t> code = {0x04, 1};
+                            if (width != 1 && (width == 4) != code32) code.push_back(0x66);
+                            code.insert(code.end(), {uint8_t(width == 1 ? 0xd2 : 0xd3),
+                                                    uint8_t(0xc0 | op << 3 | dst)});
+                            if (dead) code.insert(code.end(), {0x85, 0xf6});
+                            code.insert(code.end(), {0x73, 0});
+                            for (auto c : {&reference, &actual}) {
+                                c->s[CS].big = code32;
+                                for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                            }
+                            for (unsigned count = 0; count < 256; ++count)
+                                for (uint32_t pattern : {0u, 0xffffffffu, 0x80008080u, 0x12345678u}) {
+                                    for (auto c : {&reference, &actual}) {
+                                        c->ip = c->instructions = 0;
+                                        c->flags = 0x202 | ((count & 1) ? 0xcd5 : 0);
+                                        for (unsigned n = 0; n < 8; ++n) c->r[n] = pattern ^ (n * 0x10101u);
+                                        c->set(CX, count, 1);
+                                    }
+                                    for (unsigned k = 0; k < (dead ? 4u : 3u); ++k) reference.step();
+                                    check(jit.run() == (dead ? 4u : 3u), "CL shifts with live/dead flags execute natively");
+                                    equal(reference, actual);
+                                }
+                        }
+        // Only AF remains live through the CL shift: a fixed shift overwrites
+        // the other flags, and LAHF captures AF before XOR overwrites flags.
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u}) {
+                std::vector<uint8_t> code = {0x04, 1};
+                if (width != 1 && (width == 4) != code32) code.push_back(0x66);
+                code.insert(code.end(), {uint8_t(width == 1 ? 0xd2 : 0xd3), 0xe9,
+                                        0xd1, 0xe2, 0x9f, 0x33, 0xdb, 0x73, 0});
+                for (auto c : {&reference, &actual}) {
+                    c->s[CS].big = code32;
+                    for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                }
+                for (unsigned count = 0; count < 256; ++count)
+                    for (unsigned al : {15u, 16u, 127u, 255u}) {
+                        for (auto c : {&reference, &actual}) {
+                            c->ip = c->instructions = 0;
+                            c->flags = 0xe96;
+                            for (unsigned n = 0; n < 8; ++n) c->r[n] = 0x87654321u ^ n;
+                            c->set(AX, al, 1); c->set(CX, count, 1);
+                        }
+                        for (unsigned n = 0; n < 6; ++n) reference.step();
+                        check(jit.run() == 6, "AF-only shift dependency remains native");
+                        equal(reference, actual);
+                    }
+            }
         // Ordinary flag-producing ALU/Jcc pairs must reach the normal warmed
         // native path too. Compare both branch outcomes with full prefix state.
         for (bool code32 : {false, true})
@@ -204,8 +260,8 @@ int main() {
                 equal(reference, actual);
             }
         }
-        // Excel's two SHRDs end at an unsupported variable shift. The normal
-        // warmup policy must admit this expensive pair, not just warmup=0 tests.
+        // An unsupported rotate terminates this SHRD pair independently of CL
+        // shift coverage. Test normal pair admission, not just warmup=0 lowering.
         for (bool code32 : {false, true})
             for (unsigned width : {2u, 4u}) {
                 CPU a(65536), b(65536);
@@ -216,7 +272,7 @@ int main() {
                     code.insert(code.end(), {0x0f, 0xad, modrm});
                 }
                 const auto pairEnd = code.size();
-                code.insert(code.end(), {0xd3, 0xea});
+                code.insert(code.end(), {0xd3, 0xca});
                 for (auto c : {&a, &b}) {
                     c->s[CS].big = code32;
                     for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);

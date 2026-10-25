@@ -25,9 +25,13 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags |= CF | PF | AF | ZF | SF;
             continue;
         }
+        if (i.kind == Kind::Shift && !i.immediate) {
+            neededFlags[n] = liveFlags & (CF | PF | ZF | SF | OF);
+            // A zero count can preserve every live flag; AF is always preserved.
+            continue;
+        }
         if (i.kind == Kind::DoubleShift) {
-            // A runtime zero count preserves all flags; a nonzero count
-            // materializes the reference's complete arithmetic flags image.
+            // Runtime-zero counts and preserved flags require exact input state.
             neededFlags[n] = true;
             liveFlags = arithmeticFlags;
             continue;

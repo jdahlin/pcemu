@@ -313,6 +313,72 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             dirtyRegisters |= 1u << AX;
             continue;
         }
+        if (i.kind == Kind::Shift && !i.immediate) {
+            if (i.w == 4 && !neededFlags[n]) {
+                // ARM variable shifts already mask their count to five bits,
+                // including when source, count and destination all alias CX.
+                unsigned dst = 20 + i.dst;
+                auto op = i.op == 4 || i.op == 6 ? 0x1ac02000u
+                          : i.op == 7 ? 0x1ac02800u : 0x1ac02400u;
+                emit(op | ((20 + CX) << 16) | (dst << 5) | dst);
+                dirtyRegisters |= 1u << i.dst;
+                continue;
+            }
+            if (neededFlags[n]) {
+                finishFlags(last, -1, 0);
+                last = -1;
+            }
+            unsigned width = i.w * 8;
+            bool left = i.op == 4 || i.op == 6, arithmetic = i.op == 7;
+            bits(9, 20 + CX, 0, 5); // Capture CL before an aliased destination changes.
+            auto zero = code.size(); emit(0x34000009u);
+            extract(11, 20 + i.dst, i.w, i.dstShift);
+            if (neededFlags[n]) {
+                emit(0x51000400u | (9 << 5) | 10); // count - 1
+                if (arithmetic) {
+                    emit(0x13000000u | ((width - 1) << 10) | (11 << 5) | 14);
+                    emit(0x1ac02800u | (10 << 16) | (14 << 5) | 14); // asrv: last bit out
+                } else {
+                    emit((left ? 0x1ac02000u : 0x1ac02400u) | (10 << 16) | (11 << 5) | 14);
+                    if (left) bits(14, 14, width - 1, 1);
+                }
+            }
+            if (arithmetic) {
+                emit(0x13000000u | ((width - 1) << 10) | (11 << 5) | 13);
+                emit(0x1ac02800u | (9 << 16) | (13 << 5) | 13);
+            } else {
+                emit((left ? 0x1ac02000u : 0x1ac02400u) | (9 << 16) | (11 << 5) | 13);
+            }
+            extract(13, 13, i.w, 0);
+            if (neededFlags[n]) {
+                load(12, 19, offsetof(CPU, flags));
+                imm(10, ~(CF | SF | ZF | PF)); // AF and undefined multi-bit OF are preserved.
+                emit(0x0a000000u | (10 << 16) | (12 << 5) | 12);
+                flagBit(14, 0);
+                emit(0x7100053fu); // cmp w9,#1
+                auto many = code.size(); emit(0x54000001u);
+                if (arithmetic) imm(14, 0);
+                else {
+                    bits(10, left ? 13 : 11, width - 1, 1);
+                    if (left) emit(0x4a000000u | (10 << 16) | (14 << 5) | 14);
+                    else mov(14, 10);
+                }
+                flagBit(14, 11);
+                code[many] |= uint32_t(code.size() - many) << 5;
+                emit(0x710001bfu); // cmp w13,#0
+                emit(0x1a9f17eeu); flagBit(14, 6);
+                bits(14, 13, width - 1, 1); flagBit(14, 7);
+                bits(14, 13, 0, 8);
+                for (unsigned shift : {4u, 2u, 1u})
+                    emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+                emit(0x2a2e03eeu); flagBit(14, 2);
+                store(12, 19, offsetof(CPU, flags));
+            }
+            insert(20 + i.dst, 13, i.w, i.dstShift);
+            code[zero] |= uint32_t(code.size() - zero) << 5;
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
         if (i.kind == Kind::Shift) {
             if (neededFlags[n]) {
                 finishFlags(last, -1, 0);
