@@ -44,5 +44,21 @@ int main(){
  value.type=C::Type::String;value.text=std::u16string(1024,u'x');
  invalid([&]{C::request(C::Operation::Set,C::Pool::External,0,u"Key",&value);});
  value.text.clear();check(C::enumeration(response(value),C::Pool::Auto,7)->value.text.empty());
+ value.text=u"Probe value";
+ auto set=C::request(C::Operation::Set,C::Pool::External,0,u"ProbeKey",&value);
+ check(C::mutationAcknowledged(set,C::Operation::Set,C::Pool::External,u"ProbeKey"));
+ check(!C::mutationAcknowledged(set,C::Operation::Set,C::Pool::External,u"Other"));
+ auto got=set;got[0]=0;
+ auto getRecord=C::getResponse(got,C::Pool::External,u"ProbeKey");
+ check(getRecord && getRecord->value.text==value.text);
+ check(!C::getResponse(got,C::Pool::Guest,u"ProbeKey"));
+ check(!C::getResponse(got,C::Pool::External,u"Other"));
+ for(size_t n=0;n<C::payloadBytes;++n){
+  check(!C::getResponse(std::span<const uint8_t>(got).first(n),C::Pool::External,u"ProbeKey"));
+  check(!C::mutationAcknowledged(std::span<const uint8_t>(set).first(n),C::Operation::Set,C::Pool::External,u"ProbeKey"));
+ }
+ del=C::request(C::Operation::Delete,C::Pool::External,0,u"ProbeKey");
+ check(C::mutationAcknowledged(del,C::Operation::Delete,C::Pool::External,u"ProbeKey"));
+ check(!C::mutationAcknowledged(del,C::Operation::Set,C::Pool::External,u"ProbeKey"));
  std::cout<<checks<<" KVP codec checks passed\n";
 }

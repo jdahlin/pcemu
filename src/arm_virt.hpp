@@ -64,6 +64,9 @@ class ArmVirtMachine {
     std::string hypervReport() const;
     // Trusted host queries, between run slices with all VPs stopped.
     bool enumerateGuestKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) { return hyperv.enumerateKvp(pool,index); }
+    bool getGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.getKvp(pool,key); }
+    bool setGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value) { return hyperv.setKvp(pool,key,value); }
+    bool deleteGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.deleteKvp(pool,key); }
     std::optional<ArmHyperVKvp::Result> takeGuestKvpResult() { return hyperv.takeKvpResult(); }
     // Call between run slices, with all VPs stopped. Never forces host poweroff.
     bool requestGuestShutdown(ArmHyperVShutdown::Action action = ArmHyperVShutdown::Action::PowerOff) {

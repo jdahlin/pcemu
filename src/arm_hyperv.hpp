@@ -51,6 +51,9 @@ class ArmHyperV {
     void enableShutdown();
     void enableKvp();
     bool enumerateKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index);
+    bool getKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key);
+    bool setKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value);
+    bool deleteKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key);
     std::optional<ArmHyperVKvp::Result> takeKvpResult();
     // Trusted host request, with all VPs stopped. Acceptance is not poweroff.
     bool requestShutdown(ArmHyperVShutdown::Action action, bool force = false,

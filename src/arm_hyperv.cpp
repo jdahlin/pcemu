@@ -198,6 +198,15 @@ void ArmHyperV::enableKvp() {
 bool ArmHyperV::enumerateKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) {
     return enabled && kvpEnabled && kvp.enumerate(pool,index);
 }
+bool ArmHyperV::getKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) {
+    return enabled && kvpEnabled && kvp.get(pool,key);
+}
+bool ArmHyperV::setKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value) {
+    return enabled && kvpEnabled && kvp.set(pool,key,value);
+}
+bool ArmHyperV::deleteKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) {
+    return enabled && kvpEnabled && kvp.erase(pool,key);
+}
 std::optional<ArmHyperVKvp::Result> ArmHyperV::takeKvpResult() {
     return kvpEnabled ? kvp.takeResult() : std::nullopt;
 }

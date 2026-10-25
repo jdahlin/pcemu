@@ -19,6 +19,8 @@ class ArmHyperVKvpCodec {
                                        const std::u16string &key={},const Value *value=nullptr);
     // Caller must first verify the IC transaction/status/version. Rejects
     // malformed lengths, UTF-16, operation/pool/index and unsupported types.
+    static std::optional<Record> getResponse(std::span<const uint8_t> payload,Pool pool,const std::u16string &key);
+    static bool mutationAcknowledged(std::span<const uint8_t> payload,Operation operation,Pool pool,const std::u16string &key);
     static std::optional<Record> enumeration(std::span<const uint8_t> payload,Pool pool,uint32_t index);
 };
 }

@@ -13,7 +13,7 @@ establish completion, Windows consumption or a performance benefit.
 | Crash reporting | Validated register/message model | Controlled actual-guest crash evidence on a disposable disk |
 | VMBus, GPADLs, rings, channel lifecycle | Windows channels and typed publication/consumption audits | Preserve teardown/backpressure behavior as services grow |
 | Heartbeat, timesync, shutdown/reboot | Actual Windows responses, clock correction, poweroff and reset | Keep bounded regression coverage; hibernation is not verified |
-| KVP/Data Exchange | Codec, IC state machine, rings and actual Windows KVP 5 intrinsic record | Broader enumeration, host get/set/delete APIs and IP exchange |
+| KVP/Data Exchange | Codec, IC state machine, rings and actual Windows KVP 5 intrinsic record | Native set/get/delete verification, broader enumeration and IP exchange |
 | VP runtime, assist-page and scheduling interfaces | Not implemented as complete facilities | Determine ARM64 contract/backend support, implement relevant paths and observe use |
 | Guest file copy, backup/VSS, memory/CPU hotplug | Not implemented | Assess applicability to this VM, dependencies and implement applicable services |
 | Synthetic network/storage | Existing VM uses working VirtIO devices | Resolve applicability of Hyper-V synthetic alternatives rather than claiming VirtIO implements them |

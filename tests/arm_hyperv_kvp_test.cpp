@@ -36,7 +36,24 @@ int main(){
   result=k.takeResult();check(result && result->status==0x80070103 && !result->record && has(k,"\"endOfPool\":1"));
   check(k.enumerate(C::Pool::Guest,0));auto denied=k.packet(8);k.sent(8);denied[41]=5;put(denied,36,0x80004005);k.receive(denied,9);
   result=k.takeResult();check(result && result->status==0x80004005 && !result->record);
-  check(k.enumerate(C::Pool::Auto,9));auto late=k.packet(10);k.sent(10);late=answer(late);k.receive(late,10+k.timeout);
+  C::Value value;value.text=u"Disposable value";
+  check(!k.set(C::Pool::Auto,u"ProbeKey",value) && !k.erase(C::Pool::Guest,u"ProbeKey"));
+  check(!k.get(C::Pool::External,u""));
+  check(k.set(C::Pool::External,u"ProbeKey",value));auto mutation=k.packet(10);
+  check(mutation[44]==1 && !k.get(C::Pool::External,u"ProbeKey"));k.sent(10);mutation[41]=5;
+  auto mismatched=mutation;mismatched[60]^=1;k.receive(mismatched,11);check(has(k,"wait-response"));
+  k.receive(mutation,11);result=k.takeResult();
+  check(result && result->operation==C::Operation::Set && !result->record && result->status==0);
+  check(k.get(C::Pool::External,u"ProbeKey"));auto getReply=k.packet(12);k.sent(12);
+  auto encoded=C::request(C::Operation::Set,C::Pool::External,0,u"ProbeKey",&value);encoded[0]=0;
+  std::copy(encoded.begin(),encoded.end(),getReply.begin()+44);getReply[41]=5;k.receive(getReply,13);
+  result=k.takeResult();check(result && result->operation==C::Operation::Get && result->record && result->record->value.text==value.text);
+  check(k.erase(C::Pool::External,u"ProbeKey"));mutation=k.packet(14);k.sent(14);mutation[41]=5;k.receive(mutation,15);
+  result=k.takeResult();check(result && result->operation==C::Operation::Delete && result->status==0 && !result->record);
+  check(has(k,"\"mutationAcknowledgments\":2"));
+  check(k.get(C::Pool::External,u"ProbeKey"));mutation=k.packet(16);k.sent(16);mutation[41]=5;put(mutation,36,0x80070002);k.receive(mutation,17);
+  result=k.takeResult();check(result && result->status==0x80070002 && !result->record);
+  check(k.enumerate(C::Pool::Auto,9));auto late=k.packet(20);k.sent(20);late=answer(late);k.receive(late,20+k.timeout);
   check(has(k,"failed") && has(k,"\"timeouts\":1") && !k.takeResult() && !k.enumerate(C::Pool::Auto,0));
   k.closed();check(k.packet(0).empty() && !k.delay(0));k.opened(0);check(k.packet(0)[40]==0);
  }

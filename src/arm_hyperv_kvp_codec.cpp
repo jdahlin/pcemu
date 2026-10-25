@@ -44,18 +44,37 @@ std::vector<uint8_t> ArmHyperVKvpCodec::request(Operation op,Pool pool,uint32_t 
  }
  return b;
 }
-std::optional<ArmHyperVKvpCodec::Record> ArmHyperVKvpCodec::enumeration(std::span<const uint8_t> b,Pool pool,uint32_t index){
- if(b.size()!=payloadBytes || unsigned(pool)>3 || b[0]!=3 || b[1]!=uint8_t(pool) || get(b,2,2) || get(b,4,4)!=index)return {};
- auto key=text(b,20,size_t(get(b,12,4)),maxKeyBytes);if(!key || key->empty())return {};
- Record r;r.key=std::move(*key);r.value.type=Type(get(b,8,4));auto size=get(b,16,4);
+namespace {
+std::optional<ArmHyperVKvpCodec::Record> record(std::span<const uint8_t> b,size_t at){
+ using C=ArmHyperVKvpCodec;
+ auto key=text(b,at+12,size_t(get(b,at+4,4)),C::maxKeyBytes);if(!key || key->empty())return {};
+ C::Record r;r.key=std::move(*key);r.value.type=C::Type(get(b,at,4));auto size=get(b,at+8,4);
  switch(r.value.type){
- case Type::String:case Type::ExpandString:{
-  auto value=text(b,532,size_t(size),maxValueBytes);if(!value)return {};r.value.text=std::move(*value);break;
+ case C::Type::String:case C::Type::ExpandString:{
+  auto value=text(b,at+524,size_t(size),C::maxValueBytes);if(!value)return {};r.value.text=std::move(*value);break;
  }
- case Type::Dword:if(size!=4)return {};r.value.number=get(b,532,4);break;
- case Type::Qword:if(size!=8)return {};r.value.number=get(b,532,8);break;
+ case C::Type::Dword:if(size!=4)return {};r.value.number=get(b,at+524,4);break;
+ case C::Type::Qword:if(size!=8)return {};r.value.number=get(b,at+524,8);break;
  default:return {};
  }
  return r;
+}
+bool header(std::span<const uint8_t> b,ArmHyperVKvpCodec::Operation op,ArmHyperVKvpCodec::Pool pool){
+ return b.size()==ArmHyperVKvpCodec::payloadBytes && unsigned(pool)<=3 && b[0]==uint8_t(op) && b[1]==uint8_t(pool) && !get(b,2,2);
+}
+}
+std::optional<ArmHyperVKvpCodec::Record> ArmHyperVKvpCodec::enumeration(std::span<const uint8_t> b,Pool pool,uint32_t index){
+ if(!header(b,Operation::Enumerate,pool) || get(b,4,4)!=index)return {};
+ return record(b,8);
+}
+std::optional<ArmHyperVKvpCodec::Record> ArmHyperVKvpCodec::getResponse(std::span<const uint8_t> b,Pool pool,const std::u16string &key){
+ if(!header(b,Operation::Get,pool))return {};
+ auto r=record(b,4);if(!r || r->key!=key)return {};return r;
+}
+bool ArmHyperVKvpCodec::mutationAcknowledged(std::span<const uint8_t> b,Operation op,Pool pool,const std::u16string &key){
+ if((op!=Operation::Set && op!=Operation::Delete) || !header(b,op,pool))return false;
+ auto sizeAt=op==Operation::Set?8u:4u,keyAt=op==Operation::Set?16u:8u;
+ auto returned=text(b,keyAt,size_t(get(b,sizeAt,4)),maxKeyBytes);
+ return returned && !returned->empty() && *returned==key;
 }
 }

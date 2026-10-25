@@ -143,3 +143,26 @@ separate typed KVP-record gate.
 This verifies one intrinsic query, not every KVP operation. Remaining KVP work
 is broader host query APIs, multiple indexes/pools, get/set/delete execution
 and IP exchange, with appropriate verification of each implemented operation.
+
+## Explicit standard operations
+
+The KVP model and host/platform APIs now support get, set and delete in addition
+to enumeration. Calls remain explicit, with one pending transaction and one
+unread result. SET/DELETE are restricted to host-owned External/AutoExternal
+pools; guest-owned intrinsic and Guest pools stay read-only from these APIs.
+Invalid keys/values leave the ready state unchanged. No default boot path
+queues a mutation.
+
+GET responses validate the exact requested key and typed value. Successful
+SET/DELETE responses require the expected operation, pool and echoed key;
+`mutationAcknowledgments` counts protocol acknowledgments only. A returned
+status or acknowledgment does not establish persisted registry state. Guest
+errors remain results, timeouts never trigger automatic mutation retries, and
+close/reopen discard pending payload/result state.
+
+Validation: 16,439 state-machine checks and 7,778 codec checks pass under
+AddressSanitizer/UBSan. The full GPADL/ring/SignalEvent test now passes 57 checks,
+including set/get/delete through public host APIs, and the ARM platform forwarding
+header passes native syntax validation. Actual Windows mutation/readback/delete
+cleanup still requires a single bounded disposable-key test on the private disk.
+The VM remains stopped while this diskless implementation is completed.
