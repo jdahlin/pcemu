@@ -105,3 +105,20 @@ fields are also captured for short eight-byte negotiation bodies.
 All four framework/service combinations (framework 1/3, KVP 3/4) pass the
 expanded 10,909-check suite, including ASan/UBSan. Actual Windows selection of
 one of these versions still requires the next bounded run.
+
+The 3/4-only run also returned no selected version and shut down with exit
+zero. Inspection of the installed, WOF-decoded `icsvc.dll` with its matching
+public PDB establishes the guest's actual contract: the KVP singleton at RVA
+`0x4c440` has one version entry (count at +0x30), pointing at RVA `0x4c110`,
+whose value is `05 00 00 00` (5.0). The endpoint loads these fields in its
+initialization path. This supersedes the earlier compatibility hypothesis.
+
+The host now offers standard KVP 3/4/5 and retains whichever is selected. It
+still never sends IP operations, including version 5's binary IP format. The
+expanded suite passes 16,361 checks under ASan/UBSan. A new opt-in runner flag,
+`--hyperv-kvp-probe`, queues exactly one intrinsic-pool enumeration at index zero
+once the channel is ready. It logs the status and UTF-16-escaped result. It
+requires VMBus, does not mutate guest registry data, and does not run by default.
+The platform exposes query/result forwarding between stopped-VP slices.
+
+The remaining family-level work is tracked in [the scope inventory](hyperv-arm64-plan.md).

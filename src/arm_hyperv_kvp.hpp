@@ -2,7 +2,7 @@
 #include "arm_hyperv_kvp_codec.hpp"
 #include "arm_vmbus.hpp"
 namespace pc {
-// Host KVP v3/v4 IC. Negotiation is automatic; guest queries are explicit.
+// Host KVP v3/v4/v5 standard-payload IC. Negotiation is automatic; guest queries are explicit.
 // One outstanding enumeration and one unread result, no mutations or retries.
 class ArmHyperVKvp {
   public:

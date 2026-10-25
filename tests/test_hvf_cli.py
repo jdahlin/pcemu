@@ -196,6 +196,12 @@ class HvfCLI(unittest.TestCase):
                 cwd=root, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_kvp_probe_requires_vmbus(self):
+        result = self.invoke('--machine', 'arm64-uefi', '--hyperv', 'basic', '--hyperv-kvp-probe')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('--hyperv-kvp-probe requires --hyperv vmbus', result.stderr)
+        self.assertIn('--hyperv-kvp-probe', self.invoke('--help').stdout)
+
     def test_help_and_catalog(self):
         for option in ('--help', '--list-machines'):
             result = self.invoke(option)

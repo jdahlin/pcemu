@@ -15,11 +15,11 @@ auto answer(std::vector<uint8_t> p){
 }
 int main(){
  auto o=ArmHyperVKvp::offer();check(o.channel==4 && o.connection==19 && o.flags==0x11 && o.userData[0]==4);check(o.interfaceId!=o.instanceId && o.instanceId[0]==0x19 && o.interfaceId[0]==0xe7);
- for(unsigned fw:{1u,3u})for(unsigned service:{3u,4u}){
+ for(unsigned fw:{1u,3u})for(unsigned service:{3u,4u,5u}){
   ArmHyperVKvp k;check(k.packet(0).empty() && !k.delay(0));check(!k.enumerate(C::Pool::Auto,0));
   auto version=negotiate(k,fw,service);
   for(size_t n=0;n<version.size();++n){k.receive(std::span<const uint8_t>(version).first(n),1);check(has(k,"wait-version"));}
-  auto bad=version;put(bad,56,5);k.receive(bad,1);check(has(k,"wait-version"));
+  auto bad=version;put(bad,56,6);k.receive(bad,1);check(has(k,"wait-version"));
   bad=version;put(bad,48,0x12345678);k.receive(bad,1);
   check(has(k,"wait-version") && has(k,"\"reserved\":305419896"));
   k.receive(version,1);check(has(k,"ready") && !k.delay(1));check(!k.takeResult());

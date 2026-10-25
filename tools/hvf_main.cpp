@@ -672,6 +672,7 @@ int main(int argc, char **argv) {
     try {
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
+        bool kvpProbe=false;
         auto guestPowerAction = pc::ArmHyperVShutdown::Action::PowerOff;
         pc::ArmVirtMachine::Config uefi;
         uefi.firmware = "roms/edk2-arm64.bin";
@@ -725,6 +726,7 @@ int main(int argc, char **argv) {
                 else throw std::runtime_error("Expected --hyperv-power-action poweroff|reboot");
                 uefiOptions = true;
             }
+            else if (arg == "--hyperv-kvp-probe") { kvpProbe=true; uefiOptions=true; }
             else if (arg == "--hyperv-stats") { hypervStatsPath = value(); uefiOptions = true; }
             else if (arg == "--network") {
                 auto mode = value();
@@ -770,6 +772,7 @@ int main(int argc, char **argv) {
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
+                             "      [--hyperv-kvp-probe] (one read-only intrinsic enumeration)\n"
                              "      [--hyperv-power-action poweroff|reboot] (SIGUSR2 request; default poweroff)\n"
                              "      [--framebuffer-ppm FILE --acpi-dir DIRECTORY --cpu-state]\n"
                              "      [--extra-disk IMAGE --extra-disk-overlay PRIVATE_COW]\n"
@@ -799,6 +802,7 @@ int main(int argc, char **argv) {
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
+            if(kvpProbe && !uefi.hypervVmbus) throw std::runtime_error("--hyperv-kvp-probe requires --hyperv vmbus");
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
             std::signal(SIGUSR1, requestCapture);
@@ -826,6 +830,7 @@ int main(int argc, char **argv) {
                 };
                 saveHypervStats(hypervStatsPath, true);
                 size_t printed = 0, matchStart = 0;
+                bool kvpProbeQueued=false;
                 while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
                     if (stdinOpen) {
                         pollfd input{STDIN_FILENO, POLLIN, 0};
@@ -841,6 +846,19 @@ int main(int argc, char **argv) {
                         }
                     }
                     vm.run(std::chrono::milliseconds(100));
+                    if(kvpProbe) {
+                        if(!kvpProbeQueued) kvpProbeQueued=vm.enumerateGuestKvp(pc::ArmHyperVKvpCodec::Pool::Auto,0);
+                        if(auto result=vm.takeGuestKvpResult()) {
+                            auto encoded=[](const std::u16string &text) {
+                                std::string out;constexpr char hex[]="0123456789abcdef";
+                                for(auto c:text){out+="\\u";for(int shift=12;shift>=0;shift-=4)out+=hex[(c>>shift)&15];}
+                                return out;
+                            };
+                            std::cerr<<"Hyper-V KVP probe: index="<<result->index<<" status="<<result->status;
+                            if(result->record)std::cerr<<" key="<<encoded(result->record->key)<<" value="<<encoded(result->record->value.text);
+                            std::cerr<<'\n';
+                        }
+                    }
                     if (guestShutdownRequested) {
                         guestShutdownRequested = 0;
                         std::cerr << (vm.requestGuestShutdown(guestPowerAction)

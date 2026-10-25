@@ -25,8 +25,8 @@ void ArmHyperVKvp::expire(uint64_t now){
 std::vector<uint8_t> ArmHyperVKvp::packet(uint64_t now){
  expire(now);bool negotiation=state==State::SendVersion;
  if(!negotiation && state!=State::SendQuery)return {};
- auto body=negotiation?std::vector<uint8_t>(24):ArmHyperVKvpCodec::request(ArmHyperVKvpCodec::Operation::Enumerate,pool,index);
- if(negotiation){put(body,0,2,2);put(body,2,2,2);put(body,8,1,2);put(body,12,3,2);put(body,16,3,2);put(body,20,4,2);}
+ auto body=negotiation?std::vector<uint8_t>(28):ArmHyperVKvpCodec::request(ArmHyperVKvpCodec::Operation::Enumerate,pool,index);
+ if(negotiation){put(body,0,2,2);put(body,2,3,2);put(body,8,1,2);put(body,12,3,2);put(body,16,3,2);put(body,20,4,2);put(body,24,5,2);}
  std::vector<uint8_t> p((44+body.size()+7)&~size_t(7));
  put(p,0,6,2);put(p,2,2,2);put(p,4,p.size()/8,2);
  put(p,16,1,4);put(p,20,20+body.size(),4);
@@ -59,7 +59,7 @@ void ArmHyperVKvp::receive(std::span<const uint8_t> p,uint64_t now){
   }
   if(status){state=State::Failed;lastStatus=status;return;}
   if(body.size()<16 || get(body,0,2)!=1 || get(body,2,2)!=1 || get(body,4,4) ||
-     get(body,10,2) || (get(body,12,2)!=3 && get(body,12,2)!=4) || get(body,14,2))return fail();
+     get(body,10,2) || (get(body,12,2)<3 || get(body,12,2)>5) || get(body,14,2))return fail();
   auto fw=get(body,8,2);if(fw!=1 && fw!=3)return fail();
   framework=uint16_t(fw);service=uint16_t(get(body,12,2));state=State::Ready;++transaction;return;
  }

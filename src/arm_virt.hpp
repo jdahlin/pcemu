@@ -62,6 +62,9 @@ class ArmVirtMachine {
     void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
     std::string cpuState() const;
     std::string hypervReport() const;
+    // Trusted host queries, between run slices with all VPs stopped.
+    bool enumerateGuestKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) { return hyperv.enumerateKvp(pool,index); }
+    std::optional<ArmHyperVKvp::Result> takeGuestKvpResult() { return hyperv.takeKvpResult(); }
     // Call between run slices, with all VPs stopped. Never forces host poweroff.
     bool requestGuestShutdown(ArmHyperVShutdown::Action action = ArmHyperVShutdown::Action::PowerOff) {
         return hyperv.requestShutdown(action);
