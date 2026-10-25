@@ -76,9 +76,11 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
+    : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus, c.initializationStage), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
+    auto stage = [&](const char *name) { if (c.initializationStage) c.initializationStage(name); };
+    stage("loading firmware platform tables");
     if(c.hyperv) {
         hyperv.enableReferenceClock([this] {
             auto sample=vm.virtualCounterSample();
@@ -119,6 +121,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     if (working == original || (fs::exists(working) && fs::equivalent(working, original)))
         throw std::runtime_error("UEFI variables must use a private file, not the firmware template");
     fs::create_directories(working.parent_path());
+    stage("opening UEFI variable store");
     variableLock = open((working.string() + ".lock").c_str(), O_CREAT | O_RDWR, 0600);
     if (variableLock < 0 || flock(variableLock, LOCK_EX | LOCK_NB) != 0) {
         if (variableLock >= 0) close(variableLock);
@@ -153,7 +156,8 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             if (diskLock < 0 || flock(diskLock, LOCK_EX | LOCK_NB) != 0)
                 throw std::runtime_error("Virtio disk is already in use or cannot be locked");
             if (!direct && !fs::exists(overlay)) Disk::createOverlay(overlay, parent);
-            disk = std::make_unique<Disk>(overlay);
+            stage("opening primary disk");
+            disk = std::make_unique<Disk>(overlay, false, false, 0, c.initializationProgress);
             if (!direct && (!disk->isOverlay() || fs::canonical(disk->backingPath()).string() != parent))
                 throw std::runtime_error("Virtio disk overlay belongs to a different parent");
             if (c.diskController == "nvme") {
@@ -176,13 +180,15 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             if (extraDiskLock < 0 || flock(extraDiskLock, LOCK_EX | LOCK_NB))
                 throw std::runtime_error("Extra disk is already in use or cannot be locked");
             if (!fs::exists(overlay)) Disk::createOverlay(overlay, parent);
-            extraDisk = std::make_unique<Disk>(overlay);
+            stage("opening extra disk");
+            extraDisk = std::make_unique<Disk>(overlay, false, false, 0, c.initializationProgress);
             if (!extraDisk->isOverlay() || fs::canonical(extraDisk->backingPath()).string() != parent)
                 throw std::runtime_error("Extra disk overlay belongs to a different parent");
             extraBlock = std::make_unique<VirtioBlock>(*extraDisk, vm.ram(), HvfMachine::ramBase,
                 [this](bool level) { if (extraPci) extraPci->irq(level); });
             extraPci = std::make_unique<VirtioPciDevice>(*extraBlock, [this](bool level) { vm.setSPI(49, level); });
         } else if (!c.extraDiskOverlay.empty()) throw std::runtime_error("--extra-disk-overlay requires --extra-disk");
+        stage("creating PCI devices and network");
         if (c.network) {
             net = std::make_unique<VirtioNet>(vm.ram(), HvfMachine::ramBase,
                 [this](bool level) { if (netPci) netPci->irq(level); });
@@ -193,6 +199,9 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             gateway = std::make_unique<Network>(c.networkCapture);
             if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
         } else if (c.sshPort || !c.networkCapture.empty()) throw std::runtime_error("SSH forwarding/capture requires --network user");
+        usb = std::make_unique<UsbXhci>(vm.ram(), HvfMachine::ramBase,
+            [this](bool level) { vm.setSPI(52, level); });
+        usbInput = std::make_unique<UsbGuestInput>(*usb);
         rng = std::make_unique<VirtioRng>(vm.ram(), HvfMachine::ramBase,
             [this](bool level) { if (rngPci) rngPci->irq(level); });
         rngPci = std::make_unique<VirtioPciDevice>(
@@ -200,6 +209,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
             4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); });
         bindDevices();
+        stage("loading and mapping firmware ROM");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
         auto dtb = load(c.dtb, 64 * 1024);
         if (dtb.size() < 40 || dtb[0] != 0xd0 || dtb[1] != 0x0d || dtb[2] != 0xfe || dtb[3] != 0xed)

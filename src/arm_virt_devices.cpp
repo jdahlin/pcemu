@@ -27,6 +27,7 @@ void ArmVirtMachine::bindDevices() {
     attach("virtio-extra-block", 1, extraPci.get());
     attach("virtio-net", 2, netPci.get());
     attach("virtio-rng", 3, rngPci.get());
+    attach("usb-xhci", 4, usb.get());
     // NVMe had precedence over virtio BARs in the original platform decoder.
     attach("nvme", 0, nvme.get());
 
@@ -86,5 +87,9 @@ void ArmVirtMachine::bindDevices() {
             uart.write(o, uint32_t(a.value));
             vm.setSPI(33, uart.irq());
         }, 1 | 2 | 4);
+}
+std::string ArmVirtMachine::usbReport() const {
+    return usb ? "commands=" + std::to_string(usb->commands) +
+        " transfers=" + std::to_string(usb->transfers) + " reports=" + std::to_string(usb->reports) + " error=" + usb->error() : "disabled";
 }
 } // namespace pc

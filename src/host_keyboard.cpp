@@ -145,45 +145,4 @@ void HostKeyboard::emit(uint16_t key, bool up) {
         destination(uint8_t(scan) | (up ? 0x80 : 0));
     }
 }
-void HostKeyboard::event(uint16_t key, bool up) {
-    if (key >= held.size())
-        return;
-    bool command = key == hid::KEY_LGUI || key == hid::KEY_RGUI;
-    if (up) {
-        if (!held[key])
-            return;
-        // A bare Command tap is a guest Windows-key tap. Delay its make so
-        // native Cmd+G/Cmd+Q and Cmd+Tab don't open the guest Start menu.
-        if (command && !sent[key])
-            emit(key, false);
-        if (sent[key] || command)
-            emit(key, true);
-        held[key] = sent[key] = false;
-        return;
-    }
-    held[key] = true;
-    if (command)
-        return;
-    for (auto meta : {hid::KEY_LGUI, hid::KEY_RGUI})
-        if (held[meta] && !sent[meta]) {
-            emit(meta, false);
-            sent[meta] = true;
-        }
-    emit(key, false);
-    sent[key] = true;
-}
-void HostKeyboard::release() {
-    for (unsigned i = 0; i < held.size(); ++i) {
-        if (sent[i])
-            emit(i, true);
-        held[i] = sent[i] = false;
-    }
-}
-void HostKeyboard::consumeCommand() {
-    for (auto key : {hid::KEY_LGUI, hid::KEY_RGUI}) {
-        if (sent[key])
-            emit(key, true);
-        held[key] = sent[key] = false;
-    }
-}
 } // namespace pc

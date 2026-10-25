@@ -18,6 +18,8 @@
 #include "virtio_rng.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
+#include "usb_xhci.hpp"
+#include "usb_guest_input.hpp"
 #include <string>
 namespace pc {
 // Concrete ARM firmware platform. Keep x86 CPU/device internals out of this path.
@@ -25,6 +27,8 @@ class ArmVirtMachine {
   public:
     static constexpr size_t ramBytes = size_t(2) * 1024 * 1024 * 1024;
     struct Config {
+        Disk::OpenProgress initializationProgress;
+        HvfMachine::InitializationStage initializationStage;
         unsigned cpus = 1;
         size_t memoryBytes = ramBytes;
         std::string firmware, dtb, variableTemplate, variables;
@@ -58,6 +62,9 @@ class ArmVirtMachine {
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
+    GuestInput &guestInput() { return *usbInput; }
+    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const { return ramfb.pixels(pixels, width, height); }
+    std::string usbReport() const;
     std::string framebuffer() const { return ramfb.mode(); }
     void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
     std::string cpuState() const;
@@ -95,6 +102,8 @@ class ArmVirtMachine {
     std::unique_ptr<VirtioBlock> block;
     std::unique_ptr<VirtioPciBlock> pci;
     std::unique_ptr<Nvme> nvme;
+    std::unique_ptr<UsbXhci> usb;
+    std::unique_ptr<UsbGuestInput> usbInput;
     std::unique_ptr<Disk> extraDisk;
     std::unique_ptr<VirtioBlock> extraBlock;
     std::unique_ptr<VirtioPciDevice> extraPci, netPci, rngPci;

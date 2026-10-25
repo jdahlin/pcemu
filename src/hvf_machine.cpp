@@ -99,7 +99,9 @@ struct HvfMachine::Impl {
         if (std::this_thread::get_id() != owner)
             throw std::runtime_error("HVF vCPU operations must run on their creating thread");
     }
-    void initialize(size_t bytes, bool enableGic, unsigned cpuCount, bool hypervGic) {
+    void initialize(size_t bytes, bool enableGic, unsigned cpuCount, const InitializationStage &stage, bool hypervGic) {
+        auto progress = [&](const char *name) { if (stage) stage(name); };
+        progress("checking Hypervisor.framework");
         if(hypervGic && !enableGic) throw std::runtime_error("Hyper-V GIC view requires native GICv3");
         hypervGicEnabled=hypervGic;
         if (!cpuCount || cpuCount > 8 || (cpuCount > 1 && !enableGic))
@@ -110,6 +112,7 @@ struct HvfMachine::Impl {
             throw std::runtime_error("HVF RAM must be host-page aligned and between one page and 16 GiB");
         if (!HvfMachine::supported())
             throw std::runtime_error("Hypervisor.framework is unavailable (kern.hv_support)");
+        progress("creating hypervisor VM");
         hv_return_t created;
         if (__builtin_available(macOS 15.0, *)) {
             auto config = hv_vm_config_create();
@@ -120,6 +123,7 @@ struct HvfMachine::Impl {
         check(created, "hv_vm_create (EL2 disabled)");
         vmCreated = true;
         if (enableGic) {
+            progress("creating GICv3");
             if (__builtin_available(macOS 15.0, *)) {
                 auto config = hv_gic_config_create();
                 auto result = hv_gic_config_set_distributor_base(config, hypervGic ? ArmGicNonsecureView::nativeBase : 0x08000000);
@@ -132,6 +136,7 @@ struct HvfMachine::Impl {
                 gicEnabled = true;
             } else throw std::runtime_error("GICv3 requires macOS 15 or later");
         }
+        progress("allocating and mapping guest RAM");
         size = bytes;
         memory = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         if (memory == MAP_FAILED)
@@ -139,8 +144,10 @@ struct HvfMachine::Impl {
         check(hv_vm_map(memory, ramBase, size,
                         HV_MEMORY_READ | HV_MEMORY_WRITE | HV_MEMORY_EXEC), "hv_vm_map");
         mapped = true;
+        progress("creating primary vCPU");
         check(hv_vcpu_create(&vcpu, &exit, nullptr), "hv_vcpu_create");
         vcpuCreated = true;
+        progress("configuring guest clocks and CPU features");
         mach_timebase_info_data_t timebase{};
         check(mach_timebase_info(&timebase), "get host clock timebase");
         clockPeriod = 1000000000ull * timebase.denom / timebase.numer;
@@ -183,6 +190,7 @@ struct HvfMachine::Impl {
         check(hv_vcpu_get_vtimer_offset(vcpu, &timerOffset), "get initial virtual timer offset");
         for (unsigned i = 1; i < cpuCount; ++i)
             secondary.push_back(std::make_unique<HvfSecondary>(i, timerOffset, ramBase + size, hypervGic));
+        progress("starting hypervisor watchdog");
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
             while (!stopping) {
@@ -244,12 +252,12 @@ bool HvfMachine::supported() {
     size_t size = sizeof(value);
     return sysctlbyname("kern.hv_support", &value, &size, nullptr, 0) == 0 && value;
 }
-HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount)
+HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage)
     : HvfMachine(ramBytes,enableGic ? GicProfile::Native : GicProfile::Disabled,
-                 std::move(sleepTicks),cpuCount) {}
-HvfMachine::HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks, unsigned cpuCount) : impl(std::make_unique<Impl>()) {
+                 std::move(sleepTicks),cpuCount,std::move(stage)) {}
+HvfMachine::HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage) : impl(std::make_unique<Impl>()) {
     impl->sleepTicks = std::move(sleepTicks);
-    impl->initialize(ramBytes, profile!=GicProfile::Disabled, cpuCount, profile==GicProfile::HyperVNonsecure);
+    impl->initialize(ramBytes, profile!=GicProfile::Disabled, cpuCount, stage, profile==GicProfile::HyperVNonsecure);
 }
 HvfMachine::~HvfMachine() = default;
 std::span<uint8_t> HvfMachine::ram() {

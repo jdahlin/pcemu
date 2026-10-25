@@ -28,12 +28,13 @@ class HvfMachine {
     // Cumulative system-sleep time in mach_absolute_time ticks. The default
     // source samples mach_continuous_time; injection permits real vCPU tests
     // without putting the user's computer to sleep.
+    using InitializationStage = std::function<void(const char *)>;
     using SleepTicks = std::function<uint64_t()>;
     explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false,
-                        SleepTicks sleepTicks = {}, unsigned cpuCount = 1);
+                        SleepTicks sleepTicks = {}, unsigned cpuCount = 1, InitializationStage stage = {});
     enum class GicProfile { Disabled, Native, HyperVNonsecure };
     HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks = {},
-               unsigned cpuCount = 1);
+               unsigned cpuCount = 1, InitializationStage stage = {});
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;

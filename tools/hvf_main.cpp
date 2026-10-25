@@ -671,6 +671,7 @@ void selfTest() {
 }
 int main(int argc, char **argv) {
     try {
+        bool gui = false;
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
         bool kvpProbe=false,kvpRoundtrip=false;
@@ -742,6 +743,7 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--network-capture") { uefi.networkCapture = value(); uefiOptions = true; }
             else if (arg == "--serial-stdio") { serialStdio = true; uefiOptions = true; }
+            else if (arg == "--gui") { gui = true; uefiOptions = true; }
             else if (arg == "--run-forever") { runForever = true; uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
             else if (arg == "--disk-controller") { uefi.diskController = value(); uefiOptions = true; }
@@ -770,7 +772,7 @@ int main(int argc, char **argv) {
                              "  --kernel FILE [--timeout-ms 1..60000]\n"
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
-                             "UEFI: --machine arm64-uefi [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
+                             "UEFI: --machine arm64-uefi [--gui] [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
@@ -805,18 +807,49 @@ int main(int argc, char **argv) {
             if (test || !kernel.empty())
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
+            std::unique_ptr<pc::Frontend> frontend;
+            if (gui) frontend = pc::createFrontend(800, 600);
+            std::vector<uint32_t> displayPixels;
             if(kvpRoundtrip && (!uefi.hypervVmbus || kvpProbe)) throw std::runtime_error("--hyperv-kvp-roundtrip requires VMBus and excludes --hyperv-kvp-probe");
             if(kvpProbe && !uefi.hypervVmbus) throw std::runtime_error("--hyperv-kvp-probe requires --hyperv vmbus");
             SerialTerminal terminal(serialStdio);
             std::signal(SIGINT, interrupt); std::signal(SIGTERM, interrupt);
             std::signal(SIGUSR1, requestCapture);
             std::signal(SIGUSR2, requestGuestShutdown);
-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+            auto deadline = std::chrono::steady_clock::time_point::max();
+            bool executionStarted = false;
             bool matched = untilText.empty(), finished = false, restart;
             bool stdinOpen = serialStdio, commandSent = shellCommand.empty();
             unsigned reboots = 0;
             do {
+                auto nextInitializationPoll = std::chrono::steady_clock::now();
+                auto nextIndexReport = nextInitializationPoll;
+                uefi.initializationProgress = [&](uint64_t indexed, uint64_t total) {
+                    if (interrupted) throw std::runtime_error("VM initialization interrupted");
+                    auto now = std::chrono::steady_clock::now();
+                    if (total && (now >= nextIndexReport || indexed == total)) {
+                        nextIndexReport = now + std::chrono::seconds(1);
+                        std::cerr << "UEFI disk open: " << indexed * 100 / total << "% ("
+                                  << indexed / (1024 * 1024) << "/" << total / (1024 * 1024) << " MiB)\n";
+                    }
+                    if (frontend && now >= nextInitializationPoll) {
+                        nextInitializationPoll = now + std::chrono::milliseconds(16);
+                        for (const auto &event : frontend->poll())
+                            if (event.kind == pc::FrontendEvent::Kind::Quit) interrupted = 1;
+                    }
+                    if (interrupted) throw std::runtime_error("VM initialization interrupted");
+                };
+                uefi.initializationStage = [&](const char *name) {
+                    std::cerr << "UEFI initializing: " << name << "...\n";
+                    uefi.initializationProgress(0, 0);
+                };
                 pc::ArmVirtMachine vm(uefi);
+                std::cerr << "UEFI initialized: starting firmware execution\n";
+                if (!executionStarted) {
+                    deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+                    executionStarted = true;
+                }
+                pc::FrontendInput hostInput(frontend.get(), vm.guestInput());
                 auto saveHypervStats = [&](const std::string &path, bool required = false) {
                     if (path.empty()) return;
                     auto temporary = path + ".tmp-" + std::to_string(getpid());
@@ -842,6 +875,7 @@ int main(int argc, char **argv) {
                     kvpRoundtripState.emplace(std::u16string(key.begin(),key.end()));
                     std::cerr<<"Hyper-V KVP disposable key: "<<key<<'\n';
                 }
+                auto nextFrame = std::chrono::steady_clock::now();
                 while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
                     if (stdinOpen) {
                         pollfd input{STDIN_FILENO, POLLIN, 0};
@@ -856,7 +890,21 @@ int main(int argc, char **argv) {
                             } else stdinOpen = false;
                         }
                     }
-                    vm.run(std::chrono::milliseconds(100));
+                    // A run call can return after one MMIO instruction. Rendering
+                    // on every exit throttles firmware to the host display rate.
+                    auto now = std::chrono::steady_clock::now();
+                    bool frameDue = frontend && now >= nextFrame;
+                    if (frameDue) {
+                        nextFrame = now + std::chrono::milliseconds(16);
+                        for (const auto &event : frontend->poll())
+                            if (!hostInput.event(event)) interrupted = 1;
+                    }
+                    if (interrupted) break;
+                    vm.run(std::chrono::milliseconds(frontend ? 16 : 100));
+                    if (frameDue && !interrupted) {
+                        unsigned width = 0, height = 0;
+                        if (vm.display(displayPixels, width, height)) frontend->present(displayPixels, width, height);
+                    }
                     if(kvpRoundtripState && !kvpRoundtripReported) {
                         kvpRoundtripState->tick(vm);
                         if(kvpRoundtripState->finished()) {
@@ -899,7 +947,7 @@ int main(int argc, char **argv) {
                                   << " diskRequests=" << vm.diskRequests()
                                   << " netTx=" << vm.networkTransmitted()
                                   << " netRx=" << vm.networkReceived()
-                                  << " framebuffer=" << vm.framebuffer() << '\n';
+                                  << " framebuffer=" << vm.framebuffer() << " usb=" << vm.usbReport() << '\n';
                     }
                     const auto &output = vm.output();
                     if (output.size() > printed) {
@@ -914,6 +962,8 @@ int main(int argc, char **argv) {
                         matched = true; finished = true; break;
                     }
                 }
+                if (interrupted) std::cerr << "UEFI stopping: saving variables and flushing disks...\n";
+                hostInput.release();
                 saveHypervStats(hypervStatsPath);
                 if (!hypervStatsPath.empty()) saveHypervStats(hypervStatsPath + ".boot" + std::to_string(reboots) + ".json");
                 if(kvpRoundtripState && !kvpRoundtripReported)
@@ -925,7 +975,7 @@ int main(int argc, char **argv) {
                           << " ramMiB=" << uefi.memoryBytes / (1024 * 1024) << " disk=" << vm.diskPath() << " virtioRequests=" << vm.diskRequests()
                           << " extraDiskRequests=" << vm.extraDiskRequests()
                           << " netTx=" << vm.networkTransmitted() << " netRx=" << vm.networkReceived()
-                          << " framebuffer=" << vm.framebuffer() << " state=" << vm.stopReason() << '\n';
+                          << " framebuffer=" << vm.framebuffer() << " usb=" << vm.usbReport() << " state=" << vm.stopReason() << '\n';
                 restart = vm.resetRequested() && !interrupted && !finished &&
                     (runForever || std::chrono::steady_clock::now() < deadline);
                 if (restart) std::cerr << "UEFI restarting after guest reset: reboot=" << ++reboots << '\n';

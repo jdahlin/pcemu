@@ -99,6 +99,12 @@ int main() {
     ArmRamFb fb(config, ram, 0x40000000);
     ram[8] = 3; ram[9] = 2; ram[10] = 1;
     ram[20] = 6; ram[21] = 5; ram[22] = 4;
+    std::vector<uint32_t> argb;
+    unsigned width = 0, height = 0;
+    check(fb.pixels(argb, width, height));
+    check(width == 2 && height == 2 && argb.size() == 4);
+    check(argb[0] == 0xff010203 && argb[2] == 0xff040506); // padded rows, XRGB to ARGB
+    check(!ArmRamFb(absent, ram, 0x40000000).pixels(argb, width, height));
     auto output = std::filesystem::temp_directory_path() / ("pcemu-ramfb-" + std::to_string(getpid()) + ".ppm");
     fb.save(output.string());
     std::ifstream input(output, std::ios::binary);

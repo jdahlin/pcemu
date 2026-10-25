@@ -21,6 +21,26 @@ std::string ArmRamFb::mode() const {
         return "invalid";
     return std::to_string(width) + "x" + std::to_string(height) + "x32";
 }
+bool ArmRamFb::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const {
+    auto current = mode();
+    if (current == "inactive" || current == "invalid") return false;
+    auto bytes = fwCfg.file(0x20);
+    auto field = [&](unsigned offset, unsigned count) {
+        uint64_t value = 0;
+        for (unsigned i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
+        return value;
+    };
+    auto address = field(0, 8), stride = field(24, 4);
+    width = field(16, 4); height = field(20, 4);
+    output.resize(size_t(width) * height);
+    for (unsigned y = 0; y < height; ++y) {
+        auto row = ram.data() + address - ramBase + y * stride;
+        for (unsigned x = 0; x < width; ++x)
+            output[size_t(y) * width + x] = 0xff000000u | uint32_t(row[x*4+2]) << 16 |
+                uint32_t(row[x*4+1]) << 8 | row[x*4];
+    }
+    return true;
+}
 void ArmRamFb::save(const std::string &path) const {
     auto currentMode = mode();
     if (currentMode == "inactive" || currentMode == "invalid") throw std::runtime_error("No valid GOP framebuffer");
