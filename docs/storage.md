@@ -120,3 +120,22 @@ restarts to Explorer; rtts Win95 also passes both operations. Local evidence is
 `build/win95-smoke-3do0uj0t/result.json` and
 `build/win95-smoke-09aqnuex/result.json`. The earlier failed private run is
 retained under `build/win95-smoke-drgc45ac/`.
+
+## Removal of RAW disks and dependent installations (2026-10-25)
+
+At the user's explicit request, all remaining `.raw` files in this checkout
+were deleted together with every discovered COW descendant. This intentionally
+removed the installed Windows 11 ARM64 system and Hyper-V test branches, legacy
+DOS/Windows boot disks and the Win95 desktop/calculator snapshots. The running
+Windows 11 test instance was stopped before deletion. Earlier boot commands and
+snapshot references in this documentation are historical and require recreated
+media before use.
+
+The interrupted QCOW2 conversion was discarded, not retained as a replacement
+installation. Its incomplete output freed about 17 GiB. Subsequent RAW/dependent
+cleanup removed 51 disk files plus affected snapshot directories and freed
+another 36.57 GiB, leaving 59.37 GiB free at completion. No `.raw` files remained.
+APFS sharing means summed file allocations greatly exceeded reclaimed space.
+Original installer archives, the Windows ISO link, source code and diagnostic
+reports were retained. The ignored deletion audit is
+`build/storage-cleanup/remove-all-raw-applied.json`.
