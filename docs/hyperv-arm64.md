@@ -1033,3 +1033,29 @@ creates only the `cpus1-hyperv-vmbus` assets in a temporary working directory an
 boots without explicit ACPI/DTB options. All 11 CLI tests pass against the
 isolated source build; the earlier mixed frontend executable is excluded from
 Windows consumption evidence.
+
+### Windows with the attached VMBus profile
+
+The isolated `76a18df` runner, built from committed source in its own directory,
+reached the Windows lock screen with two VPs, 8 GiB RAM and a private local SSD
+COW cloned from the stopped SynIC experiment. No guest shutdown was assumed:
+the earlier host process received SIGTERM and completed its disk/variable flush.
+The executable hash and launch arguments are retained in
+`build/windows11-hyperv/vmbus-isolated/launch.json`.
+
+The frozen `core-evidence.json` in that directory has SHA-256
+`f2b6141c23bc6bffd680df2f97b2f63e0f27e9ab68be15e9bc41ea1cccab0291`.
+It records 124,859 successful calls, including 68,795 fixed IPIs and 54,899
+SyncContext calls, with zero failed or unsupported calls. The auditor confirms
+core, IPI, SyncContext and extended-query use. `console.png` independently shows
+the lock screen; the auditor intentionally does not infer GUI boot from counters.
+
+There are **zero SynIC register calls, VMBus contacts, posted messages or event
+signals** in this snapshot. `vmbusControlObserved` is false. Attaching ACPI and
+the server therefore establishes boot compatibility, not Windows bus activation.
+The next investigation is guest ACPI/PnP enumeration and VMBus driver start
+conditions. GPADL, rings, offered devices and integration services remain open.
+The first executable copied from the shared build directory included concurrent
+USB changes and is excluded; its stopped disk clone was removed after recording
+that provenance problem. The isolated live experiment remains separate from the
+original installed Windows disk.
