@@ -7,12 +7,19 @@
 // Offline conversion only. Neither input may be attached to a running guest.
 int main(int argc, char **argv) {
     try {
+        if (argc == 3 && std::string(argv[1]) == "size") {
+            pc::Disk disk(argv[2], false, true);
+            std::cout << disk.sectors * 512 << '\n';
+            return 0;
+        }
         if (argc == 4 && std::string(argv[1]) == "overlay") {
             pc::Disk::createOverlay(argv[2], argv[3]);
             return 0;
         }
-        if (argc == 3 && std::string(argv[1]) == "serve") {
-            pc::Disk disk(argv[2]);
+        if (argc == 3 && (std::string(argv[1]) == "serve" ||
+                          std::string(argv[1]) == "serve-readonly")) {
+            bool readOnly = std::string(argv[1]) == "serve-readonly";
+            pc::Disk disk(argv[2], false, readOnly);
             // Local pipe protocol: operation byte, LE64 LBA, LE32 sector count.
             // stdout is binary data only; a failed operation closes the pipe.
             for (;;) {

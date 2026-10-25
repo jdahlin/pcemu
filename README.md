@@ -284,3 +284,18 @@ images and extended L2 entries) are unsupported. Unsupported headers fail at
 open; unsupported cluster descriptors fail the read. Validate with
 `make test-qcow2`; `make test-qcow2-interop` additionally checks small images
 created by `qemu-img`. Mapping follows the [QEMU QCOW2 specification](https://www.qemu.org/docs/master/interop/qcow2.html).
+
+To flatten an existing PCEMU overlay into a standalone qcow2 base, stop guests
+using it, then run (requires `qemu-img`):
+
+```sh
+make build/disk-tool
+python3 tools/convert_qcow2.py media/windows11-arm64/system.pcd \
+  media/windows11-arm64/system.qcow2 --size 68719476736
+```
+
+The converter serves the logical disk through a private read-only Unix NBD
+socket, avoiding a RAW staging copy. It keeps the originals, checks QCOW2
+metadata and compares every guest-visible byte before publishing the output.
+Use a new native COW overlay on the resulting qcow2 base for guest writes.
+`python3 tests/test_qcow2_conversion.py` tests conversion of a small COW disk.
