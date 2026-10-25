@@ -88,3 +88,22 @@ of both reports. This is actual guest wall-clock correction evidence, unlike
 the earlier protocol acknowledgments alone. The command-line auditor's
 `guestClockAdjustmentVerified` remains conservative until a dedicated input
 validator is added; this observation does not change that gate implicitly.
+
+## Automated guest-clock evidence gate
+
+The auditor now accepts `--clock-report FILE`. It requires verified Windows
+core/timesync use, an explicit measured backward step of approximately two
+minutes, UTC timestamps consistent with reported offsets, ordered bounded
+samples, a final offset within three seconds with RTT at most two seconds,
+VMIC as the successful Windows time source, NTP isolation, and no probe
+restoration, diagnostic error or cleanup failure. All .NET round-trip timestamp
+fractions are parsed explicitly, including seven-digit Windows values.
+
+The report is bounded to one MiB and hashed alongside the Hyper-V and baseline
+inputs. Supplying a report makes failed clock verification a nonzero CLI exit.
+Without it, the clock gate stays false. The actual third-run artifacts pass
+this gate in `clock-adjustment/audit-clock3.json`; 22 auditor tests pass.
+
+```sh
+python3 tools/verify_windows_hyperv.py build/windows11-hyperv/clock-adjustment/clock-success-hyperv3.json --baseline build/windows11-hyperv/off/hyperv.json --clock-report build/windows11-hyperv/clock-adjustment/guest-report3.json
+```

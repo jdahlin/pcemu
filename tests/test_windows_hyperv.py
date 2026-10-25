@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from verify_windows_hyperv import verify, verify_poweroff, verify_reboot
+from verify_windows_hyperv import verify, verify_poweroff, verify_reboot, verify_clock
 
 
 def fixture():
@@ -45,6 +45,33 @@ def offered_fixture():
 
 
 class WindowsHyperV(unittest.TestCase):
+    def test_clock_gate_requires_isolated_measured_correction(self):
+        def sample(host, guest, offset):
+            return dict(hostUtc=host, guestUtc=guest, offsetSeconds=offset, roundTripMilliseconds=100)
+        before = sample('2026-10-25T22:00:00.0000000Z', '2026-10-25T22:00:00.0000000Z', 0)
+        stepped = sample('2026-10-25T22:00:05.0000000Z', '2026-10-25T21:58:05.0000000Z', -120)
+        after = sample('2026-10-25T22:00:10.0000000Z', '2026-10-25T22:00:10.5000000Z', 0.5)
+        clock = dict(schema=1, kind='pcemu-hyperv-clock', stepRequested=True,
+                     adjustmentObserved=True, restoredByProbe=False, error=None, cleanupErrors=[],
+                     ntpClientDisabled=True, ntpClientDisabledAfter=True, before=before,
+                     stepped=stepped, after=after, samples=[after],
+                     sourceAfter=dict(exitCode=0, lines=['VM IC Time Synchronization Provider']))
+        result = dict(verifiedCoreUsage=True, timesyncAcknowledgmentObserved=True)
+        self.assertTrue(verify_clock(result, clock))
+        for key, value in (('restoredByProbe', True), ('stepRequested', 1), ('ntpClientDisabled', False),
+                           ('cleanupErrors', ['failed']), ('error', 'failed'), ('samples', []),
+                           ('schema', True), ('sourceAfter', dict(exitCode=0, lines=['NTP']))):
+            changed = deepcopy(clock); changed[key] = value
+            self.assertFalse(verify_clock(result, changed), (key, value))
+        for key, value in (('offsetSeconds', float('nan')), ('roundTripMilliseconds', 3000),
+                           ('guestUtc', '2026-10-25T22:00:10.5000000'), ('offsetSeconds', 0)):
+            changed = deepcopy(clock); changed['after'][key] = value
+            changed['samples'] = [changed['after']]
+            self.assertFalse(verify_clock(result, changed), (key, value))
+        changed = deepcopy(clock); changed['stepped'] = before
+        self.assertFalse(verify_clock(result, changed))
+        self.assertFalse(verify_clock(dict(result, timesyncAcknowledgmentObserved=False), clock))
+
     def test_core_use_does_not_hide_unsupported_calls_or_claim_boot(self):
         report, baseline = fixture()
         result = verify(report, baseline)

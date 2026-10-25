@@ -8,6 +8,9 @@ benefit. Unsupported call attempts remain visible even when core use passes.
 import argparse
 import hashlib
 import json
+import math
+import re
+from datetime import datetime
 from pathlib import Path
 
 
@@ -303,10 +306,71 @@ def verify_reboot(before_result, after_result, before, after, host_log):
     return len(requests) == len(resets) == len(restarts) == 1 and requests[0] < resets[0] < restarts[0]
 
 
+def verify_clock(result, clock):
+    """Require actual isolated correction, never a host-probe restoration."""
+    if (not result.get('verifiedCoreUsage') or not result.get('timesyncAcknowledgmentObserved')
+            or type(clock) is not dict or type(clock.get('schema')) is not int or clock['schema'] != 1
+            or clock.get('kind') != 'pcemu-hyperv-clock'
+            or any(clock.get(k) is not True for k in ('stepRequested', 'adjustmentObserved',
+                                                       'ntpClientDisabled', 'ntpClientDisabledAfter'))
+            or clock.get('restoredByProbe') is not False or clock.get('error') is not None
+            or clock.get('cleanupErrors') != []):
+        return False
+    source = clock.get('sourceAfter')
+    if (type(source) is not dict or type(source.get('exitCode')) is not int or source['exitCode'] != 0
+            or source.get('lines') != ['VM IC Time Synchronization Provider']):
+        return False
+    def sample(row):
+        if type(row) is not dict:
+            raise ValueError('Missing sample')
+        for key in ('offsetSeconds', 'roundTripMilliseconds'):
+            if type(row.get(key)) not in (int, float) or not math.isfinite(row[key]):
+                raise ValueError('Invalid measurement')
+        if not 0 <= row['roundTripMilliseconds'] <= 5000:
+            raise ValueError('Unbounded request')
+        times = []
+        for key in ('hostUtc', 'guestUtc'):
+            if type(row.get(key)) is not str:
+                raise ValueError('Missing timestamp')
+            text = row[key]
+            # .NET round-trip timestamps carry seven fractional digits.
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,7}Z', text):
+                raise ValueError('Expected UTC round-trip timestamp')
+            prefix, fraction = text[:-1].split('.')
+            value = datetime.fromisoformat(prefix + '.' + fraction[:6].ljust(6, '0') + '+00:00')
+            if value.tzinfo is None or value.utcoffset().total_seconds() != 0:
+                raise ValueError('Expected UTC')
+            times.append(value)
+        if abs((times[1] - times[0]).total_seconds() - row['offsetSeconds']) > 0.001:
+            raise ValueError('Inconsistent offset')
+        return times[0]
+    try:
+        before, stepped, after = (clock[k] for k in ('before', 'stepped', 'after'))
+        previous = sample(before)
+        stamp = sample(stepped)
+        if stamp < previous or abs(stepped['offsetSeconds']) < 60:
+            return False
+        if not -125 <= stepped['offsetSeconds'] - before['offsetSeconds'] <= -115:
+            return False
+        previous = stamp
+        rows = clock.get('samples')
+        if type(rows) is not list or not 1 <= len(rows) <= 12 or rows[-1] != after:
+            return False
+        for row in rows:
+            stamp = sample(row)
+            if stamp < previous:
+                return False
+            previous = stamp
+        return abs(after['offsetSeconds']) <= 3 and after['roundTripMilliseconds'] <= 2000
+    except (KeyError, ValueError, TypeError, OverflowError):
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
     parser.add_argument('--baseline', type=Path, required=True)
+    parser.add_argument('--clock-report', type=Path, help='Isolated installed-Windows clock-step report')
     parser.add_argument('--kernel-build', type=int, default=26100)
     parser.add_argument('--shutdown-host-log', type=Path)
     parser.add_argument('--runner-exit-code', type=int)
@@ -341,9 +405,16 @@ def main():
         result['guestRebootVerified'] = verify_reboot(result, after_result, json.loads(raw['report']), after, host_raw.decode('utf-8'))
         result['sha256']['rebootReport'] = hashlib.sha256(after_raw).hexdigest()
         result['sha256']['rebootHostLog'] = hashlib.sha256(host_raw).hexdigest()
+    if args.clock_report is not None:
+        if args.clock_report.stat().st_size > 1024 * 1024:
+            parser.error('Expected bounded clock report')
+        clock_raw = args.clock_report.read_bytes()
+        result['guestClockAdjustmentVerified'] = verify_clock(result, json.loads(clock_raw.decode('utf-8-sig')))
+        result['sha256']['clockReport'] = hashlib.sha256(clock_raw).hexdigest()
     print(json.dumps(result, indent=2))
     success = (result['verifiedCoreUsage'] and (args.shutdown_host_log is None or result['guestPowerOffVerified'])
-               and (args.reboot_report is None or result['guestRebootVerified']))
+               and (args.reboot_report is None or result['guestRebootVerified'])
+               and (args.clock_report is None or result['guestClockAdjustmentVerified']))
     return 0 if success else 1
 
 
