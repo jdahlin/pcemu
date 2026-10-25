@@ -1866,3 +1866,13 @@ dirty padding, Open/Close/Teardown, out-of-RAM PFNs, unknown GPADLs and malforme
 compact lengths. The same suite passes AddressSanitizer/UBSan; 1,581 GPADL,
 4,352 ring and 189 heartbeat regression checks pass. Actual Windows validation
 of this decoder change remains a separate gate.
+
+The first Windows envelope run successfully creates one GPADL and consumes its
+host reply. It then posts a 156-byte OpenChannel structure, which the old strict
+148-byte decoder rejects (the captured request is in
+`build/windows11-hyperv/services/hyperv-envelope.json`). Copper OpenChannel2 adds
+eight optional signal/redirection bytes. The host negotiates neither feature,
+so the decoder now accepts that known size for Copper while ignoring those
+unnegotiated fields and retaining legacy connection/SINT/event routing. A
+regression uses dirty extension bytes and rejects an incomplete 155-byte form.
+This compatibility does not advertise or implement interrupt redirection.

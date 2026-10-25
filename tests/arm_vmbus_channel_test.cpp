@@ -221,6 +221,12 @@ int main() {
         check(padded.receive(1,envelope(request))==0); padded.service();
         check(get(responses.back(),0)==6 && get(responses.back(),16)==0);
         check(padded.receive(1,envelope(msg(7,12)))==0);
+        auto copper=request; copper.resize(156,0xa5);
+        check(padded.receive(1,copper)==0); padded.service();
+        check(get(responses.back(),0)==6 && get(responses.back(),16)==0);
+        check(padded.receive(1,msg(7,12))==0);
+        auto malformed=request; malformed.resize(155,0);
+        check(padded.receive(1,malformed)==5);
         auto teardown=msg(11,16); put(teardown,12,100);
         check(padded.receive(1,envelope(teardown))==0); padded.service();
         check(get(responses.back(),0)==12 && get(responses.back(),8)==100);

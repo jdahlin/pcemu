@@ -208,6 +208,10 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
         put(message, 0, 12, 4); put(message, 8, gpadl, 4);
         replies.push_back({targetVp, targetSint, std::move(message)}); return 0;
     }
+    // Copper Windows may send the OpenChannel2-sized structure even when no
+    // optional signal/redirection features were negotiated. Its eight extra
+    // bytes have no meaning in that case; keep the legacy routing policy.
+    if (version >= 0x60000 && input.size() == 156) input = input.first(148);
     if (input.size() != 148) return reject(5);
     const uint32_t openId = uint32_t(get(input, 12, 4)), gpadl = uint32_t(get(input, 16, 4));
     const uint32_t vp = uint32_t(get(input, 20, 4));
