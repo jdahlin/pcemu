@@ -43,8 +43,10 @@ $report.activation = @{ attempted = $false; succeeded = $false; error = $null; e
 if ($StartHeartbeat) {
     $report.activation.attempted = $true
     try {
-        Start-Service -Name vmicheartbeat
         $service = Get-Service -Name vmicheartbeat
+        # Start-Service can replace a native ServiceController error with a
+        # generic ServiceCommandException without retaining its InnerException.
+        if ($service.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Running) { $service.Start() }
         $service.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,
                                [TimeSpan]::FromSeconds(15))
         $report.activation.succeeded = $true

@@ -1762,3 +1762,28 @@ error and does not replace the service error. The mocked test now verifies a
 wrapped Win32 access-denied error survives serialization; this is test data,
 not a claim that the actual guest failed with access denied. The improved
 error capture remains to be run inside Windows.
+
+### Elevated activation evidence and diagnostic correction
+
+The improved probe was rerun on the retained private Windows disk. The first
+attempt produced no fresh report: offline inspection showed AutoLogonCount=0
+and the unconsumed RunOnce command. Setting AutoAdminLogon alone was insufficient.
+After staging AutoLogonCount=1, the next run returned a fresh report containing
+the new privilege/error fields. This excluded attempt is not service evidence.
+
+`build/windows11-hyperv/services/service-report3.json` proves the probe token was
+elevated. Heartbeat still remained Stopped, with PowerShell error ID
+`StartServiceFailed,Microsoft.PowerShell.Commands.StartServiceCommand` and one
+ServiceCommandException (HRESULT 0x80131501), without an inner native error.
+Thus missing elevation does not explain this run, but no specific underlying
+Win32 service error has yet been established. The host still observed no
+heartbeat channel open or response. The original basic-profile VM was restored;
+secret-bearing staging media and the temporary staging command were removed.
+
+The probe now calls the ServiceController returned by Get-Service directly,
+skipping Start when already Running, then waits at most 15 seconds for Running.
+This avoids Start-Service's lossy generic exception wrapper while preserving
+nested native errors from the controller. Cross-platform mocks cover an already
+running service as well as successful start and wrapped native failure. The
+actual Windows result above precedes this direct-controller change; the new
+path still requires a guest run.
