@@ -2116,3 +2116,31 @@ still-running test VM. This is distinct from the earlier guest-triggered reset.
 The test write disk was removed and the original basic-profile VM restarted on
 its original overlay. Actual hibernation and guest wall-clock adjustment remain
 separate verification tasks.
+
+### Guest wall-clock adjustment probe
+
+`tools/windows/verify_hyperv_clock.ps1` measures guest UTC against the host media
+server's standard HTTP Date header at `/probe`. The default records offset and
+Windows time source without changing clock or service policy. Start the existing
+loopback report/media endpoint before running it in installed Windows.
+
+For a private disposable VM only, `-AllowClockStep` enables an explicit two-minute
+backward clock step. The probe requires an elevated token, an already running
+vmictimesync service and enabled VMICTimeProvider. It temporarily disables the
+Windows NTP client while keeping Windows Time available for VMIC samples. It
+stops/restarts vmictimesync around the step, then polls up to twelve times at
+five-second intervals. Correction evidence requires a visible initial offset,
+sub-three-second final offset with bounded HTTP RTT, NTP disabled before/after,
+and Windows naming VM IC Time Synchronization Provider as its source.
+
+The report distinguishes correction from cleanup: if correction is not observed,
+the probe restores the clock from host time (falling back to its last host sample
+plus monotonic elapsed time if networking fails). Such restoration never sets
+adjustmentObserved. NTP policy and original Windows Time running/stopped state
+are restored even on partial setup failure. `HYPERV-CLOCK.JSON` retains errors
+and cleanup failures, and failed correction returns exit status 1.
+
+PowerShell parsing and mocked observation/correction/failure/cleanup paths pass
+in `tests/windows_hyperv_clock_test.ps1`. These mocks do not establish an actual
+Windows clock adjustment. Running this probe on the private guest and correlating
+its report with live timesync counters is the next validation gate.
