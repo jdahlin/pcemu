@@ -38,7 +38,7 @@ def main():
         if mode == 'basic':
             names = {r['name']: r for r in report['registers']}
             if (report['guestOsId'] != 0x5043454d55 or report['legacyCalls'] != 3
-                    or report['smcccCalls'] != 10 or report['failures'] != 1
+                    or report['smcccCalls'] != 15 or report['failures'] != 1
                     or names[0x90002]['reads'] != 1 or names[0x90002]['writes'] != 1
                     or names[0x90004]['reads'] != 2 or names[0x90004]['failures']
                     or report['referenceTime100ns'] <= 0
@@ -47,6 +47,10 @@ def main():
                     or not report['partitionInfoPage'] & 1
                     or report['vps'][0]['tlbiControl'] != 1
                     or not report['vps'][0]['syntheticVector']
+                    or report['crash']['notifications'] != 1
+                    or report['crash']['parameters'][0] != 0x42
+                    or report['crash']['messageHex'] != '5043454d'
+                    or b'Hyper-V guest crash: ' not in result.stderr
                     or names[0x40400]['writes'] != 1 or names[0x40400]['reads'] != 1):
                 raise RuntimeError('Guest results and invocation counters disagree')
         elif report['guestOsId'] or report['smcccCalls'] or report['legacyCalls']:

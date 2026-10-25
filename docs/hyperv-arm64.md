@@ -58,7 +58,7 @@ at X16. A single-register Get returns X6/X7 and X15/X16 respectively.
 
 ## Evidence and remaining Windows validation
 
-`make test-hvf` includes 156 portable model checks, native HVF tests, CLI
+`make test-hvf` includes 262 portable model checks, native HVF tests, CLI
 validation, and ACPI/device-tree checks. `make smoke-arm-hyperv` boots an
 original EFI probe with the interface off and on. It executes both HVC ABIs,
 reads/writes registers, uses actual GPA buffers, rejects an unknown call and
@@ -240,3 +240,64 @@ usage audit and records no reads of 0x90004 (`referenceCounterObserved: false`).
 Disk and network activity continued. This validates compatibility during this
 boot, not Windows use of the new clock or a performance gain. Evidence SHA-256:
 `4a8dc5d18ce22e675fa5e5aa400684c5d42889e345e5f7d5496bdcff6c0c5db0`.
+
+
+## Crash enlightenment
+
+Crash parameter registers 0x210..0x214 are independent per VP and available
+before GuestOsId. Register 0x215 reads the supported CrashNotify/CrashMessage
+capabilities. A notification copies the five parameters and, when requested,
+up to 4096 bytes from guest RAM. Subsequent guest writes cannot change the
+captured event. The platform immediately emits a `Hyper-V guest crash:` JSON
+record to stderr; the statistics retain a bounded last-event snapshot and a
+total notification count. Multiple notifications in one repeated register call
+are coalesced into that last snapshot. Notification does not stop the guest or
+prevent its own crash-dump procedure.
+
+Messages are hex encoded, preserving arbitrary bytes without terminal control
+sequences. Invalid sizes, inaccessible ranges, reserved control bits and nonzero
+upper register halves fail before publishing an event. PreOSId and NoCrashDump
+metadata are retained in the reported control word. A zero control write is a
+no-op; a message request without CrashNotify is invalid. Capability reads always
+return the supported actions, not the most recent command.
+
+Feature discovery uses ARM64 bit 72 of 0x200, following the
+[ARM64 discovery table](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/feature-discovery).
+Microsoft's [partition page](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/partition-properties)
+instead says bit 105, contradicting that table. In the original Windows kernel,
+HviGetHypervisorFeatures (RVA 0x5cad20) copies the register result unchanged;
+the initialization routine (RVA 0x4cef18) checks bit 8 of its upper 64-bit half
+before enabling the crash path. HvlLogGuestCrashInformation (RVA 0x4c9070)
+then accesses 0x210..0x215. This confirms the bit-72 interpretation for the
+validated Windows kernel. The register IDs also match Microsoft's mu_msvm
+HvGuestHypercall.h. Control fields follow the
+[crash control definition](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/datatypes/hv_crash_ctl_reg_contents).
+
+The native EFI probe advertises/discovers the capability, submits parameters
+and a RAM message, mutates that RAM afterwards and still reaches its success
+marker and PSCI shutdown. The host log and persisted JSON must contain the
+original message. This proves the notification path without deliberately
+crashing the installed Windows guest.
+
+## Remaining implementation and verification scope
+
+The objective remains all relevant extensions for this ARM64 Windows platform.
+The following is a work inventory, not a completion claim:
+
+| Facility | Current evidence / remaining work |
+| --- | --- |
+| Discovery, identity and VP registers | Native EFI and actual Windows register use verified. |
+| Partition reference counter | Rate and ABI tested; no Windows reads in the observed boot. |
+| Crash enlightenment | Model and native notification/logging tested; actual Windows crash delivery remains unverified. |
+| SyncContext / SyncContextEx | Windows invokes 0x19 frequently; guest instruction synchronization mechanism and multi-VP tests still required. |
+| Extended-capability query 0x8001 | Observed and rejected; supported input/output contract still needs investigation. |
+| Remote TLB flushes, processor masks and synthetic IPIs | Multi-VP implementation and guest validation pending. |
+| VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
+| SynIC and synthetic timers | Interrupt delivery and timer expiration implementation/validation pending; ARM Generic Timer already runs natively. |
+| VMBus / integration services | Relevance and Windows driver consumption still need evaluation against the VirtIO platform; not implemented. |
+| Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
+
+The Windows loopback/DHCP proof, on/off baseline and GUI boot evidence do not
+prove any of the unfinished services above. Every enabled feature needs its
+own side-effect tests and guest consumption evidence; performance claims need
+an actual baseline comparison.

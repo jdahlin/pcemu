@@ -44,10 +44,10 @@ int main() {
         check(hv.call(smccc ? 0 : 1, r, vp));
     };
     fastRead(0x200);
-    check(r[0] == one && r[6] == features && r[7] == 0);
+    check(r[0] == one && r[6] == features && r[7] == 256);
     check(r[2] == uint64_t(-1) && r[4] == 0x200 && r[8] == 0xcccccccccccccccc);
     fastRead(0x200, false);
-    check(r[0] == one && r[15] == features && r[16] == 0);
+    check(r[0] == one && r[15] == features && r[16] == 256);
     check(r[5] == 0xcccccccccccccccc); // Legacy output is NOT after the input
     fastRead(0x90006);
     check(r[0] == one && r[6] == 0x31237648 && r[7] == 0); // Discovery before OS identity
@@ -190,5 +190,65 @@ int main() {
     check(timeRead(0, true) == 29999500); // Failed write did not alter the epoch.
     ArmHyperV newClock(true, memory, base, 2, [&] { return ticks; });
     check(newClock.report().find("\"referenceTime100ns\":0") != std::string::npos);
+    ArmHyperV crash(true, memory, base, 2);
+    auto crashWrite = [&](uint32_t name, uint64_t value, unsigned vp = 0, uint64_t high = 0) {
+        r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
+        r[3] = name; r[5] = value; r[6] = high;
+        check(crash.call(1, r, vp)); return r[0];
+    };
+    auto crashRead = [&](uint32_t name, unsigned vp = 0) {
+        r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
+        r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name;
+        check(crash.call(0, r, vp) && r[0] == one && r[7] == 0);
+        return r[6];
+    };
+    constexpr uint64_t notify = 1ull << 63, message = 1ull << 62;
+    check(crashRead(0x215) == (notify | message));
+    for (unsigned i = 0; i < 5; ++i) {
+        check(crashRead(0x210 + i) == 0);
+        check(crashWrite(0x210 + i, 11 + i, 1) == one);
+        check(crashRead(0x210 + i, 1) == 11 + i);
+        check(crashRead(0x210 + i, 0) == 0); // Per-VP banks.
+    }
+    check(crash.takeCrashReport().empty());
+    check(crashWrite(0x215, notify, 1) == one);
+    auto event = crash.takeCrashReport();
+    check(event.find("\"parameters\":[11,12,13,14,15]") != std::string::npos);
+    check(event.find("\"vp\":1") != std::string::npos);
+    check(crash.takeCrashReport().empty());
+    check(crashWrite(0x210, 999, 1) == one);
+    check(crash.report().find("\"parameters\":[11,12,13,14,15]") != std::string::npos);
+    check(crashWrite(0x215, 0) == one && crash.takeCrashReport().empty());
+    check(crashWrite(0x215, message) == 5);
+    check(crashWrite(0x215, notify | 1) == 5);
+    check(crashWrite(0x215, notify, 0, 1) == 5);
+    check(crashWrite(0x210, 42, 0, 1) == 5);
+    check(crashRead(0x210) == 0);
+    check(crashWrite(0x213, base + 4094) == one); // Cross-page is valid for a crash message.
+    check(crashWrite(0x214, 4) == one);
+    memory[4094] = 0; memory[4095] = 0x1b; memory[4096] = 0xff; memory[4097] = 'A';
+    check(crashWrite(0x215, notify | message | (3ull << 58) | (1ull << 61)) == one);
+    memory[4094] = 99;
+    event = crash.takeCrashReport();
+    check(event.find("\"messageHex\":\"001bff41\"") != std::string::npos);
+    check(event.find("\"notifications\":2") != std::string::npos);
+    check(crashRead(0x215) == (notify | message)); // Reads return capabilities, not the last command.
+    for (auto bad : {uint64_t(4097), uint64_t(-1)}) {
+        check(crashWrite(0x214, bad) == one);
+        check(crashWrite(0x215, notify | message) == 5);
+        check(crash.takeCrashReport().empty());
+    }
+    check(crashWrite(0x214, 4) == one);
+    for (auto bad : {base - 1, base + memory.size() - 3, uint64_t(-2)}) {
+        check(crashWrite(0x213, bad) == one);
+        check(crashWrite(0x215, notify | message) == 5);
+    }
+    check(crashWrite(0x213, base) == one);
+    check(crashWrite(0x214, 4096) == one);
+    check(crashWrite(0x215, notify | message) == one);
+    check(crash.takeCrashReport().size() < 8500); // Bounded even at maximum payload.
+    ArmHyperV crashReset(true, memory, base, 2);
+    check(crashReset.takeCrashReport().empty());
+    check(crashReset.report().find("\"notifications\":0") != std::string::npos);
     std::cout << checks << " ARM Hyper-V checks passed\n";
 }

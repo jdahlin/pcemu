@@ -17,6 +17,8 @@ class ArmHyperV {
     // False leaves the call to PSCI/the platform's unsupported-call fallback.
     bool call(unsigned immediate, Registers &registers, unsigned vp);
     std::string report() const;
+    // One bounded last-event snapshot, drained by the platform after each HVC.
+    std::string takeCrashReport();
   private:
     struct Counts { uint64_t reads = 0, writes = 0, failures = 0; };
     bool enabled;
@@ -26,6 +28,13 @@ class ArmHyperV {
     Clock clock;
     uint64_t clockOrigin, referenceTime = 0;
     std::array<uint64_t, 8> tlbiControl{}, syntheticVectors{};
+    std::array<std::array<uint64_t, 5>, 8> crashParameters{};
+    std::array<uint64_t, 5> notifiedParameters{};
+    uint64_t crashNotifications = 0, crashControl = 0;
+    unsigned crashVp = 0;
+    std::string crashMessageHex;
+    bool crashPending = false;
+    std::string crashReport() const;
     uint64_t uidQueries = 0, versionQueries = 0, smcccCalls = 0, legacyCalls = 0;
     uint64_t disabledCalls = 0, failures = 0, omittedCounters = 0;
     uint64_t lastControl = 0, lastResult = 0;

@@ -41,7 +41,8 @@ efi_main:
     ldr x8, =0x000a000000000062
     cmp x6, x8
     b.ne failed
-    cbnz x7, failed
+    cmp x7, #256 // ARM64 feature bit 72, not x64 CPUID EDX:10.
+    b.ne failed
     ldr w0, =0x46000001
     ldr x1, =0x100010050
     mov x2, #-1
@@ -224,6 +225,39 @@ efi_main:
     b.ne failed
     cmp x15, x21
     b.ne failed
+    // Notify a synthetic crash without stopping the guest. Capture a RAM
+    // message now; host diagnostics must survive subsequent guest mutation.
+    add x23, x21, #512
+    ldr w8, =0x4d454350 // "PCEM"
+    str w8, [x23]
+    ldr w0, =0x46000001
+    ldr x1, =0x100010050
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    mov x4, #0x215
+    mov x5, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    mov x8, #0xc000000000000000
+    cmp x6, x8
+    b.ne failed
+    cbnz x7, failed
+    mov x4, #0x210
+    mov x6, #0x42
+    bl crash_write
+    mov x4, #0x213
+    mov x6, x23
+    bl crash_write
+    mov x4, #0x214
+    mov x6, #4
+    bl crash_write
+    mov x4, #0x215
+    mov x6, #0xc000000000000000
+    bl crash_write
+    str wzr, [x23]
     ldr w0, =0x46000001
     mov x1, #0xdead
     hvc #0
@@ -247,6 +281,19 @@ finish:
     ldr w0, =0x84000008
     hvc #0
     b .
+crash_write:
+    ldr w0, =0x46000001
+    ldr x1, =0x100010051
+    mov x2, #-1
+    ldr w3, =0xfffffffe
+    mov x5, #0
+    mov x7, #0
+    hvc #0
+    mov x8, #1
+    lsl x8, x8, #32
+    cmp x0, x8
+    b.ne failed
+    ret
 .balign 8
 success_message:
     .hword 80,67,69,77,85,95,72,89,80,69,82,86,95,80,82,79,66,69,95,79,75,13,10,0

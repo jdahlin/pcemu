@@ -255,6 +255,8 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         ArmHyperV::Registers registers;
         for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
         if (hyperv.call(unsigned(exit.syndrome & 0xffff), registers, vm.currentCPU())) {
+            auto crash = hyperv.takeCrashReport();
+            if (!crash.empty()) std::cerr << "Hyper-V guest crash: " << crash << '\n';
             for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
             return; // HVC exits already advance the PC, including legacy HVC #1.
         }

@@ -37,9 +37,13 @@ ArmHyperV::Counts *ArmHyperV::count(uint32_t name) {
 }
 uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> &value) {
     value = {};
+    if (name >= 0x210 && name <= 0x214) {
+        value[0] = crashParameters[vp][name - 0x210]; return 0;
+    }
+    if (name == 0x215) { value[0] = (1ull << 63) | (1ull << 62); return 0; }
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
-    case 0x200: value[0] = privileges; return 0;
+    case 0x200: value[0] = privileges; value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
     case 0x201: value[0] = 0xffffffff00000000ull; return 0; // No scheduling/flush recommendations
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
     case 0x203: value[0] = 2; return 0; // Stage-2 translation, no synthetic interrupt remapping
@@ -70,6 +74,36 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     }
 }
 uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_t, 2> value) {
+    if (name >= 0x210 && name <= 0x214) {
+        if (value[1]) return invalidParameter;
+        crashParameters[vp][name - 0x210] = value[0]; return 0;
+    }
+    if (name == 0x215) {
+        constexpr uint64_t notify = 1ull << 63, message = 1ull << 62;
+        if (value[1] || (value[0] & ((1ull << 58) - 1)) ||
+            (value[0] && !(value[0] & notify))) return invalidParameter;
+        if (!value[0]) return 0;
+        const auto &parameters = crashParameters[vp];
+        std::string hex;
+        if (value[0] & message) {
+            auto address = parameters[3], size = parameters[4];
+            if (size > 4096 || (size && (address < base || address - base > ram.size() ||
+                size > ram.size() - (address - base)))) return invalidParameter;
+            constexpr char digits[] = "0123456789abcdef";
+            hex.reserve(size_t(size) * 2);
+            for (size_t i = 0; i < size; ++i) {
+                auto byte = ram[size_t(address - base) + i];
+                hex += digits[byte >> 4]; hex += digits[byte & 15];
+            }
+        }
+        // Copy before returning to the guest: later register/RAM writes must
+        // not change already notified diagnostics. No guest shutdown is implied.
+        notifiedParameters = parameters;
+        crashControl = value[0]; crashVp = vp;
+        crashMessageHex = std::move(hex);
+        ++crashNotifications; crashPending = true;
+        return 0;
+    }
     if (name == 0x40400) {
         if (value[1] || (value[0] & 0x7ff)) return invalidParameter;
         // A guest VA, separate from the architectural VBAR_EL1. Optional
@@ -192,11 +226,25 @@ uint64_t ArmHyperV::invoke(Registers &r, bool smccc, unsigned vp) {
     }
     return uint64_t(reps) << 32;
 }
+std::string ArmHyperV::crashReport() const {
+    std::ostringstream s;
+    s << "{\"notifications\":" << crashNotifications << ",\"vp\":" << crashVp
+      << ",\"control\":" << crashControl << ",\"parameters\":[";
+    for (unsigned i = 0; i < 5; ++i) { if (i) s << ','; s << notifiedParameters[i]; }
+    s << "],\"messageHex\":\"" << crashMessageHex << "\"}";
+    return s.str();
+}
+std::string ArmHyperV::takeCrashReport() {
+    if (!crashPending) return {};
+    crashPending = false;
+    return crashReport();
+}
 std::string ArmHyperV::report() const {
     std::ostringstream s;
     s << "{\"schema\":1,\"mode\":\"" << (enabled ? "basic" : "off") << "\",\"guestOsId\":" << guestId
       << ",\"partitionInfoPage\":" << partitionInfo
       << ",\"referenceTime100ns\":" << referenceTime
+      << ",\"crash\":" << crashReport()
       << ",\"uidQueries\":" << uidQueries << ",\"smcccVersionQueries\":" << versionQueries
       << ",\"smcccCalls\":" << smcccCalls << ",\"legacyCalls\":" << legacyCalls
       << ",\"disabledCalls\":" << disabledCalls << ",\"failures\":" << failures
