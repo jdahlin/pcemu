@@ -10,6 +10,9 @@ void ArmVirtMachine::checkDeviceErrors() const {
 }
 void ArmVirtMachine::bindDevices() {
     mmio.clear();
+    if(gicView) mmio.map("hyperv-gic",ArmGicNonsecureView::guestBase,0x10000,
+        [this](MmioAccess &a,uint64_t offset) {a.value=gicView->read(offset,a.width);},
+        [this](MmioAccess &a,uint64_t offset) {gicView->write(offset,a.value,a.width);});
     pciBus.clear();
     auto attach = [this](const char *name, unsigned slot, auto *device) {
         if (!device) return;

@@ -107,8 +107,8 @@ smoke-win95: build/pcemu build/disk-tool
 
 ARM_BUS := src/mmio_space.cpp src/pci_ecam.cpp
 ARM_BUS_HEADERS := src/mmio_space.hpp src/pci_ecam.hpp
-ARM_DEVICES := src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
-ARM_DEVICE_HEADERS := src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_vmbus.hpp src/arm_hyperv_timers.hpp src/arm_synic.hpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
+ARM_DEVICES := src/arm_gic_ns.cpp src/arm_gpadl.cpp src/arm_vmbus_ring.cpp src/arm_vmbus.cpp src/arm_hyperv_timers.cpp src/arm_synic.cpp src/arm_hyperv_heartbeat.cpp src/arm_hyperv.cpp src/arm_pl011.cpp src/arm_pl031.cpp src/arm_nor_flash.cpp src/arm_psci.cpp src/arm_os_lock.cpp src/arm_mmio.cpp
+ARM_DEVICE_HEADERS := src/arm_gic_ns.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_vmbus.hpp src/arm_hyperv_timers.hpp src/arm_synic.hpp src/arm_hyperv_heartbeat.hpp src/arm_hyperv.hpp src/arm_pl011.hpp src/arm_pl031.hpp src/arm_nor_flash.hpp src/arm_psci.hpp src/arm_os_lock.hpp src/arm_mmio.hpp
 
 # Optional ARM64 hypervisor runner. No GUI or x86 core; shared COW storage.
 # Ad-hoc signing grants the entitlement required by Hypervisor.framework.
@@ -291,3 +291,20 @@ build/arm-hyperv-heartbeat-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS) tests/arm
 	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_heartbeat_test.cpp -o $@
 
 test test-hvf: test-arm-hyperv-heartbeat
+
+.PHONY: test-arm-gic-ns test-arm-hvf-gic
+test-arm-gic-ns: build/arm-gic-ns-tests
+	./build/arm-gic-ns-tests
+build/arm-gic-ns-tests: src/arm_gic_ns.cpp src/arm_gic_ns.hpp tests/arm_gic_ns_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_gic_ns.cpp tests/arm_gic_ns_test.cpp -o $@
+test test-hvf: test-arm-gic-ns
+
+build/pcemu-hvf: src/hvf_gic_bootstrap.hpp
+build/arm-hvf-gic-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/hvf_secondary.hpp src/hvf_gic_bootstrap.hpp src/arm_gic_ns.cpp src/arm_gic_ns.hpp tests/arm_hvf_gic_test.cpp platform/macos/hypervisor.entitlements
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/hvf_machine.cpp src/arm_gic_ns.cpp tests/arm_hvf_gic_test.cpp -framework Hypervisor -o $@
+	codesign --force --sign - --entitlements platform/macos/hypervisor.entitlements $@
+test-arm-hvf-gic: build/arm-hvf-gic-tests
+	./build/arm-hvf-gic-tests
+test-hvf: test-arm-hvf-gic

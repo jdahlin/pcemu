@@ -1,5 +1,6 @@
 #include "hvf_machine.hpp"
 #include "hvf_secondary.hpp"
+#include "arm_gic_ns.hpp"
 #if !defined(__APPLE__) || !defined(__aarch64__)
 #error "The HVF ARM64 backend requires an Apple Silicon macOS host"
 #endif
@@ -32,6 +33,8 @@ void check(hv_return_t result, const char *operation) {
 }
 }
 struct HvfMachine::Impl {
+    bool hypervGicEnabled=false;
+    std::array<uint32_t,13> gicIdentifiers{};
     std::thread::id owner = std::this_thread::get_id();
     bool gicEnabled = false;
     bool vmCreated = false, mapped = false, vcpuCreated = false;
@@ -93,7 +96,9 @@ struct HvfMachine::Impl {
         if (std::this_thread::get_id() != owner)
             throw std::runtime_error("HVF vCPU operations must run on their creating thread");
     }
-    void initialize(size_t bytes, bool enableGic, unsigned cpuCount) {
+    void initialize(size_t bytes, bool enableGic, unsigned cpuCount, bool hypervGic) {
+        if(hypervGic && !enableGic) throw std::runtime_error("Hyper-V GIC view requires native GICv3");
+        hypervGicEnabled=hypervGic;
         if (!cpuCount || cpuCount > 8 || (cpuCount > 1 && !enableGic))
             throw std::runtime_error("HVF supports 1..8 CPUs; SMP requires GICv3");
         auto pageSize = sysconf(_SC_PAGESIZE);
@@ -114,7 +119,7 @@ struct HvfMachine::Impl {
         if (enableGic) {
             if (__builtin_available(macOS 15.0, *)) {
                 auto config = hv_gic_config_create();
-                auto result = hv_gic_config_set_distributor_base(config, 0x08000000);
+                auto result = hv_gic_config_set_distributor_base(config, hypervGic ? ArmGicNonsecureView::nativeBase : 0x08000000);
                 if (result == HV_SUCCESS)
                     result = hv_gic_config_set_redistributor_base(config, 0x080a0000);
                 if (result == HV_SUCCESS)
@@ -154,6 +159,18 @@ struct HvfMachine::Impl {
         sleepBaseline = sleepTicks();
         if (enableGic) {
             check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_MPIDR_EL1, 0x80000000), "set MPIDR_EL1");
+            if(hypervGic) {
+                uint64_t typer=0;
+                check(hv_gic_get_distributor_reg(HV_GIC_DISTRIBUTOR_REG_GICD_TYPER,&typer),"Read native GIC interrupt range");
+                unsigned count=std::min(1020u,unsigned((typer&31)+1)*32);
+                for(unsigned first=32;first<count;first+=32) {
+                    unsigned bits=std::min(32u,count-first);
+                    auto mask=bits==32 ? UINT32_MAX : (1u<<bits)-1;
+                    check(hv_gic_set_distributor_reg(static_cast<hv_gic_distributor_reg_t>(0x80+first/8),mask),"Assign nonsecure SPIs");
+                }
+                gicIdentifiers=hvfInitializeNonsecureGic(vcpu,exit,0);
+            }
+
             uint64_t features = 0;
             check(hv_vcpu_get_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1, &features), "get PMU features");
             check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_ID_AA64DFR0_EL1,
@@ -162,7 +179,7 @@ struct HvfMachine::Impl {
         uint64_t timerOffset = 0;
         check(hv_vcpu_get_vtimer_offset(vcpu, &timerOffset), "get initial virtual timer offset");
         for (unsigned i = 1; i < cpuCount; ++i)
-            secondary.push_back(std::make_unique<HvfSecondary>(i, timerOffset, ramBase + size));
+            secondary.push_back(std::make_unique<HvfSecondary>(i, timerOffset, ramBase + size, hypervGic));
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
             while (!stopping) {
@@ -224,9 +241,12 @@ bool HvfMachine::supported() {
     size_t size = sizeof(value);
     return sysctlbyname("kern.hv_support", &value, &size, nullptr, 0) == 0 && value;
 }
-HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount) : impl(std::make_unique<Impl>()) {
+HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount)
+    : HvfMachine(ramBytes,enableGic ? GicProfile::Native : GicProfile::Disabled,
+                 std::move(sleepTicks),cpuCount) {}
+HvfMachine::HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks, unsigned cpuCount) : impl(std::make_unique<Impl>()) {
     impl->sleepTicks = std::move(sleepTicks);
-    impl->initialize(ramBytes, enableGic, cpuCount);
+    impl->initialize(ramBytes, profile!=GicProfile::Disabled, cpuCount, profile==GicProfile::HyperVNonsecure);
 }
 HvfMachine::~HvfMachine() = default;
 std::span<uint8_t> HvfMachine::ram() {
@@ -542,6 +562,35 @@ uint64_t HvfMachine::translationContextFlushes(unsigned cpu) const {
     impl->requireOwner();
     if (cpu >= cpuCount()) throw std::runtime_error("Invalid translation flush CPU index");
     return impl->translationFlushes[cpu];
+}
+
+uint64_t HvfMachine::nativeGicDistributorRead(uint32_t offset) const {
+    impl->requireOwner();
+    {
+        std::lock_guard lock(impl->mutex);
+        if(!impl->gicEnabled || !impl->active.empty() || impl->armed || offset>=0x10000 || (offset&3))
+            throw std::runtime_error("Native GIC access requires stopped VPs and an aligned register");
+    }
+    if(impl->hypervGicEnabled) {
+        if(offset==8) return impl->gicIdentifiers[0];
+        if(offset>=0xffd0) return impl->gicIdentifiers[1+(offset-0xffd0)/4];
+    }
+    uint64_t value=0;
+    if(__builtin_available(macOS 15.0,*))
+        check(hv_gic_get_distributor_reg(static_cast<hv_gic_distributor_reg_t>(offset),&value),"Read native distributor");
+    else throw std::runtime_error("Native GIC access requires macOS 15");
+    return value;
+}
+void HvfMachine::nativeGicDistributorWrite(uint32_t offset,uint64_t value) {
+    impl->requireOwner();
+    {
+        std::lock_guard lock(impl->mutex);
+        if(!impl->gicEnabled || !impl->active.empty() || impl->armed || offset>=0x10000 || (offset&3))
+            throw std::runtime_error("Native GIC access requires stopped VPs and an aligned register");
+    }
+    if(__builtin_available(macOS 15.0,*))
+        check(hv_gic_set_distributor_reg(static_cast<hv_gic_distributor_reg_t>(offset),value),"Write native distributor");
+    else throw std::runtime_error("Native GIC access requires macOS 15");
 }
 
 void HvfMachine::sendSoftwareInterrupt(uint64_t cpuMask, unsigned interrupt) {

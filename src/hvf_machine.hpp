@@ -28,11 +28,17 @@ class HvfMachine {
     using SleepTicks = std::function<uint64_t()>;
     explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false,
                         SleepTicks sleepTicks = {}, unsigned cpuCount = 1);
+    enum class GicProfile { Disabled, Native, HyperVNonsecure };
+    HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks = {},
+               unsigned cpuCount = 1);
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
     std::span<uint8_t> ram();
     void setSPI(uint32_t interrupt, bool level);
+    // Backend for the Hyper-V nonsecure distributor view, all VPs stopped.
+    uint64_t nativeGicDistributorRead(uint32_t offset) const;
+    void nativeGicDistributorWrite(uint32_t offset, uint64_t value);
     void mapROM(uint64_t address, std::span<const uint8_t> bytes);
     void writeMemory(uint64_t address, std::span<const uint8_t> bytes);
     void readMemory(uint64_t address, std::span<uint8_t> bytes) const;

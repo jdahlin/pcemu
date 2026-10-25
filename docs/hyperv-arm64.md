@@ -1607,8 +1607,37 @@ programming/delivery or correlated service responses. All 17 auditor tests pass,
 including malformed evidence, pending slots, extra replies and host-only probes.
 
 The diagnostic VM is stopped and its cloned writable disk removed. The original
-Windows VM is restarted on the unchanged basic-profile runner. The adapter's
-register semantics, initialization, native regression tests and guest service
-opening must be completed before production integration. The isolated source
-and binaries remain under `build/hyperv-research/gic-proxy-source/` for the next
-implementation step; no GIC or CPU policy was changed in production sources.
+Windows VM is restarted on the unchanged basic-profile runner. The isolated
+source and binaries remain under `build/hyperv-research/gic-proxy-source/`.
+
+### Integrated nonsecure GIC view
+
+The `synic` and `vmbus` profiles now select `GicProfile::HyperVNonsecure`.
+`off` and `basic` retain the native GIC and EL1-only CPU identification.
+The adapter relocates the native distributor to GPA `0xf00000000` and handles
+Windows accesses at `0x08000000` through a checked nonsecure register view.
+The CPU still executes only at EL1; the EL2 identification field is set for
+Windows HAL discovery, without enabling nested virtualization.
+
+Before firmware runs, each VP assigns its private interrupts to Group1 using a
+short EL1 stub. The host assigns SPIs to Group1. The stub checks completion and
+readback, restores CPU registers and system context, and removes its temporary
+mapping. Native distributor identity registers are cached during this step.
+The nonsecure view exposes SecurityExtn and the affinity-routed Group1 enable
+alias, hides secure group configuration, preserves native DS/ARE, masks reserved
+interrupt IDs, and forwards W1S/W1C writes without read-modify-write. Native
+backend failures abort the operation instead of reporting success.
+
+Validation of this integration:
+
+- 3,044 portable register checks, also run with AddressSanitizer/UBSan.
+- 40 native HVF checks on two VPs: CPU identity, EL1 execution, private Group1,
+  context restoration, distributor identity, real SPI48 and SGI8 acknowledgments,
+  priority masking/unmasking, and retirement of SGI8.
+- All 284 existing native headless self-tests pass.
+- The EFI Hyper-V smoke test passes in off/basic/synic/vmbus modes.
+- Existing Hyper-V, GPADL, ring, channel and heartbeat regression suites pass.
+
+The Windows observations above belong to the earlier isolated prototype.
+A Windows run with this integrated implementation remains to be verified.
+Heartbeat channel opening, GUI boot and performance benefit remain unproven.

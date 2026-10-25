@@ -6,6 +6,7 @@
 #include "arm_nor_flash.hpp"
 #include "arm_pl011.hpp"
 #include "arm_mmio.hpp"
+#include "arm_gic_ns.hpp"
 #include "arm_fw_cfg.hpp"
 #include "arm_ramfb.hpp"
 #include "mmio_space.hpp"
@@ -69,6 +70,7 @@ class ArmVirtMachine {
     ArmFwCfg fwCfg;
     ArmRamFb ramfb;
     MmioSpace mmio;
+    std::unique_ptr<ArmGicNonsecureView> gicView;
     PciEcamBus pciBus;
     void bindDevices();
     void checkDeviceErrors() const;

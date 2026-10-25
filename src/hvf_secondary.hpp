@@ -1,6 +1,7 @@
 #pragma once
 // Internal HVF worker. Every vCPU API runs on its owning persistent thread.
 #include "hvf_machine.hpp"
+#include "hvf_gic_bootstrap.hpp"
 #include <Hypervisor/Hypervisor.h>
 #include <array>
 #include <condition_variable>
@@ -39,12 +40,13 @@ class HvfSecondary {
     uint64_t pc = 0, exits = 0;
     bool online = false;
     HvfMachine::Exit result{HvfMachine::ExitReason::Canceled, 0, 0, 0, 0};
-    HvfSecondary(unsigned index, uint64_t timerOffset, uint64_t initialStack) : stack(initialStack) {
-        thread = std::thread([this, index, timerOffset] {
+    HvfSecondary(unsigned index, uint64_t timerOffset, uint64_t initialStack, bool hypervGic = false) : stack(initialStack) {
+        thread = std::thread([this, index, timerOffset, hypervGic] {
             bool created = false;
             try {
                 check(hv_vcpu_create(&id, &exit, nullptr)); created = true;
                 check(hv_vcpu_set_sys_reg(id, HV_SYS_REG_MPIDR_EL1, 0x80000000ull | index));
+                if(hypervGic) hvfInitializeNonsecureGic(id,exit,index);
                 check(hv_vcpu_set_vtimer_offset(id, timerOffset));
                 uint64_t features = 0;
                 check(hv_vcpu_get_sys_reg(id, HV_SYS_REG_ID_AA64DFR0_EL1, &features));

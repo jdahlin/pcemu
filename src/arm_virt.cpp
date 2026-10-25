@@ -76,13 +76,16 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(c.memoryBytes, true, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
+    : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
     hyperv.setPrivateInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendPrivateInterrupt(targets, interrupt);
         return true;
     });
+    if(c.hypervSynic) gicView=std::make_unique<ArmGicNonsecureView>(
+        [this](uint32_t offset) {return vm.nativeGicDistributorRead(offset);},
+        [this](uint32_t offset,uint64_t value) {vm.nativeGicDistributorWrite(offset,value);});
     hyperv.advertiseSynic(c.hypervSynic);
     if (c.hypervVmbus) { hyperv.enableVmbus(); hyperv.enableHeartbeat(); }
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
