@@ -17,13 +17,14 @@ Updated 2026-10-25. Work remains in progress.
   candidate passes Calculator/clipboard/Notepad persistence and firmware restart.
 - Office 97: reinstalled on a compressed child of the recovered Win95 QCOW2.
   Word text and Excel formula/result survive save, restart and reopen. A compact
-  external desktop checkpoint restores independently. Earlier performance
-  checkpoints with missing parents still need rebuilding. See
+  external desktop checkpoint restores independently. The dependent-recalculation
+  checkpoint has been rebuilt and passes independent positive/negative gates. See
   `measurements/office97-qcow2-recovery-2026-10-25.json`.
 - Performance: native AArch64 register operations, direct branches and guarded
   RAM moves support paged guests. Register BT/BTS/BTR/BTC now join native MUL
   and SHRD; targeted bit-test kernels improve 6.88x over the previous JIT.
-  This is not an application speedup. Many instruction forms remain interpreted,
+  Three matched Excel recalculation pairs observe a modest 3.6% paired improvement
+  after bit tests, with no general application/Rosetta claim. Many instruction forms remain interpreted,
   and Rosetta-class application performance has not been demonstrated. Work
   continues; the full goal is not complete. See
   `measurements/native-bit-test-2026-10-25.json`.

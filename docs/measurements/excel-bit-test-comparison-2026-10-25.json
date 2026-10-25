@@ -1,0 +1,7058 @@
+{
+  "scope": "Three alternating matched-source pairs of a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead. Single loaded Excel workload; three pairs are insufficient to establish a general/statistically confident speedup.",
+  "pairs": [
+    {
+      "pair": 1,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "29730fcb0da35de7d8e7d7b5b4b544e700e588670285fb9f6047f00352b4b296",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-baseline",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 26691.877208,
+              "taskResponseMs": 12702.099916999998,
+              "instructions": 1403429561,
+              "nativeInstructions": 1240175559,
+              "compiledBlocks": 29848,
+              "executionWallMs": 11065.59121
+            }
+          ],
+          "medianRestoreReadyMs": 26691.877208,
+          "medianTaskResponseMs": 12702.099916999998
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 1205.90325,
+              "taskResponseMs": 12462.144916,
+              "instructions": 1403118774,
+              "nativeInstructions": 1248437018,
+              "compiledBlocks": 29828,
+              "executionWallMs": 10884.754918
+            }
+          ],
+          "medianRestoreReadyMs": 1205.90325,
+          "medianTaskResponseMs": 12462.144916
+        }
+      },
+      "responseRatio": 1.0192547111767192,
+      "executionWallRatio": 1.0166137219774194
+    },
+    {
+      "pair": 2,
+      "runs": {
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 4852.334041,
+              "taskResponseMs": 12174.504083000002,
+              "instructions": 1403048022,
+              "nativeInstructions": 1248392823,
+              "compiledBlocks": 29703,
+              "executionWallMs": 10653.683588
+            }
+          ],
+          "medianRestoreReadyMs": 4852.334041,
+          "medianTaskResponseMs": 12174.504083000002
+        },
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "29730fcb0da35de7d8e7d7b5b4b544e700e588670285fb9f6047f00352b4b296",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-baseline",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 6068.689292,
+              "taskResponseMs": 12613.894917,
+              "instructions": 1403287253,
+              "nativeInstructions": 1240107917,
+              "compiledBlocks": 29826,
+              "executionWallMs": 11057.462753
+            }
+          ],
+          "medianRestoreReadyMs": 6068.689292,
+          "medianTaskResponseMs": 12613.894917
+        }
+      },
+      "responseRatio": 1.0360910662976035,
+      "executionWallRatio": 1.037900427740768
+    },
+    {
+      "pair": 3,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "29730fcb0da35de7d8e7d7b5b4b544e700e588670285fb9f6047f00352b4b296",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-baseline",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 414.569166,
+              "taskResponseMs": 13111.072625,
+              "instructions": 1403579933,
+              "nativeInstructions": 1240338261,
+              "compiledBlocks": 29830,
+              "executionWallMs": 11345.166454
+            }
+          ],
+          "medianRestoreReadyMs": 414.569166,
+          "medianTaskResponseMs": 13111.072625
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 2582.2367919999997,
+              "taskResponseMs": 12224.319959,
+              "instructions": 1403502644,
+              "nativeInstructions": 1248676330,
+              "compiledBlocks": 29902,
+              "executionWallMs": 10750.278324
+            }
+          ],
+          "medianRestoreReadyMs": 2582.2367919999997,
+          "medianTaskResponseMs": 12224.319959
+        }
+      },
+      "responseRatio": 1.0725400405890997,
+      "executionWallRatio": 1.0553369979893368
+    }
+  ],
+  "loadBefore": [
+    3.9404296875,
+    3.498046875,
+    3.00439453125
+  ],
+  "startedUnix": 1792938239.546885,
+  "binaries": {
+    "baseline": "29730fcb0da35de7d8e7d7b5b4b544e700e588670285fb9f6047f00352b4b296",
+    "candidate": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23"
+  },
+  "loadAfter": [
+    2.42236328125,
+    3.2021484375,
+    2.95947265625
+  ],
+  "finishedUnix": 1792938358.5123332,
+  "medianPairedResponseRatio": 1.0360910662976035,
+  "medianPairedExecutionWallRatio": 1.037900427740768,
+  "sourceProvenance": "docs/measurements/native-bit-test-2026-10-25.json records frozen candidate source hashes; baseline substitutes the three pre-bit-test JIT cpp files against those same headers and whole-machine sources.",
+  "baselineBuildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/native-bit-test/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/baseline-jit/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/baseline-jit/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/baseline-jit/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-baseline"
+  ],
+  "candidateBuildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/native-bit-test/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate"
+  ],
+  "hostProfile": {
+    "files": [
+      "build/excel-bit-test-comparison/host-profile-retry/run-0/sample.txt"
+    ],
+    "samples": 14353,
+    "attachmentBarrierSamplesExcluded": 7652,
+    "workerThreads": {},
+    "scope": "main-thread wall-stack samples; attachment barrier excluded; worker blocking stacks reported separately; small attachment/exit margins remain; profiled timings are not benchmarks",
+    "categories": [
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 3120,
+        "percent": 21.73761582944332
+      },
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 2802,
+        "percent": 19.522051139134675
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 2759,
+        "percent": 19.22246220302376
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 2263,
+        "percent": 15.766738660907128
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 1803,
+        "percent": 12.56183376297638
+      },
+      {
+        "name": "Generated code and native helpers",
+        "samples": 1508,
+        "percent": 10.506514317564273
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 70,
+        "percent": 0.48770291925033094
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 28,
+        "percent": 0.19508116770013237
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 2125,
+        "percent": 14.805267191527903
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 1670,
+        "percent": 11.635198216400752
+      },
+      {
+        "name": "???",
+        "samples": 1661,
+        "percent": 11.572493555354281
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 1577,
+        "percent": 10.987250052253884
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 1070,
+        "percent": 7.4548874799693445
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 889,
+        "percent": 6.193827074479203
+      },
+      {
+        "name": "pc::VGA::pixel(unsigned int, unsigned int) const",
+        "samples": 835,
+        "percent": 5.817599108200376
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 547,
+        "percent": 3.8110499547133005
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 528,
+        "percent": 3.678673448059639
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 429,
+        "percent": 2.988922176548457
+      },
+      {
+        "name": "main",
+        "samples": 420,
+        "percent": 2.926217515501986
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 332,
+        "percent": 2.3131052741587124
+      },
+      {
+        "name": "pc::I8259PairDevice::nextVector(bool)",
+        "samples": 287,
+        "percent": 1.9995819689263568
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 199,
+        "percent": 1.3864697275830837
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 170,
+        "percent": 1.1844213753222324
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 136,
+        "percent": 0.9475371002577858
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 109,
+        "percent": 0.7594231171183725
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 93,
+        "percent": 0.6479481641468683
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 86,
+        "percent": 0.5991778722218352
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 67,
+        "percent": 0.4668013655681739
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 44,
+        "percent": 0.30655612067163657
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 40,
+        "percent": 0.2786873824287605
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 27,
+        "percent": 0.18811398313941335
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 21,
+        "percent": 0.14631087577509927
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 17,
+        "percent": 0.11844213753222323
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 16,
+        "percent": 0.11147495297150421
+      },
+      {
+        "name": "__lseek",
+        "samples": 15,
+        "percent": 0.1045077684107852
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 12,
+        "percent": 0.08360621472862816
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 10,
+        "percent": 0.06967184560719013
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 9,
+        "percent": 0.06270466104647113
+      },
+      {
+        "name": "__bzero",
+        "samples": 9,
+        "percent": 0.06270466104647113
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "std::basic_streambuf<char>::xsputn(char const*, long)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "__sflush",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindDevices()::$_3, unsigned int (unsigned short, int)>::operator()(unsigned short&&, int&&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_free",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_14::operator()(int, int, unsigned int) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, unsigned int) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::basic_filebuf<char>::overflow(int)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__pad_and_output[abi:nqe210106]<char>(std::ostreambuf_iterator<char>, char const*, char const*, char const*, std::ios_base&, char)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "fstat",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::num_put<char, std::ostreambuf_iterator<char>>::__do_put_integral[abi:nqe210106]<unsigned long>(std::ostreambuf_iterator<char>, std::ios_base&, char, unsigned long) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "mach_timebase_info",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::this_thread::sleep_for(std::chrono::duration<long long, std::ratio<1l, 1000000000l>> const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DyldSharedCache::mappedSize() const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "invocation function for block in DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::type_info::operator==[abi:nqe210106](std::type_info const&) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Disk::readBlock(unsigned long long, std::array<unsigned char, 4096ul>&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "fseeko",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "FSE_decompress_wksp_bmi2",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__swrite",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::validReg(int)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::I8259PairDevice::write(unsigned int, bool, unsigned char)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::PIC8259::data(unsigned char)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DyldSharedCache::mappingName(unsigned int, unsigned long long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_2::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$pthread_mutex_lock",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__put_character_sequence[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, unsigned long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__srefill0",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_pthread_mutex_firstfit_unlock_slow",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__getrlimit",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::writeMachineState(std::basic_ostream<char>&, pc::Machine&, pc::Jit const&, pc::CaptureContext const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::locale::use_facet(std::locale::id&) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__quoted_output[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, char const*, char, char)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num[abi:nqe210106]<unsigned long>(unsigned long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__num_put<char>::__widen_and_group_int(char*, char*, char*, char*, char*&, char*&, std::locale const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_tlv_get_addr",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "localeconv_l",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::unique_ptr<pc::Disk>::~unique_ptr[abi:nqe210106]()",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::basic_string<char>::append[abi:nqe210106]<char const*, 0>(char const*, char const*)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "clock_gettime_nsec_np",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__num_put_base::__identify_padding(char*, char*, std::ios_base const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::~Jit()",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__munmap",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      }
+    ],
+    "inclusiveFunctions": [
+      {
+        "name": "Thread_8449758   DispatchQueue_1: com.apple.main-thread  (serial)",
+        "samples": 14353,
+        "percent": 100.0
+      },
+      {
+        "name": "start",
+        "samples": 14353,
+        "percent": 100.0
+      },
+      {
+        "name": "main",
+        "samples": 14192,
+        "percent": 98.87828328572424
+      },
+      {
+        "name": "pc::Jit::run()",
+        "samples": 7528,
+        "percent": 52.44896537309273
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 3148,
+        "percent": 21.932696997143456
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 2625,
+        "percent": 18.28885947188741
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 2365,
+        "percent": 16.477391486100466
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 1803,
+        "percent": 12.56183376297638
+      },
+      {
+        "name": "???",
+        "samples": 1674,
+        "percent": 11.663066954643629
+      },
+      {
+        "name": "__swrite",
+        "samples": 1671,
+        "percent": 11.642165400961472
+      },
+      {
+        "name": "_swrite",
+        "samples": 1670,
+        "percent": 11.635198216400752
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 1670,
+        "percent": 11.635198216400752
+      },
+      {
+        "name": "fwrite",
+        "samples": 1666,
+        "percent": 11.607329478157876
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1664,
+        "percent": 11.593395109036438
+      },
+      {
+        "name": "std::basic_streambuf<char>::xsputn(char const*, long)",
+        "samples": 1006,
+        "percent": 7.008987668083328
+      },
+      {
+        "name": "std::basic_ostream<char>::write(char const*, long)",
+        "samples": 1000,
+        "percent": 6.967184560719013
+      },
+      {
+        "name": "__sflush",
+        "samples": 991,
+        "percent": 6.904479899672542
+      },
+      {
+        "name": "std::basic_filebuf<char>::overflow(int)",
+        "samples": 986,
+        "percent": 6.8696439768689475
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 889,
+        "percent": 6.193827074479203
+      },
+      {
+        "name": "pc::VGA::pixel(unsigned int, unsigned int) const",
+        "samples": 835,
+        "percent": 5.817599108200376
+      },
+      {
+        "name": "std::basic_istream<char>::seekg(std::fpos<__mbstate_t>)",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "std::basic_filebuf<char>::seekpos(std::fpos<__mbstate_t>, unsigned int)",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "fseeko",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "__srefill1",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "_sread",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "__sread",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 713,
+        "percent": 4.967602591792657
+      },
+      {
+        "name": "_fseeko",
+        "samples": 711,
+        "percent": 4.953668222671219
+      },
+      {
+        "name": "std::__pad_and_output[abi:nqe210106]<char>(std::ostreambuf_iterator<char>, char const*, char const*, char const*, std::ios_base&, char)",
+        "samples": 689,
+        "percent": 4.8003901623354
+      },
+      {
+        "name": "std::__put_character_sequence[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, unsigned long)",
+        "samples": 684,
+        "percent": 4.765554239531805
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 613,
+        "percent": 4.270884135720755
+      },
+      {
+        "name": "std::basic_filebuf<char>::~basic_filebuf()",
+        "samples": 560,
+        "percent": 3.9016233540026475
+      },
+      {
+        "name": "std::basic_filebuf<char>::close()",
+        "samples": 560,
+        "percent": 3.9016233540026475
+      },
+      {
+        "name": "fclose",
+        "samples": 547,
+        "percent": 3.8110499547133005
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 547,
+        "percent": 3.8110499547133005
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 528,
+        "percent": 3.678673448059639
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 341,
+        "percent": 2.375809935205184
+      },
+      {
+        "name": "pc::I8259PairDevice::nextVector(bool)",
+        "samples": 287,
+        "percent": 1.9995819689263568
+      },
+      {
+        "name": "main::$_6::operator()() const",
+        "samples": 265,
+        "percent": 1.8463039085905386
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 237,
+        "percent": 1.651222740890406
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 199,
+        "percent": 1.3864697275830837
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 158,
+        "percent": 1.100815160593604
+      },
+      {
+        "name": "std::basic_ofstream<char>::basic_ofstream(std::basic_string<char> const&, unsigned int)",
+        "samples": 87,
+        "percent": 0.6061450567825541
+      },
+      {
+        "name": "std::basic_filebuf<char>::open(char const*, unsigned int)",
+        "samples": 87,
+        "percent": 0.6061450567825541
+      },
+      {
+        "name": "fopen",
+        "samples": 87,
+        "percent": 0.6061450567825541
+      },
+      {
+        "name": "open$NOCANCEL",
+        "samples": 86,
+        "percent": 0.5991778722218352
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 86,
+        "percent": 0.5991778722218352
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 70,
+        "percent": 0.48770291925033094
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 67,
+        "percent": 0.4668013655681739
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 59,
+        "percent": 0.4110638890824218
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 56,
+        "percent": 0.39016233540026474
+      },
+      {
+        "name": "dyld4::APIs::_dyld_find_unwind_sections(void*, dyld_unwind_sections*)",
+        "samples": 52,
+        "percent": 0.3622935971573887
+      },
+      {
+        "name": "__cxa_throw",
+        "samples": 48,
+        "percent": 0.3344248589145126
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 48,
+        "percent": 0.3344248589145126
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 48,
+        "percent": 0.3344248589145126
+      },
+      {
+        "name": "pc::dumpCpu(pc::CPU&)",
+        "samples": 47,
+        "percent": 0.32745767435379364
+      },
+      {
+        "name": "unwind_phase2",
+        "samples": 45,
+        "percent": 0.3135233052323556
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 44,
+        "percent": 0.30655612067163657
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 40,
+        "percent": 0.2786873824287605
+      },
+      {
+        "name": "dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 36,
+        "percent": 0.2508186441858845
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 36,
+        "percent": 0.2508186441858845
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 34,
+        "percent": 0.23688427506444645
+      },
+      {
+        "name": "std::basic_filebuf<char>::sync()",
+        "samples": 34,
+        "percent": 0.23688427506444645
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int)",
+        "samples": 32,
+        "percent": 0.22294990594300843
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 32,
+        "percent": 0.22294990594300843
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 30,
+        "percent": 0.2090155368215704
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 30,
+        "percent": 0.2090155368215704
+      },
+      {
+        "name": "pc::Machine::service(unsigned char, bool)",
+        "samples": 30,
+        "percent": 0.2090155368215704
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 28,
+        "percent": 0.19508116770013237
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 27,
+        "percent": 0.18811398313941335
+      },
+      {
+        "name": "_Unwind_Resume",
+        "samples": 26,
+        "percent": 0.18114679857869434
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 24,
+        "percent": 0.1672124294572563
+      },
+      {
+        "name": "pc::Disk::read(unsigned long long, unsigned int, unsigned char*)",
+        "samples": 22,
+        "percent": 0.15327806033581828
+      },
+      {
+        "name": "pc::Disk::readBlock(unsigned long long, std::array<unsigned char, 4096ul>&)",
+        "samples": 22,
+        "percent": 0.15327806033581828
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 21,
+        "percent": 0.14631087577509927
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 21,
+        "percent": 0.14631087577509927
+      },
+      {
+        "name": "pc::Qcow2::read(unsigned long long, std::span<unsigned char, 18446744073709551615ul>)",
+        "samples": 20,
+        "percent": 0.13934369121438026
+      },
+      {
+        "name": "fflush",
+        "samples": 19,
+        "percent": 0.13237650665366127
+      },
+      {
+        "name": "std::basic_filebuf<char>::underflow()",
+        "samples": 18,
+        "percent": 0.12540932209294225
+      },
+      {
+        "name": "fread",
+        "samples": 18,
+        "percent": 0.12540932209294225
+      },
+      {
+        "name": "__fread",
+        "samples": 18,
+        "percent": 0.12540932209294225
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 17,
+        "percent": 0.11844213753222323
+      },
+      {
+        "name": "pc::Machine::~Machine()",
+        "samples": 17,
+        "percent": 0.11844213753222323
+      },
+      {
+        "name": "std::unique_ptr<pc::Disk>::~unique_ptr[abi:nqe210106]()",
+        "samples": 17,
+        "percent": 0.11844213753222323
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 16,
+        "percent": 0.11147495297150421
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 16,
+        "percent": 0.11147495297150421
+      },
+      {
+        "name": "_sseek",
+        "samples": 15,
+        "percent": 0.1045077684107852
+      },
+      {
+        "name": "__lseek",
+        "samples": 15,
+        "percent": 0.1045077684107852
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 14,
+        "percent": 0.09754058385006618
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 14,
+        "percent": 0.09754058385006618
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 14,
+        "percent": 0.09754058385006618
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "fprintf",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "vfprintf_l",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "__xvprintf",
+        "samples": 13,
+        "percent": 0.09057339928934717
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 12,
+        "percent": 0.08360621472862816
+      },
+      {
+        "name": "pc::Qcow2::integer(unsigned long long, unsigned int)",
+        "samples": 12,
+        "percent": 0.08360621472862816
+      },
+      {
+        "name": "pc::writeMachineState(std::basic_ostream<char>&, pc::Machine&, pc::Jit const&, pc::CaptureContext const&)",
+        "samples": 12,
+        "percent": 0.08360621472862816
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 11,
+        "percent": 0.07663903016790914
+      },
+      {
+        "name": "std::getline[abi:nqe210106]<char>(std::basic_istream<char>&, std::basic_string<char>&, char)",
+        "samples": 11,
+        "percent": 0.07663903016790914
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 10,
+        "percent": 0.06967184560719013
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 9,
+        "percent": 0.06270466104647113
+      },
+      {
+        "name": "__bzero",
+        "samples": 9,
+        "percent": 0.06270466104647113
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "std::basic_istream<char>::read(char*, long)",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "std::basic_streambuf<char>::xsgetn(char*, long)",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "std::basic_streambuf<char>::uflow()",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 8,
+        "percent": 0.055737476485752106
+      },
+      {
+        "name": "pc::Disk::write(unsigned long long, unsigned int, unsigned char const*)",
+        "samples": 7,
+        "percent": 0.04877029192503309
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num[abi:nqe210106]<unsigned long long>(unsigned long long)",
+        "samples": 7,
+        "percent": 0.04877029192503309
+      },
+      {
+        "name": "std::num_put<char, std::ostreambuf_iterator<char>>::__do_put_integral[abi:nqe210106]<unsigned long long>(std::ostreambuf_iterator<char>, std::ios_base&, char, unsigned long long) const",
+        "samples": 7,
+        "percent": 0.04877029192503309
+      },
+      {
+        "name": "std::basic_ostream<char>::flush()",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 6,
+        "percent": 0.04180310736431408
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()(unsigned int) const",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_14::operator()(int, int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num_integer_promote[abi:nqe210106]<unsigned int>(unsigned int)",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "std::chrono::steady_clock::now()",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "clock_gettime",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "clock_gettime_nsec_np",
+        "samples": 5,
+        "percent": 0.034835922803595064
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "std::function<void (unsigned short, unsigned int, int)>::operator()(unsigned short, unsigned int, int) const",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "std::num_put<char, std::ostreambuf_iterator<char>>::__do_put_integral[abi:nqe210106]<unsigned long>(std::ostreambuf_iterator<char>, std::ios_base&, char, unsigned long) const",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "pc::Jit::~Jit()",
+        "samples": 4,
+        "percent": 0.027868738242876053
+      },
+      {
+        "name": "DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "DyldSharedCache::forEachCache(void (DyldSharedCache const*, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "invocation function for block in DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "__swsetup",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "__smakebuf",
+        "samples": 3,
+        "percent": 0.02090155368215704
+      },
+      {
+        "name": "DyldSharedCache::forEachRegion(void (void const*, unsigned long long, unsigned long long, unsigned int, unsigned int, unsigned long long, unsigned long long, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_Unwind_GetLanguageSpecificData",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindIoPorts()::$_6::operator()(std::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindIoPorts()::$_7, void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::I8259PairDevice::write(unsigned int, bool, unsigned char)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::function<unsigned int (unsigned short, int)>::operator()(unsigned short, int) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindDevices()::$_3, unsigned int (unsigned short, int)>::operator()(unsigned short&&, int&&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_free",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, unsigned int) const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "funlockfile",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "__swhatbuf",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "fstat",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_xzm_malloc_large_huge",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "xzm_segment_group_alloc_chunk",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_xzm_segment_group_find_and_allocate_chunk",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_xzm_segment_group_span_mark_smaller",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_xzm_reclaim_mark_used_locked",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::__quoted_output[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, char const*, char, char)",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "pc::CPU::location() const",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "snprintf",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "_vsnprintf",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "mach_timebase_info",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 2,
+        "percent": 0.013934369121438027
+      },
+      {
+        "name": "std::this_thread::sleep_for(std::chrono::duration<long long, std::ratio<1l, 1000000000l>> const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DyldSharedCache::mappedSize() const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxxabiv1::__class_type_info::can_catch(__cxxabiv1::__shim_type_info const*, void*&) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::type_info::operator==[abi:nqe210106](std::type_info const&) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "ZSTD_decompress",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "ZSTD_decompressMultiFrame",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "ZSTD_decompressBlock_internal",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "ZSTD_decodeLiteralsBlock",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "HUF_decompress4X_hufOnly_wksp",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "HUF_readDTableX1_wksp",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "HUF_readStats_wksp",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "FSE_decompress_wksp_bmi2",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxxabiv1::set_registers(_Unwind_Exception*, _Unwind_Context*, __cxxabiv1::(anonymous namespace)::scan_results const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::validReg(int)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxa_allocate_exception",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxxabiv1::__aligned_malloc_with_fallback(unsigned long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "malloc_type_aligned_alloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)::$_1::operator()(bool) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::PIC8259::data(unsigned char)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DyldSharedCache::mappingName(unsigned int, unsigned long long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_2::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_8::operator()(int, unsigned long) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_xzm_xzone_madvise_batch",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "xzm_reclaim_mark_free_locked",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_vm_reclaim_ring_resize",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_vm_deferred_reclamation_buffer_resize",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_msg2_internal",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "flockfile",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "DYLD-STUB$$pthread_mutex_lock",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__srefill",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__srefill0",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_pthread_mutex_firstfit_unlock_slow",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__sfp",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "sysconf",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__getrlimit",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::locale::use_facet(std::locale::id&) const",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num[abi:nqe210106]<unsigned long>(unsigned long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__num_put<char>::__widen_and_group_int(char*, char*, char*, char*, char*&, char*&, std::locale const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::basic_ostream<char>::sentry::~sentry()",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxa_uncaught_exceptions",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__cxa_get_globals_fast",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "_tlv_get_addr",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "localeconv_l",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::basic_string<char>::append[abi:nqe210106]<char const*, 0>(char const*, char const*)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "std::__num_put_base::__identify_padding(char*, char*, std::ios_base const&)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "__munmap",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Network::pump(pc::NE2000&, unsigned long long, unsigned long long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Network::pump(std::deque<std::vector<unsigned char>>&, std::function<void (unsigned char const*, unsigned long)>, unsigned long long, unsigned long long)",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      },
+      {
+        "name": "pc::Network::State::service()",
+        "samples": 1,
+        "percent": 0.006967184560719013
+      }
+    ]
+  },
+  "hostProfileRun": {
+    "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+    "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+    "jit": true,
+    "profiled": true,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "272b569b478a3f30ad672a6406ecae0bf2b31fd37140e12a6bc984cdb9a20e23",
+    "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+    "restoreTimeoutSeconds": 90.0,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-candidate",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "samples": [
+      {
+        "restoreReadyMs": 31112.579917000003,
+        "taskResponseMs": 16648.402707999998,
+        "instructions": 1402152946,
+        "nativeInstructions": 1247624813,
+        "compiledBlocks": 28665,
+        "executionWallMs": 11919.111156
+      }
+    ],
+    "medianRestoreReadyMs": 31112.579917000003,
+    "medianTaskResponseMs": 16648.402707999998
+  },
+  "guestProfile": {
+    "files": [
+      "build/excel-bit-test-comparison/guest-profile/run-0/guest-profile.json"
+    ],
+    "guestInstructions": 1404549326,
+    "interpretedAttempts": 155012297,
+    "events": {
+      "dispatch": 477300000,
+      "fastHit": 471168869,
+      "mapHit": 5449469,
+      "lookupMiss": 297623,
+      "metadataRebuild": 354277,
+      "translate": 60141,
+      "interpretedDispatch": 154905795,
+      "negativeHit": 153145412,
+      "nativeCall": 322394087,
+      "nativeReplay": 106502,
+      "devicePoll": 477328090,
+      "diskReadSectorsIncludingParents": 1224,
+      "diskWriteSectors": 70,
+      "cowDecompress": 49,
+      "cowCacheHit": 1
+    },
+    "opcodes": [
+      {
+        "opcode": "0f",
+        "name": "0F extended opcode total",
+        "attempts": 26502697,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 17.09715778226291,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ff",
+        "name": "INC/DEC/CALL/JMP/PUSH group",
+        "attempts": 19737454,
+        "registerOperands": 8465081,
+        "memoryOperands": 11272373,
+        "percentOfInterpretedAttempts": 12.732831125004232,
+        "modRMGroups": {
+          "0": 51377,
+          "1": 20026,
+          "2": 18274189,
+          "3": 33908,
+          "4": 2619,
+          "5": 430,
+          "6": 1354905,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "13",
+        "name": "",
+        "attempts": 16786974,
+        "registerOperands": 16785873,
+        "memoryOperands": 1101,
+        "percentOfInterpretedAttempts": 10.829446647061813,
+        "modRMGroups": {
+          "0": 8390862,
+          "1": 113,
+          "2": 1127,
+          "3": 8390678,
+          "4": 0,
+          "5": 0,
+          "6": 4194,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f ad",
+        "name": "",
+        "attempts": 16764960,
+        "registerOperands": 16764960,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 10.815245193095874,
+        "modRMGroups": {
+          "0": 6,
+          "1": 0,
+          "2": 8382475,
+          "3": 3,
+          "4": 0,
+          "5": 0,
+          "6": 3,
+          "7": 8382473
+        }
+      },
+      {
+        "opcode": "0f 84",
+        "name": "",
+        "attempts": 8916444,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.7520881714306835,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "2b",
+        "name": "SUB r,rm",
+        "attempts": 8683956,
+        "registerOperands": 8669485,
+        "memoryOperands": 14471,
+        "percentOfInterpretedAttempts": 5.602107812130543,
+        "modRMGroups": {
+          "0": 8526181,
+          "1": 30911,
+          "2": 120236,
+          "3": 1369,
+          "4": 154,
+          "5": 2571,
+          "6": 1195,
+          "7": 1339
+        }
+      },
+      {
+        "opcode": "33",
+        "name": "",
+        "attempts": 8643567,
+        "registerOperands": 8643269,
+        "memoryOperands": 298,
+        "percentOfInterpretedAttempts": 5.576052459889683,
+        "modRMGroups": {
+          "0": 125332,
+          "1": 9039,
+          "2": 8430142,
+          "3": 8975,
+          "4": 0,
+          "5": 400,
+          "6": 64698,
+          "7": 4981
+        }
+      },
+      {
+        "opcode": "03",
+        "name": "",
+        "attempts": 8474995,
+        "registerOperands": 8467336,
+        "memoryOperands": 7659,
+        "percentOfInterpretedAttempts": 5.4673049583930755,
+        "modRMGroups": {
+          "0": 21249,
+          "1": 1709,
+          "2": 5317,
+          "3": 10486,
+          "4": 50,
+          "5": 858,
+          "6": 8398456,
+          "7": 36870
+        }
+      },
+      {
+        "opcode": "78",
+        "name": "",
+        "attempts": 8472366,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.465608963913359,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0a",
+        "name": "",
+        "attempts": 8436116,
+        "registerOperands": 8435821,
+        "memoryOperands": 295,
+        "percentOfInterpretedAttempts": 5.442223722418616,
+        "modRMGroups": {
+          "0": 37200,
+          "1": 136,
+          "2": 132,
+          "3": 604,
+          "4": 6900,
+          "5": 8390929,
+          "6": 94,
+          "7": 121
+        }
+      },
+      {
+        "opcode": "d3",
+        "name": "",
+        "attempts": 8406576,
+        "registerOperands": 8406573,
+        "memoryOperands": 3,
+        "percentOfInterpretedAttempts": 5.423167169763312,
+        "modRMGroups": {
+          "0": 161,
+          "1": 1922,
+          "2": 0,
+          "3": 0,
+          "4": 19688,
+          "5": 8384499,
+          "6": 0,
+          "7": 306
+        }
+      },
+      {
+        "opcode": "76",
+        "name": "",
+        "attempts": 8394347,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.415278118225679,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "9f",
+        "name": "",
+        "attempts": 8390690,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.412918950552678,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8b",
+        "name": "MOV r,rm",
+        "attempts": 2463384,
+        "registerOperands": 378389,
+        "memoryOperands": 2084994,
+        "percentOfInterpretedAttempts": 1.5891539237045174,
+        "modRMGroups": {
+          "0": 816016,
+          "1": 135987,
+          "2": 215192,
+          "3": 644965,
+          "4": 12393,
+          "5": 88548,
+          "6": 139671,
+          "7": 410611
+        }
+      },
+      {
+        "opcode": "1b",
+        "name": "",
+        "attempts": 1700328,
+        "registerOperands": 1700326,
+        "memoryOperands": 2,
+        "percentOfInterpretedAttempts": 1.0968987834558699,
+        "modRMGroups": {
+          "0": 1275198,
+          "1": 814,
+          "2": 143,
+          "3": 423589,
+          "4": 0,
+          "5": 0,
+          "6": 436,
+          "7": 148
+        }
+      },
+      {
+        "opcode": "83",
+        "name": "ALU rm,imm8",
+        "attempts": 1670355,
+        "registerOperands": 1050378,
+        "memoryOperands": 619977,
+        "percentOfInterpretedAttempts": 1.0775628981228502,
+        "modRMGroups": {
+          "0": 527324,
+          "1": 486409,
+          "2": 128341,
+          "3": 12174,
+          "4": 101670,
+          "5": 153221,
+          "6": 49,
+          "7": 261167
+        }
+      },
+      {
+        "opcode": "f7",
+        "name": "TEST/unary word/dword group",
+        "attempts": 1079816,
+        "registerOperands": 1053849,
+        "memoryOperands": 25967,
+        "percentOfInterpretedAttempts": 0.6966002187555481,
+        "modRMGroups": {
+          "0": 12223,
+          "1": 0,
+          "2": 73281,
+          "3": 899510,
+          "4": 28567,
+          "5": 2070,
+          "6": 30278,
+          "7": 33887
+        }
+      },
+      {
+        "opcode": "01",
+        "name": "",
+        "attempts": 894448,
+        "registerOperands": 0,
+        "memoryOperands": 894448,
+        "percentOfInterpretedAttempts": 0.5770174478480246,
+        "modRMGroups": {
+          "0": 522368,
+          "1": 160647,
+          "2": 1708,
+          "3": 2496,
+          "4": 0,
+          "5": 288,
+          "6": 611,
+          "7": 206330
+        }
+      },
+      {
+        "opcode": "fa",
+        "name": "",
+        "attempts": 776124,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.500685439168739,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c7",
+        "name": "",
+        "attempts": 743091,
+        "registerOperands": 0,
+        "memoryOperands": 743091,
+        "percentOfInterpretedAttempts": 0.4793755168985077,
+        "modRMGroups": {
+          "0": 743091,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8e",
+        "name": "",
+        "attempts": 672878,
+        "registerOperands": 377709,
+        "memoryOperands": 295169,
+        "percentOfInterpretedAttempts": 0.43408040073104653,
+        "modRMGroups": {
+          "0": 194710,
+          "1": 0,
+          "2": 16804,
+          "3": 205165,
+          "4": 141272,
+          "5": 114927,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "3b",
+        "name": "CMP r,rm",
+        "attempts": 556927,
+        "registerOperands": 439540,
+        "memoryOperands": 117387,
+        "percentOfInterpretedAttempts": 0.35927923834326514,
+        "modRMGroups": {
+          "0": 28971,
+          "1": 86604,
+          "2": 2320,
+          "3": 2444,
+          "4": 28,
+          "5": 336,
+          "6": 408040,
+          "7": 28184
+        }
+      },
+      {
+        "opcode": "39",
+        "name": "CMP rm,r",
+        "attempts": 487171,
+        "registerOperands": 0,
+        "memoryOperands": 487171,
+        "percentOfInterpretedAttempts": 0.3142789374961652,
+        "modRMGroups": {
+          "0": 477947,
+          "1": 1315,
+          "2": 1003,
+          "3": 2112,
+          "4": 0,
+          "5": 316,
+          "6": 2280,
+          "7": 2198
+        }
+      },
+      {
+        "opcode": "87",
+        "name": "",
+        "attempts": 486839,
+        "registerOperands": 5282,
+        "memoryOperands": 481557,
+        "percentOfInterpretedAttempts": 0.31406476093957886,
+        "modRMGroups": {
+          "0": 102308,
+          "1": 16457,
+          "2": 86283,
+          "3": 1828,
+          "4": 123219,
+          "5": 18329,
+          "6": 93054,
+          "7": 45361
+        }
+      },
+      {
+        "opcode": "74",
+        "name": "JZ",
+        "attempts": 474588,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.30616151697952065,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "80",
+        "name": "",
+        "attempts": 391043,
+        "registerOperands": 111384,
+        "memoryOperands": 279659,
+        "percentOfInterpretedAttempts": 0.2522657928228752,
+        "modRMGroups": {
+          "0": 44556,
+          "1": 150601,
+          "2": 8314,
+          "3": 260,
+          "4": 170999,
+          "5": 2472,
+          "6": 139,
+          "7": 13702
+        }
+      },
+      {
+        "opcode": "9c",
+        "name": "",
+        "attempts": 378357,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.24408192596488007,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "9d",
+        "name": "",
+        "attempts": 372325,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.24019062178015463,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "fb",
+        "name": "",
+        "attempts": 367394,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.23700958382675924,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "51",
+        "name": "",
+        "attempts": 361334,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.23310021655894822,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "1a",
+        "name": "",
+        "attempts": 322603,
+        "registerOperands": 322603,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.2081144568807983,
+        "modRMGroups": {
+          "0": 463,
+          "1": 13,
+          "2": 6014,
+          "3": 0,
+          "4": 310098,
+          "5": 1,
+          "6": 6014,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8a",
+        "name": "MOV byte r,rm",
+        "attempts": 306120,
+        "registerOperands": 27190,
+        "memoryOperands": 278930,
+        "percentOfInterpretedAttempts": 0.19748110693437437,
+        "modRMGroups": {
+          "0": 115196,
+          "1": 8226,
+          "2": 156724,
+          "3": 3835,
+          "4": 11707,
+          "5": 7614,
+          "6": 991,
+          "7": 1827
+        }
+      },
+      {
+        "opcode": "2a",
+        "name": "",
+        "attempts": 304580,
+        "registerOperands": 304492,
+        "memoryOperands": 88,
+        "percentOfInterpretedAttempts": 0.19648763736466662,
+        "modRMGroups": {
+          "0": 304134,
+          "1": 24,
+          "2": 0,
+          "3": 52,
+          "4": 321,
+          "5": 21,
+          "6": 14,
+          "7": 14
+        }
+      },
+      {
+        "opcode": "50",
+        "name": "",
+        "attempts": 299109,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.1929582399517633,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "89",
+        "name": "MOV rm,r",
+        "attempts": 289911,
+        "registerOperands": 0,
+        "memoryOperands": 289911,
+        "percentOfInterpretedAttempts": 0.1870245171581452,
+        "modRMGroups": {
+          "0": 90457,
+          "1": 32434,
+          "2": 58291,
+          "3": 14241,
+          "4": 58236,
+          "5": 6023,
+          "6": 24155,
+          "7": 6074
+        }
+      },
+      {
+        "opcode": "75",
+        "name": "JNZ",
+        "attempts": 273084,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.17616924933381253,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c1",
+        "name": "shift/rotate immediate",
+        "attempts": 264962,
+        "registerOperands": 251784,
+        "memoryOperands": 13178,
+        "percentOfInterpretedAttempts": 0.17092966501876944,
+        "modRMGroups": {
+          "0": 196715,
+          "1": 24118,
+          "2": 70,
+          "3": 0,
+          "4": 5974,
+          "5": 37206,
+          "6": 0,
+          "7": 879
+        }
+      },
+      {
+        "opcode": "d0",
+        "name": "byte shift/rotate 1",
+        "attempts": 264847,
+        "registerOperands": 264845,
+        "memoryOperands": 2,
+        "percentOfInterpretedAttempts": 0.17085547735609646,
+        "modRMGroups": {
+          "0": 5802,
+          "1": 105103,
+          "2": 64115,
+          "3": 44235,
+          "4": 1494,
+          "5": 44079,
+          "6": 0,
+          "7": 19
+        }
+      },
+      {
+        "opcode": "e9",
+        "name": "",
+        "attempts": 252458,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.16286320820083067,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "60",
+        "name": "",
+        "attempts": 244548,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.15776038722914995,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "61",
+        "name": "",
+        "attempts": 244547,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.15775974211903976,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "86",
+        "name": "",
+        "attempts": 229429,
+        "registerOperands": 212425,
+        "memoryOperands": 17004,
+        "percentOfInterpretedAttempts": 0.1480069674730386,
+        "modRMGroups": {
+          "0": 215341,
+          "1": 5644,
+          "2": 28,
+          "3": 7351,
+          "4": 640,
+          "5": 351,
+          "6": 42,
+          "7": 32
+        }
+      },
+      {
+        "opcode": "ac",
+        "name": "",
+        "attempts": 223229,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.1440072847897996,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "99",
+        "name": "",
+        "attempts": 218509,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.14096236506965637,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "73",
+        "name": "",
+        "attempts": 218068,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.14067787151105826,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8c",
+        "name": "",
+        "attempts": 206441,
+        "registerOperands": 32674,
+        "memoryOperands": 173767,
+        "percentOfInterpretedAttempts": 0.13317717625976475,
+        "modRMGroups": {
+          "0": 60061,
+          "1": 61,
+          "2": 15998,
+          "3": 44001,
+          "4": 44779,
+          "5": 41541,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8f",
+        "name": "",
+        "attempts": 192192,
+        "registerOperands": 0,
+        "memoryOperands": 192192,
+        "percentOfInterpretedAttempts": 0.12398500229952725,
+        "modRMGroups": {
+          "0": 192192,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "eb",
+        "name": "",
+        "attempts": 190475,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.12287734824031413,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "68",
+        "name": "",
+        "attempts": 184210,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.11883573339991214,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "81",
+        "name": "",
+        "attempts": 176239,
+        "registerOperands": 123864,
+        "memoryOperands": 52375,
+        "percentOfInterpretedAttempts": 0.11369356071150923,
+        "modRMGroups": {
+          "0": 80434,
+          "1": 8161,
+          "2": 23,
+          "3": 3,
+          "4": 70907,
+          "5": 5907,
+          "6": 217,
+          "7": 10587
+        }
+      },
+      {
+        "opcode": "c9",
+        "name": "",
+        "attempts": 162233,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.1046581485080503,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "72",
+        "name": "",
+        "attempts": 161689,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.10430720860810158,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "f6",
+        "name": "TEST/unary byte group",
+        "attempts": 149322,
+        "registerOperands": 135723,
+        "memoryOperands": 13599,
+        "percentOfInterpretedAttempts": 0.0963291318752602,
+        "modRMGroups": {
+          "0": 16565,
+          "1": 0,
+          "2": 132009,
+          "3": 481,
+          "4": 100,
+          "5": 0,
+          "6": 167,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "56",
+        "name": "",
+        "attempts": 143218,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.09239137976260038,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "e4",
+        "name": "",
+        "attempts": 142560,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.09196689731008889,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8d",
+        "name": "",
+        "attempts": 141379,
+        "registerOperands": 0,
+        "memoryOperands": 141379,
+        "percentOfInterpretedAttempts": 0.09120502226994288,
+        "modRMGroups": {
+          "0": 34341,
+          "1": 6893,
+          "2": 57961,
+          "3": 2392,
+          "4": 3274,
+          "5": 4519,
+          "6": 25208,
+          "7": 6791
+        }
+      },
+      {
+        "opcode": "e6",
+        "name": "",
+        "attempts": 140943,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.09092375426189575,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "88",
+        "name": "",
+        "attempts": 135807,
+        "registerOperands": 0,
+        "memoryOperands": 135807,
+        "percentOfInterpretedAttempts": 0.08761046873590939,
+        "modRMGroups": {
+          "0": 130245,
+          "1": 756,
+          "2": 1840,
+          "3": 598,
+          "4": 2101,
+          "5": 61,
+          "6": 45,
+          "7": 161
+        }
+      },
+      {
+        "opcode": "ba",
+        "name": "",
+        "attempts": 131866,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.08506808979161182,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c6",
+        "name": "",
+        "attempts": 127382,
+        "registerOperands": 0,
+        "memoryOperands": 127382,
+        "percentOfInterpretedAttempts": 0.08217541605747575,
+        "modRMGroups": {
+          "0": 127382,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "29",
+        "name": "",
+        "attempts": 126404,
+        "registerOperands": 0,
+        "memoryOperands": 126404,
+        "percentOfInterpretedAttempts": 0.0815444983697003,
+        "modRMGroups": {
+          "0": 6153,
+          "1": 97258,
+          "2": 80,
+          "3": 472,
+          "4": 93,
+          "5": 3,
+          "6": 888,
+          "7": 21457
+        }
+      },
+      {
+        "opcode": "0b",
+        "name": "",
+        "attempts": 124171,
+        "registerOperands": 123656,
+        "memoryOperands": 515,
+        "percentOfInterpretedAttempts": 0.08010396749362407,
+        "modRMGroups": {
+          "0": 49463,
+          "1": 12011,
+          "2": 7689,
+          "3": 4927,
+          "4": 23,
+          "5": 485,
+          "6": 46468,
+          "7": 3105
+        }
+      },
+      {
+        "opcode": "d1",
+        "name": "",
+        "attempts": 121866,
+        "registerOperands": 121320,
+        "memoryOperands": 546,
+        "percentOfInterpretedAttempts": 0.07861698868961345,
+        "modRMGroups": {
+          "0": 56859,
+          "1": 3962,
+          "2": 56361,
+          "3": 194,
+          "4": 1905,
+          "5": 2048,
+          "6": 0,
+          "7": 537
+        }
+      },
+      {
+        "opcode": "fc",
+        "name": "",
+        "attempts": 121264,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.07822863240327314,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "85",
+        "name": "",
+        "attempts": 118900,
+        "registerOperands": 118345,
+        "memoryOperands": 555,
+        "percentOfInterpretedAttempts": 0.07670359210276073,
+        "modRMGroups": {
+          "0": 15361,
+          "1": 2076,
+          "2": 1239,
+          "3": 1685,
+          "4": 7,
+          "5": 425,
+          "6": 49999,
+          "7": 48108
+        }
+      },
+      {
+        "opcode": "0f a4",
+        "name": "",
+        "attempts": 116398,
+        "registerOperands": 116398,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.07508952660704073,
+        "modRMGroups": {
+          "0": 8132,
+          "1": 207,
+          "2": 235,
+          "3": 889,
+          "4": 0,
+          "5": 94576,
+          "6": 4160,
+          "7": 8199
+        }
+      },
+      {
+        "opcode": "a5",
+        "name": "",
+        "attempts": 112008,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.07225749322326344,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ab",
+        "name": "",
+        "attempts": 110163,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.07106726506994474,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "d7",
+        "name": "",
+        "attempts": 107054,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.06906161773733345,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "7f",
+        "name": "",
+        "attempts": 104691,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.06753722254693123,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ee",
+        "name": "",
+        "attempts": 102228,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.06594831634550903,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b8",
+        "name": "",
+        "attempts": 100035,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.06453358987384078,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "32",
+        "name": "",
+        "attempts": 97351,
+        "registerOperands": 96564,
+        "memoryOperands": 787,
+        "percentOfInterpretedAttempts": 0.06280211433806442,
+        "modRMGroups": {
+          "0": 95520,
+          "1": 66,
+          "2": 107,
+          "3": 71,
+          "4": 409,
+          "5": 430,
+          "6": 129,
+          "7": 619
+        }
+      },
+      {
+        "opcode": "c3",
+        "name": "RET near",
+        "attempts": 95350,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.061511249007554544,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "be",
+        "name": "",
+        "attempts": 93652,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.06041585204043522,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "1e",
+        "name": "",
+        "attempts": 91782,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.05920949613436152,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "1f",
+        "name": "",
+        "attempts": 89724,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.05788185952757025,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5e",
+        "name": "",
+        "attempts": 83430,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.05382153649397248,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f ba",
+        "name": "",
+        "attempts": 82690,
+        "registerOperands": 45,
+        "memoryOperands": 82645,
+        "percentOfInterpretedAttempts": 0.05334415501242459,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 18167,
+          "5": 16834,
+          "6": 47689,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ad",
+        "name": "",
+        "attempts": 82511,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.053228680302698825,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a3",
+        "name": "",
+        "attempts": 80319,
+        "registerOperands": 15,
+        "memoryOperands": 80304,
+        "percentOfInterpretedAttempts": 0.05181459894114078,
+        "modRMGroups": {
+          "0": 77557,
+          "1": 0,
+          "2": 2533,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 229
+        }
+      },
+      {
+        "opcode": "57",
+        "name": "",
+        "attempts": 80173,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0517204128650516,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "cf",
+        "name": "",
+        "attempts": 74743,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.048217464966666485,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a3",
+        "name": "",
+        "attempts": 73906,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.04767750780442922,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "cb",
+        "name": "",
+        "attempts": 73880,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.047660734941564024,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "52",
+        "name": "",
+        "attempts": 73337,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.04731044015172551,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5f",
+        "name": "",
+        "attempts": 64611,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.041681209330121725,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a4",
+        "name": "",
+        "attempts": 64538,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.04163411629207714,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b6",
+        "name": "",
+        "attempts": 64255,
+        "registerOperands": 1170,
+        "memoryOperands": 63085,
+        "percentOfInterpretedAttempts": 0.04145155013089059,
+        "modRMGroups": {
+          "0": 8071,
+          "1": 1991,
+          "2": 645,
+          "3": 380,
+          "4": 0,
+          "5": 0,
+          "6": 53017,
+          "7": 151
+        }
+      },
+      {
+        "opcode": "9a",
+        "name": "",
+        "attempts": 62814,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.04052194646209262,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "08",
+        "name": "",
+        "attempts": 62653,
+        "registerOperands": 0,
+        "memoryOperands": 62653,
+        "percentOfInterpretedAttempts": 0.04041808373435044,
+        "modRMGroups": {
+          "0": 62124,
+          "1": 20,
+          "2": 0,
+          "3": 402,
+          "4": 69,
+          "5": 0,
+          "6": 38,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "58",
+        "name": "",
+        "attempts": 60666,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.03913624994538337,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a1",
+        "name": "",
+        "attempts": 56439,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.03640936950956865,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "6a",
+        "name": "",
+        "attempts": 52128,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.03362829982449715,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 82",
+        "name": "",
+        "attempts": 51673,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.033334774724356225,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "f8",
+        "name": "",
+        "attempts": 48672,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.03139879928364651,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b9",
+        "name": "",
+        "attempts": 47619,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.03071949833760608,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 85",
+        "name": "",
+        "attempts": 46661,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.030101482852034636,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "e8",
+        "name": "CALL relative",
+        "attempts": 45935,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.029633132912029552,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a2",
+        "name": "",
+        "attempts": 44132,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.028469999383339245,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a1",
+        "name": "",
+        "attempts": 44090,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.028442904758710853,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a0",
+        "name": "",
+        "attempts": 44084,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.028439034098049654,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "09",
+        "name": "",
+        "attempts": 41818,
+        "registerOperands": 0,
+        "memoryOperands": 41818,
+        "percentOfInterpretedAttempts": 0.02697721458833682,
+        "modRMGroups": {
+          "0": 26316,
+          "1": 6329,
+          "2": 7671,
+          "3": 511,
+          "4": 0,
+          "5": 0,
+          "6": 990,
+          "7": 1
+        }
+      },
+      {
+        "opcode": "b0",
+        "name": "",
+        "attempts": 39709,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.025616677365925364,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5b",
+        "name": "",
+        "attempts": 36981,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.023856816985300205,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "77",
+        "name": "",
+        "attempts": 36862,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.023780048882186423,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b7",
+        "name": "",
+        "attempts": 36795,
+        "registerOperands": 5516,
+        "memoryOperands": 31279,
+        "percentOfInterpretedAttempts": 0.023736826504803035,
+        "modRMGroups": {
+          "0": 11592,
+          "1": 9831,
+          "2": 745,
+          "3": 1675,
+          "4": 0,
+          "5": 911,
+          "6": 6226,
+          "7": 5815
+        }
+      },
+      {
+        "opcode": "0f 22",
+        "name": "",
+        "attempts": 34896,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.022511762405533542,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ca",
+        "name": "",
+        "attempts": 32493,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.020961562810723332,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5a",
+        "name": "",
+        "attempts": 31849,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.020546111899754638,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "55",
+        "name": "",
+        "attempts": 31716,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.02046031225509806,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "53",
+        "name": "",
+        "attempts": 31341,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.02021839596377312,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "cd",
+        "name": "",
+        "attempts": 30575,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.019724241619360042,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 01",
+        "name": "",
+        "attempts": 29369,
+        "registerOperands": 0,
+        "memoryOperands": 29369,
+        "percentOfInterpretedAttempts": 0.018946238826459037,
+        "modRMGroups": {
+          "0": 930,
+          "1": 0,
+          "2": 0,
+          "3": 28439,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "3d",
+        "name": "",
+        "attempts": 28065,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.01810501524275845,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 95",
+        "name": "",
+        "attempts": 25239,
+        "registerOperands": 25239,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.016281934071333708,
+        "modRMGroups": {
+          "0": 25239,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a9",
+        "name": "",
+        "attempts": 25123,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.016207101298550526,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a8",
+        "name": "",
+        "attempts": 25118,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.016203875747999526,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "fd",
+        "name": "",
+        "attempts": 23616,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.015234920362479372,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5d",
+        "name": "",
+        "attempts": 23407,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.015100092349447605,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "20",
+        "name": "",
+        "attempts": 22060,
+        "registerOperands": 0,
+        "memoryOperands": 22060,
+        "percentOfInterpretedAttempts": 0.014231129031008424,
+        "modRMGroups": {
+          "0": 21898,
+          "1": 75,
+          "2": 15,
+          "3": 2,
+          "4": 55,
+          "5": 0,
+          "6": 15,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "59",
+        "name": "",
+        "attempts": 21594,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.013930507719655299,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "e0",
+        "name": "",
+        "attempts": 21487,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.013861480937863917,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "fe",
+        "name": "",
+        "attempts": 20600,
+        "registerOperands": 762,
+        "memoryOperands": 19838,
+        "percentOfInterpretedAttempts": 0.01328926827011666,
+        "modRMGroups": {
+          "0": 7637,
+          "1": 12963,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "af",
+        "name": "",
+        "attempts": 20379,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.013146698935762497,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "24",
+        "name": "",
+        "attempts": 20329,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.013114443430252504,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "06",
+        "name": "",
+        "attempts": 19587,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.012635771728484225,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ea",
+        "name": "",
+        "attempts": 19482,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.012568035166913242,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "23",
+        "name": "",
+        "attempts": 19371,
+        "registerOperands": 11835,
+        "memoryOperands": 7536,
+        "percentOfInterpretedAttempts": 0.01249642794468106,
+        "modRMGroups": {
+          "0": 16953,
+          "1": 305,
+          "2": 1387,
+          "3": 579,
+          "4": 0,
+          "5": 3,
+          "6": 118,
+          "7": 26
+        }
+      },
+      {
+        "opcode": "a6",
+        "name": "",
+        "attempts": 18988,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.012249350772474521,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0e",
+        "name": "",
+        "attempts": 18650,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.012031303555226977,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "bf",
+        "name": "",
+        "attempts": 18150,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.011708748500127058,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "22",
+        "name": "",
+        "attempts": 18110,
+        "registerOperands": 777,
+        "memoryOperands": 17333,
+        "percentOfInterpretedAttempts": 0.011682944095719064,
+        "modRMGroups": {
+          "0": 17675,
+          "1": 41,
+          "2": 46,
+          "3": 253,
+          "4": 53,
+          "5": 28,
+          "6": 0,
+          "7": 14
+        }
+      },
+      {
+        "opcode": "07",
+        "name": "",
+        "attempts": 18086,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.011667461453074268,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 20",
+        "name": "",
+        "attempts": 17689,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.011411352739324932,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c2",
+        "name": "RET near imm",
+        "attempts": 17660,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.011392644546129137,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c4",
+        "name": "",
+        "attempts": 16916,
+        "registerOperands": 0,
+        "memoryOperands": 16916,
+        "percentOfInterpretedAttempts": 0.010912682624140458,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 10141,
+          "4": 0,
+          "5": 0,
+          "6": 1074,
+          "7": 5701
+        }
+      },
+      {
+        "opcode": "0f bc",
+        "name": "",
+        "attempts": 16559,
+        "registerOperands": 11186,
+        "memoryOperands": 5373,
+        "percentOfInterpretedAttempts": 0.010682378314799115,
+        "modRMGroups": {
+          "0": 16198,
+          "1": 345,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 16
+        }
+      },
+      {
+        "opcode": "98",
+        "name": "",
+        "attempts": 16150,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.010418528279727382,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "25",
+        "name": "",
+        "attempts": 15661,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.01010306943583966,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "f9",
+        "name": "",
+        "attempts": 14367,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.009268296953241072,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "bb",
+        "name": "",
+        "attempts": 14195,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0091573380142867,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "4e",
+        "name": "",
+        "attempts": 13344,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.008608349310506637,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "aa",
+        "name": "",
+        "attempts": 12625,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.008144515141272953,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "31",
+        "name": "",
+        "attempts": 12612,
+        "registerOperands": 0,
+        "memoryOperands": 12612,
+        "percentOfInterpretedAttempts": 0.008136128709840356,
+        "modRMGroups": {
+          "0": 12474,
+          "1": 7,
+          "2": 127,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 4,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "21",
+        "name": "",
+        "attempts": 12115,
+        "registerOperands": 0,
+        "memoryOperands": 12115,
+        "percentOfInterpretedAttempts": 0.007815508985071036,
+        "modRMGroups": {
+          "0": 6711,
+          "1": 5380,
+          "2": 4,
+          "3": 2,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 18
+        }
+      },
+      {
+        "opcode": "c8",
+        "name": "",
+        "attempts": 11848,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.007643264585647679,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b4",
+        "name": "",
+        "attempts": 11734,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.007569722033084898,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b3",
+        "name": "",
+        "attempts": 11541,
+        "registerOperands": 332,
+        "memoryOperands": 11209,
+        "percentOfInterpretedAttempts": 0.007445215781816329,
+        "modRMGroups": {
+          "0": 5364,
+          "1": 325,
+          "2": 5738,
+          "3": 1,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 113
+        }
+      },
+      {
+        "opcode": "7d",
+        "name": "",
+        "attempts": 11374,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.007337482393412956,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f ab",
+        "name": "",
+        "attempts": 11031,
+        "registerOperands": 16,
+        "memoryOperands": 11015,
+        "percentOfInterpretedAttempts": 0.007116209625614412,
+        "modRMGroups": {
+          "0": 5406,
+          "1": 1,
+          "2": 5504,
+          "3": 14,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 106
+        }
+      },
+      {
+        "opcode": "0f 02",
+        "name": "",
+        "attempts": 10924,
+        "registerOperands": 6258,
+        "memoryOperands": 4666,
+        "percentOfInterpretedAttempts": 0.007047182843823029,
+        "modRMGroups": {
+          "0": 9426,
+          "1": 0,
+          "2": 529,
+          "3": 229,
+          "4": 0,
+          "5": 0,
+          "6": 740,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c5",
+        "name": "",
+        "attempts": 10681,
+        "registerOperands": 0,
+        "memoryOperands": 10681,
+        "percentOfInterpretedAttempts": 0.006890421087044469,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 54,
+          "3": 5860,
+          "4": 0,
+          "5": 0,
+          "6": 4574,
+          "7": 193
+        }
+      },
+      {
+        "opcode": "49",
+        "name": "",
+        "attempts": 9831,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.006342077493374607,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "48",
+        "name": "",
+        "attempts": 9736,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.006280792032905621,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c0",
+        "name": "",
+        "attempts": 9226,
+        "registerOperands": 8666,
+        "memoryOperands": 560,
+        "percentOfInterpretedAttempts": 0.005951785876703705,
+        "modRMGroups": {
+          "0": 879,
+          "1": 7126,
+          "2": 59,
+          "3": 0,
+          "4": 623,
+          "5": 511,
+          "6": 0,
+          "7": 28
+        }
+      },
+      {
+        "opcode": "90",
+        "name": "",
+        "attempts": 8825,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00569309672251357,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 88",
+        "name": "",
+        "attempts": 8387,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00541053849424604,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f bd",
+        "name": "",
+        "attempts": 8237,
+        "registerOperands": 8237,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0053137719777160645,
+        "modRMGroups": {
+          "0": 23,
+          "1": 8208,
+          "2": 6,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ae",
+        "name": "",
+        "attempts": 7650,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00493509234302876,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 94",
+        "name": "",
+        "attempts": 7631,
+        "registerOperands": 7608,
+        "memoryOperands": 23,
+        "percentOfInterpretedAttempts": 0.004922835250934963,
+        "modRMGroups": {
+          "0": 7631,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "79",
+        "name": "",
+        "attempts": 7411,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.004780911026690999,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "41",
+        "name": "",
+        "attempts": 7253,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.004678983629279424,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "63",
+        "name": "",
+        "attempts": 5687,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.003668741196706478,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f bf",
+        "name": "",
+        "attempts": 5472,
+        "registerOperands": 722,
+        "memoryOperands": 4750,
+        "percentOfInterpretedAttempts": 0.003530042523013513,
+        "modRMGroups": {
+          "0": 4471,
+          "1": 391,
+          "2": 232,
+          "3": 254,
+          "4": 0,
+          "5": 0,
+          "6": 62,
+          "7": 62
+        }
+      },
+      {
+        "opcode": "16",
+        "name": "",
+        "attempts": 5263,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0033952145099817466,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "47",
+        "name": "",
+        "attempts": 4747,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0030623376931186302,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "40",
+        "name": "",
+        "attempts": 4032,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0026010839643257466,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "7c",
+        "name": "",
+        "attempts": 3607,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.002326912167490815,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "d2",
+        "name": "",
+        "attempts": 3606,
+        "registerOperands": 3590,
+        "memoryOperands": 16,
+        "percentOfInterpretedAttempts": 0.0023262670573806154,
+        "modRMGroups": {
+          "0": 0,
+          "1": 1524,
+          "2": 0,
+          "3": 0,
+          "4": 1029,
+          "5": 871,
+          "6": 0,
+          "7": 182
+        }
+      },
+      {
+        "opcode": "70",
+        "name": "",
+        "attempts": 3275,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.002112735610904469,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a8",
+        "name": "",
+        "attempts": 3050,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0019675858361095054,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "7e",
+        "name": "",
+        "attempts": 2876,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0018553366769347337,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ef",
+        "name": "",
+        "attempts": 2674,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0017250244346743665,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f ac",
+        "name": "",
+        "attempts": 2400,
+        "registerOperands": 2400,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0015482642644796109,
+        "modRMGroups": {
+          "0": 6,
+          "1": 2023,
+          "2": 312,
+          "3": 44,
+          "4": 0,
+          "5": 0,
+          "6": 15,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "3c",
+        "name": "",
+        "attempts": 2341,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0015102027679778204,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "e3",
+        "name": "",
+        "attempts": 2266,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0014618195097128328,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f af",
+        "name": "",
+        "attempts": 2227,
+        "registerOperands": 517,
+        "memoryOperands": 1710,
+        "percentOfInterpretedAttempts": 0.001436660215415039,
+        "modRMGroups": {
+          "0": 911,
+          "1": 439,
+          "2": 87,
+          "3": 102,
+          "4": 0,
+          "5": 0,
+          "6": 226,
+          "7": 462
+        }
+      },
+      {
+        "opcode": "38",
+        "name": "",
+        "attempts": 2223,
+        "registerOperands": 1352,
+        "memoryOperands": 871,
+        "percentOfInterpretedAttempts": 0.0014340797749742397,
+        "modRMGroups": {
+          "0": 555,
+          "1": 125,
+          "2": 804,
+          "3": 240,
+          "4": 202,
+          "5": 70,
+          "6": 49,
+          "7": 178
+        }
+      },
+      {
+        "opcode": "46",
+        "name": "",
+        "attempts": 2050,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0013224757259096677,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b1",
+        "name": "",
+        "attempts": 1817,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0011721650702331055,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "92",
+        "name": "",
+        "attempts": 1610,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.001038627277421739,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 87",
+        "name": "",
+        "attempts": 1543,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00099540490003835,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b3",
+        "name": "",
+        "attempts": 1484,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0009573434035365595,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 8c",
+        "name": "",
+        "attempts": 1445,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0009321841092387658,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "2d",
+        "name": "",
+        "attempts": 1414,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0009121856958225708,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "e2",
+        "name": "",
+        "attempts": 1361,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0008779948599819794,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 03",
+        "name": "",
+        "attempts": 1354,
+        "registerOperands": 1353,
+        "memoryOperands": 1,
+        "percentOfInterpretedAttempts": 0.0008734790892105805,
+        "modRMGroups": {
+          "0": 280,
+          "1": 908,
+          "2": 160,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 6,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 8f",
+        "name": "",
+        "attempts": 1340,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0008644475476677827,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "43",
+        "name": "",
+        "attempts": 1241,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0008005816467579988,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a0",
+        "name": "",
+        "attempts": 1219,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0007863892243336023,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a9",
+        "name": "",
+        "attempts": 1178,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.000759939709815409,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "05",
+        "name": "",
+        "attempts": 1133,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0007309097548564164,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "a7",
+        "name": "",
+        "attempts": 1121,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0007231684335340183,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 8d",
+        "name": "",
+        "attempts": 1109,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0007154271122116202,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "00",
+        "name": "",
+        "attempts": 1106,
+        "registerOperands": 0,
+        "memoryOperands": 1106,
+        "percentOfInterpretedAttempts": 0.0007134917818810207,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 1106,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b2",
+        "name": "",
+        "attempts": 1099,
+        "registerOperands": 0,
+        "memoryOperands": 1099,
+        "percentOfInterpretedAttempts": 0.0007089760111096218,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1099,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "04",
+        "name": "",
+        "attempts": 1087,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0007012346897872238,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "42",
+        "name": "",
+        "attempts": 1018,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0006567220921834349,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "93",
+        "name": "",
+        "attempts": 985,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0006354334585468403,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "91",
+        "name": "",
+        "attempts": 949,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0006122094945796462,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "84",
+        "name": "",
+        "attempts": 941,
+        "registerOperands": 751,
+        "memoryOperands": 190,
+        "percentOfInterpretedAttempts": 0.0006070486136980475,
+        "modRMGroups": {
+          "0": 404,
+          "1": 244,
+          "2": 93,
+          "3": 130,
+          "4": 31,
+          "5": 22,
+          "6": 2,
+          "7": 15
+        }
+      },
+      {
+        "opcode": "0f 83",
+        "name": "",
+        "attempts": 898,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0005793088789594544,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "6b",
+        "name": "",
+        "attempts": 836,
+        "registerOperands": 831,
+        "memoryOperands": 5,
+        "percentOfInterpretedAttempts": 0.0005393120521270645,
+        "modRMGroups": {
+          "0": 413,
+          "1": 204,
+          "2": 37,
+          "3": 29,
+          "4": 0,
+          "5": 10,
+          "6": 102,
+          "7": 41
+        }
+      },
+      {
+        "opcode": "0c",
+        "name": "",
+        "attempts": 811,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0005231842993720685,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b5",
+        "name": "",
+        "attempts": 801,
+        "registerOperands": 0,
+        "memoryOperands": 801,
+        "percentOfInterpretedAttempts": 0.0005167331982700702,
+        "modRMGroups": {
+          "0": 23,
+          "1": 0,
+          "2": 0,
+          "3": 127,
+          "4": 0,
+          "5": 0,
+          "6": 465,
+          "7": 186
+        }
+      },
+      {
+        "opcode": "bd",
+        "name": "",
+        "attempts": 793,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0005115723173884715,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "f5",
+        "name": "",
+        "attempts": 777,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.000501250555625274,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 86",
+        "name": "",
+        "attempts": 773,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0004986701151844747,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "11",
+        "name": "",
+        "attempts": 771,
+        "registerOperands": 0,
+        "memoryOperands": 771,
+        "percentOfInterpretedAttempts": 0.000497379894964075,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 771,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "3a",
+        "name": "",
+        "attempts": 769,
+        "registerOperands": 197,
+        "memoryOperands": 572,
+        "percentOfInterpretedAttempts": 0.0004960896747436753,
+        "modRMGroups": {
+          "0": 613,
+          "1": 76,
+          "2": 41,
+          "3": 38,
+          "4": 0,
+          "5": 1,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "4b",
+        "name": "",
+        "attempts": 729,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0004702852703356818,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "4a",
+        "name": "",
+        "attempts": 712,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00045931839846228455,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 8e",
+        "name": "",
+        "attempts": 677,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00043673954460529023,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "30",
+        "name": "",
+        "attempts": 640,
+        "registerOperands": 0,
+        "memoryOperands": 640,
+        "percentOfInterpretedAttempts": 0.00041287047052789624,
+        "modRMGroups": {
+          "0": 21,
+          "1": 450,
+          "2": 0,
+          "3": 0,
+          "4": 169,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "4d",
+        "name": "",
+        "attempts": 587,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00037867963468730487,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f b4",
+        "name": "",
+        "attempts": 534,
+        "registerOperands": 0,
+        "memoryOperands": 534,
+        "percentOfInterpretedAttempts": 0.00034448879884671344,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 23,
+          "4": 0,
+          "5": 0,
+          "6": 509,
+          "7": 2
+        }
+      },
+      {
+        "opcode": "b2",
+        "name": "",
+        "attempts": 522,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00033674747752431537,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "4f",
+        "name": "",
+        "attempts": 481,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.000310297963006122,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "12",
+        "name": "",
+        "attempts": 475,
+        "registerOperands": 475,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.000306427302344923,
+        "modRMGroups": {
+          "0": 100,
+          "1": 373,
+          "2": 2,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "45",
+        "name": "",
+        "attempts": 390,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00025159294297793676,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "02",
+        "name": "",
+        "attempts": 359,
+        "registerOperands": 235,
+        "memoryOperands": 124,
+        "percentOfInterpretedAttempts": 0.0002315945295617418,
+        "modRMGroups": {
+          "0": 113,
+          "1": 125,
+          "2": 18,
+          "3": 93,
+          "4": 9,
+          "5": 0,
+          "6": 1,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0d",
+        "name": "",
+        "attempts": 307,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00019804880383135024,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "96",
+        "name": "",
+        "attempts": 218,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00014063400402356465,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "97",
+        "name": "",
+        "attempts": 214,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.0001380535635827653,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 9d",
+        "name": "",
+        "attempts": 213,
+        "registerOperands": 213,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00013740845347256546,
+        "modRMGroups": {
+          "0": 213,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "14",
+        "name": "",
+        "attempts": 210,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00013547312314196597,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f be",
+        "name": "",
+        "attempts": 204,
+        "registerOperands": 85,
+        "memoryOperands": 119,
+        "percentOfInterpretedAttempts": 0.00013160246248076693,
+        "modRMGroups": {
+          "0": 91,
+          "1": 41,
+          "2": 41,
+          "3": 28,
+          "4": 0,
+          "5": 0,
+          "6": 3,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 93",
+        "name": "",
+        "attempts": 185,
+        "registerOperands": 185,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.00011934537038697001,
+        "modRMGroups": {
+          "0": 185,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "2c",
+        "name": "",
+        "attempts": 125,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 8.063876377497974e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "69",
+        "name": "",
+        "attempts": 121,
+        "registerOperands": 119,
+        "memoryOperands": 2,
+        "percentOfInterpretedAttempts": 7.805832333418038e-05,
+        "modRMGroups": {
+          "0": 42,
+          "1": 34,
+          "2": 19,
+          "3": 7,
+          "4": 0,
+          "5": 0,
+          "6": 14,
+          "7": 5
+        }
+      },
+      {
+        "opcode": "bc",
+        "name": "",
+        "attempts": 101,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 6.515612113018363e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b7",
+        "name": "",
+        "attempts": 95,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 6.12854604689846e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "1c",
+        "name": "",
+        "attempts": 92,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.935013013838509e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b5",
+        "name": "",
+        "attempts": 90,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.805990991798541e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "34",
+        "name": "",
+        "attempts": 78,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.031858859558736e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 21",
+        "name": "",
+        "attempts": 60,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 3.870660661199027e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 80",
+        "name": "",
+        "attempts": 53,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 3.419083584059141e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 89",
+        "name": "",
+        "attempts": 47,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 3.032017517939238e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "9e",
+        "name": "",
+        "attempts": 33,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 2.128863363659465e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 9e",
+        "name": "",
+        "attempts": 31,
+        "registerOperands": 31,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.9998413416194975e-05,
+        "modRMGroups": {
+          "0": 31,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 9f",
+        "name": "",
+        "attempts": 31,
+        "registerOperands": 31,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.9998413416194975e-05,
+        "modRMGroups": {
+          "0": 31,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 23",
+        "name": "",
+        "attempts": 30,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.9353303305995136e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f a5",
+        "name": "",
+        "attempts": 30,
+        "registerOperands": 30,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.9353303305995136e-05,
+        "modRMGroups": {
+          "0": 1,
+          "1": 0,
+          "2": 25,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 3,
+          "7": 1
+        }
+      },
+      {
+        "opcode": "71",
+        "name": "",
+        "attempts": 28,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.806308308559546e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "ec",
+        "name": "",
+        "attempts": 25,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.6127752754995947e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 9c",
+        "name": "",
+        "attempts": 25,
+        "registerOperands": 25,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.6127752754995947e-05,
+        "modRMGroups": {
+          "0": 25,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "28",
+        "name": "",
+        "attempts": 19,
+        "registerOperands": 0,
+        "memoryOperands": 19,
+        "percentOfInterpretedAttempts": 1.225709209379692e-05,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 19,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "35",
+        "name": "",
+        "attempts": 15,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 9.676651652997568e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "54",
+        "name": "",
+        "attempts": 14,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 9.03154154279773e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "19",
+        "name": "",
+        "attempts": 12,
+        "registerOperands": 0,
+        "memoryOperands": 12,
+        "percentOfInterpretedAttempts": 7.741321322398055e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 12,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "dd",
+        "name": "",
+        "attempts": 10,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 6.451101101998379e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "df",
+        "name": "",
+        "attempts": 9,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 5.805990991798541e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "db",
+        "name": "",
+        "attempts": 6,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 3.870660661199028e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "1d",
+        "name": "",
+        "attempts": 3,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.935330330599514e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "5c",
+        "name": "",
+        "attempts": 3,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.935330330599514e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 97",
+        "name": "",
+        "attempts": 3,
+        "registerOperands": 3,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.935330330599514e-06,
+        "modRMGroups": {
+          "0": 3,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "b6",
+        "name": "",
+        "attempts": 2,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.2902202203996757e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "d9",
+        "name": "",
+        "attempts": 2,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.2902202203996757e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "de",
+        "name": "",
+        "attempts": 2,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.2902202203996757e-06,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "9b",
+        "name": "",
+        "attempts": 1,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 6.451101101998378e-07,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      }
+    ],
+    "negativeHitPercentOfDispatch": 32.08577666038131,
+    "notes": [
+      "0F primary and extended counts overlap; do not sum both.",
+      "Operand/group counts include only instructions calling the ModRM decoder.",
+      "Attempt counts include faulting instructions and REP host-batch resumptions.",
+      "Disk read sectors include recursive parent reads; they are not physical IO bytes.",
+      "Instrumented executable timings are not performance measurements."
+    ]
+  },
+  "guestProfileRun": {
+    "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+    "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+    "jit": true,
+    "profiled": false,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "5b65bfb7a667c13e912ff705e984415f8e43d74fe271cfe130ef1f4f4c3d706a",
+    "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+    "restoreTimeoutSeconds": 90.0,
+    "guestProfiled": true,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-profile",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "samples": [
+      {
+        "restoreReadyMs": 27003.287,
+        "taskResponseMs": 14657.591250000003,
+        "instructions": 1402938225,
+        "nativeInstructions": 1248334939,
+        "compiledBlocks": 29796,
+        "executionWallMs": 12069.006136
+      }
+    ],
+    "medianRestoreReadyMs": 27003.287,
+    "medianTaskResponseMs": 14657.591250000003
+  },
+  "profileBuildCommand": [
+    "clang++",
+    "-DPCEMU_PROFILE",
+    "-I/Users/johandahlin/dev/pcemu/build/native-bit-test/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/native-bit-test/pcemu-profile"
+  ],
+  "rawProfiles": {
+    "host-sample": {
+      "path": "docs/measurements/excel-bit-test-comparison-2026-10-25.host-sample.zst",
+      "rawBytes": 401353,
+      "rawSha256": "f6ec6e2d7cc48c244731b0cf3170329719e633f9dfd66890b4d485e5a0570d97",
+      "compressedBytes": 52345,
+      "compressedSha256": "0ce9db4c902a9041cda85ef808b018879c41660bb0de527ec3a9b074cbb42b97"
+    },
+    "guest-profile": {
+      "path": "docs/measurements/excel-bit-test-comparison-2026-10-25.guest-profile.zst",
+      "rawBytes": 632212,
+      "rawSha256": "4c6bece4817c3d2fc5c81054eea5291f10febb5f43c73c7f95d35f0e6b6be74a",
+      "compressedBytes": 36255,
+      "compressedSha256": "6a79de1b9e8f6fa2062aa39a4e3228af4d9f922475d3e85903038c99f7d466ca"
+    }
+  },
+  "hotCodeInspection": {
+    "path": "PROGRA~1   /MICROS~1   /OFFICE     /EXCEL   EXE",
+    "fileBytes": 5604624,
+    "sha256": "34edab3c7dec0b0d2d93fc679cdb1388272c41a989b6bd855ba594b156d4c070",
+    "imageBase": 805306368,
+    "sections": [
+      {
+        "name": ".text",
+        "rva": 4096,
+        "rawOffset": 1536,
+        "virtualBytes": 5490764,
+        "rawBytes": 5491200
+      },
+      {
+        "name": ".data",
+        "rva": 5496832,
+        "rawOffset": 5492736,
+        "virtualBytes": 44560,
+        "rawBytes": 20480
+      },
+      {
+        "name": ".idata",
+        "rva": 5541888,
+        "rawOffset": 5513216,
+        "virtualBytes": 18784,
+        "rawBytes": 18944
+      },
+      {
+        "name": ".rsrc",
+        "rva": 5562368,
+        "rawOffset": 5532160,
+        "virtualBytes": 72076,
+        "rawBytes": 72192
+      }
+    ],
+    "code": [
+      {
+        "address": 810631296,
+        "bytes": "da8bf7e90b2dc1ffc38b470435000000808bd0250000f07f74ee8b4e048bd98b3f568b3681e10000f07f74d32bc1760887f787da03c8f7d8c1f81466f7d86683f8360f87cb2cc1ff33d39f33d381e2ffff0f0081ca0000100081e3ffff0f8081cb00001000669133c00ac9741e80f9207211929780e920a9ffffff0074050d000000010fadf80fadd7d3ea0aed785203f713daf7c300002000741281c100001000782f0facf0010facde01d1fb6633c981e3ffff0f800bd90fbae60013c00f844f2cc1ff83d60083d30072060f81412cc1ff5eb801000000c38b4704e930fffffff7d81bf71bdaf7c300002000740b81f3ffffff7ff7def513d8f7c300001000"
+      },
+      {
+        "address": 806520192,
+        "bytes": "8b147385d274c5662b432203d08d34d38b460483e00e0f84fbfeffffff05b4235430ff2445189012308b02a38c2354308b4204a39023543056ff144d349012305ee973ffffffbfd0235430be8c235430a5a5a1e4425430a3e8425430c333c0a3d0235430a3d4235430c20400525657538bf98bf2ffd05b5f5e5a25ffff00000f8589e33e00c3dbe3837c2404007412ff15ec9a543086e0c1c81086e0a3d2f5533033c0837c2408007430b807000000dd0540245430dc3540911230dc0d40911230dc1d40245430509bdd3c249bf6442401407505b80100000059a3cc235430c20800dd05d0235430d9f1dd1dd0235430b908000000e854050000c353565725ff"
+      }
+    ],
+    "scope": "On-disk Excel PE bytes at sampled virtual addresses; not a live post-fault RAM read"
+  },
+  "shortFragmentFinding": {
+    "sampledAddresses": [
+      "0x30514103",
+      "0x30514106",
+      "0x30514109"
+    ],
+    "onDiskSequence": [
+      "SHRD EAX,EDI,CL",
+      "SHRD EDI,EDX,CL",
+      "SHR EDX,CL"
+    ],
+    "policy": "Jit::compile rejects IR fragments shorter than three instructions except specific comparisons, counter branches, calls/returns and indirect jumps. The unsupported D3 runtime shift ends this two-SHRD fragment.",
+    "evidenceLimit": "Bytes were read from installed Excel PE sections at sampled RVAs; not from live post-fault guest RAM. ModRM operand groups in the runtime profile agree with both source registers."
+  },
+  "excludedHostSample": {
+    "path": "build/excel-bit-test-comparison/host-profile/run-0/sample.txt",
+    "reason": "The required named profiler attachment barrier was missing; rejected by the harness. Retry with 10-second barrier passed and excluded 7652 barrier samples.",
+    "ownedPrivateDiskRemoved": true
+  },
+  "initialCodeInspector": {
+    "result": "Before-task checkpoint had a nonresident sampled code page, so CPU::read faulted. No performance or code-byte conclusion was drawn from that attempt; its owned private disk was removed.",
+    "replacement": "Read only the relevant on-disk PE sections through the immutable Office chain; no raw disk or RAM dump."
+  },
+  "fixtureEvidence": "docs/measurements/excel-recovered-task-2026-10-25.json"
+}

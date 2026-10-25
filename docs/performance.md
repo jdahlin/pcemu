@@ -1600,3 +1600,43 @@ identified opcode 0F BA among frequent fallbacks, but memory forms remain
 interpreted and application impact has not been measured.
 
 [Samples, frozen-source/binary hashes, build commands, kernel and integration evidence](measurements/native-bit-test-2026-10-25.json).
+
+## Excel recalculation after register bit tests (25 October)
+
+The recovered 4,096-row dependent-recalculation checkpoint restores useful
+application testing on the new external disk chain. Three alternating pairs
+use identical frozen whole-machine sources and headers; baseline substitutes
+only the pre-bit-test decoder, emitter and flag-liveness files. Every run starts
+from the same checkpoint and must render the exact changed SUM pixels.
+
+The median paired baseline/candidate ratio is **1.0361** for response latency
+and **1.0379** for execution-batch wall time. All three pairs favor the candidate;
+response ratios range from 1.0193 to 1.0725. Native coverage changes from about
+88.37% to 88.98%. This is a modest observed improvement on one loaded Excel
+task, with three pairs and no confidence interval. It does not demonstrate a
+general application speedup or Rosetta parity. Restore readiness, control and
+capture costs remain separately visible in the raw results.
+
+A normal-binary host sample covers 14,353 task samples after excluding 7,652
+attachment-barrier samples: interpreter 21.7%, JIT dispatch/cache 19.5%,
+capture/video/control 19.2%, other main-loop work 15.8%, device polling 12.6%,
+generated code/helpers 10.5%, compilation 0.5%, disk/compression 0.2%. These
+are host-time categories from a sampled automated task, including capture
+overhead; guest native coverage is not a host-time percentage. An initial
+sample without the required barrier was rejected and excluded.
+
+A separate instrumented run records 155,012,297 interpreter attempts. Frequent
+fallbacks include FF indirect CALL, register ADC (0x13), register SHRD CL,
+variable shifts and LAHF. In the sampled Excel routine, on-disk PE bytes show
+two adjacent SHRD instructions followed by unsupported `SHR EDX,CL`. The
+current minimum-length rule rejects the resulting two-instruction fragment;
+this explains why native lowering alone does not eliminate these SHRD
+fallbacks. Nearby LAHF/ADC gaps break additional short sequences. Runtime
+ModRM counts corroborate the two SHRD source registers; the code inspection
+used installed PE sections, rather than a live post-fault RAM dump. These
+findings identify the next experiments; no policy change is claimed here.
+
+All timing/profile guests and inspector sessions are stopped, and their owned
+private disk children are removed. The reusable compressed checkpoint is
+retained externally.
+[Paired runs, host/guest profiles, hashes and hot-code evidence](measurements/excel-bit-test-comparison-2026-10-25.json).
