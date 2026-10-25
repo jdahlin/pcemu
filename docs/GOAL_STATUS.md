@@ -1011,3 +1011,20 @@ gates. Successful private disks are removed. A RAM-only rendering run records
 Excel CPU ratios improve but vary widely under host load; this establishes
 cheaper presentation, not faster x86 execution or Rosetta parity. The goal
 remains active. See `vga-frame-rendering.md` and its raw measurements.
+
+
+## JIT cache-store pilot and proposed performance references (25 October)
+
+A conditional fast-slot publication candidate retained all dispatch guards but
+did not earn adoption: six of eight RAM CALL/RET case medians were below the
+baseline/candidate ratio of one. The short shared-host pilot does not establish
+a precise application effect. The JIT runtime is restored byte-identically,
+with patch, commands, hashes and raw times retained in
+`measurements/jit-cache-publish-rejected-2026-10-25.json`.
+
+The user's performance-target question is documented in `performance-targets.md`:
+proposed Pentium 133–200 experience and matched QEMU TCG system-emulation
+comparisons, with no claimed historical CPU rating. The current eight-visit JIT
+warmup is verified in main.cpp; higher thresholds need a workload experiment,
+not analogy to JS. These proposed references do not replace the requested
+compatibility or performance work. The broader goal stays active.

@@ -1,0 +1,684 @@
+{
+  "scope": "RAM-only register CALL/RET checksum loop, no guest OS or devices; not an application speedup or Rosetta comparison",
+  "startedUnix": 1792967065.066561,
+  "loadBefore": [
+    3.41455078125,
+    4.21533203125,
+    4.015625
+  ],
+  "hostContention": "Shared desktop host; no concurrent benchmark or compiler started by this task; other work may run",
+  "pairs": [
+    {
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.049729
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0437838
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0404309
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0435512
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0399835
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0442598
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0399196
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0431397
+        }
+      ],
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.06405
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0453362
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0410182
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0458027
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0411886
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0457676
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0403809
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0456476
+        }
+      ],
+      "ratios": [
+        0.7764090554254489,
+        0.965758047652869,
+        0.9856819655665047,
+        0.9508435092254386,
+        0.9707419043133294,
+        0.9670552967601536,
+        0.9885762823513097,
+        0.9450595431085095
+      ]
+    },
+    {
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0408715
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0461133
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0406472
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.046247
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0388616
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.046315
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0395616
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0466438
+        }
+      ],
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0401887
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0442313
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.040598
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0440212
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.042308
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0449957
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.040464
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.044832
+        }
+      ],
+      "ratios": [
+        0.9832939823593458,
+        0.959187479534104,
+        0.9987895845224272,
+        0.951871472744178,
+        1.0886839450768881,
+        0.9715146280902515,
+        1.0228099975734044,
+        0.9611566810594333
+      ]
+    },
+    {
+      "baseline": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0402887
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.043951
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0415412
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0439514
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.040762
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.044587
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0413711
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.044628
+        }
+      ],
+      "candidate": [
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0377928
+        },
+        {
+          "code32": 0,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0438178
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.039505
+        },
+        {
+          "code32": 0,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 33920,
+          "seconds": 0.0439835
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0397819
+        },
+        {
+          "code32": 1,
+          "stack32": 0,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0444432
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 0,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0394205
+        },
+        {
+          "code32": 1,
+          "stack32": 1,
+          "paging": 1,
+          "loops": 2000000,
+          "instructions": 10000000,
+          "native": 9999965,
+          "checksum": 2000000,
+          "seconds": 0.0459458
+        }
+      ],
+      "ratios": [
+        1.0660416798966998,
+        1.0030398605133073,
+        1.0515428426781421,
+        0.9992701808632782,
+        1.0246368323282697,
+        1.0032355905965367,
+        1.0494818685709213,
+        0.9713183794819112
+      ]
+    }
+  ],
+  "source": "#include \"jit.hpp\"\n#include <algorithm>\n#include <chrono>\n#include <iostream>\n#include <stdexcept>\nusing namespace pc;\nint main(int argc,char **argv) {\n try {\n  unsigned loops=argc>1?std::stoul(argv[1]):1000000;\n  bool enabled=argc<3 || std::string(argv[2])!=\"interpreter\";\n  if(!loops || loops>10000000) throw std::runtime_error(\"Invalid loop count\");\n  std::cout << \"[\";\n  bool first=true;\n  for(bool code32:{false,true}) for(bool stack32:{false,true}) for(bool paging:{false,true}) {\n   CPU c(1024*1024);\n   c.cr[0]=0x11;\n   c.s[CS].big=code32; c.s[CS].limit=code32?UINT32_MAX:65535;\n   c.s[SS].big=stack32; c.s[SS].base=0x10000; c.s[SS].limit=UINT32_MAX;\n   c.r[AX]=0x100; c.r[CX]=loops; c.r[DX]=0; c.r[SP]=0x7000;\n   std::vector<uint8_t> code={0xff,0xd0};\n   if(!code32) code.push_back(0x66);\n   code.insert(code.end(),{0x83,0xe9,1,0x75,uint8_t(-int(code.size()+5))});\n   auto end=code.size(); code.push_back(0xf4);\n   std::copy(code.begin(),code.end(),c.mem.begin());\n   c.mem[0x100]=0x83;c.mem[0x101]=0xc2;c.mem[0x102]=1;c.mem[0x103]=0xc3;\n   if(paging) {\n    c.write(0x80000,0x81007,4);\n    for(unsigned p=0;p<256;++p)c.write(0x81000+4*p,(p<<12)|7,4);\n    c.cr[3]=0x80000;c.cr[0]|=0x80000000;c.flushTLB();\n   }\n   Jit jit(c,enabled);\n   auto start=std::chrono::steady_clock::now();\n   while(c.ip!=end && c.instructions<=uint64_t(loops)*5)jit.run();\n   double sec=std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();\n   if(c.ip!=end || c.r[CX] || c.r[DX]!=(code32?loops:loops&65535) || c.r[SP]!=0x7000 || c.instructions!=uint64_t(loops)*5)\n    throw std::runtime_error(\"CALL/RET count, stack, destination or checksum mismatch\");\n   if(!first)std::cout << \",\";first=false;\n   std::cout << \"{\\\"code32\\\":\"<<code32<<\",\\\"stack32\\\":\"<<stack32<<\",\\\"paging\\\":\"<<paging<<\",\\\"loops\\\":\"<<loops<<\",\\\"instructions\\\":\"<<c.instructions<<\",\\\"native\\\":\"<<jit.nativeInstructions<<\",\\\"checksum\\\":\"<<c.r[DX]<<\",\\\"seconds\\\":\"<<sec<<\"}\"<<std::flush;\n  }\n  std::cout << \"]\\n\";\n }catch(const std::exception &e){std::cerr<<e.what()<<'\\n';return 1;}\n}\n",
+  "commands": {
+    "baseline": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/vga-frame/source",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/vga-frame/source/jit_arm64.cpp",
+      "build/reg-call/ram.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/ram-baseline"
+    ],
+    "candidate": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/dispatch-publish/source",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/source/jit_arm64.cpp",
+      "build/reg-call/ram.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/dispatch-publish/ram-candidate"
+    ]
+  },
+  "binarySha256": {
+    "baseline": "93b81b9edac1d9d6fee0a83b60cc16fe5fdb9af4b15d859ce2a79e8b6a473372",
+    "candidate": "9e880c882abe3163cfb3b73bb8c428bfb3c7441e267e0ca4ecbb5c373daa8d97"
+  },
+  "medianPairedRatioByCase": [
+    0.9832939823593458,
+    0.965758047652869,
+    0.9987895845224272,
+    0.951871472744178,
+    1.0246368323282697,
+    0.9715146280902515,
+    1.0228099975734044,
+    0.9611566810594333
+  ],
+  "diagnosticInterpreter": [
+    {
+      "code32": 0,
+      "stack32": 0,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 4.084e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 0,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 2.333e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 1,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.834e-06
+    },
+    {
+      "code32": 0,
+      "stack32": 1,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.834e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 0,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.916e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 0,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.709e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 1,
+      "paging": 0,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.667e-06
+    },
+    {
+      "code32": 1,
+      "stack32": 1,
+      "paging": 1,
+      "loops": 17,
+      "instructions": 85,
+      "native": 0,
+      "checksum": 17,
+      "seconds": 1.708e-06
+    }
+  ],
+  "loadAfter": [
+    3.46142578125,
+    4.21142578125,
+    4.01513671875
+  ],
+  "finishedUnix": 1792967067.7557278,
+  "candidatePatchRejected": "diff --git a/src/jit.cpp b/src/jit.cpp\nindex b37141e..a213d60 100644\n--- a/src/jit.cpp\n+++ b/src/jit.cpp\n@@ -131,7 +131,10 @@ uint32_t Jit::run() {\n             return 1;\n         }\n     }\n-    entry = {key, cached};\n+    // Fast hits already name this block. Avoid rewriting the lookup slot on\n+    // every dispatch; compilation can clear the table, so inspect it again.\n+    if (entry.key != key || entry.block != cached)\n+        entry = {key, cached};\n     auto &b = *cached;\n     if (!b.fn) {\n         profile::event(profile::InterpretedDispatch);\n",
+  "decision": "Reject runtime change: six of eight case medians regress. Short RAM-only pilot; no application speedup established. Restore src/jit.cpp byte-identical to HEAD; do not infer that removing all redundant stores is unhelpful.",
+  "testLimitations": "Three alternating pairs, two million loop iterations per case, shared desktop host. Very short per-case intervals; this rejects an unsupported optimization rather than proving a precise regression."
+}
