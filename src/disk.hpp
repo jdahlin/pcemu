@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include "vhdx.hpp"
+#include "qcow2.hpp"
 namespace pc {
 struct Disk {
     std::string path;
@@ -32,6 +33,7 @@ struct Disk {
     };
     std::unique_ptr<Disk> parent;
     std::unique_ptr<Vhdx> vhdx;
+    std::unique_ptr<Qcow2> qcow2;
     std::unordered_map<uint64_t, Block> blocks;
     bool readOnly = false;
     uint64_t headerSize = 0, liveBytes = 0, fileBytes = 0;

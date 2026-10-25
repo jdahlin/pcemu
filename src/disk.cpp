@@ -113,6 +113,11 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth)
             liveBytes += 24 + size;
             at += 24 + size;
         }
+    } else if (!std::memcmp(signature, "QFI\xfb", 4)) {
+        if (fd) throw std::runtime_error("QCOW2 cannot be used as a floppy");
+        if (!ro) throw std::runtime_error("QCOW2 requires read-only access; create a COW overlay for writes");
+        qcow2 = std::make_unique<Qcow2>(path, fileBytes);
+        sectors = qcow2->size() / 512;
     } else if (!std::memcmp(signature, "vhdxfile", 8)) {
         if (fd) throw std::runtime_error("VHDX cannot be used as a floppy");
         vhdx = std::make_unique<Vhdx>(path, fileBytes, !ro);
@@ -222,6 +227,10 @@ bool Disk::read(uint64_t lba, unsigned count, uint8_t *data) {
     if (lba >= sectors || count > sectors - lba)
         return false;
     try {
+        if (qcow2) {
+            qcow2->read(lba * 512, {data, size_t(count) * 512});
+            return true;
+        }
         if (vhdx) {
             vhdx->read(lba * 512, {data, size_t(count) * 512});
             return true;

@@ -268,3 +268,19 @@ the previous input/video checkpoint. See [networking](docs/networking.md).
 Local storage was reduced from about 15 GiB to 3.4 GiB while preserving original
 archives, current boot disks and snapshots. Smoke tests now discard successful
 scratch disks by default. See [storage cleanup](docs/storage.md).
+
+QCOW2 v2/v3 images are detected by their header and supported as read-only,
+parentless base disks (standard, uncompressed L1/L2 clusters, including sparse
+and v3 zero clusters). To run a writable guest, create a native overlay:
+
+```sh
+./build/disk-tool overlay build/guest.pcd /path/to/base.qcow2
+./build/pcemu --disk build/guest.pcd
+```
+
+Keep the base image with its overlay. Direct QCOW2 writes, backing-file chains,
+encryption, compressed clusters and incompatible feature flags (including dirty
+images and extended L2 entries) are unsupported. Unsupported headers fail at
+open; unsupported cluster descriptors fail the read. Validate with
+`make test-qcow2`; `make test-qcow2-interop` additionally checks small images
+created by `qemu-img`. Mapping follows the [QEMU QCOW2 specification](https://www.qemu.org/docs/master/interop/qcow2.html).

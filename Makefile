@@ -231,3 +231,20 @@ HARDWARE_MODELS := src/ata.cpp src/disk.cpp src/pic.cpp src/i8259_pair.cpp src/p
 build/hardware-device-tests: $(HARDWARE_MODELS) $(HEADERS) tests/hardware_devices_test.cpp
 	@mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(HARDWARE_MODELS) tests/hardware_devices_test.cpp $(shell pkg-config --libs libzstd) -o $@
+
+.PHONY: test-qcow2
+test-qcow2: build/qcow2-tests
+	./build/qcow2-tests
+
+build/qcow2-tests: src/disk.cpp src/disk.hpp src/qcow2.hpp src/vhdx.hpp tests/qcow2_test.cpp
+	@mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) src/disk.cpp tests/qcow2_test.cpp $(shell pkg-config --libs libzstd) -o $@
+
+# Keep the format checks in both regular and HVF validation suites.
+test test-hvf: test-qcow2
+
+.PHONY: test-qcow2-interop
+test-qcow2-interop: build/qcow2-tests
+	python3 tests/test_qcow2_interop.py
+
+build/pcemu-hvf build/virtio-tests build/vhdx-tests build/nvme-tests build/virtio-rng-tests build/disk-progress-tests: src/qcow2.hpp
