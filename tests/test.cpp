@@ -1441,6 +1441,84 @@ int main() {
             check(denied,
                   "cached native code cannot bypass changed fetch permissions after TLB flush");
         }
+        // Cached instruction-fetch translation must retain the reference
+        // permissions, segment fault priority, A20 and TLB invalidation rules.
+        for (unsigned access = 0; access < 4; ++access)
+            for (unsigned permissions : {0u, 2u, 4u, 6u})
+                for (unsigned mutation = 0; mutation < 6; ++mutation)
+                    for (bool a20 : {false, true}) {
+                        CPU ref(2 * 1024 * 1024), native(2 * 1024 * 1024);
+                        constexpr uint32_t linear = 0x12020, pte = 0x81048;
+                        for (auto c : {&ref, &native}) {
+                            c->cr[0] = 0x80000011;
+                            c->cr[3] = 0x80000;
+                            c->s[CS].base = 0x12000;
+                            c->s[CS].big = true;
+                            c->s[CS].selector = access ? 3 : 0;
+                            c->flags = access == 2 ? 0x20002 : 2;
+                            c->systemAccess = access == 3;
+                            c->a20 = a20;
+                            // Paging structures are below the A20 alias.
+                            c->mem[0x80000] = 7; c->mem[0x80001] = 0x10; c->mem[0x80002] = 8;
+                            c->mem[pte] = 7; c->mem[pte + 1] = 0x40; c->mem[pte + 2] = 0x10;
+                            const uint8_t code[] = {0x83, 0xc0, 1, 0x83, 0xc3, 1,
+                                                    0x83, 0xc2, 1, 0xeb, 0xf5};
+                            const uint8_t other[] = {0x83, 0xc0, 2, 0x83, 0xc3, 2,
+                                                     0x83, 0xc2, 2, 0xeb, 0xf5};
+                            std::copy(std::begin(code), std::end(code), c->mem.begin() + (a20 ? 0x104020 : 0x4020));
+                            std::copy(std::begin(other), std::end(other), c->mem.begin() + 0x5020);
+                            c->ip = 0x20;
+                            c->flushTLB();
+                        }
+                        Jit jit(native, true, 0);
+                        for (unsigned n = 0; n < 4; ++n) ref.step();
+                        check(jit.run() == 4, "paged fetch fixture warms a native block");
+                        for (auto c : {&ref, &native}) {
+                            c->r[AX] = c->r[BX] = c->r[DX] = 0;
+                            c->ip = 0x20;
+                            c->cr[2] = 0xdeadbeef;
+                            c->mem[pte] = 1 | permissions;
+                            auto &entry = c->tlb[((linear >> 12) ^ (linear >> 22)) & (c->tlb.size() - 1)];
+                            entry.permissions = permissions;
+                            if (mutation == 1) entry.tag ^= 1;
+                            if (mutation == 2) entry.epoch ^= 1;
+                            if (mutation == 3) {
+                                // A new CR3 must not reuse the old cached frame.
+                                c->mem[0x82000] = 7; c->mem[0x82001] = 0x30; c->mem[0x82002] = 8;
+                                c->mem[0x83048] = 1 | permissions; c->mem[0x83049] = 0x50;
+                                c->cr[3] = 0x82000;
+                            }
+                            if (mutation == 4) {
+                                c->mem[pte + 1] = 0x50; c->mem[pte + 2] = 0;
+                                c->flushTLB();
+                            }
+                            if (mutation == 5) c->s[CS].unusable = true;
+                        }
+                        struct FetchStop {};
+                        unsigned faults[2]{};
+                        Fault observed[2]{};
+                        ref.observeFault = [&](const Fault &f) { ++faults[0]; observed[0] = f; throw FetchStop{}; };
+                        native.observeFault = [&](const Fault &f) { ++faults[1]; observed[1] = f; throw FetchStop{}; };
+                        try { for (unsigned n = 0; n < 4; ++n) ref.step(); } catch (const FetchStop &) {}
+                        try { jit.run(); } catch (const FetchStop &) {}
+                        const bool segmentFault = mutation == 5 && access != 2;
+                        const bool pageFault = !segmentFault && (access == 1 || access == 2) && !(permissions & 4);
+                        check(faults[0] == unsigned(segmentFault || pageFault) && faults[1] == faults[0],
+                              "cached fetch checks current read permissions and segment usability");
+                        if (faults[0])
+                            check(observed[0].vector == (segmentFault ? 13 : 14) &&
+                                  observed[0].error == (segmentFault ? 0 : 5) &&
+                                  observed[1].vector == observed[0].vector && observed[1].error == observed[0].error,
+                                  "cached fetch retains precise segment-before-page fault priority");
+                        else
+                            check(native.r[AX] == (mutation == 3 || mutation == 4 ? 2u : 1u),
+                                  "cached fetch selects the current mapped code including A20 aliases");
+                        check(native.cr[2] == ref.cr[2] && native.cr[2] == (pageFault ? linear : 0xdeadbeefu) &&
+                              native.ip == ref.ip && native.flags == ref.flags && native.instructions == ref.instructions,
+                              "cached fetch preserves restart IP, CR2, flags and instruction count");
+                        for (unsigned reg = 0; reg < 8; ++reg)
+                            check(native.r[reg] == ref.r[reg], "cached fetch matches reference registers");
+                    }
         {
             CPU hot;
             program(hot, {0xb8, 1, 0, 0xb9, 3, 0, 0xba, 4, 0});

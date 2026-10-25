@@ -7,6 +7,24 @@
 #endif
 namespace pc {
 using jit_detail::Kind;
+// The dispatcher asks for this on every cached paged block entry. Reuse a
+// current permitted read translation without the address()/physical() call
+// pair; misses and segment faults retain the reference CPU's slow path.
+static inline uint32_t instructionPage(CPU &cpu) {
+    const auto &cs = cpu.s[CS];
+    if (!(cpu.cr[0] & 1) || (cpu.flags & 0x20000) || !cs.unusable) {
+        const uint32_t linear = cs.base + cpu.ip;
+        const uint32_t page = linear >> 12;
+        const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size() - 1)];
+        if (cpu.tlbCR3 == cpu.cr[3] && entry.epoch == cpu.tlbEpoch && entry.tag == page &&
+            ((entry.permissions & 4) || cpu.cpl() != 3 || cpu.systemAccess)) {
+            uint32_t physical = entry.base | (linear & 4095);
+            if (!cpu.a20) physical &= ~(1u << 20);
+            return physical >> 12;
+        }
+    }
+    return cpu.physical(cpu.address(CS, cpu.ip)) >> 12;
+}
 Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes, BlockMode mode)
     : cpu(c), capacity(arenaBytes), warmup(heat), blockMode(mode) {
     if (capacity < 65536)
@@ -68,7 +86,7 @@ uint32_t Jit::run() {
     bool checkedPage = false;
     if ((cpu.cr[0] & 0x80000000u) && cached && (cached->fn || cached->tlbEpoch != cpu.tlbEpoch)) {
         try {
-            currentPage = cpu.physical(cpu.address(CS, cpu.ip)) >> 12;
+            currentPage = instructionPage(cpu);
             checkedPage = true;
         } catch (const Fault &) {
             cpu.step(); // Deliver #PF with the interpreter's restartable frame.

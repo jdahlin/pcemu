@@ -926,3 +926,21 @@ now attributes 28.5% to dispatch/cache checks, 17.9% native/helpers, 16.9% devic
 polling and 11.5% interpreter. The goal remains active; application speed and
 fresh-installer validation for subsequent runtime changes remain separate gates.
 See `measurements/excel-register-call-2026-10-25.json` and `near-call.md`.
+
+
+## Inline cached instruction-fetch validation (25 October)
+
+The dispatcher resolves current permitted paged TLB hits inline, retaining the
+reference CPU path for misses and faults and all existing block identity guards.
+A 192-case reference comparison adds 2,304 checks across permissions, privilege,
+VM86/system access, A20, TLB misses, CR3/remapping and unusable CS. Core checks
+(354,948), stack/JIT (33,360), DOS, Win3.11 persistence and both Win95 application/
+restart/exact-file checks pass. Successful private disks are removed.
+
+All twelve Excel tasks match expected pixels. Six pairs observe median response/
+execution-wall speed ratios of 1.097/1.123, with large shared-host timing drift;
+these are not general application performance guarantees. Native coverage is
+unchanged. A diagnostic host profile shows dispatch/cache attribution at 21.4%
+versus 28.5% previously, with fewer address/physical helper samples. The goal
+remains active; the latest candidate has not rerun fresh Win95 Setup. See
+`jit-fetch-validation.md` and `measurements/jit-fetch-tlb-2026-10-25.json`.
