@@ -340,3 +340,12 @@ build/arm-hyperv-shutdown-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_shutdown_integration_test.cpp -o $@
 test test-hvf: test-arm-hyperv-shutdown-integration
+
+# Portable reference-clock page contract; native advertisement is separate.
+.PHONY: test-arm-hyperv-reference-clock
+test-arm-hyperv-reference-clock: build/arm-hyperv-reference-clock-tests
+	./build/arm-hyperv-reference-clock-tests
+build/arm-hyperv-reference-clock-tests: src/arm_hyperv_reference_clock.cpp src/arm_hyperv_reference_clock.hpp tests/arm_hyperv_reference_clock_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_reference_clock.cpp tests/arm_hyperv_reference_clock_test.cpp -o $@
+test test-hvf: test-arm-hyperv-reference-clock
