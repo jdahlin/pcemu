@@ -139,11 +139,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.imm = 1;
                 if (op == 0xfe || op == 0xff) {
                     auto m = byte();
-                    if (op == 0xff && ((m >> 3) & 7) == 2 && (m >> 6) == 3) {
+                    if (op == 0xff && ((m >> 3) & 7) == 2) {
                         i.kind = Kind::Memory;
                         i.nearCall = i.indirectCall = i.memory.store = true;
+                        i.memoryCall = (m >> 6) != 3;
+                        if (i.memoryCall) {
+                            i.callPointer = memoryOperand(m, address32, overrideSegment);
+                            i.callPointer.width = w;
+                            i.callPointer.begin = begin;
+                        } else i.src = m & 7;
                         i.imm = pos;
-                        i.src = m & 7;
                         i.stackDelta = -w;
                         i.memory.base = SP;
                         i.memory.segment = SS;

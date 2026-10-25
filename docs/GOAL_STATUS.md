@@ -1028,3 +1028,22 @@ comparisons, with no claimed historical CPU rating. The current eight-visit JIT
 warmup is verified in main.cpp; higher thresholds need a workload experiment,
 not analogy to JS. These proposed references do not replace the requested
 compatibility or performance work. The broader goal stays active.
+
+
+## Native memory-indirect near CALL (25 October)
+
+The measured hot `FF /2` memory form now reads its pointer through the guarded
+RAM helper, checks the target and uses the existing native stack-store path.
+Old ESP addressing, pointer/return-slot aliases, CS-before-stack validation,
+MMIO/fault replay and self-modifying stack writes retain restartable behavior.
+8,677 new differential checks, 33,360 stack checks and 354,948 core checks pass.
+Headless DOS, Win3.11 and both rtts/installed OSR2 application persistence and
+restart gates pass; temporary disks are removed.
+
+Three matched RAM-only pairs show 1.47–1.72× case-median CALL/RET kernel
+speedups. Excel native coverage rises from about 97.69% to 98.41%. Six process
+CPU pairs have four favorable and two unfavorable results, with wide shared-host
+variation; the median ratio 1.068 is exploratory, not a stable general gain.
+Fresh Setup was not repeated under this lowering and remains a final gate.
+The full goal stays active. See `memory-indirect-call.md` and
+`measurements/native-memory-call-2026-10-25.json`.

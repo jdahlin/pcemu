@@ -15,13 +15,13 @@ struct Instruction {
     bool immediate;
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
-    bool indirectJump = false, indirectCall = false;
+    bool indirectJump = false, indirectCall = false, memoryCall = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;
     bool negate = false; // Register NEG uses the ordinary 0 - operand flag path.
     bool predictedTaken = false; // Trace path only; terminal branches use imm/end.
     uint32_t target = 0;
-    NativeMemoryMove memory;
+    NativeMemoryMove memory, callPointer;
 };
 struct DecodedBlock {
     std::vector<Instruction> instructions;

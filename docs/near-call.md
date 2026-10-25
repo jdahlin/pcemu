@@ -76,3 +76,10 @@ the task harness, not isolated CPU timings or a general application profile.
 Dispatch validation and polling now warrant investigation alongside memory CALL.
 
 [Windows validation, complete paired Excel results and compressed profiles](measurements/excel-register-call-2026-10-25.json).
+
+
+Memory-indirect `FF /2` now has native lowering as well. A guarded RAM pointer
+read precedes the existing native push, with operand aliasing and two-access
+fault/MMIO replay tests. See [current memory CALL validation](memory-indirect-call.md);
+the earlier statement that memory CALL remains interpreted describes the prior
+register-only implementation.

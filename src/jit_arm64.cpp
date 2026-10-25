@@ -51,7 +51,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
-        if (i.indirectCall) usedRegisters |= 1u << i.src;
+        if (i.indirectCall && !i.memoryCall) usedRegisters |= 1u << i.src;
+        if (i.memoryCall) {
+            if (i.callPointer.base >= 0) usedRegisters |= 1u << i.callPointer.base;
+            if (i.callPointer.index >= 0) usedRegisters |= 1u << i.callPointer.index;
+        }
         if (i.kind == Kind::DoubleShift && !i.immediate)
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch)
@@ -259,10 +263,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     };
     auto neededFlags = jit_detail::analyzeFlagLiveness(ir);
     block.memory = std::make_shared<std::vector<NativeMemoryMove>>();
-    block.memory->reserve(ir.size());
+    block.memory->reserve(ir.size() + unsigned(ir.back().memoryCall));
     for (auto i : ir)
-        if (i.kind == Kind::Memory)
+        if (i.kind == Kind::Memory) {
+            if (i.memoryCall) block.memory->push_back(i.callPointer);
             block.memory->push_back(i.memory);
+        }
     size_t memoryIndex = 0;
     unsigned dirtyRegisters = 0;
     auto flushRegisters = [&](unsigned dirty) {
@@ -587,16 +593,36 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             continue;
         }
         if (i.kind == Kind::Memory) {
-            size_t invalidCall = size_t(-1);
+            std::vector<size_t> invalidCalls;
             if (i.nearCall) {
-                if (i.indirectCall) {
+                if (i.memoryCall) {
+                    // Read the target with the old SP/ESP and guarded RAM-only
+                    // semantics. A later stack failure may replay this plain RAM
+                    // read; no device callback or guest write has occurred.
+                    const auto &op = i.callPointer;
+                    imm(2, op.displacement);
+                    if (op.base >= 0)
+                        emit(0x0b000000u | ((20 + op.base) << 16) | (2 << 5) | 2);
+                    if (op.index >= 0)
+                        emit(0x0b000000u | ((20 + op.index) << 16) | (op.scale << 10) | (2 << 5) | 2);
+                    if (!op.address32) extract(2, 2, 2, 0);
+                    emit(0xaa1303e0u);
+                    pointer(1, reinterpret_cast<uintptr_t>(&(*block.memory)[memoryIndex++]));
+                    imm(3, 0);
+                    imm(4, block.page);
+                    imm(5, block.generation);
+                    call(reinterpret_cast<uintptr_t>(&nativeMemory));
+                    invalidCalls.push_back(code.size()); emit(0x34000000u); // cbz w0,replay
+                    load(9, 19, offsetof(CPU, nativeValue));
+                    store(9, 31, 108);
+                } else if (i.indirectCall) {
                     // Capture the target before the push changes SP/ESP.
                     extract(9, 20 + i.src, i.w, 0);
                     store(9, 31, 108);
                 } else imm(9, i.target);
                 load(10, 19, offsetof(CPU, s) + CS * sizeof(Segment) + offsetof(Segment, limit));
                 emit(0x6b00001fu | (10 << 16) | (9 << 5));
-                invalidCall = code.size(); emit(0x54000008u); // b.hi replay before stack write
+                invalidCalls.push_back(code.size()); emit(0x54000008u); // b.hi replay before stack write
             }
             if (i.memory.delta) {
                 // INC/DEC preserve CF. Publish the preceding flags before any
@@ -849,8 +875,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             exits.push_back(code.size());
             emit(0x14000000u);
             code[fallback] |= uint32_t(code.size() - fallback) << 5;
-            if (invalidCall != size_t(-1)) {
-                code[invalidCall] |= uint32_t(code.size() - invalidCall) << 5;
+            if (!invalidCalls.empty()) {
+                for (auto at : invalidCalls)
+                    code[at] |= uint32_t(code.size() - at) << 5;
                 static_assert(offsetof(CPU, nativeFallback) < 4096);
                 imm(9, 1);
                 emit(0x39000000u | (offsetof(CPU, nativeFallback) << 10) | (19 << 5) | 9);
