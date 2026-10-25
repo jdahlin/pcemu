@@ -1,6 +1,7 @@
 #include "usb_xhci.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <sstream>
 namespace pc {
 namespace {
 void access(uint64_t o, unsigned w, unsigned size) {
@@ -24,7 +25,12 @@ UsbXhci::UsbXhci(std::span<uint8_t> r, uint64_t b, std::function<void(bool)> i)
 }
 void UsbXhci::range(uint64_t a, uint64_t n) const {
     if (a < ramBase || n > ram.size() || a - ramBase > ram.size() - n)
-        throw std::runtime_error("xHCI DMA outside guest RAM");
+    {
+        std::ostringstream detail;
+        detail << "xHCI DMA outside guest RAM: address=0x" << std::hex << a
+               << " length=0x" << n;
+        throw std::runtime_error(detail.str());
+    }
 }
 uint64_t UsbXhci::get(uint64_t a, unsigned w) const {
     range(a, w);
@@ -533,20 +539,29 @@ void UsbXhci::transfer(unsigned id, unsigned ep) {
         } else if ((type == 3 || type == 1) && ep == 1) {
             if (type == 3 ? bool(t[3] & (1 << 16)) : s.controlIn) {
                 actual = std::min<size_t>(length, s.control.size());
-                range(ptr, actual);
-                std::copy_n(s.control.begin(), actual, ram.begin() + (ptr - ramBase));
+                if (actual) {
+                    range(ptr, actual);
+                    std::copy_n(s.control.begin(), actual, ram.begin() + (ptr - ramBase));
+                }
                 s.control.erase(s.control.begin(), s.control.begin() + actual);
                 if (actual < length)
                     cc = 13;
+            } else if (t[3] & 64) {
+                // OUT data may live inline in the TRB, including a zero LED
+                // byte. IDT is payload, never a guest physical DMA pointer.
+                if (length > 8) cc = 5;
+                else actual = length;
             } else {
-                range(ptr, length);
+                if (length) range(ptr, length);
                 actual = length;
             }
         } else if (type == 1 && ep == 3) {
             auto &q = pending[s.port - 1];
             actual = std::min<size_t>(length, s.port == 2 && !s.protocol ? 3 : q.front().size());
-            range(ptr, actual);
-            std::copy_n(q.front().begin(), actual, ram.begin() + (ptr - ramBase));
+            if (actual) {
+                range(ptr, actual);
+                std::copy_n(q.front().begin(), actual, ram.begin() + (ptr - ramBase));
+            }
             q.pop_front();
             ++reports;
             if (actual < length)

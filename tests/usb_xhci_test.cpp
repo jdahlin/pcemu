@@ -243,6 +243,19 @@ int main() {
     }
     {
         Guest g;
+        g.device(1);
+        // Windows initializes keyboard LEDs with inline OUT report data.
+        // IDT payload zero is not a DMA address at physical address zero.
+        g.trb(g.control, (uint64_t(1) << 48) | (uint64_t(0x200) << 16) | 0x921,
+              8, (2 << 10) | 64 | (2 << 16));
+        g.trb(g.control + 16, 0, 1, (3 << 10) | 64 | 16);
+        g.trb(g.control + 32, 0, 0, (4 << 10) | (1 << 16) | 32);
+        g.w(0x2004, 1);
+        assert(g.usb.error().empty());
+        assert(!(g.r(0x44) & 4));
+    }
+    {
+        Guest g;
         g.w(0x58, Guest::base + g.ram.size() + 1, 8);
         g.w(0x2000, 0);
         assert((g.r(0x44) & 5) == 5); // bad DMA halts controller, never touches host memory

@@ -20,6 +20,13 @@ now explicitly zeroes that field; preserving it in the old fixture hid this
 second failure. Snapshot diagnostics count host key/pointer events separately
 from delivered reports and show each slot's configuration and pending IN state.
 
+Windows' inline OUT control data is also supported. The Immediate Data (IDT)
+bit means a short report is stored in the TRB itself, not at the physical address
+represented by those bytes. Treating a zero LED report as DMA to address zero
+halted the controller after HID configuration. Regression coverage now includes
+this request, and zero-byte transfers no longer attempt DMA or form invalid
+host pointers. DMA failures report the failing guest address and length.
+
 Short descriptor responses also retain their Short Packet completion code at
 an Event Data TRB. The following status stage starts with a fresh byte count and
 completion status. These rules were checked against the
