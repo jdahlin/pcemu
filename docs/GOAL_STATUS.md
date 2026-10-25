@@ -622,3 +622,18 @@ with identical guest work and validated CRCs/durations. This remains a scoped
 flat integer result, not broad Windows/Rosetta performance. [Full evidence](measurements/native-memory-incdec-2026-10-25.json)
 is committed; successful compressed overlays and temporary baseline files are
 removed. Fresh installer validation on this exact binary remains unproven.
+
+
+## Native indirect jump validation (25 October)
+
+Near FF /4 register/memory JMP now runs natively, including mixed operand and
+address widths and guarded paged RAM. 17,861 differential checks include
+precise read/fetch faults, MMIO replay, A20 and code-generation exit targets.
+DOS kernels, Win3.11 save/DOS return and both Win95 Calculator/clipboard/
+Notepad save/restart/exact file checks pass headless on the candidate binary.
+Five complete-source baseline CoreMark pairs show median throughput +8.08%;
+this is flat computation, not a measured Windows speedup.
+Evidence: `docs/measurements/native-indirect-jump-2026-10-25.json`.
+Indirect calls, far transfers, block linking and broader MMU/flags work remain.
+The broad goal stays active; latest-binary fresh OSR2 installation and Rosetta
+performance equivalence remain unproven.

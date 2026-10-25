@@ -139,20 +139,33 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.imm = 1;
                 if (op == 0xfe || op == 0xff) {
                     auto m = byte();
-                    if (((m >> 3) & 7) > 1) {
+                    if (op == 0xff && ((m >> 3) & 7) == 4) {
+                        i.indirectJump = true;
+                        i.imm = 0;
+                        if ((m >> 6) == 3) {
+                            i.kind = Kind::IndirectJump;
+                            i.immediate = false;
+                            i.dst = i.src = m & 7;
+                        } else {
+                            i.kind = Kind::Memory;
+                            i.memory = memoryOperand(m, address32, overrideSegment);
+                        }
+                    } else if (((m >> 3) & 7) > 1) {
                         pos = begin;
                         break;
                     }
-                    i.w = op == 0xfe ? 1 : w;
-                    i.op = 8 + ((m >> 3) & 1);
-                    if ((m >> 6) != 3) {
-                        i.kind = Kind::Memory;
-                        i.memoryAlu = true;
-                        i.memory = memoryOperand(m, address32, overrideSegment);
-                        i.memory.store = true;
-                        i.memory.delta = i.op == 8 ? 1 : -1;
-                    } else
-                        i.dst = m & 7;
+                    if (!i.indirectJump) {
+                        i.w = op == 0xfe ? 1 : w;
+                        i.op = 8 + ((m >> 3) & 1);
+                        if ((m >> 6) != 3) {
+                            i.kind = Kind::Memory;
+                            i.memoryAlu = true;
+                            i.memory = memoryOperand(m, address32, overrideSegment);
+                            i.memory.store = true;
+                            i.memory.delta = i.op == 8 ? 1 : -1;
+                        } else
+                            i.dst = m & 7;
+                    }
                 } else {
                     i.dst = op & 7;
                     i.op = op < 0x48 ? 8 : 9;
@@ -417,7 +430,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn)
+            if (i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

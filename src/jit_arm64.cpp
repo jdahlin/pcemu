@@ -266,6 +266,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         if (i.kind == Kind::Nop)
             continue;
+        if (i.kind == Kind::IndirectJump) {
+            // Operand size selects the target width independently of CS.big.
+            extract(10, 20 + i.src, i.w, 0);
+            store(10, 19, offsetof(CPU, ip));
+            continue;
+        }
         if (i.kind == Kind::Branch) {
             if (i.dst >= 0 && n + 1 < ir.size()) {
                 finishFlags(last, -1, 0);
@@ -462,9 +468,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     insert(20 + SP, 11, block.stack32 ? 4 : 2, 0);
                     dirtyRegisters |= 1u << SP;
                 }
-                if (i.nearReturn) {
+                if (i.nearReturn || i.indirectJump) {
                     // Commit the dynamic destination only after a successful
-                    // stack read. Fault/MMIO replay retains the original IP.
+                    // pointer read. Fault/MMIO replay retains the original IP.
                     store(10, 19, offsetof(CPU, ip));
                 } else if (!i.memory.store) {
                     if (i.signedSource)
@@ -652,7 +658,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             // Successful memory access changed code: commit through this instruction.
             flushRegisters(dirtyRegisters);
             finishFlags(i.memoryAlu ? int(n) : last, -1, 0);
-            if (!i.nearReturn) {
+            if (!i.nearReturn && !i.indirectJump) {
                 imm(9, i.memory.end);
                 store(9, 19, offsetof(CPU, ip));
             }
@@ -712,7 +718,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     }
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == Kind::Branch;
-    if (!ir.back().nearReturn && ir.back().kind != Kind::CounterBranch) {
+    if (!ir.back().nearReturn && !ir.back().indirectJump && ir.back().kind != Kind::CounterBranch) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);

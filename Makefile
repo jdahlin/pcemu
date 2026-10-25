@@ -40,6 +40,8 @@ build/guest-bench: $(CORE) $(HEADERS) tools/guest_bench.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
 build/guest-bench-profile: $(CORE) $(HEADERS) tools/guest_bench.cpp
 	$(CXX) $(CPPFLAGS) -DPCEMU_PROFILE $(CXXFLAGS) $(CORE) tools/guest_bench.cpp $(shell pkg-config --libs libzstd) -o $@
+build/jit-jump-tests: $(CORE) $(HEADERS) tests/jit_jump_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_jump_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-rmw-tests: $(CORE) $(HEADERS) tests/jit_rmw_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CORE) tests/jit_rmw_test.cpp $(shell pkg-config --libs libzstd) -o $@
 build/jit-read-tests: $(CORE) $(HEADERS) tests/jit_read_test.cpp
@@ -49,7 +51,7 @@ build/frontend-tests: src/frontend.hpp src/frontend_sdl.cpp src/host_key.hpp tes
 build/io-port-space-tests: src/io_port_space.hpp tests/io_port_space_test.cpp
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) tests/io_port_space_test.cpp -o $@
-test: build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+test: build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
 	./build/hardware-device-tests
 	./build/i8042-tests
@@ -57,6 +59,7 @@ test: build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc
 	./build/io-port-space-tests
 	./build/frontend-tests
 	./build/jit-read-tests
+	./build/jit-jump-tests
 	./build/jit-rmw-tests
 	./build/network-tests
 	./build/integration-tests

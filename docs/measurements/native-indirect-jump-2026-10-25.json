@@ -1,0 +1,956 @@
+{
+  "scope": "Five alternating headless CoreMark pairs with complete pre-change baseline source at 83d1620; 15000 iterations, canonical CRC and DOS return. One-host flat integer computation, not Windows or Rosetta equivalence.",
+  "baselineRef": "83d1620",
+  "signature": [
+    "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8",
+    5962639001,
+    15000
+  ],
+  "runnerSha256": {
+    "baseline": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+    "candidate": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e"
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0657125930051263,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.62612275,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/indirect-jump-baseline-source/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              4.6142578125,
+              3.4912109375,
+              3.1181640625
+            ],
+            "loadAverageAfter": [
+              4.11474609375,
+              3.43408203125,
+              3.103515625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 959.9310231963972,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 14.662604958,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5905372336,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 285,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 811056,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              4.11474609375,
+              3.43408203125,
+              3.103515625
+            ],
+            "loadAverageAfter": [
+              3.79345703125,
+              3.39599609375,
+              3.0947265625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 1023.0105798366965,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.114447878221673,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 14.308854541,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5905372336,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 285,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 811056,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.79345703125,
+              3.39599609375,
+              3.0947265625
+            ],
+            "loadAverageAfter": [
+              3.25390625,
+              3.29443359375,
+              3.0634765625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 1048.3019417815465,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.946472583,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/indirect-jump-baseline-source/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.25390625,
+              3.29443359375,
+              3.0634765625
+            ],
+            "loadAverageAfter": [
+              3.1787109375,
+              3.2783203125,
+              3.06201171875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 940.6468999288907,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0808073694001183,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.393605167,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/indirect-jump-baseline-source/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.1787109375,
+              3.2783203125,
+              3.06201171875
+            ],
+            "loadAverageAfter": [
+              3.22509765625,
+              3.28076171875,
+              3.06640625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 974.4306052591377,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 14.242690791,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5905372336,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 285,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 811056,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.22509765625,
+              3.28076171875,
+              3.06640625
+            ],
+            "loadAverageAfter": [
+              3.6298828125,
+              3.365234375,
+              3.10009765625
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 1053.1717791330939,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0752287567284573,
+      "results": {
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 14.419167459,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5905372336,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 285,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 811056,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.6298828125,
+              3.365234375,
+              3.10009765625
+            ],
+            "loadAverageAfter": [
+              3.42822265625,
+              3.3310546875,
+              3.09130859375
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 1040.2819748540655,
+          "publishedScoreEligible": true
+        },
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.5039035,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/indirect-jump-baseline-source/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.42822265625,
+              3.3310546875,
+              3.09130859375
+            ],
+            "loadAverageAfter": [
+              3.35107421875,
+              3.31494140625,
+              3.0888671875
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 967.4982819649258,
+          "publishedScoreEligible": true
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baselineSecondsOverCandidateSeconds": 1.0825542676499784,
+      "results": {
+        "baseline": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 15.542027334,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5836732343,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 284,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 810592,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "9f338b1e1d2121cbb60aea65abc0add7255f96efb1beb1d4b04519ea69daface",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/indirect-jump-baseline-source/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              3.24267578125,
+              3.29296875,
+              3.08203125
+            ],
+            "loadAverageAfter": [
+              2.966796875,
+              3.22900390625,
+              3.06298828125
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 965.125055930493,
+          "publishedScoreEligible": true
+        },
+        "candidate": {
+          "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+          "jit": true,
+          "followJumps": true,
+          "traces": false,
+          "profiled": false,
+          "returnedToDos": true,
+          "crcValidated": true,
+          "microValidated": false,
+          "loops": 1000000,
+          "upstreamValidated": true,
+          "samples": [
+            {
+              "case": 1,
+              "hostSeconds": 14.356811292,
+              "guestInstructions": 5962639001,
+              "nativeInstructions": 5905372336,
+              "slowMemoryCalls": 0,
+              "compiledBlocks": 285,
+              "cacheRecycles": 0,
+              "residentNativeBytes": 811056,
+              "jitClearedBefore": false,
+              "checksumChecked": false,
+              "checksum": 0
+            }
+          ],
+          "runnerSha256": "b8a3a071b489f56b29423c08d695a151e9e1cfbc91a729a02de0fc3990ee053e",
+          "runnerPath": "/Users/johandahlin/dev/pcemu/build/guest-bench",
+          "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+          "gitDirty": true,
+          "host": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "machine": "arm64",
+            "logicalCpus": 10,
+            "loadAverageBefore": [
+              2.966796875,
+              3.22900390625,
+              3.06298828125
+            ],
+            "loadAverageAfter": [
+              2.751953125,
+              3.16796875,
+              3.0439453125
+            ]
+          },
+          "build": {
+            "suite": "coremark",
+            "upstream": "https://github.com/eembc/coremark",
+            "commit": "1f483d5b8316753a742cbf5590caf5bd0a4e4777",
+            "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+            "flags": [
+              "--target=i386-none-elf",
+              "-march=i386",
+              "-mno-sse",
+              "-mno-mmx",
+              "-msoft-float",
+              "-O2",
+              "-ffreestanding",
+              "-fno-builtin",
+              "-fno-pic",
+              "-fno-pie",
+              "-fno-stack-protector",
+              "-fno-asynchronous-unwind-tables",
+              "-DITERATIONS=15000",
+              "-I/Users/johandahlin/dev/pcemu/tests/guest_perf",
+              "-I/Users/johandahlin/dev/pcemu/tests/vendor/coremark"
+            ],
+            "iterations": 15000,
+            "comBytes": 11992,
+            "comSha256": "60f8ed6d8671abe1de371c145607999c369445b02fa9efcfca859f07da0c38e8"
+          },
+          "iterations": 15000,
+          "iterationsPerHostSecond": 1044.8002481134793,
+          "publishedScoreEligible": true
+        }
+      }
+    }
+  ],
+  "medianPairedThroughput": 1.0808073694001183,
+  "validation": {
+    "indirectJumpChecks": 17861,
+    "coreChecks": 343418,
+    "readJitChecks": 243295,
+    "rmwChecks": 947820,
+    "flagLivenessChecks": 237430,
+    "guestPerf": {
+      "coremarkCrcBothEngines": true,
+      "shortScoresRejected": true,
+      "microIntervalsBothEngines": 64,
+      "microResultsAndInstructionCountsMatch": true,
+      "wrongGuestChecksumRejected": true
+    },
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win311.raw",
+      "emulatorSha256": "719f1ddd163d2e547855b413bc19c9e47d8ac4101b8f5a256a319c084341592a",
+      "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 5672,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rtts": {
+      "pid": 78701,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-9u5ofk2r/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-9u5ofk2r/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-9u5ofk2r/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-9u5ofk2r/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "719f1ddd163d2e547855b413bc19c9e47d8ac4101b8f5a256a319c084341592a",
+      "profiled": false,
+      "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 469328280,
+        "afterInstructions": 1387978126,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\PE461FEB.TXT",
+          "fatName": "PE461FEBTXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications E461FEBD.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "2e157c9037229078d18b0bf3af5ddf94e722bce1b9274721760ddc185f1412fc"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    },
+    "osr2": {
+      "pid": 78694,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-cjhw1e8k/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-cjhw1e8k/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-cjhw1e8k/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-cjhw1e8k/state.json"
+      ],
+      "sourceDisk": "/Users/johandahlin/dev/pcemu/media/win95-fresh-installed.pcd",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "719f1ddd163d2e547855b413bc19c9e47d8ac4101b8f5a256a319c084341592a",
+      "profiled": false,
+      "gitCommit": "398aeeb0f87f4f55a282239f641964eed913d8d7",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 280013522,
+        "afterInstructions": 1174903915,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\PD39AA0B.TXT",
+          "fatName": "PD39AA0BTXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications D39AA0B8.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "cdb72c5201bf810b9596a32ee486be449c6deb2e96eace6ec570470b69d797ec"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    }
+  },
+  "sourceSha256": {
+    "src/jit.cpp": "1f313daf02131a465e98ca870ebf27203091b22eae4ca1f703997ed62a4f99a9",
+    "src/jit_decode.cpp": "5c0eee13c271b74885f042e3ebc149aef7522ab5845e2f91c63a165203fd7042",
+    "src/jit_ir.hpp": "a95082b8023129abf35931da9760e9397a840c94fed2aba17aca1177edeb60ca",
+    "src/jit_arm64.cpp": "c4157c77ced5d943749dd9c8c787782e7901d48c9e8ef02695f573d72ba6586b",
+    "tests/jit_jump_test.cpp": "fdf7013d0cd63e75588fca42a2ce179ff30b68826bf6c51dd94a3477faaf6a9e"
+  },
+  "baselineSourceSha256": {
+    "src/jit.cpp": "9b24737ea3b38e1a49fa9930870a0f7640b569d2a5804a2f6c2b49191a7b76a7",
+    "src/jit_decode.cpp": "e8bfacdccf60dfacf5234ab6aa29cbf45402e4cdfc6b79bbdf86303c0f93b149",
+    "src/jit_ir.hpp": "f40dc77ed1351d9abd32bde28c058ef966da6c97ad2552a31c9624c25c0d6290",
+    "src/jit_arm64.cpp": "026021360d110f9db52c22d70e8c88c01bacbf281d8c57638f4280b29bf059f6"
+  },
+  "baselineTemporarySourceRemovedAfterSuccess": true,
+  "compatibilityScope": "Installed Win95 image boot/applications/restart/file persistence, Win3.11 save/DOS exit and DOS kernels. Fresh OSR2 installation is not repeated on this binary."
+}

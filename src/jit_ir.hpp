@@ -5,7 +5,7 @@ namespace pc::jit_detail {
 // Shared decoded operations; no ARM instruction encoding belongs here.
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
-    CounterBranch, Exchange, Multiply, Shift
+    CounterBranch, Exchange, Multiply, Shift, IndirectJump
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -14,6 +14,7 @@ struct Instruction {
     bool immediate;
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
+    bool indirectJump = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;
     bool negate = false; // Register NEG uses the ordinary 0 - operand flag path.

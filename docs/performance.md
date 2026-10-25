@@ -1414,3 +1414,43 @@ and [character-device documentation](https://www.qemu.org/docs/master/system/qem
 describe the configurable I/O port and Unix socket backend used here. Seven
 validator tests cover canonical checks, wrong/missing CRCs, iteration mismatch,
 other guest errors and the specific unavailable-clock diagnostic.
+
+
+## Native near indirect JMP (25 October)
+
+FF /4 near jumps now lower register and memory targets at 16/32-bit operand
+widths. The target is read dynamically on every execution; operand width
+selects its truncation independently of code/address size. Register transfers
+leave GPRs and flags untouched. Memory transfers reuse guarded RAM reads and
+commit IP only after success. Fault/MMIO replay retains the original prefixed
+instruction and preceding flags; destination-fetch faults occur on the next
+dispatch. A successful helper exit after a code-page generation change also
+retains the loaded target. Single-transfer blocks are admitted after warmup.
+Indirect CALL and far control transfers remain interpreted.
+
+The new `build/jit-jump-tests` target in `make test` passes 17,861 checks:
+all GPRs, all block modes, code/operand/address-size combinations, FS and SS
+based/SIB addressing, pending flags, changing pointers without recompilation,
+read-only/warm/cold paging, precise faults, device callback counts, cross-page
+reads, A20 aliases, deferred destination-fetch faults, preceding code writes,
+and page-table accessed-bit writes invalidating the executing code page. Core,
+read, memory INC/DEC and flag suites pass 343,418 / 243,295 / 947,820 / 237,430
+checks. DOS CRCs, all 64 matching micro intervals and wrong-checksum rejection
+pass. Win3.11 exact Notepad save/DOS exit and both Win95 application/restart/
+exact FAT file checks pass headless; successful private disks are removed.
+This does not repeat the OSR2 installer on this binary.
+
+Five alternating uninstrumented CoreMark pairs compare against the complete
+pre-change source at `83d1620`, including its original IR layout. All ten
+15,000-iteration runs use the same COM hash and 5,962,639,001 guest instructions,
+pass canonical CRCs and upstream duration validation, and return to DOS. Paired
+baseline/candidate interval ratios are 1.06571, 1.11445, 1.08081, 1.07523 and
+1.08255: **median paired throughput improves 8.08%**. Median intervals are
+15.5420 / 14.3568 seconds. Native instructions increase 5,836,732,343 ->
+5,905,372,336 (97.89% -> 99.04% coverage); resident native bytes rise
+810,592 -> 811,056. These are one-host flat integer workload results without
+confidence intervals, not Windows startup or Rosetta equivalence.
+
+[Complete paired evidence, source/binary hashes and guest validation](measurements/native-indirect-jump-2026-10-25.json)
+is committed. The temporary baseline source, binary and debug symbols were
+removed after success. No installer or Office fixture was created.

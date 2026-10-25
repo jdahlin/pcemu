@@ -167,7 +167,7 @@ Jit::Block Jit::compile(bool translate) {
          (ir[0].kind == Kind::Alu && (ir[0].op == 7 || ir[0].op == 8 || ir[0].op == 9)));
     if (ir.empty() || (warmup && ir.size() < 3 && !shortComparison &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
-                      !ir.back().nearReturn))
+                      !ir.back().nearReturn && !ir.back().indirectJump))
         return block;
     return emitArm64(std::move(block), decoded);
 #endif
