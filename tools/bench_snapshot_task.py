@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Repeat a framebuffer-verified guest task from an immutable snapshot.
 
-Times include process startup/control/capture/poll overhead; they are end-to-end
-upper bounds, not isolated CPU execution time. Successful runs discard their
+Wall times include control/capture/poll overhead; restore is reported separately.
+macOS process CPU time measures the task response interval including guest and
+control/video work, excluding descheduled/blocked time. Successful runs discard
 private disk deltas and temporary frames. Failure leaves its live guest intact.
 """
 import argparse
@@ -14,6 +15,7 @@ import statistics
 import subprocess
 import time
 from pathlib import Path
+from host_process_cpu import read_process_cpu, cpu_interval
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('snapshot', type=Path)
@@ -149,11 +151,23 @@ for index in range(a.repeat):
             initial = observe(before, a.restore_timeout)
         if a.guest_profile:
             send('profile-start')
+        cpu_before = None
+        try:
+            cpu_before = read_process_cpu(child.pid)
+            cpu_measurement = None
+        except (OSError, ValueError, NotImplementedError) as error:
+            cpu_measurement = {'status': 'unavailable', 'reason': str(error)}
         began = time.perf_counter()
         send(*task['commands'])
         final = observe(after, task.get('timeout',10))
         task_ms = (time.perf_counter()-began)*1000
+        if cpu_before is not None:
+            try:
+                cpu_measurement = cpu_interval(cpu_before, read_process_cpu(child.pid))
+            except (OSError, ValueError, NotImplementedError) as error:
+                cpu_measurement = {'status': 'unavailable', 'reason': str(error)}
         sample = {'restoreReadyMs':restore_ms,'taskResponseMs':task_ms,
+                  'processCpuTime':cpu_measurement,
                   'instructions':final['instructions']-initial['instructions'],
                   'nativeInstructions':final['nativeInstructions']-initial['nativeInstructions'],
                   'compiledBlocks':final['compiledBlocks']-initial['compiledBlocks']}
@@ -208,7 +222,11 @@ report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profile
         'hostInputSuppressed':bool(host_input_suppressed),
         'emulator':str(engine),
         'scope':'end-to-end process/control/capture/poll latency; not isolated CPU time',
+        'processCpuTimeScope':'emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time',
         'samples':results,'medianRestoreReadyMs':statistics.median(r['restoreReadyMs'] for r in results),
         'medianTaskResponseMs':statistics.median(r['taskResponseMs'] for r in results)}
+cpu_samples = [r['processCpuTime']['totalMs'] for r in results
+               if r['processCpuTime']['status'] == 'available']
+report['medianProcessCpuMs'] = statistics.median(cpu_samples) if len(cpu_samples) == len(results) else None
 (a.output/'result.json').write_text(json.dumps(report,indent=2)+'\n')
 print(f'PASS: {a.repeat} independent restores produced the expected pixels',flush=True)

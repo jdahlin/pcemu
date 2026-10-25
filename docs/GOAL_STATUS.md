@@ -944,3 +944,20 @@ unchanged. A diagnostic host profile shows dispatch/cache attribution at 21.4%
 versus 28.5% previously, with fewer address/physical helper samples. The goal
 remains active; the latest candidate has not rerun fresh Win95 Setup. See
 `jit-fetch-validation.md` and `measurements/jit-fetch-tlb-2026-10-25.json`.
+
+
+## Process CPU accounting separates scheduler wait from task CPU (25 October)
+
+The snapshot task runner now reads macOS process user/system CPU counters around
+the task-response interval, with Mach timebase conversion and explicit unavailable
+status on unsupported/failed reads. A real sleeping/busy child validates units
+and sleep exclusion; identity and counter-regression checks prevent false data.
+Three accounting tests, syntax checks and six actual Excel restores pass.
+
+Three matched pairs of pre/post fetch-TLB candidates observe lower process CPU
+in all three pairs, with a median ratio of 1.045 (about 4.3% less CPU). Capture,
+cache warmup and guest idle work remain in the interval, and the first baseline
+has extra observed instructions; this is not isolated guest CPU time or a general
+application claim. No emulator binary changed or large fixture was created.
+The goal remains active. See `host-cpu-timing.md` and
+`measurements/process-cpu-excel-2026-10-25.json`.
