@@ -43,6 +43,8 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             written = CF | SF | ZF | PF | (i.imm == 1 ? OF : 0);
         neededFlags[n] = written & liveFlags;
         liveFlags &= ~written;
+        if (i.kind == Kind::Alu && (i.op == 2 || i.op == 3))
+            liveFlags |= CF; // Carry is an input even when output flags are dead.
     }
     return neededFlags;
 }

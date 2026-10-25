@@ -1701,3 +1701,40 @@ ready marker; headless Win3.11 save/exit and both Win95 Calculator/clipboard/
 Notepad save/restart checks pass.
 
 [Pairs, source/binary hashes, counters and integration evidence](measurements/excel-lahf-2026-10-25.json).
+
+## Native carry arithmetic in Excel (25 October)
+
+ADC/SBB register and immediate forms now run natively at byte, word and dword
+widths, including legacy high-byte aliases and sign-extended immediates. Memory
+forms remain interpreted. Incoming CF is captured before destination updates
+and retained with the original operands when deferred flag calculation needs
+it. A full-width intermediate preserves 32-bit carry/borrow; overflow and AF
+use the original operands and truncated result. Flag liveness demands incoming
+CF even when the instruction's output flags are overwritten later.
+
+Three alternating matched-source pairs favor the candidate: median paired
+response ratio **1.1203**, execution-batch wall-time ratio **1.1171**. Response
+ratios range from 1.0520 to 1.1204. Native coverage rises from about 91.36% to
+94.07%. This is an observed improvement on one loaded Excel task with three
+pairs and no confidence interval. All samples, including the slower third
+candidate sample, are retained. It is not a general application/Rosetta claim.
+Builds and integration guests ran after the timing pairs.
+
+Separate instrumented counts confirm the coverage change. Register ADC opcode
+0x13 attempts fall from **16,785,874 to 391**; its memory forms still fall back.
+Register SBB 0x1B attempts fall from 1,701,246 to 7,956. Newly joined native
+sequences also remove many neighboring ADD and Jcc fallbacks. Total interpreted
+attempts fall from 121,432,549 to **83,569,194**. Warmup, remaining short
+fragments and memory forms have not been claimed eliminated. Instrumented
+latencies are diagnostic and excluded from the scores.
+
+The flag suite passes **82,250,706** checks, including exhaustive byte operand
+pairs with both carry inputs, every register alias, wider carry/overflow edges,
+both register directions, immediate encodings, pending/dead-output carry
+chains and trace side exits. Exact flags/GPR/IP/instruction state matches the
+interpreter. The core suite passes 352,644 checks. DOS reaches its version/ready
+markers, and headless Win3.11 save/exit plus both Win95 Calculator/clipboard/
+Notepad/restart checks pass. Successful private disks are removed and the
+reused checkpoint hashes remain unchanged.
+
+[Paired timings, hashes, counters and integration evidence](measurements/excel-carry-2026-10-25.json).

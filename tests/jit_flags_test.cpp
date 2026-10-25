@@ -24,6 +24,112 @@ int main() {
             std::cout << "Flag-liveness tests require Apple ARM64\n";
             return 0;
         }
+        auto carryCase = [&](unsigned width, unsigned dst, unsigned src,
+                             uint32_t left, uint32_t right, unsigned carry) {
+            for (auto c : {&reference, &actual}) {
+                c->ip = c->instructions = 0;
+                c->flags = 0xe96 | carry;
+                for (unsigned n = 0; n < 8; ++n) c->r[n] = 0xa5b6c7d8u ^ (n * 0x10101u);
+                c->set(dst, left, width); c->set(src, right, width);
+            }
+            reference.step(); reference.step(); reference.step();
+            check(jit.run() == 3, "ADC/SBB and branch execute natively");
+            equal(reference, actual);
+        };
+        const std::vector<uint32_t> carryEdges = {0, 1, 15, 16, 127, 128, 255,
+            0x7fff, 0x8000, 0xffff, 0x7fffffff, 0x80000000, 0xffffffff};
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u})
+                for (unsigned op : {2u, 3u})
+                    for (unsigned dst = 0; dst < 8; ++dst)
+                        for (unsigned src = 0; src < 8; ++src) {
+                            std::vector<uint8_t> code;
+                            bool reverse = (dst ^ src) & 1;
+                            if (width != 1 && (width == 4) != code32) code.push_back(0x66);
+                            code.insert(code.end(), {uint8_t(op * 8 + (width != 1) + (reverse ? 2 : 0)),
+                                uint8_t(0xc0 | (reverse ? dst << 3 | src : src << 3 | dst)), 0x90, 0x73, 0});
+                            for (auto c : {&reference, &actual}) {
+                                c->s[CS].big = code32;
+                                for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                            }
+                            if (width == 1 && dst == 0) {
+                                for (unsigned a = 0; a < 256; ++a)
+                                    for (unsigned b = 0; b < 256; ++b)
+                                        for (unsigned cf = 0; cf < 2; ++cf) carryCase(width, dst, src, a, b, cf);
+                            } else
+                                for (auto a : carryEdges)
+                                    for (auto b : carryEdges)
+                                        for (unsigned cf = 0; cf < 2; ++cf) carryCase(width, dst, src, a, b, cf);
+                        }
+        // Immediate accumulator, full-width group, and sign-extended/alias group.
+        for (bool code32 : {false, true})
+            for (unsigned width : {1u, 2u, 4u})
+                for (unsigned op : {2u, 3u})
+                    for (unsigned form = 0; form < 3; ++form)
+                        for (auto immediate : carryEdges) {
+                            std::vector<uint8_t> code;
+                            unsigned dst = form ? 7 : AX;
+                            if (width != 1 && (width == 4) != code32) code.push_back(0x66);
+                            if (!form) code.push_back(op * 8 + (width == 1 ? 4 : 5));
+                            else code.insert(code.end(), {uint8_t(width == 1 ? (form == 1 ? 0x80 : 0x82)
+                                                          : form == 1 ? 0x81 : 0x83),
+                                                         uint8_t(0xc0 | op << 3 | dst)});
+                            unsigned bytes = form == 2 ? 1 : width;
+                            for (unsigned n = 0; n < bytes; ++n) code.push_back(immediate >> (n * 8));
+                            code.insert(code.end(), {0x90, 0x73, 0});
+                            for (auto c : {&reference, &actual}) {
+                                c->s[CS].big = code32;
+                                for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
+                            }
+                            for (auto a : carryEdges)
+                                for (unsigned cf = 0; cf < 2; ++cf) carryCase(width, dst, dst, a, a, cf);
+                        }
+        // Carry from a pending ADD and through multiple ADC/SBBs must survive
+        // even when the final XOR makes the last arithmetic output flags dead.
+        {
+            std::mt19937 inputs(0xcadca11);
+            const uint8_t code[] = {0x80,0xc2,1, 0x12,0xc4, 0x18,0xdf,
+                                    0x80,0xd1,0xfe, 0x33,0xf6, 0x73,0};
+            for (bool code32 : {false, true}) {
+                for (auto c : {&reference, &actual}) {
+                    c->s[CS].big = code32;
+                    for (unsigned n = 0; n < sizeof(code); ++n) c->write(n, code[n], 1);
+                }
+                for (unsigned trial = 0; trial < 10000; ++trial) {
+                    reference.ip = actual.ip = reference.instructions = actual.instructions = 0;
+                    reference.flags = actual.flags = 0x202 | (inputs() & 0xcd5);
+                    for (unsigned n = 0; n < 8; ++n) reference.r[n] = actual.r[n] = inputs();
+                    for (unsigned n = 0; n < 6; ++n) reference.step();
+                    check(jit.run() == 6, "pending and dead-output carry chains remain native");
+                    equal(reference, actual);
+                }
+            }
+        }
+        // A trace side exit must expose the ADC's exact flags and prefix state;
+        // the predicted continuation overwrites most flags with INC.
+        for (bool code32 : {false, true}) {
+            CPU a(65536), b(65536);
+            Jit trace(b, true, 0, 65536, Jit::BlockMode::Trace);
+            const uint8_t code[] = {0x04,1, 0x10,0xd3, 0x73,2, 0x46,0x90,0x40,0xf4};
+            for (auto c : {&a, &b}) {
+                c->s[CS].big = code32;
+                for (unsigned n = 0; n < sizeof(code); ++n) c->write(n, code[n], 1);
+            }
+            for (unsigned al : {0u, 255u})
+                for (auto left : carryEdges)
+                    for (auto right : carryEdges) {
+                        for (auto c : {&a, &b}) {
+                            c->ip = c->instructions = 0;
+                            c->flags = 0xad6;
+                            for (unsigned n = 0; n < 8; ++n) c->r[n] = 0xa5b6c7d8u ^ n;
+                            c->set(AX, al, 1); c->set(BX, left, 1); c->set(DX, right, 1);
+                        }
+                        auto n = trace.run();
+                        check(n == 3 || n == 6, "carry trace executes a valid prefix or continuation");
+                        for (unsigned k = 0; k < n; ++k) a.step();
+                        equal(a, b);
+                    }
+        }
         // LAHF consumes pending flags even when the following XOR overwrites
         // them, and changes only AH. Exhaust byte ADD operands/aliases and
         // preserve externally supplied low flag bits in the flag-only form.

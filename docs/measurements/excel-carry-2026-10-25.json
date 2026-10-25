@@ -1,0 +1,1143 @@
+{
+  "scope": "Three alternating matched-source pairs testing native register/immediate ADC and SBB with carry dependencies in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead. Three pairs on one loaded Excel task; no confidence interval, general application performance or Rosetta claim.",
+  "pairs": [
+    {
+      "pair": 1,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "3b57ddda474c6d73da449690d049d27feb108e964d7a534ba39787a0cf81f87d",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/lahf/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 30610.514833,
+              "taskResponseMs": 10971.045541999998,
+              "instructions": 1403420309,
+              "nativeInstructions": 1282194730,
+              "compiledBlocks": 29826,
+              "executionWallMs": 9642.260961
+            }
+          ],
+          "medianRestoreReadyMs": 30610.514833,
+          "medianTaskResponseMs": 10971.045541999998
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 950.811125,
+              "taskResponseMs": 9792.18425,
+              "instructions": 1403204183,
+              "nativeInstructions": 1319957450,
+              "compiledBlocks": 29997,
+              "executionWallMs": 8628.441045
+            }
+          ],
+          "medianRestoreReadyMs": 950.811125,
+          "medianTaskResponseMs": 9792.18425
+        }
+      },
+      "responseRatio": 1.1203879810574435,
+      "executionWallRatio": 1.1174974610955344
+    },
+    {
+      "pair": 2,
+      "runs": {
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 489.37333299999995,
+              "taskResponseMs": 9793.770333,
+              "instructions": 1402761156,
+              "nativeInstructions": 1319611507,
+              "compiledBlocks": 29738,
+              "executionWallMs": 8625.749211
+            }
+          ],
+          "medianRestoreReadyMs": 489.37333299999995,
+          "medianTaskResponseMs": 9793.770333
+        },
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "3b57ddda474c6d73da449690d049d27feb108e964d7a534ba39787a0cf81f87d",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/lahf/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 488.101708,
+              "taskResponseMs": 10971.728166,
+              "instructions": 1403460711,
+              "nativeInstructions": 1282223760,
+              "compiledBlocks": 29830,
+              "executionWallMs": 9636.134913
+            }
+          ],
+          "medianRestoreReadyMs": 488.101708,
+          "medianTaskResponseMs": 10971.728166
+        }
+      },
+      "responseRatio": 1.120276236112142,
+      "executionWallRatio": 1.117135993324673
+    },
+    {
+      "pair": 3,
+      "runs": {
+        "baseline": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "3b57ddda474c6d73da449690d049d27feb108e964d7a534ba39787a0cf81f87d",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/lahf/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 549.130334,
+              "taskResponseMs": 11113.2065,
+              "instructions": 1403170043,
+              "nativeInstructions": 1282021711,
+              "compiledBlocks": 29841,
+              "executionWallMs": 9790.399461
+            }
+          ],
+          "medianRestoreReadyMs": 549.130334,
+          "medianTaskResponseMs": 11113.2065
+        },
+        "candidate": {
+          "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+          "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+          "jit": true,
+          "profiled": false,
+          "followJumps": true,
+          "traces": false,
+          "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+          "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+          "restoreTimeoutSeconds": 90.0,
+          "guestProfiled": false,
+          "frontend": "headless",
+          "hostInputSuppressed": false,
+          "emulator": "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate",
+          "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+          "samples": [
+            {
+              "restoreReadyMs": 1100.310834,
+              "taskResponseMs": 10563.783958,
+              "instructions": 1403282999,
+              "nativeInstructions": 1319987467,
+              "compiledBlocks": 29767,
+              "executionWallMs": 9208.637919
+            }
+          ],
+          "medianRestoreReadyMs": 1100.310834,
+          "medianTaskResponseMs": 10563.783958
+        }
+      },
+      "responseRatio": 1.0520100130961048,
+      "executionWallRatio": 1.0631756343464935
+    }
+  ],
+  "loadBefore": [
+    3.458984375,
+    3.001953125,
+    2.7880859375
+  ],
+  "startedUnix": 1792941891.366661,
+  "binaries": {
+    "baseline": "3b57ddda474c6d73da449690d049d27feb108e964d7a534ba39787a0cf81f87d",
+    "candidate": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1"
+  },
+  "loadAfter": [
+    3.111328125,
+    2.986328125,
+    2.80078125
+  ],
+  "finishedUnix": 1792941990.461525,
+  "medianPairedResponseRatio": 1.120276236112142,
+  "medianPairedExecutionWallRatio": 1.117135993324673,
+  "sourceProvenance": "Baseline is the verified LAHF candidate documented in docs/measurements/excel-lahf-2026-10-25.json. Frozen whole-machine sources and headers are identical except these three carry-lowering files.",
+  "changedSourceHashes": {
+    "jit_arm64.cpp": "db81b28adbac3964dc95c0da7abf9e3ab683a190d56568583daebe20415fc593",
+    "jit_decode.cpp": "85230ba95a18c61f652a5578e7199ab9140c1f0fdde36305162409fa68d69402",
+    "jit_flags.cpp": "904d2b79793a5272390d28ab9d98489adc141240396410a00a15b269c3c28b75"
+  },
+  "candidateBuildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/carry/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/carry/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate"
+  ],
+  "flagChecks": 82250706,
+  "coreChecks": 352644,
+  "integration": {
+    "win311": {
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "sourceDisk": "/Volumes/data/pcemu/recovered/win311.qcow2",
+      "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+      "gitCommit": "eafa276564201fc0d2b76d1d6b25ea4d4bea687b",
+      "privateDiskFormat": "PCEMUCOW",
+      "privateDiskBytes": 4767,
+      "privateDiskAllocatedBytes": 8192,
+      "verifiedFile": "C:\\PCEMU.TXT",
+      "verifiedBytes": 25,
+      "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+      "privateDiskRemoved": true
+    },
+    "rtts": {
+      "pid": 39783,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-gp6_p7vx/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-gp6_p7vx/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-gp6_p7vx/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-gp6_p7vx/state.json"
+      ],
+      "sourceDisk": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+      "profiled": false,
+      "guestProfiled": false,
+      "gitCommit": "eafa276564201fc0d2b76d1d6b25ea4d4bea687b",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 507384578,
+        "afterInstructions": 1540746667,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P0ABE91A.TXT",
+          "fatName": "P0ABE91ATXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 0ABE91AF.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "4d7036143f372f1b32c6a4a8ae3d6e4390c1a39e68f5c9c6b26ae41dcb45a074"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    },
+    "osr2": {
+      "pid": 39715,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/carry/pcemu-candidate",
+        "--headless",
+        "--machine",
+        "win95",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-_ufnao4m/disk.pcd",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--steps",
+        "0",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-_ufnao4m/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-_ufnao4m/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/win95-smoke-_ufnao4m/state.json"
+      ],
+      "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSha256": "15d1cfea5a952de5e373abb88aed46e2015d71aa8ef20afa7cf002f626425bd1",
+      "profiled": false,
+      "guestProfiled": false,
+      "gitCommit": "eafa276564201fc0d2b76d1d6b25ea4d4bea687b",
+      "verification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 511809226,
+        "afterInstructions": 1279413628,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\PA6387B9.TXT",
+          "fatName": "PA6387B9TXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications A6387B9F.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "1aa39ec4433759c6b8f3d101fc1eb52176905a2f1600e1a8cd4c98fae2a2cac6"
+        }
+      },
+      "applicationOcrScratchRemoved": true,
+      "privateDiskRemoved": true
+    }
+  },
+  "dosBoot": {
+    "versionMarker": "MS-DOS Version 6.22",
+    "readyMarker": "PCEMU MS-DOS ready",
+    "state": {
+      "ip": 30107,
+      "flags": 514,
+      "cr0": 16,
+      "cr3": 0,
+      "cr2": 0,
+      "gdtBase": 0,
+      "gdtLimit": 0,
+      "idtBase": 0,
+      "idtLimit": 1023,
+      "trBase": 0,
+      "trSelector": 0,
+      "ldtBase": 0,
+      "registers": [
+        1792,
+        249,
+        127,
+        0,
+        2702,
+        0,
+        269,
+        507
+      ],
+      "segments": [
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 25,
+          "base": 400,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        }
+      ],
+      "instructions": 10066360,
+      "resets": 0,
+      "resetRequested": 0,
+      "nativeInstructions": 5509871,
+      "executionWallNs": 317150925,
+      "nativeMemoryCalls": 99,
+      "executionEpoch": 0,
+      "machineProfile": "pc-legacy",
+      "machinePlatform": "pc-legacy-v1",
+      "executionBackend": "jit",
+      "jitFollowJumps": 1,
+      "jitTraces": 0,
+      "ramBytes": 16777216,
+      "disk": "/Users/johandahlin/dev/pcemu/build/carry/dos-check.pcd",
+      "compiledBlocks": 1244,
+      "cacheRecycles": 0,
+      "halted": 0,
+      "waitingKey": 0,
+      "hostInput": 1,
+      "network": {
+        "isr": 128,
+        "imr": 0,
+        "command": 33,
+        "current": 0,
+        "boundary": 0,
+        "transmitted": 0,
+        "received": 0,
+        "dropped": 0
+      },
+      "mouse": {
+        "enabled": 0,
+        "id": 0,
+        "pendingPackets": 0,
+        "auxOutput": 0
+      },
+      "video": {
+        "graphics": 0,
+        "width": 640,
+        "height": 200,
+        "memoryMode": 6,
+        "shiftMode": 0,
+        "dispiEnabled": 0,
+        "bpp": 8,
+        "crtc": [
+          0,
+          79,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          199,
+          40,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "pic": [
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 252,
+          "base": 8,
+          "autoEOI": 0
+        },
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 255,
+          "base": 112,
+          "autoEOI": 0
+        }
+      ],
+      "pit0": {
+        "reload": 65536,
+        "loadedAt": 0,
+        "mode": 3,
+        "nullCount": 0,
+        "writeHigh": 0,
+        "value": 13092
+      },
+      "keyboard": {
+        "full": 0,
+        "data": 0,
+        "pendingScans": 0,
+        "pendingReplies": 0,
+        "commandByte": 69
+      }
+    },
+    "privateDiskRemoved": true
+  },
+  "diagnosticGuestProfile": {
+    "scope": "Separate instrumented run; timings excluded from benchmark pairs",
+    "guestInstructions": 1404650446,
+    "interpretedAttemptsBefore": 121432549,
+    "interpretedAttemptsAfter": 83569194,
+    "events": {
+      "dispatch": 413780000,
+      "fastHit": 407728857,
+      "mapHit": 5373187,
+      "lookupMiss": 295470,
+      "metadataRebuild": 350981,
+      "translate": 59391,
+      "interpretedDispatch": 83458361,
+      "negativeHit": 81709937,
+      "nativeCall": 330321521,
+      "nativeReplay": 110833,
+      "devicePoll": 413808091,
+      "diskReadSectorsIncludingParents": 1224,
+      "diskWriteSectors": 70,
+      "cowDecompress": 49,
+      "cowCacheHit": 1
+    },
+    "topOpcodes": [
+      {
+        "opcode": "ff",
+        "name": "INC/DEC/CALL/JMP/PUSH group",
+        "attempts": 19734283,
+        "registerOperands": 8464988,
+        "memoryOperands": 11269295,
+        "percentOfInterpretedAttempts": 23.61430337595454,
+        "modRMGroups": {
+          "0": 51151,
+          "1": 19948,
+          "2": 18274991,
+          "3": 33814,
+          "4": 2557,
+          "5": 428,
+          "6": 1351394,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "2b",
+        "name": "SUB r,rm",
+        "attempts": 8683344,
+        "registerOperands": 8668915,
+        "memoryOperands": 14429,
+        "percentOfInterpretedAttempts": 10.390603982611104,
+        "modRMGroups": {
+          "0": 8525623,
+          "1": 30913,
+          "2": 120200,
+          "3": 1363,
+          "4": 155,
+          "5": 2582,
+          "6": 1185,
+          "7": 1323
+        }
+      },
+      {
+        "opcode": "78",
+        "name": "",
+        "attempts": 8472489,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 10.138292107974621,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0a",
+        "name": "",
+        "attempts": 8435779,
+        "registerOperands": 8435484,
+        "memoryOperands": 295,
+        "percentOfInterpretedAttempts": 10.094364437689803,
+        "modRMGroups": {
+          "0": 36858,
+          "1": 136,
+          "2": 126,
+          "3": 617,
+          "4": 6899,
+          "5": 8390930,
+          "6": 94,
+          "7": 119
+        }
+      },
+      {
+        "opcode": "d3",
+        "name": "",
+        "attempts": 8406265,
+        "registerOperands": 8406262,
+        "memoryOperands": 3,
+        "percentOfInterpretedAttempts": 10.05904759593589,
+        "modRMGroups": {
+          "0": 168,
+          "1": 1929,
+          "2": 0,
+          "3": 0,
+          "4": 19371,
+          "5": 8384491,
+          "6": 0,
+          "7": 306
+        }
+      },
+      {
+        "opcode": "76",
+        "name": "",
+        "attempts": 8394271,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 10.044695417308919,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8b",
+        "name": "MOV r,rm",
+        "attempts": 2029834,
+        "registerOperands": 373727,
+        "memoryOperands": 1656106,
+        "percentOfInterpretedAttempts": 2.428926142329433,
+        "modRMGroups": {
+          "0": 808917,
+          "1": 135095,
+          "2": 214337,
+          "3": 222404,
+          "4": 12410,
+          "5": 88483,
+          "6": 139012,
+          "7": 409175
+        }
+      },
+      {
+        "opcode": "83",
+        "name": "ALU rm,imm8",
+        "attempts": 1457855,
+        "registerOperands": 838715,
+        "memoryOperands": 619140,
+        "percentOfInterpretedAttempts": 1.744488525281218,
+        "modRMGroups": {
+          "0": 482664,
+          "1": 486761,
+          "2": 21992,
+          "3": 49,
+          "4": 101417,
+          "5": 152775,
+          "6": 47,
+          "7": 212150
+        }
+      },
+      {
+        "opcode": "0f",
+        "name": "0F extended opcode total",
+        "attempts": 1347003,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 1.6118415597020117,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "01",
+        "name": "",
+        "attempts": 893816,
+        "registerOperands": 0,
+        "memoryOperands": 893816,
+        "percentOfInterpretedAttempts": 1.0695520169788881,
+        "modRMGroups": {
+          "0": 522588,
+          "1": 159932,
+          "2": 1699,
+          "3": 2529,
+          "4": 0,
+          "5": 288,
+          "6": 611,
+          "7": 206169
+        }
+      },
+      {
+        "opcode": "fa",
+        "name": "",
+        "attempts": 773234,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.9252620050397997,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "c7",
+        "name": "",
+        "attempts": 741626,
+        "registerOperands": 0,
+        "memoryOperands": 741626,
+        "percentOfInterpretedAttempts": 0.8874394552614687,
+        "modRMGroups": {
+          "0": 741626,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "8e",
+        "name": "",
+        "attempts": 671675,
+        "registerOperands": 376601,
+        "memoryOperands": 295074,
+        "percentOfInterpretedAttempts": 0.8037351658554945,
+        "modRMGroups": {
+          "0": 194704,
+          "1": 0,
+          "2": 16833,
+          "3": 205120,
+          "4": 140732,
+          "5": 114286,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "0f 84",
+        "name": "",
+        "attempts": 525851,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.629240243719474,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "39",
+        "name": "CMP rm,r",
+        "attempts": 487188,
+        "registerOperands": 0,
+        "memoryOperands": 487188,
+        "percentOfInterpretedAttempts": 0.5829755878703341,
+        "modRMGroups": {
+          "0": 478061,
+          "1": 1289,
+          "2": 1014,
+          "3": 2104,
+          "4": 0,
+          "5": 321,
+          "6": 2250,
+          "7": 2149
+        }
+      },
+      {
+        "opcode": "87",
+        "name": "",
+        "attempts": 483810,
+        "registerOperands": 5288,
+        "memoryOperands": 478522,
+        "percentOfInterpretedAttempts": 0.5789334285071602,
+        "modRMGroups": {
+          "0": 101827,
+          "1": 16438,
+          "2": 85525,
+          "3": 1842,
+          "4": 122887,
+          "5": 17964,
+          "6": 92136,
+          "7": 45191
+        }
+      },
+      {
+        "opcode": "74",
+        "name": "JZ",
+        "attempts": 473355,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.5664228375829495,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "80",
+        "name": "",
+        "attempts": 389377,
+        "registerOperands": 110839,
+        "memoryOperands": 278538,
+        "percentOfInterpretedAttempts": 0.4659336549303084,
+        "modRMGroups": {
+          "0": 44547,
+          "1": 150236,
+          "2": 8185,
+          "3": 164,
+          "4": 170083,
+          "5": 2448,
+          "6": 139,
+          "7": 13575
+        }
+      },
+      {
+        "opcode": "9c",
+        "name": "",
+        "attempts": 376704,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.45076897594584914,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      },
+      {
+        "opcode": "9d",
+        "name": "",
+        "attempts": 370674,
+        "registerOperands": 0,
+        "memoryOperands": 0,
+        "percentOfInterpretedAttempts": 0.44355339839702174,
+        "modRMGroups": {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0
+        }
+      }
+    ],
+    "adc13Before": {
+      "opcode": "13",
+      "name": "",
+      "attempts": 16787001,
+      "registerOperands": 16785874,
+      "memoryOperands": 1127,
+      "percentOfInterpretedAttempts": 13.824136228911739,
+      "modRMGroups": {
+        "0": 8390862,
+        "1": 113,
+        "2": 1154,
+        "3": 8390678,
+        "4": 0,
+        "5": 0,
+        "6": 4194,
+        "7": 0
+      }
+    },
+    "adc13After": {
+      "opcode": "13",
+      "name": "",
+      "attempts": 1533,
+      "registerOperands": 391,
+      "memoryOperands": 1142,
+      "percentOfInterpretedAttempts": 0.0018344080236073594,
+      "modRMGroups": {
+        "0": 191,
+        "1": 100,
+        "2": 1157,
+        "3": 35,
+        "4": 0,
+        "5": 0,
+        "6": 50,
+        "7": 0
+      }
+    },
+    "sbb1bBefore": {
+      "opcode": "1b",
+      "name": "",
+      "attempts": 1701248,
+      "registerOperands": 1701246,
+      "memoryOperands": 2,
+      "percentOfInterpretedAttempts": 1.4009818734843489,
+      "modRMGroups": {
+        "0": 1276027,
+        "1": 759,
+        "2": 141,
+        "3": 423735,
+        "4": 0,
+        "5": 0,
+        "6": 438,
+        "7": 148
+      }
+    },
+    "sbb1bAfter": {
+      "opcode": "1b",
+      "name": "",
+      "attempts": 7958,
+      "registerOperands": 7956,
+      "memoryOperands": 2,
+      "percentOfInterpretedAttempts": 0.009522647783344662,
+      "modRMGroups": {
+        "0": 7198,
+        "1": 226,
+        "2": 61,
+        "3": 302,
+        "4": 0,
+        "5": 0,
+        "6": 111,
+        "7": 60
+      }
+    },
+    "jzBefore": {
+      "opcode": "0f 84",
+      "name": "",
+      "attempts": 8915746,
+      "registerOperands": 0,
+      "memoryOperands": 0,
+      "percentOfInterpretedAttempts": 7.342138556277856,
+      "modRMGroups": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0
+      }
+    },
+    "jzAfter": {
+      "opcode": "0f 84",
+      "name": "",
+      "attempts": 525851,
+      "registerOperands": 0,
+      "memoryOperands": 0,
+      "percentOfInterpretedAttempts": 0.629240243719474,
+      "modRMGroups": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0
+      }
+    },
+    "run": {
+      "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+      "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+      "jit": true,
+      "profiled": false,
+      "followJumps": true,
+      "traces": false,
+      "emulatorSha256": "a17146bb249f8f7d1eb33b89e625651bba2956c3352bf6b46daa060b28650b5d",
+      "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+      "restoreTimeoutSeconds": 90.0,
+      "guestProfiled": true,
+      "frontend": "headless",
+      "hostInputSuppressed": false,
+      "emulator": "/Users/johandahlin/dev/pcemu/build/carry/pcemu-profile",
+      "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+      "samples": [
+        {
+          "restoreReadyMs": 31556.430625,
+          "taskResponseMs": 10777.896292000001,
+          "instructions": 1403447878,
+          "nativeInstructions": 1320128755,
+          "compiledBlocks": 29915,
+          "executionWallMs": 9336.744183
+        }
+      ],
+      "medianRestoreReadyMs": 31556.430625,
+      "medianTaskResponseMs": 10777.896292000001
+    },
+    "buildCommand": [
+      "clang++",
+      "-DPCEMU_PROFILE",
+      "-I/Users/johandahlin/dev/pcemu/build/carry/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/main.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/network.cpp",
+      "/Users/johandahlin/dev/pcemu/build/carry/source/frontend_sdl.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/carry/pcemu-profile"
+    ]
+  },
+  "rawGuestProfile": {
+    "path": "docs/measurements/excel-carry-2026-10-25.guest-profile.zst",
+    "rawBytes": 626309,
+    "rawSha256": "f48be97effd4645c101ff3fc9b6643e6c147bbd9647cf6e72620fd5ec6927d1d",
+    "compressedBytes": 35696,
+    "compressedSha256": "293ac655e53516b072f552107ac8379c94acc8b1e1bb4c40a89ad68e8c764f09"
+  },
+  "checkpointUnchanged": true
+}

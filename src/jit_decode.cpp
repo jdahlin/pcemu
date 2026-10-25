@@ -249,9 +249,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = address32;
                 i.memory.displacement = immediate(address32 ? 4 : 2);
                 i.memory.store = bool(op & 2);
-            } else if (op < 0x40 && (op & 7) <= 5 &&
-                       ((op >> 3) == 0 || (op >> 3) == 1 || (op >> 3) == 4 || (op >> 3) == 5 ||
-                        (op >> 3) == 6 || (op >> 3) == 7)) {
+            } else if (op < 0x40 && (op & 7) <= 5) {
                 i.kind = Kind::Alu;
                 i.w = (op & 1) ? w : 1;
                 i.op = op >> 3;
@@ -262,7 +260,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 } else {
                     auto m = byte();
                     if ((m >> 6) != 3) {
-                        if (i.op != 7 && !(op & 2)) {
+                        if (i.op == 2 || i.op == 3 || (i.op != 7 && !(op & 2))) {
                             pos = begin;
                             break;
                         }
@@ -288,10 +286,6 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     }
                     i.memoryAlu = true;
                     i.memory = memoryOperand(m, address32, overrideSegment);
-                }
-                if (i.op == 2 || i.op == 3) {
-                    pos = begin;
-                    break;
                 }
                 i.kind = i.memoryAlu ? Kind::Memory : Kind::Alu;
                 i.dst = i.memoryAlu ? 0 : m & 7;

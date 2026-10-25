@@ -168,19 +168,26 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         bool logical = last >= 0 &&
                        (ir[last].op == 1 || ir[last].op == 4 || ir[last].op == 6);
         bool arithmetic = last >= 0 &&
-                          (ir[last].op == 0 || ir[last].op == 5 || ir[last].op == 7 ||
+                          (ir[last].op == 0 || ir[last].op == 2 || ir[last].op == 3 ||
+                           ir[last].op == 5 || ir[last].op == 7 ||
                            ir[last].op == 8 || ir[last].op == 9);
         if (logical || arithmetic) {
             load(9, 31, 96);
             load(10, 31, 100);
             auto op = ir[last].op;
-            bool addition = op == 0 || op == 8, preserveCarry = op >= 8;
+            bool addition = op == 0 || op == 2 || op == 8, preserveCarry = op >= 8;
+            bool withCarry = op == 2 || op == 3;
             if (arithmetic) {
                 extract(9, 9, ir[last].w, 0);
                 extract(10, 10, ir[last].w, 0);
                 // Zero-extended inputs allow a full 33-bit sum for 32-bit CF.
-                emit((addition ? 0x8b000000u : 0x4b000000u) |
+                emit((addition ? 0x8b000000u : withCarry ? 0xcb000000u : 0x4b000000u) |
                      (10 << 16) | (9 << 5) | 11);
+                if (withCarry) {
+                    load(14, 31, 104);
+                    emit((addition ? 0x8b000000u : 0xcb000000u) |
+                         (14 << 16) | (11 << 5) | 11);
+                }
             } else
                 emit((op == 1 ? 0x2a000000u : op == 4 ? 0x0a000000u : 0x4a000000u) |
                      (10 << 16) | (9 << 5) | 11);
@@ -190,7 +197,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             imm(14, 2);
             emit(0x2a000000u | (14 << 16) | (12 << 5) | 12);
             if (arithmetic && !preserveCarry) {
-                if (addition) {
+                if (addition || withCarry) {
                     auto bit = ir[last].w * 8;
                     emit(0xd3400000u | (bit << 16) | (bit << 10) | (11 << 5) | 13);
                 } else {
@@ -778,6 +785,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 last = n;
             continue;
         }
+        bool withCarry = i.kind == Kind::Alu && (i.op == 2 || i.op == 3);
+        if (withCarry) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            load(13, 19, offsetof(CPU, flags));
+            bits(13, 13, 0, 1);
+            if (neededFlags[n]) store(13, 31, 104);
+        }
         if ((i.kind == Kind::Alu || i.kind == Kind::Test) && neededFlags[n]) {
             if (i.kind == Kind::Alu && i.op >= 8)
                 finishFlags(last, -1, 0);
@@ -801,12 +816,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Move)
             mov(10, 12);
         else {
-            uint32_t op = i.op == 0 || i.op == 8 ? 0x0b000000
+            uint32_t op = i.op == 0 || i.op == 2 || i.op == 8 ? 0x0b000000
                           : i.op == 1 ? 0x2a000000
                           : i.op == 4 ? 0x0a000000
                           : i.op == 6 ? 0x4a000000
                                       : 0x4b000000;
             emit(op | (12 << 16) | (11 << 5) | 10);
+            if (withCarry)
+                emit((i.op == 2 ? 0x0b000000u : 0x4b000000u) |
+                     (13 << 16) | (10 << 5) | 10);
         }
         if (i.kind == Kind::Test || (i.kind == Kind::Alu && i.op == 7))
             continue;
