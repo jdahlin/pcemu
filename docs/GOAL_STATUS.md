@@ -842,3 +842,21 @@ private child is removed. Evidence:
 `docs/measurements/recovered-rtts-2026-10-25.json`.
 Missing Office/OSR2/DOS/Win3.11 parents and fresh installer validation remain
 unresolved; this recovery restores the original rtts requirement independently.
+
+## DOS and Win3.11 restored on compact external chains (25 October)
+
+Recovered the MS-DOS 6.22 with CD-support VHD archive, verified its published
+SHA-512, and verified logical equality after offline QCOW2 conversion. The base
+uses about 9 MiB for a roughly 2 GiB virtual disk. Our emulator prints MS-DOS
+Version 6.22 and the ready marker. No raw multi-GiB staging copy was created.
+
+Reworked prepare_win311.py to stage flat/floppy source files into a new
+compressed DOS child and read every source/answer file back. All 460 source
+files match. Original Setup /h using the checked-in answer file completes to
+DOS; independent cold boot, Notepad save, DOS return and exact stopped-guest
+file contents pass. Installed child is about 13 MiB on /Volumes/data. The local
+DOS and Win3.11 media names are symlinks to complete external chains.
+The rtts zero parent is now a 196,616-byte QCOW2 container; its complete logical
+image hash remains unchanged. Evidence:
+`docs/measurements/recovered-dos-win311-2026-10-25.json`.
+Fresh Win95 Setup and recovery/replacement of the separate Office parent remain.

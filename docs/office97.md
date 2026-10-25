@@ -1,8 +1,8 @@
 # Office 97 on Windows 95
 
 Latest availability audit (2026-10-25): the local parent
-`media/office97-base/disk.raw` is missing, along with the retained DOS/Win3.11/
-earlier local snapshot parents. The original rtts image has since been
+`media/office97-base/disk.raw` is missing, along with earlier local snapshot parents. DOS and Win3.11 have since been
+recovered independently under `/Volumes/data/pcemu/recovered/`. The original rtts image has since been
 recovered separately to `/Volumes/data/pcemu/recovered/rtts-win95.pcd`. The external Office ISO, installed
 COW children and recalculation snapshot remain, but their missing parent prevents
 boot/restore. The installation and application checks below passed before this

@@ -151,3 +151,12 @@ The compressed disk is 180,006,943 bytes. SMB reports the 256 MiB zero parent
 as allocated; storage accounting must include it rather than assuming sparse
 allocation. Missing Office parent data cannot be reconstructed from COW children
 alone; the Office ISO and dependent recalculation snapshot are not substitutes.
+
+The rtts zero parent was subsequently replaced in place by an empty QCOW2 v2
+container (196,616 bytes), preserving its path and all logical zero sectors.
+The full rtts logical SHA-256 was verified again after this replacement. This
+removes the prior 256 MiB blank-file allocation. Current DOS and Win3.11 chains
+also reside under /Volumes/data/pcemu/recovered; local media paths are symlinks.
+The DOS QCOW2 base is about 9 MiB; the installed Win3.11 compressed child about
+13 MiB. Retain all parents. Recovery evidence:
+`measurements/recovered-dos-win311-2026-10-25.json`.
