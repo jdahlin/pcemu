@@ -39,7 +39,7 @@ efi_main:
     cmp x0, x8
     b.ne failed
     ldr x8, =0x001a000000000062
-    bic x9, x6, #4 // Optional SynIC access.
+    bic x9, x6, #0x1c // Optional SynIC, timers and native GIC access.
     bic x9, x9, #0x3000000000 // Optional VMBus grants PostMessage/SignalEvent.
     cmp x9, x8
     b.ne failed

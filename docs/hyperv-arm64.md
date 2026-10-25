@@ -294,7 +294,7 @@ The following is a work inventory, not a completion claim:
 | Extended-capability query 0x8001 | Native memory/fast ABI and two successful Windows queries verified. |
 | Remote TLB flushes, processor masks and synthetic IPIs | Fixed/Ex address-space flushes, ARM drain and IPIs are native-tested. Windows fixed IPI use verified; Windows TLB/Ex use and ARM list applicability still need verification. |
 | VP assist and reference-time page | Shared-memory ABI, ordering and guest consumption pending. |
-| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer features remain unadvertised. Complete ARM semantics and Windows consumption remain pending. ARM Generic Timer already runs natively. |
+| SynIC and synthetic timers | Event/message controller, four timers per VP, connection APIs and native SGI/PPI delivery tested. SynIC is advertised only in opt-in synic/vmbus profiles; timer access and native GIC access are advertised only in vmbus mode. Direct-timer feature advertisement, complete ARM semantics and Windows consumption remain pending. ARM Generic Timer already runs natively. |
 | VMBus / integration services | Contact/version, empty-offer completion and unload control paths are model/native tested. Opt-in runtime/ACPI attachment is implemented and native/EFI-tested. Windows enumeration, GPADL and service channels remain pending. |
 | Nested virtualization / isolation | Host/backend capability and applicability not established; not advertised. |
 
@@ -1059,3 +1059,36 @@ The first executable copied from the shared build directory included concurrent
 USB changes and is excluded; its stopped disk clone was removed after recording
 that provenance problem. The isolated live experiment remains separate from the
 original installed Windows disk.
+
+### WinHv initialization prerequisite
+
+Offline inspection of the stopped VMBus experiment confirms that Windows
+enumerated `ACPI\VMBus\0` and selected its inbox `wvmbus.inf` child-device
+section (version 10.0.26100.9278). PnP event 411 records problem 0x27 and
+status `0xc035001e` (Hyper-V feature unavailable), before any SynIC register use.
+The parent ACPI0004 module was successfully started. This rules out a missing
+ACPI device or a missing VMBus driver as the explanation for this boot.
+Evidence is retained under `build/windows11-hyperv/vmbus-isolated/offline/`,
+including the EVTX-derived `vmbus-pnp-events.xml` and source-file hashes.
+The SYSTEM hive was dirty after the host stop; its read-only heuristic summary
+is supplementary evidence, while the PnP event independently confirms binding
+and failure. Sparse default streams of Compact OS files are not driver bytes:
+WOF XPRESS8K streams were decoded with wimlib's bounded decompression API.
+The decoded installed VMBus SHA-256 is
+`271fb6b003ce24f54229cd37cc5dcbe965bef42e304b9da2ad2ecca18c89b052`,
+identical to the copy extracted from this installation's WinPE WIM.
+
+The media's `winhv.sys`, with matching public PDB identifier
+`0C4BA9724C61C8A1C7D0087E293AE47C1`, tests every feature bit 1 through 6 in
+`WinHvpCheckPartitionPrivileges`, called by `WinHvpInitialize`, before enabling SynIC support. Failure returns that same
+feature-unavailable status. The old VMBus profile omitted bits 3 and 4.
+VMBus mode now advertises access to the already implemented four synthetic
+timers and the native virtual GIC, so its low feature bits meet the 0x7e mask.
+Basic and SynIC-only profiles retain their previous masks. This does not
+advertise the optional direct-timer feature or x64 APIC register emulation:
+[Microsoft's ARM64 interrupt contract](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/virtual-interrupts)
+uses the architectural virtual GIC rather than synthetic x64 EOI/ICR/TPR MSRs.
+Actual Windows consumption must still be checked after this advertisement change.
+
+Validation of the WinHv prerequisite change: 2,075 isolated portable checks,
+270 native HVF checks, and EFI probes for all four profiles passed.

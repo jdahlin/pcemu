@@ -970,7 +970,8 @@ int main() {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
         r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
         check(integrated.call(0, r, 0) && r[0] == one &&
-              r[6] == (features | 4 | (1ull << 36) | (1ull << 37)));
+              r[6] == (features | 0x1c | (1ull << 36) | (1ull << 37)));
+        check((r[6] & 0x7e) == 0x7e); // WinHv driver initialization prerequisite.
         check(!integrated.removeConnection(1) && !integrated.removeConnection(4));
         check(!integrated.bindMessageConnection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
         rejected = false;

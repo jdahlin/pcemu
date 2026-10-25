@@ -122,7 +122,11 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     switch (name) {
     case 0x100: value[0] = 1ull | (1ull << 48); return 0; // PCEmu interface version 1.0, build 1
     case 0x200:
-        value[0] = privileges | (synicAdvertised ? 4 : 0) | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
+        // WinHv requires the complete reference-counter/SynIC/timer/native
+        // interrupt-controller/hypercall/VP-index privilege set. On ARM64,
+        // interrupt-controller access is the architectural virtual GIC, not
+        // the x64-only synthetic EOI/ICR/TPR register interface.
+        value[0] = privileges | (synicAdvertised ? 4 : 0) | (vmbusEnabled ? 0x18 : 0) | (allowPostMessages ? 1ull << 36 : 0) | (allowSignalEvents ? 1ull << 37 : 0);
         value[1] = 1ull << 8; return 0; // ARM64 bit 72: crash registers
     case 0x201: value[0] = 0xffffffff00000000ull | (interruptSender ? 4 : 0); return 0; // Recommend IPIs only with a real interrupt backend
     case 0x202: value[0] = cpus | (uint64_t(cpus) << 32); return 0;
