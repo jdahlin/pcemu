@@ -367,3 +367,11 @@ build/arm-hvf-reference-page-tests: src/hvf_machine.cpp src/hvf_machine.hpp src/
 test-arm-hvf-reference-page: build/arm-hvf-reference-page-tests
 	./build/arm-hvf-reference-page-tests
 test-hvf: test-arm-hvf-reference-page
+
+.PHONY: test-arm-hyperv-kvp-codec
+build/arm-hyperv-kvp-codec-tests: src/arm_hyperv_kvp_codec.cpp src/arm_hyperv_kvp_codec.hpp tests/arm_hyperv_kvp_codec_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_kvp_codec.cpp tests/arm_hyperv_kvp_codec_test.cpp -o $@
+test-arm-hyperv-kvp-codec: build/arm-hyperv-kvp-codec-tests
+	./build/arm-hyperv-kvp-codec-tests
+test test-hvf: test-arm-hyperv-kvp-codec
