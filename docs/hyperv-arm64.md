@@ -1430,7 +1430,11 @@ protocol implementation reference.
 The ARM platform explicitly calls `enableHeartbeat()` with `--hyperv vmbus`.
 `basic`, `synic` and `off` do not register the service. Its interface GUID is
 57164f39-9115-4e78-ab55-382f3bd5422d, offered on channel 1 / dedicated event
-connection 16 as a message-mode named pipe. This is a real host-side component,
+connection 16 as a message-mode named pipe. Offer flags are 0x11: named-pipe
+mode plus enumeration of the guest device interface. The latter is required
+by the IC pipe offer used in Microsoft's
+[OpenVMM channel implementation](https://github.com/microsoft/openvmm/blob/main/vm/devices/vmbus/vmbus_server/src/channels.rs).
+This is a real host-side component,
 not an echo handler. Opening its ring starts host-initiated IC version negotiation;
 framework and heartbeat versions 1.0/3.0 are offered. The guest must select one
 supported version of each before probes begin.
@@ -1461,7 +1465,7 @@ versions, application state, negotiation/probe/response counts, rejected respons
 and timeouts. Queued packets and completed negotiation alone never set
 `responsive=true`.
 
-`make test-arm-hyperv-heartbeat` passes 187 checks, including ASan/UBSan. Tests
+`make test-arm-hyperv-heartbeat` passes 188 checks, including ASan/UBSan. Tests
 use independent guest response fixtures and exercise IC/pipe layouts, selection,
 sequence correlation, malformed/truncated payloads, legacy v1, retained Linux
 negotiation tails, time wraparound, timeout/retry, backpressure, close/reopen and

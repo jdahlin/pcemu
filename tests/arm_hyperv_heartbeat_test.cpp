@@ -30,7 +30,7 @@ int main() {
     ArmHyperVHeartbeat h;
     check(!h.delay(0) && h.packet(0).empty());
     auto offer=h.offer();
-    check(offer.channel==1 && offer.connection==16 && offer.flags==0x10 && offer.userData[0]==4);
+    check(offer.channel==1 && offer.connection==16 && offer.flags==0x11 && offer.userData[0]==4);
     const std::array<uint8_t,16> guid={0x39,0x4f,0x16,0x57,0x15,0x91,0x78,0x4e,0xab,0x55,0x38,0x2f,0x3b,0xd5,0x42,0x2d};
     check(offer.interfaceId==guid);
     h.opened(100); auto request=h.packet(100);
@@ -115,6 +115,7 @@ int main() {
     auto contact=control(14,40);put(contact,8,0x60000);post(contact);post(control(3,8));
     check(get(ram,4096+512+16)==1 && get(ram,4096+512+16+184)==1);
     check(ram[4096+512+16+8]==0x39 && get(ram,4096+512+16+60)==4);
+    check(get(ram,4096+512+16+56,2)==0x11);
     auto header=control(8,60);put(header,12,42);put(header,16,40,2);put(header,18,1,2);put(header,20,16384);
     for(unsigned i=0;i<4;++i)put(header,28+8*i,(base>>12)+8+i,8);
     post(header);auto open=control(5,148);put(open,12,100);put(open,16,42);put(open,24,2);post(open);

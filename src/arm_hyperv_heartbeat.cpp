@@ -12,7 +12,7 @@ void put(std::span<uint8_t> b, size_t at, uint64_t v, unsigned n) {
 }
 ArmVmbus::Offer ArmHyperVHeartbeat::offer() {
     ArmVmbus::Offer o{};
-    o.channel=channelId; o.connection=connectionId; o.flags=0x10;
+    o.channel=channelId; o.connection=connectionId; o.flags=0x11;
     o.interfaceId={0x39,0x4f,0x16,0x57,0x15,0x91,0x78,0x4e,0xab,0x55,0x38,0x2f,0x3b,0xd5,0x42,0x2d};
     o.instanceId=o.interfaceId;
     o.userData[0]=4; // Message-mode named pipe.
