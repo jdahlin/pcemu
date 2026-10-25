@@ -58,3 +58,20 @@ all truncated negotiation/query reply lengths, wrong transaction/version/pool/
 index, explicit guest failure, end-of-pool, timeout and reopen. Channel
 registration/service dispatch and actual Windows queries remain unimplemented;
 this model alone does not add a default VM device. The Windows VM stays stopped.
+
+## VMBus integration
+
+`ArmHyperV::enableKvp()` now registers the real offer, event connection and
+packet handler. The ARM platform includes KVP as its fourth VMBus IC. Host
+callers explicitly use `enumerateKvp(pool,index)` and drain `takeKvpResult()`;
+opening the channel sends negotiation only. The service loop publishes a
+request only when its ring has room, counts only successful publication and
+uses the common deadline scheduling. Ready/idle KVP adds no periodic polling.
+Close clears pending results and removes its service deadline.
+
+The full ring/GPADL/SignalEvent test passes 41 checks under ASan/UBSan,
+including a full outbound ring, actual reply decoding, unread-result protection,
+end-of-pool, timeout and close. Timesync/shutdown regressions pass 32/38 checks,
+the core Hyper-V suite passes 2,170 checks, and the isolated native runner
+compiles. Windows channel negotiation and returned guest values remain separate
+verification steps.

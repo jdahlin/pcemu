@@ -4,6 +4,7 @@
 #include "arm_hyperv_heartbeat.hpp"
 #include "arm_hyperv_timesync.hpp"
 #include "arm_hyperv_shutdown.hpp"
+#include "arm_hyperv_kvp.hpp"
 #include "arm_hyperv_timers.hpp"
 #include "arm_hyperv_reference_clock.hpp"
 #include <array>
@@ -48,6 +49,9 @@ class ArmHyperV {
     // UTC clock returns FILETIME; reference time remains the monotonic Clock.
     void enableTimeSync(Clock utcClock = {});
     void enableShutdown();
+    void enableKvp();
+    bool enumerateKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index);
+    std::optional<ArmHyperVKvp::Result> takeKvpResult();
     // Trusted host request, with all VPs stopped. Acceptance is not poweroff.
     bool requestShutdown(ArmHyperVShutdown::Action action, bool force = false,
                          uint32_t timeoutSeconds = 0);
@@ -85,6 +89,8 @@ class ArmHyperV {
     Clock utcClock;
     bool shutdownEnabled = false;
     ArmHyperVShutdown shutdown;
+    bool kvpEnabled=false;
+    ArmHyperVKvp kvp;
     std::map<uint32_t, uint32_t> vmbusEventPorts;
     ArmHyperVReferenceClock referenceClock;
     CounterProvider counterProvider;

@@ -94,7 +94,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         [this](uint32_t offset) {return vm.nativeGicDistributorRead(offset);},
         [this](uint32_t offset,uint64_t value) {vm.nativeGicDistributorWrite(offset,value);});
     hyperv.advertiseSynic(c.hypervSynic);
-    if (c.hypervVmbus) { hyperv.enableVmbus(); hyperv.enableHeartbeat(); hyperv.enableTimeSync(); hyperv.enableShutdown(); }
+    if (c.hypervVmbus) { hyperv.enableVmbus(); hyperv.enableHeartbeat(); hyperv.enableTimeSync(); hyperv.enableShutdown(); hyperv.enableKvp(); }
     hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;

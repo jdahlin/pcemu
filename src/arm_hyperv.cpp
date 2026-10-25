@@ -77,6 +77,10 @@ void ArmHyperV::service() {
             if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVShutdown::channelId,packet))
                 shutdown.sent(now);
         }
+        if (kvpEnabled) {
+            auto now=timeNow();auto packet=kvp.packet(now);
+            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVKvp::channelId,packet))kvp.sent(now);
+        }
         if (vmbusEnabled) vmbus.service();
         timers.service(timeNow());
     }
@@ -97,6 +101,10 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
+    if (kvpEnabled) {
+        auto next=kvp.delay(timeNow());
+        if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
+    }
     return delay;
 }
 void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
@@ -177,6 +185,21 @@ void ArmHyperV::enableShutdown() {
         },[this]{shutdown.closed();},[this]{shutdown.opened(timeNow());}))
         throw std::runtime_error("Shutdown requires VMBus and an available channel/connection");
     shutdownEnabled=true;
+}
+void ArmHyperV::enableKvp() {
+    if(kvpEnabled) return;
+    if(!offerVmbusChannel(ArmHyperVKvp::offer(),
+        [this](std::span<const uint8_t> packet) {
+            kvp.receive(packet,timeNow());return std::vector<uint8_t>{};
+        },[this]{kvp.closed();},[this]{kvp.opened(timeNow());}))
+        throw std::runtime_error("KVP requires VMBus and an available channel/connection");
+    kvpEnabled=true;
+}
+bool ArmHyperV::enumerateKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) {
+    return enabled && kvpEnabled && kvp.enumerate(pool,index);
+}
+std::optional<ArmHyperVKvp::Result> ArmHyperV::takeKvpResult() {
+    return kvpEnabled ? kvp.takeResult() : std::nullopt;
 }
 bool ArmHyperV::requestShutdown(ArmHyperVShutdown::Action action,bool force,uint32_t seconds) {
     return enabled && shutdownEnabled && shutdown.request(action,force,seconds);
@@ -681,6 +704,7 @@ std::string ArmHyperV::report() const {
     s << ']';
     if (synicAdvertised) s << ",\"synic\":" << synic.report();
     if (vmbusEnabled) s << ",\"vmbus\":" << vmbus.report();
+    if (kvpEnabled) s << ",\"kvp\":" << kvp.report();
     if (shutdownEnabled) s << ",\"shutdown\":" << shutdown.report();
     if (timesyncEnabled) s << ",\"timesync\":" << timesync.report();
     if (heartbeatEnabled) s << ",\"heartbeat\":" << heartbeat.report();
