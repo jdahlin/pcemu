@@ -698,3 +698,17 @@ were mixed, including a 0.927 ratio for one dense paged case. The experiment
 is rejected and the previously validated CPU implementation is restored.
 Evidence and exact patch: `docs/measurements/rejected-physical-slow-context-2026-10-25.json`
 and the adjacent `.patch`. The broad goal remains active.
+
+
+## Restored binary host profile (25 October)
+
+The restored implementation passes another headless rtts Calculator/clipboard/
+Notepad exact-file persistence check through one firmware restart. The private
+compressed child was removed on success. Of 29,516 main-thread wall-stack
+samples excluding profiler attachment waits, interpreter execution accounts for
+51.1%, dispatch/cache/validation 18.1%, polling 11.1%, and native code/helpers
+8.6%. These include OCR/control waits and are not startup benchmark timings.
+`CPU::physical` self time is 8.26%; the next investigation should quantify
+fallback instructions and transitions before another TLB hit-path experiment.
+Evidence: `docs/measurements/restored-win95-profile-2026-10-25.json` and adjacent
+compressed raw sample. Fresh installation on this binary remains unverified.
