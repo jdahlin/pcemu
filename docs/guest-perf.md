@@ -580,3 +580,70 @@ Raw results, per-variant correctness scope, baseline revision and executable
 hashes are in `measurements/rejected-native-read-cache-2026-10-25.json`;
 four complete prototype patches are alongside it. Successful private disks
 were removed. Neither Office nor installer fixtures were recreated.
+
+
+## Stackless cached CPU translation (2026-10-25)
+
+A fresh main-thread sample of the original rtts application/restart check placed
+52.5% of wall samples under the interpreter and 10.8% directly in
+`CPU::physical`. Its original host function allocated a 96-byte stack frame even
+on cached read hits. Splitting a short cached-translation path from the unchanged
+page-walk/fault/dirty-update body removes that frame on hits. This retains the
+original software TLB, permission semantics and A20 behavior.
+
+The first compiler-selected version expanded `CPU::stepImpl` from 3,739 to
+3,894 instructions by inlining the new lookup. Its RAM interpreter flat cases
+were mixed and often substantially slower. Marking the public lookup noinline
+restores the 3,739-instruction interpreter shape while the lookup itself is a
+50-instruction leaf function; the original translation function was 249
+instructions. Instruction counts describe complete host functions, not cycles
+or the number of instructions executed by an individual lookup.
+
+Five original-build alternating rtts startup pairs showed median baseline/
+candidate throughput ratios of 1.0443 by process time and 1.0573 by internal
+execution time. A later rebuild produced a different whole-file hash while the
+saved translation and interpreter instruction words still matched. Both Win95
+application checks and Win3.11 then validated that rebuilt executable. A fresh
+five-pair comparison using a frozen copy of that exact executable gives **1.0356
+process throughput and 1.0438 internal execution throughput**. All five individual
+process ratios exceed one (1.0034–1.0458). Both initial and repeated results are
+retained. Each pair runs 300 million guest instructions, disconnected from host
+networking, with private compressed overlays. This measures a startup prefix,
+not desktop readiness or full boot time. Captured guest/device state and all
+reported native/helper/compilation/recycle counters match; bytewise RAM equality
+was not checked.
+
+Three alternating RAM pairs per engine provide workload limits:
+
+* Interpreter flat ratios are 0.985–1.010. Paged dense ratios are 1.040–1.054;
+  page-stride ratios are 1.006–1.062 up to 2,048 nodes, but the 4,096-node
+  TLB-thrashing case regresses to 0.903. Misses repeat some checks before entering
+  the original slow body; reducing that duplication remains future work.
+* Native RAM ratios are mixed, 0.964–1.041 over all 20 cases. The tiny paged
+  dense and page-stride rings reach 0.966 and 0.972 respectively. This is not a
+  universal native-memory improvement. The native inline memory emitter is
+  unchanged.
+
+Every paired RAM case has matching guest instructions, native instructions,
+helper calls and final pointers. Interpreter runs use 8,000,007 dependent loads
+per case; native runs use 128,000,007. These are one-host observations without
+confidence intervals or core isolation; an unrelated ARM/HVF guest was also
+running. The change is retained for the actual Win95 improvement and the common
+paged interpreter path, with the cold-miss and small-native-ring regressions
+explicitly recorded.
+
+Validation passes 352,644 core, 255,535 read-JIT, 947,820 RMW, 2,957,189 byte,
+237,430 flag, 17,861 indirect-jump and 2,898 snapshot checks. Headless DOS
+CoreMark CRCs, all 64 microbenchmark intervals and wrong-result rejection pass;
+RAM results agree with interpreter and QEMU, and corrupt-kernel rejection passes.
+Win3.11 exact Notepad persistence and both rtts/installed-OSR2 Calculator,
+clipboard, Notepad, restart and stopped-guest file checks pass. The exact rebuilt
+emulator hash matches across those Windows checks and the repeated startup
+comparison. A fresh OSR2 installation was not rerun.
+
+The profile traces for original rtts and retained rtts/OSR2 application checks
+are archived with zstd. They include observer/OCR/control work and are not timing
+benchmarks. Raw paired results, host disassembly, executable hashes and validation
+evidence are in `measurements/physical-translation-fast-path-2026-10-25.json`;
+the initial automatically inlined patch is alongside it. Successful private disks
+are removed; no Office or installer fixtures were recreated.

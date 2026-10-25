@@ -67,7 +67,8 @@ struct CPU {
     std::function<uint32_t(uint16_t, int)> input;
     std::function<void(uint16_t, uint32_t, int)> output;
     explicit CPU(size_t ram = 16 * 1024 * 1024);
-    uint32_t physical(uint32_t linear, bool write = false);
+    // Keep cached translation out of the already large interpreter loop.
+    [[gnu::noinline]] uint32_t physical(uint32_t linear, bool write = false);
     void flushTLB();
     uint32_t read(uint32_t linear, int width);
     uint32_t systemRead(uint32_t linear, int width);
@@ -107,6 +108,7 @@ struct CPU {
     } repeatResume;
 
   private:
+    uint32_t physicalSlow(uint32_t linear, bool write);
     void stepImpl();
     void ioPermission(uint16_t port, int width);
     bool descriptorVisible(uint16_t selector, uint32_t high) const;

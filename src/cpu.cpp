@@ -75,6 +75,23 @@ void CPU::flushTLB() {
 }
 uint32_t CPU::physical(uint32_t a, bool wr) {
     if (cr[0] & 0x80000000u) {
+        if (tlbCR3 != cr[3]) return physicalSlow(a, wr);
+        const uint32_t page = a >> 12;
+        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+        if (entry.epoch != tlbEpoch || entry.tag != page || (wr && !entry.dirty))
+            return physicalSlow(a, wr);
+        if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) &&
+            cpl() == 3 && !systemAccess)
+            return physicalSlow(a, wr);
+        a = entry.base | (a & 4095);
+    }
+    if (!a20) a &= ~(1u << 20);
+    return a;
+}
+// Keep page walks, dirty-bit writes and exception construction out of the
+// common cached-translation path. Tail calls preserve precise slow semantics.
+uint32_t CPU::physicalSlow(uint32_t a, bool wr) {
+    if (cr[0] & 0x80000000u) {
         if (tlbCR3 != cr[3])
             flushTLB();
         // A user-accessible page also permits supervisor/system accesses.

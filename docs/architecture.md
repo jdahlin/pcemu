@@ -1,7 +1,8 @@
 # Machine and translation architecture
 
 This is an original software x86 machine for Apple Silicon. It currently boots
-MS-DOS 6.22 and Windows 3.11 **standard mode** to Program Manager. C++20 implements
+MS-DOS 6.22, Windows 3.11 **standard mode**, and Windows 95 from rtts and
+installed OSR2 images. C++20 implements
 the processor, memory, disk and devices. SDL2 supplies the host window and input.
 No existing CPU emulator, hypervisor or translation engine is linked or run.
 
@@ -13,6 +14,14 @@ implements common 8086–386 integer operations, 16/32-bit effective addresses,
 protected-mode descriptors and call/interrupt gates, privilege-stack transitions,
 restartable segment faults, and basic two-level page translation. It is a
 compatibility implementation, not a complete or validated 80386.
+
+`CPU::physical` handles cached translations in a short, non-inlined host
+function. Valid epoch/tag hits with sufficient permissions and, for writes,
+an already-set dirty bit return the physical address with A20 applied.
+CR3 synchronization, misses, faults and required dirty-bit updates use
+`physicalSlow`, retaining the original page-walk and exception side effects.
+Keeping this lookup out of the large interpreter loop preserves its code shape;
+the cached host function needs no stack frame in the measured ARM64 build.
 
 Unimplemented valid instructions stop with the guest CS:EIP. Selected architectural
 faults are delivered through the guest IDT. Windows uses #UD for its software

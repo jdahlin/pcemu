@@ -669,3 +669,20 @@ JIT/interpreter/QEMU memory smoke and corrupted-kernel rejection pass.
 Evidence and rejected patch: `docs/measurements/rejected-tlb-base-hoist-2026-10-25.json`.
 Future memory work needs to improve the complete lookup path and be measured
 against both small dense rings and larger TLB-pressure cases.
+
+
+## Cached CPU translation fast path (25 October)
+
+Retained a stackless cached `CPU::physical` path with the original slow page
+walk/fault/dirty-update behavior. Five paired startup-prefix runs on the exact
+application-tested binary improve median process throughput by 3.6% and internal
+execution throughput by 4.4%. The common paged interpreter RAM kernels improve,
+but the largest interpreter TLB-thrashing case and some native kernels regress;
+full paired data and limits are in
+`docs/measurements/physical-translation-fast-path-2026-10-25.json`.
+
+Current headless DOS benchmark validation, Win3.11 Notepad persistence, and both
+rtts/installed-OSR2 application/restart/persistence checks pass. Existing core,
+native-memory/flags/control-flow and snapshot suites pass. A fresh latest-binary
+OSR2 installation and Rosetta performance equivalence remain unproven; the broad
+goal remains active. Cold-miss guard duplication remains an optimization target.
