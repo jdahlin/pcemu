@@ -188,3 +188,11 @@ exact saved-file readback and a firmware restart to Explorer. See
 [recovery evidence](measurements/recovered-win95-qcow2-2026-10-25.json).
 `media/win95.raw` now points to this external QCOW2; writable validation uses
 small disposable compressed children.
+
+After independent validation, the redundant owned installation leaves
+`win311-final.pcd` and `win95-fresh.pcd` were removed; their standalone QCOW2
+replacements retain identical guest bytes. Office's recreated installation
+uses a compressed child of `win95.qcow2`. Its external desktop checkpoint
+adds only about 10 MiB, by snapshotting a small session child rather than
+copying the complete Office installation. Successful restore-test disks and
+the temporary desktop session disk were removed.

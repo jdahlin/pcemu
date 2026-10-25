@@ -1,26 +1,30 @@
 # Office 97 on Windows 95
 
-Latest availability audit (2026-10-25): the local parent
-`media/office97-base/disk.raw` is missing, along with earlier local snapshot parents. DOS and Win3.11 have since been
-recovered independently under `/Volumes/data/pcemu/recovered/`. The original rtts image has since been
-recovered separately to `/Volumes/data/pcemu/recovered/rtts-win95.pcd`. The external Office ISO, installed
-COW children and recalculation snapshot remain, but their missing parent prevents
-boot/restore. The installation and application checks below passed before this
-loss; they do not establish current runnability. Parent recovery or a complete
-installation chain is required before more Office timing runs.
+Current recovery (2026-10-25): DOS, Win3.11, rtts and a fresh Windows 95
+OSR2 installation have been recovered on `/Volumes/data/pcemu/recovered/`.
+Win3.11 and Win95 now have standalone QCOW2 bases. Office 97 Professional
+SR-1 was installed again into `office97.pcd`, a zstd compressed writable child
+of the immutable `win95.qcow2` base. Its ISO remains external; all 5,781 staged
+files were read back before Setup. No raw staging disk or extracted tree was
+created.
 
-Current local availability (2026-10-25): the English Professional SR-1 ISO was
-restored from WinWorld to `/Volumes/data/pcemu/media/office97/`. Its archive
-SHA-512 matched the published checksum; the extracted ISO has SHA-256
-`4e0fabcf43b4f2ac7d2e71a2b51b15226fb8e954a3fee2125e04756d2fef8ee4`.
-The media-directory ISO is a symlink to that external volume. Installed RAM checkpoints remain absent. A new installed compressed disk is
-available at `/Volumes/data/pcemu/office97-install/disk.pcd`; Setup completion,
-Word text save, Excel calculation/save and a firmware restart to Explorer pass.
-Stopped-guest readback verifies both compound-file headers and Word text.
-Excel formula persistence on reopening remains unverified. Current evidence:
-[installation record](measurements/office97-restored-install-2026-10-25.json). The retained `media/office97-base/disk.raw`
-is a pre-Office Win95 baseline. New large media/disk data belongs on the external
-volume.
+Word saved and reopened `C:\RECOVER.DOC` after a firmware restart. Excel
+saved and reopened `C:\RECOVER.XLS`, preserving A1's `=2+2` formula and value
+4. Stopped-guest readback verified both compound-file headers/hashes and the
+Word text payload. The new compressed checkpoint is
+`/Volumes/data/pcemu/snapshots/office97-recovered-desktop`; an independent
+headless restore reached Explorer. `build/snapshots/office97-desktop` points
+to it, so `./run-office97.sh --vga` uses this recovered VGA installation.
+The checkpoint adds about 10 MiB; its disk is a small child above the installed
+Office disk, avoiding another full Office copy. See
+[recovery evidence](measurements/office97-qcow2-recovery-2026-10-25.json).
+
+Earlier Office overlays and performance checkpoints still refer to a missing
+parent. They cannot be substituted onto the new base: their old measurements
+remain historical. The dependent-recalculation fixture must be rebuilt before
+resuming those comparisons. The remaining sections describe the earlier
+installation, driver setup and measurements; those old checkpoint paths have
+not been restored by this recovery.
 
 The supplied Office 97 Professional SR-1 media installs through Microsoft's
 normal Setup in the independent Windows 95 OSR2 installation. Word edits and

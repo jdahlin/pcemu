@@ -1,0 +1,59 @@
+{
+  "scope": "Recreated Office 97 Professional SR-1 on freshly installed Win95 OSR2; Word save/reopen and Excel formula/result persistence after firmware restart, offline compound-file and Word payload checks; compressed desktop snapshot restored independently",
+  "disk": "/Volumes/data/pcemu/recovered/office97.pcd",
+  "parent": "/Volumes/data/pcemu/recovered/win95.qcow2",
+  "diskBytes": 555728705,
+  "staging": {
+    "parent": "/Volumes/data/pcemu/recovered/win95.qcow2",
+    "sourceIso": "/Volumes/data/pcemu/media/office97/Microsoft Office 97 Professional SR-1 (ISO)/Office 97 Pro SR-1.iso",
+    "sourceIsoSha256": "4e0fabcf43b4f2ac7d2e71a2b51b15226fb8e954a3fee2125e04756d2fef8ee4",
+    "filesVerified": 5781,
+    "payloadBytes": 672387604,
+    "stagingRawCopy": false,
+    "stagedCompressedBytes": 474628356
+  },
+  "runner": {
+    "source": "build/win95-fresh-recovered/pcemu",
+    "sha256": "404c65184b15eaa1602f96ddc3387d22835aafb5dee7bb6e71f22c927bd65648"
+  },
+  "restart": {
+    "scope": "guest restart and desktop; no file assertion",
+    "beforeInstructions": 17465852589,
+    "afterInstructions": 18287696474,
+    "beforeResets": 0,
+    "afterResets": 1
+  },
+  "files": {
+    "RECOVER DOC": {
+      "bytes": 19456,
+      "sha256": "377523c36567d2eb80111e390f6afc3e88529fb8aa85863d780fe871b451a8cc",
+      "compoundHeader": true
+    },
+    "RECOVER XLS": {
+      "bytes": 13824,
+      "sha256": "5c1d3bc4c535a7eae31ec4ea75c40ffc63303559db5c94d2e70acf250ed4df0c",
+      "compoundHeader": true
+    }
+  },
+  "visualChecks": {
+    "word": "Word reopened C:\\RECOVER.DOC containing PCEMU QCOW2 recovery Word persistence.",
+    "excel": "Excel reopened C:\\RECOVER.XLS; selected A1 formula =2+2 and displayed value 4",
+    "screenshots": [
+      "build/recovered-office97-install/word-reopened.png",
+      "build/recovered-office97-install/excel-reopened.png"
+    ]
+  },
+  "snapshot": "/Volumes/data/pcemu/snapshots/office97-recovered-desktop",
+  "snapshotFiles": {
+    "disk.raw": 811580,
+    "state.bin": 9495384,
+    "preview.ppm.zst": 8797
+  },
+  "independentRestore": {
+    "scope": "desktop bootstrap only",
+    "instructions": 2659565770,
+    "resets": 0
+  },
+  "temporaryRestoreDiskRemoved": true,
+  "rawStagingCopies": 0
+}
