@@ -450,15 +450,22 @@ int main(int argc, char **argv) {
             unsigned reboots = 0;
             do {
                 pc::ArmVirtMachine vm(uefi);
-                auto saveHypervStats = [&](const std::string &path) {
+                auto saveHypervStats = [&](const std::string &path, bool required = false) {
                     if (path.empty()) return;
                     auto temporary = path + ".tmp-" + std::to_string(getpid());
-                    std::ofstream out(temporary);
-                    out << vm.hypervReport(); out.close();
-                    if (!out) throw std::runtime_error("Cannot write Hyper-V statistics");
-                    std::filesystem::rename(temporary, path);
+                    try {
+                        std::ofstream out(temporary);
+                        out << vm.hypervReport(); out.close();
+                        if (!out) throw std::runtime_error("Cannot write Hyper-V statistics: " + path);
+                        std::filesystem::rename(temporary, path);
+                    } catch (const std::exception &error) {
+                        std::error_code ignored;
+                        std::filesystem::remove(temporary, ignored);
+                        if (required) throw;
+                        std::cerr << "Hyper-V statistics unavailable: " << error.what() << '\n';
+                    }
                 };
-                saveHypervStats(hypervStatsPath);
+                saveHypervStats(hypervStatsPath, true);
                 size_t printed = 0, matchStart = 0;
                 while (!vm.stopped() && !interrupted && (runForever || std::chrono::steady_clock::now() < deadline)) {
                     if (stdinOpen) {

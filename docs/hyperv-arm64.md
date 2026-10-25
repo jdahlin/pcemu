@@ -66,7 +66,10 @@ powers off through PSCI. Guest results and counters agree in both modes.
 This synthetic probe does not establish Windows consumption.
 
 `--hyperv-stats FILE` writes JSON after initialization, on SIGUSR1 and at
-normal exit/reset. `FILE.bootN.json` preserves each boot before recreation.
+normal exit/reset. An unwritable destination at startup rejects the launch.
+Later write failures emit a warning and leave the guest running; subsequent
+captures retry. Shutdown still saves the variable store if diagnostics fail.
+`FILE.bootN.json` preserves each boot before recreation.
 Counters distinguish discovery, both hypercall ABIs, disabled attempts, call
 codes, register reads/writes and failures. Tables are bounded and omissions
 are counted. Disabled mode records attempts without exposing the interface.
