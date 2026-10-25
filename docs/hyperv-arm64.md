@@ -1977,3 +1977,34 @@ does not prove that Windows changed its wall clock or selected VMIC as its time
 provider. That requires guest-side time/provider measurements. No GUI/performance
 claim is added. The test VM was stopped, its cloned disk removed, and the
 original basic-profile VM restarted on its original overlay.
+
+### Explicit shutdown protocol model
+
+`ArmHyperVShutdown` adds the host shutdown IC v3.2 state machine, using interface
+`0e0b6031-5213-4934-818b-38d90ced39db`, distinct instance
+`b6650ff7-33bc-4840-8048-e0676786f393`, and reserved channel 3 / connection 18.
+The layout was checked against Microsoft's OpenVMM
+[shutdown protocol](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic_protocol/src/shutdown.rs)
+and [host implementation](https://github.com/microsoft/openvmm/blob/main/vm/devices/hyperv_ic/src/shutdown.rs).
+
+Opening the channel negotiates framework 1/3 and shutdown 3.2 only. It never
+queues a power operation. An explicit request after negotiation selects power
+off, reboot or hibernate, with force disabled by default and a caller-selected
+guest timeout. The message contains a planned reason and an empty 2,048-byte
+friendly-text field. Ring publication confirmation advances the request count;
+backpressure alone does not. Only one operation may be pending.
+
+Matching guest status-zero replies are reported as accepted, not as completed
+poweroff. A negative guest status is retained and permits a new explicit request.
+A missing/late reply instead leaves an uncertain failed session, with no
+automatic retransmission. Close/reopen drops the operation and renegotiates;
+it does not replay a pending shutdown. Malformed/duplicate replies do not count
+as acceptance. Actual VM power state must later be established independently.
+
+All 270 model checks pass normally and under AddressSanitizer/UBSan, including
+truncation, unsupported versions, transaction mismatch, denial, timeout,
+reopening, action/force flags and the requirement for an explicit request.
+The model is included in `test` and `test-hvf`. Production registration, the
+host request path, Windows service negotiation and actual controlled shutdown
+still require integration and guest verification. Guest hibernation policy is
+not established by model support for the protocol flag.

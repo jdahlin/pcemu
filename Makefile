@@ -324,3 +324,11 @@ build/arm-hyperv-timesync-integration-tests: $(ARM_DEVICES) $(ARM_DEVICE_HEADERS
 	@mkdir -p build
 	$(CXX) -Isrc $(CXXFLAGS) $(ARM_DEVICES) tests/arm_hyperv_timesync_integration_test.cpp -o $@
 test test-hvf: test-arm-hyperv-timesync-integration
+
+.PHONY: test-arm-hyperv-shutdown
+test-arm-hyperv-shutdown: build/arm-hyperv-shutdown-tests
+	./build/arm-hyperv-shutdown-tests
+build/arm-hyperv-shutdown-tests: src/arm_hyperv_shutdown.cpp src/arm_hyperv_shutdown.hpp src/arm_vmbus.hpp src/arm_gpadl.hpp src/arm_vmbus_ring.hpp tests/arm_hyperv_shutdown_test.cpp
+	@mkdir -p build
+	$(CXX) -Isrc $(CXXFLAGS) src/arm_hyperv_shutdown.cpp tests/arm_hyperv_shutdown_test.cpp -o $@
+test test-hvf: test-arm-hyperv-shutdown
