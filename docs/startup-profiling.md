@@ -379,3 +379,17 @@ be nonzero. The normal executable rejects this option. Instrumented timings are
 not benchmarks. Native replay contributes interpreter attempts; faulting dispatch
 can exit before selecting native or interpreted execution. Existing interactive
 profile-start/profile-stop commands can replace the active diagnostic interval.
+
+## Separate application-use intervals
+
+`python3 tools/smoke_win95.py --applications --guest-profile` uses the diagnostic
+executable and starts each interval only after the application's window has been
+verified. Calculator covers 2+2 evaluation; Notepad covers clipboard paste,
+editing, and saving. Launch, boot, shutdown, and restart are outside these opcode
+intervals. The usual exact file readback and restart checks still apply.
+
+The output directory contains `application-profiles/calculator.json` and
+`notepad.json`. Counts include guest idle/message loops and input settling;
+they are not host execution costs, isolated latency measurements, or evidence
+about Office performance. Use these alongside boot profiles and CPU/memory
+kernels rather than treating startup as representative of application use.

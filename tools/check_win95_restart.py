@@ -23,9 +23,15 @@ p.add_argument('--pid', type=int, required=True)
 p.add_argument('--output', type=Path, required=True)
 p.add_argument('--timeout', type=float, default=600)
 p.add_argument('--applications', action='store_true', help='calculate 2+2, copy result into a fresh Notepad file and restart; caller verifies file after guest exit')
+p.add_argument('--application-profile-dir', type=Path, help='diagnostic opcode intervals after Calculator/Notepad have loaded')
 p.add_argument('--desktop-only', action='store_true', help='bootstrap desktop only; no restart or file assertion')
 p.add_argument('--restart-only', action='store_true', help='verify restart and desktop without the raw-FAT marker check (supports COW disks)')
 a = p.parse_args()
+if a.application_profile_dir:
+    if not a.applications:
+        p.error('--application-profile-dir requires --applications')
+    a.application_profile_dir = a.application_profile_dir.resolve()
+    a.application_profile_dir.mkdir(parents=True, exist_ok=True)
 if a.applications:
     if a.desktop_only:
         p.error('--applications requires restart verification')
@@ -157,7 +163,11 @@ def applications():
     print('Checking Calculator and clipboard transfer', flush=True)
     launch('calc.exe')
     wait_text('calculator')
+    if a.application_profile_dir:
+        send('profile-start', settle=0)
     send('key 011b', 'text 2+2', 'key 1c0d', settle=.6)
+    if a.application_profile_dir:
+        send('profile-stop ' + str(a.application_profile_dir / 'calculator.json'), settle=0)
     screenshot('calculator.png')
     shortcut(0x1d, 0x2e)  # Ctrl+C: result must come from Calculator.
     shortcut(0x38, 0x3e)
@@ -165,6 +175,8 @@ def applications():
     print('Saving a fresh Notepad file', flush=True)
     launch('notepad.exe')
     wait_text('notepad')
+    if a.application_profile_dir:
+        send('profile-start', settle=0)
     shortcut(0x1d, 0x2f)  # Ctrl+V: later exact FAT readback verifies arithmetic.
     send('key 1c0d', 'text PCEMU Win95 applications ' + token + '.', settle=.4)
     shortcut(0x38, 0x21)  # File menu; this Win95 Notepad lacks Ctrl+S.
@@ -172,6 +184,8 @@ def applications():
     wait_text('save', 'name')
     send('text C:\\' + stem + '.TXT', 'key 1c0d', settle=.6)
     wait_text('notepad', absent=('saveas', 'filename'))
+    if a.application_profile_dir:
+        send('profile-stop ' + str(a.application_profile_dir / 'notepad.json'), settle=0)
     screenshot('notepad-saved.png')
     shortcut(0x38, 0x3e)
     desktop(a.timeout)

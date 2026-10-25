@@ -726,3 +726,17 @@ MOV r,rm (4.16M), far CALL immediate (3.52M), far RET (3.51M), and FF group
 investigation alongside memory lowering. Both successful compressed children
 were removed. Evidence: `docs/measurements/win95-startup-opcodes-2026-10-25.json`.
 The broad goal remains active, including current-binary fresh installer validation.
+
+
+## Application-use profiling separate from startup (25 October)
+
+Added optional diagnostic intervals after Calculator and Notepad have loaded.
+Boot and application launch are excluded; Calculator arithmetic and Notepad
+clipboard/edit/save execute inside separate intervals. Exact stopped-guest file
+readback and firmware restart pass; the private compressed disk is removed.
+Calculator's fallback mix includes MOV, FF group, XCHG, CLI and PUSHA/POPA,
+rather than the segment-load/far-transfer-heavy startup ordering. Counts also
+include message loops and input settling, and do not isolate computation cost
+or establish Office performance. Keep startup, application use and kernels as
+separate optimization workloads. Evidence:
+`docs/measurements/win95-application-use-opcodes-2026-10-25.json`.

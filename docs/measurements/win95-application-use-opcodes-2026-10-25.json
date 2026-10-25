@@ -1,0 +1,7771 @@
+{
+  "pid": 5143,
+  "command": [
+    "/Users/johandahlin/dev/pcemu/build/pcemu-profile",
+    "--headless",
+    "--machine",
+    "win95",
+    "--disk",
+    "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/disk.pcd",
+    "--ram-mb",
+    "64",
+    "--execute-vgabios",
+    "--steps",
+    "0",
+    "--control-file",
+    "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/control.txt",
+    "--frame",
+    "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/frame.ppm",
+    "--state-json",
+    "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/state.json"
+  ],
+  "sourceDisk": "/Users/johandahlin/dev/pcemu/media/rtts-win95.img",
+  "scope": "cold boot, applications and guest restart",
+  "emulatorSha256": "6b183e7e32a59902b5ecfde72f09a89d27f9623797bfd3c4a79f9bf398ee172d",
+  "profiled": false,
+  "guestProfiled": true,
+  "gitCommit": "8637bd477c87285546d78eac6d754c84efebc0a9",
+  "applicationProfiles": {
+    "calculator": {
+      "path": "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/application-profiles/calculator.json",
+      "sha256": "68b57eaa51a6b186ea309eae04f33932ca48cecb25eea6c01f870f8085da0ba5",
+      "scope": "After application load; includes input settling and guest idle/message loops; counts are not host costs or timing benchmarks"
+    },
+    "notepad": {
+      "path": "/Users/johandahlin/dev/pcemu/build/win95-smoke-s6gk5zbd/application-profiles/notepad.json",
+      "sha256": "8ed425c41edacd7edfd8bda391372c4974440efdc736136b0446f49c614c7c51",
+      "scope": "After application load; includes input settling and guest idle/message loops; counts are not host costs or timing benchmarks"
+    }
+  },
+  "verification": {
+    "scope": "applications, restart, desktop and exact file persistence",
+    "beforeInstructions": 517118404,
+    "afterInstructions": 1637146379,
+    "beforeResets": 0,
+    "afterResets": 1,
+    "applications": {
+      "file": "C:\\P7B14652.TXT",
+      "fatName": "P7B14652TXT",
+      "expectedContents": " 4\r\nPCEMU Win95 applications 7B146520.",
+      "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+      "verifiedBytes": 38,
+      "verifiedSha256": "e3f3a0e7ce719df379ad05ad3eb2e47e79303441d56c359cbdf67c82f3509b2e"
+    }
+  },
+  "applicationOcrScratchRemoved": true,
+  "privateDiskRemoved": true,
+  "profiles": {
+    "calculator": {
+      "startInstructions": 687080241,
+      "stopInstructions": 717593929,
+      "interpretedAttempts": 9545169,
+      "events": {
+        "dispatch": 16600000,
+        "fastHit": 15434397,
+        "mapHit": 862476,
+        "lookupMiss": 12780,
+        "metadataRebuild": 12820,
+        "translate": 3250,
+        "interpretedDispatch": 9544494,
+        "negativeHit": 9200715,
+        "nativeCall": 7055502,
+        "nativeReplay": 675,
+        "devicePoll": 16600610,
+        "diskReadSectorsIncludingParents": 16,
+        "diskWriteSectors": 0,
+        "cowDecompress": 1,
+        "cowCacheHit": 0
+      },
+      "opcodes": [
+        {
+          "opcode": 1,
+          "attempts": 168418,
+          "registerOperands": 0,
+          "memoryOperands": 168418,
+          "groups": [
+            138190,
+            3025,
+            30,
+            58,
+            0,
+            0,
+            54,
+            27061
+          ]
+        },
+        {
+          "opcode": 2,
+          "attempts": 8,
+          "registerOperands": 7,
+          "memoryOperands": 1,
+          "groups": [
+            1,
+            0,
+            0,
+            7,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 3,
+          "attempts": 28609,
+          "registerOperands": 27614,
+          "memoryOperands": 995,
+          "groups": [
+            1084,
+            92,
+            244,
+            513,
+            1,
+            0,
+            25949,
+            726
+          ]
+        },
+        {
+          "opcode": 4,
+          "attempts": 11,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 5,
+          "attempts": 53,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 6,
+          "attempts": 28376,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 7,
+          "attempts": 27381,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 8,
+          "attempts": 52387,
+          "registerOperands": 0,
+          "memoryOperands": 52387,
+          "groups": [
+            52370,
+            0,
+            0,
+            1,
+            16,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 9,
+          "attempts": 27077,
+          "registerOperands": 0,
+          "memoryOperands": 27077,
+          "groups": [
+            647,
+            156,
+            26223,
+            25,
+            0,
+            0,
+            26,
+            0
+          ]
+        },
+        {
+          "opcode": 10,
+          "attempts": 817,
+          "registerOperands": 781,
+          "memoryOperands": 36,
+          "groups": [
+            500,
+            0,
+            17,
+            140,
+            10,
+            150,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 11,
+          "attempts": 58986,
+          "registerOperands": 58943,
+          "memoryOperands": 43,
+          "groups": [
+            29180,
+            2376,
+            101,
+            476,
+            0,
+            12,
+            26502,
+            339
+          ]
+        },
+        {
+          "opcode": 12,
+          "attempts": 59,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 13,
+          "attempts": 8,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 14,
+          "attempts": 865,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 15,
+          "attempts": 475289,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 17,
+          "attempts": 435,
+          "registerOperands": 0,
+          "memoryOperands": 435,
+          "groups": [
+            0,
+            0,
+            435,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 18,
+          "attempts": 485,
+          "registerOperands": 485,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            485,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 19,
+          "attempts": 749,
+          "registerOperands": 133,
+          "memoryOperands": 616,
+          "groups": [
+            0,
+            125,
+            616,
+            6,
+            0,
+            0,
+            2,
+            0
+          ]
+        },
+        {
+          "opcode": 22,
+          "attempts": 582,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 26,
+          "attempts": 478,
+          "registerOperands": 478,
+          "memoryOperands": 0,
+          "groups": [
+            116,
+            2,
+            5,
+            0,
+            349,
+            1,
+            5,
+            0
+          ]
+        },
+        {
+          "opcode": 27,
+          "attempts": 259,
+          "registerOperands": 259,
+          "memoryOperands": 0,
+          "groups": [
+            87,
+            93,
+            1,
+            54,
+            0,
+            0,
+            24,
+            0
+          ]
+        },
+        {
+          "opcode": 30,
+          "attempts": 83119,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 31,
+          "attempts": 82974,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 32,
+          "attempts": 529,
+          "registerOperands": 0,
+          "memoryOperands": 529,
+          "groups": [
+            528,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 33,
+          "attempts": 289,
+          "registerOperands": 0,
+          "memoryOperands": 289,
+          "groups": [
+            159,
+            128,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 34,
+          "attempts": 26153,
+          "registerOperands": 31,
+          "memoryOperands": 26122,
+          "groups": [
+            26126,
+            1,
+            0,
+            7,
+            12,
+            0,
+            0,
+            7
+          ]
+        },
+        {
+          "opcode": 35,
+          "attempts": 26180,
+          "registerOperands": 25935,
+          "memoryOperands": 245,
+          "groups": [
+            26064,
+            6,
+            77,
+            28,
+            0,
+            0,
+            5,
+            0
+          ]
+        },
+        {
+          "opcode": 36,
+          "attempts": 311,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 37,
+          "attempts": 26028,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 41,
+          "attempts": 27754,
+          "registerOperands": 0,
+          "memoryOperands": 27754,
+          "groups": [
+            25787,
+            1921,
+            0,
+            20,
+            0,
+            0,
+            26,
+            0
+          ]
+        },
+        {
+          "opcode": 42,
+          "attempts": 255,
+          "registerOperands": 253,
+          "memoryOperands": 2,
+          "groups": [
+            154,
+            4,
+            0,
+            0,
+            84,
+            2,
+            0,
+            11
+          ]
+        },
+        {
+          "opcode": 43,
+          "attempts": 80735,
+          "registerOperands": 79571,
+          "memoryOperands": 1164,
+          "groups": [
+            79767,
+            644,
+            98,
+            47,
+            8,
+            54,
+            58,
+            59
+          ]
+        },
+        {
+          "opcode": 44,
+          "attempts": 12,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 45,
+          "attempts": 63,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 48,
+          "attempts": 12,
+          "registerOperands": 0,
+          "memoryOperands": 12,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            12,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 49,
+          "attempts": 61,
+          "registerOperands": 0,
+          "memoryOperands": 61,
+          "groups": [
+            25,
+            0,
+            36,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 50,
+          "attempts": 331,
+          "registerOperands": 301,
+          "memoryOperands": 30,
+          "groups": [
+            22,
+            0,
+            13,
+            14,
+            53,
+            160,
+            17,
+            52
+          ]
+        },
+        {
+          "opcode": 51,
+          "attempts": 106780,
+          "registerOperands": 106761,
+          "memoryOperands": 19,
+          "groups": [
+            27658,
+            26123,
+            26325,
+            44,
+            0,
+            0,
+            26469,
+            161
+          ]
+        },
+        {
+          "opcode": 52,
+          "attempts": 6,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 56,
+          "attempts": 390,
+          "registerOperands": 338,
+          "memoryOperands": 52,
+          "groups": [
+            33,
+            8,
+            38,
+            9,
+            14,
+            1,
+            7,
+            280
+          ]
+        },
+        {
+          "opcode": 57,
+          "attempts": 449,
+          "registerOperands": 0,
+          "memoryOperands": 449,
+          "groups": [
+            221,
+            31,
+            42,
+            40,
+            0,
+            2,
+            65,
+            48
+          ]
+        },
+        {
+          "opcode": 58,
+          "attempts": 89,
+          "registerOperands": 0,
+          "memoryOperands": 89,
+          "groups": [
+            67,
+            7,
+            4,
+            7,
+            0,
+            4,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 59,
+          "attempts": 845,
+          "registerOperands": 491,
+          "memoryOperands": 354,
+          "groups": [
+            413,
+            120,
+            84,
+            119,
+            0,
+            0,
+            41,
+            68
+          ]
+        },
+        {
+          "opcode": 60,
+          "attempts": 265,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 61,
+          "attempts": 26453,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 64,
+          "attempts": 766,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 65,
+          "attempts": 73,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 66,
+          "attempts": 141,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 67,
+          "attempts": 48,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 69,
+          "attempts": 2,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 70,
+          "attempts": 63,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 71,
+          "attempts": 153,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 72,
+          "attempts": 296,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 73,
+          "attempts": 514,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 74,
+          "attempts": 28,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 75,
+          "attempts": 36,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 77,
+          "attempts": 13,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 78,
+          "attempts": 53,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 79,
+          "attempts": 44,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 80,
+          "attempts": 5393,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 81,
+          "attempts": 28138,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 82,
+          "attempts": 1850,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 83,
+          "attempts": 979,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 84,
+          "attempts": 5,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 85,
+          "attempts": 3327,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 86,
+          "attempts": 2510,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 87,
+          "attempts": 2869,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 88,
+          "attempts": 1350,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 89,
+          "attempts": 537,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 90,
+          "attempts": 51973,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 91,
+          "attempts": 733,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 93,
+          "attempts": 727,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 94,
+          "attempts": 2631,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 95,
+          "attempts": 2408,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 96,
+          "attempts": 363147,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 97,
+          "attempts": 363147,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 99,
+          "attempts": 25823,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 104,
+          "attempts": 27674,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 105,
+          "attempts": 5,
+          "registerOperands": 5,
+          "memoryOperands": 0,
+          "groups": [
+            4,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "opcode": 106,
+          "attempts": 2498,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 107,
+          "attempts": 32,
+          "registerOperands": 32,
+          "memoryOperands": 0,
+          "groups": [
+            21,
+            3,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ]
+        },
+        {
+          "opcode": 112,
+          "attempts": 122,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 113,
+          "attempts": 12,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 114,
+          "attempts": 53806,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 115,
+          "attempts": 105805,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 116,
+          "attempts": 58876,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 117,
+          "attempts": 80289,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 118,
+          "attempts": 115,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 119,
+          "attempts": 396,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 120,
+          "attempts": 2299,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 121,
+          "attempts": 2767,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 124,
+          "attempts": 173,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 125,
+          "attempts": 161,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 126,
+          "attempts": 178,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 127,
+          "attempts": 2213,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 128,
+          "attempts": 341931,
+          "registerOperands": 53913,
+          "memoryOperands": 288018,
+          "groups": [
+            877,
+            80289,
+            30,
+            6,
+            182813,
+            308,
+            0,
+            77608
+          ]
+        },
+        {
+          "opcode": 129,
+          "attempts": 79652,
+          "registerOperands": 894,
+          "memoryOperands": 78758,
+          "groups": [
+            95,
+            179,
+            0,
+            0,
+            79038,
+            38,
+            4,
+            298
+          ]
+        },
+        {
+          "opcode": 131,
+          "attempts": 296056,
+          "registerOperands": 240416,
+          "memoryOperands": 55640,
+          "groups": [
+            81974,
+            226,
+            2772,
+            0,
+            52697,
+            131128,
+            0,
+            27259
+          ]
+        },
+        {
+          "opcode": 132,
+          "attempts": 61,
+          "registerOperands": 34,
+          "memoryOperands": 27,
+          "groups": [
+            17,
+            0,
+            21,
+            9,
+            0,
+            14,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 133,
+          "attempts": 619,
+          "registerOperands": 603,
+          "memoryOperands": 16,
+          "groups": [
+            323,
+            90,
+            51,
+            50,
+            0,
+            2,
+            74,
+            29
+          ]
+        },
+        {
+          "opcode": 134,
+          "attempts": 3683,
+          "registerOperands": 73,
+          "memoryOperands": 3610,
+          "groups": [
+            2796,
+            652,
+            0,
+            2,
+            71,
+            150,
+            0,
+            12
+          ]
+        },
+        {
+          "opcode": 135,
+          "attempts": 547067,
+          "registerOperands": 21,
+          "memoryOperands": 547046,
+          "groups": [
+            130203,
+            51914,
+            155542,
+            46,
+            104495,
+            43,
+            78242,
+            26582
+          ]
+        },
+        {
+          "opcode": 136,
+          "attempts": 78766,
+          "registerOperands": 0,
+          "memoryOperands": 78766,
+          "groups": [
+            78186,
+            18,
+            9,
+            69,
+            461,
+            6,
+            0,
+            17
+          ]
+        },
+        {
+          "opcode": 137,
+          "attempts": 188066,
+          "registerOperands": 0,
+          "memoryOperands": 188066,
+          "groups": [
+            80482,
+            1206,
+            389,
+            312,
+            52844,
+            132,
+            52313,
+            388
+          ]
+        },
+        {
+          "opcode": 138,
+          "attempts": 111280,
+          "registerOperands": 3630,
+          "memoryOperands": 107650,
+          "groups": [
+            108537,
+            214,
+            1001,
+            164,
+            756,
+            75,
+            90,
+            443
+          ]
+        },
+        {
+          "opcode": 139,
+          "attempts": 760998,
+          "registerOperands": 167368,
+          "memoryOperands": 593630,
+          "groups": [
+            244314,
+            28926,
+            106444,
+            55465,
+            719,
+            55841,
+            29627,
+            239662
+          ]
+        },
+        {
+          "opcode": 140,
+          "attempts": 3109,
+          "registerOperands": 1467,
+          "memoryOperands": 1642,
+          "groups": [
+            951,
+            15,
+            890,
+            577,
+            369,
+            307,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 141,
+          "attempts": 56593,
+          "registerOperands": 0,
+          "memoryOperands": 56593,
+          "groups": [
+            903,
+            1477,
+            1265,
+            123,
+            490,
+            2,
+            52076,
+            257
+          ]
+        },
+        {
+          "opcode": 142,
+          "attempts": 116636,
+          "registerOperands": 58987,
+          "memoryOperands": 57649,
+          "groups": [
+            32009,
+            0,
+            485,
+            81289,
+            1886,
+            967,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 143,
+          "attempts": 2458,
+          "registerOperands": 0,
+          "memoryOperands": 2458,
+          "groups": [
+            2458,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 144,
+          "attempts": 280,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 145,
+          "attempts": 41,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 146,
+          "attempts": 251,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 147,
+          "attempts": 80,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 150,
+          "attempts": 12,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 152,
+          "attempts": 244,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 153,
+          "attempts": 235590,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 154,
+          "attempts": 4737,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 156,
+          "attempts": 340824,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 157,
+          "attempts": 340668,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 158,
+          "attempts": 8,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 159,
+          "attempts": 1,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 160,
+          "attempts": 38,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 161,
+          "attempts": 27117,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 162,
+          "attempts": 959,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 163,
+          "attempts": 26904,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 164,
+          "attempts": 229,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 165,
+          "attempts": 157417,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 167,
+          "attempts": 25707,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 168,
+          "attempts": 155,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 169,
+          "attempts": 48,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 170,
+          "attempts": 1035,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 171,
+          "attempts": 2671,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 172,
+          "attempts": 864,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 173,
+          "attempts": 1116,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 174,
+          "attempts": 110,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 175,
+          "attempts": 2,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 176,
+          "attempts": 1449,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 177,
+          "attempts": 224,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 178,
+          "attempts": 172,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 179,
+          "attempts": 91,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 180,
+          "attempts": 39,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 184,
+          "attempts": 54352,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 185,
+          "attempts": 78291,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 186,
+          "attempts": 943,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 187,
+          "attempts": 199,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 189,
+          "attempts": 34,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 190,
+          "attempts": 53768,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 191,
+          "attempts": 51714,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 192,
+          "attempts": 231,
+          "registerOperands": 231,
+          "memoryOperands": 0,
+          "groups": [
+            47,
+            128,
+            10,
+            0,
+            13,
+            33,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 193,
+          "attempts": 156317,
+          "registerOperands": 156317,
+          "memoryOperands": 0,
+          "groups": [
+            201,
+            52253,
+            0,
+            0,
+            283,
+            103477,
+            0,
+            103
+          ]
+        },
+        {
+          "opcode": 194,
+          "attempts": 355,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 195,
+          "attempts": 131501,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 196,
+          "attempts": 31948,
+          "registerOperands": 0,
+          "memoryOperands": 31948,
+          "groups": [
+            0,
+            0,
+            0,
+            5401,
+            0,
+            0,
+            133,
+            26414
+          ]
+        },
+        {
+          "opcode": 197,
+          "attempts": 26338,
+          "registerOperands": 0,
+          "memoryOperands": 26338,
+          "groups": [
+            0,
+            0,
+            0,
+            20,
+            0,
+            0,
+            26313,
+            5
+          ]
+        },
+        {
+          "opcode": 198,
+          "attempts": 28129,
+          "registerOperands": 0,
+          "memoryOperands": 28129,
+          "groups": [
+            28129,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 199,
+          "attempts": 82905,
+          "registerOperands": 0,
+          "memoryOperands": 82905,
+          "groups": [
+            82905,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 200,
+          "attempts": 2203,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 201,
+          "attempts": 5922,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 202,
+          "attempts": 4530,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 203,
+          "attempts": 1731,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 205,
+          "attempts": 391,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 207,
+          "attempts": 53014,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 208,
+          "attempts": 3549,
+          "registerOperands": 3549,
+          "memoryOperands": 0,
+          "groups": [
+            267,
+            143,
+            1814,
+            939,
+            14,
+            370,
+            0,
+            2
+          ]
+        },
+        {
+          "opcode": 209,
+          "attempts": 54219,
+          "registerOperands": 54138,
+          "memoryOperands": 81,
+          "groups": [
+            210,
+            210,
+            52689,
+            0,
+            456,
+            626,
+            0,
+            28
+          ]
+        },
+        {
+          "opcode": 210,
+          "attempts": 108,
+          "registerOperands": 108,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            88,
+            10,
+            0,
+            10
+          ]
+        },
+        {
+          "opcode": 211,
+          "attempts": 883,
+          "registerOperands": 883,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            72,
+            0,
+            0,
+            88,
+            42,
+            0,
+            681
+          ]
+        },
+        {
+          "opcode": 215,
+          "attempts": 5,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 217,
+          "attempts": 6,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 221,
+          "attempts": 16,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 223,
+          "attempts": 2,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 224,
+          "attempts": 182,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 226,
+          "attempts": 15,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 227,
+          "attempts": 71,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 228,
+          "attempts": 1294,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 230,
+          "attempts": 2218,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 232,
+          "attempts": 1246,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 233,
+          "attempts": 157881,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 234,
+          "attempts": 26217,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 235,
+          "attempts": 54812,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 236,
+          "attempts": 1,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 238,
+          "attempts": 1076,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 239,
+          "attempts": 1115,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 245,
+          "attempts": 51773,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 246,
+          "attempts": 55724,
+          "registerOperands": 55185,
+          "memoryOperands": 539,
+          "groups": [
+            722,
+            0,
+            54638,
+            357,
+            0,
+            0,
+            7,
+            0
+          ]
+        },
+        {
+          "opcode": 247,
+          "attempts": 139388,
+          "registerOperands": 139149,
+          "memoryOperands": 239,
+          "groups": [
+            273,
+            0,
+            104623,
+            26896,
+            2598,
+            1723,
+            2343,
+            932
+          ]
+        },
+        {
+          "opcode": 248,
+          "attempts": 52781,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 249,
+          "attempts": 206306,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 250,
+          "attempts": 426014,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 251,
+          "attempts": 289946,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 252,
+          "attempts": 157383,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 253,
+          "attempts": 51743,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 254,
+          "attempts": 203,
+          "registerOperands": 31,
+          "memoryOperands": 172,
+          "groups": [
+            53,
+            150,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 255,
+          "attempts": 729505,
+          "registerOperands": 53181,
+          "memoryOperands": 676324,
+          "groups": [
+            1233,
+            580,
+            578664,
+            504,
+            114,
+            128520,
+            19890,
+            0
+          ]
+        },
+        {
+          "opcode": 257,
+          "attempts": 51772,
+          "registerOperands": 0,
+          "memoryOperands": 51772,
+          "groups": [
+            8,
+            0,
+            0,
+            51764,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 258,
+          "attempts": 202,
+          "registerOperands": 164,
+          "memoryOperands": 38,
+          "groups": [
+            146,
+            0,
+            27,
+            21,
+            0,
+            0,
+            8,
+            0
+          ]
+        },
+        {
+          "opcode": 259,
+          "attempts": 12,
+          "registerOperands": 12,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            8,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 288,
+          "attempts": 28,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 290,
+          "attempts": 51,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 386,
+          "attempts": 723,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 387,
+          "attempts": 41,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 388,
+          "attempts": 26790,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 389,
+          "attempts": 398,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 390,
+          "attempts": 3,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 391,
+          "attempts": 52,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 393,
+          "attempts": 2,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 396,
+          "attempts": 18,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 397,
+          "attempts": 26,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 398,
+          "attempts": 12,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 399,
+          "attempts": 36,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 404,
+          "attempts": 9,
+          "registerOperands": 9,
+          "memoryOperands": 0,
+          "groups": [
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 405,
+          "attempts": 28,
+          "registerOperands": 28,
+          "memoryOperands": 0,
+          "groups": [
+            28,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 407,
+          "attempts": 1,
+          "registerOperands": 1,
+          "memoryOperands": 0,
+          "groups": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 415,
+          "attempts": 1,
+          "registerOperands": 1,
+          "memoryOperands": 0,
+          "groups": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 416,
+          "attempts": 52268,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 417,
+          "attempts": 52267,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 419,
+          "attempts": 275,
+          "registerOperands": 48,
+          "memoryOperands": 227,
+          "groups": [
+            176,
+            0,
+            32,
+            1,
+            0,
+            0,
+            0,
+            66
+          ]
+        },
+        {
+          "opcode": 420,
+          "attempts": 222,
+          "registerOperands": 222,
+          "memoryOperands": 0,
+          "groups": [
+            187,
+            0,
+            4,
+            9,
+            0,
+            0,
+            22,
+            0
+          ]
+        },
+        {
+          "opcode": 424,
+          "attempts": 51992,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 425,
+          "attempts": 51991,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 427,
+          "attempts": 257,
+          "registerOperands": 0,
+          "memoryOperands": 257,
+          "groups": [
+            120,
+            0,
+            133,
+            0,
+            0,
+            0,
+            0,
+            4
+          ]
+        },
+        {
+          "opcode": 428,
+          "attempts": 166,
+          "registerOperands": 166,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            32,
+            30,
+            102,
+            0,
+            0,
+            2,
+            0
+          ]
+        },
+        {
+          "opcode": 431,
+          "attempts": 731,
+          "registerOperands": 59,
+          "memoryOperands": 672,
+          "groups": [
+            682,
+            14,
+            29,
+            5,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "opcode": 434,
+          "attempts": 145,
+          "registerOperands": 0,
+          "memoryOperands": 145,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            145,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 435,
+          "attempts": 344,
+          "registerOperands": 44,
+          "memoryOperands": 300,
+          "groups": [
+            120,
+            20,
+            176,
+            0,
+            0,
+            0,
+            0,
+            28
+          ]
+        },
+        {
+          "opcode": 436,
+          "attempts": 4,
+          "registerOperands": 0,
+          "memoryOperands": 4,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4
+          ]
+        },
+        {
+          "opcode": 437,
+          "attempts": 1,
+          "registerOperands": 0,
+          "memoryOperands": 1,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ]
+        },
+        {
+          "opcode": 438,
+          "attempts": 26799,
+          "registerOperands": 116,
+          "memoryOperands": 26683,
+          "groups": [
+            25918,
+            126,
+            721,
+            16,
+            0,
+            0,
+            17,
+            1
+          ]
+        },
+        {
+          "opcode": 439,
+          "attempts": 26896,
+          "registerOperands": 387,
+          "memoryOperands": 26509,
+          "groups": [
+            25991,
+            361,
+            29,
+            71,
+            0,
+            59,
+            249,
+            136
+          ]
+        },
+        {
+          "opcode": 442,
+          "attempts": 129877,
+          "registerOperands": 25832,
+          "memoryOperands": 104045,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            266,
+            26181,
+            103430,
+            0
+          ]
+        },
+        {
+          "opcode": 444,
+          "attempts": 446,
+          "registerOperands": 326,
+          "memoryOperands": 120,
+          "groups": [
+            378,
+            20,
+            0,
+            0,
+            0,
+            0,
+            0,
+            48
+          ]
+        },
+        {
+          "opcode": 446,
+          "attempts": 19,
+          "registerOperands": 8,
+          "memoryOperands": 11,
+          "groups": [
+            11,
+            6,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 447,
+          "attempts": 384,
+          "registerOperands": 123,
+          "memoryOperands": 261,
+          "groups": [
+            216,
+            54,
+            59,
+            28,
+            0,
+            0,
+            10,
+            17
+          ]
+        }
+      ]
+    },
+    "notepad": {
+      "startInstructions": 956152072,
+      "stopInstructions": 1161150151,
+      "interpretedAttempts": 63618015,
+      "events": {
+        "dispatch": 110980000,
+        "fastHit": 102608589,
+        "mapHit": 6334630,
+        "lookupMiss": 129770,
+        "metadataRebuild": 221058,
+        "translate": 28925,
+        "interpretedDispatch": 63603962,
+        "negativeHit": 61026596,
+        "nativeCall": 47376007,
+        "nativeReplay": 14053,
+        "devicePoll": 110984100,
+        "diskReadSectorsIncludingParents": 816,
+        "diskWriteSectors": 91,
+        "cowDecompress": 66,
+        "cowCacheHit": 0
+      },
+      "opcodes": [
+        {
+          "opcode": 0,
+          "attempts": 638,
+          "registerOperands": 0,
+          "memoryOperands": 638,
+          "groups": [
+            0,
+            0,
+            638,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 1,
+          "attempts": 1097915,
+          "registerOperands": 0,
+          "memoryOperands": 1097915,
+          "groups": [
+            896419,
+            22893,
+            574,
+            1033,
+            0,
+            41,
+            225,
+            176730
+          ]
+        },
+        {
+          "opcode": 2,
+          "attempts": 191,
+          "registerOperands": 157,
+          "memoryOperands": 34,
+          "groups": [
+            65,
+            53,
+            35,
+            16,
+            7,
+            0,
+            1,
+            14
+          ]
+        },
+        {
+          "opcode": 3,
+          "attempts": 183750,
+          "registerOperands": 179299,
+          "memoryOperands": 4451,
+          "groups": [
+            4693,
+            432,
+            768,
+            2341,
+            41,
+            76,
+            169601,
+            5798
+          ]
+        },
+        {
+          "opcode": 4,
+          "attempts": 2430,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 5,
+          "attempts": 793,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 6,
+          "attempts": 179881,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 7,
+          "attempts": 182828,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 8,
+          "attempts": 347417,
+          "registerOperands": 0,
+          "memoryOperands": 347417,
+          "groups": [
+            346993,
+            52,
+            0,
+            36,
+            308,
+            0,
+            28,
+            0
+          ]
+        },
+        {
+          "opcode": 9,
+          "attempts": 177174,
+          "registerOperands": 0,
+          "memoryOperands": 177174,
+          "groups": [
+            5532,
+            1175,
+            170060,
+            16,
+            0,
+            0,
+            372,
+            19
+          ]
+        },
+        {
+          "opcode": 10,
+          "attempts": 14564,
+          "registerOperands": 14168,
+          "memoryOperands": 396,
+          "groups": [
+            10906,
+            61,
+            90,
+            605,
+            2068,
+            706,
+            49,
+            79
+          ]
+        },
+        {
+          "opcode": 11,
+          "attempts": 387560,
+          "registerOperands": 387162,
+          "memoryOperands": 398,
+          "groups": [
+            191285,
+            2149,
+            3037,
+            5484,
+            24,
+            144,
+            177142,
+            8295
+          ]
+        },
+        {
+          "opcode": 12,
+          "attempts": 1595,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 13,
+          "attempts": 177,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 14,
+          "attempts": 17160,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 15,
+          "attempts": 3173799,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 17,
+          "attempts": 86,
+          "registerOperands": 0,
+          "memoryOperands": 86,
+          "groups": [
+            0,
+            0,
+            86,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 18,
+          "attempts": 9642,
+          "registerOperands": 9642,
+          "memoryOperands": 0,
+          "groups": [
+            33,
+            9595,
+            14,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 19,
+          "attempts": 1964,
+          "registerOperands": 1715,
+          "memoryOperands": 249,
+          "groups": [
+            57,
+            1422,
+            485,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 20,
+          "attempts": 411,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 22,
+          "attempts": 10337,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 23,
+          "attempts": 10,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 25,
+          "attempts": 6,
+          "registerOperands": 0,
+          "memoryOperands": 6,
+          "groups": [
+            0,
+            0,
+            6,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 26,
+          "attempts": 13844,
+          "registerOperands": 13844,
+          "memoryOperands": 0,
+          "groups": [
+            353,
+            10621,
+            206,
+            0,
+            2438,
+            20,
+            206,
+            0
+          ]
+        },
+        {
+          "opcode": 27,
+          "attempts": 8218,
+          "registerOperands": 8218,
+          "memoryOperands": 0,
+          "groups": [
+            5632,
+            1127,
+            318,
+            659,
+            0,
+            46,
+            412,
+            24
+          ]
+        },
+        {
+          "opcode": 28,
+          "attempts": 446,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 30,
+          "attempts": 549096,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 31,
+          "attempts": 543239,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 32,
+          "attempts": 3891,
+          "registerOperands": 0,
+          "memoryOperands": 3891,
+          "groups": [
+            3645,
+            45,
+            57,
+            0,
+            87,
+            0,
+            57,
+            0
+          ]
+        },
+        {
+          "opcode": 33,
+          "attempts": 2719,
+          "registerOperands": 0,
+          "memoryOperands": 2719,
+          "groups": [
+            1721,
+            945,
+            33,
+            16,
+            0,
+            0,
+            4,
+            0
+          ]
+        },
+        {
+          "opcode": 34,
+          "attempts": 179769,
+          "registerOperands": 5626,
+          "memoryOperands": 174143,
+          "groups": [
+            178783,
+            133,
+            25,
+            72,
+            684,
+            70,
+            0,
+            2
+          ]
+        },
+        {
+          "opcode": 35,
+          "attempts": 174027,
+          "registerOperands": 171135,
+          "memoryOperands": 2892,
+          "groups": [
+            172436,
+            121,
+            1318,
+            65,
+            0,
+            5,
+            71,
+            11
+          ]
+        },
+        {
+          "opcode": 36,
+          "attempts": 4400,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 37,
+          "attempts": 175647,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 40,
+          "attempts": 10,
+          "registerOperands": 0,
+          "memoryOperands": 10,
+          "groups": [
+            0,
+            0,
+            10,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 41,
+          "attempts": 184888,
+          "registerOperands": 0,
+          "memoryOperands": 184888,
+          "groups": [
+            169701,
+            13985,
+            108,
+            93,
+            32,
+            10,
+            138,
+            821
+          ]
+        },
+        {
+          "opcode": 42,
+          "attempts": 2010,
+          "registerOperands": 1968,
+          "memoryOperands": 42,
+          "groups": [
+            1317,
+            2,
+            0,
+            19,
+            632,
+            10,
+            5,
+            25
+          ]
+        },
+        {
+          "opcode": 43,
+          "attempts": 545024,
+          "registerOperands": 541579,
+          "memoryOperands": 3445,
+          "groups": [
+            530156,
+            4789,
+            6343,
+            858,
+            33,
+            765,
+            1361,
+            719
+          ]
+        },
+        {
+          "opcode": 44,
+          "attempts": 600,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 45,
+          "attempts": 12232,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 48,
+          "attempts": 149,
+          "registerOperands": 0,
+          "memoryOperands": 149,
+          "groups": [
+            20,
+            0,
+            0,
+            0,
+            129,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 49,
+          "attempts": 767,
+          "registerOperands": 0,
+          "memoryOperands": 767,
+          "groups": [
+            575,
+            3,
+            189,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 50,
+          "attempts": 9796,
+          "registerOperands": 9514,
+          "memoryOperands": 282,
+          "groups": [
+            4034,
+            16,
+            3254,
+            30,
+            1010,
+            731,
+            68,
+            653
+          ]
+        },
+        {
+          "opcode": 51,
+          "attempts": 713332,
+          "registerOperands": 713237,
+          "memoryOperands": 95,
+          "groups": [
+            188645,
+            171965,
+            174391,
+            1671,
+            0,
+            75,
+            174121,
+            2464
+          ]
+        },
+        {
+          "opcode": 52,
+          "attempts": 1081,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 53,
+          "attempts": 123,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 56,
+          "attempts": 2294,
+          "registerOperands": 1879,
+          "memoryOperands": 415,
+          "groups": [
+            307,
+            59,
+            576,
+            705,
+            138,
+            35,
+            16,
+            458
+          ]
+        },
+        {
+          "opcode": 57,
+          "attempts": 4678,
+          "registerOperands": 0,
+          "memoryOperands": 4678,
+          "groups": [
+            2405,
+            360,
+            314,
+            456,
+            0,
+            38,
+            627,
+            478
+          ]
+        },
+        {
+          "opcode": 58,
+          "attempts": 553,
+          "registerOperands": 61,
+          "memoryOperands": 492,
+          "groups": [
+            465,
+            29,
+            23,
+            23,
+            5,
+            3,
+            0,
+            5
+          ]
+        },
+        {
+          "opcode": 59,
+          "attempts": 11692,
+          "registerOperands": 7676,
+          "memoryOperands": 4016,
+          "groups": [
+            6988,
+            825,
+            681,
+            1466,
+            16,
+            126,
+            473,
+            1117
+          ]
+        },
+        {
+          "opcode": 60,
+          "attempts": 2519,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 61,
+          "attempts": 174924,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 64,
+          "attempts": 2648,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 65,
+          "attempts": 1695,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 66,
+          "attempts": 2079,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 67,
+          "attempts": 791,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 69,
+          "attempts": 115,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 70,
+          "attempts": 655,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 71,
+          "attempts": 2285,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 72,
+          "attempts": 3162,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 73,
+          "attempts": 2298,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 74,
+          "attempts": 315,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 75,
+          "attempts": 263,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 77,
+          "attempts": 91,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 78,
+          "attempts": 297,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 79,
+          "attempts": 236,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 80,
+          "attempts": 39788,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 81,
+          "attempts": 189635,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 82,
+          "attempts": 15655,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 83,
+          "attempts": 16831,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 85,
+          "attempts": 15184,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 86,
+          "attempts": 40433,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 87,
+          "attempts": 37815,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 88,
+          "attempts": 12391,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 89,
+          "attempts": 11340,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 90,
+          "attempts": 342189,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 91,
+          "attempts": 12548,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 92,
+          "attempts": 8,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 93,
+          "attempts": 9643,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 94,
+          "attempts": 38603,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 95,
+          "attempts": 34173,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 96,
+          "attempts": 2378596,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 97,
+          "attempts": 2378599,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 99,
+          "attempts": 168705,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 104,
+          "attempts": 191581,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 105,
+          "attempts": 19,
+          "registerOperands": 19,
+          "memoryOperands": 0,
+          "groups": [
+            2,
+            7,
+            3,
+            0,
+            0,
+            0,
+            7,
+            0
+          ]
+        },
+        {
+          "opcode": 106,
+          "attempts": 17526,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 107,
+          "attempts": 549,
+          "registerOperands": 437,
+          "memoryOperands": 112,
+          "groups": [
+            257,
+            108,
+            25,
+            52,
+            0,
+            18,
+            65,
+            24
+          ]
+        },
+        {
+          "opcode": 112,
+          "attempts": 2128,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 113,
+          "attempts": 4,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 114,
+          "attempts": 372191,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 115,
+          "attempts": 700911,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 116,
+          "attempts": 426099,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 117,
+          "attempts": 540192,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 118,
+          "attempts": 1406,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 119,
+          "attempts": 4676,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 120,
+          "attempts": 684,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 121,
+          "attempts": 2728,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 124,
+          "attempts": 1234,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 125,
+          "attempts": 1912,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 126,
+          "attempts": 1146,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 127,
+          "attempts": 14489,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 128,
+          "attempts": 2247339,
+          "registerOperands": 352131,
+          "memoryOperands": 1895208,
+          "groups": [
+            6441,
+            531990,
+            773,
+            59,
+            1199119,
+            982,
+            277,
+            507698
+          ]
+        },
+        {
+          "opcode": 129,
+          "attempts": 522115,
+          "registerOperands": 11312,
+          "memoryOperands": 510803,
+          "groups": [
+            4076,
+            1769,
+            45,
+            12,
+            512638,
+            910,
+            48,
+            2617
+          ]
+        },
+        {
+          "opcode": 131,
+          "attempts": 1944167,
+          "registerOperands": 1573938,
+          "memoryOperands": 370229,
+          "groups": [
+            537288,
+            3021,
+            6749,
+            454,
+            347966,
+            859173,
+            1818,
+            187698
+          ]
+        },
+        {
+          "opcode": 132,
+          "attempts": 332,
+          "registerOperands": 284,
+          "memoryOperands": 48,
+          "groups": [
+            182,
+            54,
+            11,
+            47,
+            15,
+            21,
+            2,
+            0
+          ]
+        },
+        {
+          "opcode": 133,
+          "attempts": 7300,
+          "registerOperands": 7069,
+          "memoryOperands": 231,
+          "groups": [
+            4049,
+            490,
+            316,
+            618,
+            7,
+            203,
+            986,
+            631
+          ]
+        },
+        {
+          "opcode": 134,
+          "attempts": 81625,
+          "registerOperands": 1223,
+          "memoryOperands": 80402,
+          "groups": [
+            76827,
+            2760,
+            9,
+            206,
+            1007,
+            645,
+            15,
+            156
+          ]
+        },
+        {
+          "opcode": 135,
+          "attempts": 3595479,
+          "registerOperands": 487,
+          "memoryOperands": 3594992,
+          "groups": [
+            856596,
+            339958,
+            1018305,
+            2651,
+            690120,
+            639,
+            512488,
+            174722
+          ]
+        },
+        {
+          "opcode": 136,
+          "attempts": 523882,
+          "registerOperands": 0,
+          "memoryOperands": 523882,
+          "groups": [
+            514082,
+            264,
+            4274,
+            533,
+            4060,
+            485,
+            37,
+            147
+          ]
+        },
+        {
+          "opcode": 137,
+          "attempts": 1238851,
+          "registerOperands": 0,
+          "memoryOperands": 1238851,
+          "groups": [
+            530554,
+            8453,
+            3789,
+            4017,
+            347452,
+            974,
+            341144,
+            2468
+          ]
+        },
+        {
+          "opcode": 138,
+          "attempts": 751585,
+          "registerOperands": 19189,
+          "memoryOperands": 732396,
+          "groups": [
+            708628,
+            3903,
+            13148,
+            1233,
+            15104,
+            5570,
+            2145,
+            1854
+          ]
+        },
+        {
+          "opcode": 139,
+          "attempts": 5054128,
+          "registerOperands": 1109644,
+          "memoryOperands": 3944484,
+          "groups": [
+            1621310,
+            198124,
+            703015,
+            380728,
+            8023,
+            359382,
+            205421,
+            1578125
+          ]
+        },
+        {
+          "opcode": 140,
+          "attempts": 43168,
+          "registerOperands": 20016,
+          "memoryOperands": 23152,
+          "groups": [
+            12034,
+            41,
+            11546,
+            8691,
+            5861,
+            4995,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 141,
+          "attempts": 369075,
+          "registerOperands": 0,
+          "memoryOperands": 369075,
+          "groups": [
+            8581,
+            1979,
+            9075,
+            2455,
+            3977,
+            348,
+            340433,
+            2227
+          ]
+        },
+        {
+          "opcode": 142,
+          "attempts": 868201,
+          "registerOperands": 453971,
+          "memoryOperands": 414230,
+          "groups": [
+            258482,
+            0,
+            5430,
+            565295,
+            22102,
+            16892,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 143,
+          "attempts": 23762,
+          "registerOperands": 0,
+          "memoryOperands": 23762,
+          "groups": [
+            23762,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 144,
+          "attempts": 4616,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 145,
+          "attempts": 1205,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 146,
+          "attempts": 4745,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 147,
+          "attempts": 1840,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 150,
+          "attempts": 449,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 151,
+          "attempts": 84,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 152,
+          "attempts": 4578,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 153,
+          "attempts": 1520145,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 154,
+          "attempts": 37927,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 156,
+          "attempts": 2235323,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 157,
+          "attempts": 2233249,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 158,
+          "attempts": 28,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 159,
+          "attempts": 28,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 160,
+          "attempts": 2476,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 161,
+          "attempts": 181091,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 162,
+          "attempts": 8935,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 163,
+          "attempts": 176681,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 164,
+          "attempts": 10870,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 165,
+          "attempts": 1035713,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 166,
+          "attempts": 521,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 167,
+          "attempts": 168054,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 168,
+          "attempts": 1841,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 169,
+          "attempts": 365,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 170,
+          "attempts": 27820,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 171,
+          "attempts": 52104,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 172,
+          "attempts": 37657,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 173,
+          "attempts": 26097,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 174,
+          "attempts": 2578,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 175,
+          "attempts": 4356,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 176,
+          "attempts": 10682,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 177,
+          "attempts": 1237,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 178,
+          "attempts": 1134,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 179,
+          "attempts": 2786,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 180,
+          "attempts": 1046,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 181,
+          "attempts": 88,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 182,
+          "attempts": 9,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 183,
+          "attempts": 39,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 184,
+          "attempts": 369993,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 185,
+          "attempts": 516266,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 186,
+          "attempts": 8207,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 187,
+          "attempts": 4544,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 188,
+          "attempts": 15,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 189,
+          "attempts": 315,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 190,
+          "attempts": 355447,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 191,
+          "attempts": 339287,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 192,
+          "attempts": 2023,
+          "registerOperands": 2023,
+          "memoryOperands": 0,
+          "groups": [
+            672,
+            1018,
+            81,
+            0,
+            45,
+            207,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 193,
+          "attempts": 1036177,
+          "registerOperands": 1032582,
+          "memoryOperands": 3595,
+          "groups": [
+            5546,
+            346578,
+            4,
+            0,
+            3919,
+            680017,
+            0,
+            113
+          ]
+        },
+        {
+          "opcode": 194,
+          "attempts": 6151,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 195,
+          "attempts": 861521,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 196,
+          "attempts": 184139,
+          "registerOperands": 0,
+          "memoryOperands": 184139,
+          "groups": [
+            0,
+            0,
+            0,
+            9524,
+            0,
+            0,
+            1205,
+            173410
+          ]
+        },
+        {
+          "opcode": 197,
+          "attempts": 174468,
+          "registerOperands": 0,
+          "memoryOperands": 174468,
+          "groups": [
+            0,
+            0,
+            3,
+            729,
+            0,
+            0,
+            173480,
+            256
+          ]
+        },
+        {
+          "opcode": 198,
+          "attempts": 193221,
+          "registerOperands": 0,
+          "memoryOperands": 193221,
+          "groups": [
+            193221,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 199,
+          "attempts": 573707,
+          "registerOperands": 0,
+          "memoryOperands": 573707,
+          "groups": [
+            573707,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 200,
+          "attempts": 23773,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 201,
+          "attempts": 57082,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 202,
+          "attempts": 36295,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 203,
+          "attempts": 26502,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 205,
+          "attempts": 4048,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 207,
+          "attempts": 349733,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 208,
+          "attempts": 30319,
+          "registerOperands": 30319,
+          "memoryOperands": 0,
+          "groups": [
+            2658,
+            4198,
+            10365,
+            6891,
+            2368,
+            3832,
+            0,
+            7
+          ]
+        },
+        {
+          "opcode": 209,
+          "attempts": 355096,
+          "registerOperands": 353398,
+          "memoryOperands": 1698,
+          "groups": [
+            256,
+            616,
+            340426,
+            360,
+            725,
+            12583,
+            0,
+            130
+          ]
+        },
+        {
+          "opcode": 210,
+          "attempts": 5038,
+          "registerOperands": 4878,
+          "memoryOperands": 160,
+          "groups": [
+            0,
+            1738,
+            0,
+            0,
+            1186,
+            1974,
+            0,
+            140
+          ]
+        },
+        {
+          "opcode": 211,
+          "attempts": 6673,
+          "registerOperands": 6673,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            3047,
+            0,
+            0,
+            2973,
+            645,
+            0,
+            8
+          ]
+        },
+        {
+          "opcode": 215,
+          "attempts": 2632,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 224,
+          "attempts": 5704,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 226,
+          "attempts": 1567,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 227,
+          "attempts": 1324,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 228,
+          "attempts": 10992,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 230,
+          "attempts": 16362,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 232,
+          "attempts": 18412,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 233,
+          "attempts": 1033143,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 234,
+          "attempts": 172799,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 235,
+          "attempts": 367970,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 236,
+          "attempts": 111,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 238,
+          "attempts": 3697,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 239,
+          "attempts": 6066,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 245,
+          "attempts": 338444,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 246,
+          "attempts": 378057,
+          "registerOperands": 370987,
+          "memoryOperands": 7070,
+          "groups": [
+            8596,
+            0,
+            368459,
+            579,
+            370,
+            0,
+            53,
+            0
+          ]
+        },
+        {
+          "opcode": 247,
+          "attempts": 881556,
+          "registerOperands": 873469,
+          "memoryOperands": 8087,
+          "groups": [
+            3131,
+            0,
+            685499,
+            176402,
+            3466,
+            712,
+            7312,
+            5034
+          ]
+        },
+        {
+          "opcode": 248,
+          "attempts": 348516,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 249,
+          "attempts": 1346748,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 250,
+          "attempts": 2796619,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 251,
+          "attempts": 1902956,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 252,
+          "attempts": 1040433,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 253,
+          "attempts": 340211,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 254,
+          "attempts": 6679,
+          "registerOperands": 1357,
+          "memoryOperands": 5322,
+          "groups": [
+            3230,
+            3449,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 255,
+          "attempts": 4856734,
+          "registerOperands": 353848,
+          "memoryOperands": 4502885,
+          "groups": [
+            10616,
+            12826,
+            3819983,
+            5651,
+            1155,
+            838526,
+            167976,
+            0
+          ]
+        },
+        {
+          "opcode": 256,
+          "attempts": 2,
+          "registerOperands": 2,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 257,
+          "attempts": 338155,
+          "registerOperands": 0,
+          "memoryOperands": 338155,
+          "groups": [
+            251,
+            0,
+            0,
+            337904,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 258,
+          "attempts": 3630,
+          "registerOperands": 2058,
+          "memoryOperands": 1572,
+          "groups": [
+            2371,
+            17,
+            679,
+            386,
+            0,
+            0,
+            177,
+            0
+          ]
+        },
+        {
+          "opcode": 259,
+          "attempts": 783,
+          "registerOperands": 775,
+          "memoryOperands": 8,
+          "groups": [
+            273,
+            377,
+            119,
+            10,
+            0,
+            0,
+            4,
+            0
+          ]
+        },
+        {
+          "opcode": 288,
+          "attempts": 476,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 290,
+          "attempts": 887,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 384,
+          "attempts": 28,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 386,
+          "attempts": 9811,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 387,
+          "attempts": 204,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 388,
+          "attempts": 191715,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 389,
+          "attempts": 7331,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 390,
+          "attempts": 992,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 391,
+          "attempts": 1020,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 392,
+          "attempts": 64,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 393,
+          "attempts": 29,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 396,
+          "attempts": 167,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 397,
+          "attempts": 47,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 398,
+          "attempts": 100,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 399,
+          "attempts": 381,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 403,
+          "attempts": 92,
+          "registerOperands": 92,
+          "memoryOperands": 0,
+          "groups": [
+            92,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 404,
+          "attempts": 1644,
+          "registerOperands": 1644,
+          "memoryOperands": 0,
+          "groups": [
+            1644,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 405,
+          "attempts": 1406,
+          "registerOperands": 1406,
+          "memoryOperands": 0,
+          "groups": [
+            1406,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 412,
+          "attempts": 1,
+          "registerOperands": 1,
+          "memoryOperands": 0,
+          "groups": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 416,
+          "attempts": 344203,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 417,
+          "attempts": 344209,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 419,
+          "attempts": 17644,
+          "registerOperands": 560,
+          "memoryOperands": 17084,
+          "groups": [
+            16119,
+            0,
+            539,
+            4,
+            0,
+            0,
+            0,
+            982
+          ]
+        },
+        {
+          "opcode": 420,
+          "attempts": 5805,
+          "registerOperands": 5805,
+          "memoryOperands": 0,
+          "groups": [
+            5520,
+            0,
+            34,
+            251,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 424,
+          "attempts": 339898,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 425,
+          "attempts": 339904,
+          "registerOperands": 0,
+          "memoryOperands": 0,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 427,
+          "attempts": 1989,
+          "registerOperands": 21,
+          "memoryOperands": 1968,
+          "groups": [
+            704,
+            1,
+            1115,
+            19,
+            0,
+            0,
+            0,
+            150
+          ]
+        },
+        {
+          "opcode": 428,
+          "attempts": 2324,
+          "registerOperands": 2324,
+          "memoryOperands": 0,
+          "groups": [
+            2,
+            403,
+            583,
+            1336,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 431,
+          "attempts": 184,
+          "registerOperands": 57,
+          "memoryOperands": 127,
+          "groups": [
+            53,
+            7,
+            67,
+            3,
+            0,
+            0,
+            0,
+            54
+          ]
+        },
+        {
+          "opcode": 434,
+          "attempts": 2499,
+          "registerOperands": 0,
+          "memoryOperands": 2499,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            2499,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "opcode": 435,
+          "attempts": 3563,
+          "registerOperands": 348,
+          "memoryOperands": 3215,
+          "groups": [
+            667,
+            68,
+            2397,
+            1,
+            0,
+            0,
+            0,
+            430
+          ]
+        },
+        {
+          "opcode": 436,
+          "attempts": 164,
+          "registerOperands": 0,
+          "memoryOperands": 164,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            88,
+            76
+          ]
+        },
+        {
+          "opcode": 437,
+          "attempts": 17,
+          "registerOperands": 0,
+          "memoryOperands": 17,
+          "groups": [
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        {
+          "opcode": 438,
+          "attempts": 172071,
+          "registerOperands": 1812,
+          "memoryOperands": 170259,
+          "groups": [
+            169870,
+            1787,
+            237,
+            93,
+            0,
+            0,
+            35,
+            49
+          ]
+        },
+        {
+          "opcode": 439,
+          "attempts": 182766,
+          "registerOperands": 7377,
+          "memoryOperands": 175389,
+          "groups": [
+            171076,
+            5582,
+            370,
+            609,
+            0,
+            1078,
+            2962,
+            1089
+          ]
+        },
+        {
+          "opcode": 442,
+          "attempts": 852660,
+          "registerOperands": 168625,
+          "memoryOperands": 684035,
+          "groups": [
+            0,
+            0,
+            0,
+            0,
+            3567,
+            172653,
+            676440,
+            0
+          ]
+        },
+        {
+          "opcode": 444,
+          "attempts": 3301,
+          "registerOperands": 2620,
+          "memoryOperands": 681,
+          "groups": [
+            2654,
+            87,
+            0,
+            0,
+            0,
+            0,
+            0,
+            560
+          ]
+        },
+        {
+          "opcode": 446,
+          "attempts": 122,
+          "registerOperands": 49,
+          "memoryOperands": 73,
+          "groups": [
+            70,
+            28,
+            9,
+            2,
+            0,
+            0,
+            13,
+            0
+          ]
+        },
+        {
+          "opcode": 447,
+          "attempts": 1511,
+          "registerOperands": 189,
+          "memoryOperands": 1322,
+          "groups": [
+            1354,
+            37,
+            39,
+            67,
+            0,
+            0,
+            10,
+            4
+          ]
+        }
+      ]
+    }
+  }
+}
