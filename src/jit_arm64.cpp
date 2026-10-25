@@ -51,6 +51,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.kind == Kind::DoubleShift && !i.immediate)
+            usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch)
             continue;
         if (!(i.kind == Kind::Memory && (i.immediate || i.nearReturn)))
@@ -60,7 +62,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 usedRegisters |= 1u << i.memory.base;
             if (i.memory.index >= 0)
                 usedRegisters |= 1u << i.memory.index;
-        } else if (!i.immediate || i.kind == Kind::Multiply)
+        } else if (!i.immediate || i.kind == Kind::Multiply || i.kind == Kind::DoubleShift)
             usedRegisters |= 1u << i.src;
     }
     bool fastMemory = false, fastStore = false;
@@ -345,6 +347,45 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 store(12, 19, offsetof(CPU, flags));
             }
             insert(20 + i.dst, 11, i.w, i.dstShift);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
+        if (i.kind == Kind::DoubleShift) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            if (i.immediate) imm(9, i.imm);
+            else bits(9, 20 + CX, 0, 5);
+            auto zero = code.size();
+            emit(0x34000009u); // cbz w9: count zero preserves destination and flags
+            extract(11, 20 + i.dst, i.w, 0);
+            extract(12, 20 + i.src, i.w, 0);
+            emit(0xaa000000u | (12 << 16) | ((i.w * 8) << 10) | (11 << 5) | 13);
+            emit(0x51000400u | (9 << 5) | 10); // count - 1
+            emit(0x9ac02400u | (10 << 16) | (13 << 5) | 14); // lsrv x14,pair,count-1
+            emit(0x9ac02400u | (9 << 16) | (13 << 5) | 13); // lsrv x13,pair,count
+            extract(13, 13, i.w, 0);
+            load(12, 19, offsetof(CPU, flags));
+            imm(10, ~(CF | PF | AF | ZF | SF | OF));
+            emit(0x0a000000u | (10 << 16) | (12 << 5) | 12);
+            imm(10, AF | 2); // Reference AND(result,mask) defines undefined AF as 1.
+            emit(0x2a000000u | (10 << 16) | (12 << 5) | 12);
+            flagBit(14, 0);
+            emit(0x7100053fu); // cmp w9,#1
+            auto notOne = code.size(); emit(0x54000001u); // b.ne
+            emit(0x4a000000u | (13 << 16) | (11 << 5) | 14);
+            bits(14, 14, i.w * 8 - 1, 1); flagBit(14, 11);
+            code[notOne] |= uint32_t(code.size() - notOne) << 5;
+            emit(0x710001bfu); // cmp w13,#0
+            emit(0x1a9f17eeu); // cset w14,eq
+            flagBit(14, 6);
+            bits(14, 13, i.w * 8 - 1, 1); flagBit(14, 7);
+            bits(14, 13, 0, 8);
+            for (unsigned shift : {4u, 2u, 1u})
+                emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+            emit(0x2a2e03eeu); flagBit(14, 2);
+            store(12, 19, offsetof(CPU, flags));
+            insert(20 + i.dst, 13, i.w, 0);
+            code[zero] |= uint32_t(code.size() - zero) << 5;
             dirtyRegisters |= 1u << i.dst;
             continue;
         }

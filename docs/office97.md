@@ -1,5 +1,13 @@
 # Office 97 on Windows 95
 
+Latest availability audit (2026-10-25): the local parent
+`media/office97-base/disk.raw` is missing, along with the retained DOS/Win3.11/
+rtts media and earlier local snapshot parents. The external Office ISO, installed
+COW children and recalculation snapshot remain, but their missing parent prevents
+boot/restore. The installation and application checks below passed before this
+loss; they do not establish current runnability. Parent recovery or a complete
+installation chain is required before more Office timing runs.
+
 Current local availability (2026-10-25): the English Professional SR-1 ISO was
 restored from WinWorld to `/Volumes/data/pcemu/media/office97/`. Its archive
 SHA-512 matched the published checksum; the extracted ISO has SHA-256

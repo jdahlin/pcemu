@@ -358,7 +358,18 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xaf) {
+                if (extended == 0xac || extended == 0xad) {
+                    auto m = byte();
+                    if ((m >> 6) != 3) { pos = begin; break; }
+                    i.kind = Kind::DoubleShift;
+                    i.dst = m & 7;
+                    i.src = (m >> 3) & 7;
+                    i.immediate = extended == 0xac;
+                    if (i.immediate) {
+                        i.imm = byte() & 31;
+                        if (!i.imm) i.kind = Kind::Nop;
+                    }
+                } else if (extended == 0xaf) {
                     auto m = byte();
                     if ((m >> 6) != 3) {
                         pos = begin;

@@ -695,3 +695,32 @@ These task-scoped results replace broad launch/interaction intervals as the
 basis for choosing the next Excel optimization. Raw compressed host/guest
 profiles, source hashes, complete paired results and category summaries:
 `measurements/excel-byte-mul-comparison-2026-10-25.json` and adjacent zstd files.
+
+## Native register SHRD (25 October)
+
+Register SHRD now lowers directly to ARM64 for 16/32-bit operands with CL or
+immediate counts. A 64-bit source/destination pair implements all masked count
+values, including the reference behavior for undefined 16-bit overshifts.
+Masked zero preserves the destination and flags. Nonzero counts match the
+reference's CF/PF/AF/ZF/SF/OF image (including its deterministic undefined AF),
+and upper register halves remain intact for 16-bit operands. Count/source/
+destination aliases are captured before writing the result. Runtime zero counts
+make preceding flags live; native blocks materialize them before the operation.
+Memory forms retain the existing interpreter path.
+
+The flag suite passes 17,014,646 checks, including 524,288 new differential
+cases across all register overlaps, full count bytes, operand/code sizes and
+input patterns. Core checks pass 352,644. Candidate Win3.11 Notepad persistence
+and Win95 application/clipboard/restart/exact file checks passed before local
+media disappeared during the subsequent timing attempt.
+
+Five alternating RAM-only CL-count kernel pairs show median throughput ratio
+3.8502, identical final guest GPR/flags/instruction fields, and 40M native guest
+instructions versus the old 30M. Both RAM builds share frozen headers/support
+sources, with isolated old JIT implementation files for the baseline.
+Evidence: `measurements/native-shrd-2026-10-25.json`.
+
+Excel timing remains unproven: its first baseline restore failed before boot
+because `media/office97-base/disk.raw` was missing. External children/snapshot
+still exist but cannot restore without this parent. Do not infer an Excel gain
+from the RAM kernel or treat this failed attempt as a performance sample.

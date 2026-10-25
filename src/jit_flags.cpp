@@ -20,6 +20,13 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
+        if (i.kind == Kind::DoubleShift) {
+            // A runtime zero count preserves all flags; a nonzero count
+            // materializes the reference's complete arithmetic flags image.
+            neededFlags[n] = true;
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         unsigned written = 0;
         if (i.kind == Kind::Alu || i.kind == Kind::Test)
             written = i.kind == Kind::Alu && i.op >= 8 ? arithmeticFlags & ~CF : arithmeticFlags;

@@ -809,3 +809,21 @@ samples. These differ from the earlier broad interaction profile. Evidence:
 `docs/measurements/excel-byte-mul-comparison-2026-10-25.json` plus compressed
 raw profiles. Further code lowering/block-boundary work and current-binary fresh
 Windows installation remain outstanding; broad performance completion is unproven.
+
+## Native SHRD and missing guest parents (25 October)
+
+Register SHRD CL/immediate now runs natively with zero-count flag preservation,
+full register-alias coverage and 16/32-bit behavior matching the interpreter.
+Flag tests pass 17,014,646 checks (524,288 new SHRD cases), core passes 352,644,
+and candidate Win3.11/Win95 application-persistence checks passed. Five paired
+RAM-only kernels give median 3.85x throughput with identical guest results and
+full native coverage. Evidence: `docs/measurements/native-shrd-2026-10-25.json`.
+
+The attempted Excel baseline restore subsequently failed before boot: local
+DOS, Win3.11, rtts and Office base/snapshot parents are now absent. Read-only
+checks found no moved base under /Volumes/data/pcemu or live deleted-file handle.
+The user has been asked for a moved location. External ISO/COW children and
+recalculation snapshot remain, but cannot replace missing parent content.
+Excel speedup and current runnability are not established. Continue RAM work or
+recover complete guest chains; broad goal and fresh installer validation remain
+active and incomplete.
