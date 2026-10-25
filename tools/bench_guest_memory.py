@@ -144,12 +144,16 @@ def main():
     parser.add_argument('--loops', type=int, default=4000000)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--timeout', type=float, default=300)
+    parser.add_argument('--runner', type=Path, help='Existing PCEMU memory-bench executable; skip rebuild')
     args = parser.parse_args()
     if not 1 <= args.loops <= 10000000 or args.timeout <= 0:
         parser.error('loops must be 1..10000000 and timeout positive')
+    if args.runner and (args.backend == 'qemu' or not args.runner.is_file() or
+                        not os.access(args.runner, os.X_OK)):
+        parser.error('--runner requires an executable PCEMU memory harness')
     work = args.output.resolve()
     work.mkdir(parents=True, exist_ok=False)
-    if args.backend != 'qemu':
+    if args.backend != 'qemu' and not args.runner:
         subprocess.run(['make', '-s', 'build/memory-bench'], cwd=ROOT, check=True)
     program = build(work, args.loops)
     load_before = os.getloadavg()
@@ -157,12 +161,15 @@ def main():
         result = run_qemu(work, program, args.timeout)
         transcript = (work / 'guest.txt').read_text()
     else:
-        runner = ROOT / 'build/memory-bench'
+        runner = args.runner.resolve() if args.runner else ROOT / 'build/memory-bench'
+        runner_hash = hashlib.sha256(runner.read_bytes()).hexdigest()
         command = [str(runner), str(program), str(work / 'raw.json'), '--backend', args.backend]
         subprocess.run(command, check=True, timeout=args.timeout)
         result = json.loads((work / 'raw.json').read_text())
         result['command'] = command
-        result['runnerSha256'] = hashlib.sha256(runner.read_bytes()).hexdigest()
+        if hashlib.sha256(runner.read_bytes()).hexdigest() != runner_hash:
+            raise RuntimeError('Runner changed during measurement')
+        result['runnerSha256'] = runner_hash
         transcript = (work / 'raw.json.guest.txt').read_text()
     records = validate(transcript, args.loops)
     if len(result['samples']) != len(records):

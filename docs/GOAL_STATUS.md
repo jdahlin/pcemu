@@ -656,3 +656,16 @@ above 1,024 pages exercise translation-helper pressure.
 Evidence: `docs/measurements/guest-memory-sweep-2026-10-25.json`.
 Streaming reads/writes/copies and user-mode memory workloads remain future
 coverage; the broad boot/correctness/performance goal remains active.
+
+
+## TLB-base hoist experiment rejected (25 October)
+
+A measured attempt to cache the TLB-array address in a free host register
+strongly regressed small paged pointer rings across three alternating pairs.
+The emitter is restored; no production performance change is retained.
+Exact guest/native/helper counts match, leaving the microarchitectural cause
+unproven. Pressure tests remain and pass 255,535 read-JIT checks; restored
+JIT/interpreter/QEMU memory smoke and corrupted-kernel rejection pass.
+Evidence and rejected patch: `docs/measurements/rejected-tlb-base-hoist-2026-10-25.json`.
+Future memory work needs to improve the complete lookup path and be measured
+against both small dense rings and larger TLB-pressure cases.

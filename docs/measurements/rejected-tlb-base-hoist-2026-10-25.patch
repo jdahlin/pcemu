@@ -1,0 +1,74 @@
+diff --git a/src/jit_arm64.cpp b/src/jit_arm64.cpp
+index e99825b..be5184d 100644
+--- a/src/jit_arm64.cpp
++++ b/src/jit_arm64.cpp
+@@ -64,9 +64,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+             usedRegisters |= 1u << i.src;
+     }
+     bool fastMemory = false, fastStore = false;
++    unsigned fastAccesses = 0;
+     for (auto i : ir)
+         if (i.kind == Kind::Memory && (!i.memory.store || !block.watched)) {
+             fastMemory = true;
++            ++fastAccesses;
+             fastStore |= i.memory.store;
+         }
+     // x28 is free of guest GPR assignments. An unused guest-register slot can
+@@ -78,11 +80,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                 bitmapRegister = 20 + reg;
+                 break;
+             }
+-    int epochRegister = -1;
++    int epochRegister = -1, tlbRegister = -1;
+     auto savePair = [&](int pair) {
+         return pair == 0 || (usedRegisters & (3u << (pair * 2 - 1))) || (pair == 4 && fastMemory) ||
+                bitmapRegister == 19 + pair * 2 || bitmapRegister == 20 + pair * 2 ||
+-               epochRegister == 19 + pair * 2 || epochRegister == 20 + pair * 2;
++               epochRegister == 19 + pair * 2 || epochRegister == 20 + pair * 2 ||
++               tlbRegister == 19 + pair * 2 || tlbRegister == 20 + pair * 2;
+     };
+     if (fastMemory && (block.cr0 & 0x80000000u))
+         for (unsigned pass = 0; pass < 2 && epochRegister < 0; ++pass)
+@@ -94,6 +97,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     break;
+                 }
+             }
++    // Amortize the fixed TLB-array address over multiple accesses. Prefer an
++    // already-saved unused GPR slot; never displace a live guest register.
++    if (fastAccesses >= 4 && (block.cr0 & 0x80000000u))
++        for (unsigned pass = 0; pass < 2 && tlbRegister < 0; ++pass)
++            for (int reg = 7; reg >= 0; --reg) {
++                int host = 20 + reg;
++                if (!(usedRegisters & (1u << reg)) && host != bitmapRegister && host != epochRegister &&
++                    (pass || savePair((host - 19) / 2))) {
++                    tlbRegister = host;
++                    break;
++                }
++            }
+     emit(0xa9b97bfdu); // stp x29,x30,[sp,#-112]!
+     emit(0x910003fdu); // mov x29,sp: keep a valid host frame chain for diagnostics.
+     for (int k = 0; k < 5; k++)
+@@ -122,6 +137,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+         if (low || !high)
+             emit(0x91000000u | (low << 10) | ((high ? reg : 19) << 5) | reg);
+     };
++    if (tlbRegister >= 0)
++        cpuAddress(tlbRegister, offsetof(CPU, tlb));
+     if (epochRegister >= 0) {
+         // Fetch validation synchronizes CR3/TLB before entry. Supported native
+         // instructions and continuing RAM helpers cannot change the epoch;
+@@ -528,8 +545,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded)
+                     static_assert(sizeof(CPU::TLBEntry) == 20);
+                     static_assert(offsetof(CPU::TLBEntry, permissions) == 16);
+                     static_assert(offsetof(CPU::TLBEntry, dirty) == 17);
+-                    cpuAddress(12, offsetof(CPU, tlb));
+-                    emit(0x8b2b498cu); // add x12,x12,w11,uxtw #2
++                    if (tlbRegister >= 0)
++                        emit(0x8b2b480cu | (tlbRegister << 5)); // add x12,xTLB,w11,uxtw #2
++                    else {
++                        cpuAddress(12, offsetof(CPU, tlb));
++                        emit(0x8b2b498cu); // add x12,x12,w11,uxtw #2
++                    }
+                     // The little-endian tag/epoch pair forms one 64-bit key.
+                     // A stale epoch or colliding page tag must both miss.
+                     static_assert(std::endian::native == std::endian::little);

@@ -403,6 +403,49 @@ int main() {
             check(hot.nativeInstructions > 0 && c.r[AX] == 8 && c.ip == 0,
                   "negative cache immediately translates changed instruction bytes");
         }
+        // Hoisted TLB bases must coexist with every live-GPR combination,
+        // bitmap/epoch registers and cold helpers that clobber caller saves.
+        for (unsigned mask = 1; mask < 256; ++mask)
+        for (unsigned width : {1u, 2u, 4u})
+        for (bool mixed : {false, true})
+        for (bool warm : {false, true}) {
+            CPU ref(1024 * 1024), cpu(1024 * 1024);
+            std::vector<uint8_t> code;
+            unsigned count = 0;
+            for (unsigned pass = 0; pass < 4; ++pass)
+                for (unsigned reg = 0; reg < 8; ++reg)
+                    if (mask & (1u << reg)) {
+                        if (width == 1) code.insert(code.end(), {0x0f,0xb6});
+                        else {
+                            if (width == 2) code.push_back(0x66);
+                            code.push_back(0x8b);
+                        }
+                        code.insert(code.end(), {uint8_t(0x05 | (reg << 3)), 0,0x40,0,0});
+                        ++count;
+                    }
+            if (mixed) { code.insert(code.end(), {0xa3,4,0x40,0,0}); ++count; }
+            code.insert(code.end(), {0xeb,0}); ++count;
+            for (auto c : {&ref, &cpu}) {
+                c->s[CS].big = true; c->s[CS].selector = mask & 1 ? 3 : 0;
+                c->flags = 0x244ed7;
+                for (unsigned r = 0; r < 8; ++r) c->r[r] = 0xabcd0000 + r;
+                std::copy(code.begin(), code.end(), c->mem.begin());
+                c->write(0x4000, 0x12345678, 4);
+                c->write(0x80000, 0x81007, 4); c->write(0x81000, 7, 4);
+                c->write(0x81010, 0x4007, 4);
+                c->cr[0] = 0x80000011; c->cr[3] = 0x80000;
+                if (warm) c->physical(0x4000, true);
+            }
+            Jit guarded(cpu, true, 0);
+            for (unsigned n = 0; n < count; ++n) ref.step();
+            check(guarded.run() == count && guarded.nativeInstructions == count,
+                  "TLB base register pressure must stay native");
+            check(std::equal(std::begin(ref.r), std::end(ref.r), std::begin(cpu.r)),
+                  "TLB base caching clobbered a guest GPR");
+            check(ref.ip == cpu.ip && ref.flags == cpu.flags && ref.instructions == cpu.instructions,
+                  "TLB base caching changed control state");
+            check(ref.mem == cpu.mem, "TLB base caching changed RAM/page-table effects");
+        }
         check(jit.cacheRecycles > 0, "memory comparison arena recycling exercised");
         std::cout << "Passed " << checks << " read JIT checks\n";
     } catch (const std::exception &e) {

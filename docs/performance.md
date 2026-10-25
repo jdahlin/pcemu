@@ -1533,3 +1533,42 @@ results. The earlier one-million-iteration calibration is excluded. Both
 QEMU-inclusive smoke and `make smoke-guest-memory` pass exact results, matching
 JIT/reference instruction counts, native execution and corrupted-kernel
 rejection. No production CPU/JIT behavior changed in this benchmark addition.
+
+
+## Rejected TLB-base address hoist (25 October)
+
+An experiment reserved an unused callee-saved host GPR for the CPU's fixed
+TLB-array address in paged blocks with at least four fast memory accesses.
+It preferred an already-saved register pair and retained the original path
+under register pressure. This removed two repeated address ADDs per access
+without removing translation, permission, fault or RAM/device guards.
+
+Three alternating 128,000,007-load-per-case pairs reject the change. The
+16-node dense paged ring's median baseline/candidate cost is 1.7453 /
+5.2331 ns/load (median paired throughput 0.33307). The 16-page sparse ring
+is 1.7766 / 5.4143 ns/load (0.31700). Dense 256/1,024-node ratios are
+0.64435 / 0.63987; larger dense cases are near neutral. The 2,048-page
+helper-heavy case improves only 3.02%, and the 4,096-page case regresses
+2.89%. Flat emitted code is unchanged; its measured controls vary.
+
+All six sweeps have identical guest results, instruction counts, native counts
+and helper counts. Thus the small-ring regression is not explained by extra
+interpreter/helper work. The exact microarchitectural cause remains unknown;
+these measurements do not establish a dependency or alignment explanation.
+Fewer emitted instructions did not produce faster execution on this host.
+The production emitter is restored byte-for-byte to its pre-experiment source.
+
+[All paired samples and validation](measurements/rejected-tlb-base-hoist-2026-10-25.json)
+and the [rejected patch](measurements/rejected-tlb-base-hoist-2026-10-25.patch)
+are retained. The new pressure tests remain: 255 nonempty live-GPR masks,
+byte/word/dword reads, mixed stores, warm/cold translations and supervisor/user
+contexts compare full GPR/control/memory state against the interpreter.
+The read-JIT suite now passes 255,535 checks; restored-emitter JIT/reference/
+QEMU smoke and corrupted-guest rejection pass. No production runtime change
+is retained and no Windows speedup is claimed.
+
+The memory wrapper now accepts `--runner PATH` for controlled PCEMU baseline
+comparisons, skips rebuilding that executable, rejects QEMU/custom-runner
+combinations and checks the executable hash before/after measurement. The
+temporary baseline executable was removed after validation; tests use RAM and
+only the existing tiny successful QEMU boot fixture, removed by the wrapper.
