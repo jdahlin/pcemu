@@ -1,5 +1,6 @@
 #include "frontend.hpp"
 #include "host_key.hpp"
+#include "win95_shutdown.hpp"
 #include <SDL.h>
 #include <iostream>
 #include <stdexcept>
@@ -12,6 +13,37 @@ static void check(bool value, const char *message) {
 }
 int main() {
     try {
+        std::vector<uint8_t> ram(1024, 0);
+        const uint8_t terminal[] = {0xb3, 3, 0xb8, 0x0e, 0x16, 0xcd, 0x2f, 0x90, 0xeb, 0xfd};
+        std::copy(std::begin(terminal), std::end(terminal), ram.begin() + 100);
+        check(win95ShutdownComplete(ram, 0x10, 80, 27, 0x160e, 3), "WIN.COM safe loop recognized");
+        check(win95ShutdownComplete(ram, 0x10, 80, 28, 0x160e, 3), "both safe-loop instructions recognized");
+        check(!win95ShutdownComplete(ram, 0x11, 80, 27, 0x160e, 3), "protected mode is not shutdown");
+        check(!win95ShutdownComplete(ram, 0x10, 80, 27, 0, 3), "shutdown broadcast required");
+        check(!win95ShutdownComplete(ram, 0x10, 80, 27, 0x160e, 0), "shutdown broadcast subtype required");
+        check(!win95ShutdownComplete(ram, 0x10, 80, 29, 0x160e, 3), "unrelated guest code is not shutdown");
+        check(!win95ShutdownComplete(ram, 0x10, 100000, 27, 0x160e, 3), "invalid guest address rejected");
+        ram[100] = 0;
+        check(!win95ShutdownComplete(ram, 0x10, 80, 27, 0x160e, 3), "exact shutdown code required");
+        Win95ShutdownRequest shutdown;
+        std::vector<unsigned> keys, scans;
+        auto tick = [&](uint64_t t, uint64_t count, bool mode = true, bool empty = true) {
+            shutdown.tick(t, count, mode, empty,
+                          [&](uint8_t s) { scans.push_back(s); },
+                          [&](uint16_t k) { keys.push_back(k); });
+        };
+        tick(0, 0); check(scans.empty(), "no input before close request");
+        shutdown.request(0, 0);
+        tick(0, 0, false); check(scans.empty(), "wait for Windows protected mode");
+        tick(0, 0, true, false); check(scans.empty(), "wait for keyboard queue to drain");
+        tick(0, 0); tick(1, 1); check(scans.size() == 1, "keys paced by time and guest progress");
+        shutdown.request(0, 0); // Repeated close must not restart or cut power.
+        for (unsigned i = 1; i < 50; ++i) tick(i * 1000, i * 1000000);
+        check(scans == std::vector<unsigned>{0x1d, 1, 0x81, 0x9d}, "Ctrl+Escape make and break order");
+        std::string command;
+        for (auto k : keys) if (k < 256) command += char(k);
+        check(command == "rrundll32.exe user.exe,ExitWindows", "normal guest shutdown command");
+        check(keys.back() == 0x1c0d, "Run command submitted once");
         SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
         SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "1");
         auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);

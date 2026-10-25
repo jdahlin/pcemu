@@ -5,6 +5,7 @@
 #include "network.hpp"
 #include "profile.hpp"
 #include "frontend.hpp"
+#include "win95_shutdown.hpp"
 #include "pc_display.hpp"
 #include "session_diagnostics.hpp"
 #include "cpu_benchmarks.hpp"
@@ -337,6 +338,14 @@ int main(int argc, char **argv) {
             m.ps2.motion(0, 0, 0);
             setMouseCapture(false);
         };
+        Win95ShutdownRequest shutdown;
+        auto requestClose = [&] {
+            releaseInput();
+            if (machineId != "win95") { quit = true; return; }
+            const auto now = std::chrono::steady_clock::now().time_since_epoch();
+            shutdown.request(std::chrono::duration_cast<std::chrono::milliseconds>(now).count(), c.instructions);
+            std::cerr << "Windows shutdown requested; waiting for guest completion.\n";
+        };
         const char *networkCapture = std::getenv("PCEMU_NET_PCAP");
         std::unique_ptr<Network> network;
         if (enableNetwork) network = std::make_unique<Network>(networkCapture ? networkCapture : "");
@@ -530,7 +539,9 @@ int main(int argc, char **argv) {
                             command >> address;
                             breakAt = std::stoull(address, nullptr, 0);
                             afterBreak = 0;
-                        } else if (op == "quit")
+                        } else if (op == "close")
+                            requestClose();
+                        else if (op == "quit")
                             quit = true;
                         else if (!op.empty() && op[0] != '#')
                             throw std::runtime_error("Unknown guest-control command: " + op);
@@ -568,6 +579,19 @@ int main(int argc, char **argv) {
                             nextTyped = c.instructions + 100000;
                     }
                 }
+                if (shutdown.requested && win95ShutdownComplete(c.mem, c.cr[0], c.s[CS].base,
+                                                                c.ip, c.r[AX], c.r[BX])) {
+                    if (m.disk) m.disk->flush();
+                    if (m.floppy) m.floppy->flush();
+                    std::cerr << "Windows shutdown complete; disks flushed.\n";
+                    quit = true;
+                    break;
+                }
+                const auto shutdownNow = std::chrono::steady_clock::now().time_since_epoch();
+                shutdown.tick(std::chrono::duration_cast<std::chrono::milliseconds>(shutdownNow).count(),
+                              c.instructions, c.cr[0] & 1, m.ps2.state().scanCodes.empty(),
+                              [&](uint8_t scan) { m.ps2.enqueueScan(scan); },
+                              [&](uint16_t key) { m.key(key); });
                 if (headless) {
                     if (!untilText.empty() && m.text().find(untilText) != std::string::npos)
                         break;
@@ -585,7 +609,7 @@ int main(int argc, char **argv) {
                 }
                 for (const auto &event : frontend->poll()) {
                     using K = FrontendEvent::Kind;
-                    if (event.kind == K::Quit) { quit = true; continue; }
+                    if (event.kind == K::Quit) { requestClose(); continue; }
                     if (event.kind == K::FocusLost) { releaseInput(); continue; }
                     if (!enableHostInput) continue;
                     if (event.kind == K::ToggleCapture) {

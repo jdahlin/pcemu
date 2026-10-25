@@ -18,7 +18,10 @@ and Pause have their own scan sequences. F12 and Ctrl+Q reach Windows/Office.
 Losing focus releases held host keys and mouse buttons.
 
 Click inside the window to capture relative mouse movement. **Cmd+G** releases
-or captures the mouse; **Cmd+Q** quits the emulator. The capture click is consumed. The window title shows capture state.
+or captures the mouse. For the `win95` profile, window close and **Cmd+Q** request
+a normal Windows shutdown. The emulator stays open for save prompts or cancellation
+and exits only after recognizing WIN.COM’s completed shutdown loop and flushing
+the disks. Other profiles retain immediate close behavior. The capture click is consumed. The window title shows capture state.
 The guest keyboard layout controls characters; host IME/text composition is
 disabled for this physical-keyboard path.
 The first implementation uses relative PS/2 input, not an absolute pointer or
@@ -126,3 +129,22 @@ movement sample. Full output buffers still update IRQ lines immediately when
 IRQ enable bits change. The guard reads live state rather than caching it, so
 host injection, command replies and restored pending packets need no explicit
 wake-up/invalidation hook. Interrupt delivery itself is not batched by this change.
+
+### Windows 95 close requests
+
+The legacy platform has no ACPI power button. Close requests use paced PS/2
+keyboard input to open the English Windows 95 Run dialog and invoke
+`rundll32.exe user.exe,ExitWindows` without a force option. Repeated close clicks
+are idempotent. A request made during boot waits for protected mode. If Windows
+cancels shutdown or the shell cannot accept the shortcut, the emulator remains
+open; the user can complete shutdown through Start → Shut Down. There is no
+timeout that cuts power. Completion matches the original real-mode WIN.COM
+shutdown broadcast and terminal instruction loop, rather than a fixed address,
+CPU idle time or a quiet disk. Unrecognized guest versions remain open.
+
+The control-file command `close` exercises the same path headless. The existing
+`quit` command remains an explicit immediate stop for disposable validation
+guests. Frontend tests cover pacing, repeated requests and rejection of unrelated
+guest code as shutdown completion. A private compressed OSR2 overlay was booted
+to Explorer and shut down through `close`, reaching the safe-to-turn-off screen
+and the logged disk-flush completion.
