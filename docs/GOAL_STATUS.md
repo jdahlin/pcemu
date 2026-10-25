@@ -740,3 +740,17 @@ include message loops and input settling, and do not isolate computation cost
 or establish Office performance. Keep startup, application use and kernels as
 separate optimization workloads. Evidence:
 `docs/measurements/win95-application-use-opcodes-2026-10-25.json`.
+
+
+## Office installation restored on external storage (25 October)
+
+All 5,781 ISO files (672,387,604 bytes) were staged and read back through a
+compressed private child on `/Volumes/data`, without raw staging duplication.
+Office SR-1 Setup reports successful completion. Word saves RESTORED.DOC with
+the test text; Excel displays =2+2 as 4 and saves RESTORED.XLS. A guest restart
+returns to Explorer. After clean emulator exit, offline FAT readback verifies
+both compound-file headers/hashes and the exact Word text payload. Formula
+persistence on reopening and representative steady-use Office profiles remain
+next steps. Evidence: `docs/measurements/office97-restored-install-2026-10-25.json`
+and adjacent setup/Word/Excel screenshots. The frozen runner hash is recorded.
+The broad emulator goal remains active; this does not repeat Windows Setup.

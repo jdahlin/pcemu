@@ -4,9 +4,12 @@ Current local availability (2026-10-25): the English Professional SR-1 ISO was
 restored from WinWorld to `/Volumes/data/pcemu/media/office97/`. Its archive
 SHA-512 matched the published checksum; the extracted ISO has SHA-256
 `4e0fabcf43b4f2ac7d2e71a2b51b15226fb8e954a3fee2125e04756d2fef8ee4`.
-The media-directory ISO is a symlink to that external volume. Installed Office
-checkpoints remain absent; historical measurements below do not establish
-that Office is currently runnable. The retained `media/office97-base/disk.raw`
+The media-directory ISO is a symlink to that external volume. Installed RAM checkpoints remain absent. A new installed compressed disk is
+available at `/Volumes/data/pcemu/office97-install/disk.pcd`; Setup completion,
+Word text save, Excel calculation/save and a firmware restart to Explorer pass.
+Stopped-guest readback verifies both compound-file headers and Word text.
+Excel formula persistence on reopening remains unverified. Current evidence:
+[installation record](measurements/office97-restored-install-2026-10-25.json). The retained `media/office97-base/disk.raw`
 is a pre-Office Win95 baseline. New large media/disk data belongs on the external
 volume.
 

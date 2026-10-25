@@ -1,0 +1,29 @@
+{
+  "scope": "Restored Office 97 Professional SR-1 Setup completion, Word text save, Excel =2+2 displayed as 4 and workbook save, guest firmware restart to Explorer, stopped-guest compound-file header/hash checks; Word payload verified; Excel formula persistence/reopen remains to be checked",
+  "disk": "/Volumes/data/pcemu/office97-install/disk.pcd",
+  "stagedFiles": 5781,
+  "stagedBytes": 672387604,
+  "runner": {
+    "sha256": "1d754fe064dcc645aa4a1033bcf234bb7e25b6de6694130d91080f65e9f6e99a",
+    "scope": "Frozen existing normal executable for restored Office media installation"
+  },
+  "restart": {
+    "scope": "guest restart and desktop; no file assertion",
+    "beforeInstructions": 19661013395,
+    "afterInstructions": 20260095442,
+    "beforeResets": 0,
+    "afterResets": 1
+  },
+  "files": {
+    "RESTOREDDOC": {
+      "bytes": 19456,
+      "sha256": "bc880ef4938e02bb86a94b0a48a79d422aa88d14da201be009da392ce90f2971",
+      "compoundFileHeader": true
+    },
+    "RESTOREDXLS": {
+      "bytes": 13824,
+      "sha256": "758606fbd8226397bdd57fced80d005458abca998c2ee484dde1aa1cbc776aa8",
+      "compoundFileHeader": true
+    }
+  }
+}
