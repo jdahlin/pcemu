@@ -122,3 +122,24 @@ requires VMBus, does not mutate guest registry data, and does not run by default
 The platform exposes query/result forwarding between stopped-VP slices.
 
 The remaining family-level work is tracked in [the scope inventory](hyperv-arm64-plan.md).
+
+## Actual Windows KVP result
+
+The combined bounded probe using commit `92f9ce8` succeeds. Windows selects
+framework 3.0 and KVP 5.0, then returns a nonempty `FullyQualifiedDomainName`
+record for intrinsic pool Auto, index zero. The host validates and drains the
+record: one negotiation, one request, one response, one record, status zero,
+zero rejected responses and zero timeouts. This confirms the version-table
+diagnosis and real guest data exchange through the VMBus rings.
+
+Evidence is `build/windows11-hyperv/kvp-query/`: `observation.json`, final
+`hyperv.json`, `host.log`, `result.json` and `audit.json`. The private returned
+value is retained only in ignored `guest-record.json` (mode 0600). Launch
+metadata hashes that record, host log and counters. The normal Windows audit
+and explicit poweroff gate pass; the supervisor records exit zero after
+56.9 seconds and no running VM. The existing auditor does not yet expose a
+separate typed KVP-record gate.
+
+This verifies one intrinsic query, not every KVP operation. Remaining KVP work
+is broader host query APIs, multiple indexes/pools, get/set/delete execution
+and IP exchange, with appropriate verification of each implemented operation.
