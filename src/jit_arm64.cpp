@@ -51,6 +51,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.indirectCall) usedRegisters |= 1u << i.src;
         if (i.kind == Kind::DoubleShift && !i.immediate)
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch)
@@ -588,7 +589,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Memory) {
             size_t invalidCall = size_t(-1);
             if (i.nearCall) {
-                imm(9, i.target);
+                if (i.indirectCall) {
+                    // Capture the target before the push changes SP/ESP.
+                    extract(9, 20 + i.src, i.w, 0);
+                    store(9, 31, 108);
+                } else imm(9, i.target);
                 load(10, 19, offsetof(CPU, s) + CS * sizeof(Segment) + offsetof(Segment, limit));
                 emit(0x6b00001fu | (10 << 16) | (9 << 5));
                 invalidCall = code.size(); emit(0x54000008u); // b.hi replay before stack write
@@ -645,9 +650,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     insert(20 + SP, 11, block.stack32 ? 4 : 2, 0);
                     dirtyRegisters |= 1u << SP;
                 }
-                if (i.nearReturn || i.indirectJump) {
+                if (i.nearReturn || i.indirectJump || i.indirectCall) {
                     // Commit the dynamic destination only after a successful
-                    // pointer read. Fault/MMIO replay retains the original IP.
+                    // stack access or pointer read. Replay retains the original IP.
+                    if (i.indirectCall) load(10, 31, 108);
                     store(10, 19, offsetof(CPU, ip));
                 } else if (!i.memory.store) {
                     if (i.signedSource)
@@ -835,7 +841,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             // Successful memory access changed code: commit through this instruction.
             flushRegisters(dirtyRegisters);
             finishFlags(i.memoryAlu ? int(n) : last, -1, 0);
-            if (!i.nearReturn && !i.indirectJump) {
+            if (!i.nearReturn && !i.indirectJump && !i.indirectCall) {
                 imm(9, i.memory.end);
                 store(9, 19, offsetof(CPU, ip));
             }
@@ -912,7 +918,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     }
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == Kind::Branch;
-    if (!ir.back().nearReturn && !ir.back().indirectJump && ir.back().kind != Kind::CounterBranch) {
+    if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
+        ir.back().kind != Kind::CounterBranch) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);

@@ -28,5 +28,18 @@ disks were removed.
 
 [Build, source/specification hashes and runtime evidence](measurements/near-call-target-limit-2026-10-25.json).
 
-Native register-indirect CALL remains the next performance step; this change
-corrects the existing reference and direct-call paths first.
+Native register-indirect CALL (`FF /2`, register operands) now shares the guarded
+native stack-store path. The emitter captures the masked target before changing
+SP/ESP, checks the current CS limit before the push, and commits the destination
+only after success. An otherwise unused host scratch slot preserves the target
+across stack helpers. Memory-indirect CALL remains interpreted.
+
+Expanded tests cover every target register, recently modified targets, SP/ESP
+aliasing, mixed operand/stack widths, paging and stack faults, MMIO replay, and a
+push overwriting the CALL's own code. The stack/JIT suite passes 33,360 checks,
+the core suite 352,644, and flag-liveness tests 91,745,234. This candidate's Windows
+and Excel performance validation is pending: `/Volumes/data` was unmounted and
+the comparison's baseline exited before loading the external snapshot. No
+application speedup is claimed for this change.
+
+[Native register CALL build and validation evidence](measurements/native-register-call-2026-10-25.json).

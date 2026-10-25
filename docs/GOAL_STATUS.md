@@ -883,3 +883,15 @@ at runtime. Stack/JIT checks (27,641), core checks (352,644), DOS and all three
 Windows application validation paths pass. Native register-indirect CALL work
 continues after this correctness prerequisite. See `near-call.md` and
 `measurements/near-call-target-limit-2026-10-25.json`.
+
+
+## Native register-indirect CALL (25 October)
+
+FF /2 register targets now use native code with the existing guarded stack push.
+The target is captured before SP/ESP changes, checked against the current CS
+limit, and committed only after successful access. Memory operands still replay.
+All 33,360 stack/JIT, 352,644 core, and 91,745,234 flag-liveness checks pass.
+Application/performance validation is pending because the external /Volumes/data
+volume disappeared before the matched Excel baseline loaded its snapshot. No
+application timing result was produced. See `near-call.md` and
+`measurements/native-register-call-2026-10-25.json`. The overall goal remains active.

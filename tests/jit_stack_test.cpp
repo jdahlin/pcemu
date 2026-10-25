@@ -182,12 +182,39 @@ int main() {
                       "cached stack blocks revalidate SS.B without code or CS changes");
             }
         }
+        for (unsigned target : {unsigned(AX), unsigned(SP)}) {
+            CPU c(65536);
+            c.s[CS].big = c.s[SS].big = true;
+            const uint8_t code[] = {0xff, uint8_t(0xd0 | target)};
+            std::copy(std::begin(code), std::end(code), c.mem.begin());
+            c.r[AX] = 0x100; c.r[SP] = 5;
+            Jit changed(c, true, 0, 65536);
+            check(changed.run() == 1 && changed.nativeInstructions == 1 &&
+                      c.ip == (target == SP ? 5u : 0x100u) && c.r[SP] == 1 && c.read(1, 4) == 2,
+                  "self-modifying register CALL commits captured target and return address once");
+        }
+        {
+            CPU c(1024 * 1024);
+            c.s[CS].big = c.s[SS].big = true;
+            c.mem[0] = 0xff; c.mem[1] = 0xd0;
+            c.r[AX] = 0x100; c.r[SP] = 0xa0004;
+            unsigned accesses = 0;
+            c.videoWrite = [&](uint32_t at, uint8_t value) {
+                ++accesses;
+                check(c.r[SP] == 0xa0000 && value == (at == 0xa0000 ? 2 : 0),
+                      "register CALL MMIO sees committed SP and exact return bytes");
+            };
+            Jit guarded(c, true, 0, 65536);
+            check(guarded.run() == 1 && guarded.nativeInstructions == 0 && accesses == 4 &&
+                      c.ip == 0x100 && c.r[SP] == 0xa0000,
+                  "register CALL MMIO replays exactly once");
+        }
         for (bool store : {false, true})
             for (bool word : {false, true})
                 for (bool stack32 : {false, true})
                     for (unsigned kind = 0; kind < 4; ++kind)
-                      for (unsigned transfer = 0; transfer < 3; ++transfer) {
-                        bool call = transfer == 1, ret = transfer == 2;
+                      for (unsigned transfer = 0; transfer < 4; ++transfer) {
+                        bool call = transfer == 1 || transfer == 3, ret = transfer == 2;
                         if ((call && !store) || (ret && store))
                             continue;
                         if (kind == 1 && !store)
@@ -196,10 +223,11 @@ int main() {
                         std::vector<uint8_t> code = {0xb8, 0xff, 0xff, 0xff, 0xff, 0x83, 0xc0, 1};
                         if (word)
                             code.push_back(0x66);
-                        code.push_back(ret ? 0xc2 : call ? 0xe8 : store ? 0x50 : 0x5c);
+                        if (transfer == 3) code.insert(code.end(), {0xff, 0xd0});
+                        else code.push_back(ret ? 0xc2 : call ? 0xe8 : store ? 0x50 : 0x5c);
                         if (ret)
                             code.insert(code.end(), {0xff, 0xff});
-                        if (call)
+                        if (transfer == 1)
                             code.insert(code.end(), word ? 2 : 4, 0);
                         code.insert(code.end(), {0xbb, 0xef, 0xbe, 0xad, 0xde, 0xf4});
                         auto originalSP =
@@ -288,48 +316,51 @@ int main() {
             for (bool overrideWidth : {false, true})
                 for (bool stack32 : {false, true})
                     for (bool paging : {false, true})
-                        for (unsigned edge = 0; edge < 4; ++edge) {
-                            CPU ref(1024 * 1024), native(1024 * 1024);
-                            unsigned width = code32 != overrideWidth ? 4 : 2;
-                            std::vector<uint8_t> code = {0x83, 0xc3, 1};
-                            if (overrideWidth)
-                                code.push_back(0x66);
-                            code.push_back(0xe8);
-                            uint32_t displacement = edge & 1 ? 0xffffffe0u : 0x12345u;
-                            for (unsigned n = 0; n < width; ++n)
-                                code.push_back(displacement >> (n * 8));
-                            for (auto c : {&ref, &native}) {
-                                c->cr[0] = 1;
-                                c->s[CS].big = code32;
-                                c->s[CS].limit = UINT32_MAX; // This fixture tests valid wide targets/wraps.
-                                c->s[SS].big = stack32;
-                                c->s[SS].base = 0x10000;
-                                c->r[SP] = (0x7000 + edge) | (stack32 ? 0 : 0xabcd0000u);
-                                c->r[BX] = 0x7fffffff;
-                                c->flags = 0x8d7;
-                                std::copy(code.begin(), code.end(), c->mem.begin());
-                                if (paging) {
-                                    c->write(0x80000, 0x81007, 4);
-                                    for (unsigned page = 0; page < 256; ++page)
-                                        c->write(0x81000 + page * 4, (page << 12) | 7, 4);
-                                    c->cr[3] = 0x80000;
-                                    c->cr[0] = 0x80000001;
+                        for (unsigned edge = 0; edge < 4; ++edge)
+                            for (unsigned form = 0; form < 9; ++form) {
+                                CPU ref(1024 * 1024), native(1024 * 1024);
+                                unsigned width = code32 != overrideWidth ? 4 : 2;
+                                std::vector<uint8_t> code = {0x83, 0xc3, 1};
+                                if (overrideWidth)
+                                    code.push_back(0x66);
+                                if (!form) code.push_back(0xe8);
+                                else code.insert(code.end(), {0xff, uint8_t(0xd0 | (form - 1))});
+                                uint32_t displacement = edge & 1 ? 0xffffffe0u : 0x12345u;
+                                if (!form) for (unsigned n = 0; n < width; ++n)
+                                    code.push_back(displacement >> (n * 8));
+                                for (auto c : {&ref, &native}) {
+                                    c->cr[0] = 1;
+                                    c->s[CS].big = code32;
+                                    c->s[CS].limit = UINT32_MAX; // This fixture tests valid wide targets/wraps.
+                                    c->s[SS].big = stack32;
+                                    c->s[SS].base = 0x10000;
+                                    c->r[SP] = (0x7000 + edge) | (stack32 ? 0 : 0xabcd0000u);
+                                    c->r[BX] = 0x7fffffff;
+                                    if (form && form - 1 != SP) c->r[form - 1] = 0x12345678u + edge;
+                                    c->flags = 0x8d7;
+                                    std::copy(code.begin(), code.end(), c->mem.begin());
+                                    if (paging) {
+                                        c->write(0x80000, 0x81007, 4);
+                                        for (unsigned page = 0; page < 256; ++page)
+                                            c->write(0x81000 + page * 4, (page << 12) | 7, 4);
+                                        c->cr[3] = 0x80000;
+                                        c->cr[0] = 0x80000001;
+                                    }
+                                    c->flushTLB();
                                 }
-                                c->flushTLB();
+                                ref.step();
+                                ref.step();
+                                Jit translated(native, true, 0);
+                                check(translated.run() == 2 && translated.nativeInstructions == (edge && edge < width ? 1u : 2u),
+                                      "near CALL runs natively or replays a page-crossing push");
+                                check(native.ip == ref.ip && native.flags == ref.flags,
+                                      "near CALL preserves target and preceding arithmetic flags");
+                                for (unsigned r = 0; r < 8; ++r)
+                                    check(native.r[r] == ref.r[r], "near CALL preserves registers");
+                                check(std::memcmp(native.mem.data() + 0x16000,
+                                                  ref.mem.data() + 0x16000, 0x2000) == 0,
+                                      "near CALL pushes the exact mixed-width return address");
                             }
-                            ref.step();
-                            ref.step();
-                            Jit translated(native, true, 0);
-                            check(translated.run() == 2 && translated.nativeInstructions == (edge && edge < width ? 1u : 2u),
-                                  "direct CALL runs natively or replays a page-crossing push");
-                            check(native.ip == ref.ip && native.flags == ref.flags,
-                                  "direct CALL preserves target and preceding arithmetic flags");
-                            for (unsigned r = 0; r < 8; ++r)
-                                check(native.r[r] == ref.r[r], "direct CALL preserves registers");
-                            check(std::memcmp(native.mem.data() + 0x16000,
-                                              ref.mem.data() + 0x16000, 0x2000) == 0,
-                                  "direct CALL pushes the exact mixed-width return address");
-                        }
         {
             CPU c(65536);
             c.s[CS].big = c.s[SS].big = true;
