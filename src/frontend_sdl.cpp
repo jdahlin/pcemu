@@ -21,6 +21,9 @@ class SDLFrontend final : public Frontend {
 
   public:
     SDLFrontend(unsigned w, unsigned h, DisplayShape shape) {
+        // Relative device counts must not be scaled into the monitor's logical
+        // 4x3 coordinates. Guest drivers apply their own pointer acceleration.
+        SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_SCALING, "0", SDL_HINT_OVERRIDE);
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER))
             throw std::runtime_error(SDL_GetError());
         try {

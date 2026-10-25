@@ -13,7 +13,10 @@ static void check(bool value, const char *message) {
 int main() {
     try {
         SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
+        SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "1");
         auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);
+        check(!SDL_GetHintBoolean(SDL_HINT_MOUSE_RELATIVE_SCALING, SDL_TRUE),
+              "relative mouse counts stay independent of logical display scaling");
         auto *window = SDL_GetWindowFromID(1);
         check(window != nullptr, "headless window exists");
         auto *renderer = SDL_GetRenderer(window);
@@ -45,6 +48,16 @@ int main() {
         SDL_RenderGetLogicalSize(renderer, &logicalWidth, &logicalHeight);
         check(logicalWidth == 4 && logicalHeight == 3, "same-size return to VGA restores aspect");
         frontend->poll();
+        SDL_Event motion{};
+        motion.type = SDL_MOUSEMOTION;
+        motion.motion.windowID = SDL_GetWindowID(window);
+        motion.motion.xrel = 120;
+        motion.motion.yrel = -75;
+        SDL_PushEvent(&motion);
+        auto movement = frontend->poll();
+        check(movement.size() == 1 && movement[0].kind == FrontendEvent::Kind::Motion &&
+                  movement[0].x == 120 && movement[0].y == -75,
+              "classic VGA presentation preserves relative movement counts");
         std::vector<uint32_t> frame(640 * 400, 0xff123456);
         frontend->present(frame, 640, 400);
         frame.resize(1024 * 768, 0xffabcdef);

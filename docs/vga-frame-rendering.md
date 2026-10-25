@@ -83,3 +83,8 @@ responsive to close events. Headless runs have no presentation delay and snapsho
 restores resume directly. This is the emulator's own firmware banner, not a
 third-party BIOS or a BIOS setup utility. The component tests exercise hard-disk
 and floppy boot handoff using a temporary 512-byte image.
+
+Relative SDL mouse movement is independent of renderer logical size and DPI
+scaling. The frontend disables SDL relative scaling so the 4:3 monitor
+coordinates cannot shrink motion counts; guest mouse drivers retain control
+over acceleration and sensitivity.
