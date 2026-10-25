@@ -387,6 +387,12 @@ void HvfMachine::setPC(uint64_t value) {
     if (impl->selected) { impl->secondary[impl->selected - 1]->setPC(value); return; }
     check(hv_vcpu_set_reg(impl->vcpu, HV_REG_PC, value), "set PC");
 }
+HvfMachine::VirtualCounterSample HvfMachine::virtualCounterSample() const {
+    impl->requireOwner();
+    uint64_t offset=0;
+    check(hv_vcpu_get_vtimer_offset(impl->vcpu, &offset), "sample virtual timer offset");
+    return {mach_absolute_time()-offset, impl->clockPeriod, impl->sleepApplied};
+}
 HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     impl->requireOwner();
     if (budget.count() <= 0 || budget > std::chrono::seconds(60))

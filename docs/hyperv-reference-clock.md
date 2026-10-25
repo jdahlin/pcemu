@@ -26,3 +26,19 @@ host-sleep offset changes. Native guest reads must be compared with hypercall
 reference time before actual Windows consumption or performance is claimed.
 The existing HVF backend changes virtual-counter offsets after host sleep, so
 using a one-time host timestamp without this synchronization would be incorrect.
+
+## Native counter sampling prerequisite
+
+`HvfMachine::virtualCounterSample()` now returns the virtual count, native
+frequency and applied sleep correction while all VPs are stopped. It samples
+`mach_absolute_time` minus the actual primary HVF timer offset, which is shared
+with secondary VPs. It does not itself change offsets or enable the reference
+page privilege.
+
+`make test-arm-hvf-reference-counter` executes actual CNTVCT/CNTFRQ reads on
+two VPs and compares them against host-side samples. Injecting five seconds
+of host sleep and allowing the backend's next clock synchronization verifies
+that both VPs and subsequent host samples include the same adjustment. All
+29 native checks pass. This establishes the counter sampling prerequisite;
+shared-page guest reads and atomic rebasing before VP resumption remain to be
+implemented and tested.

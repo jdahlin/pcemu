@@ -82,6 +82,11 @@ class HvfMachine {
     };
     // Read-only GIC snapshot; all VPs must be stopped. Offline VPs are unavailable.
     PrivateInterruptState privateInterruptState(unsigned cpu) const;
+    struct VirtualCounterSample {
+        uint64_t value, frequency, sleepAdjustment;
+    };
+    // Paired with the offset used by CNTVCT on every VP. All VPs stopped.
+    VirtualCounterSample virtualCounterSample() const;
     uint64_t exits() const;
     static bool supported();
 
