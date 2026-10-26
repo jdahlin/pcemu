@@ -411,17 +411,17 @@ struct SpiceFrontend::Impl {
                 auto &s = self(a);
                 s.agentEnabled = connected;
                 if (s.serial)
-                    s.serial->hostConnected(connected, 1);
+                    s.serial->set_host_port_open(connected, 1);
             };
             agentInterface.write = [](SpiceCharDeviceInstance *a, const uint8_t *data, int count) {
                 auto &s = self(a);
-                return s.serial && count > 0 ? int(s.serial->receive({data, size_t(count)}, 1)) : 0;
+                return s.serial && count > 0 ? int(s.serial->receive_from_host({data, size_t(count)}, 1)) : 0;
             };
             agentInterface.read = [](SpiceCharDeviceInstance *a, uint8_t *data, int count) {
                 auto &s = self(a);
                 if (!s.serial || count <= 0)
                     return 0;
-                auto bytes = s.serial->takeOutput(size_t(count), 1);
+                auto bytes = s.serial->take_guest_output(size_t(count), 1);
                 std::copy(bytes.begin(), bytes.end(), data);
                 return int(bytes.size());
             };
@@ -493,12 +493,12 @@ struct SpiceFrontend::Impl {
         cleanup();
     }
     void pump(VirtioSerial *next) {
-        bool available = next && next->portReady(1) && next->portOpen(1);
+        bool available = next && next->port_ready(1) && next->guest_port_open(1);
         if (agentAttached && (next != serial || !available)) {
             spice_server_remove_interface(&agent.base.base);
             agentAttached = false;
             if (serial)
-                serial->hostConnected(false, 1);
+                serial->set_host_port_open(false, 1);
         }
         serial = next;
         if (available && !agentAttached) {
@@ -507,7 +507,7 @@ struct SpiceFrontend::Impl {
             agentAttached = true;
         }
         if (serial && agentAttached) {
-            serial->hostConnected(agentEnabled, 1);
+            serial->set_host_port_open(agentEnabled, 1);
             spice_server_char_device_wakeup(&agent.base);
         }
     }

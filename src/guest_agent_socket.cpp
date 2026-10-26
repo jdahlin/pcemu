@@ -71,7 +71,7 @@ void GuestAgentSocket::disconnect(VirtioSerial &serial) {
     client = -1;
     pending.clear();
     sent = 0;
-    serial.hostConnected(false);
+    serial.set_host_port_open(false);
 }
 void GuestAgentSocket::pump(VirtioSerial &serial) {
     if (resetCount != serial.resetCount) {
@@ -93,15 +93,15 @@ void GuestAgentSocket::pump(VirtioSerial &serial) {
             client = -1;
             throw;
         }
-        serial.hostConnected(true);
+        serial.set_host_port_open(true);
     }
     serial.poll();
     std::array<uint8_t, 65536> buffer;
-    auto capacity = std::min(buffer.size(), serial.receiveCapacity());
+    auto capacity = std::min(buffer.size(), serial.host_receive_capacity());
     if (capacity) {
         auto size = recv(client, buffer.data(), capacity, 0);
         if (size > 0)
-            serial.receive(std::span(buffer).first(size));
+            serial.receive_from_host(std::span(buffer).first(size));
         else if (!size || (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)) {
             disconnect(serial);
             return;
@@ -115,7 +115,7 @@ void GuestAgentSocket::pump(VirtioSerial &serial) {
         }
     }
     if (sent == pending.size()) {
-        pending = serial.takeOutput(buffer.size());
+        pending = serial.take_guest_output(buffer.size());
         sent = 0;
     }
     if (sent < pending.size()) {

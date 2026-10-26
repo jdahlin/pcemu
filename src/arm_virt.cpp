@@ -314,8 +314,8 @@ std::string ArmVirtMachine::cpuState() const {
 }
 std::string ArmVirtMachine::hypervReport() const {
     auto report = hyperv.report(); report.resize(report.find_last_of('}'));
-    if (serial) report += ",\"virtioSerial\":{\"ready\":" + std::string(serial->portReady() ? "true" : "false") +
-        ",\"open\":" + std::string(serial->portOpen() ? "true" : "false") +
+    if (serial) report += ",\"virtioSerial\":{\"ready\":" + std::string(serial->port_ready() ? "true" : "false") +
+        ",\"open\":" + std::string(serial->guest_port_open() ? "true" : "false") +
         ",\"received\":" + std::to_string(serial->received) + ",\"transmitted\":" + std::to_string(serial->transmitted) +
         ",\"completions\":" + std::to_string(serial->completions) + ",\"messageInterrupts\":" + std::to_string(serialPci->messageInterrupts) + "}";
     if (balloon) {

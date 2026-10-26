@@ -40,11 +40,11 @@ int main() {
         check(name == "org.qemu.guest_agent.0");
         check(rxControl() == 6);
         control(6, 1);
-        check(serial.portReady() && serial.portOpen());
+        check(serial.port_ready() && serial.guest_port_open());
     };
     setup();
     check(serial.read(8) == 3 && serial.read(0x104) == 1);
-    serial.hostConnected(true);
+    serial.set_host_port_open(true);
     handshake();
     check(irq && interruptQueue == 3);
     serial.write(0x64, 3);
@@ -54,7 +54,7 @@ int main() {
     m.descriptor(0, 1, 0x23000, 256, 2);
     m.submit(serial, 0);
     check(m.get(m.used(0) + 2, 2) == 0);
-    check(serial.receive(std::span(reinterpret_cast<const uint8_t *>(fromHost.data()),
+    check(serial.receive_from_host(std::span(reinterpret_cast<const uint8_t *>(fromHost.data()),
                                    fromHost.size())) == fromHost.size());
     check(m.get(m.used(0) + 2, 2) == 1 && m.get(m.used(0) + 8, 4) == fromHost.size());
     check(std::equal(fromHost.begin(), fromHost.begin() + 8, m.ram.begin() + 0x22000));
@@ -62,9 +62,9 @@ int main() {
     m.put(0x24000, 0x0a7d7b, 3);
     m.descriptor(1, 0, 0x24000, 3, 0);
     m.submit(serial, 1);
-    auto bytes = serial.takeOutput(2);
+    auto bytes = serial.take_guest_output(2);
     check(bytes == std::vector<uint8_t>({'{', '}'}));
-    check(serial.takeOutput(9) == std::vector<uint8_t>({'\n'}));
+    check(serial.take_guest_output(9) == std::vector<uint8_t>({'\n'}));
     check(m.get(m.used(1) + 8, 4) == 0);
     // Bounded TX preserves the unconsumed descriptor until the host drains it.
     m.descriptor(1, 0, 0x40000, 65536, 0);
@@ -73,7 +73,7 @@ int main() {
     auto count = m.get(m.used(1) + 2, 2);
     m.submit(serial, 1);
     check(m.get(m.used(1) + 2, 2) == count);
-    check(serial.takeOutput(65536).size() == 65536);
+    check(serial.take_guest_output(65536).size() == 65536);
     serial.poll();
     check(m.get(m.used(1) + 2, 2) == count + 1);
     // Closing Windows ports can detach unused RX buffers before device reset.
@@ -83,14 +83,14 @@ int main() {
     m.submit(serial, 0);
     serial.poll();
     check(serial.error().empty());
-    serial.hostConnected(false);
+    serial.set_host_port_open(false);
     check(rxControl() == 6 && m.get(0x21006, 2) == 0);
-    check(serial.receive(std::array<uint8_t, 1>{1}) == 0);
+    check(serial.receive_from_host(std::array<uint8_t, 1>{1}) == 0);
     // Bad trailing DMA is rejected before touching the first receive buffer.
     setup();
-    serial.hostConnected(true);
+    serial.set_host_port_open(true);
     handshake();
-    serial.receive(std::array<uint8_t, 2>{1, 2});
+    serial.receive_from_host(std::array<uint8_t, 2>{1, 2});
     m.descriptor(0, 0, 0x22000, 1, 3, 1);
     m.descriptor(0, 1, m.ram.size() + 1, 1, 2);
     m.submit(serial, 0);
@@ -142,7 +142,7 @@ int main() {
         }
         check(refused && std::filesystem::exists(path));
         setup();
-        serial.hostConnected(false);
+        serial.set_host_port_open(false);
         handshake();
         int client = ::socket(AF_UNIX, SOCK_STREAM, 0);
         check(client >= 0);
@@ -188,7 +188,7 @@ int main() {
             n.submit(multi, 2);
             check(n.get(0x21000, 4) == id && n.get(0x21004, 2) == event);
         };
-        multi.hostConnected(true, 1);
+        multi.set_host_port_open(true, 1);
         ctl(0, 0, 1);
         reply(0, 1);
         reply(1, 1);
@@ -198,23 +198,23 @@ int main() {
             reply(id, 6);
             ctl(id, 6, 1);
         }
-        check(multi.receiveCapacity(0) == 0 && multi.receiveCapacity(1) > 0);
+        check(multi.host_receive_capacity(0) == 0 && multi.host_receive_capacity(1) > 0);
         n.descriptor(4, 0, 0x22000, 8, 2);
         n.submit(multi, 4);
-        check(multi.receive(std::array<uint8_t, 3>{1, 2, 3}, 1) == 3);
+        check(multi.receive_from_host(std::array<uint8_t, 3>{1, 2, 3}, 1) == 3);
         check(n.get(0x22000, 3) == 0x030201 && n.get(n.used(0) + 2, 2) == 0);
         n.put(0x23000, 0x060504, 3);
         n.descriptor(5, 0, 0x23000, 3, 0);
         n.submit(multi, 5);
-        check(multi.takeOutput(10).empty());
-        check(multi.takeOutput(10, 1) == std::vector<uint8_t>({4, 5, 6}));
-        multi.hostConnected(true, 0);
+        check(multi.take_guest_output(10).empty());
+        check(multi.take_guest_output(10, 1) == std::vector<uint8_t>({4, 5, 6}));
+        multi.set_host_port_open(true, 0);
         reply(0, 6);
-        multi.hostConnected(false, 1);
+        multi.set_host_port_open(false, 1);
         reply(1, 6);
-        check(multi.receiveCapacity(1) == 0 && multi.receiveCapacity(0) > 0);
+        check(multi.host_receive_capacity(1) == 0 && multi.host_receive_capacity(0) > 0);
         multi.write(0x70, 0);
-        check(!multi.portReady(0) && !multi.portReady(1) && !multi.portOpen(1));
+        check(!multi.port_ready(0) && !multi.port_ready(1) && !multi.guest_port_open(1));
         check(multi.error().empty());
     }
     std::cout << checks << " virtio serial checks passed\n";
