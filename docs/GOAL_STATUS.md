@@ -1253,3 +1253,23 @@ three Excel pairs and all Word pairs, but spread is wide and no stable gain is
 claimed. No CPU/emitter/cache policy changes. Evidence is in
 `inactive-breakpoint.md` and its measurement record; the useful-work goal stays
 active.
+
+
+## Bounded native batching improves both measured tasks (26 October)
+
+A soft budget capped at 64 native instructions amortizes board polls; at most
+127 complete before polling. Every interpreter/replay/I/O/state-changing boundary
+stops batching, while entry/MMU/code guards still run per block. Debugger/trace
+paths keep single-block dispatch, and original dispatch counts retain control
+pump cadence. All six Office pairs favor it: median CPU ratio 1.314 for loaded
+Excel and 1.085 for Word warm launch. Separate counters show about 39.83M device
+polls instead of 359.55M for roughly the same 1.404B guest instructions. This is
+not a twofold whole-task gain.
+
+3,500 combined batch/board checks, 354,948 core checks, current CMake compilation,
+DOS interpreter/JIT and breakpoint/trace checks pass. Win3.11, rtts and installed
+OSR2 application/restart/exact-file gates pass; children are removed. The real
+PIT/PIC/EOI/IRET test matches checksums/counts and observes worst IRQ lateness
+58–61 instructions batched versus 2 unbatched: the timing granularity change is
+explicit. Fresh OSR2 Setup is underway and not yet counted complete. See
+`native-batching.md` and `measurements/native-batching-2026-10-26.json`.

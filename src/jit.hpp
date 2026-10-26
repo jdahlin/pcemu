@@ -21,6 +21,13 @@ class Jit {
     Jit(const Jit &) = delete;
     Jit &operator=(const Jit &) = delete;
     uint32_t run();
+    struct BatchResult {
+        uint32_t instructions = 0, dispatches = 0;
+    };
+    // Soft budget capped at 64, at most 127 completed guest instructions.
+    // Stops on interpreter/replay boundaries. Caller must poll devices next;
+    // use run() instead for per-block debugger/trace observations.
+    BatchResult runBatch(unsigned budget = 64);
     void clear();
     uint64_t nativeInstructions = 0, compiledBlocks = 0, cacheHits = 0, cacheRecycles = 0;
     bool enabled() const {

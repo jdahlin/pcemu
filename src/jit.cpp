@@ -154,6 +154,20 @@ uint32_t Jit::run() {
     }
     return n;
 }
+Jit::BatchResult Jit::runBatch(unsigned budget) {
+    if (budget > 64)
+        budget = 64;
+    BatchResult result;
+    const auto before = nativeInstructions;
+    while (result.instructions < budget && !cpu.halted) {
+        auto n = run();
+        ++result.dispatches;
+        result.instructions += n;
+        if (!n || nativeInstructions - before != result.instructions)
+            break; // Any interpreter instruction/replay is a device-poll boundary.
+    }
+    return result;
+}
 Jit::Block Jit::compile(bool translate) {
     Block block;
     auto linear = cpu.address(CS, cpu.ip), physical = cpu.physical(linear);

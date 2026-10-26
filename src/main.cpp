@@ -351,7 +351,8 @@ int main(int argc, char **argv) {
                 if (network) network->pump(m.nic, c.executionEpoch, m.resets);
                 else m.nic.outgoing.clear();
                 const auto batchStarted = std::chrono::steady_clock::now();
-                for (int batch = 0; batch < 20000 && !c.halted; batch++) {
+                const bool canBatch = breakAt > UINT32_MAX && !trace && traceTailPath.empty();
+                for (unsigned batch = 0; batch < 20000 && !c.halted;) {
                     if (breakAt <= UINT32_MAX && c.address(CS, c.ip) == breakAt) {
                         std::cerr << "Guest breakpoint at " << c.location() << '\n';
                         if (!afterBreak) {
@@ -380,7 +381,16 @@ int main(int argc, char **argv) {
                         h.count = c.instructions;
                         std::copy_n(c.r, 8, h.r);
                     }
-                    jit.run();
+                    if (canBatch) {
+                        unsigned budget = 64;
+                        if (headless && limit && limit - c.instructions < budget)
+                            budget = unsigned(limit - c.instructions);
+                        auto result = jit.runBatch(budget);
+                        batch += result.dispatches;
+                    } else {
+                        jit.run();
+                        ++batch;
+                    }
                     m.poll();
                     if (c.instructions >= nextTimer) {
                         m.poll();
