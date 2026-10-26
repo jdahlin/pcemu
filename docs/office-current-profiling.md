@@ -195,3 +195,9 @@ A real headless restored Word task also passes with exit status zero using
 an existing checkpoint and a small disposable child, removed after success.
 [Its report](measurements/snapshot-shutdown-2026-10-26.json) is a harness smoke
 check, not a performance comparison. No emulator runtime behavior changed.
+
+The task harness also records `nativeMemoryCalls` as a task-interval delta when
+both capture states expose the counter. This excludes snapshot restoration and
+pre-task idle activity; final cumulative counters must not be compared as task
+costs. The optional field preserves compatibility with older executables.
+The disk-free shutdown fixture verifies a known seven-call delta.

@@ -22,7 +22,7 @@ while True:
         if command=='complete': done=True
         if command=='capture':
             frame.write_bytes(b'P6\n1 1\n255\n'+(b'\xff\xff\xff' if done else b'\x00\x00\x00'))
-            state.write_text(json.dumps(dict(executionEpoch=1,instructions=int(done),nativeInstructions=int(done),compiledBlocks=0,disk='')))
+            state.write_text(json.dumps(dict(executionEpoch=1,instructions=int(done),nativeInstructions=int(done),compiledBlocks=0,nativeMemoryCalls=7*int(done),disk='')))
         if command=='quit':
             time.sleep(.15)
             control.with_name("exit-ready").touch()
@@ -54,6 +54,7 @@ class SnapshotShutdownTests(unittest.TestCase):
             report=json.loads((directory/'output/result.json').read_text())
             self.assertEqual(report['shutdownTimeoutSeconds'],2)
             self.assertEqual(report['samples'][0]['exitStatus'],0)
+            self.assertEqual(report['samples'][0]['nativeMemoryCalls'],7)
             self.assertGreaterEqual(report['samples'][0]['shutdownWaitMs'],100)
             self.assertFalse((directory/'output/run-0/frame.ppm').exists())
 

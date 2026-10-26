@@ -174,6 +174,8 @@ for index in range(a.repeat):
                   'instructions':final['instructions']-initial['instructions'],
                   'nativeInstructions':final['nativeInstructions']-initial['nativeInstructions'],
                   'compiledBlocks':final['compiledBlocks']-initial['compiledBlocks']}
+        if 'nativeMemoryCalls' in final and 'nativeMemoryCalls' in initial:
+            sample['nativeMemoryCalls'] = final['nativeMemoryCalls'] - initial['nativeMemoryCalls']
         if 'executionWallNs' in final and 'executionWallNs' in initial:
             sample['executionWallMs'] = (final['executionWallNs']-initial['executionWallNs'])/1e6
         results.append(sample)
