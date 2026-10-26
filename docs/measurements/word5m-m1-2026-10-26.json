@@ -1,0 +1,171 @@
+{
+  "baseline": {
+    "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+    "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+    "jit": true,
+    "profiled": false,
+    "instrumentsProfiled": false,
+    "jitDebugMapped": false,
+    "directLinks": false,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+    "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+    "restoreTimeoutSeconds": 30.0,
+    "shutdownTimeoutSeconds": 30,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+    "samples": [
+      {
+        "restoreReadyMs": 207.67454197630286,
+        "taskResponseMs": 2127.597041428089,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1862.038458,
+          "systemMs": 190.891458,
+          "totalMs": 2052.929916
+        },
+        "instructions": 100040490,
+        "nativeInstructions": 85910829,
+        "compiledBlocks": 57609,
+        "nativeMemoryCalls": 1718048,
+        "executionWallMs": 1876.448536,
+        "shutdownWaitMs": 38.529541343450546,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 188.22087487205863,
+        "taskResponseMs": 2131.0470830649137,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1864.60475,
+          "systemMs": 196.934959,
+          "totalMs": 2061.539709
+        },
+        "instructions": 100039129,
+        "nativeInstructions": 85860882,
+        "compiledBlocks": 57808,
+        "nativeMemoryCalls": 1723982,
+        "executionWallMs": 1866.874548,
+        "shutdownWaitMs": 38.938624784350395,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 189.23404207453132,
+        "taskResponseMs": 2078.969333320856,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1837.715125,
+          "systemMs": 183.8085,
+          "totalMs": 2021.523625
+        },
+        "instructions": 99460242,
+        "nativeInstructions": 85330421,
+        "compiledBlocks": 57501,
+        "nativeMemoryCalls": 1713600,
+        "executionWallMs": 1841.98088,
+        "shutdownWaitMs": 39.04820838943124,
+        "exitStatus": 0
+      }
+    ],
+    "medianRestoreReadyMs": 189.23404207453132,
+    "medianTaskResponseMs": 2127.597041428089,
+    "medianProcessCpuMs": 2052.929916
+  },
+  "linked": {
+    "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+    "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+    "jit": true,
+    "profiled": false,
+    "instrumentsProfiled": false,
+    "jitDebugMapped": false,
+    "directLinks": true,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+    "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+    "restoreTimeoutSeconds": 30.0,
+    "shutdownTimeoutSeconds": 30,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+    "samples": [
+      {
+        "restoreReadyMs": 198.67741642519832,
+        "taskResponseMs": 2187.2880002483726,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1931.454333,
+          "systemMs": 199.157833,
+          "totalMs": 2130.612166
+        },
+        "instructions": 100848747,
+        "nativeInstructions": 86674975,
+        "compiledBlocks": 57468,
+        "nativeMemoryCalls": 1728094,
+        "directLinkTransitions": 5346254,
+        "directLinkPromotions": 6162,
+        "directLinkBlocks": 6162,
+        "executionWallMs": 1944.888046,
+        "shutdownWaitMs": 38.94075006246567,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 191.11129129305482,
+        "taskResponseMs": 2195.300417020917,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1937.266541,
+          "systemMs": 200.944,
+          "totalMs": 2138.210541
+        },
+        "instructions": 99657918,
+        "nativeInstructions": 85533886,
+        "compiledBlocks": 57265,
+        "nativeMemoryCalls": 1714199,
+        "directLinkTransitions": 5255565,
+        "directLinkPromotions": 6006,
+        "directLinkBlocks": 6006,
+        "executionWallMs": 1947.497054,
+        "shutdownWaitMs": 38.63233374431729,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 190.68116694688797,
+        "taskResponseMs": 2186.1208747141063,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 1932.596083,
+          "systemMs": 198.424167,
+          "totalMs": 2131.02025
+        },
+        "instructions": 99608218,
+        "nativeInstructions": 85495289,
+        "compiledBlocks": 57178,
+        "nativeMemoryCalls": 1713840,
+        "directLinkTransitions": 5256544,
+        "directLinkPromotions": 6005,
+        "directLinkBlocks": 6005,
+        "executionWallMs": 1941.211282,
+        "shutdownWaitMs": 38.62616699188948,
+        "exitStatus": 0
+      }
+    ],
+    "medianRestoreReadyMs": 191.11129129305482,
+    "medianTaskResponseMs": 2187.2880002483726,
+    "medianProcessCpuMs": 2131.02025
+  }
+}
