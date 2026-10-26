@@ -308,10 +308,14 @@ uint32_t Jit::run() {
     // A TLB flush need not discard decoded code when fetch permissions were
     // rechecked and the same physical instruction page is still mapped.
     cached->tlbEpoch = cpu.tlbEpoch;
-    if (!cached->attempted && ++cached->visits >= warmup) {
+    // Initially reject cheap fragments to limit cold compilation. Revisit only
+    // supported short fragments that survive another 64 executions unchanged.
+    const bool hotShort = cached->shortKind && ++cached->visits >= 64;
+    if (hotShort || (!cached->attempted && ++cached->visits >= warmup)) {
         try {
             profile::event(profile::Translate);
-            auto translated = compile();
+            auto translated = compile(true, hotShort);
+            if (hotShort && translated.fn) profile::event(profile::ShortPromote);
             // Compilation can recycle the arena and clear both lookup tables.
             cached = installBlock(key, std::move(translated));
         } catch (const Fault &) {
@@ -331,6 +335,10 @@ uint32_t Jit::run() {
         profile::event(profile::InterpretedDispatch);
         if (b.attempted)
             profile::event(profile::NegativeHit);
+        if (b.shortKind) {
+            profile::event(profile::ShortFragmentHit);
+            if (b.shortKind == 2) profile::event(profile::ShortMemoryFragmentHit);
+        }
         cpu.step();
         return 1;
     }
@@ -438,7 +446,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
     }
     return result;
 }
-Jit::Block Jit::compile(bool translate) {
+Jit::Block Jit::compile(bool translate, bool hotShort) {
     Block block;
     auto linear = cpu.address(CS, cpu.ip), physical = cpu.physical(linear);
     block.page = physical >> 12;
@@ -467,12 +475,19 @@ Jit::Block Jit::compile(bool translate) {
         (ir[0].memoryAlu || ir[0].kind == Kind::Test || ir[0].kind == Kind::Alu);
     const bool doubleShiftPair = ir.size() == 2 &&
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
-    if (ir.empty() || (warmup && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
+    if (ir.empty()) return block;
+    if (warmup && !hotShort && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
-                      !ir.front().stringMove))
+                      !ir.front().stringMove) {
+        block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
+            return i.kind == Kind::Memory;
+        }) ? 2 : 1;
         return block;
+    }
     return emitArm64(std::move(block), decoded);
+#else
+    (void)hotShort;
 #endif
     return block;
 }

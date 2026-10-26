@@ -157,3 +157,8 @@ ctest --test-dir build/word-optimize/final \
 The remaining largest cost is still interpreter/MMU work. The counters point
 to short memory/ALU fragments and memory bit tests for subsequent investigation;
 the result does not justify enabling direct linking globally.
+
+A subsequent [hot short-fragment coverage change](word5m-hot-short-2026-10-26.md)
+raises the native instruction share to 90.8% and improves median CPU by another
+7.4% versus this build in a new matched comparison, with the original baseline
+still included. See that report for the latest bottleneck and coverage priorities.

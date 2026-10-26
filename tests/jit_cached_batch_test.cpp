@@ -476,6 +476,87 @@ static void stringMoveTests() {
     }
 }
 
+static void hotShortFragmentTests() {
+    for (bool paging : {false, true})
+        for (bool memory : {false, true}) {
+            auto c = memory ? make({0x8b, 0x03, 0xf8, 0xf4}, paging)
+                            : make({0x83, 0xc0, 1, 0xf8, 0xf4}, paging);
+            c.r[BX] = 0x1000;
+            c.write(0x1000, 0x12345678, 4);
+            CPU ref = c;
+            Jit jit(c, true, 8);
+            jit.setDirectLinks(linksMode, 0);
+            for (unsigned run = 0; run < 256; ++run) {
+                if (run == 60) {
+                    // Negative entries need no host-buffer guards, but their
+                    // promotion must capture the current RAM allocation.
+                    auto replacement = c.mem;
+                    c.mem.swap(replacement);
+                    std::fill(replacement.begin(), replacement.end(), 0xa5);
+                    if (!memory) {
+                        c.write(2, 2, 1);
+                        ref.write(2, 2, 1);
+                    }
+                }
+                c.ip = ref.ip = 0;
+                c.halted = ref.halted = false;
+                while (!c.halted) {
+                    auto part = jit.runBatch();
+                    check(part.instructions && part.instructions <= 127, "short fragment budget");
+                    for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+                    equal(c, ref);
+                }
+                if (run == 15)
+                    check(jit.nativeInstructions == 0, "cold short fragment compiled prematurely");
+                if (!memory && run == 75)
+                    check(jit.nativeInstructions == 0, "changed short code retained old promotion heat");
+            }
+            check(jit.compiledBlocks == 1 && jit.nativeInstructions > 100,
+                  "hot supported short fragment was not promoted exactly once");
+            if (paging && memory) {
+                c.r[BX] = ref.r[BX] = 0x5000;
+                std::fill_n(c.mem.begin() + 0x81014, 4, 0);
+                std::fill_n(ref.mem.begin() + 0x81014, 4, 0);
+                c.flushTLB(); ref.flushTLB();
+                c.ip = ref.ip = 0;
+                c.halted = ref.halted = false;
+                unsigned faults = 0;
+                auto capture = [&](const Fault &f) {
+                    check(f.vector == 14 && f.error == 0, "promoted short memory fault type");
+                    ++faults;
+                    throw std::runtime_error("captured short fault");
+                };
+                c.observeFault = ref.observeFault = capture;
+                auto calls = c.nativeMemoryCalls;
+                try { jit.runBatch(); check(false, "promoted short fault missing"); }
+                catch (const std::runtime_error &e) { check(std::string(e.what()) == "captured short fault", "short fault observer"); }
+                try { ref.step(); check(false, "reference short fault missing"); }
+                catch (const std::runtime_error &e) { check(std::string(e.what()) == "captured short fault", "reference short fault observer"); }
+                equal(c, ref);
+                check(faults == 2 && c.nativeMemoryCalls > calls && c.cr[2] == 0x5000,
+                      "promoted short fragment did not replay its precise fault");
+            }
+        }
+    {
+        auto c = make({0xf3, 0xad, 0xf4});
+        c.r[SI] = 0x1000;
+        CPU ref = c;
+        Jit jit(c, true, 8);
+        jit.setDirectLinks(linksMode, 0);
+        for (unsigned run = 0; run < 256; ++run) {
+            c.ip = ref.ip = 0;
+            c.r[CX] = ref.r[CX] = 2;
+            c.halted = ref.halted = false;
+            while (!c.halted) {
+                auto part = jit.runBatch();
+                for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+                equal(c, ref);
+            }
+        }
+        check(jit.nativeInstructions == 0, "hot unsupported REP form was promoted");
+    }
+}
+
 static void delayedPromotionTest() {
     auto c = make({0x83, 0xc0, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4});
     c.r[CX] = 1000;
@@ -545,6 +626,7 @@ int main() {
             linksMode = enabled;
             memoryTests();
             stringMoveTests();
+            hotShortFragmentTests();
             cycleTests();
         }
         check(observedLinks > 0, "direct links were never exercised");

@@ -83,6 +83,7 @@ class Jit {
         uint32_t page = 0, generation = 0, cr0 = 0, cr3 = 0, csBase = 0, tlbEpoch = 0;
         uint64_t executionEpoch = 0;
         bool a20 = true, attempted = false, linkRequested = false;
+        uint8_t shortKind = 0; // Supported but rejected: 1 register-only, 2 memory.
         bool vm = false, watched = false, usesStack = false, stack32 = false;
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
@@ -115,7 +116,7 @@ class Jit {
     };
     CachedBatch runCached(unsigned budget) noexcept;
     template <bool Linking> CachedBatch runCachedImpl(unsigned budget) noexcept;
-    Block compile(bool translate = true);
+    Block compile(bool translate = true, bool hotShort = false);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
     std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.

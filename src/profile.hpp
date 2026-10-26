@@ -29,6 +29,9 @@ enum Event {
     DiskWriteSectors,
     CowDecompress,
     CowCacheHit,
+    ShortFragmentHit,
+    ShortMemoryFragmentHit,
+    ShortPromote,
     Count
 };
 #ifdef PCEMU_PROFILE
@@ -99,7 +102,10 @@ inline void stop(const std::string &path, uint64_t instructions) {
                            "diskReadSectorsIncludingParents",
                            "diskWriteSectors",
                            "cowDecompress",
-                           "cowCacheHit"};
+                           "cowCacheHit",
+                           "shortFragmentHit",
+                           "shortMemoryFragmentHit",
+                           "shortPromote"};
     out << "{\"startInstructions\":" << data.startInstructions
         << ",\"stopInstructions\":" << instructions << ",\"interpretedAttempts\":" << data.attempts
         << ",\"events\":{";

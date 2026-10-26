@@ -1855,3 +1855,15 @@ measurement. Very short CPU intervals may round to zero at clock resolution;
 use sufficiently long workloads for comparisons. Existing wall-based consumers
 remain compatible. Sixteen JIT/interpreter, flat/paged cases pass exact guest
 results and positive CPU/wall intervals at one million/20,000 iterations.
+
+### Word 97 document loading: hot short-fragment coverage (2026-10-26)
+
+Supported one/two-instruction fragments that fail the initial cost admission can
+now enter native execution after 64 further unchanged executions. Unsupported
+instructions retain negative caching. This reduces Word's interpreted attempts
+from 12.54 to 9.02 million and raises native instruction share from 87.3% to 90.8%.
+Eight rotating holdout rounds show 7.4% lower median task CPU than f4abcad and
+11.2% lower than the rebuilt original 57ce863 baseline, with direct linking off.
+New tests exercise promotion under interrupts, code changes, RAM replacement
+and precise faults. Full scope, controls, limits and reproduction commands are
+in [the Word coverage report](measurements/word5m-hot-short-2026-10-26.md).
