@@ -1406,3 +1406,17 @@ median CPU ratio 1.0583, about 5.5% less CPU time. Word response is neutral but
 CPU ratio 0.9892; large 8 MiB RAM controls lose a few percent. It stays private.
 Next: move controller entry outside generated blocks to remove exit overhead
 and code growth. See [iterative-controller evidence](native-chain-loop.md).
+
+### Cached-only native tail retained
+
+The default bounded batch now uses a separate cached-only helper after normal
+entry. CPU layout, native lowering, single-block execution and snapshot format
+stay unchanged. Six O3 Excel pairs all improve (median CPU ratio 1.0343); Word
+is near baseline. Default Debug completed medians are positive with substantial
+variation; incomplete baseline observations are excluded and their original
+guests verified/cleaned up. Small RAM batch cases improve; 8 MiB controls are
+near baseline. All 354,948 core, 3,500 timer/batch and 71,249 cached-batch checks
+pass. DOS, Win3.11, both installed Win95 images and fresh OSR2 Setup pass again
+on one frozen integrated executable, including exact readback and clean exit.
+See [implementation and evidence](cached-tail-dispatch.md). Another 2× remains
+unproven; the goal stays active.

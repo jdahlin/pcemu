@@ -63,6 +63,11 @@ class Jit {
         Block *block = nullptr;
     };
     std::array<FastEntry, 4096> fast{};
+    struct CachedBatch {
+        BatchResult count;
+        bool stoppedZero = false;
+    };
+    CachedBatch runCached(unsigned budget) noexcept;
     Block compile(bool translate = true);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);

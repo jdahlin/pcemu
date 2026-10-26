@@ -154,6 +154,49 @@ uint32_t Jit::run() {
     }
     return n;
 }
+Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
+    // Only already-native fast-cache hits run here. Keep these context guards
+    // synchronized with run(); misses, compilation and replay stay outside.
+    CachedBatch result;
+    while (result.count.instructions < budget) {
+        if (cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
+            (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough))
+            return result;
+        uint64_t key = uint64_t(cpu.s[CS].selector) << 48 | uint64_t(cpu.s[CS].big) << 47 | cpu.ip;
+        auto &entry = fast[(cpu.ip ^ (cpu.ip >> 12) ^ (cpu.s[CS].selector * 31u)) & 4095];
+        Block *b = entry.key == key ? entry.block : nullptr;
+        if (!b || !b->fn || b->executionEpoch != cpu.executionEpoch ||
+            b->page >= cpu.generation.size() || b->generation != cpu.generation[b->page] ||
+            b->cr0 != cpu.cr[0] || b->cr3 != cpu.cr[3] || b->csBase != cpu.s[CS].base ||
+            b->a20 != cpu.a20 || b->vm != bool(cpu.flags & 0x20000) ||
+            b->watched != bool(cpu.watchWrite) || (b->usesStack && b->stack32 != cpu.s[SS].big) ||
+            b->ram != cpu.mem.data() || b->ramSize != cpu.mem.size() ||
+            b->codeBits != cpu.codeUsed.data())
+            return result;
+        auto oldCR2 = cpu.cr[2];
+        try {
+            if ((cpu.cr[0] & 0x80000000u) && instructionPage(cpu) != b->page)
+                return result;
+            if (b->generation != cpu.generation[b->page])
+                return result;
+        } catch (...) {
+            cpu.cr[2] = oldCR2;
+            return result;
+        }
+        ++result.count.dispatches;
+        ++cacheHits;
+        profile::event(profile::Dispatch);
+        profile::event(profile::FastHit);
+        profile::event(profile::NativeCall);
+        auto n = b->fn(&cpu);
+        result.count.instructions += n;
+        if (!n) {
+            result.stoppedZero = !cpu.nativeFallback;
+            break;
+        }
+    }
+    return result;
+}
 Jit::BatchResult Jit::runBatch(unsigned budget) {
     if (budget > 64)
         budget = 64;
@@ -164,7 +207,23 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
         ++result.dispatches;
         result.instructions += n;
         if (!n || nativeInstructions - before != result.instructions)
-            break; // Any interpreter instruction/replay is a device-poll boundary.
+            break;
+        if (result.instructions < budget) {
+            auto tail = runCached(budget - result.instructions);
+            cpu.instructions += tail.count.instructions;
+            nativeInstructions += tail.count.instructions;
+            result.instructions += tail.count.instructions;
+            result.dispatches += tail.count.dispatches;
+            if (cpu.nativeFallback) {
+                profile::event(profile::NativeReplay);
+                cpu.nativeFallback = false;
+                cpu.step();
+                ++result.instructions;
+                break;
+            }
+            if (tail.stoppedZero)
+                break;
+        }
     }
     return result;
 }
