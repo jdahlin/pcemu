@@ -514,35 +514,35 @@ int main() {
     // touched while all VPs are stopped, including the injection callback.
     std::vector<uint8_t> zeroBaseRam(4096, 0xaa);
     ArmSynic zeroBaseSynic(zeroBaseRam, 0, 1);
-    check(zeroBaseSynic.write(0xa0012, 0, 1) == 0 && zeroBaseRam[0] == 0);
+    check(zeroBaseSynic.write_vp_register(0xa0012, 0, 1) == 0 && zeroBaseRam[0] == 0);
     {
         std::vector<uint8_t> memory(8192);
         ArmSynic diagnostic(memory, base, 2);
         check(diagnostic.report().find("\"slotType\"") == std::string::npos);
-        check(diagnostic.write(0xa0010, 0, 1) == 0);
-        check(diagnostic.write(0xa0013, 0, base + 1) == 0);
-        check(diagnostic.write(0xa0002, 0, 0x10008) == 0);
+        check(diagnostic.write_vp_register(0xa0010, 0, 1) == 0);
+        check(diagnostic.write_vp_register(0xa0013, 0, base + 1) == 0);
+        check(diagnostic.write_vp_register(0xa0002, 0, 0x10008) == 0);
         std::array<uint8_t, 20> versionReply{};
         versionReply[0] = 15; versionReply[8] = 1; versionReply[12] = 7;
         const auto before = memory;
-        check(diagnostic.postMessage(0, 2, 1, 0, versionReply) == 0);
+        check(diagnostic.post_message(0, 2, 1, 0, versionReply) == 0);
         const auto posted = memory;
         const auto snapshot = diagnostic.report();
         check(snapshot.find("\"config\":65544,\"queued\":0,\"slotType\":1,\"payloadBytes\":20") != std::string::npos);
         check(snapshot.find("\"vmbusVersionReply\":{\"supported\":1,\"connectionState\":0,\"connectionId\":7,\"features\":0}") != std::string::npos);
         check(memory == posted && memory != before); // Reporting does not acknowledge a slot.
-        check(diagnostic.postMessage(0, 2, 1, 0, versionReply) == 0);
+        check(diagnostic.post_message(0, 2, 1, 0, versionReply) == 0);
         check(diagnostic.report().find("\"config\":65544,\"queued\":1") != std::string::npos);
         memory[512] = 0; // Guest consumes the visible message; stale payload is private.
         check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
-        check(diagnostic.service() == 0);
+        check(diagnostic.service_message_queues() == 0);
         memory[516] = 15; // Truncated payload cannot expose response fields.
         check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
         memory[516] = 241;
         check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
         memory[516] = 20; memory[512] = 2; // Arbitrary payloads are never decoded.
         check(diagnostic.report().find("\"vmbusVersionReply\"") == std::string::npos);
-        check(diagnostic.write(0xa0013, 0, 0) == 0);
+        check(diagnostic.write_vp_register(0xa0013, 0, 0) == 0);
         check(diagnostic.report().find("\"slotType\"") == std::string::npos);
     }
     std::vector<uint8_t> synicRam(5 * 4096, 0xaa);
@@ -550,81 +550,81 @@ int main() {
     uint64_t value = 99;
     bool newly = true;
     for (unsigned vp = 0; vp < 2; ++vp) {
-        check(synic.read(0xa0010, vp, value) == 0 && value == 0);
-        check(synic.read(0xa0011, vp, value) == 0 && value == 1);
+        check(synic.read_vp_register(0xa0010, vp, value) == 0 && value == 0);
+        check(synic.read_vp_register(0xa0011, vp, value) == 0 && value == 1);
         for (unsigned sint = 0; sint < 16; ++sint)
-            check(synic.read(0xa0000 + sint, vp, value) == 0 && value == 0x10000);
+            check(synic.read_vp_register(0xa0000 + sint, vp, value) == 0 && value == 0x10000);
     }
-    check(synic.signalEvent(1, 2, 0, newly) == 0x18 && !newly);
-    check(synic.write(0xa0011, 0, 1) == 5); // Read-only version.
-    check(synic.write(0xa0015, 0, 1) == 5); // No fake response-buffer support.
-    check(synic.write(0xa0010, 0, 2) == 5);
-    check(synic.write(0xa0012, 1, base + 1) == 0);
-    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0);
+    check(synic.signal_event(1, 2, 0, newly) == 0x18 && !newly);
+    check(synic.write_vp_register(0xa0011, 0, 1) == 5); // Read-only version.
+    check(synic.write_vp_register(0xa0015, 0, 1) == 5); // No fake response-buffer support.
+    check(synic.write_vp_register(0xa0010, 0, 2) == 5);
+    check(synic.write_vp_register(0xa0012, 1, base + 1) == 0);
+    check(synic.write_vp_register(0xa0013, 1, base + 4096 + 1) == 0);
     check(std::all_of(synicRam.begin(), synicRam.begin() + 8192, [](auto b) { return b == 0; }));
-    check(synic.write(0xa0010, 1, 1) == 0);
+    check(synic.write_vp_register(0xa0010, 1, 1) == 0);
     for (uint64_t bad : {uint64_t(32), uint64_t(255), 16ull | (1ull << 17), 16ull | (1ull << 20)})
-        check(synic.write(0xa0002, 1, bad) == 5);
-    check(synic.write(0xa0002, 1, 16) == 0);
-    check(synic.signalEvent(1, 2, 0, newly) == 0x71 && !newly && synicRam[512] == 0);
+        check(synic.write_vp_register(0xa0002, 1, bad) == 5);
+    check(synic.write_vp_register(0xa0002, 1, 16) == 0);
+    check(synic.signal_event(1, 2, 0, newly) == 0x71 && !newly && synicRam[512] == 0);
     unsigned notifications = 0;
-    synic.setInterruptSender([&](uint64_t targets, unsigned vector) {
+    synic.set_interrupt_sender([&](uint64_t targets, unsigned vector) {
         check(targets == 2 && vector == 16);
         check(synicRam[512] != 0 || synicRam[4096 + 512] != 0);
         ++notifications; return true;
     });
-    check(synic.signalEvent(1, 2, 0, newly) == 0 && newly);
-    check(synic.signalEvent(1, 2, 0, newly) == 0 && !newly && notifications == 1);
-    check(synic.signalEvent(1, 2, 2047, newly) == 0 && newly && synicRam[767] == 128);
+    check(synic.signal_event(1, 2, 0, newly) == 0 && newly);
+    check(synic.signal_event(1, 2, 0, newly) == 0 && !newly && notifications == 1);
+    check(synic.signal_event(1, 2, 2047, newly) == 0 && newly && synicRam[767] == 128);
     synicRam[512] &= ~1; // Guest clears a flag after servicing it.
-    check(synic.signalEvent(1, 2, 0, newly) == 0 && newly && notifications == 3);
-    check(synic.write(0xa0012, 1, base + 1) == 0 && synicRam[512] == 1);
+    check(synic.signal_event(1, 2, 0, newly) == 0 && newly && notifications == 3);
+    check(synic.write_vp_register(0xa0012, 1, base + 1) == 0 && synicRam[512] == 1);
     auto before = synicRam;
     for (auto bad : {base - 4096 + 1, base + 5 * 4096 + 1, base + 3})
-        check(synic.write(0xa0012, 1, bad) == 5 && synicRam == before);
-    check(synic.signalEvent(2, 2, 0, newly) == 14 && !newly);
-    check(synic.signalEvent(1, 16, 0, newly) == 5);
-    check(synic.signalEvent(1, 2, 2048, newly) == 5);
-    check(synic.write(0xa0002, 1, 16 | 0x10000) == 0);
-    check(synic.signalEvent(1, 2, 1, newly) == 0x18 && synicRam[512] == 1);
-    check(synic.write(0xa0002, 1, 16 | 0x50000) == 0); // Polling overrides mask.
-    check(synic.signalEvent(1, 2, 1, newly) == 0 && newly && notifications == 3);
-    check(synic.write(0xa0002, 1, 16) == 0);
+        check(synic.write_vp_register(0xa0012, 1, bad) == 5 && synicRam == before);
+    check(synic.signal_event(2, 2, 0, newly) == 14 && !newly);
+    check(synic.signal_event(1, 16, 0, newly) == 5);
+    check(synic.signal_event(1, 2, 2048, newly) == 5);
+    check(synic.write_vp_register(0xa0002, 1, 16 | 0x10000) == 0);
+    check(synic.signal_event(1, 2, 1, newly) == 0x18 && synicRam[512] == 1);
+    check(synic.write_vp_register(0xa0002, 1, 16 | 0x50000) == 0); // Polling overrides mask.
+    check(synic.signal_event(1, 2, 1, newly) == 0 && newly && notifications == 3);
+    check(synic.write_vp_register(0xa0002, 1, 16) == 0);
     const std::array<uint8_t, 3> payload{11, 22, 33};
-    check(synic.postMessage(1, 2, 0x80000010, 0x12345678, payload) == 0);
+    check(synic.post_message(1, 2, 0x80000010, 0x12345678, payload) == 0);
     const size_t slot = 4096 + 512;
     check(get(synicRam, slot) == 0x0000000380000010ull);
     check(get(synicRam, slot + 8) == 0x12345678 && synicRam[slot + 16] == 11);
     check(notifications == 4);
     for (unsigned i = 0; i < 16; ++i)
-        check(synic.postMessage(1, 2, 1 + i, i, payload) == 0);
+        check(synic.post_message(1, 2, 1 + i, i, payload) == 0);
     check(synicRam[slot + 5] == 1 && notifications == 4);
-    check(synic.postMessage(1, 2, 99, 99, payload) == 0x13);
-    check(synic.write(0xa0014, 1, 0) == 0 && notifications == 4); // Occupied slot retained.
+    check(synic.post_message(1, 2, 99, 99, payload) == 0x13);
+    check(synic.write_vp_register(0xa0014, 1, 0) == 0 && notifications == 4); // Occupied slot retained.
     for (unsigned i = 0; i < 16; ++i) {
         put(synicRam, slot, 0, 4); // Guest releases slot before EOM.
-        check(synic.write(0xa0014, 1, 0) == 0);
+        check(synic.write_vp_register(0xa0014, 1, 0) == 0);
         check(synicRam[slot] == i + 1 && get(synicRam, slot + 8) == i);
         check(synicRam[slot + 5] == (i != 15));
     }
     check(notifications == 20);
-    check(synic.read(0xa0014, 1, value) == 0 && value == 0);
-    check(synic.write(0xa0014, 1, 1) == 5);
+    check(synic.read_vp_register(0xa0014, 1, value) == 0 && value == 0);
+    check(synic.write_vp_register(0xa0014, 1, 1) == 5);
     put(synicRam, slot, 0, 4);
-    synic.setInterruptSender([](uint64_t, unsigned) { return false; });
+    synic.set_interrupt_sender([](uint64_t, unsigned) { return false; });
     auto empty = synicRam;
-    check(synic.postMessage(1, 2, 77, 0, payload) == 0x71 && synicRam == empty);
-    check(synic.write(0xa0002, 1, 16 | 0x10000) == 0);
-    check(synic.postMessage(1, 2, 78, 0, payload) == 0 && synicRam[slot] == 78);
-    check(synic.postMessage(1, 2, 79, 0, payload) == 0);
-    check(synic.write(0xa0013, 1, base + 4096) == 0);
+    check(synic.post_message(1, 2, 77, 0, payload) == 0x71 && synicRam == empty);
+    check(synic.write_vp_register(0xa0002, 1, 16 | 0x10000) == 0);
+    check(synic.post_message(1, 2, 78, 0, payload) == 0 && synicRam[slot] == 78);
+    check(synic.post_message(1, 2, 79, 0, payload) == 0);
+    check(synic.write_vp_register(0xa0013, 1, base + 4096) == 0);
     put(synicRam, slot, 0, 4);
-    check(synic.write(0xa0014, 1, 0) == 0 && synicRam[slot] == 0); // Disabled page defers queue.
-    check(synic.postMessage(1, 2, 80, 0, payload) == 0x18);
-    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0);
-    check(synic.write(0xa0014, 1, 0) == 0 && synicRam[slot] == 79);
-    check(synic.postMessage(1, 2, 0, 0, payload) == 5);
-    check(synic.postMessage(1, 2, 1, 0, std::span<const uint8_t>(synicRam).first(241)) == 5);
+    check(synic.write_vp_register(0xa0014, 1, 0) == 0 && synicRam[slot] == 0); // Disabled page defers queue.
+    check(synic.post_message(1, 2, 80, 0, payload) == 0x18);
+    check(synic.write_vp_register(0xa0013, 1, base + 4096 + 1) == 0);
+    check(synic.write_vp_register(0xa0014, 1, 0) == 0 && synicRam[slot] == 79);
+    check(synic.post_message(1, 2, 0, 0, payload) == 5);
+    check(synic.post_message(1, 2, 1, 0, std::span<const uint8_t>(synicRam).first(241)) == 5);
     fastWrite(0x1000a000066bbull); check(r[0] == one);
     // ARM Get/SetVpRegisters delegates to this controller without advertising
     // the incomplete feature. Both HVC register layouts remain valid.
@@ -831,22 +831,22 @@ int main() {
     wrapped.service(59); check(wrappedSignals == 1 && wrapped.nextDeadline() == 70 && wrapped.nextDelay(59) == 11);
     // Draining after a guest EOI/slot release must not require a new post or
     // an EOM hypercall. Disabled mappings stop forcing host polling.
-    check(synic.postMessage(1, 2, 80, 0, payload) == 0 && synic.needsService());
-    check(synic.service() == 0 && synicRam[slot] == 79); // Still occupied.
+    check(synic.post_message(1, 2, 80, 0, payload) == 0 && synic.needs_service());
+    check(synic.service_message_queues() == 0 && synicRam[slot] == 79); // Still occupied.
     put(synicRam, slot, 0, 4);
-    check(synic.service() == 0 && synicRam[slot] == 80 && !synic.needsService());
-    check(synic.postMessage(1, 2, 81, 0, payload) == 0);
-    check(synic.write(0xa0013, 1, base + 4096) == 0 && !synic.needsService());
-    check(synic.write(0xa0013, 1, base + 4096 + 1) == 0 && synic.needsService());
+    check(synic.service_message_queues() == 0 && synicRam[slot] == 80 && !synic.needs_service());
+    check(synic.post_message(1, 2, 81, 0, payload) == 0);
+    check(synic.write_vp_register(0xa0013, 1, base + 4096) == 0 && !synic.needs_service());
+    check(synic.write_vp_register(0xa0013, 1, base + 4096 + 1) == 0 && synic.needs_service());
     put(synicRam, slot, 0, 4);
-    check(synic.service() == 0 && synicRam[slot] == 81 && !synic.needsService());
-    check(synic.postMessage(1, 2, 82, 0, payload) == 0);
-    check(synic.write(0xa0002, 1, 16) == 0);
+    check(synic.service_message_queues() == 0 && synicRam[slot] == 81 && !synic.needs_service());
+    check(synic.post_message(1, 2, 82, 0, payload) == 0);
+    check(synic.write_vp_register(0xa0002, 1, 16) == 0);
     put(synicRam, slot, 0, 4);
     auto beforeRescanFailure = synicRam;
-    check(synic.service() == 0x71 && synic.needsService() && synicRam == beforeRescanFailure);
-    synic.setInterruptSender([](uint64_t, unsigned) { return true; });
-    check(synic.service() == 0 && synicRam[slot] == 82 && !synic.needsService());
+    check(synic.service_message_queues() == 0x71 && synic.needs_service() && synicRam == beforeRescanFailure);
+    synic.set_interrupt_sender([](uint64_t, unsigned) { return true; });
+    check(synic.service_message_queues() == 0 && synicRam[slot] == 82 && !synic.needs_service());
     ArmHyperVTimers crossing(1);
     bool acceptCrossing = false;
     crossing.setDelivery([&](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
@@ -892,15 +892,15 @@ int main() {
     connectedWrite(0x90002, 0x1000a000066bbull);
     check(connectionCall(true, false, false) == 6); // No host endpoints or privilege yet.
     auto &receiver = connected.synicController();
-    check(receiver.write(0xa0010, 0, 1) == 0 && receiver.write(0xa0012, 0, base + 4096 + 1) == 0);
-    check(receiver.write(0xa0002, 0, 16) == 0);
+    check(receiver.write_vp_register(0xa0010, 0, 1) == 0 && receiver.write_vp_register(0xa0012, 0, base + 4096 + 1) == 0);
+    check(receiver.write_vp_register(0xa0002, 0, 16) == 0);
     unsigned connectionIrqs = 0;
     connected.setPrivateInterruptSender([&](uint64_t mask, unsigned vector) {
         check(mask == 1 && vector == 16); ++connectionIrqs; return true;
     });
     check(connected.bindEventConnection(42, 10, [&](unsigned vp, uint16_t relative) {
         check(vp == 1); bool newly = false;
-        return receiver.signalEvent(0, 2, 100 + relative, newly);
+        return receiver.signal_event(0, 2, 100 + relative, newly);
     }));
     check(!connected.bindEventConnection(42, 10, [](unsigned, uint16_t) { return 0; }));
     check(!connected.bindEventConnection(43, 0, [](unsigned, uint16_t) { return 0; }));
@@ -958,21 +958,21 @@ int main() {
     // must pass the INTID unchanged, including zero, without an APIC offset.
     std::vector<uint8_t> sgiRam(4096);
     ArmSynic sgiSynic(sgiRam, base, 1);
-    check(sgiSynic.write(0xa0010, 0, 1) == 0 && sgiSynic.write(0xa0012, 0, base + 1) == 0);
+    check(sgiSynic.write_vp_register(0xa0010, 0, 1) == 0 && sgiSynic.write_vp_register(0xa0012, 0, base + 1) == 0);
     unsigned sgiNotifications = 0, expectedIntid = 0;
-    sgiSynic.setInterruptSender([&](uint64_t mask, unsigned intid) {
+    sgiSynic.set_interrupt_sender([&](uint64_t mask, unsigned intid) {
         check(mask == 1 && intid == expectedIntid); ++sgiNotifications; return true;
     });
     for (unsigned intid = 0; intid < 32; ++intid) {
         expectedIntid = intid;
-        check(sgiSynic.write(0xa0001, 0, intid) == 0);
-        check(sgiSynic.read(0xa0001, 0, value) == 0 && value == intid);
-        check(sgiSynic.signalEvent(0, 1, intid, newly) == 0 && newly);
+        check(sgiSynic.write_vp_register(0xa0001, 0, intid) == 0);
+        check(sgiSynic.read_vp_register(0xa0001, 0, value) == 0 && value == intid);
+        check(sgiSynic.signal_event(0, 1, intid, newly) == 0 && newly);
         check(sgiRam[256 + intid / 8] & (1u << (intid % 8)));
     }
     check(sgiNotifications == 32);
-    check(sgiSynic.write(0xa0001, 0, 32) == 5);
-    check(sgiSynic.read(0xa0001, 0, value) == 0 && value == 31);
+    check(sgiSynic.write_vp_register(0xa0001, 0, 32) == 5);
+    check(sgiSynic.read_vp_register(0xa0001, 0, value) == 0 && value == 31);
     ArmHyperV profile(true, sgiRam, base, 1), disabledProfile(false, sgiRam, base, 1);
     bool rejectedProfile = false;
     try { profile.advertiseSynic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
@@ -1076,9 +1076,9 @@ int main() {
         try { integrated.advertiseSynic(false); } catch (const std::runtime_error &) { rejected = true; }
         check(rejected);
         auto &controller = integrated.synicController();
-        check(controller.write(0xa0010, 1, 1) == 0);
-        check(controller.write(0xa0013, 1, base + 4096 + 1) == 0);
-        check(controller.write(0xa0002, 1, 16) == 0);
+        check(controller.write_vp_register(0xa0010, 1, 1) == 0);
+        check(controller.write_vp_register(0xa0013, 1, base + 4096 + 1) == 0);
+        check(controller.write_vp_register(0xa0002, 1, 16) == 0);
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x90002; r[6] = 0x1000a000066bbull;
         check(integrated.call(0, r, 0) && r[0] == one);
@@ -1152,7 +1152,7 @@ int main() {
         if (fast) for (unsigned i = 0; i < 6; ++i) r[start + i] = get(busRam, i * 8);
         else r[start] = base;
         check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == one);
-        check(pageDiagnostic.synicController().read(0xa0013, 0, value) == 0 && value == base + 4096 + 1);
+        check(pageDiagnostic.synicController().read_vp_register(0xa0013, 0, value) == 0 && value == base + 4096 + 1);
         // Padding tolerance does not permit nonzero bits beyond a 64-bit register.
         if (fast) r[start + 5] = 1; else put(busRam, 40, 1);
         r[0] = smccc ? 0x46000001 : (one | 0x51 | (fast ? 0x10000 : 0));

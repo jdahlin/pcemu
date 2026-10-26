@@ -105,8 +105,8 @@ int main() {
     r[0]=(1ull<<32)|0x10051; r[1]=UINT64_MAX; r[2]=0xfffffffe; r[3]=0x90002; r[5]=0x1000a000066bb;
     check(hv.call(1,r,0) && r[0]==(1ull<<32));
     auto &synic=hv.synicController();
-    check(synic.write(0xa0010,0,1)==0 && synic.write(0xa0002,0,16)==0);
-    check(synic.write(0xa0013,0,base+4096+1)==0 && synic.write(0xa0012,0,base+8192+1)==0);
+    check(synic.write_vp_register(0xa0010,0,1)==0 && synic.write_vp_register(0xa0002,0,16)==0);
+    check(synic.write_vp_register(0xa0013,0,base+4096+1)==0 && synic.write_vp_register(0xa0012,0,base+8192+1)==0);
     auto control=[&](unsigned kind,size_t bytes) {std::vector<uint8_t> p(bytes);put(p,0,kind);if(bytes>=12)put(p,8,1);return p;};
     auto post=[&](const std::vector<uint8_t>& p) {
         put(ram,4096+512,0); hv.service(); put(ram,4096+512,0);

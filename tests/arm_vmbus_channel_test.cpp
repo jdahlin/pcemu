@@ -174,11 +174,11 @@ int main() {
     check(hv.call(1,r,0) && r[0]==(1ull<<32));
     auto &synic=hv.synicController();
     for(unsigned vp=0;vp<2;++vp) {
-        check(synic.write(0xa0010,vp,1)==0);
-        check(synic.write(0xa0002,vp,16)==0);
+        check(synic.write_vp_register(0xa0010,vp,1)==0);
+        check(synic.write_vp_register(0xa0002,vp,16)==0);
     }
-    check(synic.write(0xa0013,0,base+4096+1)==0);
-    check(synic.write(0xa0012,1,base+8192+1)==0);
+    check(synic.write_vp_register(0xa0013,0,base+4096+1)==0);
+    check(synic.write_vp_register(0xa0012,1,base+8192+1)==0);
     auto post=[&](const std::vector<uint8_t>& payload) {
         put(integratedRam,4096+2*256,0); // Guest acknowledges preceding control reply.
         std::fill(integratedRam.begin(),integratedRam.begin()+256,0);

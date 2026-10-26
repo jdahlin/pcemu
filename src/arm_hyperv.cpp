@@ -33,7 +33,7 @@ ArmHyperV::ArmHyperV(bool on, std::span<uint8_t> memory, uint64_t start, unsigne
             return privateInterruptSender && privateInterruptSender(1ull << vp, unsigned((config >> 4) & 31));
         std::array<uint8_t, 24> payload{};
         put(payload, 0, timer, 4); put(payload, 8, expiration, 8); put(payload, 16, now, 8);
-        return synic.tryPostMessage(vp, unsigned((config >> 16) & 15), 0x80000010, 0, payload) == 0;
+        return synic.try_post_message(vp, unsigned((config >> 16) & 15), 0x80000010, 0, payload) == 0;
     });
     if (!cpus || cpus > 8) throw std::runtime_error("Invalid Hyper-V VP count");
 }
@@ -55,7 +55,7 @@ uint64_t ArmHyperV::timeNow() const {
 }
 void ArmHyperV::service() {
     if (enabled) {
-        synic.service(); // A false injection keeps the queued message for retry.
+        synic.service_message_queues(); // A false injection keeps the queued message for retry.
         if (heartbeatEnabled) {
             auto now=timeNow();
             auto packet=heartbeat.packet(now);
@@ -101,7 +101,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
         auto next=shutdown.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
-    if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
+    if (synic.needs_service() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
     if (kvpEnabled) {
         auto next=kvp.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
@@ -111,7 +111,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
 void ArmHyperV::setPrivateInterruptSender(SoftwareInterruptSender send) {
     if (synicAdvertised && !send) throw std::runtime_error("Cannot remove an advertised SynIC interrupt backend");
     privateInterruptSender = std::move(send);
-    synic.setInterruptSender(privateInterruptSender);
+    synic.set_interrupt_sender(privateInterruptSender);
 }
 void ArmHyperV::advertiseSynic(bool advertise) {
     if (advertise && (!enabled || !privateInterruptSender))
@@ -126,7 +126,7 @@ void ArmHyperV::enableVmbus() {
     if (connections.contains(1) || connections.contains(4) || connections.size() > 62)
         throw std::runtime_error("VMBus control connections unavailable");
     vmbus.setSender([this](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
-        return synic.postMessage(vp, sint, 1, 0, payload);
+        return synic.post_message(vp, sint, 1, 0, payload);
     });
     bindMessageConnection(4, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
         return vmbus.receive(type, payload, true);
@@ -136,7 +136,7 @@ void ArmHyperV::enableVmbus() {
     });
     vmbus.setEventSender([this](unsigned vp, unsigned sint, unsigned flag) {
         bool newly = false;
-        return synic.signalEvent(vp, sint, flag, newly);
+        return synic.signal_event(vp, sint, flag, newly);
     });
     // Grant the implemented event API. No channel event ports exist until an
     // actual channel is offered; unknown connections still fail, never succeed.
@@ -243,7 +243,7 @@ uint16_t ArmHyperV::readRegister(uint32_t name, unsigned vp, std::array<uint64_t
     }
     if (name >= 0xa0000 && name <= 0xa0015) {
         if (!guestId) return accessDenied;
-        return synic.read(name, vp, value[0]);
+        return synic.read_vp_register(name, vp, value[0]);
     }
     if (name >= 0x210 && name <= 0x214) {
         value[0] = crashParameters[vp][name - 0x210]; return 0;
@@ -306,7 +306,7 @@ uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_
     if (name >= 0xa0000 && name <= 0xa0015) {
         if (!guestId) return accessDenied;
         if (value[1]) return invalidParameter;
-        return synic.write(name, vp, value[0]);
+        return synic.write_vp_register(name, vp, value[0]);
     }
     if (name >= 0x210 && name <= 0x214) {
         if (value[1]) return invalidParameter;

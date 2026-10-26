@@ -20,8 +20,8 @@ int main(){
     hv.setPrivateInterruptSender([](uint64_t,unsigned){return true;});hv.advertiseSynic(true);hv.enableVmbus();hv.enableShutdown();hv.enableShutdown();
     check(!hv.requestShutdown(Action::PowerOff));
     auto& synic=hv.synicController();
-    check(synic.write(0xa0010,0,1)==0&&synic.write(0xa0002,0,16)==0);
-    check(synic.write(0xa0013,0,base+4096+1)==0&&synic.write(0xa0012,0,base+8192+1)==0);
+    check(synic.write_vp_register(0xa0010,0,1)==0&&synic.write_vp_register(0xa0002,0,16)==0);
+    check(synic.write_vp_register(0xa0013,0,base+4096+1)==0&&synic.write_vp_register(0xa0012,0,base+8192+1)==0);
     ArmHyperV::Registers r{};
     r[0]=(1ull<<32)|0x10051;r[1]=UINT64_MAX;r[2]=0xfffffffe;r[3]=0x90002;r[5]=0x1000a000066bb;
     check(hv.call(1,r,0)&&r[0]==(1ull<<32));

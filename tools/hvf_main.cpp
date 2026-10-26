@@ -450,18 +450,18 @@ void selfTest() {
         require(vm.softwareInterruptRequests(0) == 1 && vm.softwareInterruptRequests(1) == 4,
                 "Empty/rejected SGI request changed counters");
         pc::ArmSynic synic(vm.ram(), HvfMachine::ramBase, 2);
-        synic.setInterruptSender([&](uint64_t targets, unsigned vector) {
+        synic.set_interrupt_sender([&](uint64_t targets, unsigned vector) {
             vm.sendPrivateInterrupt(targets, vector); return true;
         });
         for (unsigned cpu = 0; cpu < 2; ++cpu) {
-            require(synic.write(0xa0010, cpu, 1) == 0 &&
-                    synic.write(0xa0012, cpu, HvfMachine::ramBase + 0x18001 + cpu * 0x2000) == 0 &&
-                    synic.write(0xa0013, cpu, HvfMachine::ramBase + 0x19001 + cpu * 0x2000) == 0 &&
-                    synic.write(0xa0002, cpu, 16) == 0 && synic.write(0xa0003, cpu, 31) == 0,
+            require(synic.write_vp_register(0xa0010, cpu, 1) == 0 &&
+                    synic.write_vp_register(0xa0012, cpu, HvfMachine::ramBase + 0x18001 + cpu * 0x2000) == 0 &&
+                    synic.write_vp_register(0xa0013, cpu, HvfMachine::ramBase + 0x19001 + cpu * 0x2000) == 0 &&
+                    synic.write_vp_register(0xa0002, cpu, 16) == 0 && synic.write_vp_register(0xa0003, cpu, 31) == 0,
                     "Native SynIC configuration failed");
         }
         bool newly = false;
-        require(synic.signalEvent(1, 2, 2047, newly) == 0 && newly &&
+        require(synic.signal_event(1, 2, 2047, newly) == 0 && newly &&
                 vm.ram()[0x1a000 + 767] == 128, "Native SynIC flag was not deposited");
         acknowledge(1023, 16);
         pc::ArmHyperVTimers syntheticTimers(2);
@@ -473,7 +473,7 @@ void selfTest() {
             }
             const std::array<uint64_t, 3> message{timer, expiration, now};
             require(timer == 0 && expiration == 100 && now == 100, "Native timer expired early");
-            return synic.tryPostMessage(cpu, 3, 0x80000010, 0,
+            return synic.try_post_message(cpu, 3, 0x80000010, 0,
                 {reinterpret_cast<const uint8_t *>(message.data()), sizeof(message)}) == 0;
         });
         for (unsigned cpu = 0; cpu < 2; ++cpu)
@@ -531,15 +531,15 @@ void selfTest() {
         registers[4] = 0x90002; registers[6] = 0x5043454d55;
         require(hyperv.call(0, registers, 0) && registers[0] == (1ull << 32), "Connection fixture identity failed");
         auto &synic = hyperv.synicController();
-        require(synic.write(0xa0010, 0, 1) == 0 &&
-                synic.write(0xa0012, 0, HvfMachine::ramBase + 0x19001) == 0 &&
-                synic.write(0xa0013, 0, HvfMachine::ramBase + 0x1a001) == 0 &&
-                synic.write(0xa0002, 0, multiclient ? 0 : 31) == 0, "Connection fixture SynIC setup failed");
+        require(synic.write_vp_register(0xa0010, 0, 1) == 0 &&
+                synic.write_vp_register(0xa0012, 0, HvfMachine::ramBase + 0x19001) == 0 &&
+                synic.write_vp_register(0xa0013, 0, HvfMachine::ramBase + 0x1a001) == 0 &&
+                synic.write_vp_register(0xa0002, 0, multiclient ? 0 : 31) == 0, "Connection fixture SynIC setup failed");
         hyperv.setPrivateInterruptSender([&](uint64_t targets, unsigned vector) {
             vm.sendPrivateInterrupt(targets, vector); return true;
         });
         require(hyperv.bindEventConnection(42, 10, [&](unsigned, uint16_t relative) {
-            bool newly = false; return synic.signalEvent(0, 2, 100 + relative, newly);
+            bool newly = false; return synic.signal_event(0, 2, 100 + relative, newly);
         }), "Native event endpoint binding failed");
         hyperv.advertiseSynic(true);
         hyperv.enableVmbus();
