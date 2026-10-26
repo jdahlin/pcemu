@@ -54,6 +54,11 @@ passed with an 8 KiB allocated overlay, which was removed after verification.
 
 The Win3.11 and DOS reset smoke scripts remove their private disks after
 successful verification and write small state JSON instead of full RAM dumps.
+The DOS reset script stages its COM programs through the compressed disk reader
+into a new COW child, so a compressed or QCOW2 parent does not require a raw
+copy. All three reset paths pass with the recovered compressed DOS parent;
+successful children and their index files are removed. See the
+[reset evidence](measurements/compressed-dos-reset-2026-10-26.json).
 They retain failing disks for investigation. Pass `--keep-artifacts` explicitly
 when full successful disks/RAM dumps are needed:
 

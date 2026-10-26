@@ -1,0 +1,583 @@
+{
+  "scope": "Production DOS reset smoke stages COM programs through CowFile into private compressed overlays, supporting the recovered compressed DOS parent without a raw copy.",
+  "command": [
+    "python3",
+    "tools/smoke_reset.py"
+  ],
+  "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+  "sourceDisk": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+  "log": "ninja: no work to do.\nninja: no work to do.\nPASS: WARM.COM reset and rebooted MS-DOS through VGA ROM\nPASS: KBC.COM reset and rebooted MS-DOS through VGA ROM\nPASS: FAST.COM reset and rebooted MS-DOS through VGA ROM\nEvidence retained in /Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby\n",
+  "states": {
+    "fast.bin.json": {
+      "ip": 73,
+      "flags": 582,
+      "cr0": 16,
+      "cr3": 0,
+      "cr2": 0,
+      "gdtBase": 0,
+      "gdtLimit": 0,
+      "idtBase": 0,
+      "idtLimit": 1023,
+      "trBase": 0,
+      "trSelector": 0,
+      "ldtBase": 0,
+      "registers": [
+        1792,
+        1414,
+        278,
+        892,
+        2668,
+        0,
+        35,
+        507
+      ],
+      "segments": [
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 592,
+          "base": 9472,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 112,
+          "base": 1792,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        }
+      ],
+      "instructions": 200000002,
+      "resets": 1,
+      "resetRequested": 0,
+      "nativeInstructions": 121098224,
+      "executionWallNs": 5263685380,
+      "nativeMemoryCalls": 3171248,
+      "executionEpoch": 0,
+      "machineProfile": "pc-legacy",
+      "machinePlatform": "pc-legacy-v1",
+      "executionBackend": "jit",
+      "jitFollowJumps": 1,
+      "jitTraces": 0,
+      "ramBytes": 16777216,
+      "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/fast.pcd",
+      "compiledBlocks": 2845,
+      "cacheRecycles": 0,
+      "halted": 0,
+      "waitingKey": 0,
+      "hostInput": 1,
+      "network": {
+        "isr": 128,
+        "imr": 0,
+        "command": 33,
+        "current": 0,
+        "boundary": 0,
+        "transmitted": 0,
+        "received": 0,
+        "dropped": 0
+      },
+      "absoluteMouse": {
+        "active": 0,
+        "queuedWords": 0
+      },
+      "hostCursor": {
+        "active": 0,
+        "visible": 0,
+        "size": 0,
+        "revision": 0,
+        "shapeHash": 2166136261,
+        "hotX": 0,
+        "hotY": 0
+      },
+      "mouse": {
+        "enabled": 0,
+        "id": 0,
+        "pendingPackets": 0,
+        "auxOutput": 0
+      },
+      "video": {
+        "graphics": 0,
+        "width": 640,
+        "height": 200,
+        "memoryMode": 3,
+        "shiftMode": 16,
+        "dispiEnabled": 0,
+        "bpp": 8,
+        "crtc": [
+          95,
+          79,
+          80,
+          130,
+          85,
+          129,
+          191,
+          31,
+          0,
+          79,
+          13,
+          14,
+          0,
+          0,
+          4,
+          180,
+          156,
+          142,
+          143,
+          40,
+          31,
+          150,
+          185,
+          163,
+          255,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "pic": [
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 252,
+          "base": 8,
+          "autoEOI": 0
+        },
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 255,
+          "base": 112,
+          "autoEOI": 0
+        }
+      ],
+      "pit0": {
+        "reload": 65536,
+        "loadedAt": 2620602,
+        "mode": 3,
+        "nullCount": 0,
+        "writeHigh": 0,
+        "value": 6260
+      },
+      "keyboard": {
+        "full": 0,
+        "data": 0,
+        "pendingScans": 0,
+        "pendingReplies": 0,
+        "commandByte": 69
+      }
+    },
+    "kbc.bin.json": {
+      "ip": 34374,
+      "flags": 642,
+      "cr0": 16,
+      "cr3": 0,
+      "cr2": 0,
+      "gdtBase": 0,
+      "gdtLimit": 0,
+      "idtBase": 0,
+      "idtLimit": 1023,
+      "trBase": 0,
+      "trSelector": 0,
+      "ldtBase": 0,
+      "registers": [
+        1781,
+        1414,
+        278,
+        892,
+        2688,
+        0,
+        35,
+        507
+      ],
+      "segments": [
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 25,
+          "base": 400,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 112,
+          "base": 1792,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        }
+      ],
+      "instructions": 200000000,
+      "resets": 1,
+      "resetRequested": 0,
+      "nativeInstructions": 121098198,
+      "executionWallNs": 5217487146,
+      "nativeMemoryCalls": 3171264,
+      "executionEpoch": 0,
+      "machineProfile": "pc-legacy",
+      "machinePlatform": "pc-legacy-v1",
+      "executionBackend": "jit",
+      "jitFollowJumps": 1,
+      "jitTraces": 0,
+      "ramBytes": 16777216,
+      "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/kbc.pcd",
+      "compiledBlocks": 2841,
+      "cacheRecycles": 0,
+      "halted": 0,
+      "waitingKey": 0,
+      "hostInput": 1,
+      "network": {
+        "isr": 128,
+        "imr": 0,
+        "command": 33,
+        "current": 0,
+        "boundary": 0,
+        "transmitted": 0,
+        "received": 0,
+        "dropped": 0
+      },
+      "absoluteMouse": {
+        "active": 0,
+        "queuedWords": 0
+      },
+      "hostCursor": {
+        "active": 0,
+        "visible": 0,
+        "size": 0,
+        "revision": 0,
+        "shapeHash": 2166136261,
+        "hotX": 0,
+        "hotY": 0
+      },
+      "mouse": {
+        "enabled": 0,
+        "id": 0,
+        "pendingPackets": 0,
+        "auxOutput": 0
+      },
+      "video": {
+        "graphics": 0,
+        "width": 640,
+        "height": 200,
+        "memoryMode": 3,
+        "shiftMode": 16,
+        "dispiEnabled": 0,
+        "bpp": 8,
+        "crtc": [
+          95,
+          79,
+          80,
+          130,
+          85,
+          129,
+          191,
+          31,
+          0,
+          79,
+          13,
+          14,
+          0,
+          0,
+          4,
+          180,
+          156,
+          142,
+          143,
+          40,
+          31,
+          150,
+          185,
+          163,
+          255,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "pic": [
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 252,
+          "base": 8,
+          "autoEOI": 0
+        },
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 255,
+          "base": 112,
+          "autoEOI": 0
+        }
+      ],
+      "pit0": {
+        "reload": 65536,
+        "loadedAt": 2612491,
+        "mode": 3,
+        "nullCount": 0,
+        "writeHigh": 0,
+        "value": 55574
+      },
+      "keyboard": {
+        "full": 0,
+        "data": 0,
+        "pendingScans": 0,
+        "pendingReplies": 0,
+        "commandByte": 69
+      }
+    },
+    "warm.bin.json": {
+      "ip": 17021,
+      "flags": 658,
+      "cr0": 16,
+      "cr3": 0,
+      "cr2": 0,
+      "gdtBase": 0,
+      "gdtLimit": 0,
+      "idtBase": 0,
+      "idtLimit": 1023,
+      "trBase": 0,
+      "trSelector": 0,
+      "ldtBase": 0,
+      "registers": [
+        256,
+        249,
+        127,
+        0,
+        2684,
+        2684,
+        269,
+        507
+      ],
+      "segments": [
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 25,
+          "base": 400,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        }
+      ],
+      "instructions": 200000004,
+      "resets": 1,
+      "resetRequested": 0,
+      "nativeInstructions": 121098242,
+      "executionWallNs": 5314367199,
+      "nativeMemoryCalls": 3171248,
+      "executionEpoch": 0,
+      "machineProfile": "pc-legacy",
+      "machinePlatform": "pc-legacy-v1",
+      "executionBackend": "jit",
+      "jitFollowJumps": 1,
+      "jitTraces": 0,
+      "ramBytes": 16777216,
+      "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/warm.pcd",
+      "compiledBlocks": 2845,
+      "cacheRecycles": 0,
+      "halted": 0,
+      "waitingKey": 0,
+      "hostInput": 1,
+      "network": {
+        "isr": 128,
+        "imr": 0,
+        "command": 33,
+        "current": 0,
+        "boundary": 0,
+        "transmitted": 0,
+        "received": 0,
+        "dropped": 0
+      },
+      "absoluteMouse": {
+        "active": 0,
+        "queuedWords": 0
+      },
+      "hostCursor": {
+        "active": 0,
+        "visible": 0,
+        "size": 0,
+        "revision": 0,
+        "shapeHash": 2166136261,
+        "hotX": 0,
+        "hotY": 0
+      },
+      "mouse": {
+        "enabled": 0,
+        "id": 0,
+        "pendingPackets": 0,
+        "auxOutput": 0
+      },
+      "video": {
+        "graphics": 0,
+        "width": 640,
+        "height": 200,
+        "memoryMode": 3,
+        "shiftMode": 16,
+        "dispiEnabled": 0,
+        "bpp": 8,
+        "crtc": [
+          95,
+          79,
+          80,
+          130,
+          85,
+          129,
+          191,
+          31,
+          0,
+          79,
+          13,
+          14,
+          0,
+          0,
+          4,
+          180,
+          156,
+          142,
+          143,
+          40,
+          31,
+          150,
+          185,
+          163,
+          255,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "pic": [
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 252,
+          "base": 8,
+          "autoEOI": 0
+        },
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 255,
+          "base": 112,
+          "autoEOI": 0
+        }
+      ],
+      "pit0": {
+        "reload": 65536,
+        "loadedAt": 2620614,
+        "mode": 3,
+        "nullCount": 0,
+        "writeHigh": 0,
+        "value": 6282
+      },
+      "keyboard": {
+        "full": 0,
+        "data": 0,
+        "pendingScans": 0,
+        "pendingReplies": 0,
+        "commandByte": 69
+      }
+    }
+  },
+  "privateDisksRemoved": true
+}
