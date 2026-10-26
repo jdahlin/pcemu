@@ -1357,3 +1357,12 @@ Exact source, tests and measurements are in `batch-key-evaluation.md` and its
 record. The next substantial direction is guarded native block linking with
 current MMU/code checks, compatible contexts, helper-data lifetime and bounded
 poll/debugger exits; that work is not implemented by this experiment.
+
+### Native self-loop prototype: correctness progress, performance rejected
+
+A private second-entry native loop passes 232,960 register checks, 1,084
+memory/fault/invalidation checks, 3,500 batch/timer checks, 759 context mutation
+checks and 354,948 core checks. Six paired application comparisons do not show
+a dependable gain: Excel CPU ratio 1.014, Word 0.987, with wide variation and
+Word's initial apparent gain reversed on confirmation. Production remains on
+bounded native batching. See [trial and evidence](native-self-loop-trial.md).
