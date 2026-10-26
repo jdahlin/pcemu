@@ -46,3 +46,7 @@ No new guest image or Office fixture is made; successful task children are remov
 
 [Build/source identity, complete per-run categories/sites/functions, task results
 and compressed raw traces](measurements/post-batch-host-profile-2026-10-26.json).
+
+The subsequent [standalone inlining experiment](batch-inline-evaluation.md)
+verifies removal of that call, but mixed workload results do not justify keeping
+the compiler hint alone. Production guards and code remain unchanged by it.

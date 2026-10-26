@@ -1304,3 +1304,14 @@ shares, not exact CPU durations or proof that a relative share changed in
 absolute cost. The analyzer now handles batch ancestry; 13 tests pass. All raw
 traces are compressed and verified. The next safe test is inlining the batch's
 call before relaxing any guard. See `post-batch-profiling.md` and its measurement.
+
+
+## Within-batch inline hint not retained alone (26 October)
+
+A sole call-site Clang inline hint removes the run call in host disassembly
+without changing validation or polling bounds. All six task pairs pass pixels.
+Excel CPU ratios 1.025/1.040/1.030 favor it, but Word's 0.966/0.978/1.003 do not
+establish a broad gain. Production stays unchanged; the exact source patch,
+disassembly and all measurements are in `batch-inline-evaluation.md` and its
+record. No extra candidate OS gate is claimed. Reusing invariant context checks
+inside native batches is a more substantive next candidate and remains unimplemented.

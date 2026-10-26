@@ -1,0 +1,627 @@
+{
+  "scope": "Clang call-site inlining of Jit::run inside the native batch, validation/budget unchanged. Rejected as standalone production change after mixed workload results.",
+  "buildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/batch-inline/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu"
+  ],
+  "candidateSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+  "baselineSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+  "sourcePatch": "--- baseline/jit.cpp\n+++ candidate/jit.cpp\n@@ -159,7 +159,11 @@\n     BatchResult result;\n     const auto before = nativeInstructions;\n     while (result.instructions < budget && !cpu.halted) {\n-        auto n = run();\n+        uint32_t n;\n+#if defined(__clang__)\n+        [[clang::always_inline]]\n+#endif\n+        n = run();\n         ++result.dispatches;\n         result.instructions += n;\n         if (!n || nativeInstructions - before != result.instructions)\n",
+  "sourceDifferences": [
+    "jit.cpp"
+  ],
+  "disassembly": {
+    "baseline": {
+      "runCalls": 1,
+      "text": "__ZN2pc3Jit8runBatchEj:\n1000272d4:\tf8 5f bc a9\tstp\tx24, x23, [sp, #-0x40]!\n1000272d8:\tf6 57 01 a9\tstp\tx22, x21, [sp, #0x10]\n1000272dc:\tf4 4f 02 a9\tstp\tx20, x19, [sp, #0x20]\n1000272e0:\tfd 7b 03 a9\tstp\tx29, x30, [sp, #0x30]\n1000272e4:\tfd c3 00 91\tadd\tx29, sp, #0x30\n1000272e8:\t08 08 80 52\tmov\tw8, #0x40\n1000272ec:\t3f 00 01 71\tcmp\tw1, #0x40\n1000272f0:\t36 30 88 1a\tcsel\tw22, w1, w8, lo\n1000272f4:\t81 03 00 34\tcbz\tw1, 0x100027364\n1000272f8:\tf3 03 00 aa\tmov\tx19, x0\n1000272fc:\t08 00 80 52\tmov\tw8, #0x0\n100027300:\t14 00 80 52\tmov\tw20, #0x0\n100027304:\t17 00 40 f9\tldr\tx23, [x0]\n100027308:\tf5 03 08 aa\tmov\tx21, x8\n10002730c:\t68 12 40 f9\tldr\tx8, [x19, #0x20]\n100027310:\t08 05 43 39\tldrb\tw8, [x8, #0xc1]\n100027314:\ta8 01 00 37\ttbnz\tw8, #0x0, 0x100027348\n100027318:\te0 03 13 aa\tmov\tx0, x19\n10002731c:\t33 fd ff 97\tbl\t__ZN2pc3Jit3runEv\n100027320:\t14 00 14 0b\tadd\tw20, w0, w20\n100027324:\t00 01 00 34\tcbz\tw0, 0x100027344\n100027328:\t9f 02 16 6b\tcmp\tw20, w22\n10002732c:\tc2 00 00 54\tb.hs\t0x100027344\n100027330:\t69 02 40 f9\tldr\tx9, [x19]\n100027334:\ta8 06 00 11\tadd\tw8, w21, #0x1\n100027338:\t29 01 17 cb\tsub\tx9, x9, x23\n10002733c:\t3f 01 14 eb\tcmp\tx9, x20\n100027340:\t40 fe ff 54\tb.eq\t0x100027308\n100027344:\tb5 06 00 11\tadd\tw21, w21, #0x1\n100027348:\te8 03 14 2a\tmov\tw8, w20\n10002734c:\t00 81 15 aa\torr\tx0, x8, x21, lsl #32\n100027350:\tfd 7b 43 a9\tldp\tx29, x30, [sp, #0x30]\n100027354:\tf4 4f 42 a9\tldp\tx20, x19, [sp, #0x20]\n100027358:\tf6 57 41 a9\tldp\tx22, x21, [sp, #0x10]\n10002735c:\tf8 5f c4 a8\tldp\tx24, x23, [sp], #0x40\n100027360:\tc0 03 5f d6\tret\n100027364:\t00 00 80 d2\tmov\tx0, #0x0\n100027368:\tfd 7b 43 a9\tldp\tx29, x30, [sp, #0x30]\n10002736c:\tf4 4f 42 a9\tldp\tx20, x19, [sp, #0x20]\n100027370:\tf6 57 41 a9\tldp\tx22, x21, [sp, #0x10]\n100027374:\tf8 5f c4 a8\tldp\tx24, x23, [sp], #0x40\n100027378:\tc0 03 5f d6\tret\n"
+    },
+    "candidate": {
+      "runCalls": 0,
+      "text": "__ZN2pc3Jit8runBatchEj:\n1000272d4:\tff 43 03 d1\tsub\tsp, sp, #0xd0\n1000272d8:\tfc 6f 07 a9\tstp\tx28, x27, [sp, #0x70]\n1000272dc:\tfa 67 08 a9\tstp\tx26, x25, [sp, #0x80]\n1000272e0:\tf8 5f 09 a9\tstp\tx24, x23, [sp, #0x90]\n1000272e4:\tf6 57 0a a9\tstp\tx22, x21, [sp, #0xa0]\n1000272e8:\tf4 4f 0b a9\tstp\tx20, x19, [sp, #0xb0]\n1000272ec:\tfd 7b 0c a9\tstp\tx29, x30, [sp, #0xc0]\n1000272f0:\tfd 03 03 91\tadd\tx29, sp, #0xc0\n1000272f4:\t08 08 80 52\tmov\tw8, #0x40\n1000272f8:\t3f 00 01 71\tcmp\tw1, #0x40\n1000272fc:\t38 30 88 1a\tcsel\tw24, w1, w8, lo\n100027300:\t41 36 00 34\tcbz\tw1, 0x1000279c8\n100027304:\tf3 03 00 aa\tmov\tx19, x0\n100027308:\t16 00 80 52\tmov\tw22, #0x0\n10002730c:\t17 00 80 52\tmov\tw23, #0x0\n100027310:\t19 00 40 f9\tldr\tx25, [x0]\n100027314:\t1a e0 01 91\tadd\tx26, x0, #0x78\n100027318:\t1b 00 80 92\tmov\tx27, #-0x1\n10002731c:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027320:\t08 04 43 39\tldrb\tw8, [x0, #0xc1]\n100027324:\tc8 34 00 37\ttbnz\tw8, #0x0, 0x1000279bc\n100027328:\t68 02 41 39\tldrb\tw8, [x19, #0x40]\n10002732c:\t1f 05 00 71\tcmp\tw8, #0x1\n100027330:\te1 2d 00 54\tb.ne\t0x1000278ec\n100027334:\t08 70 40 f9\tldr\tx8, [x0, #0xe0]\n100027338:\t88 00 00 b4\tcbz\tx8, 0x100027348\n10002733c:\t09 6c 40 f9\tldr\tx9, [x0, #0xd8]\n100027340:\t3f 01 08 eb\tcmp\tx9, x8\n100027344:\t49 2d 00 54\tb.ls\t0x1000278ec\n100027348:\t09 24 40 b9\tldr\tw9, [x0, #0x24]\n10002734c:\t09 2d 40 37\ttbnz\tw9, #0x8, 0x1000278ec\n100027350:\t08 78 40 79\tldrh\tw8, [x0, #0x3c]\n100027354:\t0a 3d 50 d3\tlsl\tx10, x8, #48\n100027358:\t0b f8 40 39\tldrb\tw11, [x0, #0x3e]\n10002735c:\t4a bd 0b aa\torr\tx10, x10, x11, lsl #47\n100027360:\t02 20 40 b9\tldr\tw2, [x0, #0x20]\n100027364:\t4a 01 02 aa\torr\tx10, x10, x2\n100027368:\taa 83 1a f8\tstur\tx10, [x29, #-0x58]\n10002736c:\t0b 69 1b 53\tlsl\tw11, w8, #5\n100027370:\t6b 01 08 4b\tsub\tw11, w11, w8\n100027374:\t6b 31 42 4a\teor\tw11, w11, w2, lsr #12\n100027378:\t6b 01 02 4a\teor\tw11, w11, w2\n10002737c:\t6b 2d 00 12\tand\tw11, w11, #0xfff\n100027380:\t5c 53 2b 8b\tadd\tx28, x26, w11, uxtw #4\n100027384:\t8b 57 40 a9\tldp\tx11, x21, [x28]\n100027388:\t7f 01 0a eb\tcmp\tx11, x10\n10002738c:\ta4 0a 40 fa\tccmp\tx21, #0x0, #0x4, eq\n100027390:\tc1 06 00 54\tb.ne\t0x100027468\n100027394:\t6c 2e 40 f9\tldr\tx12, [x19, #0x58]\n100027398:\tec 17 00 b4\tcbz\tx12, 0x100027694\n10002739c:\t6b 36 40 f9\tldr\tx11, [x19, #0x68]\n1000273a0:\tab 17 00 b4\tcbz\tx11, 0x100027694\n1000273a4:\t8e 05 00 d1\tsub\tx14, x12, #0x1\n1000273a8:\t9f 01 0e ea\ttst\tx12, x14\n1000273ac:\t40 01 00 54\tb.eq\t0x1000273d4\n1000273b0:\teb 03 0a aa\tmov\tx11, x10\n1000273b4:\t5f 01 0c eb\tcmp\tx10, x12\n1000273b8:\t63 00 00 54\tb.lo\t0x1000273c4\n1000273bc:\t4b 09 cc 9a\tudiv\tx11, x10, x12\n1000273c0:\t6b a9 0c 9b\tmsub\tx11, x11, x12, x10\n1000273c4:\t6d 02 45 f8\tldur\tx13, [x19, #0x50]\n1000273c8:\tad 79 6b f8\tldr\tx13, [x13, x11, lsl #3]\n1000273cc:\tcd 00 00 b5\tcbnz\tx13, 0x1000273e4\n1000273d0:\tb1 00 00 14\tb\t0x100027694\n1000273d4:\tcb 01 0a 8a\tand\tx11, x14, x10\n1000273d8:\t6d 02 45 f8\tldur\tx13, [x19, #0x50]\n1000273dc:\tad 79 6b f8\tldr\tx13, [x13, x11, lsl #3]\n1000273e0:\tad 15 00 b4\tcbz\tx13, 0x100027694\n1000273e4:\tad 01 40 f9\tldr\tx13, [x13]\n1000273e8:\t6d 15 00 b4\tcbz\tx13, 0x100027694\n1000273ec:\t9f 01 0e ea\ttst\tx12, x14\n1000273f0:\te1 00 00 54\tb.ne\t0x10002740c\n1000273f4:\t15 00 00 14\tb\t0x100027448\n1000273f8:\tae 09 40 f9\tldr\tx14, [x13, #0x10]\n1000273fc:\tdf 01 0a eb\tcmp\tx14, x10\n100027400:\t20 03 00 54\tb.eq\t0x100027464\n100027404:\tad 01 40 f9\tldr\tx13, [x13]\n100027408:\t6d 14 00 b4\tcbz\tx13, 0x100027694\n10002740c:\tae 05 40 f9\tldr\tx14, [x13, #0x8]\n100027410:\tdf 01 0a eb\tcmp\tx14, x10\n100027414:\t20 ff ff 54\tb.eq\t0x1000273f8\n100027418:\tdf 01 0c eb\tcmp\tx14, x12\n10002741c:\t63 00 00 54\tb.lo\t0x100027428\n100027420:\tcf 09 cc 9a\tudiv\tx15, x14, x12\n100027424:\tee b9 0c 9b\tmsub\tx14, x15, x12, x14\n100027428:\tdf 01 0b eb\tcmp\tx14, x11\n10002742c:\tc0 fe ff 54\tb.eq\t0x100027404\n100027430:\t99 00 00 14\tb\t0x100027694\n100027434:\tac 09 40 f9\tldr\tx12, [x13, #0x10]\n100027438:\t9f 01 0a eb\tcmp\tx12, x10\n10002743c:\t40 01 00 54\tb.eq\t0x100027464\n100027440:\tad 01 40 f9\tldr\tx13, [x13]\n100027444:\t8d 12 00 b4\tcbz\tx13, 0x100027694\n100027448:\tac 05 40 f9\tldr\tx12, [x13, #0x8]\n10002744c:\t9f 01 0a eb\tcmp\tx12, x10\n100027450:\t20 ff ff 54\tb.eq\t0x100027434\n100027454:\t8c 01 0e 8a\tand\tx12, x12, x14\n100027458:\t9f 01 0b eb\tcmp\tx12, x11\n10002745c:\t20 ff ff 54\tb.eq\t0x100027440\n100027460:\t8d 00 00 14\tb\t0x100027694\n100027464:\tb5 61 00 91\tadd\tx21, x13, #0x18\n100027468:\t0a 70 40 b9\tldr\tw10, [x0, #0x70]\n10002746c:\t0a 01 f8 37\ttbnz\tw10, #0x1f, 0x10002748c\n100027470:\t09 00 80 52\tmov\tw9, #0x0\n100027474:\t28 00 80 52\tmov\tw8, #0x1\n100027478:\taa 12 40 f9\tldr\tx10, [x21, #0x20]\n10002747c:\t0b 68 40 f9\tldr\tx11, [x0, #0xd0]\n100027480:\t5f 01 0b eb\tcmp\tx10, x11\n100027484:\te0 06 00 54\tb.eq\t0x100027560\n100027488:\t83 00 00 14\tb\t0x100027694\n10002748c:\t0c 14 40 91\tadd\tx12, x0, #0x5, lsl #12\n100027490:\tab 02 40 f9\tldr\tx11, [x21]\n100027494:\tab 00 00 b5\tcbnz\tx11, 0x1000274a8\n100027498:\tab 1e 40 b9\tldr\tw11, [x21, #0x1c]\n10002749c:\t8d 21 42 b9\tldr\tw13, [x12, #0x220]\n1000274a0:\t7f 01 0d 6b\tcmp\tw11, w13\n1000274a4:\t60 fe ff 54\tb.eq\t0x100027470\n1000274a8:\taa 03 00 37\ttbnz\tw10, #0x0, 0x10002751c\n1000274ac:\t8b 25 42 b9\tldr\tw11, [x12, #0x224]\n1000274b0:\t0d 7c 40 b9\tldr\tw13, [x0, #0x7c]\n1000274b4:\t7f 01 0d 6b\tcmp\tw11, w13\n1000274b8:\t81 03 00 54\tb.ne\t0x100027528\n1000274bc:\t0b 34 40 b9\tldr\tw11, [x0, #0x34]\n1000274c0:\t6d 01 02 0b\tadd\tw13, w11, w2\n1000274c4:\tab 55 0c 53\tubfx\tw11, w13, #12, #10\n1000274c8:\t6b 59 4d 4a\teor\tw11, w11, w13, lsr #22\n1000274cc:\t8e 02 80 52\tmov\tw14, #0x14\n1000274d0:\t6b 01 ae 9b\tumaddl\tx11, w11, w14, x0\n1000274d4:\t6b 81 08 91\tadd\tx11, x11, #0x220\n1000274d8:\t6e 05 40 b9\tldr\tw14, [x11, #0x4]\n1000274dc:\t8c 21 42 b9\tldr\tw12, [x12, #0x220]\n1000274e0:\tdf 01 0c 6b\tcmp\tw14, w12\n1000274e4:\t21 02 00 54\tb.ne\t0x100027528\n1000274e8:\tac 7d 0c 53\tlsr\tw12, w13, #12\n1000274ec:\t6d 01 40 b9\tldr\tw13, [x11]\n1000274f0:\tbf 01 0c 6b\tcmp\tw13, w12\n1000274f4:\ta1 01 00 54\tb.ne\t0x100027528\n1000274f8:\t6c 41 40 39\tldrb\tw12, [x11, #0x10]\n1000274fc:\t6c 0b 10 37\ttbnz\tw12, #0x2, 0x100027668\n100027500:\tc9 0a 88 37\ttbnz\tw9, #0x11, 0x100027658\n100027504:\t2a 0b 00 36\ttbz\tw10, #0x0, 0x100027668\n100027508:\t08 3d 00 12\tand\tw8, w8, #0xffff\n10002750c:\t69 00 80 52\tmov\tw9, #0x3\n100027510:\t3f 01 28 6a\tbics\twzr, w9, w8\n100027514:\te8 17 9f 1a\tcset\tw8, eq\n100027518:\t51 00 00 14\tb\t0x10002765c\n10002751c:\t89 fc 8f 37\ttbnz\tw9, #0x11, 0x1000274ac\n100027520:\t0b fc 40 39\tldrb\tw11, [x0, #0x3f]\n100027524:\t4b fc 07 36\ttbz\tw11, #0x0, 0x1000274ac\n100027528:\tf4 03 00 aa\tmov\tx20, x0\n10002752c:\t21 00 80 52\tmov\tw1, #0x1\n100027530:\t23 68 ff 97\tbl\t__ZNK2pc3CPU7addressEij\n100027534:\te1 03 00 aa\tmov\tx1, x0\n100027538:\te0 03 14 aa\tmov\tx0, x20\n10002753c:\t02 00 80 52\tmov\tw2, #0x0\n100027540:\tcc 65 ff 97\tbl\t__ZN2pc3CPU8physicalEjb\n100027544:\t08 00 80 52\tmov\tw8, #0x0\n100027548:\t09 7c 0c 53\tlsr\tw9, w0, #12\n10002754c:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027550:\taa 12 40 f9\tldr\tx10, [x21, #0x20]\n100027554:\t0b 68 40 f9\tldr\tx11, [x0, #0xd0]\n100027558:\t5f 01 0b eb\tcmp\tx10, x11\n10002755c:\tc1 09 00 54\tb.ne\t0x100027694\n100027560:\taa 0a 40 b9\tldr\tw10, [x21, #0x8]\n100027564:\t0b 30 55 a9\tldp\tx11, x12, [x0, #0x150]\n100027568:\t8c 01 0b cb\tsub\tx12, x12, x11\n10002756c:\t5f 09 8c eb\tcmp\tx10, x12, asr #2\n100027570:\t22 09 00 54\tb.hs\t0x100027694\n100027574:\tac 0e 40 b9\tldr\tw12, [x21, #0xc]\n100027578:\t6b 79 6a b8\tldr\tw11, [x11, x10, lsl #2]\n10002757c:\t9f 01 0b 6b\tcmp\tw12, w11\n100027580:\ta1 08 00 54\tb.ne\t0x100027694\n100027584:\tab 12 40 b9\tldr\tw11, [x21, #0x10]\n100027588:\t0c 70 40 b9\tldr\tw12, [x0, #0x70]\n10002758c:\t7f 01 0c 6b\tcmp\tw11, w12\n100027590:\t21 08 00 54\tb.ne\t0x100027694\n100027594:\tab 16 40 b9\tldr\tw11, [x21, #0x14]\n100027598:\t0c 7c 40 b9\tldr\tw12, [x0, #0x7c]\n10002759c:\t7f 01 0c 6b\tcmp\tw11, w12\n1000275a0:\ta1 07 00 54\tb.ne\t0x100027694\n1000275a4:\tab 1a 40 b9\tldr\tw11, [x21, #0x18]\n1000275a8:\t0c 34 40 b9\tldr\tw12, [x0, #0x34]\n1000275ac:\t7f 01 0c 6b\tcmp\tw11, w12\n1000275b0:\t21 07 00 54\tb.ne\t0x100027694\n1000275b4:\tab a2 40 39\tldrb\tw11, [x21, #0x28]\n1000275b8:\t0c 08 43 39\tldrb\tw12, [x0, #0xc2]\n1000275bc:\t7f 01 0c 6b\tcmp\tw11, w12\n1000275c0:\ta1 06 00 54\tb.ne\t0x100027694\n1000275c4:\tab aa 40 39\tldrb\tw11, [x21, #0x2a]\n1000275c8:\t0c 24 40 b9\tldr\tw12, [x0, #0x24]\n1000275cc:\t8c 45 11 53\tubfx\tw12, w12, #17, #1\n1000275d0:\t9f 01 0b 6b\tcmp\tw12, w11\n1000275d4:\t01 06 00 54\tb.ne\t0x100027694\n1000275d8:\tab 02 40 f9\tldr\tx11, [x21]\n1000275dc:\teb 19 00 b4\tcbz\tx11, 0x100027918\n1000275e0:\tab ae 40 39\tldrb\tw11, [x21, #0x2b]\n1000275e4:\t0c 88 40 f9\tldr\tx12, [x0, #0x110]\n1000275e8:\t9f 01 00 f1\tcmp\tx12, #0x0\n1000275ec:\tec 07 9f 1a\tcset\tw12, ne\n1000275f0:\t7f 01 0c 6b\tcmp\tw11, w12\n1000275f4:\t01 05 00 54\tb.ne\t0x100027694\n1000275f8:\tab b2 40 39\tldrb\tw11, [x21, #0x2c]\n1000275fc:\t7f 05 00 71\tcmp\tw11, #0x1\n100027600:\ta1 00 00 54\tb.ne\t0x100027614\n100027604:\tab b6 40 39\tldrb\tw11, [x21, #0x2d]\n100027608:\t0c 28 41 39\tldrb\tw12, [x0, #0x4a]\n10002760c:\t7f 01 0c 6b\tcmp\tw11, w12\n100027610:\t21 04 00 54\tb.ne\t0x100027694\n100027614:\tab 1a 40 f9\tldr\tx11, [x21, #0x30]\n100027618:\t0c 9c 40 f9\tldr\tx12, [x0, #0x138]\n10002761c:\t7f 01 0c eb\tcmp\tx11, x12\n100027620:\ta1 03 00 54\tb.ne\t0x100027694\n100027624:\tac 22 40 f9\tldr\tx12, [x21, #0x40]\n100027628:\t0d a0 40 f9\tldr\tx13, [x0, #0x140]\n10002762c:\tab 01 0b cb\tsub\tx11, x13, x11\n100027630:\t9f 01 0b eb\tcmp\tx12, x11\n100027634:\t01 03 00 54\tb.ne\t0x100027694\n100027638:\tab 1e 40 f9\tldr\tx11, [x21, #0x38]\n10002763c:\t0c b4 40 f9\tldr\tx12, [x0, #0x168]\n100027640:\t5f 01 09 6b\tcmp\tw10, w9\n100027644:\t08 15 9f 1a\tcsinc\tw8, w8, wzr, ne\n100027648:\t7f 01 0c eb\tcmp\tx11, x12\n10002764c:\t41 02 00 54\tb.ne\t0x100027694\n100027650:\t08 09 00 37\ttbnz\tw8, #0x0, 0x100027770\n100027654:\t10 00 00 14\tb\t0x100027694\n100027658:\t28 00 80 52\tmov\tw8, #0x1\n10002765c:\t68 00 00 34\tcbz\tw8, 0x100027668\n100027660:\t08 e8 40 b9\tldr\tw8, [x0, #0xe8]\n100027664:\t28 f6 ff 34\tcbz\tw8, 0x100027528\n100027668:\t08 00 80 52\tmov\tw8, #0x0\n10002766c:\t69 09 40 b9\tldr\tw9, [x11, #0x8]\n100027670:\t0a 08 43 39\tldrb\tw10, [x0, #0xc2]\n100027674:\t29 7d 0c 53\tlsr\tw9, w9, #12\n100027678:\t2b 79 17 12\tand\tw11, w9, #0xfffffeff\n10002767c:\t5f 01 00 71\tcmp\tw10, #0x0\n100027680:\t29 11 8b 1a\tcsel\tw9, w9, w11, ne\n100027684:\taa 12 40 f9\tldr\tx10, [x21, #0x20]\n100027688:\t0b 68 40 f9\tldr\tx11, [x0, #0xd0]\n10002768c:\t5f 01 0b eb\tcmp\tx10, x11\n100027690:\t80 f6 ff 54\tb.eq\t0x100027560\n100027694:\te8 23 00 91\tadd\tx8, sp, #0x8\n100027698:\te0 03 13 aa\tmov\tx0, x19\n10002769c:\t01 00 80 52\tmov\tw1, #0x0\n1000276a0:\t11 fe ff 97\tbl\t__ZN2pc3Jit7compileEb\n1000276a4:\t60 42 01 91\tadd\tx0, x19, #0x50\n1000276a8:\ta1 63 01 d1\tsub\tx1, x29, #0x58\n1000276ac:\ta2 63 01 d1\tsub\tx2, x29, #0x58\n1000276b0:\te3 23 00 91\tadd\tx3, sp, #0x8\n1000276b4:\td9 00 00 94\tbl\t__ZNSt3__112__hash_tableINS_17__hash_value_typeIyN2pc3Jit5BlockEEENS_22__unordered_map_hasherIyNS_4pairIKyS4_EENS_4hashIyEENS_8equal_toIyEELb1EEENS_21__unordered_map_equalIyS9_SD_SB_Lb1EEENS_9allocatorIS9_EEE25__emplace_unique_key_argsIyJRS8_RS4_EEENS7_INS_15__hash_iteratorIPNS_11__hash_nodeIS5_PvEEEEbEERKT_DpOT0_\n1000276b8:\te1 03 00 37\ttbnz\tw1, #0x0, 0x100027734\n1000276bc:\te0 83 c0 3c\tldur\tq0, [sp, #0x8]\n1000276c0:\t00 80 81 3c\tstur\tq0, [x0, #0x18]\n1000276c4:\te0 43 c4 3c\tldur\tq0, [sp, #0x44]\n1000276c8:\t00 40 85 3c\tstur\tq0, [x0, #0x54]\n1000276cc:\te0 83 c3 3c\tldur\tq0, [sp, #0x38]\n1000276d0:\t00 80 84 3c\tstur\tq0, [x0, #0x48]\n1000276d4:\te0 83 c2 3c\tldur\tq0, [sp, #0x28]\n1000276d8:\te1 83 c1 3c\tldur\tq1, [sp, #0x18]\n1000276dc:\t00 80 83 3c\tstur\tq0, [x0, #0x38]\n1000276e0:\t01 80 82 3c\tstur\tq1, [x0, #0x28]\n1000276e4:\te8 33 40 f9\tldr\tx8, [sp, #0x60]\n1000276e8:\te0 83 c5 3c\tldur\tq0, [sp, #0x58]\n1000276ec:\t88 00 00 b4\tcbz\tx8, 0x1000276fc\n1000276f0:\t08 21 00 91\tadd\tx8, x8, #0x8\n1000276f4:\t29 00 80 52\tmov\tw9, #0x1\n1000276f8:\t\t.long\t0xf8290108\n1000276fc:\t14 38 40 f9\tldr\tx20, [x0, #0x70]\n100027700:\t00 80 86 3c\tstur\tq0, [x0, #0x68]\n100027704:\t94 01 00 b4\tcbz\tx20, 0x100027734\n100027708:\t88 22 00 91\tadd\tx8, x20, #0x8\n10002770c:\t\t.long\t0xf8fb0108\n100027710:\t28 01 00 b5\tcbnz\tx8, 0x100027734\n100027714:\t88 02 40 f9\tldr\tx8, [x20]\n100027718:\t08 09 40 f9\tldr\tx8, [x8, #0x10]\n10002771c:\tf5 03 00 aa\tmov\tx21, x0\n100027720:\te0 03 14 aa\tmov\tx0, x20\n100027724:\t00 01 3f d6\tblr\tx8\n100027728:\te0 03 14 aa\tmov\tx0, x20\n10002772c:\tce e9 00 94\tbl\t0x100061e64 ; symbol stub for: __ZNSt3__119__shared_weak_count14__release_weakEv\n100027730:\te0 03 15 aa\tmov\tx0, x21\n100027734:\tf4 33 40 f9\tldr\tx20, [sp, #0x60]\n100027738:\t94 01 00 b4\tcbz\tx20, 0x100027768\n10002773c:\t88 22 00 91\tadd\tx8, x20, #0x8\n100027740:\t\t.long\t0xf8fb0108\n100027744:\t28 01 00 b5\tcbnz\tx8, 0x100027768\n100027748:\t88 02 40 f9\tldr\tx8, [x20]\n10002774c:\t08 09 40 f9\tldr\tx8, [x8, #0x10]\n100027750:\tf5 03 00 aa\tmov\tx21, x0\n100027754:\te0 03 14 aa\tmov\tx0, x20\n100027758:\t00 01 3f d6\tblr\tx8\n10002775c:\te0 03 14 aa\tmov\tx0, x20\n100027760:\tc1 e9 00 94\tbl\t0x100061e64 ; symbol stub for: __ZNSt3__119__shared_weak_count14__release_weakEv\n100027764:\te0 03 15 aa\tmov\tx0, x21\n100027768:\t15 60 00 91\tadd\tx21, x0, #0x18\n10002776c:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027770:\t08 44 8a 52\tmov\tw8, #0x5220\n100027774:\t08 68 68 b8\tldr\tw8, [x0, x8]\n100027778:\ta8 1e 00 b9\tstr\tw8, [x21, #0x1c]\n10002777c:\ta8 a6 40 39\tldrb\tw8, [x21, #0x29]\n100027780:\ta8 07 00 37\ttbnz\tw8, #0x0, 0x100027874\n100027784:\ta8 4a 40 b9\tldr\tw8, [x21, #0x48]\n100027788:\t08 05 00 11\tadd\tw8, w8, #0x1\n10002778c:\ta8 4a 00 b9\tstr\tw8, [x21, #0x48]\n100027790:\t69 46 40 b9\tldr\tw9, [x19, #0x44]\n100027794:\t1f 01 09 6b\tcmp\tw8, w9\n100027798:\te3 06 00 54\tb.lo\t0x100027874\n10002779c:\te8 23 00 91\tadd\tx8, sp, #0x8\n1000277a0:\te0 03 13 aa\tmov\tx0, x19\n1000277a4:\t21 00 80 52\tmov\tw1, #0x1\n1000277a8:\tcf fd ff 97\tbl\t__ZN2pc3Jit7compileEb\n1000277ac:\t60 42 01 91\tadd\tx0, x19, #0x50\n1000277b0:\ta1 63 01 d1\tsub\tx1, x29, #0x58\n1000277b4:\ta2 63 01 d1\tsub\tx2, x29, #0x58\n1000277b8:\te3 23 00 91\tadd\tx3, sp, #0x8\n1000277bc:\t97 00 00 94\tbl\t__ZNSt3__112__hash_tableINS_17__hash_value_typeIyN2pc3Jit5BlockEEENS_22__unordered_map_hasherIyNS_4pairIKyS4_EENS_4hashIyEENS_8equal_toIyEELb1EEENS_21__unordered_map_equalIyS9_SD_SB_Lb1EEENS_9allocatorIS9_EEE25__emplace_unique_key_argsIyJRS8_RS4_EEENS7_INS_15__hash_iteratorIPNS_11__hash_nodeIS5_PvEEEEbEERKT_DpOT0_\n1000277c0:\te1 03 00 37\ttbnz\tw1, #0x0, 0x10002783c\n1000277c4:\te0 83 c0 3c\tldur\tq0, [sp, #0x8]\n1000277c8:\t00 80 81 3c\tstur\tq0, [x0, #0x18]\n1000277cc:\te0 43 c4 3c\tldur\tq0, [sp, #0x44]\n1000277d0:\t00 40 85 3c\tstur\tq0, [x0, #0x54]\n1000277d4:\te0 83 c3 3c\tldur\tq0, [sp, #0x38]\n1000277d8:\t00 80 84 3c\tstur\tq0, [x0, #0x48]\n1000277dc:\te0 83 c2 3c\tldur\tq0, [sp, #0x28]\n1000277e0:\te1 83 c1 3c\tldur\tq1, [sp, #0x18]\n1000277e4:\t00 80 83 3c\tstur\tq0, [x0, #0x38]\n1000277e8:\t01 80 82 3c\tstur\tq1, [x0, #0x28]\n1000277ec:\te8 33 40 f9\tldr\tx8, [sp, #0x60]\n1000277f0:\te0 83 c5 3c\tldur\tq0, [sp, #0x58]\n1000277f4:\t88 00 00 b4\tcbz\tx8, 0x100027804\n1000277f8:\t08 21 00 91\tadd\tx8, x8, #0x8\n1000277fc:\t29 00 80 52\tmov\tw9, #0x1\n100027800:\t\t.long\t0xf8290108\n100027804:\t14 38 40 f9\tldr\tx20, [x0, #0x70]\n100027808:\t00 80 86 3c\tstur\tq0, [x0, #0x68]\n10002780c:\t94 01 00 b4\tcbz\tx20, 0x10002783c\n100027810:\t88 22 00 91\tadd\tx8, x20, #0x8\n100027814:\t\t.long\t0xf8fb0108\n100027818:\t28 01 00 b5\tcbnz\tx8, 0x10002783c\n10002781c:\t88 02 40 f9\tldr\tx8, [x20]\n100027820:\t08 09 40 f9\tldr\tx8, [x8, #0x10]\n100027824:\tf5 03 00 aa\tmov\tx21, x0\n100027828:\te0 03 14 aa\tmov\tx0, x20\n10002782c:\t00 01 3f d6\tblr\tx8\n100027830:\te0 03 14 aa\tmov\tx0, x20\n100027834:\t8c e9 00 94\tbl\t0x100061e64 ; symbol stub for: __ZNSt3__119__shared_weak_count14__release_weakEv\n100027838:\te0 03 15 aa\tmov\tx0, x21\n10002783c:\tf4 33 40 f9\tldr\tx20, [sp, #0x60]\n100027840:\t94 01 00 b4\tcbz\tx20, 0x100027870\n100027844:\t88 22 00 91\tadd\tx8, x20, #0x8\n100027848:\t\t.long\t0xf8fb0108\n10002784c:\t28 01 00 b5\tcbnz\tx8, 0x100027870\n100027850:\t88 02 40 f9\tldr\tx8, [x20]\n100027854:\t08 09 40 f9\tldr\tx8, [x8, #0x10]\n100027858:\tf5 03 00 aa\tmov\tx21, x0\n10002785c:\te0 03 14 aa\tmov\tx0, x20\n100027860:\t00 01 3f d6\tblr\tx8\n100027864:\te0 03 14 aa\tmov\tx0, x20\n100027868:\t7f e9 00 94\tbl\t0x100061e64 ; symbol stub for: __ZNSt3__119__shared_weak_count14__release_weakEv\n10002786c:\te0 03 15 aa\tmov\tx0, x21\n100027870:\t15 60 00 91\tadd\tx21, x0, #0x18\n100027874:\ta8 83 5a f8\tldur\tx8, [x29, #-0x58]\n100027878:\t88 57 00 a9\tstp\tx8, x21, [x28]\n10002787c:\ta8 02 40 f9\tldr\tx8, [x21]\n100027880:\t48 03 00 b4\tcbz\tx8, 0x1000278e8\n100027884:\t69 0a 40 f9\tldr\tx9, [x19, #0x10]\n100027888:\t29 05 00 91\tadd\tx9, x9, #0x1\n10002788c:\t69 0a 00 f9\tstr\tx9, [x19, #0x10]\n100027890:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027894:\t1f 0c 03 39\tstrb\twzr, [x0, #0xc3]\n100027898:\t00 01 3f d6\tblr\tx8\n10002789c:\tf4 03 00 aa\tmov\tx20, x0\n1000278a0:\te8 03 00 2a\tmov\tw8, w0\n1000278a4:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n1000278a8:\t09 6c 40 f9\tldr\tx9, [x0, #0xd8]\n1000278ac:\t29 01 08 8b\tadd\tx9, x9, x8\n1000278b0:\t09 6c 00 f9\tstr\tx9, [x0, #0xd8]\n1000278b4:\t69 02 40 f9\tldr\tx9, [x19]\n1000278b8:\t28 01 08 8b\tadd\tx8, x9, x8\n1000278bc:\t68 02 00 f9\tstr\tx8, [x19]\n1000278c0:\t08 0c 43 39\tldrb\tw8, [x0, #0xc3]\n1000278c4:\t1f 05 00 71\tcmp\tw8, #0x1\n1000278c8:\t81 00 00 54\tb.ne\t0x1000278d8\n1000278cc:\t1f 0c 03 39\tstrb\twzr, [x0, #0xc3]\n1000278d0:\t49 72 ff 97\tbl\t__ZN2pc3CPU4stepEv\n1000278d4:\t94 06 00 11\tadd\tw20, w20, #0x1\n1000278d8:\td6 06 00 11\tadd\tw22, w22, #0x1\n1000278dc:\t97 02 17 0b\tadd\tw23, w20, w23\n1000278e0:\td4 00 00 35\tcbnz\tw20, 0x1000278f8\n1000278e4:\t36 00 00 14\tb\t0x1000279bc\n1000278e8:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n1000278ec:\t42 72 ff 97\tbl\t__ZN2pc3CPU4stepEv\n1000278f0:\td6 06 00 11\tadd\tw22, w22, #0x1\n1000278f4:\tf7 06 00 11\tadd\tw23, w23, #0x1\n1000278f8:\tff 02 18 6b\tcmp\tw23, w24\n1000278fc:\t02 06 00 54\tb.hs\t0x1000279bc\n100027900:\t68 02 40 f9\tldr\tx8, [x19]\n100027904:\te9 03 17 2a\tmov\tw9, w23\n100027908:\t08 01 19 cb\tsub\tx8, x8, x25\n10002790c:\t1f 01 09 eb\tcmp\tx8, x9\n100027910:\t60 d0 ff 54\tb.eq\t0x10002731c\n100027914:\t2a 00 00 14\tb\t0x1000279bc\n100027918:\t5f 01 09 6b\tcmp\tw10, w9\n10002791c:\t08 15 9f 1a\tcsinc\tw8, w8, wzr, ne\n100027920:\ta8 eb 07 36\ttbz\tw8, #0x0, 0x100027694\n100027924:\t93 ff ff 17\tb\t0x100027770\n100027928:\tf4 03 01 aa\tmov\tx20, x1\n10002792c:\tf5 03 00 aa\tmov\tx21, x0\n100027930:\te0 23 00 91\tadd\tx0, sp, #0x8\n100027934:\t51 fe ff 97\tbl\t__ZN2pc3Jit5BlockD1Ev\n100027938:\t03 00 00 14\tb\t0x100027944\n10002793c:\tf4 03 01 aa\tmov\tx20, x1\n100027940:\tf5 03 00 aa\tmov\tx21, x0\n100027944:\t9f 06 00 71\tcmp\tw20, #0x1\n100027948:\t21 06 00 54\tb.ne\t0x100027a0c\n10002794c:\te0 03 15 aa\tmov\tx0, x21\n100027950:\ta2 e9 00 94\tbl\t0x100061fd8 ; symbol stub for: ___cxa_begin_catch\n100027954:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027958:\t27 72 ff 97\tbl\t__ZN2pc3CPU4stepEv\n10002795c:\t16 00 00 14\tb\t0x1000279b4\n100027960:\tf5 03 00 aa\tmov\tx21, x0\n100027964:\t3f 04 00 71\tcmp\tw1, #0x1\n100027968:\t21 05 00 54\tb.ne\t0x100027a0c\n10002796c:\te0 03 15 aa\tmov\tx0, x21\n100027970:\t9a e9 00 94\tbl\t0x100061fd8 ; symbol stub for: ___cxa_begin_catch\n100027974:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n100027978:\t1f 72 ff 97\tbl\t__ZN2pc3CPU4stepEv\n10002797c:\t0e 00 00 14\tb\t0x1000279b4\n100027980:\tf4 03 01 aa\tmov\tx20, x1\n100027984:\tf5 03 00 aa\tmov\tx21, x0\n100027988:\te0 23 00 91\tadd\tx0, sp, #0x8\n10002798c:\t3b fe ff 97\tbl\t__ZN2pc3Jit5BlockD1Ev\n100027990:\t03 00 00 14\tb\t0x10002799c\n100027994:\tf4 03 01 aa\tmov\tx20, x1\n100027998:\tf5 03 00 aa\tmov\tx21, x0\n10002799c:\t9f 06 00 71\tcmp\tw20, #0x1\n1000279a0:\t61 03 00 54\tb.ne\t0x100027a0c\n1000279a4:\te0 03 15 aa\tmov\tx0, x21\n1000279a8:\t8c e9 00 94\tbl\t0x100061fd8 ; symbol stub for: ___cxa_begin_catch\n1000279ac:\t60 12 40 f9\tldr\tx0, [x19, #0x20]\n1000279b0:\t11 72 ff 97\tbl\t__ZN2pc3CPU4stepEv\n1000279b4:\t8c e9 00 94\tbl\t0x100061fe4 ; symbol stub for: ___cxa_end_catch\n1000279b8:\tce ff ff 17\tb\t0x1000278f0\n1000279bc:\te8 03 17 2a\tmov\tw8, w23\n1000279c0:\t00 81 16 aa\torr\tx0, x8, x22, lsl #32\n1000279c4:\t02 00 00 14\tb\t0x1000279cc\n1000279c8:\t00 00 80 d2\tmov\tx0, #0x0\n1000279cc:\tfd 7b 4c a9\tldp\tx29, x30, [sp, #0xc0]\n1000279d0:\tf4 4f 4b a9\tldp\tx20, x19, [sp, #0xb0]\n1000279d4:\tf6 57 4a a9\tldp\tx22, x21, [sp, #0xa0]\n1000279d8:\tf8 5f 49 a9\tldp\tx24, x23, [sp, #0x90]\n1000279dc:\tfa 67 48 a9\tldp\tx26, x25, [sp, #0x80]\n1000279e0:\tfc 6f 47 a9\tldp\tx28, x27, [sp, #0x70]\n1000279e4:\tff 43 03 91\tadd\tsp, sp, #0xd0\n1000279e8:\tc0 03 5f d6\tret\n1000279ec:\tf5 03 00 aa\tmov\tx21, x0\n1000279f0:\t7d e9 00 94\tbl\t0x100061fe4 ; symbol stub for: ___cxa_end_catch\n1000279f4:\t06 00 00 14\tb\t0x100027a0c\n1000279f8:\tf5 03 00 aa\tmov\tx21, x0\n1000279fc:\t7a e9 00 94\tbl\t0x100061fe4 ; symbol stub for: ___cxa_end_catch\n100027a00:\t03 00 00 14\tb\t0x100027a0c\n100027a04:\tf5 03 00 aa\tmov\tx21, x0\n100027a08:\t77 e9 00 94\tbl\t0x100061fe4 ; symbol stub for: ___cxa_end_catch\n100027a0c:\te0 03 15 aa\tmov\tx0, x21\n100027a10:\t7f e8 00 94\tbl\t0x100061c0c ; symbol stub for: __Unwind_Resume\n100027a14:\t18 82 ff 97\tbl\t___clang_call_terminate\n"
+    }
+  },
+  "pairs": {
+    "excel": {
+      "scope": "Three alternating matched-source pairs with process CPU accounting testing inlining the within-batch dispatch call, same validation checks and budget; ordinary uninstrumented FollowJumps in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.",
+      "pairs": [
+        {
+          "pair": 1,
+          "runs": {
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 471.575709,
+                  "taskResponseMs": 5055.734083000001,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4814.965375,
+                    "systemMs": 217.619875,
+                    "totalMs": 5032.58525
+                  },
+                  "instructions": 1402654948,
+                  "nativeInstructions": 1382678173,
+                  "compiledBlocks": 31741,
+                  "executionWallMs": 4723.119347
+                }
+              ],
+              "medianRestoreReadyMs": 471.575709,
+              "medianTaskResponseMs": 5055.734083000001,
+              "medianProcessCpuMs": 5032.58525
+            },
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 595.785125,
+                  "taskResponseMs": 4980.79575,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4685.540083,
+                    "systemMs": 224.560709,
+                    "totalMs": 4910.100792
+                  },
+                  "instructions": 1403725277,
+                  "nativeInstructions": 1383508841,
+                  "compiledBlocks": 31919,
+                  "executionWallMs": 4604.603366
+                }
+              ],
+              "medianRestoreReadyMs": 595.785125,
+              "medianTaskResponseMs": 4980.79575,
+              "medianProcessCpuMs": 4910.100792
+            }
+          },
+          "responseRatio": 1.015045453931734,
+          "executionWallRatio": 1.0257385862754458,
+          "processCpuRatio": 1.024945406049416
+        },
+        {
+          "pair": 2,
+          "runs": {
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 329.10158299999995,
+                  "taskResponseMs": 4910.133167,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4631.568042,
+                    "systemMs": 208.847458,
+                    "totalMs": 4840.4155
+                  },
+                  "instructions": 1403313743,
+                  "nativeInstructions": 1383218651,
+                  "compiledBlocks": 31864,
+                  "executionWallMs": 4546.502987
+                }
+              ],
+              "medianRestoreReadyMs": 329.10158299999995,
+              "medianTaskResponseMs": 4910.133167,
+              "medianProcessCpuMs": 4840.4155
+            },
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 317.049958,
+                  "taskResponseMs": 5120.457292,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4822.538291,
+                    "systemMs": 211.096958,
+                    "totalMs": 5033.635249
+                  },
+                  "instructions": 1403198125,
+                  "nativeInstructions": 1383074049,
+                  "compiledBlocks": 32241,
+                  "executionWallMs": 4731.079356
+                }
+              ],
+              "medianRestoreReadyMs": 317.049958,
+              "medianTaskResponseMs": 5120.457292,
+              "medianProcessCpuMs": 5033.635249
+            }
+          },
+          "responseRatio": 1.0428347089267447,
+          "executionWallRatio": 1.0405974370912692,
+          "processCpuRatio": 1.039918008898203
+        },
+        {
+          "pair": 3,
+          "runs": {
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 324.60529199999996,
+                  "taskResponseMs": 5041.429875000001,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4791.526541,
+                    "systemMs": 214.070125,
+                    "totalMs": 5005.596666
+                  },
+                  "instructions": 1403260798,
+                  "nativeInstructions": 1383162233,
+                  "compiledBlocks": 31849,
+                  "executionWallMs": 4719.6367
+                }
+              ],
+              "medianRestoreReadyMs": 324.60529199999996,
+              "medianTaskResponseMs": 5041.429875000001,
+              "medianProcessCpuMs": 5005.596666
+            },
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 328.96829099999997,
+                  "taskResponseMs": 4919.557500000001,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 4648.258875,
+                    "systemMs": 213.709625,
+                    "totalMs": 4861.9685
+                  },
+                  "instructions": 1403566578,
+                  "nativeInstructions": 1383416466,
+                  "compiledBlocks": 31877,
+                  "executionWallMs": 4564.436232
+                }
+              ],
+              "medianRestoreReadyMs": 328.96829099999997,
+              "medianTaskResponseMs": 4919.557500000001,
+              "medianProcessCpuMs": 4861.9685
+            }
+          },
+          "responseRatio": 1.0247730359895173,
+          "executionWallRatio": 1.034002111128628,
+          "processCpuRatio": 1.0295411551925935
+        }
+      ],
+      "loadBefore": [
+        2.85986328125,
+        3.0078125,
+        3.00830078125
+      ],
+      "startedUnix": 1792977385.459402,
+      "binaries": {
+        "baseline": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+        "candidate": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a"
+      },
+      "medianPairedProcessCpuRatio": 1.0295411551925935,
+      "loadAfter": [
+        2.94189453125,
+        3.00634765625,
+        3.00537109375
+      ],
+      "finishedUnix": 1792977419.0300422,
+      "medianPairedResponseRatio": 1.0247730359895173,
+      "medianPairedExecutionWallRatio": 1.034002111128628
+    },
+    "word": {
+      "scope": "Three alternating matched-source pairs with process CPU accounting testing inlining the within-batch dispatch call, same validation checks and budget; ordinary uninstrumented FollowJumps in a restored, warm Word launch task. Restore is separate; response includes control/capture/poll overhead.",
+      "pairs": [
+        {
+          "pair": 1,
+          "runs": {
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 1104.8951249999998,
+                  "taskResponseMs": 698.063166,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 626.528958,
+                    "systemMs": 45.123375,
+                    "totalMs": 671.652333
+                  },
+                  "instructions": 31064554,
+                  "nativeInstructions": 23549791,
+                  "compiledBlocks": 38951,
+                  "executionWallMs": 644.47829
+                }
+              ],
+              "medianRestoreReadyMs": 1104.8951249999998,
+              "medianTaskResponseMs": 698.063166,
+              "medianProcessCpuMs": 671.652333
+            },
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 347.66491600000006,
+                  "taskResponseMs": 703.6483330000001,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 649.969834,
+                    "systemMs": 45.13325,
+                    "totalMs": 695.103084
+                  },
+                  "instructions": 31561425,
+                  "nativeInstructions": 23923719,
+                  "compiledBlocks": 40602,
+                  "executionWallMs": 648.364229
+                }
+              ],
+              "medianRestoreReadyMs": 347.66491600000006,
+              "medianTaskResponseMs": 703.6483330000001,
+              "medianProcessCpuMs": 695.103084
+            }
+          },
+          "responseRatio": 0.9920625591818177,
+          "executionWallRatio": 0.9940065493650174,
+          "processCpuRatio": 0.9662629161921543
+        },
+        {
+          "pair": 2,
+          "runs": {
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 324.081375,
+                  "taskResponseMs": 706.199333,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 649.758458,
+                    "systemMs": 48.813416,
+                    "totalMs": 698.571874
+                  },
+                  "instructions": 31485023,
+                  "nativeInstructions": 23841118,
+                  "compiledBlocks": 39399,
+                  "executionWallMs": 651.759082
+                }
+              ],
+              "medianRestoreReadyMs": 324.081375,
+              "medianTaskResponseMs": 706.199333,
+              "medianProcessCpuMs": 698.571874
+            },
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 332.20316699999995,
+                  "taskResponseMs": 695.7797919999999,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 635.249167,
+                    "systemMs": 48.1085,
+                    "totalMs": 683.357667
+                  },
+                  "instructions": 31246134,
+                  "nativeInstructions": 23688775,
+                  "compiledBlocks": 39671,
+                  "executionWallMs": 632.907284
+                }
+              ],
+              "medianRestoreReadyMs": 332.20316699999995,
+              "medianTaskResponseMs": 695.7797919999999,
+              "medianProcessCpuMs": 683.357667
+            }
+          },
+          "responseRatio": 0.9852456091175604,
+          "executionWallRatio": 0.9710755116105922,
+          "processCpuRatio": 0.9782209854615476
+        },
+        {
+          "pair": 3,
+          "runs": {
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 317.235834,
+                  "taskResponseMs": 696.631542,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 645.079459,
+                    "systemMs": 43.920042,
+                    "totalMs": 688.999501
+                  },
+                  "instructions": 32266511,
+                  "nativeInstructions": 24427606,
+                  "compiledBlocks": 41273,
+                  "executionWallMs": 643.435066
+                }
+              ],
+              "medianRestoreReadyMs": 317.235834,
+              "medianTaskResponseMs": 696.631542,
+              "medianProcessCpuMs": 688.999501
+            },
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/batch-inline/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 345.385959,
+                  "taskResponseMs": 695.2949160000002,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 642.395667,
+                    "systemMs": 44.767959,
+                    "totalMs": 687.163626
+                  },
+                  "instructions": 31370672,
+                  "nativeInstructions": 23758297,
+                  "compiledBlocks": 39220,
+                  "executionWallMs": 643.843327
+                }
+              ],
+              "medianRestoreReadyMs": 345.385959,
+              "medianTaskResponseMs": 695.2949160000002,
+              "medianProcessCpuMs": 687.163626
+            }
+          },
+          "responseRatio": 1.0019223871327714,
+          "executionWallRatio": 0.9993659000833287,
+          "processCpuRatio": 1.0026716708081402
+        }
+      ],
+      "loadBefore": [
+        2.94189453125,
+        3.00634765625,
+        3.00537109375
+      ],
+      "startedUnix": 1792977419.070791,
+      "binaries": {
+        "baseline": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+        "candidate": "66f81a04127da4a6cda15eeb361f6fd93898fc4db82156b9b3531255df59e08a"
+      },
+      "medianPairedProcessCpuRatio": 0.9782209854615476,
+      "loadAfter": [
+        2.8662109375,
+        2.9892578125,
+        2.9990234375
+      ],
+      "finishedUnix": 1792977427.0365891,
+      "medianPairedResponseRatio": 0.9920625591818177,
+      "medianPairedExecutionWallRatio": 0.9940065493650174
+    }
+  },
+  "drivers": {
+    "run-pairs.py": "from pathlib import Path\nimport json,subprocess,statistics,os,hashlib,time\nroot=Path.cwd();out=root/'build/excel-batch-inline-pairs';out.mkdir(exist_ok=True)\nsnapshot='/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered'\ntask='build/flag-pair/task-120.json'\nr={'scope':'Three alternating matched-source pairs with process CPU accounting testing inlining the within-batch dispatch call, same validation checks and budget; ordinary uninstrumented FollowJumps in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.','pairs':[],'loadBefore':os.getloadavg(),'startedUnix':time.time(),'binaries':{m:hashlib.sha256((root/({'baseline':'build/native-batch/pcemu','candidate':'build/batch-inline/pcemu'}[m])).read_bytes()).hexdigest() for m in ('baseline','candidate')}}\nfor n in range(3):\n runs={}\n for m in (('baseline','candidate') if n%2==0 else ('candidate','baseline')):\n  d=out/('pair-'+str(n+1)+'-'+m)\n  cmd=['python3','tools/bench_snapshot_task.py',snapshot,'--task',task,'--repeat','1','--emulator',{'baseline':'build/native-batch/pcemu','candidate':'build/batch-inline/pcemu'}[m],'--restore-timeout','90','--output',str(d)]\n  with (out/(d.name+'.log')).open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)\n  runs[m]=json.loads((d/'result.json').read_text());print('Finished',n+1,m,runs[m]['medianTaskResponseMs'],flush=True)\n b=runs['baseline']['samples'][0];c=runs['candidate']['samples'][0]\n r['pairs'].append({'pair':n+1,'runs':runs,'responseRatio':b['taskResponseMs']/c['taskResponseMs'],'executionWallRatio':b['executionWallMs']/c['executionWallMs'],'processCpuRatio':b['processCpuTime']['totalMs']/c['processCpuTime']['totalMs']})\n (out/'partial.json').write_text(json.dumps(r,indent=2)+'\\n')\nr['medianPairedProcessCpuRatio']=statistics.median(p['processCpuRatio'] for p in r['pairs'])\nr['loadAfter']=os.getloadavg();r['finishedUnix']=time.time()\nr['medianPairedResponseRatio']=statistics.median(p['responseRatio'] for p in r['pairs'])\nr['medianPairedExecutionWallRatio']=statistics.median(p['executionWallRatio'] for p in r['pairs'])\n(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n');print('PASS',r['medianPairedResponseRatio'],r['medianPairedExecutionWallRatio'],flush=True)\n",
+    "run-word-pairs.py": "from pathlib import Path\nimport json,subprocess,statistics,os,hashlib,time\nroot=Path.cwd();out=root/'build/word-batch-inline-pairs';out.mkdir(exist_ok=True)\nsnapshot='/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026'\ntask='build/word-memory-call-probe/task.json'\nr={'scope':'Three alternating matched-source pairs with process CPU accounting testing inlining the within-batch dispatch call, same validation checks and budget; ordinary uninstrumented FollowJumps in a restored, warm Word launch task. Restore is separate; response includes control/capture/poll overhead.','pairs':[],'loadBefore':os.getloadavg(),'startedUnix':time.time(),'binaries':{m:hashlib.sha256((root/({'baseline':'build/native-batch/pcemu','candidate':'build/batch-inline/pcemu'}[m])).read_bytes()).hexdigest() for m in ('baseline','candidate')}}\nfor n in range(3):\n runs={}\n for m in (('baseline','candidate') if n%2==0 else ('candidate','baseline')):\n  d=out/('pair-'+str(n+1)+'-'+m)\n  cmd=['python3','tools/bench_snapshot_task.py',snapshot,'--task',task,'--repeat','1','--emulator',{'baseline':'build/native-batch/pcemu','candidate':'build/batch-inline/pcemu'}[m],'--restore-timeout','90','--output',str(d)]\n  with (out/(d.name+'.log')).open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)\n  runs[m]=json.loads((d/'result.json').read_text());print('Finished',n+1,m,runs[m]['medianTaskResponseMs'],flush=True)\n b=runs['baseline']['samples'][0];c=runs['candidate']['samples'][0]\n r['pairs'].append({'pair':n+1,'runs':runs,'responseRatio':b['taskResponseMs']/c['taskResponseMs'],'executionWallRatio':b['executionWallMs']/c['executionWallMs'],'processCpuRatio':b['processCpuTime']['totalMs']/c['processCpuTime']['totalMs']})\n (out/'partial.json').write_text(json.dumps(r,indent=2)+'\\n')\nr['medianPairedProcessCpuRatio']=statistics.median(p['processCpuRatio'] for p in r['pairs'])\nr['loadAfter']=os.getloadavg();r['finishedUnix']=time.time()\nr['medianPairedResponseRatio']=statistics.median(p['responseRatio'] for p in r['pairs'])\nr['medianPairedExecutionWallRatio']=statistics.median(p['executionWallRatio'] for p in r['pairs'])\n(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n');print('PASS',r['medianPairedResponseRatio'],r['medianPairedExecutionWallRatio'],flush=True)\n"
+  },
+  "decision": "Keep current production batch implementation. Small consistent Excel gain, mixed/slightly unfavorable Word launch; no broad standalone benefit established.",
+  "limits": [
+    "Three pairs each on a shared host; not proof of an intrinsic Word regression.",
+    "No retained production attribute or weakened guards.",
+    "No new CPU or full OS smoke gate claimed for this non-retained compiler-hint candidate.",
+    "Existing checkpoints reused; successful private task overlays removed."
+  ],
+  "reference": "post-batch-host-profile-2026-10-26.json",
+  "attributeReference": "https://clang.llvm.org/docs/AttributeReference.html#always-inline-force-inline"
+}
