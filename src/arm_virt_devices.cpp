@@ -109,6 +109,6 @@ bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, uns
 }
 std::string ArmVirtMachine::usbReport() const {
     return usb ? "commands=" + std::to_string(usb->commands) +
-        " transfers=" + std::to_string(usb->transfers) + " reports=" + std::to_string(usb->reports) + usb->inputState() + " error=" + usb->error() : "disabled";
+        " transfers=" + std::to_string(usb->transfers) + " reports=" + std::to_string(usb->reports) + usb->input_state() + " error=" + usb->last_error() : "disabled";
 }
 } // namespace pc

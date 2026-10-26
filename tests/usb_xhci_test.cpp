@@ -98,7 +98,7 @@ int main() {
         g.trb(g.intr + 16, g.data, 8, (1 << 10) | 32); g.w(0x2004, 3);
         input.release();
         assert(g.get(g.data, 6) == 0x0000007fff00ull); // Release buttons without moving.
-        assert(g.usb.error().empty());
+        assert(g.usb.last_error().empty());
     }
 
     {
@@ -130,16 +130,16 @@ int main() {
         g.trb(g.intr, g.data, 8, (1 << 10) | 32);
         g.w(0x2004, 3);
         assert(g.usb.reports == 0); // interrupt transfer stays pending on NAK
-        g.usb.key(0xe1, false);
+        g.usb.receive_key_usage(0xe1, false);
         assert(g.usb.reports == 1);
         assert(g.get(g.data, 1) == 2);
         g.trb(g.intr + 16, g.data, 8, (1 << 10) | 32);
         g.w(0x2004, 3);
-        g.usb.key(4, false);
+        g.usb.receive_key_usage(4, false);
         assert(g.get(g.data + 2, 1) == 4);
         g.trb(g.intr + 32, g.data, 8, (1 << 10) | 32);
         g.w(0x2004, 3);
-        g.usb.releaseAll();
+        g.usb.release_all_input();
         assert(g.get(g.data, 8) == 0);
         g.w(0x40, 2);
         assert(g.r(0x44) == 1);
@@ -151,7 +151,7 @@ int main() {
         g.interruptEndpoint();
         g.trb(g.intr, g.data, 4, (1 << 10) | 32);
         g.w(0x2004, 3);
-        g.usb.mouse(-15, 20, -1, 5);
+        g.usb.receive_relative_motion(-15, 20, -1, 5);
         assert(g.get(g.data, 4) == 0xff14f105);
     }
     {
@@ -266,7 +266,7 @@ int main() {
         g.trb(g.control + 16, 0, 1, (3 << 10) | 64 | 16);
         g.trb(g.control + 32, 0, 0, (4 << 10) | (1 << 16) | 32);
         g.w(0x2004, 1);
-        assert(g.usb.error().empty());
+        assert(g.usb.last_error().empty());
         assert(!(g.r(0x44) & 4));
     }
     {
