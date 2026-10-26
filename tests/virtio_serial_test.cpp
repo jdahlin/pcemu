@@ -168,5 +168,54 @@ int main() {
         check(rxControl() == 6 && m.get(0x21006, 2) == 0);
     }
     check(!std::filesystem::exists(path));
+    // SPICE and QGA share one controller, but never data or open states.
+    {
+        Memory n;
+        VirtioSerial multi(
+            n.ram, n.base, [](bool, unsigned) {},
+            std::vector<std::string>{"org.qemu.guest_agent.0", "com.redhat.spice.0"});
+        n.configure(multi, 6, 2);
+        check(multi.read(0x104) == 2);
+        auto ctl = [&](unsigned id, unsigned event, unsigned value) {
+            n.put(0x20000, id, 4);
+            n.put(0x20004, event, 2);
+            n.put(0x20006, value, 2);
+            n.descriptor(3, 0, 0x20000, 8, 0);
+            n.submit(multi, 3);
+        };
+        auto reply = [&](unsigned id, unsigned event) {
+            n.descriptor(2, 0, 0x21000, 256, 2);
+            n.submit(multi, 2);
+            check(n.get(0x21000, 4) == id && n.get(0x21004, 2) == event);
+        };
+        multi.hostConnected(true, 1);
+        ctl(0, 0, 1);
+        reply(0, 1);
+        reply(1, 1);
+        for (unsigned id = 0; id < 2; ++id) {
+            ctl(id, 3, 1);
+            reply(id, 7);
+            reply(id, 6);
+            ctl(id, 6, 1);
+        }
+        check(multi.receiveCapacity(0) == 0 && multi.receiveCapacity(1) > 0);
+        n.descriptor(4, 0, 0x22000, 8, 2);
+        n.submit(multi, 4);
+        check(multi.receive(std::array<uint8_t, 3>{1, 2, 3}, 1) == 3);
+        check(n.get(0x22000, 3) == 0x030201 && n.get(n.used(0) + 2, 2) == 0);
+        n.put(0x23000, 0x060504, 3);
+        n.descriptor(5, 0, 0x23000, 3, 0);
+        n.submit(multi, 5);
+        check(multi.takeOutput(10).empty());
+        check(multi.takeOutput(10, 1) == std::vector<uint8_t>({4, 5, 6}));
+        multi.hostConnected(true, 0);
+        reply(0, 6);
+        multi.hostConnected(false, 1);
+        reply(1, 6);
+        check(multi.receiveCapacity(1) == 0 && multi.receiveCapacity(0) > 0);
+        multi.write(0x70, 0);
+        check(!multi.portReady(0) && !multi.portReady(1) && !multi.portOpen(1));
+        check(multi.error().empty());
+    }
     std::cout << checks << " virtio serial checks passed\n";
 }
