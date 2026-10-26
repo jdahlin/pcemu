@@ -79,7 +79,7 @@ int main(){
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && request[44]==2);answer(request);
     result=hv.takeKvpResult();check(result && result->operation==ArmHyperVKvpCodec::Operation::Delete && result->status==0);
     check(hv.enumerateKvp(ArmHyperVKvpCodec::Pool::Guest,0));hv.service();
-    now+=ArmHyperVKvp::timeout;hv.service();check(!hv.enumerateKvp(ArmHyperVKvpCodec::Pool::Auto,0));
+    now+=ArmHyperVKvp::ResponseTimeout100ns;hv.service();check(!hv.enumerateKvp(ArmHyperVKvpCodec::Pool::Auto,0));
     check(hv.report().find("\"timeouts\":1")!=std::string::npos && !hv.serviceDelay100ns());
     post(message(7,12));check(!hv.serviceDelay100ns() && !hv.takeKvpResult());
     check(hv.report().find("\"state\":\"closed\"")!=std::string::npos);

@@ -78,8 +78,8 @@ void ArmHyperV::service() {
                 shutdown.packet_published(now);
         }
         if (kvpEnabled) {
-            auto now=timeNow();auto packet=kvp.packet(now);
-            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVKvp::channelId,packet))kvp.sent(now);
+            auto now=timeNow();auto packet=kvp.pending_packet(now);
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVKvp::ChannelId,packet))kvp.packet_published(now);
         }
         if (vmbusEnabled) vmbus.service_channels();
         timers.service(timeNow());
@@ -103,7 +103,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     }
     if (synic.needs_service() || (vmbusEnabled && vmbus.needs_service())) return std::min(delay.value_or(10000), uint64_t(10000));
     if (kvpEnabled) {
-        auto next=kvp.delay(now);
+        auto next=kvp.next_delay_100ns(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     return delay;
@@ -189,27 +189,27 @@ void ArmHyperV::enableShutdown() {
 }
 void ArmHyperV::enableKvp() {
     if(kvpEnabled) return;
-    if(!offerVmbusChannel(ArmHyperVKvp::offer(),
+    if(!offerVmbusChannel(ArmHyperVKvp::channel_offer(),
         [this](std::span<const uint8_t> packet) {
-            kvp.receive(packet,timeNow());return std::vector<uint8_t>{};
-        },[this]{kvp.closed();},[this]{kvp.opened(timeNow());}))
+            kvp.receive_response(packet,timeNow());return std::vector<uint8_t>{};
+        },[this]{kvp.channel_closed();},[this]{kvp.channel_opened(timeNow());}))
         throw std::runtime_error("KVP requires VMBus and an available channel/connection");
     kvpEnabled=true;
 }
 bool ArmHyperV::enumerateKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) {
-    return enabled && kvpEnabled && kvp.enumerate(pool,index);
+    return enabled && kvpEnabled && kvp.enumerate_value(pool,index);
 }
 bool ArmHyperV::getKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) {
-    return enabled && kvpEnabled && kvp.get(pool,key);
+    return enabled && kvpEnabled && kvp.get_value(pool,key);
 }
 bool ArmHyperV::setKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value) {
-    return enabled && kvpEnabled && kvp.set(pool,key,value);
+    return enabled && kvpEnabled && kvp.set_value(pool,key,value);
 }
 bool ArmHyperV::deleteKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) {
-    return enabled && kvpEnabled && kvp.erase(pool,key);
+    return enabled && kvpEnabled && kvp.delete_value(pool,key);
 }
 std::optional<ArmHyperVKvp::Result> ArmHyperV::takeKvpResult() {
-    return kvpEnabled ? kvp.takeResult() : std::nullopt;
+    return kvpEnabled ? kvp.take_result() : std::nullopt;
 }
 bool ArmHyperV::requestShutdown(ArmHyperVShutdown::Action action,bool force,uint32_t seconds) {
     return enabled && shutdownEnabled && shutdown.request_shutdown(action,force,seconds);
