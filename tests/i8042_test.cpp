@@ -52,62 +52,62 @@ int main() {
                 auto reference = seed, gated = seed;
                 I8042Device::IrqState irq{bool(gates & 1), bool(gates & 2),
                                          bool(gates & 4), bool(gates & 8)};
-                auto expected = reference.poll(now, irq);
+                auto expected = reference.poll_output_buffer(now, irq);
                 I8042Device::Irqs actual;
-                if (gated.pollDue(now)) actual = gated.poll(now, irq);
+                if (gated.poll_due(now)) actual = gated.poll_output_buffer(now, irq);
                 check(actual.keyboard == expected.keyboard && actual.mouse == expected.mouse);
                 check(image(gated) == image(reference));
             }
     }
     const I8042Device::IrqState ready{false, false, false, false};
     I8042Device controller;
-    controller.enqueueScan(0x1e); controller.enqueueScan(0x9e);
-    auto status = controller.readStatus(0, ready);
+    controller.enqueue_scan_code(0x1e); controller.enqueue_scan_code(0x9e);
+    auto status = controller.read_status_register(0, ready);
     check((status.value & 1) && status.irqs.keyboard && !status.irqs.mouse);
-    auto byte = controller.readData(0, ready);
+    auto byte = controller.read_data_register(0, ready);
     check(byte.value == 0x1e && byte.full && !byte.irqs.keyboard);
-    check(controller.readData(3999, ready).value == 0x1e && !controller.state().keyboardFull);
-    check(!(controller.readStatus(3999, ready).value & 1));
-    status = controller.readStatus(4000, ready);
+    check(controller.read_data_register(3999, ready).value == 0x1e && !controller.state().keyboardFull);
+    check(!(controller.read_status_register(3999, ready).value & 1));
+    status = controller.read_status_register(4000, ready);
     check((status.value & 1) && status.irqs.keyboard);
-    check(controller.readData(4000, ready).value == 0x9e);
-    controller.reset(); controller.enqueueScan(0x30);
-    check(!controller.poll(0, {true, false, false, false}).keyboard);
+    check(controller.read_data_register(4000, ready).value == 0x9e);
+    controller.reset(); controller.enqueue_scan_code(0x30);
+    check(!controller.poll_output_buffer(0, {true, false, false, false}).keyboard);
     check(!controller.state().keyboardFull && controller.state().scanCodes.size() == 1);
-    check(!controller.poll(0, {false, true, false, false}).keyboard);
+    check(!controller.poll_output_buffer(0, {false, true, false, false}).keyboard);
     check(!controller.state().keyboardFull);
-    check(controller.poll(0, ready).keyboard);
-    check(!controller.poll(0, ready).keyboard); // Only a new edge raises PIC input.
-    controller.readData(0, ready);
-    controller.reset(); controller.enqueueScan(0x20);
-    controller.write(0xed);
-    check(controller.poll(0, {true, true, false, false}).keyboard); // Replies bypass scan gating.
-    check(controller.readData(0, ready).value == 0xfa);
-    controller.write(7);
+    check(controller.poll_output_buffer(0, ready).keyboard);
+    check(!controller.poll_output_buffer(0, ready).keyboard); // Only a new edge raises PIC input.
+    controller.read_data_register(0, ready);
+    controller.reset(); controller.enqueue_scan_code(0x20);
+    controller.write_data_register(0xed);
+    check(controller.poll_output_buffer(0, {true, true, false, false}).keyboard); // Replies bypass scan gating.
+    check(controller.read_data_register(0, ready).value == 0xfa);
+    controller.write_data_register(7);
     check(controller.state().keyboardLEDs == 7 && controller.state().scanCodes.size() == 1);
-    check(controller.readData(4000, ready).value == 0xfa);
-    check(controller.readData(8000, ready).value == 0x20);
+    check(controller.read_data_register(4000, ready).value == 0xfa);
+    check(controller.read_data_register(8000, ready).value == 0x20);
     controller.reset();
-    controller.command(0xd1, true);
-    auto effects = controller.write(0);
+    controller.write_command_register(0xd1, true);
+    auto effects = controller.write_data_register(0);
     check(effects.a20.has_value() && !*effects.a20 && effects.reset);
-    controller.command(0xd1, false);
-    effects = controller.write(3);
+    controller.write_command_register(0xd1, false);
+    effects = controller.write_data_register(3);
     check(effects.a20.has_value() && *effects.a20 && !effects.reset);
-    controller.command(0xd0, false);
-    check(controller.readData(0, ready).value == 1); // Board A20 is sampled, not cached.
-    check(controller.command(0xfe, true).reset);
-    check(!controller.command(0xff, true).reset);
+    controller.write_command_register(0xd0, false);
+    check(controller.read_data_register(0, ready).value == 1); // Board A20 is sampled, not cached.
+    check(controller.write_command_register(0xfe, true).reset);
+    check(!controller.write_command_register(0xff, true).reset);
     controller.reset();
-    controller.command(0x60, true); controller.write(3);
-    controller.command(0xd4, true); controller.write(0xf4);
-    status = controller.readStatus(0, ready);
+    controller.write_command_register(0x60, true); controller.write_data_register(3);
+    controller.write_command_register(0xd4, true); controller.write_data_register(0xf4);
+    status = controller.read_status_register(0, ready);
     check((status.value & 0x21) == 0x21 && status.irqs.mouse && !status.irqs.keyboard);
-    check(controller.readData(0, ready).value == 0xfa);
-    controller.motion(5, -3, 1);
-    check(controller.readStatus(4000, ready).irqs.mouse);
+    check(controller.read_data_register(0, ready).value == 0xfa);
+    controller.accumulate_motion(5, -3, 1);
+    check(controller.read_status_register(4000, ready).irqs.mouse);
     auto saved = controller; // Controller state is independent of board pointers/callbacks.
-    check(saved.readData(4000, ready).value == controller.readData(4000, ready).value);
+    check(saved.read_data_register(4000, ready).value == controller.read_data_register(4000, ready).value);
     controller.reset();
     check(controller.state().scanCodes.empty() && controller.state().keyboardReplies.empty() &&
           !controller.state().keyboardFull && !controller.mouse().enabled);

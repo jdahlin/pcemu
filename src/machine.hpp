@@ -36,7 +36,7 @@ struct Machine {
     HostCursor hostCursor;
     void absolutePointer(int x, int y, int wheel, uint8_t buttons) {
         if (absoluteMouse.motion(x, y, wheel, buttons))
-            ps2.motion(1, 0, buttons); // Wake the guest driver even for a stationary click.
+            ps2.accumulate_motion(1, 0, buttons); // Wake the guest driver even for a stationary click.
     }
     PCI pci;
     NE2000 nic;

@@ -337,8 +337,8 @@ int main(int argc, char **argv) {
         uint64_t graphicsStart = 0, nextTyped = 0;
         uint64_t loops = 0;
         Ps2GuestInput guestInput(
-            [&](uint8_t byte) { m.ps2.enqueueScan(byte); },
-            [&](int dx, int dy, uint8_t buttons, int wheel) { m.ps2.motion(dx, dy, buttons, wheel); },
+            [&](uint8_t byte) { m.ps2.enqueue_scan_code(byte); },
+            [&](int dx, int dy, uint8_t buttons, int wheel) { m.ps2.accumulate_motion(dx, dy, buttons, wheel); },
             [&] { c.halted = false; },
             [&](int x, int y, int wheel, uint8_t buttons) { m.absolutePointer(x, y, wheel, buttons); });
         FrontendInput hostInput(frontend.get(), guestInput);
@@ -440,7 +440,7 @@ int main(int argc, char **argv) {
                         } else if (op == "scan") {
                             unsigned k;
                             command >> std::hex >> k;
-                            m.ps2.enqueueScan(k);
+                            m.ps2.enqueue_scan_code(k);
                             c.halted = false;
                         } else if (op == "text") {
                             std::string text;
@@ -460,7 +460,7 @@ int main(int argc, char **argv) {
                             if (!(command >> dx >> dy >> buttons))
                                 throw std::runtime_error("mouse needs DX DY BUTTONS [WHEEL]");
                             command >> wheel;
-                            m.ps2.motion(dx, dy, buttons, wheel);
+                            m.ps2.accumulate_motion(dx, dy, buttons, wheel);
                         } else if (op == "capture")
                             captureRequested = 1;
                         else if (op == "profile-wait") {
@@ -610,7 +610,7 @@ int main(int argc, char **argv) {
                 const auto shutdownNow = std::chrono::steady_clock::now().time_since_epoch();
                 shutdown.tick(std::chrono::duration_cast<std::chrono::milliseconds>(shutdownNow).count(),
                               c.instructions, c.cr[0] & 1, m.ps2.state().scanCodes.empty(),
-                              [&](uint8_t scan) { m.ps2.enqueueScan(scan); },
+                              [&](uint8_t scan) { m.ps2.enqueue_scan_code(scan); },
                               [&](uint16_t key) { m.key(key); });
                 if (headless) {
                     if (!untilText.empty() && m.text().find(untilText) != std::string::npos)

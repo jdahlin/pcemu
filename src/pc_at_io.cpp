@@ -86,15 +86,15 @@ void Machine::bindIoPorts() {
         if (verbose)
             std::fprintf(stderr, "KBC OUT %04x=%02x at %s\n", p, unsigned(v), cpu.location().c_str());
         ports[p] = v;
-        auto effects = p == 0x64 ? ps2.command(v, cpu.a20) : ps2.write(v);
+        auto effects = p == I8042Device::Register::CommandRegister ? ps2.write_command_register(v, cpu.a20) : ps2.write_data_register(v);
         if (effects.a20) cpu.a20 = *effects.a20;
         resetRequested |= effects.reset;
     });
     for (uint16_t p : {0x60, 0x64})
         ioPorts.map(p == 0x60 ? "ps2-data" : "ps2-command", p, 1,
             counted([this](uint16_t p, int) -> uint32_t {
-                auto read = p == 0x64 ? ps2.readStatus(cpu.instructions, ps2IrqState())
-                                      : ps2.readData(cpu.instructions, ps2IrqState());
+                auto read = p == I8042Device::Register::CommandRegister ? ps2.read_status_register(cpu.instructions, ps2IrqState())
+                                      : ps2.read_data_register(cpu.instructions, ps2IrqState());
                 applyPs2Irqs(read.irqs);
                 if (p == 0x60 && verbose)
                     std::fprintf(stderr, "KBC read %02x full=%d at %04x:%08x count=%llu\n", read.value,

@@ -463,7 +463,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 }
                 c.write(0xf032a, bh ? 1 : 2, 1);
                 ps2.mouse().enabled = bh;
-                ps2.enableAuxiliaryInterface();
+                ps2.enable_auxiliary_interface();
                 if (bh) {
                     pic[0].mask &= ~4;
                     pic[1].mask &= ~0x10;

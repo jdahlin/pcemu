@@ -1,14 +1,48 @@
+// The i8042-style controller is the PC's keyboard/auxiliary byte gateway. Port
+// 60h carries device data and command parameters; port 64h writes controller
+// commands and reads status. A single output latch tags bytes as keyboard or
+// auxiliary data and signals IRQ1 or IRQ12 when enabled. The attached mouse owns
+// its protocol; this component also supplies a minimal 101/102-key keyboard
+// command responder. Host input supplies scan bytes; the board applies A20/reset
+// effects and routes newly asserted IRQs into its interrupt controllers.
+//
+// Controller Command byte, input/output ports and keyboard device commands are
+// different interfaces even when byte values overlap. Data writes first satisfy
+// a pending controller command, then a keyboard parameter, otherwise a keyboard
+// command. Replies outrank injected scan codes and mouse motion packets. Reading
+// the output latch releases its IRQ; Status/Data reads may first make queued input
+// available. An empty Data read retains the last latched byte for compatibility.
+//
+// IMPLEMENTATION NOTE: Board PIC masking/in-service state backpressures injected
+// scan/motion streams; command replies bypass that gate. A 4000-instruction read
+// spacing prevents flooding, not a physical PS/2 timing model. Startup represents
+// firmware-initialized state. Real parity/timeouts, passwords, electrical clocks,
+// full controller RAM and diagnostics are not implemented; tests report success.
+// COMPATIBILITY: Host scan codes are already translated; requested keyboard scan
+// sets/translation and typematic/key-type controls do not re-encode or repeat them.
+// Input-port command C0 returns an AT-style 80h value rather than PS/2 Type 1 data
+// lines. Unknown F7h..FDh key-type commands are acknowledged without applying them.
+// FIXME: Implement those documented command/status effects before claiming full
+// controller/keyboard conformance. Preserve current behavior during this migration.
+// IBM PS/2 Hardware Interface Technical Reference, May 1988: Type 1 Controller
+// (printed pages 1-11) and 101/102-Key Keyboard commands (printed pages 21-27).
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=334
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=530
+
 #include "i8042.hpp"
 namespace pc {
-I8042Device::Irqs I8042Device::poll(uint64_t now, IrqState inputs) {
+// Service output priority/backpressure and return newly asserted keyboard/mouse IRQs.
+// IBM Type 1 Controller; board gating/spacing and keyboard compatibility are described above.
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=338
+I8042Device::Irqs I8042Device::poll_output_buffer(uint64_t now, IrqState inputs) {
     Irqs result;
     // No output-buffer/IRQ work is possible until queued input is ready or
     // the mouse sample deadline arrives. Inspect live state so guest I/O,
     // host input and restored snapshots need no cached-deadline invalidation.
     if (!state_.keyboardFull && !state_.mouse.packet_due(now) &&
         (now < state_.keyboardNextAt ||
-         (state_.keyboardReplies.empty() && state_.mouse.replies.empty() && state_.scanCodes.empty() &&
-          state_.mouse.packets.empty())))
+         (state_.keyboardReplies.empty() && state_.mouse.replies.empty() &&
+          state_.scanCodes.empty() && state_.mouse.packets.empty())))
         return result;
     state_.mouse.poll_due_report(now);
     // Backpressure the injected scan stream until the current IRQ service ends.
@@ -21,12 +55,18 @@ I8042Device::Irqs I8042Device::poll(uint64_t now, IrqState inputs) {
         else if (!state_.mouse.replies.empty()) {
             queue = &state_.mouse.replies;
             auxiliary = true;
-        } else if (state_.keyboardEnabled && !state_.keyboardParameter && !(state_.keyboardCommandByte & 0x10) &&
-                   !inputs.keyboardInService && (!(state_.keyboardCommandByte & 1) || !inputs.keyboardMasked) &&
+        } else if (state_.keyboardEnabled && !state_.keyboardParameter &&
+                   !(state_.keyboardCommandByte & KeyboardInterfaceDisable) &&
+                   !inputs.keyboardInService &&
+                   (!(state_.keyboardCommandByte & KeyboardInterruptEnable) ||
+                    !inputs.keyboardMasked) &&
                    !state_.scanCodes.empty())
             queue = &state_.scanCodes;
-        else if (!(state_.keyboardCommandByte & 0x20) && !inputs.mouseInService &&
-                 (!(state_.keyboardCommandByte & 2) || !inputs.mouseMasked) && !state_.mouse.packets.empty()) {
+        else if (!(state_.keyboardCommandByte & AuxiliaryInterfaceDisable) &&
+                 !inputs.mouseInService &&
+                 (!(state_.keyboardCommandByte & AuxiliaryInterruptEnable) ||
+                  !inputs.mouseMasked) &&
+                 !state_.mouse.packets.empty()) {
             queue = &state_.mouse.packets;
             auxiliary = true;
         }
@@ -37,168 +77,189 @@ I8042Device::Irqs I8042Device::poll(uint64_t now, IrqState inputs) {
             state_.keyboardFull = true;
         }
     }
-    if (state_.keyboardFull && state_.keyboardAux && (state_.keyboardCommandByte & 2) && !state_.mouseLine) {
+    if (state_.keyboardFull && state_.keyboardAux &&
+        (state_.keyboardCommandByte & AuxiliaryInterruptEnable) && !state_.mouseLine) {
         result.mouse = true;
         state_.mouseLine = true;
-    } else if (state_.keyboardFull && !state_.keyboardAux && (state_.keyboardCommandByte & 1) && !state_.keyLine) {
+    } else if (state_.keyboardFull && !state_.keyboardAux &&
+               (state_.keyboardCommandByte & KeyboardInterruptEnable) && !state_.keyLine) {
         result.keyboard = true;
         state_.keyLine = true;
     }
     return result;
 }
-I8042Device::Effects I8042Device::command(uint8_t value, bool a20) {
+// Decode a Controller Command write and return board reset/A20 effects.
+// IBM Type 1 Controller; board gating/spacing and keyboard compatibility are described above.
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=340
+I8042Device::Effects I8042Device::write_command_register(uint8_t value, bool a20) {
     Effects result;
     state_.keyboardLastCommand = true;
     state_.keyboardControllerPending = 0;
     // AT controller F0..FF pulse low the output bits whose command bits are
     // zero. Output bit 0 is RESET#, so every even pulse command resets the CPU.
-    if ((value & 0xf0) == 0xf0 && !(value & 1)) {
+    if ((value & PulseOutputCommandMask) == PulseOutputCommandMask && !(value & ResetDeasserted)) {
         result.reset = true;
         return result;
     }
     switch (value) {
-    case 0x20:
+    case ControllerCommand::ReadCommandByte:
         state_.keyboardReplies.push_back(state_.keyboardCommandByte);
         break;
-    case 0x60:
-    case 0xd1:
-    case 0xd2:
-    case 0xd3:
-    case 0xd4:
+    case ControllerCommand::WriteCommandByte:
+    case ControllerCommand::WriteOutputPort:
+    case ControllerCommand::WriteKeyboardOutputBuffer:
+    case ControllerCommand::WriteAuxiliaryOutputBuffer:
+    case ControllerCommand::WriteAuxiliaryDevice:
         state_.keyboardControllerPending = value;
         break;
-    case 0xaa:
-        state_.keyboardCommandByte |= 4;
-        state_.keyboardReplies.push_back(0x55);
+    case ControllerCommand::ControllerSelfTest:
+        state_.keyboardCommandByte |= SystemFlag;
+        state_.keyboardReplies.push_back(ControllerTestPassed);
         break;
-    case 0xab:
-        state_.keyboardReplies.push_back(0);
+    case ControllerCommand::TestKeyboardInterface:
+        state_.keyboardReplies.push_back(InterfaceTestPassed);
         break;
-    case 0xad:
-        state_.keyboardCommandByte |= 0x10;
+    case ControllerCommand::DisableKeyboardInterface:
+        state_.keyboardCommandByte |= KeyboardInterfaceDisable;
         break;
-    case 0xae:
-        state_.keyboardCommandByte &= ~0x10;
+    case ControllerCommand::EnableKeyboardInterface:
+        state_.keyboardCommandByte &= ~KeyboardInterfaceDisable;
         break;
-    case 0xa7:
-        state_.keyboardCommandByte |= 0x20;
+    case ControllerCommand::DisableAuxiliaryInterface:
+        state_.keyboardCommandByte |= AuxiliaryInterfaceDisable;
         break;
-    case 0xa8:
-        state_.keyboardCommandByte &= ~0x20;
+    case ControllerCommand::EnableAuxiliaryInterface:
+        state_.keyboardCommandByte &= ~AuxiliaryInterfaceDisable;
         break;
-    case 0xa9:
-        state_.keyboardReplies.push_back(0);
+    case ControllerCommand::TestAuxiliaryInterface:
+        state_.keyboardReplies.push_back(InterfaceTestPassed);
         break;
-    case 0xc0:
-        state_.keyboardReplies.push_back(0x80);
+    case ControllerCommand::ReadInputPort:
+        state_.keyboardReplies.push_back(AtKeyboardUnlockedInput);
         break;
-    case 0xd0:
-        state_.keyboardReplies.push_back((state_.keyboardOutputPort & ~2) | (a20 ? 2 : 0));
+    case ControllerCommand::ReadOutputPort:
+        state_.keyboardReplies.push_back((state_.keyboardOutputPort & ~GateAddress20) |
+                                         (a20 ? GateAddress20 : 0));
         break;
     default:
         break;
     }
     return result;
 }
-I8042Device::Effects I8042Device::write(uint8_t value) {
+// Apply a pending controller parameter or attached-keyboard command/data byte.
+// IBM Type 1 Controller; board gating/spacing and keyboard compatibility are described above.
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=343
+I8042Device::Effects I8042Device::write_data_register(uint8_t value) {
     Effects result;
     state_.keyboardLastCommand = false;
     if (state_.keyboardControllerPending) {
         auto command = state_.keyboardControllerPending;
         state_.keyboardControllerPending = 0;
-        if (command == 0x60) {
+        if (command == ControllerCommand::WriteCommandByte) {
             state_.keyboardCommandByte = value;
-            if (!(value & 1))
+            if (!(value & KeyboardInterruptEnable))
                 state_.keyLine = false;
-            if (!(value & 2))
+            if (!(value & AuxiliaryInterruptEnable))
                 state_.mouseLine = false;
-        } else if (command == 0xd1) {
+        } else if (command == ControllerCommand::WriteOutputPort) {
             state_.keyboardOutputPort = value;
-            result.a20 = bool(value & 2);
-            if (!(value & 1))
+            result.a20 = bool(value & GateAddress20);
+            if (!(value & ResetDeasserted))
                 result.reset = true;
-        } else if (command == 0xd2)
+        } else if (command == ControllerCommand::WriteKeyboardOutputBuffer)
             state_.keyboardReplies.push_back(value);
-        else if (command == 0xd3)
+        else if (command == ControllerCommand::WriteAuxiliaryOutputBuffer)
             state_.mouse.replies.push_back(value);
-        else if (command == 0xd4)
+        else if (command == ControllerCommand::WriteAuxiliaryDevice)
             state_.mouse.write_command(value);
         return result;
     }
     if (state_.keyboardParameter) {
         auto parameter = state_.keyboardParameter;
         state_.keyboardParameter = 0;
-        state_.keyboardReplies.push_back(0xfa);
-        if (parameter == 0xed)
-            state_.keyboardLEDs = value & 7;
-        if (parameter == 0xf0) {
+        state_.keyboardReplies.push_back(KeyboardAcknowledge);
+        if (parameter == KeyboardCommand::SetStatusIndicators)
+            state_.keyboardLEDs = value & StatusIndicatorMask;
+        if (parameter == KeyboardCommand::SelectScanCodeSet) {
             if (!value)
                 state_.keyboardReplies.push_back(state_.keyboardScanSet);
-            else if (value <= 3)
+            else if (value <= MaximumScanCodeSet)
                 state_.keyboardScanSet = value;
         }
         return result;
     }
     switch (value) {
-    case 0xed:
-    case 0xf0:
-    case 0xf3:
+    case KeyboardCommand::SetStatusIndicators:
+    case KeyboardCommand::SelectScanCodeSet:
+    case KeyboardCommand::SetTypematicRateDelay:
         state_.keyboardParameter = value;
-        state_.keyboardReplies.push_back(0xfa);
+        state_.keyboardReplies.push_back(KeyboardAcknowledge);
         break;
-    case 0xee:
-        state_.keyboardReplies.push_back(0xee);
+    case KeyboardCommand::Echo:
+        state_.keyboardReplies.push_back(KeyboardCommand::Echo);
         break;
-    case 0xf2:
-        state_.keyboardReplies.insert(state_.keyboardReplies.end(), {0xfa, 0xab, 0x83});
+    case KeyboardCommand::ReadKeyboardId:
+        state_.keyboardReplies.insert(state_.keyboardReplies.end(),
+                                      {KeyboardAcknowledge, uint8_t(KeyboardIdentification >> 8),
+                                       uint8_t(KeyboardIdentification)});
         break;
-    case 0xf4:
+    case KeyboardCommand::EnableScanning:
         state_.keyboardEnabled = true;
-        state_.keyboardReplies.push_back(0xfa);
+        state_.keyboardReplies.push_back(KeyboardAcknowledge);
         break;
-    case 0xf5:
+    case KeyboardCommand::DefaultDisable:
         state_.keyboardEnabled = false;
         state_.keyboardLEDs = 0;
-        state_.keyboardScanSet = 2;
-        state_.keyboardReplies.push_back(0xfa);
+        state_.keyboardScanSet = DefaultScanCodeSet;
+        state_.keyboardReplies.push_back(KeyboardAcknowledge);
         break;
-    case 0xf6:
+    case KeyboardCommand::SetKeyboardDefault:
         state_.keyboardLEDs = 0;
-        state_.keyboardScanSet = 2;
-        state_.keyboardReplies.push_back(0xfa);
+        state_.keyboardScanSet = DefaultScanCodeSet;
+        state_.keyboardReplies.push_back(KeyboardAcknowledge);
         break;
-    case 0xff:
+    case KeyboardCommand::ResetKeyboard:
         state_.keyboardLEDs = 0;
-        state_.keyboardScanSet = 2;
+        state_.keyboardScanSet = DefaultScanCodeSet;
         state_.keyboardEnabled = true;
-        state_.keyboardReplies.insert(state_.keyboardReplies.end(), {0xfa, 0xaa});
+        state_.keyboardReplies.insert(state_.keyboardReplies.end(),
+                                      {KeyboardAcknowledge, KeyboardSelfTestPassed});
         break;
-    case 0xfe:
+    case KeyboardCommand::ResendKeyboardByte:
         state_.keyboardReplies.push_back(state_.keyboardData);
         break;
     default:
-        state_.keyboardReplies.push_back(value >= 0xf7 ? 0xfa : 0xfe);
+        state_.keyboardReplies.push_back(
+            value >= KeyboardCommand::SetAllKeysTypematic ? KeyboardAcknowledge : KeyboardResend);
         break;
     }
     return result;
 }
-I8042Device::Read I8042Device::readStatus(uint64_t now, IrqState inputs) {
-    auto irqs = poll(now, inputs);
-    return {uint8_t((state_.keyboardFull ? 1 : 0) |
-                   (state_.keyboardFull && state_.keyboardAux ? 0x20 : 0) |
-                   (state_.keyboardCommandByte & 4) | (state_.keyboardLastCommand ? 8 : 0)),
+// Service pending input and read status bits plus newly asserted IRQs.
+// IBM Type 1 Controller; board gating/spacing and keyboard compatibility are described above.
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=336
+I8042Device::Read I8042Device::read_status_register(uint64_t now, IrqState inputs) {
+    auto irqs = poll_output_buffer(now, inputs);
+    return {uint8_t((state_.keyboardFull ? OutputBufferFull : 0) |
+                    (state_.keyboardFull && state_.keyboardAux ? AuxiliaryOutputBufferFull : 0) |
+                    (state_.keyboardCommandByte & SystemFlag) |
+                    (state_.keyboardLastCommand ? LastWriteWasCommand : 0)),
             irqs, state_.keyboardFull};
 }
-I8042Device::Read I8042Device::readData(uint64_t now, IrqState inputs) {
-    auto irqs = poll(now, inputs);
+// Service/read the output latch, acknowledge its IRQ and apply host read spacing.
+// IBM Type 1 Controller; board gating/spacing and keyboard compatibility are described above.
+// https://wiki.retrotechcollection.com/images/0/0d/IBM_PS2_Hardware_Interface_Technical_Reference_May88.pdf#page=338
+I8042Device::Read I8042Device::read_data_register(uint64_t now, IrqState inputs) {
+    auto irqs = poll_output_buffer(now, inputs);
     bool full = state_.keyboardFull;
     if (full) {
         if (state_.keyboardAux) {
             state_.mouse.lastSent = state_.keyboardData;
             state_.mouseLine = false;
-        } else state_.keyLine = false;
+        } else
+            state_.keyLine = false;
         state_.keyboardFull = false;
-        state_.keyboardNextAt = now + 4000;
+        state_.keyboardNextAt = now + OutputReadSpacingTicks;
     }
     return {state_.keyboardData, irqs, full};
 }

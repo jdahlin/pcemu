@@ -38,11 +38,11 @@ void enqueuePcKey(I8042Device &controller, uint16_t k) {
     auto scan = k >> 8;
     if (scan) {
         if (shift)
-            controller.enqueueScan(0x2a);
-        controller.enqueueScan(scan);
-        controller.enqueueScan(scan | 0x80);
+            controller.enqueue_scan_code(0x2a);
+        controller.enqueue_scan_code(scan);
+        controller.enqueue_scan_code(scan | 0x80);
         if (shift)
-            controller.enqueueScan(0xaa);
+            controller.enqueue_scan_code(0xaa);
     }
 }
 } // namespace pc

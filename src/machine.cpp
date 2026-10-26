@@ -97,7 +97,7 @@ void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {
     if (irqs.mouse) pic[1].raise_interrupt(4);
 }
 void Machine::pollPs2() {
-    applyPs2Irqs(ps2.poll(cpu.instructions, ps2IrqState()));
+    applyPs2Irqs(ps2.poll_output_buffer(cpu.instructions, ps2IrqState()));
 }
 void Machine::poll() {
     profile::event(profile::DevicePoll);
@@ -107,7 +107,7 @@ void Machine::poll() {
     }
     if (pit.timer_interrupt_due(cpu.instructions / 4))
         pic[0].raise_interrupt(0);
-    if (ps2.pollDue(cpu.instructions))
+    if (ps2.poll_due(cpu.instructions))
         pollPs2();
     if (ata.interrupt_level() && !ataLine) {
         pic[1].raise_interrupt(6);
