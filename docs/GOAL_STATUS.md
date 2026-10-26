@@ -1130,3 +1130,18 @@ than globally using large traces or retaining the rejected PS/2 ordering change.
 The 2× target remains unproven and the broader goal stays active. See
 `conditional-trace-evaluation.md` and
 `measurements/conditional-traces-2026-10-26.json`.
+
+
+## Adaptive trace prototype rejected after controls (26 October)
+
+A selective 1024-native-entry conditional trace prototype passes 30,185
+differential checks, the 354,948-check core suite and 17,861 jump checks. Final
+Excel opt-in pairs favor it (median CPU ratio 1.134), while Word warm launch
+does not (0.981). Disabled-feature Excel controls are unfavorable in all three
+pairs. Other chats started ARM/HVF and x86 workloads during those controls;
+the measurements do not isolate implementation overhead, but cannot establish
+an acceptable legacy path. All proposed runtime, analyzer and test-target
+changes are restored. The complete rejected patch and all final/intermediate
+measurements remain in `adaptive-traces.md` and its measurement record. No
+adaptive OS smoke or fresh Setup gate is claimed. Six production sample
+analyzer tests pass. The twofold goal remains unachieved.
