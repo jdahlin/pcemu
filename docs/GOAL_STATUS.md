@@ -1343,3 +1343,15 @@ for Excel and 0.992 for Word. Production is unchanged; no further RAM/full-OS
 gate is run for this non-retained variant. All six pairs, source, commands and
 test results are in `local-context-evaluation.md` and its measurement. A narrower
 key-only hoist is being evaluated separately.
+
+
+## Key-only local hoist also fails the task gate (26 October)
+
+A narrower local two-value lookup-key hoist preserves persistent metadata layout
+and all live validation checks. It passes 3,500 batch/timer and 759 mutation
+checks plus all six task pixel gates, but median CPU ratios are 0.960 for Excel
+and 0.998 for Word. No production change or extra RAM/full-OS gate is retained.
+Exact source, tests and measurements are in `batch-key-evaluation.md` and its
+record. The next substantial direction is guarded native block linking with
+current MMU/code checks, compatible contexts, helper-data lifetime and bounded
+poll/debugger exits; that work is not implemented by this experiment.
