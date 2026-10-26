@@ -4,11 +4,13 @@ import argparse
 from collections import Counter, defaultdict
 from datetime import datetime
 import json
+import re
 from pathlib import Path
 import subprocess
 import xml.etree.ElementTree as ET
 
 from analyze_samples import category
+from jit_debug_map import TimedCodeMap
 
 
 def resolved(element, by_id):
@@ -54,12 +56,16 @@ def site(frame, ids):
 def analyze(report, directory):
     groups, sites, functions = Counter(), Counter(), Counter()
     quartiles = [Counter() for _ in range(4)]
+    jit_regions, jit_blocks = Counter(), Counter()
+    unmapped_jit = 0
     outside, workers, total = 0, defaultdict(Counter), 0
     runs = []
     for index, sample in enumerate(report['samples']):
         trace = directory / f'run-{index}' / 'instruments.trace'
         xml = trace.parent / 'time-profile.xml'
         origin = trace_start(trace)
+        origin_ns = int(origin.timestamp() * 1e9)
+        code_map = TimedCodeMap(trace.parent/'jit-debug.jsonl') if report.get('jitDebugMapped') else None
         start = int((datetime.fromisoformat(sample['taskStartUtc']) - origin).total_seconds() * 1e9)
         end = int((datetime.fromisoformat(sample['taskEndUtc']) - origin).total_seconds() * 1e9)
         if not 0 <= start < end:
@@ -72,6 +78,10 @@ def analyze(report, directory):
             if not frames:
                 continue
             names = [frame.attrib.get('name', '???') for frame in frames]
+            if code_map:
+                pid = re.search(r'pid: (\d+)', thread)
+                if not pid or int(pid[1]) != code_map.pid:
+                    raise ValueError('Instruments process and JIT map PID differ')
             if 'Main Thread' not in thread:
                 workers[thread][names[0]] += 1
                 continue
@@ -83,6 +93,23 @@ def analyze(report, directory):
             sites[site(frames[0], ids)] += 1
             functions[names[0]] += 1
             total += 1
+            if code_map:
+                found = None
+                for depth, frame in enumerate(frames):
+                    if not frame.attrib.get('name', '').startswith(('0x', '???')):
+                        continue
+                    # Instruments tags ARM64 PCs with low bits. Caller frames
+                    # point after BL/BLR: attribute the call instruction itself.
+                    address = int(frame.attrib['addr'], 16) & ~3
+                    found = code_map.lookup(address - (4 if depth else 0), origin_ns + timestamp)
+                    if found:
+                        block, region = found
+                        scope = 'generated self' if depth == 0 else 'helper descendants'
+                        jit_regions[(region['kind'], scope)] += 1
+                        jit_blocks[(block['cr3'], block['cs'], block['ip'])] += 1
+                        break
+                if not found and names[0].startswith(('0x', '???')):
+                    unmapped_jit += 1
         runs.append({'trace': str(trace), 'windowStartNs': start, 'windowEndNs': end,
                      'mainThreadSamples': sum(run.values()), 'categories': dict(run)})
     if not total:
@@ -94,6 +121,12 @@ def analyze(report, directory):
             'samples': total, 'outsideTaskSamples': outside,
             'workerSamples': {thread: sum(counts.values()) for thread, counts in workers.items()},
             'runs': runs, 'categories': rows(groups),
+            'jitRegions': [{'region': key[0], 'scope': key[1], 'samples': count,
+                            'percentOfMain': 100 * count / total}
+                           for key, count in jit_regions.most_common()],
+            'jitBlocks': [{'cr3': key[0], 'cs': key[1], 'ip': key[2], 'samples': count}
+                          for key, count in jit_blocks.most_common(30)],
+            'unmappedJitSelfSamples': unmapped_jit,
             'timeQuartiles': [{'index': index + 1, 'samples': sum(counts.values()),
                                'categories': dict(counts)}
                               for index, counts in enumerate(quartiles)],

@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
          executeVga = false, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
     std::string tracePath, dumpPath, framePath, untilText, traceTailPath;
-    std::string snapshotPath;
+    std::string snapshotPath, jitDebugMapPath;
     std::string stateJsonPath, guestProfilePath;
     uint64_t captureEvery = 0;
     uint64_t breakAt = 0x100000000ull, afterBreak = 0;
@@ -75,6 +75,8 @@ int main(int argc, char **argv) {
                 enableNetwork = false;
             else if (arg == "--execute-vgabios")
                 executeVga = true;
+            else if (arg == "--jit-debug-map")
+                jitDebugMapPath = value();
             else if (arg == "--load-snapshot")
                 snapshotPath = value();
             else if (arg == "--state-json")
@@ -156,6 +158,7 @@ int main(int argc, char **argv) {
                              "  --benchmark-memory-bytes (byte loads/stores with wraparound)\n"
                              "    --backend jit|interpreter selects one benchmark engine\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --jit-debug-map FILE (timestamped generated-code diagnostics)\n"
                              "  --jit-traces (experimental conditional branch traces)\n"
                              "  --jit-basic-blocks (disable default same-page jump joining)\n"
                              "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
@@ -252,6 +255,7 @@ int main(int argc, char **argv) {
         Jit jit(c, enableJit, 8, 16 * 1024 * 1024,
                 traceJit ? Jit::BlockMode::Trace
                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
+        if (!jitDebugMapPath.empty()) jit.setDebugMap(jitDebugMapPath);
         std::ofstream trace;
         if (!tracePath.empty() && !afterBreak)
             trace.open(tracePath);
@@ -673,6 +677,7 @@ int main(int argc, char **argv) {
                       : c.halted   ? "HLT"
                                    : "budget/quit")
                   << '\n';
+        jit.flushDebugMap();
         return 0;
     } catch (const std::exception &e) {
         std::cerr << "pcemu: " << e.what() << '\n';

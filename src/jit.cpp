@@ -2,11 +2,81 @@
 #include "jit_ir.hpp"
 #include "profile.hpp"
 #include <utility>
+#include <chrono>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <unistd.h>
 #if defined(__APPLE__) && defined(__aarch64__)
 #include <sys/mman.h>
 #endif
 namespace pc {
 using jit_detail::Kind;
+static int64_t debugTimeNs() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+}
+void Jit::setDebugMap(const std::string &path) {
+    if (debugState || std::filesystem::exists(path))
+        throw std::runtime_error("JIT debug map already exists: " + path);
+    debugState = std::make_unique<DebugState>();
+    debugState->stream.open(path);
+    if (!debugState->stream) throw std::runtime_error("Cannot create JIT debug map: " + path);
+    debugState->stream << "{\"event\":\"header\",\"version\":1,\"pid\":" << getpid()
+             << ",\"clock\":\"unix-ns\",\"arenaBytes\":" << capacity << "}\n";
+    debugReset();
+}
+void Jit::debugReset() {
+    if (!debugState || !debugState->stream.is_open()) return;
+    DebugRecord record{};
+    record.time = debugTimeNs();
+    record.generation = ++debugState->generation;
+    debugState->records.push_back(std::move(record));
+}
+void Jit::debugBlock(const Block &block, const std::vector<uint32_t> &code,
+                     const std::vector<DebugRegion> &regions) {
+    if (!debugState || !debugState->stream.is_open()) return;
+    debugState->records.push_back({debugTimeNs(), debugState->generation,
+        reinterpret_cast<uintptr_t>(block.fn), cpu.s[CS].selector, block.csBase, cpu.ip,
+        block.cr3, block.page, block.generation, code, regions});
+}
+void Jit::flushDebugMap() {
+    if (!debugState || !debugState->stream.is_open()) return;
+    // Serialize after sampling stops. Collection only copies code/metadata;
+    // formatting and file IO must not dominate cold-compilation profiles.
+    for (const auto &record : debugState->records) {
+        if (record.code.empty()) {
+            debugState->stream << "{\"event\":\"reset\",\"timeNs\":" << record.time
+                     << ",\"generation\":" << record.generation << "}\n";
+            continue;
+        }
+        debugState->stream << "{\"event\":\"load\",\"timeNs\":" << record.time
+                 << ",\"generation\":" << record.generation << ",\"start\":" << record.start
+                 << ",\"end\":" << record.start + record.code.size()*4 << ",\"cs\":" << record.cs
+                 << ",\"csBase\":" << record.csBase << ",\"ip\":" << record.ip
+                 << ",\"cr3\":" << record.cr3 << ",\"physicalPage\":" << record.page
+                 << ",\"codeGeneration\":" << record.codeGeneration << ",\"arm64\":\"";
+        const auto *bytes = reinterpret_cast<const uint8_t *>(record.code.data());
+        static constexpr char hex[] = "0123456789abcdef";
+        std::string encoded(record.code.size()*8, '\0');
+        for (size_t i = 0; i < record.code.size()*4; ++i) {
+            encoded[i*2] = hex[bytes[i] >> 4];
+            encoded[i*2+1] = hex[bytes[i] & 15];
+        }
+        debugState->stream << encoded << "\",\"regions\":[";
+        bool first = true;
+        for (const auto &region : record.regions) {
+            debugState->stream << (first ? "" : ",") << "{\"offset\":" << region.offset
+                     << ",\"kind\":" << std::quoted(region.kind)
+                     << ",\"guestIP\":" << region.guestIP << '}';
+            first = false;
+        }
+        debugState->stream << "]}\n";
+    }
+    debugState->stream.flush();
+    if (!debugState->stream) throw std::runtime_error("Cannot write JIT debug map");
+    debugState->records.clear();
+}
 // The dispatcher asks for this on every cached paged block entry. Reuse a
 // current permitted read translation without the address()/physical() call
 // pair; misses and segment faults retain the reference CPU's slow path.
@@ -44,12 +114,14 @@ Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes, BlockMode mode)
 #endif
 }
 Jit::~Jit() {
+    try { flushDebugMap(); } catch (const std::exception &e) { std::cerr << e.what() << '\n'; }
 #if defined(__APPLE__) && defined(__aarch64__)
     if (arena)
         munmap(arena, capacity);
 #endif
 }
 void Jit::clear() {
+    debugReset();
     blocks.clear();
     fast = {};
     used = 0;

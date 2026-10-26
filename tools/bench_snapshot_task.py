@@ -30,6 +30,7 @@ p.add_argument('--no-jit', action='store_true')
 p.add_argument('--emulator', type=Path, help='alternate executable for controlled comparisons')
 p.add_argument('--sample', action='store_true', help='macOS sample call stacks during the task; profiled timings include sampler overhead')
 p.add_argument('--instruments', action='store_true', help='record a macOS Instruments Time Profiler trace around the task')
+p.add_argument('--jit-debug-map', action='store_true', help='save generated ARM64 bytes, guest locations and timestamped region maps (diagnostic overhead)')
 p.add_argument('--guest-profile', action='store_true', help='record opcode/dispatch counters with build/pcemu-profile')
 p.add_argument('--gui', action='store_true', help='include the normal SDL frontend rather than headless operation')
 p.add_argument('--sample-wait-ms', type=int, default=3000, help='named guest-side attachment barrier; requires a current emulator (0 for older executables)')
@@ -98,6 +99,8 @@ for index in range(a.repeat):
         command.append('--headless')
     elif host_input_suppressed:
         command.append('--no-host-input')
+    if a.jit_debug_map:
+        command += ['--jit-debug-map', str((work/'jit-debug.jsonl').resolve())]
     if a.no_jit:
         command.append('--no-jit')
     if a.jit_follow_jumps == 'traces':
@@ -267,6 +270,7 @@ if hashlib.sha256(engine.read_bytes()).hexdigest() != engine_hash or \
     raise RuntimeError('Emulator or task changed during measurement; results not accepted')
 report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profiled':a.sample,
         'instrumentsProfiled':a.instruments,
+        'jitDebugMapped':a.jit_debug_map,
         'followJumps':follow_jumps_mode, 'traces':trace_mode,
         'emulatorSha256':engine_hash,
         'taskSha256':task_hash, 'restoreTimeoutSeconds':a.restore_timeout,

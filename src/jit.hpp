@@ -2,6 +2,7 @@
 #include "cpu.hpp"
 #include "jit_memory.hpp"
 #include <memory>
+#include <fstream>
 #include <unordered_map>
 namespace pc {
 namespace jit_detail {
@@ -29,6 +30,9 @@ class Jit {
     // use run() instead for per-block debugger/trace observations.
     BatchResult runBatch(unsigned budget = 64);
     void clear();
+    // Optional diagnostic sidecar. Does not change arena capacity or generated code.
+    void setDebugMap(const std::string &path);
+    void flushDebugMap();
     uint64_t nativeInstructions = 0, compiledBlocks = 0, cacheHits = 0, cacheRecycles = 0;
     bool enabled() const {
         return active;
@@ -38,6 +42,24 @@ class Jit {
     }
 
   private:
+    struct Block;
+    struct DebugRegion { size_t offset; const char *kind; uint32_t guestIP; };
+    struct DebugRecord {
+        int64_t time;
+        uint64_t generation;
+        uintptr_t start = 0;
+        uint32_t cs = 0, csBase = 0, ip = 0, cr3 = 0, page = 0, codeGeneration = 0;
+        std::vector<uint32_t> code;
+        std::vector<DebugRegion> regions;
+    };
+    struct DebugState {
+        std::vector<DebugRecord> records;
+        std::ofstream stream;
+        uint64_t generation = 0;
+    };
+    void debugReset();
+    void debugBlock(const Block &block, const std::vector<uint32_t> &code,
+                    const std::vector<DebugRegion> &regions);
     using Function = uint32_t (*)(CPU *);
     struct Block {
         Function fn = nullptr;
@@ -71,5 +93,6 @@ class Jit {
     Block compile(bool translate = true);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
+    std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.
 };
 } // namespace pc

@@ -1,5 +1,9 @@
 # Mapping generated ARM64 samples to emitted regions
 
+The [current timestamped JIT debugging workflow](jit-debugging.md) is integrated
+with Instruments and handles ordinary arena recycling. The experiments below
+used older private source and maps without code lifetimes.
+
 Three restored headless Excel dependent-recalculation profiles now map anonymous
 ARM64 frames to regions emitted by the JIT. They use the native PUSH source set,
 the existing checkpoint/task and verified result pixels. This resolves part of

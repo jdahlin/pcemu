@@ -1,6 +1,9 @@
 #include "jit.hpp"
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <unistd.h>
 using namespace pc;
 static unsigned checks;
 static uint64_t multiDispatchBatches;
@@ -235,6 +238,37 @@ static void cycleTests() {
     check(multiDispatchBatches > 0, "no multi-dispatch batch exercised");
 }
 
+static void debugMapTests() {
+    auto folder = std::filesystem::temp_directory_path() /
+                  ("pcemu-jit-debug-" + std::to_string(getpid()));
+    std::filesystem::create_directory(folder);
+    auto path = folder / "map.jsonl";
+    auto c = make({0xb8, 1, 0, 0, 0, 0x83, 0xc0, 2, 0xf4});
+    CPU ref = c;
+    Jit jit(c, true, 0);
+    jit.setDebugMap(path.string());
+    bool rejected = false;
+    try { jit.setDebugMap(path.string()); } catch (const std::runtime_error &) { rejected = true; }
+    check(rejected, "debug map overwrite accepted");
+    for (unsigned run = 0; run < 2; ++run) {
+        c.ip = ref.ip = 0;
+        c.halted = ref.halted = false;
+        auto batch = jit.runBatch();
+        for (unsigned i = 0; i < batch.instructions; ++i) ref.step();
+        equal(c, ref);
+        jit.clear(); // Start a new address lifetime before reusing the arena.
+    }
+    jit.flushDebugMap();
+    std::ifstream file(path);
+    std::string text((std::istreambuf_iterator<char>(file)), {});
+    check(text.find("\"arm64\":") != std::string::npos, "debug machine bytes missing");
+    check(text.find("\"generation\":3") != std::string::npos, "debug reset lifetime missing");
+    check(text.find("\"guestIP\":5") != std::string::npos, "debug instruction start missing");
+    file.close();
+    std::filesystem::remove(path);
+    std::filesystem::remove(folder);
+}
+
 int main() {
     try {
         CPU probe(1024 * 1024);
@@ -245,6 +279,7 @@ int main() {
         }
         memoryTests();
         cycleTests();
+        debugMapTests();
         std::cout << "Passed " << checks
                   << " cached batch checks; multi-dispatch batches=" << multiDispatchBatches
                   << "\n";

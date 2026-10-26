@@ -478,6 +478,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             }
             if (i.kind == Kind::Branch && i.dst >= 0)
                 i.predictedTaken = i.imm < i.end;
+            i.start = begin;
             ir.push_back(i);
             if (i.kind == Kind::Branch && i.dst < 0 && blockMode != BlockMode::Basic) {
                 // The next byte fetch enforces the original linear/physical page

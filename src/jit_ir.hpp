@@ -12,6 +12,7 @@ struct Instruction {
     Kind kind = Kind::Unsupported;
     int dst, src, op, w, dstShift, srcShift, stackDelta;
     uint32_t imm, end;
+    uint32_t start = 0; // Guest start, including prefixes and followed jumps.
     bool immediate;
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;

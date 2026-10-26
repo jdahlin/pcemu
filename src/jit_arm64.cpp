@@ -20,6 +20,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     const auto &ir = decoded.instructions;
     auto pos = decoded.end;
     std::vector<uint32_t> code;
+    std::vector<DebugRegion> debugRegions;
+    auto mark = [&](const char *kind, uint32_t ip) {
+        if (debugState) debugRegions.push_back({code.size()*4, kind, ip});
+    };
+    mark("Prologue", cpu.ip);
     auto emit = [&](uint32_t x) { code.push_back(x); };
     auto mov = [&](int dst, int src) { emit(0x2a0003e0u | (src << 16) | dst); };
     auto extract = [&](int dst, int src, int width, int shift) {
@@ -282,6 +287,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     int last = -1;
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
+        static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
+            "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags"};
+        mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
         if (i.kind == Kind::IndirectJump) {
@@ -952,8 +961,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         dirtyRegisters |= 1u << i.dst;
         insert(dst, 10, i.w, i.dstShift);
     }
+    mark("GPR commit", ir.back().start);
     flushRegisters(dirtyRegisters);
     bool branch = ir.back().kind == Kind::Branch;
+    mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
         ir.back().kind != Kind::CounterBranch) {
         imm(9, ir.back().nearCall ? ir.back().target
@@ -961,10 +972,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                                           : pos);
         store(9, 19, offsetof(CPU, ip));
     }
+    mark("Flags and branch", ir.back().start);
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
+    mark("Instruction count", ir.back().start);
     imm(0, ir.size());
     for (auto at : exits)
         code[at] |= uint32_t(code.size() - at) & 0x03ffffffu;
+    mark("Host epilogue", ir.back().start);
     for (int k = 0; k < 5; k++)
         if (savePair(k))
             emit(0xa9400000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |
@@ -975,6 +989,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     if (bytes > capacity)
         return block; // Never copy an oversized block beyond the executable arena.
     if (used + bytes > capacity) {
+        debugReset();
         blocks.clear();
         cacheRecycles++;
         fast = {};
@@ -987,6 +1002,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     block.fn = reinterpret_cast<Function>(arena + used);
     used = (used + bytes + 15) & ~size_t(15);
     compiledBlocks++;
+    debugBlock(block, code, debugRegions);
     return block;
 }
 } // namespace pc
