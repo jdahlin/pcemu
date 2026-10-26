@@ -64,6 +64,11 @@ enum class Register : unsigned {
     // PrimeCell ID byte 3: bits 31:24 of the standard PrimeCell signature.
     PrimeCellIdentificationRegister3 = 0xffc,
 };
+// Fixed signature identifying ARM's PrimeCell identification scheme across devices.
+// The Peripheral Identification registers separately identify the PL031 part.
+// ARM DDI 0224C, 3.5 PrimeCell identification registers.
+// https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=29
+constexpr uint32_t PrimeCellIdentification = 0xb105f00d;
 // Only bit 0 participates in interrupt mask, status and clear registers.
 constexpr uint32_t InterruptBit = 1u << 0;
 // A 32-bit seconds value repeats after 2^32 seconds; longer gaps cross every alarm.
@@ -162,17 +167,17 @@ uint32_t ArmPl031::read_register(unsigned offset) {
     // ARM DDI 0224C, 3.5 PrimeCell identification registers.
     // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=29
     case Register::PrimeCellIdentificationRegister0:
-        // Bits 7:0 of the standard PrimeCell identification value, 0xb105f00d.
-        return 0x0d;
+        // Return identification bits 7:0 in the low byte; upper register bits are zero.
+        return uint8_t(PrimeCellIdentification >> 0);
     case Register::PrimeCellIdentificationRegister1:
-        // Bits 15:8 of 0xb105f00d, returned in the low byte of this register.
-        return 0xf0;
+        // Return identification bits 15:8 in the low byte; upper register bits are zero.
+        return uint8_t(PrimeCellIdentification >> 8);
     case Register::PrimeCellIdentificationRegister2:
-        // Bits 23:16 of 0xb105f00d, returned in the low byte of this register.
-        return 0x05;
+        // Return identification bits 23:16 in the low byte; upper register bits are zero.
+        return uint8_t(PrimeCellIdentification >> 16);
     case Register::PrimeCellIdentificationRegister3:
-        // Bits 31:24 of 0xb105f00d, returned in the low byte of this register.
-        return 0xb1;
+        // Return identification bits 31:24 in the low byte; upper register bits are zero.
+        return uint8_t(PrimeCellIdentification >> 24);
     // AD-HOC: No register value is implemented here; return an all-zero word.
     // This also covers the write-only Interrupt Clear Register; zero is model policy.
     default:
