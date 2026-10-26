@@ -268,9 +268,10 @@ app-native:
 	python3 tools/build_swiftui_app.py
 
 .PHONY: test-audio
-test-audio: build/intel-hda-tests
+test-audio: build/intel-hda-tests build/intel-hda-sanitized-tests
 	./build/intel-hda-tests
-test-hvf: test-audio
+	./build/intel-hda-sanitized-tests
+test test-hvf: test-audio
 
 .PHONY: register-vms test-native
 register-vms:
@@ -286,3 +287,7 @@ test-native: app-native
 	./build/frontend-input-tests
 	./build/frontend-tests
 	./build/snapshot-tests
+
+.PHONY: smoke-audio
+smoke-audio: build/pcemu-hvf firmware-arm64
+	PATH="/opt/homebrew/opt/llvm/bin:$$PATH" python3 tools/smoke_intel_hda.py

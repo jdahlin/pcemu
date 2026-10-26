@@ -22,6 +22,7 @@
 #include "guest_agent_socket.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
+#include "intel_hda.hpp"
 #include "usb_xhci.hpp"
 #include "usb_guest_input.hpp"
 #include <string>
@@ -39,6 +40,8 @@ class ArmVirtMachine {
         std::string disk, diskOverlay;
         std::string extraDisk, extraDiskOverlay;
         bool network = false;
+        bool intelHda = false;
+        IntelHda::PlaybackSink audioSink;
         bool virtioMsix = false;
         bool virtioSerial = false;
         bool spiceAgent = false;
@@ -116,6 +119,8 @@ class ArmVirtMachine {
     std::unique_ptr<VirtioBlock> block;
     std::unique_ptr<VirtioPciBlock> pci;
     std::unique_ptr<Nvme> nvme;
+    std::unique_ptr<IntelHda> hda;
+    std::chrono::steady_clock::time_point audioServiceTime;
     std::unique_ptr<UsbXhci> usb;
     std::unique_ptr<UsbGuestInput> usbInput;
     std::unique_ptr<Disk> extraDisk;

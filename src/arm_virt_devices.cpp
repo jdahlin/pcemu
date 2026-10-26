@@ -34,6 +34,12 @@ void ArmVirtMachine::bindDevices() {
     attach("virtio-serial", 5, serialPci.get());
     attach("virtio-balloon", 6, balloonPci.get());
     attach("virtio-gpu", 7, gpuPci.get());
+    if (hda) pciBus.attach("ich9-intel-hda", 8,
+        [this](uint64_t o, unsigned w) { return hda->read_configuration(o, w); },
+        [this](uint64_t o, uint64_t v, unsigned w) { hda->write_configuration(o, v, w); },
+        [this](uint64_t a, unsigned w) { return hda->contains(a, w); },
+        [this](uint64_t a, unsigned w) { return hda->read_register(a, w); },
+        [this](uint64_t a, uint64_t v, unsigned w) { hda->write_register(a, v, w); });
     // NVMe had precedence over virtio BARs in the original platform decoder.
     attach("nvme", 0, nvme.get());
 

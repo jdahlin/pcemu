@@ -13,6 +13,15 @@ from build_arm_platform import build
 
 @unittest.skipUnless(shutil.which('dtc'), 'device-tree compiler is required')
 class ArmPlatform(unittest.TestCase):
+    def test_hda_interrupt_map(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = build(1, Path(directory))
+            route = subprocess.check_output(['fdtget', '-t', 'x', str(output / 'pcemu-virt.dtb'),
+                                             '/pcie@3f000000', 'interrupt-map'], text=True)
+            cells = [int(cell, 16) for cell in route.split()]
+            self.assertEqual(cells[-10:-6], [0x4000, 0, 0, 1])
+            self.assertEqual(cells[-4:], [0, 0, 24, 4])  # SPI24 = GSI56, level high.
+
     def test_matching_descriptions(self):
         for count in (2, 8):
             with self.subTest(cpus=count), tempfile.TemporaryDirectory() as directory:

@@ -356,6 +356,8 @@ endif()
 pcemu_program(pcemu-hvf SDL ZSTD HVF
   SOURCES
     src/frontend_spice.cpp
+    src/intel_hda.cpp
+    src/host_audio_sdl.cpp
     src/host_keyboard.cpp
     ${HVF_USB_SOURCE}
     src/frontend_sdl.cpp
@@ -713,3 +715,6 @@ add_executable(session-library-tests EXCLUDE_FROM_ALL tests/session_library_test
 target_include_directories(session-library-tests PRIVATE src)
 target_link_libraries(session-library-tests PRIVATE pcemu-session)
 add_test(NAME session-library-tests COMMAND session-library-tests)
+
+pcemu_program(intel-hda-tests SOURCES src/intel_hda.cpp tests/intel_hda_test.cpp)
+pcemu_program(intel-hda-sanitized-tests SANITIZE SOURCES src/intel_hda.cpp tests/intel_hda_test.cpp)

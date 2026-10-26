@@ -17,6 +17,8 @@ The [minimal Debian ARM64 server](docs/debian-arm64.md) boots from installed
 virtio storage and accepts SSH over virtio-net (`./run-debian.sh`).
 [NVMe storage](docs/nvme.md) boots the original Windows 11-based ARM64
 Validation OS VHDX to an administrator command prompt using its inbox driver.
+[ICH9 HD Audio playback](docs/intel-hda.md) supports ARM64 Windows with a native
+audio driver and is enabled by `./run11.sh`.
 Interactive Windows input and Windows shutdown/restart validation remain work
 in progress.
 

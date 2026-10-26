@@ -5,10 +5,15 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from build_arm_acpi import build, TABLES, RSDP
+from build_arm_acpi import build, dsdt, TABLES, RSDP
 
 
 class ArmAcpi(unittest.TestCase):
+    def test_hda_intx_route(self):
+        # AML Package(4) { DWord(0x8ffff), Zero, Zero, Byte(56) }:
+        # slot 8 / any function, INTA, direct level interrupt GSI 56.
+        self.assertIn(bytes.fromhex('120b040cffff080000000a38'), dsdt())
+
     def relocated(self, cpu_count=1, **options):
         tables, rsdp, script, _ = build(cpu_count, **options)
         files = {TABLES: bytearray(tables), RSDP: bytearray(rsdp)}

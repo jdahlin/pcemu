@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-26",
+  "guest": "Existing installed Windows 11 ARM64 system-tools-live.qcow2",
+  "platform": "arm64-uefi, 2 CPUs, 4096 MiB, Hyper-V VMBus, PCI INTx audio",
+  "headless": true,
+  "durationSeconds": 60,
+  "audioController": "8086:293e revision 3, slot 8 INTA/GSI56",
+  "audioBackend": "SDL with SDL_AUDIODRIVER=dummy",
+  "audioDriverStagedByTest": false,
+  "guestPnpDriverNameCaptured": false,
+  "counters": {
+    "hdaCommands": 75,
+    "hdaFrames": 159581,
+    "hdaOutputFrames": 159554,
+    "hdaNonzeroSamples": 308905
+  },
+  "outputSeconds": 3.3240416666666666,
+  "observations": [
+    "Guest issued codec commands and configured a playback stream",
+    "Nonzero PCM reached the speaker output path and SDL queue",
+    "No listening test performed; SDL output was intentionally silent",
+    "Guest remained running when the bounded test ended; clean Windows shutdown was not tested",
+    "qemu-img check found no overlay errors"
+  ],
+  "binarySHA256": "f55392ba796ec0724107157975bd20de9b8af37bda4787f36174097f56bcad9c",
+  "hostLogSHA256": "09ecc97dc280a51ef90af6479ca801aa0dfa8b8c34217dacfac70cae0b9d1e9e",
+  "overlayAllocatedBytes": 369111040,
+  "temporaryOverlayRemovedAfterSuccess": true
+}

@@ -210,6 +210,11 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             gateway->enableWakeups([this] { vm.requestExit(); });
             if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
         } else if (c.sshPort || !c.networkCapture.empty()) throw std::runtime_error("SSH forwarding/capture requires --network user");
+        if (c.intelHda) {
+            hda = std::make_unique<IntelHda>(vm.ram(), HvfMachine::ramBase,
+                [this](bool level) { vm.setSPI(56, level); }, c.audioSink);
+            audioServiceTime = std::chrono::steady_clock::now();
+        }
         usb = std::make_unique<UsbXhci>(vm.ram(), HvfMachine::ramBase,
             [this](bool level) { vm.setSPI(52, level); });
         usbInput = std::make_unique<UsbGuestInput>(*usb);
@@ -310,6 +315,7 @@ std::string ArmVirtMachine::cpuState() const {
         if (input >> std::hex >> address) dump("reported", address);
     }
     if (nvme) output << ' ' << nvme->diagnostics();
+    if (hda) output << ' ' << hda->diagnostics();
     return output.str();
 }
 std::string ArmVirtMachine::hypervReport() const {
@@ -394,6 +400,12 @@ void ArmVirtMachine::updateRtcInterrupt() {
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
     updateRtcInterrupt();
+    if (hda) {
+        auto now = std::chrono::steady_clock::now();
+        hda->service_elapsed_microseconds(uint64_t(std::chrono::duration_cast<std::chrono::microseconds>(now - audioServiceTime).count()));
+        audioServiceTime = now;
+        slice = std::min(slice, std::chrono::milliseconds(5));
+    }
     if (serial) serial->poll();
     if (agentSocket) {
         agentSocket->pump(*serial);

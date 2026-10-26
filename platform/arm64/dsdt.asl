@@ -33,7 +33,8 @@ DefinitionBlock ("", "DSDT", 2, "PCEMU ", "ARMVIRT ", 1)
                 Package () { 0x4FFFF, Zero, Zero, 52 },
                 Package () { 0x5FFFF, Zero, Zero, 53 },
                 Package () { 0x6FFFF, Zero, Zero, 54 },
-                Package () { 0x7FFFF, Zero, Zero, 55 }
+                Package () { 0x7FFFF, Zero, Zero, 55 },
+                Package () { 0x8FFFF, Zero, Zero, 56 }
             })
         }
         Device (COM0)

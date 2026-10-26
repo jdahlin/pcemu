@@ -1,5 +1,6 @@
 #include "hvf_machine.hpp"
 #include "arm_virt.hpp"
+#include "host_audio.hpp"
 #include "frontend_spice.hpp"
 #include "arm_vmbus.hpp"
 #include "machine_profile.hpp"
@@ -800,6 +801,7 @@ int main(int argc, char **argv) {
         bool kvpProbe=false,kvpRoundtrip=false;
         auto guestPowerAction = pc::ArmHyperVShutdown::Action::PowerOff;
         pc::ArmVirtMachine::Config uefi;
+        std::string audioBackend = "sdl";
         uefi.firmware = "roms/edk2-arm64.bin";
         uefi.dtb = "build/arm64-fw/pcemu-virt.dtb";
         uefi.variableTemplate = "roms/edk2-arm64-vars.bin";
@@ -826,6 +828,16 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
             else if (arg == "--balloon-pfn64") { uefi.balloonLegacyPfn64 = true; uefi.virtioBalloon = true; uefiOptions = true; }
+            else if (arg == "--audio") {
+                auto mode = value();
+                if (mode != "none" && mode != "ich9") throw std::runtime_error("Audio must be none or ich9");
+                uefi.intelHda = mode == "ich9"; uefiOptions = true;
+            }
+            else if (arg == "--audio-backend") {
+                audioBackend = value();
+                if (audioBackend != "sdl" && audioBackend != "null") throw std::runtime_error("Audio backend must be sdl or null");
+                uefiOptions = true;
+            }
             else if (arg == "--virtio-gpu") { uefi.virtioGpu = true; uefiOptions = true; }
             else if (arg == "--virtio-balloon") { uefi.virtioBalloon = true; uefiOptions = true; }
             else if (arg == "--balloon-target-mb") {
@@ -906,6 +918,7 @@ int main(int argc, char **argv) {
                              "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
                              "  --virtio-msix (requires matching --msi platform assets)\n"
                              "  --virtio-serial [--guest-agent-socket PRIVATE_PATH]\n"
+                             "  --audio none|ich9 --audio-backend sdl|null (default: none, sdl)\n"
                              "  --virtio-gpu (2D display and cursor)\n"
                              "  --virtio-balloon [--balloon-target-mb N] [--balloon-pfn64]\n"
                              "  --self-test\n"
@@ -992,6 +1005,8 @@ int main(int argc, char **argv) {
                     std::cerr << "UEFI initializing: " << name << "...\n";
                     uefi.initializationProgress(0, 0);
                 };
+                auto audio = uefi.intelHda && audioBackend == "sdl" ? pc::open_host_audio() : nullptr;
+                if (audio) uefi.audioSink = [&audio](std::span<const int16_t> samples) { audio->queue_samples(samples); };
                 pc::ArmVirtMachine vm(uefi);
                 std::cerr << "UEFI initialized: starting firmware execution\n";
                 if (!executionStarted) {
