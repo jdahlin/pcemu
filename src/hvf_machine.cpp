@@ -15,6 +15,7 @@
 #include <deque>
 #include <algorithm>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -56,13 +57,24 @@ struct HvfMachine::Impl {
     std::condition_variable changed;
     std::thread watchdog;
     bool stopping = false, armed = false;
-    uint64_t generation = 0;
+    std::optional<std::chrono::steady_clock::time_point> watchdogDeadline;
     hv_return_t cancelResult = HV_SUCCESS;
     bool wakeRequested = false;
     std::chrono::steady_clock::time_point deadline;
     SleepTicks sleepTicks;
     std::function<void(bool)> counterRebase;
     uint64_t sleepBaseline = 0, sleepApplied = 0, nextClockCheck = 0, clockPeriod = 0;
+    void armDeadlineLocked(std::chrono::milliseconds budget) {
+        deadline = std::chrono::steady_clock::now() + budget;
+        cancelResult = HV_SUCCESS;
+        armed = true;
+        // A later deadline needs no wakeup: the worker can adopt it when its
+        // existing wait expires. Only a new or earlier deadline interrupts it.
+        if (!watchdogDeadline || deadline < *watchdogDeadline) {
+            watchdogDeadline = deadline;
+            changed.notify_one();
+        }
+    }
     void cancelLocked() {
         if (active.empty()) return;
         auto result = hv_vcpus_exit(active.data(), uint32_t(active.size()));
@@ -195,18 +207,24 @@ struct HvfMachine::Impl {
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
             while (!stopping) {
-                changed.wait(lock, [this] { return stopping || armed; });
-                if (stopping)
-                    break;
-                const auto current = generation;
-                const auto target = deadline;
-                if (changed.wait_until(lock, target, [this, current] {
-                        return stopping || !armed || generation != current;
+                changed.wait(lock, [this] { return stopping || watchdogDeadline.has_value(); });
+                if (stopping) break;
+                const auto target = *watchdogDeadline;
+                if (changed.wait_until(lock, target, [this, target] {
+                        return stopping || !watchdogDeadline || *watchdogDeadline != target;
                     }))
                     continue;
-                // Keep vCPU lifetime protected until the cancellation call returns.
-                cancelLocked();
-                armed = false;
+                // Short exits may have replaced the run while we slept. Consult
+                // the current run under the same lock before canceling anything.
+                if (armed && deadline > std::chrono::steady_clock::now()) {
+                    watchdogDeadline = deadline;
+                    continue;
+                }
+                if (armed) {
+                    cancelLocked();
+                    armed = false;
+                }
+                watchdogDeadline.reset();
             }
         });
     }
@@ -434,11 +452,7 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
         impl->active.clear();
         if (impl->primaryOnline) impl->active.push_back(impl->vcpu);
         for (auto &cpu : impl->secondary) if (cpu->online) impl->active.push_back(cpu->id);
-        impl->deadline = std::chrono::steady_clock::now() + budget;
-        impl->cancelResult = HV_SUCCESS;
-        ++impl->generation;
-        impl->armed = true;
-        impl->changed.notify_one();
+        impl->armDeadlineLocked(budget);
     }
     std::exception_ptr failure;
     Exit primary{ExitReason::Canceled, 0, 0, 0, 0};
@@ -469,7 +483,6 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     {
         std::lock_guard lock(impl->mutex);
         impl->armed = false;
-        impl->changed.notify_one();
         if (impl->cancelResult != HV_SUCCESS && !failure)
             failure = std::make_exception_ptr(std::runtime_error("SMP vCPU cancellation failed"));
         impl->active.clear();
@@ -566,13 +579,12 @@ void HvfMachine::runMaintenance(uint64_t cpuMask, bool flushTranslations) {
         // failures. CPU lifetimes remain protected by the normal VM owner.
         auto disarm = [&] {
             std::lock_guard lock(impl->mutex);
-            impl->armed = false; impl->active.clear(); impl->changed.notify_one();
+            impl->armed = false; impl->active.clear();
         };
         {
             std::lock_guard lock(impl->mutex);
-            impl->active = {id}; impl->deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(250);
-            impl->cancelResult = HV_SUCCESS; ++impl->generation; impl->armed = true;
-            impl->changed.notify_one();
+            impl->active = {id};
+            impl->armDeadlineLocked(std::chrono::milliseconds(250));
         }
         try {
             bool executed = true;

@@ -22,6 +22,7 @@
 #include <poll.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/resource.h>
 #include <mach/mach_time.h>
 using pc::HvfMachine;
 namespace {
@@ -71,6 +72,33 @@ HvfMachine::Exit hvc(HvfMachine &vm, std::source_location caller = std::source_l
     require(exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16,
             diagnostic.str().c_str());
     return exit;
+}
+void benchmarkWatchdog() {
+    HvfMachine vm;
+    code(vm, std::array<uint32_t, 1>{0xd4000002}); // Repeat one immediate HVC exit.
+    auto cpuSeconds = [] {
+        rusage usage{};
+        if (getrusage(RUSAGE_SELF, &usage)) throw std::runtime_error("getrusage failed");
+        return double(usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) +
+            double(usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) / 1000000;
+    };
+    for (unsigned trial = 0; trial < 3; ++trial) {
+        constexpr unsigned runs = 100000;
+        unsigned canceled = 0;
+        auto cpu = cpuSeconds();
+        auto start = std::chrono::steady_clock::now();
+        for (unsigned i = 0; i < runs;) {
+            vm.setPC(HvfMachine::ramBase);
+            auto exit = vm.run(std::chrono::milliseconds(16));
+            if (exit.reason == HvfMachine::ExitReason::Canceled) { ++canceled; continue; }
+            require(exit.exceptionClass() == 0x16, "Watchdog benchmark did not exit at HVC");
+            ++i;
+        }
+        auto elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+        std::cout << "{\"benchmark\":\"watchdog-exits\",\"trial\":" << trial
+                  << ",\"runs\":" << runs << ",\"canceled\":" << canceled
+                  << ",\"wallSeconds\":" << elapsed << ",\"cpuSeconds\":" << cpuSeconds() - cpu << "}\n";
+    }
 }
 void selfTest() {
     // Invalid configuration must fail before claiming the process-wide VM.
@@ -691,11 +719,56 @@ void selfTest() {
         while (exit.reason == HvfMachine::ExitReason::Canceled);
         require(exit.exceptionClass() == 0x16, "Guest did not resume after readiness wakeup");
     }
+    {
+        HvfMachine vm;
+        auto timedLoop = [&](unsigned budget, unsigned lower, unsigned upper) {
+            code(vm, std::array<uint32_t, 1>{0x14000000});
+            auto start = std::chrono::steady_clock::now();
+            auto exit = vm.run(std::chrono::milliseconds(budget));
+            auto elapsed = std::chrono::steady_clock::now() - start;
+            require(exit.reason == HvfMachine::ExitReason::Canceled,
+                    "Changed watchdog deadline did not cancel the guest");
+            require(elapsed >= std::chrono::milliseconds(lower) && elapsed < std::chrono::milliseconds(upper),
+                    "Watchdog used a stale deadline");
+        };
+        // An immediate exit leaves a pending long watchdog wait. A shorter run
+        // must wake it, while a longer run must survive the old earlier timeout.
+        code(vm, std::array<uint32_t, 1>{0xd4000002});
+        hvc(vm); // default 1000 ms budget
+        timedLoop(10, 5, 500);
+        code(vm, std::array<uint32_t, 1>{0xd4000002});
+        auto exit = vm.run(std::chrono::milliseconds(10));
+        require(exit.exceptionClass() == 0x16, "Short run did not exit normally");
+        timedLoop(80, 60, 1000);
+        // Expired waits while inactive must not poison the next run.
+        code(vm, std::array<uint32_t, 1>{0xd4000002});
+        auto immediate = vm.run(std::chrono::milliseconds(10));
+        require(immediate.exceptionClass() == 0x16, "Inactive-deadline setup did not exit");
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        vm.setPC(HvfMachine::ramBase);
+        hvc(vm);
+    }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true, {}, 2);
+        code(vm, std::array<uint32_t, 1>{0x14000000});
+        require(vm.startCPU(1, HvfMachine::ramBase, 0) == 0, "Watchdog secondary start failed");
+        for (unsigned i = 0; i < 2; ++i) {
+            auto start = std::chrono::steady_clock::now();
+            auto exit = vm.run(std::chrono::milliseconds(20));
+            require(exit.reason == HvfMachine::ExitReason::Canceled &&
+                    std::chrono::steady_clock::now() - start < std::chrono::milliseconds(1000),
+                    "Watchdog failed to stop both uncooperative vCPUs");
+        }
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }
 int main(int argc, char **argv) {
     try {
+        if (argc == 2 && std::string(argv[1]) == "--benchmark-watchdog") {
+            benchmarkWatchdog();
+            return 0;
+        }
         bool gui = false;
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
@@ -794,6 +867,7 @@ int main(int argc, char **argv) {
                 std::cout << "pcemu-hvf: experimental ARM64 bare-metal platform on Apple Silicon\n"
                              "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
                              "  --self-test\n"
+                             "  --benchmark-watchdog (standalone headless RAM-only exit benchmark)\n"
                              "  --kernel FILE [--timeout-ms 1..60000]\n"
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"

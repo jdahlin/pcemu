@@ -143,3 +143,44 @@ Raw windows, thread matches, binary identities and Hyper-V counter rates are in
 [the residual measurement record](windows11-arm-residual-2026-10-26.json).
 Local stack captures remain in `build/windows11-idle-profile/residual-*.sample.txt`.
 Reproduce the CPU split by adding `--threads` to the profiler command above.
+
+## Watchdog optimization
+
+The watchdog now retains its pending timed wait across short exits. Arming a
+run only signals it when no wait exists or the new deadline is earlier. When
+the old wait expires, it checks the current active run under the mutex: it
+adopts an extended deadline, cancels an expired run, or goes idle if no run is
+active. Completing a run no longer wakes the worker just to disarm/rearm it.
+Each run still receives its full requested budget; this does not merge guest
+execution across device processing. Context-maintenance runs use the same helper.
+
+Native validation passed 298 self-test checks and 13 CLI integration tests.
+Coverage includes shortening a pending deadline, extending beyond the old
+expiry, expiration while inactive, external readiness cancellation, repeated
+cancellation of two uncooperative vCPUs, and instruction/translation maintenance.
+The Windows guest was signed in, accepted keyboard and mouse input, resolved DNS,
+and completed HTTP download/upload after the change.
+
+A new standalone, headless RAM-only benchmark is reproducible with:
+
+```sh
+./build/pcemu-hvf --benchmark-watchdog
+```
+
+It repeats 100,000 immediate HVC exits with a 16 ms budget, resetting PC each
+time, for three trials. Before: CPU seconds 0.183486, 0.173050, 0.173173; after:
+0.068426, 0.066231, 0.066450. Median CPU cost fell **61.6%**, from 0.173173 to
+0.066450 seconds; median wall time fell from 0.122672 to 0.066453 seconds. No
+cancellations occurred. This isolates short-exit overhead and is not a claim of
+61.6% lower total Windows CPU. Both versions used the same frozen source tree
+and benchmark; only the watchdog implementation differed.
+
+In three post-login 20-second Windows windows the watchdog consumed **0.272%,
+0.256%, 0.263% CPU**, versus **1.01–2.76%** in the preceding boot. Total process
+CPU was 11.88%, 16.83%, 11.26%, with 4.25, 28.19, 3.85 disk requests/sec.
+The watchdog reduction is visible, but separate boots have different guest work;
+these totals do not establish a specific reduction in total Windows idle CPU.
+
+[Watchdog benchmark and Windows measurements](windows11-arm-watchdog-2026-10-26.json)
+retain the raw trials and validation results. The guest was left running at the
+signed-in desktop after validation.

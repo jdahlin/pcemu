@@ -1,0 +1,365 @@
+{
+  "before": {
+    "trials": [
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 0,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.129079,
+        "cpuSeconds": 0.183486
+      },
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 1,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.122137,
+        "cpuSeconds": 0.17305
+      },
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 2,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.122672,
+        "cpuSeconds": 0.173173
+      }
+    ],
+    "medianCpuSeconds": 0.173173,
+    "medianWallSeconds": 0.122672
+  },
+  "after": {
+    "trials": [
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 0,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.0684185,
+        "cpuSeconds": 0.068426
+      },
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 1,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.0662158,
+        "cpuSeconds": 0.066231
+      },
+      {
+        "benchmark": "watchdog-exits",
+        "trial": 2,
+        "runs": 100000,
+        "canceled": 0,
+        "wallSeconds": 0.0664529,
+        "cpuSeconds": 0.06645
+      }
+    ],
+    "medianCpuSeconds": 0.06645,
+    "medianWallSeconds": 0.0664529
+  },
+  "cpuReductionPercent": 61.627967408314234,
+  "note": "Headless RAM-only one-vCPU 100000 immediate HVC exits per trial, 16 ms run budget; reset PC before each run. Only watchdog backend differs.",
+  "windowsAfter": {
+    "pid": 93521,
+    "sampleSeconds": 20.0,
+    "settleSeconds": 15.0,
+    "percentConvention": "100% = one logical CPU",
+    "machTimebase": {
+      "numer": 125,
+      "denom": 3
+    },
+    "samples": [
+      {
+        "wallSeconds": 20.004455667000002,
+        "cpuPercent": 11.879930640920714,
+        "userCpuSeconds": 1.5223487083333334,
+        "systemCpuSeconds": 0.85416675,
+        "footprintBytes": 5211872552,
+        "packageWakeupsPerSecond": 17.39612443312177,
+        "interruptWakeupsPerSecond": 127.07169054309064,
+        "pageinsPerSecond": 0.0,
+        "netTxPerSecond": 0.14996658994070491,
+        "reportsPerSecond": 0.0,
+        "pointersPerSecond": 0.0,
+        "diskRequestsPerSecond": 4.249053381653306,
+        "netRxPerSecond": 0.14996658994070491,
+        "exitsPerSecond": 6537.243610968581,
+        "keysPerSecond": 0.0,
+        "threads": [
+          {
+            "handle": "0x1fbe3e260",
+            "name": "",
+            "userCpuSeconds": 1.094367,
+            "systemCpuSeconds": 0.418914,
+            "cpuPercent": 7.564719706401997
+          },
+          {
+            "handle": "0x16f7ab0e0",
+            "name": "",
+            "userCpuSeconds": 0.412383,
+            "systemCpuSeconds": 0.3963,
+            "cpuPercent": 4.042514395100636
+          },
+          {
+            "handle": "0x16f8370e0",
+            "name": "",
+            "userCpuSeconds": 0.015544,
+            "systemCpuSeconds": 0.038792,
+            "cpuPercent": 0.27161948770060473
+          },
+          {
+            "handle": "0x16f4ef0e0",
+            "name": "",
+            "userCpuSeconds": 3e-05,
+            "systemCpuSeconds": 8.9e-05,
+            "cpuPercent": 0.0005948674734314628
+          },
+          {
+            "handle": "0x16f3d70e0",
+            "name": "",
+            "userCpuSeconds": 2.6e-05,
+            "systemCpuSeconds": 7.1e-05,
+            "cpuPercent": 0.0004848919741416126
+          },
+          {
+            "handle": "0x16f57b0e0",
+            "name": "com.apple.NSEventThread",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f34b0e0",
+            "name": "SDLTimer",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f71f0e0",
+            "name": "com.apple.virtualization.thread.virtual-clock",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f8c30e0",
+            "name": "",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          }
+        ],
+        "threadCpuSumPercent": 11.87993334865081,
+        "threadCoverageNote": "Only threads present at both endpoints; snapshots are sequential"
+      },
+      {
+        "wallSeconds": 20.004229208000005,
+        "cpuPercent": 16.834783651581784,
+        "userCpuSeconds": 2.381551083333333,
+        "systemCpuSeconds": 0.986117625,
+        "footprintBytes": 5221489960,
+        "packageWakeupsPerSecond": 22.34527485924015,
+        "interruptWakeupsPerSecond": 153.66750540783943,
+        "pageinsPerSecond": 0.0,
+        "netTxPerSecond": 5.198900638391444,
+        "reportsPerSecond": 0.0,
+        "pointersPerSecond": 0.0,
+        "diskRequestsPerSecond": 28.194038077430523,
+        "netRxPerSecond": 7.248467236218841,
+        "exitsPerSecond": 7763.258378278024,
+        "keysPerSecond": 0.0,
+        "threads": [
+          {
+            "handle": "0x1fbe3e260",
+            "name": "",
+            "userCpuSeconds": 1.516564,
+            "systemCpuSeconds": 0.497272,
+            "cpuPercent": 10.067051217322762
+          },
+          {
+            "handle": "0x16f7ab0e0",
+            "name": "",
+            "userCpuSeconds": 0.850987,
+            "systemCpuSeconds": 0.448563,
+            "cpuPercent": 6.496376273674616
+          },
+          {
+            "handle": "0x16f8370e0",
+            "name": "",
+            "userCpuSeconds": 0.013591,
+            "systemCpuSeconds": 0.037673,
+            "cpuPercent": 0.2562658099293259
+          },
+          {
+            "handle": "0x16f8c30e0",
+            "name": "",
+            "userCpuSeconds": 0.000348,
+            "systemCpuSeconds": 0.002433,
+            "cpuPercent": 0.01390206026477558
+          },
+          {
+            "handle": "0x16f3d70e0",
+            "name": "",
+            "userCpuSeconds": 3.7e-05,
+            "systemCpuSeconds": 9.3e-05,
+            "cpuPercent": 0.0006498625797989305
+          },
+          {
+            "handle": "0x16f4ef0e0",
+            "name": "",
+            "userCpuSeconds": 2.3e-05,
+            "systemCpuSeconds": 8.3e-05,
+            "cpuPercent": 0.0005298879496822049
+          },
+          {
+            "handle": "0x16f57b0e0",
+            "name": "com.apple.NSEventThread",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f34b0e0",
+            "name": "SDLTimer",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f71f0e0",
+            "name": "com.apple.virtualization.thread.virtual-clock",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          }
+        ],
+        "threadCpuSumPercent": 16.83477511172096,
+        "threadCoverageNote": "Only threads present at both endpoints; snapshots are sequential"
+      },
+      {
+        "wallSeconds": 20.003468292000008,
+        "cpuPercent": 11.26513271151688,
+        "userCpuSeconds": 1.5090300833333332,
+        "systemCpuSeconds": 0.7443871666666666,
+        "footprintBytes": 5222194472,
+        "packageWakeupsPerSecond": 20.296480293988402,
+        "interruptWakeupsPerSecond": 122.17881241011737,
+        "pageinsPerSecond": 0.0,
+        "netTxPerSecond": 2.649540530988634,
+        "reportsPerSecond": 0.0,
+        "pointersPerSecond": 0.0,
+        "diskRequestsPerSecond": 3.8493324695495246,
+        "netRxPerSecond": 2.6995318617620043,
+        "exitsPerSecond": 6110.44036042907,
+        "keysPerSecond": 0.0,
+        "threads": [
+          {
+            "handle": "0x1fbe3e260",
+            "name": "",
+            "userCpuSeconds": 1.070916,
+            "systemCpuSeconds": 0.356761,
+            "cpuPercent": 7.137147314453321
+          },
+          {
+            "handle": "0x16f7ab0e0",
+            "name": "",
+            "userCpuSeconds": 0.422982,
+            "systemCpuSeconds": 0.343133,
+            "cpuPercent": 3.8299108375440705
+          },
+          {
+            "handle": "0x16f8370e0",
+            "name": "",
+            "userCpuSeconds": 0.014689,
+            "systemCpuSeconds": 0.037842,
+            "cpuPercent": 0.2626094596855923
+          },
+          {
+            "handle": "0x16f3d70e0",
+            "name": "",
+            "userCpuSeconds": 0.000183,
+            "systemCpuSeconds": 0.004995,
+            "cpuPercent": 0.02588551107445122
+          },
+          {
+            "handle": "0x16f8c30e0",
+            "name": "",
+            "userCpuSeconds": 0.000116,
+            "systemCpuSeconds": 0.001364,
+            "cpuPercent": 0.007398716954458826
+          },
+          {
+            "handle": "0x16f4ef0e0",
+            "name": "",
+            "userCpuSeconds": 0.000129,
+            "systemCpuSeconds": 0.000214,
+            "cpuPercent": 0.0017147026455266062
+          },
+          {
+            "handle": "0x16f57b0e0",
+            "name": "com.apple.NSEventThread",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f34b0e0",
+            "name": "SDLTimer",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          },
+          {
+            "handle": "0x16f71f0e0",
+            "name": "com.apple.virtualization.thread.virtual-clock",
+            "userCpuSeconds": 0.0,
+            "systemCpuSeconds": 0.0,
+            "cpuPercent": 0.0
+          }
+        ],
+        "threadCpuSumPercent": 11.264666542357421,
+        "threadCoverageNote": "Only threads present at both endpoints; snapshots are sequential"
+      }
+    ],
+    "medianCpuPercent": 11.879930640920714
+  },
+  "threadMap": [
+    {
+      "role": "main",
+      "threadId": 999898,
+      "handle": "0x1fbe3e260",
+      "matchErrorNanoseconds": 0
+    },
+    {
+      "role": "secondary",
+      "threadId": 1000033,
+      "handle": "0x16f7ab0e0",
+      "matchErrorNanoseconds": 0
+    },
+    {
+      "role": "watchdog",
+      "threadId": 1000034,
+      "handle": "0x16f8370e0",
+      "matchErrorNanoseconds": 0
+    },
+    {
+      "role": "network",
+      "threadId": 1000075,
+      "handle": "0x16f8c30e0",
+      "matchErrorNanoseconds": 0
+    }
+  ],
+  "validation": {
+    "nativeSelfTestChecks": 298,
+    "cliTests": 13,
+    "windowsKeyboard": true,
+    "windowsMouse": true,
+    "windowsDns": true,
+    "windowsHttpDownloadAndUpload": true
+  },
+  "binarySha256": "ceedd424f4a3f672b9ec6a384d5a3a75f7256aa5c2916786c2b812f90b077ac0",
+  "windowsComparisonNote": "Separate boots, variable guest workload. Use the controlled RAM-only benchmark for causal comparison; total Windows CPU savings are not isolated."
+}
