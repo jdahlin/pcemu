@@ -1213,3 +1213,15 @@ separate cache-capacity experiment. Diagnostic timings do not establish a
 production speedup. Twelve analyzer tests pass; maps/stacks are compressed with
 verified round trips and duplicate raw maps removed. Production runtime remains
 unchanged. See `emitted-code-profiling.md` and its full measurement record.
+
+
+## JIT capacity experiment keeps the default (26 October)
+
+Uninstrumented arena-only 32 versus 16 MiB pairs confirm substantially fewer
+compiled blocks in Excel and Word. All expected pixels pass. Excel's three CPU
+ratios are 1.036/0.975/0.933; Word's are 1.026/1.041/1.027. Shared-host noise and
+mixed Excel outcomes do not justify a default change. Production stays at 16
+MiB, and no capacity option or other runtime change is retained. Source identity,
+drivers and all six pairs are in `jit-cache-capacity.md` and its measurement.
+The emitted finishing bucket remains the next profiling lead; no broad speedup
+or goal completion is claimed.
