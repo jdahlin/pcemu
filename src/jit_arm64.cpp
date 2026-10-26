@@ -79,6 +79,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.leaveFrame) usedRegisters |= 1u << SP;
         if (i.indirectCall && !i.memoryCall) usedRegisters |= 1u << i.src;
         if (i.memoryCall || i.memoryPush) {
             if (i.callPointer.base >= 0) usedRegisters |= 1u << i.callPointer.base;
@@ -747,14 +748,16 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
                 // Change SP only after a successful access. POP SP/ESP writes
                 // its destination after the increment, including mixed widths.
+                // LEAVE derives the incremented stack pointer from BP/EBP.
                 if (i.stackDelta) {
                     auto amount = unsigned(i.stackDelta < 0 ? -i.stackDelta : i.stackDelta);
+                    const int stackBase = i.leaveFrame ? BP : SP;
                     if (amount < 4096)
                         emit((i.stackDelta < 0 ? 0x51000000u : 0x11000000u) | (amount << 10) |
-                             ((20 + SP) << 5) | 11);
+                             ((20 + stackBase) << 5) | 11);
                     else {
                         imm(12, amount);
-                        emit(0x0b000000u | (12 << 16) | ((20 + SP) << 5) | 11);
+                        emit(0x0b000000u | (12 << 16) | ((20 + stackBase) << 5) | 11);
                     }
                     insert(20 + SP, 11, block.stack32 ? 4 : 2, 0);
                     dirtyRegisters |= 1u << SP;

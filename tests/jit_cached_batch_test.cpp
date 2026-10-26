@@ -475,10 +475,113 @@ static void stringMoveTests() {
     }
 }
 
+static void leaveTests() {
+    for (bool paging : {false, true})
+     for (bool code32 : {false, true})
+      for (bool stack32 : {false, true})
+       for (unsigned width : {2u, 4u})
+        for (unsigned frame : {0x1000u, 0xfffeu, 0xffffu})
+         for (uint8_t prefix : {uint8_t(0), uint8_t(0x67), uint8_t(0x64)}) {
+            auto c = make({}, paging);
+            c.s[CS].big = code32; c.s[SS].big = stack32;
+            c.s[SS].base = 0x3000; c.s[FS].base = 0x9000;
+            c.r[SP] = 0x76542000; c.r[BP] = stack32 ? frame : 0xabcd0000 | frame;
+            c.r[AX] = 0x7fffffff;
+            std::vector<uint8_t> code{0x83, 0xc0, 1};
+            if (prefix) code.push_back(prefix);
+            if (code32 != (width == 4)) code.push_back(0x66);
+            code.push_back(0xc9); code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            c.write(0x3000 + frame, 0xa5b6c7d8, width);
+            compare(c); // SS.B and operand size vary independently; prefixes do not select the stack.
+        }
+    for (bool paging : {false, true})
+     for (bool stack32 : {false, true}) {
+        auto c = make({0xc9, 0xf4}, paging);
+        c.s[SS].big = stack32; c.r[BP] = 0x1000; c.r[SP] = 0x12342000;
+        c.write(0x1000, 0x5678, 4);
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(jit.nativeInstructions == 1 && c.halted, "LEAVE did not execute natively");
+    }
+    {
+        auto c = make({0xc9, 0xf4});
+        c.write(0x1000, 0x1111, 4); c.write(0x11000, 0x2222, 4);
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        for (bool stack32 : {false, true}) {
+            c.ip = 0; c.halted = false; c.instructions = 0;
+            c.s[SS].big = stack32; c.r[BP] = 0x11000; c.r[SP] = 0x12342000;
+            CPU ref = c; auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+            check(c.r[BP] == (stack32 ? 0x2222u : 0x1111u), "LEAVE reused stale stack-size context");
+        }
+        check(jit.compiledBlocks >= 2, "LEAVE stack-size change did not recompile");
+    }
+    for (bool stack32 : {false, true})
+     for (unsigned width : {2u, 4u}) {
+        auto c = make({0x83, 0xc0, 1, 0x90, 0xc9, 0xf4});
+        c.mem[3] = width == 2 ? 0x66 : 0x90;
+        c.s[SS].base = 0x9f000; c.s[SS].big = stack32;
+        c.r[SP] = 0x12342000; c.r[BP] = stack32 ? 0x1000 : 0xabcd1000;
+        c.r[AX] = 0x7fffffff;
+        CPU ref = c; std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) {
+            trace.push_back((uint64_t(c.r[SP]) << 32) | c.flags); trace.push_back(p);
+            return uint8_t(p + 0x40);
+        };
+        ref.videoRead = [&](uint32_t p) {
+            refTrace.push_back((uint64_t(ref.r[SP]) << 32) | ref.flags); refTrace.push_back(p);
+            return uint8_t(p + 0x40);
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() == width * 2, "LEAVE MMIO replay SP/flags/order");
+        check(c.nativeMemoryCalls, "LEAVE MMIO did not exercise native replay");
+    }
+    for (bool stack32 : {false, true})
+     for (bool unusable : {false, true})
+      for (bool crossPage : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0xc9, 0xf4}, true);
+        c.s[CS].selector = 3; c.s[SS].big = stack32; c.s[SS].unusable = unusable;
+        c.r[SP] = 0x76542000; c.r[BP] = (stack32 ? 0 : 0xabcd0000) | (crossPage ? 0x4fff : 0x5000);
+        c.r[AX] = 0x7fffffff;
+        uint32_t notPresent = 0x5006;
+        std::copy_n(reinterpret_cast<uint8_t *>(&notPresent), 4, c.mem.begin() + 0x81014);
+        c.flushTLB(); CPU ref = c; unsigned faults = 0;
+        c.observeFault = ref.observeFault = [&](const Fault &f) {
+            check(f.vector == (unusable ? 12 : 14) && f.error == (unusable ? 0u : 4u), "LEAVE fault type");
+            ++faults; throw std::runtime_error("LEAVE fault");
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "missing native LEAVE fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "LEAVE fault", "native LEAVE fault"); }
+        try { ref.step(); ref.step(); check(false, "missing reference LEAVE fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "LEAVE fault", "reference LEAVE fault"); }
+        equal(c, ref);
+        check(faults == 2 && c.ip == 3 && c.r[SP] == 0x76542000, "LEAVE fault committed stack/frame state");
+    }
+    for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0xc9, 0x83, 0xe9, 1, 0x75, 0xfa, 0xf4});
+        c.r[CX] = 1000; c.r[BP] = 0x1000; c.r[SP] = 0x23452000;
+        c.write(0x1000, 0x1000, 4);
+        compare(c, 10000, mode);
+    }
+    {
+        auto c = make({0xc9, 0xc3});
+        c.r[BP] = 0x1000; c.r[SP] = 0x2000;
+        c.write(0x1000, 0x3000, 4); c.write(0x1004, 0x100, 4); c.mem[0x100] = 0xf4;
+        compare(c); // LEAVE + RET stays native with the new stack pointer.
+    }
+}
+
 static void memoryBitStringTests() {
-    auto append = [](std::vector<uint8_t> &code, uint32_t value, unsigned width) {
-        for (unsigned b = 0; b < width; ++b) code.push_back(uint8_t(value >> (b * 8)));
-    };
     for (bool paging : {false, true})
      for (bool code32 : {false, true})
       for (bool address32 : {false, true})
@@ -1027,6 +1130,7 @@ int main() {
             memoryWriteCoverageTests();
             memoryExchangeTests();
             memoryBitStringTests();
+            leaveTests();
             hotShortFragmentTests();
             cycleTests();
         }

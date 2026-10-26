@@ -120,6 +120,14 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = uint32_t(-w);
                 block.usesStack = true;
+            } else if (op == 0xc9) {
+                i.kind = Kind::Memory;
+                i.leaveFrame = true;
+                i.dst = i.memory.base = BP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                i.stackDelta = w;
+                block.usesStack = true;
             } else if ((op >= 0x50 && op <= 0x5f) || op == 0x68 || op == 0x6a) {
                 i.kind = Kind::Memory;
                 i.immediate = op == 0x68 || op == 0x6a;

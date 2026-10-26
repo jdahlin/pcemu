@@ -1904,3 +1904,14 @@ to 397. Native shares reach 93.25% and 99.34%. All 48 unprofiled restores pass;
 median CPU is 18.7% below the original Word baseline and 8.3% below the original
 Excel baseline, with modest incremental reductions of 1.9% and 1.6% versus the
 XCHG build. See the [full results and limits](measurements/office-memory-bits-2026-10-27.md).
+
+### Word and Excel: native LEAVE (2026-10-27)
+
+LEAVE now uses the guarded stack-read path with independent stack and operand
+widths, exact fault/MMIO replay, and SS.B cache validation. Interpreted LEAVE
+attempts fall from 214,492 to 27,626 in Word and 160,511 to 14,738 in Excel;
+native shares reach 93.45% and 99.36%. All 48 headless restores pass. This is a
+coverage improvement: incremental timing versus the preceding bit-string build
+is neutral within measurement noise. The complete candidate remains 19.9% below
+the original Word baseline and 8.6% below the original Excel baseline in the
+fresh comparison. See [measurements and correctness scope](measurements/office-leave-2026-10-27.md).
