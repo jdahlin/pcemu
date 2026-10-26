@@ -65,6 +65,11 @@ disk was installed by the complete Windows setup wizard and includes its normal
 program groups. The launcher falls back to the older `media/dos.raw` if needed. The original
 DOS VHD and Windows floppy archive are preserved.
 
+For the native SwiftUI VM library, use `make app-native` and open
+`build/PCEmu Library.app`. Existing Windows 3.11, Windows 95 and Windows 11 disks
+are registered automatically. See [the native frontend and library API](docs/swiftui-frontend.md)
+for snapshot restore, lifecycle controls, input capture and current engine limits.
+
 For a double-click launcher tied to this checkout:
 
 ```sh

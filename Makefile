@@ -262,3 +262,27 @@ test test-hvf: test-virtio-gpu
 test-spice: build/spice-tests build/spice-sanitized-tests
 	GST_PLUGIN_SYSTEM_PATH_1_0= GST_PLUGIN_PATH_1_0= ./build/spice-tests
 	GST_PLUGIN_SYSTEM_PATH_1_0= GST_PLUGIN_PATH_1_0= ./build/spice-sanitized-tests
+
+.PHONY: app-native
+app-native:
+	python3 tools/build_swiftui_app.py
+
+.PHONY: test-audio
+test-audio: build/intel-hda-tests
+	./build/intel-hda-tests
+test-hvf: test-audio
+
+.PHONY: register-vms test-native
+register-vms:
+	mkdir -p build
+	xcrun swiftc platform/macos/PCEmu/Defaults.swift tools/register_vm_defaults.swift -o build/register-vm-defaults
+	./build/register-vm-defaults "$(CURDIR)"
+test-native: app-native
+	./tools/build.sh pcemu session-library-tests frontend-input-tests frontend-tests snapshot-tests
+	./build/session-library-tests
+	python3 -m unittest discover -s tests -p test_session_control.py
+	xcrun swiftc platform/macos/PCEmu/Defaults.swift tests/default_machines_test.swift -o build/default-machines-tests
+	./build/default-machines-tests
+	./build/frontend-input-tests
+	./build/frontend-tests
+	./build/snapshot-tests

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <string_view>
 #include <vector>
 namespace pc {
 // UI events use USB HID keyboard usages, never toolkit keycodes or guest scan codes.
@@ -20,6 +21,7 @@ class Frontend {
   public:
     virtual ~Frontend() = default;
     virtual std::vector<FrontendEvent> poll() = 0;
+    virtual void reportError(std::string_view) {}
     // Pixels are borrowed only for this call, in 0xAARRGGBB format.
     virtual void present(std::span<const uint32_t> pixels, unsigned width, unsigned height,
                          DisplayShape shape = DisplayShape::SquarePixels) = 0;

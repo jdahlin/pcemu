@@ -1,0 +1,35 @@
+{
+  "workload": "2 billion real-mode INC/JMP instructions, 512-byte synthetic boot disk; headless, no network/control/display IO",
+  "scope": "Final session extraction only, same linked engine objects; excludes SwiftUI rendering and input bridge costs. Six alternating pairs; elapsed guest-loop wall time.",
+  "seconds": {
+    "before": [
+      1.10816,
+      1.11296,
+      1.11098,
+      1.08643,
+      1.0726,
+      1.07213
+    ],
+    "library": [
+      1.10029,
+      1.10082,
+      1.10546,
+      1.08351,
+      1.0601,
+      1.07498
+    ]
+  },
+  "instructions": {
+    "before": 2000000014,
+    "library": 2000000014
+  },
+  "medianSeconds": {
+    "before": 1.097295,
+    "library": 1.0918999999999999
+  },
+  "medianChangePercent": -0.4916635909213096,
+  "executables": {
+    "pcemu-session-baseline": "a45765151ef7d8340f588f539f31234e37400b76eba66c868315dfb2dc3eef4d",
+    "pcemu": "c2afdc76f5c25557ef34692c51441badf817c016a456768f1f12723afbde415f"
+  }
+}

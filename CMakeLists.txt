@@ -49,6 +49,7 @@ set(CORE
   src/ne2000.cpp
 )
 set(SESSION
+  src/pc_session.cpp
   src/pc_display.cpp
   src/session_diagnostics.cpp
   src/cpu_benchmarks.cpp
@@ -129,7 +130,7 @@ set(HARDWARE_MODELS
 
 # Share objects across executables with identical compilation settings.
 function(pcemu_program name)
-  cmake_parse_arguments(P "PROFILE;SANITIZE;SDL;ZSTD;HVF" "" "SOURCES" ${ARGN})
+  cmake_parse_arguments(P "PROFILE;SANITIZE;SDL;ZSTD;HVF;STATIC" "" "SOURCES" ${ARGN})
   if(P_HVF AND NOT (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64"))
     return()
   endif()
@@ -155,7 +156,11 @@ function(pcemu_program name)
     endif()
     list(APPEND objects $<TARGET_OBJECTS:${object}>)
   endforeach()
-  add_executable(${name} EXCLUDE_FROM_ALL ${objects})
+  if(P_STATIC)
+    add_library(${name} STATIC EXCLUDE_FROM_ALL ${objects})
+  else()
+    add_executable(${name} EXCLUDE_FROM_ALL ${objects})
+  endif()
   if(name STREQUAL "pcemu")
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
   endif()
@@ -694,3 +699,17 @@ pcemu_program(arm-hyperv-sanitized-tests SANITIZE
     src/arm_hyperv.cpp
     tests/arm_hyperv_test.cpp
 )
+
+# Toolkit-independent embeddable x86 session. No SDL frontend is linked.
+pcemu_program(pcemu-session STATIC ZSTD SOURCES ${CORE} ${SESSION} src/network.cpp)
+target_include_directories(pcemu-session PUBLIC ${PROJECT_SOURCE_DIR}/src)
+if(APPLE)
+  add_library(pcemu-native-core STATIC EXCLUDE_FROM_ALL platform/macos/PCEmu/NativeBridge.cpp)
+  target_include_directories(pcemu-native-core PRIVATE src)
+  target_link_libraries(pcemu-native-core PRIVATE pcemu-session)
+endif()
+
+add_executable(session-library-tests EXCLUDE_FROM_ALL tests/session_library_test.cpp)
+target_include_directories(session-library-tests PRIVATE src)
+target_link_libraries(session-library-tests PRIVATE pcemu-session)
+add_test(NAME session-library-tests COMMAND session-library-tests)

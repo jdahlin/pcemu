@@ -11,6 +11,8 @@ if [ "${1:-}" = --help ]; then
     exit 0
 fi
 
+ram_mb=${PCEMU_RAM_MB:-4096}
+cpus=${PCEMU_CPUS:-2}
 frontend=--gui
 if [ "${1:-}" = --spice ]; then
     shift
@@ -32,11 +34,11 @@ done
 
 ./tools/build.sh pcemu-hvf
 python3 tools/build_hvf_app.py
-python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus --msi
+python3 tools/build_arm_platform.py --cpus "$cpus" --ram-mb "$ram_mb" --hyperv --vmbus --msi
 mkdir -p build/windows11-sdl
 echo 'Starting Windows with seamless mouse and host cursor.'
 exec ./build/PCEmu11.app/Contents/MacOS/pcemu-hvf --machine arm64-uefi $frontend --run-forever \
-    --ram-mb 4096 --cpus 2 --hyperv vmbus --network user --virtio-msix \
+    --ram-mb "$ram_mb" --cpus "$cpus" --hyperv vmbus --network user --virtio-msix \
     --disk-controller virtio --virtio-transport pci \
     --virtio-gpu --virtio-serial --virtio-balloon --balloon-pfn64 \
     --disk media/windows11-arm64/system.qcow2 \
