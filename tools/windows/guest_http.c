@@ -65,7 +65,9 @@ void mainCRTStartup(void) {
     }
     HANDLE session = WinHttpOpen(L"PCEmuWinPE/1.0", 1, 0, 0, 0);
     if (!session) fail("open");
-    WinHttpSetTimeouts(session, 10000, 10000, 60000, 60000);
+    // Applying a large WIM to a QCOW2 target can stall reads while the guest
+    // services storage writes. Keep the per-read timeout above that pause.
+    WinHttpSetTimeouts(session, 10000, 10000, 60000, 300000);
     HANDLE connection = WinHttpConnect(session, L"10.0.2.2", 8080, 0);
     if (!connection) fail("connect");
     HANDLE request = WinHttpOpenRequest(connection, post ? L"POST" : L"GET", post ? L"/report" : args[2], 0, 0, 0, 0);
