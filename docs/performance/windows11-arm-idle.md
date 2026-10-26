@@ -82,3 +82,64 @@ HVF waits and vCPU synchronization; no further optimization is claimed here.
 
 Raw intervals, including background-active runs, binary identity and configuration
 are retained in [the measurement record](windows11-arm-idle-2026-10-26.json).
+
+## Residual CPU follow-up
+
+A subsequent boot used the same executable code/data segments (the copied app
+was re-signed), 4 GiB/two vCPUs, with the desktop visible. Six 30-second windows
+after 15 seconds settling measured **34.05%, 23.42%, 18.92%, 8.68%, 12.57%,
+19.67% CPU** (median 19.29%). Disk requests/sec were respectively 131.18, 34.33,
+2.47, 4.97, 5.97, 17.23. This does **not** reproduce a stable 7% baseline:
+Windows work changes between boots and continues with little disk traffic.
+The earlier 6.79% observation remains valid for its recorded windows, but is
+not a guaranteed idle level.
+
+The profiler now supports `--threads`, using `PROC_PIDLISTTHREADS` plus
+`PROC_PIDTHREADINFO`. These thread counters are already nanoseconds; process
+rusage times still require mach timebase conversion. The CPU sums matched the
+process within 0.108 percentage points over all six windows. Transient threads
+missing at an endpoint are excluded, and snapshots are sequential.
+
+Thread roles were identified from stack samples and matched to thread handles
+using cumulative counters from `PROC_PIDTHREADID64INFO`: the four matches differed
+by only 0–42 microseconds. This avoids guessing roles from thread enumeration
+order. Instruments/xctrace was unavailable on this host.
+
+| Role | Quietest window (8.68% total) | Range over all six windows |
+| --- | --- | --- |
+| Main / vCPU 0 / device processing / display | 4.98% | 4.98–20.48% |
+| Secondary vCPU 1 | 2.60% | 2.60–10.44% |
+| Run-deadline watchdog | 1.01% | 1.01–2.76% |
+| Network readiness worker | 0.0005% | 0–0.021% |
+
+The five-second quieter stack capture showed primary and secondary vCPUs mostly
+waiting inside HVF, with secondary finish/dispatch synchronization also present.
+The watchdog waited/rearmed its condition-variable deadline; the network worker
+blocked in poll. There were no SDL present or pixel conversion frames, and only
+12 main-thread wall samples in visible-row comparison. Waiting stack counts are
+not charged as CPU time; the table above comes from actual CPU counters. The
+stack capture overlapped the fourth interval, so its observer overhead is not
+isolated.
+
+Hyper-V counter snapshots around these windows recorded approximately 1,982–3,798
+timer configuration/count writes per second (`0xb0000`/`0xb0001`), 42–69 synthetic
+timer deliveries/sec, 307–547 IPI calls/sec and only 0.7–6.7 context-sync calls/sec.
+Those counts identify frequent exits, not their individual CPU costs. In
+particular, this does not justify blaming instruction-context barriers for the
+remaining load.
+
+The next measured candidate is the run-deadline watchdog: `HvfMachine::run`
+increments generation, arms and notifies it for every run, then disarms/notifies
+it after the exit. Thousands of short exits therefore repeatedly rebuild a timed
+wait, and the thread alone consumes 1–2.76 CPU percentage points. A follow-up
+should test retaining the deadline across short exits or reducing notifications,
+while preserving cancellation, input latency and timer deadlines. The remaining
+main/secondary CPU includes guest execution and host coordination; these external
+profiles cannot precisely separate their CPU costs. Per-phase CPU instrumentation
+would be needed before claiming savings there. No additional execution behavior
+was changed in this follow-up.
+
+Raw windows, thread matches, binary identities and Hyper-V counter rates are in
+[the residual measurement record](windows11-arm-residual-2026-10-26.json).
+Local stack captures remain in `build/windows11-idle-profile/residual-*.sample.txt`.
+Reproduce the CPU split by adding `--threads` to the profiler command above.
