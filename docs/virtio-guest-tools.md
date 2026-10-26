@@ -33,6 +33,35 @@ queue changes. Indirect descriptors, packed rings and EVENT_IDX are not
 advertised. Each queue retains its own indices and interrupt vector. PCI also
 forwards device configuration writes and the configuration generation byte.
 
+## Balloon memory coordination
+
+`--virtio-balloon` exposes PCI 1AF4:1045 in slot 6, INTx SPI 54 or MSI-X.
+`--balloon-target-mb N` requests N MiB of guest memory for the balloon (zero by
+default). Inflate/deflate PFNs are validated before accounting changes, actual
+size is written by the guest, and the third queue implements host-polled memory
+statistics. Missing service-provided statistics remain unknown; the Windows
+balloon user service has not been installed or started by this validation.
+
+Host discard hints are permitted only after negotiating MUST_TELL_HOST and only
+for complete host pages whose constituent 4 KiB guest pages are all ballooned.
+The Darwin backend uses MADV_DONTNEED; accepted hints do not establish an equal
+reduction in resident host memory. A driver that omits MUST_TELL_HOST can still
+coordinate guest memory, but PCEmu issues no discard hints for it.
+
+The signed Windows 0.1.302 balloon package sends arrays of 64-bit PFNs instead
+of the specified 32-bit entries. The normal device correctly rejects the zero
+upper half as an invalid guest page. For this specific package, opt in to
+`--balloon-pfn64`; it changes PFN parsing on both inflate and deflate queues and
+continues to validate all guest addresses. It is not advertised as a VirtIO
+feature or automatically inferred. Remove this option with a corrected driver.
+[Upstream fix 9f96702d8206](https://github.com/virtio-win/kvm-guest-drivers-windows/commit/9f96702d8206)
+was merged on 2026-10-26, after the pinned signed package was built.
+
+The native WinPE test with this option observed exactly 16,384 inflated pages
+(64 MiB), guest-written actual=16,384, and all 16,384 pages returned on shutdown.
+No discard hints were issued because this Windows driver does not negotiate
+MUST_TELL_HOST. [Evidence](measurements/windows-virtio-balloon-2026-10-26.json).
+
 ## Validation
 
 ```sh
@@ -42,6 +71,7 @@ make test-virtio-serial
 PATH=/opt/homebrew/opt/llvm/bin:$PATH python3 tools/build_windows_guest.py
 python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus --msi
 python3 tools/smoke_windows_virtio_serial.py
+python3 tools/smoke_windows_virtio_serial.py --balloon
 ```
 
 The headless runner uses the already available official ARM64 boot WIM/ISO,

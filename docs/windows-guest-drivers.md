@@ -18,7 +18,7 @@ and viosock. Packages without matching hardware are staged, not active.
 | SCSI | vioscsi 0.1.302 | Staged; separate virtio-scsi controller absent |
 | Serial | vioserial 0.1.302 | Named agent port implemented; signed ARM64 WinPE I/O test, opt-in PCI device |
 | Input | vioinput 0.1.302 | Staged; current input uses working USB HID |
-| Balloon | Balloon 0.1.302 | Staged; balloon device absent |
+| Balloon | Balloon 0.1.302 | Inflate/deflate verified with explicit PFN64 compatibility; see guest-tool device notes |
 | Display | viogpudo 0.1.302 | Staged; currently RAMFB with Microsoft Basic Display |
 | Shared filesystem | viofs 0.1.302 | Staged; host filesystem device/backend absent |
 | Memory hotplug | viomem 0.1.302 | Staged; host memory-hotplug device absent |

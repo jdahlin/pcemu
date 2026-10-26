@@ -119,6 +119,7 @@ set(HARDWARE_MODELS
   src/virtio_rng.cpp
   src/virtio_device.cpp
   src/virtio_serial.cpp
+  src/virtio_balloon.cpp
   src/guest_agent_socket.cpp
   src/virtio_pci.cpp
   src/nvme.cpp
@@ -356,6 +357,7 @@ pcemu_program(pcemu-hvf SDL ZSTD HVF
     src/virtio_rng.cpp
     src/virtio_device.cpp
     src/virtio_serial.cpp
+    src/virtio_balloon.cpp
     src/guest_agent_socket.cpp
     src/network.cpp
     src/ne2000.cpp
@@ -622,4 +624,13 @@ pcemu_program(virtio-serial-sanitized-tests SANITIZE ZSTD
     src/virtio_serial.cpp
     src/guest_agent_socket.cpp
     tests/virtio_serial_test.cpp
+)
+
+pcemu_program(virtio-balloon-tests ZSTD
+  SOURCES src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp
+    src/virtio_device.cpp src/virtio_balloon.cpp tests/virtio_balloon_test.cpp
+)
+pcemu_program(virtio-balloon-sanitized-tests ZSTD SANITIZE
+  SOURCES src/disk.cpp src/virtio_blk.cpp src/virtio_pci.cpp
+    src/virtio_device.cpp src/virtio_balloon.cpp tests/virtio_balloon_test.cpp
 )

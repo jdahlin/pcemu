@@ -2,6 +2,7 @@
 #include <stdexcept>
 namespace pc {
 void ArmVirtMachine::checkDeviceErrors() const {
+    if (balloon && !balloon->error().empty()) throw std::runtime_error("Virtio balloon requires reset: " + balloon->error());
     for (auto *device : {block.get(), extraBlock.get()})
         if (device && !device->error().empty())
             throw std::runtime_error("Virtio device requires reset: " + device->error());
@@ -30,6 +31,7 @@ void ArmVirtMachine::bindDevices() {
     attach("virtio-rng", 3, rngPci.get());
     attach("usb-xhci", 4, usb.get());
     attach("virtio-serial", 5, serialPci.get());
+    attach("virtio-balloon", 6, balloonPci.get());
     // NVMe had precedence over virtio BARs in the original platform decoder.
     attach("nvme", 0, nvme.get());
 

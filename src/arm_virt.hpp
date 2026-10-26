@@ -17,6 +17,7 @@
 #include "virtio_net.hpp"
 #include "virtio_rng.hpp"
 #include "virtio_serial.hpp"
+#include "virtio_balloon.hpp"
 #include "guest_agent_socket.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
@@ -39,6 +40,9 @@ class ArmVirtMachine {
         bool network = false;
         bool virtioMsix = false;
         bool virtioSerial = false;
+        bool virtioBalloon = false;
+        bool balloonLegacyPfn64 = false;
+        uint32_t balloonTargetMB = 0;
         std::string guestAgentSocket;
         bool hyperv = false;
         bool hypervSynic = false;
@@ -115,6 +119,9 @@ class ArmVirtMachine {
     std::unique_ptr<VirtioRng> rng;
     std::unique_ptr<VirtioPciDevice> serialPci;
     std::unique_ptr<VirtioSerial> serial;
+    std::unique_ptr<VirtioBalloon> balloon;
+    std::unique_ptr<VirtioPciDevice> balloonPci;
+    std::chrono::steady_clock::time_point nextBalloonStats;
     std::unique_ptr<GuestAgentSocket> agentSocket;
     std::unique_ptr<VirtioNet> net;
     std::unique_ptr<Network> gateway;

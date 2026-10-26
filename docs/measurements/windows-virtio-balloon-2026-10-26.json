@@ -1,0 +1,39 @@
+{
+  "verified": true,
+  "binarySHA256": "7ca613ee99af3d3635f15b511dbbd88a1d12ef9f8fca6ce9b64cfcd7379a6a16",
+  "guest": "Microsoft ARM64 Windows PE 26100.9457",
+  "bytesToGuest": 16,
+  "guestReport": "/Users/johandahlin/dev/pcemu/build/windows-serial-m3erg2q_/reports/report-1793032579987572000.log",
+  "serial": {
+    "ready": false,
+    "open": false,
+    "received": 16,
+    "transmitted": 45,
+    "completions": 18,
+    "messageInterrupts": 11
+  },
+  "scope": "Signed vioserial driver and original test process; not a QEMU guest-agent service.",
+  "balloonObserved": {
+    "targetPages": 16384,
+    "actualPages": 16384,
+    "inflatedPages": 16384,
+    "inflatePages": 16384,
+    "deflatePages": 0,
+    "discardHintBytes": 0,
+    "discardFailures": 0,
+    "statistics": {
+      "65535": 18446744073709551615
+    }
+  },
+  "balloonFinal": {
+    "targetPages": 16384,
+    "actualPages": 0,
+    "inflatedPages": 0,
+    "inflatePages": 16384,
+    "deflatePages": 16384,
+    "discardHintBytes": 0,
+    "discardFailures": 0,
+    "statistics": {}
+  },
+  "temporaryMediaRemoved": true
+}

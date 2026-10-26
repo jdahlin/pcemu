@@ -1,4 +1,5 @@
 #include "arm_virt.hpp"
+#include <sys/mman.h>
 #include <algorithm>
 #include <array>
 #include <filesystem>
@@ -225,6 +226,18 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 3, 0x07800001, 4, [this](bool level) { vm.setSPI(53, level); }, msi);
             if (!c.guestAgentSocket.empty()) agentSocket = std::make_unique<GuestAgentSocket>(c.guestAgentSocket);
         }
+        if (c.virtioBalloon || c.balloonTargetMB) {
+            balloon = std::make_unique<VirtioBalloon>(vm.ram(), HvfMachine::ramBase,
+                [this](bool level, unsigned queue) { if (balloonPci) balloonPci->irq(level, queue); },
+                size_t(sysconf(_SC_PAGESIZE)), [this](uint64_t address, size_t length) {
+                    return madvise(vm.ram().data() + (address - HvfMachine::ramBase), length, MADV_DONTNEED) == 0;
+                }, c.balloonLegacyPfn64);
+            balloonPci = std::make_unique<VirtioPciDevice>(
+                [this](unsigned o, unsigned w) { return balloon->read(o, w); },
+                [this](unsigned o, uint64_t v, unsigned w) { balloon->write(o, v, w); },
+                5, 0x05800001, 3, [this](bool level) { vm.setSPI(54, level); }, msi);
+            balloon->setTargetPages(c.balloonTargetMB * 256);
+        }
         bindDevices();
         stage("loading and mapping firmware ROM");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
@@ -293,6 +306,23 @@ std::string ArmVirtMachine::hypervReport() const {
         ",\"open\":" + std::string(serial->portOpen() ? "true" : "false") +
         ",\"received\":" + std::to_string(serial->received) + ",\"transmitted\":" + std::to_string(serial->transmitted) +
         ",\"completions\":" + std::to_string(serial->completions) + ",\"messageInterrupts\":" + std::to_string(serialPci->messageInterrupts) + "}";
+    if (balloon) {
+        report += ",\"virtioBalloon\":{\"targetPages\":" + std::to_string(balloon->targetPages()) +
+            ",\"actualPages\":" + std::to_string(balloon->actualPages()) +
+            ",\"inflatedPages\":" + std::to_string(balloon->inflatedPages()) +
+            ",\"inflatePages\":" + std::to_string(balloon->inflatePages) +
+            ",\"deflatePages\":" + std::to_string(balloon->deflatePages) +
+            ",\"discardHintBytes\":" + std::to_string(balloon->discardBytes) +
+            ",\"discardFailures\":" + std::to_string(balloon->discardFailures) +
+            ",\"statistics\":{";
+        bool first = true;
+        for (auto [tag, value] : balloon->statistics()) {
+            if (!first) report += ',';
+            first = false;
+            report += "\"" + std::to_string(tag) + "\":" + std::to_string(value);
+        }
+        report += "}}";
+    }
     report += ",\"instructionContextBarriers\":[";
     for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
         if (cpu) report += ',';
@@ -347,6 +377,10 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (agentSocket) {
         agentSocket->pump(*serial);
         slice = std::min(slice, std::chrono::milliseconds(10));
+    }
+    if (balloon && std::chrono::steady_clock::now() >= nextBalloonStats) {
+        balloon->requestStats();
+        nextBalloonStats = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     }
     checkDeviceErrors();
     hyperv.service();

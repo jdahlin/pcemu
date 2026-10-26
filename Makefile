@@ -245,3 +245,9 @@ test-virtio-serial: build/virtio-serial-tests
 	./build/virtio-serial-tests
 
 test test-hvf: test-virtio-serial
+
+.PHONY: test-virtio-balloon
+test-virtio-balloon: build/virtio-balloon-tests
+	./build/virtio-balloon-tests
+
+test test-hvf: test-virtio-balloon

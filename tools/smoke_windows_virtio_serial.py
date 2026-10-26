@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--wim', type=Path, default=ROOT / 'build/windows11-install/boot.wim')
     parser.add_argument('--binary', type=Path, default=ROOT / 'build/pcemu-hvf')
     parser.add_argument('--keep-artifacts', action='store_true')
+    parser.add_argument('--balloon', action='store_true', help='Also verify a 64 MiB signed Windows balloon inflation')
     args = parser.parse_args()
     iso, source_wim = args.iso.resolve(strict=True), args.wim.resolve(strict=True)
     work = Path(tempfile.mkdtemp(prefix='windows-serial-', dir=ROOT / 'build'))
@@ -37,6 +38,8 @@ def main():
     pcemu.mkdir(parents=True)
     shutil.copytree(ROOT / 'media/netkvm-arm64-0.1.302', pcemu / 'NETKVM')
     shutil.copytree(ROOT / 'media/virtio-arm64-0.1.302/vioserial', pcemu / 'VIOSERIAL')
+    if args.balloon:
+        shutil.copytree(ROOT / 'media/virtio-arm64-0.1.302/Balloon', pcemu / 'BALLOON')
     for source, name in [('guest-http', 'HTTP'), ('check-serial', 'SERIAL')]:
         shutil.copyfile(ROOT / f'build/windows-guest/{source}.exe', pcemu / f'{name}.EXE')
     (pcemu / 'PROBE.CMD').write_bytes(
@@ -44,6 +47,9 @@ def main():
         b'wpeutil InitializeNetwork\r\ndrvload X:\\PCEMU\\VIOSERIAL\\vioser.inf\r\n'
         b'if errorlevel 1 exit /b 1\r\npnputil /enum-devices /connected\r\n'
         b'X:\\PCEMU\\SERIAL.EXE\r\nexit /b %errorlevel%\r\n')
+    if args.balloon:
+        probe = pcemu / 'PROBE.CMD'
+        probe.write_bytes(probe.read_bytes().replace(b'pnputil /enum-devices', b'drvload X:\\PCEMU\\BALLOON\\balloon.inf\r\nif errorlevel 1 exit /b 1\r\npnputil /enum-devices'))
     (pcemu / 'WRAPPER.CMD').write_bytes(
         b'@echo off\r\ncall X:\\PCEMU\\PROBE.CMD > X:\\PCEMU\\PROBE.LOG 2>&1\r\n'
         b'set RC=%errorlevel%\r\necho PCEMU_SERIAL_PROBE_RC=%RC% >> X:\\PCEMU\\PROBE.LOG\r\n'
@@ -65,6 +71,9 @@ def main():
                '--disk', str(boot), '--vars', str(work / 'vars.bin'), '--virtio-serial',
                '--guest-agent-socket', str(socket_path), '--run-forever',
                '--hyperv-stats', str(work / 'devices.json'), '--framebuffer-ppm', str(work / 'console.ppm')]
+    if args.balloon:
+        command += ['--virtio-balloon', '--balloon-target-mb', '64', '--balloon-pfn64']
+    balloon_observed = None
     server = ThreadingHTTPServer(('127.0.0.1', 8080), make_handler(iso, reports))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -95,6 +104,19 @@ def main():
                     if b'PCEMU_SERIAL_READY\n' not in data:
                         time.sleep(0.1)
                         continue
+                    if args.balloon:
+                        while time.monotonic() < deadline:
+                            process.send_signal(signal.SIGUSR1)
+                            time.sleep(0.5)
+                            try:
+                                current = json.loads((work / 'devices.json').read_text())['virtioBalloon']
+                            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                                continue
+                            if current['actualPages'] == 16384 and current['inflatedPages'] == 16384:
+                                balloon_observed = current
+                                break
+                        if balloon_observed is None:
+                            raise RuntimeError('Windows balloon did not reach the requested 64 MiB')
                     payload = bytes([0, 1, 2, 3, 255, 254, 128, 127, 10, 13, 42, 99, 100, 0, 255, 17])
                     client.sendall(payload[:7]); time.sleep(0.02); client.sendall(payload[7:])
                     while b'PCEMU_SERIAL_ROUNDTRIP_OK\n' not in data:
@@ -117,6 +139,9 @@ def main():
                   'guest': 'Microsoft ARM64 Windows PE 26100.9457', 'bytesToGuest': 16,
                   'guestReport': str(matching[0]), 'serial': stats,
                   'scope': 'Signed vioserial driver and original test process; not a QEMU guest-agent service.'}
+        if args.balloon:
+            result['balloonObserved'] = balloon_observed
+            result['balloonFinal'] = json.loads((work / 'devices.json').read_text())['virtioBalloon']
         if not args.keep_artifacts:
             for path in (wim, boot, work / 'vars.bin.qcow2', work / 'console.ppm'):
                 path.unlink(missing_ok=True)
