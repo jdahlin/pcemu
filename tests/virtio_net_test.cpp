@@ -72,6 +72,7 @@ int main() {
         f.ram[0x8000 + i] = i;
     f.tx();
     check(f.net.transmitted == 1 && f.net.outgoing.size() == 1 && f.irq);
+    check(f.net.interruptQueue() == 1);
     check(f.net.outgoing.front().size() == 60 && f.net.outgoing.front().front() == 12);
     check(f.get(0x6002, 2) == 1 && f.get(0x6008, 4) == 0);
     f.net.write(0x64, 1);
@@ -83,6 +84,7 @@ int main() {
     std::vector<uint8_t> frame(60, 0xa5);
     f.net.receive(frame.data(), frame.size());
     check(f.net.received == 1 && f.get(0x3008, 4) == 72 && f.irq);
+    check(f.net.interruptQueue() == 0);
     check(
         std::all_of(f.ram.begin() + 0x9000, f.ram.begin() + 0x900c, [](auto b) { return b == 0; }));
     check(f.ram[0x900c] == 0xa5 && f.ram[0xa000] == 0xa5);

@@ -1,6 +1,7 @@
 """Validate matching ACPI and compiled device-tree CPU topology."""
 from pathlib import Path
 import json
+import struct
 import shutil
 import subprocess
 import sys
@@ -53,6 +54,24 @@ class ArmPlatform(unittest.TestCase):
             self.assertTrue(manifest['vmbus'])
             self.assertTrue(manifest['hyperv'])
             self.assertIn('SSDT', manifest['tableOffsets'])
+
+    def test_msi_frame_matches_acpi_and_device_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = build(2, Path(directory), 4096, hyperv=True, vmbus=True, msi=True)
+            manifest = json.loads((output / 'acpi/manifest.json').read_text())
+            self.assertTrue(manifest['msi'])
+            tables = (output / 'acpi/tables').read_bytes()
+            frame = manifest['tableOffsets']['APIC'] + 44 + 2 * 80 + 24 + 16
+            self.assertEqual(struct.unpack_from('<BBHIQIHH', tables, frame),
+                             (13, 24, 0, 0, 0x08020000, 1, 64, 64))
+            node = '/interrupt-controller@8000000/msi-controller@8020000'
+            spi = subprocess.check_output(['fdtget', '-t', 'i', str(output / 'pcemu-virt.dtb'),
+                                           node, 'arm,msi-base-spi'], text=True)
+            self.assertEqual(spi.strip(), '64')
+            tree = subprocess.check_output(['dtc', '-I', 'dtb', '-O', 'dts',
+                                            str(output / 'pcemu-virt.dtb')], text=True)
+            self.assertIn('arm,gic-v2m-frame', tree)
+            self.assertIn('msi-parent', tree)
 
     def test_invalid_memory(self):
         for size in (0, 255, 16385):

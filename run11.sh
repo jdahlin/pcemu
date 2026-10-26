@@ -21,11 +21,11 @@ done
 
 ./tools/build.sh pcemu-hvf
 python3 tools/build_hvf_app.py
-python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus
+python3 tools/build_arm_platform.py --cpus 2 --ram-mb 4096 --hyperv --vmbus --msi
 mkdir -p build/windows11-sdl
 echo 'Starting Windows. Click to capture input; Cmd+G releases it.'
 exec ./build/PCEmu11.app/Contents/MacOS/pcemu-hvf --machine arm64-uefi --gui --run-forever \
-    --ram-mb 4096 --cpus 2 --hyperv vmbus --network user \
+    --ram-mb 4096 --cpus 2 --hyperv vmbus --network user --virtio-msix \
     --disk-controller virtio --virtio-transport pci \
     --disk media/windows11-arm64/system.qcow2 \
     --disk-overlay media/windows11-arm64/system-live.pcd \

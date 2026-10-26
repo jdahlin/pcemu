@@ -143,6 +143,10 @@ struct HvfMachine::Impl {
                 if (result == HV_SUCCESS)
                     result = hv_gic_config_set_redistributor_base(config, 0x080a0000);
                 if (result == HV_SUCCESS)
+                    result = hv_gic_config_set_msi_region_base(config, msiFrameBase);
+                if (result == HV_SUCCESS)
+                    result = hv_gic_config_set_msi_interrupt_range(config, msiBase, msiCount);
+                if (result == HV_SUCCESS)
                     result = hv_gic_create(config);
                 os_release(config);
                 check(result, "create GICv3");
@@ -288,6 +292,13 @@ void HvfMachine::setSPI(uint32_t interrupt, bool level) {
     if (!impl->gicEnabled) throw std::runtime_error("GICv3 is not enabled");
     if (__builtin_available(macOS 15.0, *)) check(hv_gic_set_spi(interrupt, level), "set GIC SPI");
     else throw std::runtime_error("GICv3 requires macOS 15");
+}
+void HvfMachine::sendMSI(uint64_t address, uint32_t interrupt) {
+    impl->requireOwner();
+    if (!impl->gicEnabled || address != msiSetSpi || interrupt < msiBase || interrupt - msiBase >= msiCount)
+        throw std::runtime_error("Invalid GIC MSI target");
+    if (__builtin_available(macOS 15.0, *)) check(hv_gic_send_msi(address, interrupt), "send GIC MSI");
+    else throw std::runtime_error("GIC MSI requires macOS 15");
 }
 void HvfMachine::mapROM(uint64_t address, std::span<const uint8_t> bytes) {
     impl->requireOwner();

@@ -102,7 +102,7 @@ def gas(address):
     return struct.pack('<BBBBQ', 0, 32, 0, 3, address)
 
 
-def build(cpu_count=1, hyperv=False, vmbus=False):
+def build(cpu_count=1, hyperv=False, vmbus=False, msi=False):
     if vmbus and not hyperv:
         raise ValueError('VMBus requires Hyper-V identity')
     if not 1 <= cpu_count <= 8:
@@ -124,6 +124,8 @@ def build(cpu_count=1, hyperv=False, vmbus=False):
     gicd = struct.pack('<BBHIQIB3x', 12, 24, 0, 0, 0x08000000, 0, 3)
     gicr = struct.pack('<BBHQI', 14, 16, 0, 0x080a0000, 0x20000 * cpu_count)
     madt = struct.pack('<II', 0, 0) + giccs + gicd + gicr
+    if msi:
+        madt += struct.pack('<BBHIQIHH', 13, 24, 0, 0, 0x08020000, 1, 64, 64)
     # One virtual package with distinct cores; no invented physical cache data.
     pptt = struct.pack('<BBHIIII', 0, 20, 0, 1, 0, 0, 0)
     for cpu in range(cpu_count):
@@ -195,6 +197,7 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'build/arm64-fw/acpi')
     parser.add_argument('--hyperv', action='store_true')
     parser.add_argument('--vmbus', action='store_true')
+    parser.add_argument('--msi', action='store_true')
     parser.add_argument('--iasl', type=Path)
     parser.add_argument('--cpus', type=int, default=1, choices=range(1, 9))
     args = parser.parse_args()
@@ -212,10 +215,10 @@ def main():
                         '-p', str(prefix), str(ROOT / 'platform/arm64/vmbus.asl')], check=True)
         if prefix.with_suffix('.aml').read_bytes() != vmbus_ssdt():
             raise ValueError('Recompiled VMBus SSDT differs from vmbus-aml.json')
-    blob, rsdp, loader, offsets = build(args.cpus, args.hyperv, args.vmbus)
+    blob, rsdp, loader, offsets = build(args.cpus, args.hyperv, args.vmbus, args.msi)
     for name, data in [('tables', blob), ('rsdp', rsdp), ('table-loader', loader)]:
         (args.output / name).write_bytes(data)
-    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'hyperv': args.hyperv, 'vmbus': args.vmbus, 'tableOffsets': offsets,
+    (args.output / 'manifest.json').write_text(json.dumps({'cpuCount': args.cpus, 'hyperv': args.hyperv, 'vmbus': args.vmbus, 'msi': args.msi, 'tableOffsets': offsets,
         'tableBytes': len(blob), 'loaderBytes': len(loader)}, indent=2) + '\n')
     print(f'Built ARM ACPI: {len(blob)} table bytes, {len(loader)} loader bytes')
 

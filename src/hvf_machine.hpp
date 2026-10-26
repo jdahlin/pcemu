@@ -40,6 +40,9 @@ class HvfMachine {
     HvfMachine &operator=(const HvfMachine &) = delete;
     std::span<uint8_t> ram();
     void setSPI(uint32_t interrupt, bool level);
+    static constexpr uint64_t msiFrameBase = 0x08020000, msiSetSpi = msiFrameBase + 0x40;
+    static constexpr uint32_t msiBase = 64, msiCount = 64;
+    void sendMSI(uint64_t address, uint32_t interrupt);
     // Backend for the Hyper-V nonsecure distributor view, all VPs stopped.
     uint64_t nativeGicDistributorRead(uint32_t offset) const;
     void nativeGicDistributorWrite(uint32_t offset, uint64_t value);

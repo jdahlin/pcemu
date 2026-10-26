@@ -760,6 +760,28 @@ void selfTest() {
                     "Watchdog failed to stop both uncooperative vCPUs");
         }
     }
+    {
+        HvfMachine vm(2 * 1024 * 1024, true);
+        code(vm, std::array<uint32_t, 14>{
+            0xd2800020, 0xd518cca0, 0xd5033fdf, // SRE
+            0xd2801fe0, 0xd5184600, // PMR
+            0xd2800020, 0xd518cce0, 0xd5033fdf, // group 1 enabled
+            0xd538cc01, 0xd4000002, // IAR -> x1, HVC
+            0xd518cc21, 0xd5033fdf, 0xd538cc01, 0xd4000002}); // EOI, next IAR
+        vm.nativeGicDistributorWrite(0, 0x13);
+        vm.nativeGicDistributorWrite(0x88, 1); // SPI 64 group 1
+        vm.nativeGicDistributorWrite(0x108, 1); // enable SPI 64
+        vm.nativeGicDistributorWrite(0xc10, 2); // edge-triggered
+        vm.nativeGicDistributorWrite(0x6200, 0); // route to VP0
+        rejects([&] { vm.sendMSI(HvfMachine::msiSetSpi + 4, 64); }, "Wrong MSI address accepted");
+        rejects([&] { vm.sendMSI(HvfMachine::msiSetSpi, 63); }, "Non-MSI SPI accepted");
+        vm.sendMSI(HvfMachine::msiSetSpi, 64);
+        auto exit = hvc(vm);
+        require(vm.reg(1) == 64, "Native MSI was not delivered through the GIC");
+        vm.setPC(exit.pc + 4);
+        hvc(vm);
+        require(vm.reg(1) == 1023, "MSI was delivered again after EOI");
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }
@@ -800,6 +822,7 @@ int main(int argc, char **argv) {
                 return 0;
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
+            else if (arg == "--virtio-msix") { uefi.virtioMsix = true; uefiOptions = true; }
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk") { uefi.extraDisk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk-overlay") { uefi.extraDiskOverlay = value(); uefiOptions = true; }
@@ -866,6 +889,7 @@ int main(int argc, char **argv) {
             } else if (arg == "--help") {
                 std::cout << "pcemu-hvf: experimental ARM64 bare-metal platform on Apple Silicon\n"
                              "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
+                             "  --virtio-msix (requires matching --msi platform assets)\n"
                              "  --self-test\n"
                              "  --benchmark-watchdog (standalone headless RAM-only exit benchmark)\n"
                              "  --kernel FILE [--timeout-ms 1..60000]\n"
@@ -894,12 +918,13 @@ int main(int argc, char **argv) {
         if (selectedBackend != pc::ExecutionBackend::Auto && selectedBackend != pc::ExecutionBackend::Hvf)
             throw std::runtime_error("The ARM64 test platform requires --backend hvf or auto");
         if (machine == "arm64-uefi") {
-            if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes || uefi.hyperv) {
+            if (uefi.cpus > 1 || uefi.memoryBytes != pc::ArmVirtMachine::ramBytes || uefi.hyperv || uefi.virtioMsix) {
                 auto directory = "build/arm64-fw/cpus" + std::to_string(uefi.cpus);
                 if (uefi.memoryBytes != pc::ArmVirtMachine::ramBytes)
                     directory += "-ram" + std::to_string(uefi.memoryBytes / (1024 * 1024));
                 if (uefi.hyperv) directory += "-hyperv";
                 if (uefi.hypervVmbus) directory += "-vmbus";
+                if (uefi.virtioMsix) directory += "-msi";
                 if (!dtbExplicit) uefi.dtb = directory + "/pcemu-virt.dtb";
                 if (!acpiExplicit) uefi.acpiDirectory = directory + "/acpi";
             }

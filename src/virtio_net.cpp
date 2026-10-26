@@ -256,6 +256,7 @@ void VirtioNet::signal(Queue &q, uint16_t previous) {
     } else
         send = !(get(q.available, 2) & 1);
     if (send && previous != q.index) {
+        signaledQueue = unsigned(&q - queues.data());
         isr |= 1;
         interrupt(true);
     }

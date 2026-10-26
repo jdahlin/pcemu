@@ -14,7 +14,7 @@
 namespace pc {
 namespace fs = std::filesystem;
 namespace {
-void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hyperv, bool vmbus) {
+void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hyperv, bool vmbus, bool msi) {
     bool foundFadt = false, foundVmbus = false;
     for (size_t at = 0; at + 36 <= blob.size();) {
         uint32_t size = 0;
@@ -46,6 +46,7 @@ void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hy
         if (length < 36 || length > blob.size() - at) throw std::runtime_error("Invalid ACPI table length");
         if (std::string(reinterpret_cast<const char *>(blob.data() + at), 4) == "APIC") {
             unsigned cpus = 0;
+            bool msiFrame = false;
             for (size_t entry = at + 44; entry + 2 <= at + length;) {
                 auto bytes = blob[entry + 1];
                 if (bytes < 2 || bytes > at + length - entry) throw std::runtime_error("Invalid MADT entry");
@@ -54,8 +55,12 @@ void validateCpuTables(std::span<const uint8_t> blob, unsigned expected, bool hy
                         throw std::runtime_error("ACPI CPU affinity does not match the HVF topology");
                     ++cpus;
                 }
+                if (blob[entry] == 13 && bytes == 24 && little(entry + 8, 8) == HvfMachine::msiFrameBase &&
+                    little(entry + 16, 4) == 1 && little(entry + 20, 2) == HvfMachine::msiCount &&
+                    little(entry + 22, 2) == HvfMachine::msiBase) msiFrame = true;
                 entry += bytes;
             }
+            if (msi && !msiFrame) throw std::runtime_error("MSI-X requires ARM platform assets built with --msi");
             if (cpus != expected) throw std::runtime_error("ACPI CPU count does not match --cpus; build matching ARM platform assets");
             return;
         }
@@ -111,7 +116,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     });
     fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
-    validateCpuTables(tables, c.cpus, c.hyperv, c.hypervVmbus);
+    validateCpuTables(tables, c.cpus, c.hyperv, c.hypervVmbus, c.virtioMsix);
     fwCfg.addFile("etc/acpi/tables", std::move(tables));
     fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
     fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
@@ -142,6 +147,8 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             throw std::runtime_error("Disk controller must be virtio or nvme");
         if (c.diskController == "nvme" && c.virtioTransport != "pci")
             throw std::runtime_error("NVMe requires PCI transport");
+        VirtioPciDevice::Message msi;
+        if (c.virtioMsix) msi = [this](uint64_t address, uint32_t data) { vm.sendMSI(address, data); };
         if (!c.disk.empty()) {
             const auto parent = fs::canonical(c.disk).string();
             std::ifstream probe(parent, std::ios::binary);
@@ -167,7 +174,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 block = std::make_unique<VirtioBlock>(*disk, vm.ram(), HvfMachine::ramBase,
                                                      [this](bool level) { if (pci) pci->irq(level); else vm.setSPI(48, level); });
                 if (c.virtioTransport == "pci")
-                    pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); });
+                    pci = std::make_unique<VirtioPciBlock>(*block, [this](bool level) { vm.setSPI(48, level); }, msi);
             }
         } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
         if (!c.extraDisk.empty()) {
@@ -186,16 +193,16 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 throw std::runtime_error("Extra disk overlay belongs to a different parent");
             extraBlock = std::make_unique<VirtioBlock>(*extraDisk, vm.ram(), HvfMachine::ramBase,
                 [this](bool level) { if (extraPci) extraPci->irq(level); });
-            extraPci = std::make_unique<VirtioPciDevice>(*extraBlock, [this](bool level) { vm.setSPI(49, level); });
+            extraPci = std::make_unique<VirtioPciDevice>(*extraBlock, [this](bool level) { vm.setSPI(49, level); }, msi);
         } else if (!c.extraDiskOverlay.empty()) throw std::runtime_error("--extra-disk-overlay requires --extra-disk");
         stage("creating PCI devices and network");
         if (c.network) {
             net = std::make_unique<VirtioNet>(vm.ram(), HvfMachine::ramBase,
-                [this](bool level) { if (netPci) netPci->irq(level); });
+                [this](bool level) { if (netPci) netPci->irq(level, net->interruptQueue()); });
             netPci = std::make_unique<VirtioPciDevice>(
                 [this](unsigned o, unsigned w) { return net->read(o, w); },
                 [this](unsigned o, uint64_t v, unsigned w) { net->write(o, v, w); },
-                1, 0x02000001, 2, [this](bool level) { vm.setSPI(50, level); });
+                1, 0x02000001, 2, [this](bool level) { vm.setSPI(50, level); }, msi);
             gateway = std::make_unique<Network>(c.networkCapture);
             gateway->enableWakeups([this] { vm.requestExit(); });
             if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
@@ -208,7 +215,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         rngPci = std::make_unique<VirtioPciDevice>(
             [this](unsigned o, unsigned w) { return rng->read(o, w); },
             [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
-            4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); });
+            4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); }, msi);
         bindDevices();
         stage("loading and mapping firmware ROM");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
@@ -302,7 +309,17 @@ std::string ArmVirtMachine::hypervReport() const {
                   ",\"pending\":" + std::to_string(gic.pending) +
                   ",\"active\":" + std::to_string(gic.active) + '}';
     }
-    return report + "]}";
+    report += "],\"virtioMsix\":{";
+    bool comma = false;
+    for (const auto &[name, device] : std::initializer_list<std::pair<const char *, VirtioPciDevice *>>{
+            {"block", pci.get()}, {"extraBlock", extraPci.get()}, {"network", netPci.get()}, {"rng", rngPci.get()}}) {
+        if (!device) continue;
+        if (comma) report += ',';
+        comma = true;
+        report += "\"" + std::string(name) + "\":{\"enabled\":" +
+            (device->msixEnabled() ? "true" : "false") + ",\"messages\":" + std::to_string(device->messageInterrupts) + '}';
+    }
+    return report + "}}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {
     bool level = rtc.irq();

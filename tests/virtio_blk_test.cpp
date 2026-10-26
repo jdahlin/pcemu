@@ -208,6 +208,67 @@ int main() {
             net.write(bar + 0x1004, 1, 2);
             check(regs[0x50] == 1);
         }
+        {
+            std::array<uint64_t, 0x140> regs{};
+            regs[0x34] = 256;
+            bool line = false;
+            VirtioPciDevice *endpoint = nullptr;
+            std::vector<std::pair<uint64_t, uint32_t>> messages;
+            VirtioPciDevice pci([&](unsigned o, unsigned) { return regs.at(o); },
+                [&](unsigned o, uint64_t v, unsigned) {
+                    if (o == 0x64) {
+                        regs[0x60] &= ~v;
+                        endpoint->irq(regs[0x60] != 0);
+                    } else regs.at(o) = v;
+                }, 16, 0x03800001, 2, [&](bool v) { line = v; },
+                [&](uint64_t address, uint32_t data) { messages.emplace_back(address, data); });
+            endpoint = &pci;
+            check(pci.configRead(0x7d, 1) == 0x90 && pci.configRead(0x90, 1) == 0x11);
+            check(pci.configRead(0x92, 2) == 2);
+            pci.configWrite(0x10, 0xffffffff, 4);
+            check(pci.configRead(0x10, 4) == 0xffff8000);
+            constexpr uint64_t bar = 0x10000000;
+            pci.configWrite(0x10, bar, 4); pci.configWrite(4, 6, 2);
+            for (unsigned i = 0; i < 3; ++i) {
+                check(pci.read(bar + 0x400c + i * 16, 4) == 1);
+                pci.write(bar + 0x4000 + i * 16, 0x08020040, 8);
+                pci.write(bar + 0x4008 + i * 16, 64 + i, 4);
+            }
+            pci.write(bar + 16, 0, 2);
+            for (unsigned i = 0; i < 2; ++i) {
+                pci.write(bar + 22, i, 2); pci.write(bar + 26, i + 1, 2);
+                check(pci.read(bar + 26, 2) == i + 1);
+            }
+            pci.configWrite(0x92, 0x8000, 2);
+            check(pci.configRead(0x92, 2) == 0x8002);
+            regs[0x60] = 1; pci.irq(true, 1);
+            check(!line && messages.empty() && pci.read(bar + 0x5000, 8) == 4);
+            check(regs[0x60] == 0);
+            pci.write(bar + 0x402c, 0, 4);
+            check(messages.size() == 1 && messages.back() == std::pair<uint64_t, uint32_t>{0x08020040, 66});
+            check(pci.read(bar + 0x5000, 8) == 0);
+            pci.configWrite(0x93, 0xc0, 1); // function mask
+            pci.write(bar + 0x401c, 0, 4); pci.write(bar + 0x400c, 0, 4);
+            regs[0x60] = 1; pci.irq(true, 0);
+            regs[0x60] = 2; pci.irq(true);
+            check(messages.size() == 1 && pci.read(bar + 0x5000, 8) == 3);
+            pci.configWrite(0x93, 0x80, 1);
+            check(messages.size() == 3 && messages[1].second == 64 && messages[2].second == 65);
+            check(pci.read(bar + 0x5000, 8) == 0);
+            pci.write(bar + 26, 99, 2); check(pci.read(bar + 26, 2) == 0xffff);
+            regs[0x60] = 1; pci.irq(true, 1); check(messages.size() == 3);
+            pci.write(bar + 26, 2, 2);
+            pci.configWrite(4, 2, 2); // bus master off: retain the message
+            regs[0x60] = 1; pci.irq(true, 1);
+            check(messages.size() == 3 && pci.read(bar + 0x5000, 8) == 4);
+            pci.configWrite(4, 6, 2); check(messages.size() == 4 && messages.back().second == 66);
+            check(pci.messageInterrupts == 4);
+            pci.write(bar + 20, 0, 1);
+            check(pci.read(bar + 16, 2) == 0xffff && pci.read(bar + 26, 2) == 0xffff);
+            pci.configWrite(0x92, 0, 2);
+            regs[0x60] = 1; pci.irq(true); check(line);
+            check(pci.read(bar + 0x2000, 1) == 1 && !line);
+        }
         fs::remove_all(directory);
         std::cout << checks << " virtio checks passed\n";
     } catch (...) { fs::remove_all(directory); throw; }

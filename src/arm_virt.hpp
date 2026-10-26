@@ -35,6 +35,7 @@ class ArmVirtMachine {
         std::string disk, diskOverlay;
         std::string extraDisk, extraDiskOverlay;
         bool network = false;
+        bool virtioMsix = false;
         bool hyperv = false;
         bool hypervSynic = false;
         uint16_t sshPort = 0;
