@@ -24,33 +24,33 @@ int main() {
     std::vector<std::vector<uint8_t>> replies;
     bool block=false, eventFail=false;
     unsigned events=0, calls=0, closes=0;
-    bus.setSender([&](unsigned vp,unsigned sint,std::span<const uint8_t> p) {
+    bus.set_message_sender([&](unsigned vp,unsigned sint,std::span<const uint8_t> p) {
         check(vp==0 && sint==2); if(block) return uint16_t(0x13);
         replies.emplace_back(p.begin(),p.end()); return uint16_t(0);
     });
     ArmVmbus::Offer offer{};
     offer.channel=7; offer.connection=16; offer.interfaceId[0]=1; offer.instanceId[0]=2;
     auto echo=[&](std::span<const uint8_t> p) { ++calls; return std::vector<uint8_t>(p.begin(),p.end()); };
-    check(!bus.addChannel(offer,echo)); // Notification delivery must exist.
-    bus.setEventSender([&](unsigned vp,unsigned sint,unsigned flag) {
+    check(!bus.add_channel(offer,echo)); // Notification delivery must exist.
+    bus.set_event_sender([&](unsigned vp,unsigned sint,unsigned flag) {
         check(vp==1 && sint==2 && flag==7); ++events;
         return uint16_t(eventFail ? 0x71 : 0);
     });
-    check(bus.addChannel(offer,echo,[&] {++closes;}));
-    check(!bus.addChannel(offer,echo));
+    check(bus.add_channel(offer,echo,[&] {++closes;}));
+    check(!bus.add_channel(offer,echo));
     auto second=offer; second.channel=8; second.connection=17;
-    check(!bus.addChannel(second,echo)); // Same GUID pair.
-    second.instanceId[0]=3; check(bus.addChannel(second,echo));
+    check(!bus.add_channel(second,echo)); // Same GUID pair.
+    second.instanceId[0]=3; check(bus.add_channel(second,echo));
     auto contact=msg(14,40); put(contact,8,0x60000);
-    check(bus.receive(1,contact)==0); bus.service();
+    check(bus.receive_control_message(1,contact)==0); bus.service_channels();
     check(replies.size()==1 && replies[0].size()==20 && replies[0][8]==1);
-    check(!bus.addChannel(offer,echo));
+    check(!bus.add_channel(offer,echo));
     auto header=msg(8,60); put(header,12,42); put(header,16,40,2); put(header,18,1,2);
     put(header,20,16384); // Byte count and zero offset, then four noncontiguous PFNs.
     const unsigned pages[]={8,3,10,5};
     for(unsigned i=0;i<4;++i) put(header,28+8*i,(base>>12)+pages[i],8);
-    check(bus.receive(1,header)==5); // Cannot use an unoffered channel.
-    check(bus.receive(1,msg(3))==0); bus.service();
+    check(bus.receive_control_message(1,header)==5); // Cannot use an unoffered channel.
+    check(bus.receive_control_message(1,msg(3))==0); bus.service_channels();
     check(replies.size()==4 && replies[1].size()==196);
     check(get(replies[1],0)==1 && get(replies[1],184)==7 && get(replies[1],190,2)==1);
     check(get(replies[1],192)==16 && replies[1][8]==1 && replies[1][24]==2);
@@ -59,26 +59,26 @@ int main() {
     check(bus.report().find("\"deliveredOfferReplies\":2")!=std::string::npos);
     check(bus.report().find("\"deliveredOffersDoneReplies\":1")!=std::string::npos);
     block=true;
-    check(bus.receive(1,msg(3))==0); bus.service();
+    check(bus.receive_control_message(1,msg(3))==0); bus.service_channels();
     check(bus.report().find("\"deliveredOfferReplies\":2")!=std::string::npos);
-    block=false; bus.service();
+    block=false; bus.service_channels();
     check(bus.report().find("\"deliveredOfferReplies\":4")!=std::string::npos);
     replies.resize(4); // Remaining test expectations concern the first inventory.
     auto fragment=header; fragment.resize(36);
-    check(bus.receive(1,fragment)==0); bus.service(); check(replies.size()==4);
+    check(bus.receive_control_message(1,fragment)==0); bus.service_channels(); check(replies.size()==4);
     auto body=msg(9,40); put(body,8,0xaabbccdd); put(body,12,42);
     std::copy(header.begin()+36,header.end(),body.begin()+16);
-    check(bus.receive(1,body)==0); bus.service();
+    check(bus.receive_control_message(1,body)==0); bus.service_channels();
     check(get(replies.back(),0)==10 && get(replies.back(),12)==42 && get(replies.back(),16)==0);
     check(bus.report().find("\"deliveredChannelReplies\":1")!=std::string::npos);
-    check(bus.receive(1,body)==0x15);
+    check(bus.receive_control_message(1,body)==0x15);
     auto open=msg(5,148); put(open,12,100); put(open,16,42); put(open,20,2); put(open,24,2);
-    check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
+    check(bus.receive_control_message(1,open)==0); bus.service_channels(); check(get(replies.back(),16)==0xc000000d);
     put(open,20,1); put(open,24,1);
-    check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
-    put(open,24,2); check(bus.receive(1,open)==0); bus.service();
+    check(bus.receive_control_message(1,open)==0); bus.service_channels(); check(get(replies.back(),16)==0xc000000d);
+    put(open,24,2); check(bus.receive_control_message(1,open)==0); bus.service_channels();
     check(get(replies.back(),0)==6 && get(replies.back(),12)==100 && get(replies.back(),16)==0);
-    check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
+    check(bus.receive_control_message(1,open)==0); bus.service_channels(); check(get(replies.back(),16)==0xc000000d);
     ArmGpadl guest(ram,base);
     check(guest.begin_descriptor(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
     ArmVmbusRing outbound(guest,7,42,0,8192), inbound(guest,7,42,8192,8192);
@@ -87,17 +87,17 @@ int main() {
     bool notify=false;
     eventFail=true;
     check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok && notify);
-    check(bus.signalChannel(7)==0); bus.service();
-    check(calls==1 && events==1 && bus.needsService());
+    check(bus.signal_channel(7)==0); bus.service_channels();
+    check(calls==1 && events==1 && bus.needs_service());
     std::vector<uint8_t> received;
     check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
-    eventFail=false; bus.service(); check(calls==1 && events==2 && !bus.needsService());
+    eventFail=false; bus.service_channels(); check(calls==1 && events==2 && !bus.needs_service());
     // One service call may consume at most sixteen packets from each channel.
     for(unsigned i=0;i<40;++i) {
         put(packet,8,i,8); check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
     }
-    check(bus.signalChannel(7)==0); bus.service(); check(calls==17 && bus.needsService());
-    bus.service(); check(calls==33 && bus.needsService()); bus.service(); check(calls==41);
+    check(bus.signal_channel(7)==0); bus.service_channels(); check(calls==17 && bus.needs_service());
+    bus.service_channels(); check(calls==33 && bus.needs_service()); bus.service_channels(); check(calls==41);
     for(unsigned i=0;i<40;++i) {
         check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==i);
     }
@@ -107,53 +107,53 @@ int main() {
     for(unsigned i=0;i<3;++i) {
         put(large,8,200+i,8);
         check(outbound.write_packet(large,notify)==ArmVmbusRing::Result::Ok);
-        check(bus.signalChannel(7)==0); bus.service();
+        check(bus.signal_channel(7)==0); bus.service_channels();
     }
     check(calls==43); // First response queued, second retained, third still in RX.
     for(unsigned i=0;i<3;++i) {
         check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==200+i);
-        bus.service();
+        bus.service_channels();
     }
-    check(calls==44 && !bus.needsService());
+    check(calls==44 && !bus.needs_service());
     auto teardown=msg(11,16); put(teardown,12,42);
-    check(bus.receive(1,teardown)==0x15);
-    auto wrong=teardown; put(wrong,8,8); check(bus.receive(1,wrong)==5);
-    check(bus.receive(1,msg(7,12))==0 && closes==1);
-    check(bus.receive(1,msg(7,12))==0 && closes==1);
-    check(bus.signalChannel(7)==0x15);
-    check(bus.receive(1,teardown)==0); bus.service();
+    check(bus.receive_control_message(1,teardown)==0x15);
+    auto wrong=teardown; put(wrong,8,8); check(bus.receive_control_message(1,wrong)==5);
+    check(bus.receive_control_message(1,msg(7,12))==0 && closes==1);
+    check(bus.receive_control_message(1,msg(7,12))==0 && closes==1);
+    check(bus.signal_channel(7)==0x15);
+    check(bus.receive_control_message(1,teardown)==0); bus.service_channels();
     check(replies.back().size()==12 && get(replies.back(),0)==12 && get(replies.back(),8)==42);
-    check(bus.receive(1,teardown)==0); bus.service(); // Idempotent unknown teardown.
-    check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
+    check(bus.receive_control_message(1,teardown)==0); bus.service_channels(); // Idempotent unknown teardown.
+    check(bus.receive_control_message(1,open)==0); bus.service_channels(); check(get(replies.back(),16)==0xc000000d);
     // Reused mappings cannot retain old packets: guest initializes both ring headers.
     std::fill(ram.begin(),ram.end(),0);
-    check(bus.receive(1,header)==0); bus.service();
-    check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0);
+    check(bus.receive_control_message(1,header)==0); bus.service_channels();
+    check(bus.receive_control_message(1,open)==0); bus.service_channels(); check(get(replies.back(),16)==0);
     // Invalid ring indices close the channel without calling its backend.
-    put(ram,8*4096,4096); check(bus.signalChannel(7)==0); bus.service();
+    put(ram,8*4096,4096); check(bus.signal_channel(7)==0); bus.service_channels();
     check(closes==2 && calls==44 && bus.report().find("\"channelFaults\":1")!=std::string::npos);
-    check(bus.receive(1,teardown)==0); bus.service();
+    check(bus.receive_control_message(1,teardown)==0); bus.service_channels();
     std::fill(ram.begin(),ram.end(),0);
-    check(bus.receive(1,header)==0); bus.service();
+    check(bus.receive_control_message(1,header)==0); bus.service_channels();
     auto silentOpen=open; put(silentOpen,20,UINT32_MAX);
-    check(bus.receive(1,silentOpen)==0); bus.service(); check(get(replies.back(),16)==0);
+    check(bus.receive_control_message(1,silentOpen)==0); bus.service_channels(); check(get(replies.back(),16)==0);
     auto eventCount=events;
     check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
-    check(bus.signalChannel(7)==0); bus.service();
+    check(bus.signal_channel(7)==0); bus.service_channels();
     check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     check(events==eventCount); // Disabled interrupt target does not suppress ring traffic.
-    check(bus.receive(1,msg(16))==0); bus.service(); check(closes==3);
+    check(bus.receive_control_message(1,msg(16))==0); bus.service_channels(); check(closes==3);
     check(bus.report().find("\"deliveredUnloadReplies\":1")!=std::string::npos);
     check(bus.report().find("\"gpadls\":0")!=std::string::npos);
-    check(bus.receive(1,body)==0x15);
-    check(bus.receive(1,contact)==0); bus.service();
-    check(bus.receive(1,header)==5); // Recontact must reoffer before accepting memory.
+    check(bus.receive_control_message(1,body)==0x15);
+    check(bus.receive_control_message(1,contact)==0); bus.service_channels();
+    check(bus.receive_control_message(1,header)==5); // Recontact must reoffer before accepting memory.
     // Queue backpressure is atomic: a rejected offer request adds no partial offers.
     block=true;
-    for(unsigned i=0;i<5;++i) check(bus.receive(1,msg(3))==0);
-    check(bus.receive(1,msg(3))==0x13);
-    auto before=replies.size(); bus.service(); check(replies.size()==before && bus.needsService());
-    block=false; bus.service(); check(replies.size()==before+15 && !bus.needsService());
+    for(unsigned i=0;i<5;++i) check(bus.receive_control_message(1,msg(3))==0);
+    check(bus.receive_control_message(1,msg(3))==0x13);
+    auto before=replies.size(); bus.service_channels(); check(replies.size()==before && bus.needs_service());
+    block=false; bus.service_channels(); check(replies.size()==before+15 && !bus.needs_service());
     // End-to-end host registration, real PostMessage/SignalEvent and SynIC bitmap.
     std::vector<uint8_t> integratedRam(16*4096);
     ArmHyperV hv(true,integratedRam,base,2);
@@ -211,13 +211,13 @@ int main() {
         std::vector<uint8_t> memory(40*4096);
         ArmVmbus padded(memory,base,1);
         std::vector<std::vector<uint8_t>> responses;
-        padded.setSender([&](unsigned,unsigned,std::span<const uint8_t> p) {
+        padded.set_message_sender([&](unsigned,unsigned,std::span<const uint8_t> p) {
             responses.emplace_back(p.begin(),p.end()); return uint16_t(0);
         });
-        padded.setEventSender([](unsigned,unsigned,unsigned){return uint16_t(0);});
-        check(padded.addChannel(offer,echo));
-        check(padded.receive(1,contact)==0); padded.service();
-        check(padded.receive(1,msg(3))==0); padded.service();
+        padded.set_event_sender([](unsigned,unsigned,unsigned){return uint16_t(0);});
+        check(padded.add_channel(offer,echo));
+        check(padded.receive_control_message(1,contact)==0); padded.service_channels();
+        check(padded.receive_control_message(1,msg(3))==0); padded.service_channels();
         auto envelope=[](std::vector<uint8_t> v) { v.resize(240,0xa5); return v; };
         auto rangeHeader=[&](unsigned id,unsigned pages) {
             auto v=msg(8,28+pages*8); put(v,12,id); put(v,16,8+pages*8,2); put(v,18,1,2);
@@ -226,38 +226,38 @@ int main() {
             return v;
         };
         auto complete=rangeHeader(100,12);
-        check(padded.receive(1,envelope(complete))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(complete))==0); padded.service_channels();
         check(get(responses.back(),0)==10 && get(responses.back(),16)==0);
         auto request=msg(5,148); put(request,12,1); put(request,16,100); put(request,20,0); put(request,24,6);
-        check(padded.receive(1,envelope(request))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(request))==0); padded.service_channels();
         check(get(responses.back(),0)==6 && get(responses.back(),16)==0);
-        check(padded.receive(1,envelope(msg(7,12)))==0);
+        check(padded.receive_control_message(1,envelope(msg(7,12)))==0);
         auto copper=request; copper.resize(156,0xa5);
-        check(padded.receive(1,copper)==0); padded.service();
+        check(padded.receive_control_message(1,copper)==0); padded.service_channels();
         check(get(responses.back(),0)==6 && get(responses.back(),16)==0);
-        check(padded.receive(1,msg(7,12))==0);
+        check(padded.receive_control_message(1,msg(7,12))==0);
         auto malformed=request; malformed.resize(155,0);
-        check(padded.receive(1,malformed)==5);
+        check(padded.receive_control_message(1,malformed)==5);
         auto teardown=msg(11,16); put(teardown,12,100);
-        check(padded.receive(1,envelope(teardown))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(teardown))==0); padded.service_channels();
         check(get(responses.back(),0)==12 && get(responses.back(),8)==100);
         auto large=rangeHeader(101,30); // 248 range bytes: 216 header + 32 body.
         auto first=std::vector<uint8_t>(large.begin(),large.begin()+236);
         auto before=responses.size();
-        check(padded.receive(1,envelope(first))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(first))==0); padded.service_channels();
         check(responses.size()==before); // Trailing envelope bytes are not PFNs.
         auto last=msg(9,48); put(last,12,101);
         std::copy(large.begin()+236,large.end(),last.begin()+16);
-        check(padded.receive(1,envelope(last))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(last))==0); padded.service_channels();
         check(get(responses.back(),0)==10 && get(responses.back(),16)==0);
         // No access is gained through padding or an out-of-RAM PFN.
         auto invalid=rangeHeader(102,12); put(invalid,28,0xffffffffffffffffull,8);
-        check(padded.receive(1,envelope(invalid))==0); padded.service();
+        check(padded.receive_control_message(1,envelope(invalid))==0); padded.service_channels();
         check(get(responses.back(),16)==0xc000000d);
         auto compact=complete; compact.push_back(0xa5);
-        check(padded.receive(1,compact)==5); // Arbitrary compact oversizing is still invalid.
+        check(padded.receive_control_message(1,compact)==5); // Arbitrary compact oversizing is still invalid.
         auto unknown=msg(9,240); put(unknown,12,999);
-        check(padded.receive(1,unknown)==5);
+        check(padded.receive_control_message(1,unknown)==5);
     }
     std::cout << checks << " VMBus channel checks passed\n";
 }

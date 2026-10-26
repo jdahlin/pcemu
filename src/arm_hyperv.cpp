@@ -59,7 +59,7 @@ void ArmHyperV::service() {
         if (heartbeatEnabled) {
             auto now=timeNow();
             auto packet=heartbeat.packet(now);
-            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVHeartbeat::channelId,packet))
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVHeartbeat::channelId,packet))
                 heartbeat.sent(now);
         }
         if (timesyncEnabled) {
@@ -67,21 +67,21 @@ void ArmHyperV::service() {
             auto due=timesync.delay(now);
             if(due && !*due) {
                 auto packet=timesync.packet(now,utcClock());
-                if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVTimeSync::channelId,packet))
+                if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVTimeSync::channelId,packet))
                     timesync.sent(now);
             }
         }
         if (shutdownEnabled) {
             auto now=timeNow();
             auto packet=shutdown.packet(now);
-            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVShutdown::channelId,packet))
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVShutdown::channelId,packet))
                 shutdown.sent(now);
         }
         if (kvpEnabled) {
             auto now=timeNow();auto packet=kvp.packet(now);
-            if(!packet.empty() && !vmbus.sendChannelPacket(ArmHyperVKvp::channelId,packet))kvp.sent(now);
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVKvp::channelId,packet))kvp.sent(now);
         }
-        if (vmbusEnabled) vmbus.service();
+        if (vmbusEnabled) vmbus.service_channels();
         timers.service(timeNow());
     }
 }
@@ -101,7 +101,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
         auto next=shutdown.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
-    if (synic.needs_service() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
+    if (synic.needs_service() || (vmbusEnabled && vmbus.needs_service())) return std::min(delay.value_or(10000), uint64_t(10000));
     if (kvpEnabled) {
         auto next=kvp.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
@@ -125,16 +125,16 @@ void ArmHyperV::enableVmbus() {
         throw std::runtime_error("VMBus requires advertised SynIC with an interrupt backend");
     if (connections.contains(1) || connections.contains(4) || connections.size() > 62)
         throw std::runtime_error("VMBus control connections unavailable");
-    vmbus.setSender([this](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
+    vmbus.set_message_sender([this](unsigned vp, unsigned sint, std::span<const uint8_t> payload) {
         return synic.post_message(vp, sint, 1, 0, payload);
     });
     bindMessageConnection(4, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
-        return vmbus.receive(type, payload, true);
+        return vmbus.receive_control_message(type, payload, true);
     });
     bindMessageConnection(1, [this](unsigned, uint32_t type, std::span<const uint8_t> payload) {
-        return vmbus.receive(type, payload, false);
+        return vmbus.receive_control_message(type, payload, false);
     });
-    vmbus.setEventSender([this](unsigned vp, unsigned sint, unsigned flag) {
+    vmbus.set_event_sender([this](unsigned vp, unsigned sint, unsigned flag) {
         bool newly = false;
         return synic.signal_event(vp, sint, flag, newly);
     });
@@ -147,9 +147,9 @@ bool ArmHyperV::offerVmbusChannel(const ArmVmbus::Offer &offer, ArmVmbus::Packet
                                  std::function<void()> closed, std::function<void()> opened) {
     if (!vmbusEnabled || connections.contains(offer.connection)) return false;
     if (!bindEventConnection(offer.connection, 1, [this, id = offer.channel](unsigned, uint16_t) {
-            return vmbus.signalChannel(id);
+            return vmbus.signal_channel(id);
         })) return false;
-    if (!vmbus.addChannel(offer, std::move(handler), std::move(closed), std::move(opened))) {
+    if (!vmbus.add_channel(offer, std::move(handler), std::move(closed), std::move(opened))) {
         connections.erase(offer.connection); return false;
     }
     vmbusEventPorts.emplace(offer.connection, offer.channel);
