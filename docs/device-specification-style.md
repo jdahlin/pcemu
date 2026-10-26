@@ -31,8 +31,11 @@ specification's operation, register and signal names: `write_match_register()`
 for RTCMR, `write_load_register()` for RTCLR, and `rtcintr_asserted()` for the
 RTCINTR output. Bus adapters can use `read_register()` and `write_register()`;
 the specification does not name an algorithm for every C++ boundary. Do not
-invent a specification algorithm name for host-only helpers. Canonical register
-names such as `RTCMR` are preferable to invented synonyms. Name offsets, command values,
+invent a specification algorithm name for host-only helpers. Use the full register titles from the specification as scoped constants, such
+as `Register::DataRegister`, `Register::ControlRegister`, and
+`Register::InterruptMaskSetOrClearRegister`. Retain hardware abbreviations such
+as RTCDR in documentation and section references so readers can search the
+manual. Prefer descriptive names over unexplained acronyms in executable code. Name offsets, command values,
 bit masks and timing quantities; include units in timing names. Keep definitions
 local unless callers need them. Document every constant: explain the register's
 purpose, the effect of a bit or command, or the quantity and units represented.
