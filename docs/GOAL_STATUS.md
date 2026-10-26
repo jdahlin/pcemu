@@ -1379,3 +1379,12 @@ and improves the 8 MiB paged dependent-load kernel 1.57×. Six Office pairs show
 Excel CPU ratio 1.032 and Word 0.913; the default stays at 1,024 entries.
 The collision fixture now derives an actual collision for the configured
 capacity, passing 354,948 checks in both builds. See [trial evidence](tlb-capacity-trial.md).
+
+### Native transition evidence guides the next dispatch experiment
+
+Two loaded Excel counter profiles put 81.2% of sampled native transitions in
+a 33-address cycle; only about 0.28% return to their own start. Zero eligible
+register-only self-loops are observed. Word's hot addresses are more diffuse.
+This explains why same-block repetition was a weak target and motivates bounded
+cross-block linking, which is not implemented or proven by this diagnostic.
+See [transition profiles](native-transition-profiling.md).
