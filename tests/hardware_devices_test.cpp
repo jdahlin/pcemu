@@ -86,9 +86,9 @@ int main() {
         vga.dispiPortWrite(false, 1); vga.dispiPortWrite(true, 800);
         check(vga.dispiPortRead(true) == 800);
         PCI bus;
-        bus.out(0xcf8, 0x80001000, 4); check(bus.in(0xcfc, 4) == 0x11111234);
-        bus.out(0xcf8, 0x80001010, 4); bus.out(0xcfc, 0xffffffffu, 4);
-        check(bus.display().barProbe && bus.in(0xcfc, 4) == 0xff000000u);
+        bus.write_io_register(0xcf8, 0x80001000, 4); check(bus.read_io_register(0xcfc, 4) == 0x11111234);
+        bus.write_io_register(0xcf8, 0x80001010, 4); bus.write_io_register(0xcfc, 0xffffffffu, 4);
+        check(bus.display().barProbe && bus.read_io_register(0xcfc, 4) == 0xff000000u);
         bus.reset(); check(!bus.address && !bus.display().barProbe);
         NE2000 nic; check(!nic.irq()); nic.reset();
         Network gateway; // Host packet backend also links without an execution engine.
