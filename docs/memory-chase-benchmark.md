@@ -40,3 +40,8 @@ is a reproducible starting point rather than evidence of an optimization.
 Interpreter/JIT and single/batch combinations pass at one and 1,000 traversals
 for all eight cases. Both CTest checks pass. Future comparisons should preserve
 compiler flags, alternate candidate/baseline runs and retain exact checksums.
+
+A [TLB-capacity trial](tlb-capacity-trial.md) confirms that the largest paged
+case responds strongly to fewer collisions, but the global larger-table policy
+regresses Word launch and remains disabled. Future MMU work must retain both
+the memory stress case and application controls.

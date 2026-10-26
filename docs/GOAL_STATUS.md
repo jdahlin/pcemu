@@ -1366,3 +1366,11 @@ checks and 354,948 core checks. Six paired application comparisons do not show
 a dependable gain: Excel CPU ratio 1.014, Word 0.987, with wide variation and
 Word's initial apparent gain reversed on confirmation. Production remains on
 bounded native batching. See [trial and evidence](native-self-loop-trial.md).
+
+### TLB capacity: stress gain, application regression
+
+A private 4,096-entry table reduces slow helper calls from 10.1 million to 2,040
+and improves the 8 MiB paged dependent-load kernel 1.57×. Six Office pairs show
+Excel CPU ratio 1.032 and Word 0.913; the default stays at 1,024 entries.
+The collision fixture now derives an actual collision for the configured
+capacity, passing 354,948 checks in both builds. See [trial evidence](tlb-capacity-trial.md).

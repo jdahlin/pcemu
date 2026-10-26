@@ -798,10 +798,16 @@ int main() {
                 for (unsigned reg = 1; reg < 8; ++reg)
                     hot.r[reg] = 0x12345000 + reg;
                 hot.write(0x80000, 0x81007, 4);
-                hot.write(0x80004, 0x82007, 4);
+                uint32_t collisionPage = 1024;
+                auto slot = [&](uint32_t page) {
+                    return (page ^ (page >> 10)) & (hot.tlb.size() - 1);
+                };
+                while (slot(collisionPage) != slot(5))
+                    ++collisionPage;
+                hot.write(0x80000 + 4 * (collisionPage >> 10), 0x82007, 4);
                 hot.write(0x81000, 7, 4);
                 hot.write(0x81014, 0x5007, 4);
-                hot.write(0x82010, 0x6007, 4);
+                hot.write(0x82000 + 4 * (collisionPage & 1023), 0x6007, 4);
                 hot.cr[0] = 0x80000011;
                 hot.cr[3] = 0x80000;
                 hot.s[CS].selector = 3;
@@ -810,7 +816,7 @@ int main() {
                 Jit jit(hot, true, 0);
                 check(jit.run() == blockInstructions && hot.mem[0x5000] == 1 && hot.nativeMemoryCalls == 2,
                       "native TLB key accepts full-width epochs after cold access");
-                hot.physical(0x404000, true); // Hashes to the same slot as page 5.
+                hot.physical(collisionPage << 12, true); // Collides with page 5 for this capacity.
                 check(jit.run() == blockInstructions && hot.mem[0x5000] == 2 && hot.mem[0x6000] == 0 &&
                           hot.nativeMemoryCalls == 3,
                       "same-epoch TLB tag collision cannot reuse another page's RAM");
