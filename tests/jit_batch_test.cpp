@@ -5,6 +5,7 @@
 #include <memory>
 using namespace pc;
 static unsigned checks;
+static bool linksMode;
 static void check(bool v, const char *s) {
     ++checks;
     if (!v)
@@ -50,6 +51,7 @@ static void timerTests() {
             m.out(0x40, 0xe8, 1);
             m.out(0x40, 3, 1);
             Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             unsigned delivered = 0;
             uint64_t worst = 0;
             while (!c.halted && c.instructions < 100000) {
@@ -97,6 +99,7 @@ int main() {
                                 paging(c);
                             CPU ref = c;
                             Jit jit(c, true, warmup, 65536, mode);
+            jit.setDirectLinks(linksMode, 0);
                             auto r = jit.runBatch(budget);
                             for (unsigned i = 0; i < r.instructions; ++i)
                                 ref.step();
@@ -121,6 +124,7 @@ int main() {
             for (unsigned i = 0; i < 3; ++i)
                 ref.step();
             Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             auto r = jit.runBatch();
             equal(c, ref);
             check(r.instructions == 3 && r.dispatches == 2 && jit.nativeInstructions == 2,
@@ -141,6 +145,7 @@ int main() {
             ref.step();
             ref.step();
             Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             auto r = jit.runBatch();
             equal(c, ref);
             check(r.instructions == 2 && r.dispatches == 1 && reads == 4,
@@ -157,6 +162,7 @@ int main() {
                 c.flags = ref.flags = c.flags | TF;
             ref.step();
             Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             auto r = jit.runBatch();
             equal(c, ref);
             check(r.instructions == 1 && r.dispatches == 1 && !jit.nativeInstructions,
@@ -190,6 +196,7 @@ int main() {
             } catch (const Stop &) {
             }
             Jit jit(b, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             try {
                 jit.runBatch();
             } catch (const Stop &) {
@@ -212,6 +219,7 @@ int main() {
             c.mem[512 * 32] = 0xf4;
             CPU ref = c;
             Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(linksMode, 0);
             while (!c.halted) {
                 auto r = jit.runBatch();
                 check(r.instructions && r.instructions <= 127, "recycle batch progress/bound");
@@ -221,7 +229,7 @@ int main() {
             }
             check(c.r[AX] == 512 && jit.cacheRecycles > 0, "batch cache recycling coverage");
         }
-        timerTests();
+        for (bool enabled : {false, true}) { linksMode = enabled; timerTests(); }
         std::cout << "Passed " << checks << " native batch checks\n";
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';

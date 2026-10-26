@@ -17,10 +17,10 @@ def load(time, generation, ip=0):
 
 
 class JitDebugMapTests(unittest.TestCase):
-    def mapping(self, directory, events):
+    def mapping(self, directory, events, version=1):
         path = Path(directory)/'map.jsonl'
         path.write_text('\n'.join(json.dumps(e) for e in
-            [dict(event='header', version=1, clock='unix-ns', pid=42), *events]))
+            [dict(event='header', version=version, clock='unix-ns', pid=42), *events]))
         return TimedCodeMap(path)
 
     def test_reuse_never_attributes_old_samples_to_new_code(self):
@@ -35,6 +35,17 @@ class JitDebugMapTests(unittest.TestCase):
                 self.assertIsNone(mapping.lookup(4100, time))
             self.assertIsNone(mapping.lookup(4104, 15_000_000))
             self.assertIsNone(mapping.lookup(4095, 15_000_000))
+
+    def test_branch_patches_keep_regions_and_require_live_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            reset = dict(event='reset', timeNs=0, generation=1)
+            patch = dict(event='patch', timeNs=4_000_000, generation=1,
+                         start=4100, end=4104, arm64='00000014')
+            mapping = self.mapping(directory, [reset, load(1_000_000, 1), patch], version=2)
+            self.assertEqual(mapping.lookup(4100, 5_000_000)[1]['kind'], 'Alu')
+            patch['start'], patch['end'] = 4104, 4108
+            with self.assertRaisesRegex(ValueError, 'Invalid JIT patch'):
+                self.mapping(directory, [reset, load(1_000_000, 1), patch], version=2)
 
     def test_overlapping_live_code_and_bad_machine_bytes_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

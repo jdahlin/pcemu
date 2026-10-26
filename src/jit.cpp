@@ -2,6 +2,8 @@
 #include "jit_ir.hpp"
 #include "profile.hpp"
 #include <utility>
+#include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
@@ -9,6 +11,8 @@
 #include <unistd.h>
 #if defined(__APPLE__) && defined(__aarch64__)
 #include <sys/mman.h>
+#include <libkern/OSCacheControl.h>
+#include <pthread.h>
 #endif
 namespace pc {
 using jit_detail::Kind;
@@ -22,7 +26,7 @@ void Jit::setDebugMap(const std::string &path) {
     debugState = std::make_unique<DebugState>();
     debugState->stream.open(path);
     if (!debugState->stream) throw std::runtime_error("Cannot create JIT debug map: " + path);
-    debugState->stream << "{\"event\":\"header\",\"version\":1,\"pid\":" << getpid()
+    debugState->stream << "{\"event\":\"header\",\"version\":2,\"pid\":" << getpid()
              << ",\"clock\":\"unix-ns\",\"arenaBytes\":" << capacity << "}\n";
     debugReset();
 }
@@ -45,6 +49,17 @@ void Jit::flushDebugMap() {
     // Serialize after sampling stops. Collection only copies code/metadata;
     // formatting and file IO must not dominate cold-compilation profiles.
     for (const auto &record : debugState->records) {
+        if (record.patch) {
+            debugState->stream << "{\"event\":\"patch\",\"timeNs\":" << record.time
+                << ",\"generation\":" << record.generation << ",\"start\":" << record.start
+                << ",\"end\":" << record.start + 4 << ",\"arm64\":\"";
+            static constexpr char hex[] = "0123456789abcdef";
+            const auto *bytes = reinterpret_cast<const uint8_t *>(record.code.data());
+            for (unsigned i = 0; i < 4; ++i)
+                debugState->stream << hex[bytes[i] >> 4] << hex[bytes[i] & 15];
+            debugState->stream << "\"}\n";
+            continue;
+        }
         if (record.code.empty()) {
             debugState->stream << "{\"event\":\"reset\",\"timeNs\":" << record.time
                      << ",\"generation\":" << record.generation << "}\n";
@@ -122,10 +137,96 @@ Jit::~Jit() {
 }
 void Jit::clear() {
     debugReset();
+    incomingLinks.clear();
+    directLinkTransitions = directLinkPromotions = directLinkBlocks = 0;
     blocks.clear();
     fast = {};
     used = 0;
     nativeInstructions = compiledBlocks = cacheHits = cacheRecycles = 0;
+}
+void Jit::setDirectLinks(bool enabled, unsigned hotEntries) {
+    if (directLinks != enabled || linkWarmup != hotEntries) {
+        clear();
+        directLinks = enabled;
+        linkWarmup = hotEntries;
+    }
+}
+void Jit::setLinkTarget(Block &source, unsigned slot, uintptr_t target) {
+    auto &link = *source.link;
+    if (link.target[slot] == target) return;
+    const auto base = reinterpret_cast<uintptr_t>(source.fn);
+    const auto address = base + link.branchOffsets[slot];
+    const auto destination = target ? target : base + link.fallbackOffset;
+    const auto words = (int64_t(destination) - int64_t(address)) / 4;
+    if (words < -(1 << 25) || words >= (1 << 25))
+        throw std::runtime_error("Direct-link branch outside ARM64 range");
+    const uint32_t instruction = 0x14000000u | (uint32_t(words) & 0x03ffffffu);
+#if defined(__APPLE__) && defined(__aarch64__)
+    // Publication/invalidation happens only after all native frames returned.
+    pthread_jit_write_protect_np(0);
+    *reinterpret_cast<uint32_t *>(address) = instruction;
+    pthread_jit_write_protect_np(1);
+    sys_icache_invalidate(reinterpret_cast<void *>(address), 4);
+#endif
+    link.target[slot] = target;
+    if (debugState) {
+        DebugRecord record{};
+        record.time = debugTimeNs();
+        record.generation = debugState->generation;
+        record.start = address;
+        record.code = {instruction};
+        record.patch = true;
+        debugState->records.push_back(std::move(record));
+    }
+}
+void Jit::patchIncoming(uint64_t key) {
+    auto pending = incomingLinks.find(key);
+    if (pending == incomingLinks.end()) return;
+    auto target = blocks.find(key);
+    auto &list = pending->second;
+    std::erase_if(list, [&](const IncomingLink &edge) {
+        auto state = edge.state.lock();
+        auto source = blocks.find(edge.source);
+        if (!state || source == blocks.end() || source->second.link != state) return true;
+        auto &a = source->second;
+        if (target == blocks.end()) { setLinkTarget(a, edge.slot, 0); return false; }
+        uintptr_t destinationEntry = 0;
+        const auto &b = target->second;
+        const auto destination = a.link->ips[edge.slot];
+        if (a.fn && b.fn && b.link && b.link->entry && a.link->saveMask == b.link->saveMask &&
+            (uint32_t(a.csBase + a.link->startIP) >> 12) == (uint32_t(a.csBase + destination) >> 12) &&
+            a.page == b.page && a.generation == b.generation && a.cr0 == b.cr0 &&
+            a.cr3 == b.cr3 && a.csBase == b.csBase && a.a20 == b.a20 && a.vm == b.vm &&
+            a.executionEpoch == b.executionEpoch && a.watched == b.watched &&
+            a.stack32 == b.stack32 && a.ram == b.ram && a.ramSize == b.ramSize &&
+            a.codeBits == b.codeBits && a.link->generationData == b.link->generationData)
+            destinationEntry = reinterpret_cast<uintptr_t>(b.fn) +
+                (&a == &b ? b.link->loopEntry :
+                 (b.link->usedRegisters & ~a.link->usedRegisters) == 0 ? b.link->loadedEntry : b.link->entry);
+        setLinkTarget(a, edge.slot, destinationEntry);
+        return false;
+    });
+}
+Jit::Block *Jit::installBlock(uint64_t key, Block block) {
+    if (!directLinks) return &blocks.insert_or_assign(key, std::move(block)).first->second;
+    // No native frame is live here. Remove incoming references before releasing
+    // helper metadata embedded in the old code, then publish compatible edges.
+    if (auto it = incomingLinks.find(key); it != incomingLinks.end())
+        for (auto &edge : it->second)
+            if (auto state = edge.state.lock()) {
+                auto source = blocks.find(edge.source);
+                if (source != blocks.end() && source->second.link == state)
+                    setLinkTarget(source->second, edge.slot, 0);
+            }
+    auto &stored = blocks.insert_or_assign(key, std::move(block)).first->second;
+    if (stored.link)
+        for (unsigned slot = 0; slot < stored.link->count; ++slot) {
+            auto destination = (key & 0xffffffff00000000ull) | stored.link->ips[slot];
+            incomingLinks[destination].push_back({key, slot, stored.link});
+            patchIncoming(destination);
+        }
+    patchIncoming(key);
+    return &stored;
 }
 uint32_t Jit::run() {
     profile::event(profile::Dispatch);
@@ -178,12 +279,13 @@ uint32_t Jit::run() {
          (cached->watched != bool(cpu.watchWrite) ||
           (cached->usesStack && cached->stack32 != cpu.s[SS].big) ||
           cached->ram != cpu.mem.data() || cached->ramSize != cpu.mem.size() ||
-          cached->codeBits != cpu.codeUsed.data())) ||
+          cached->codeBits != cpu.codeUsed.data() ||
+          (cached->link && cached->link->generationData != cpu.generation.data()))) ||
         (checkedPage && cached->page != currentPage)) {
         try {
             profile::event(profile::MetadataRebuild);
             auto metadata = compile(false);
-            cached = &blocks.insert_or_assign(key, metadata).first->second;
+            cached = installBlock(key, std::move(metadata));
         } catch (const Fault &) {
             cpu.step();
             return 1;
@@ -192,12 +294,15 @@ uint32_t Jit::run() {
     // A TLB flush need not discard decoded code when fetch permissions were
     // rechecked and the same physical instruction page is still mapped.
     cached->tlbEpoch = cpu.tlbEpoch;
-    if (!cached->attempted && ++cached->visits >= warmup) {
+    const bool promote = directLinks && cached->fn && !cached->linkRequested &&
+                         ++cached->visits >= linkWarmup;
+    if ((!cached->attempted && ++cached->visits >= warmup) || promote) {
         try {
             profile::event(profile::Translate);
-            auto translated = compile();
+            if (promote) ++directLinkPromotions;
+            auto translated = compile(true, promote || (directLinks && !linkWarmup));
             // Compilation can recycle the arena and clear both lookup tables.
-            cached = &blocks.insert_or_assign(key, translated).first->second;
+            cached = installBlock(key, std::move(translated));
         } catch (const Fault &) {
             cpu.step();
             return 1;
@@ -215,7 +320,7 @@ uint32_t Jit::run() {
     cacheHits++;
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
-    auto n = b.fn(&cpu);
+    auto n = uint32_t(b.fn(&cpu, 0));
     cpu.instructions += n;
     nativeInstructions += n;
     if (cpu.nativeFallback) {
@@ -243,7 +348,8 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
             b->a20 != cpu.a20 || b->vm != bool(cpu.flags & 0x20000) ||
             b->watched != bool(cpu.watchWrite) || (b->usesStack && b->stack32 != cpu.s[SS].big) ||
             b->ram != cpu.mem.data() || b->ramSize != cpu.mem.size() ||
-            b->codeBits != cpu.codeUsed.data())
+            b->codeBits != cpu.codeUsed.data() ||
+            (b->link && b->link->generationData != cpu.generation.data()))
             return result;
         auto oldCR2 = cpu.cr[2];
         try {
@@ -255,14 +361,21 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
             cpu.cr[2] = oldCR2;
             return result;
         }
-        ++result.count.dispatches;
-        ++cacheHits;
-        profile::event(profile::Dispatch);
-        profile::event(profile::FastHit);
-        profile::event(profile::NativeCall);
-        auto n = b->fn(&cpu);
+        auto packed = b->fn(&cpu, directLinks ? budget - result.count.instructions : 0);
+        auto n = uint32_t(packed);
+        auto dispatches = unsigned(packed >> 32);
+        const bool stoppedZero = dispatches & 0x8000;
+        dispatches &= 0x7fff;
+        assert(n <= 127 && dispatches <= 64);
+        if (!dispatches) dispatches = 1;
+        result.count.dispatches += dispatches;
+        cacheHits += dispatches;
+        directLinkTransitions += dispatches - 1;
+        profile::event(profile::Dispatch, dispatches);
+        profile::event(profile::FastHit, dispatches);
+        profile::event(profile::NativeCall, dispatches);
         result.count.instructions += n;
-        if (!n) {
+        if (!n || stoppedZero) {
             result.stoppedZero = !cpu.nativeFallback;
             break;
         }
@@ -299,9 +412,10 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
     }
     return result;
 }
-Jit::Block Jit::compile(bool translate) {
+Jit::Block Jit::compile(bool translate, bool linked) {
     Block block;
     auto linear = cpu.address(CS, cpu.ip), physical = cpu.physical(linear);
+    block.linkRequested = linked;
     block.page = physical >> 12;
     block.generation = cpu.generation.at(block.page);
     block.cr0 = cpu.cr[0];

@@ -30,6 +30,9 @@ class Jit {
     // use run() instead for per-block debugger/trace observations.
     BatchResult runBatch(unsigned budget = 64);
     void clear();
+    void setDirectLinks(bool enabled, unsigned hotEntries = 32);
+    bool directLinksEnabled() const { return directLinks; }
+    uint64_t directLinkTransitions = 0, directLinkPromotions = 0, directLinkBlocks = 0;
     // Optional diagnostic sidecar. Does not change arena capacity or generated code.
     void setDebugMap(const std::string &path);
     void flushDebugMap();
@@ -51,6 +54,7 @@ class Jit {
         uint32_t cs = 0, csBase = 0, ip = 0, cr3 = 0, page = 0, codeGeneration = 0;
         std::vector<uint32_t> code;
         std::vector<DebugRegion> regions;
+        bool patch = false;
     };
     struct DebugState {
         std::vector<DebugRecord> records;
@@ -60,18 +64,29 @@ class Jit {
     void debugReset();
     void debugBlock(const Block &block, const std::vector<uint32_t> &code,
                     const std::vector<DebugRegion> &regions);
-    using Function = uint32_t (*)(CPU *);
+    using Function = uint64_t (*)(CPU *, unsigned);
+    struct LinkState {
+        std::array<uintptr_t, 2> target{};
+        std::array<uint32_t, 2> ips{};
+        uint32_t startIP = 0, entry = 0, saveMask = 0;
+        uint32_t loadedEntry = 0, loopEntry = 0, usedRegisters = 0;
+        const uint32_t *generationData = nullptr;
+        unsigned count = 0;
+        std::array<uint32_t, 2> branchOffsets{};
+        uint32_t fallbackOffset = 0;
+    };
     struct Block {
         Function fn = nullptr;
         uint32_t page = 0, generation = 0, cr0 = 0, cr3 = 0, csBase = 0, tlbEpoch = 0;
         uint64_t executionEpoch = 0;
-        bool a20 = true, attempted = false;
+        bool a20 = true, attempted = false, linkRequested = false;
         bool vm = false, watched = false, usesStack = false, stack32 = false;
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;
         unsigned visits = 0;
         std::shared_ptr<std::vector<NativeMemoryMove>> memory;
+        std::shared_ptr<LinkState> link;
     };
     CPU &cpu;
     uint8_t *arena = nullptr;
@@ -90,9 +105,16 @@ class Jit {
         bool stoppedZero = false;
     };
     CachedBatch runCached(unsigned budget) noexcept;
-    Block compile(bool translate = true);
+    Block compile(bool translate = true, bool linked = false);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
     std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.
+    bool directLinks = false;
+    unsigned linkWarmup = 32;
+    struct IncomingLink { uint64_t source; unsigned slot; std::weak_ptr<LinkState> state; };
+    std::unordered_map<uint64_t, std::vector<IncomingLink>> incomingLinks;
+    Block *installBlock(uint64_t key, Block block);
+    void patchIncoming(uint64_t key);
+    void setLinkTarget(Block &source, unsigned slot, uintptr_t target);
 };
 } // namespace pc

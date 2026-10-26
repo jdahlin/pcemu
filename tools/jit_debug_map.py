@@ -12,9 +12,10 @@ class TimedCodeMap:
             for line in stream:
                 event = json.loads(line)
                 if event['event'] == 'header':
-                    if self.pid is not None or event['version'] != 1 or event['clock'] != 'unix-ns':
+                    if self.pid is not None or event['version'] not in (1, 2) or event['clock'] != 'unix-ns':
                         raise ValueError('Invalid JIT map header')
                     self.pid = event['pid']
+                    self.version = event['version']
                     continue
                 timestamp = event['timeNs']
                 if self.pid is None or timestamp < previous_time:
@@ -24,7 +25,7 @@ class TimedCodeMap:
                     if self.epochs:
                         self.epochs[-1]['end'] = timestamp
                     self.epochs.append({'start': timestamp, 'end': None,
-                                        'generation': event['generation'], 'blocks': []})
+                                        'generation': event['generation'], 'blocks': [], 'addresses': []})
                 elif event['event'] == 'load':
                     if not self.epochs or event['generation'] != self.epochs[-1]['generation']:
                         raise ValueError('JIT load has no matching arena generation')
@@ -35,7 +36,19 @@ class TimedCodeMap:
                             offsets[-1] >= size):
                         raise ValueError('Invalid JIT code or region range')
                     event['offsets'] = offsets
+                    if self.epochs[-1]['blocks'] and self.epochs[-1]['blocks'][-1]['end'] > event['start']:
+                        raise ValueError('Overlapping JIT blocks within an arena generation')
                     self.epochs[-1]['blocks'].append(event)
+                    self.epochs[-1]['addresses'].append(event['start'])
+                elif event['event'] == 'patch':
+                    if self.version < 2 or not self.epochs or event['generation'] != self.epochs[-1]['generation']:
+                        raise ValueError('JIT patch has no matching arena generation')
+                    epoch = self.epochs[-1]
+                    index = bisect_right(epoch['addresses'], event['start']) - 1
+                    if (index < 0 or event['start'] % 4 or event['end'] != event['start'] + 4 or
+                            len(bytes.fromhex(event['arm64'])) != 4 or
+                            event['end'] > epoch['blocks'][index]['end']):
+                        raise ValueError('Invalid JIT patch range')
                 else:
                     raise ValueError('Unknown JIT map event')
         if self.pid is None:

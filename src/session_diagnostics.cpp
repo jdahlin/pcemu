@@ -48,6 +48,10 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
     j << "],\"instructions\":" << c.instructions << ",\"resets\":" << m.resets
       << ",\"resetRequested\":" << m.resetRequested
       << ",\"nativeInstructions\":" << jit.nativeInstructions
+      << ",\"jitDirectLinks\":" << jit.directLinksEnabled()
+      << ",\"directLinkTransitions\":" << jit.directLinkTransitions
+      << ",\"directLinkPromotions\":" << jit.directLinkPromotions
+      << ",\"directLinkBlocks\":" << jit.directLinkBlocks
       << ",\"executionWallNs\":" << executionWallNs
       << ",\"nativeMemoryCalls\":" << c.nativeMemoryCalls
       << ",\"executionEpoch\":" << c.executionEpoch

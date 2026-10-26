@@ -6,6 +6,12 @@
 #include <unistd.h>
 using namespace pc;
 static unsigned checks;
+static bool linksMode;
+static uint64_t observedLinks;
+struct LinkProbe {
+    Jit &jit;
+    ~LinkProbe() { observedLinks += jit.directLinkTransitions; }
+};
 static uint64_t multiDispatchBatches;
 void check(bool v, const char *s) {
     ++checks;
@@ -39,6 +45,8 @@ void compare(CPU c, unsigned batches = 10000) {
     CPU ref = c, single = c;
     Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps),
         one(single, true, 0, 65536, Jit::BlockMode::FollowJumps);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
     for (unsigned k = 0; k < batches && !c.halted; ++k) {
         auto p = jit.runBatch();
         Jit::BatchResult q;
@@ -92,6 +100,8 @@ static void memoryTests() {
             return 0x42;
         };
         Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
         auto p = jit.runBatch();
         check(p.instructions == 17 && p.dispatches == 5, "MMIO prefix/calendar");
         for (unsigned i = 0; i < p.instructions; ++i)
@@ -124,6 +134,8 @@ static void memoryTests() {
             throw Stop{};
         };
         Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
         try {
             jit.runBatch();
             check(false, "missing native fault");
@@ -157,6 +169,8 @@ static void memoryTests() {
         c.flushTLB();
         CPU ref = c;
         Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
         auto n = jit.runBatch();
         for (unsigned i = 0; i < n.instructions; ++i)
             ref.step();
@@ -208,6 +222,8 @@ static void cycleTests() {
                             CPU ref = c, single = c;
                             Jit jit(c, true, warm, 65536, mode),
                                 one(single, true, warm, 65536, mode);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
                             unsigned batches = 0;
                             while (!c.halted) {
                                 auto part = jit.runBatch();
@@ -246,6 +262,8 @@ static void debugMapTests() {
     auto c = make({0xb8, 1, 0, 0, 0, 0x83, 0xc0, 2, 0xf4});
     CPU ref = c;
     Jit jit(c, true, 0);
+        jit.setDirectLinks(linksMode, 0);
+        LinkProbe linkProbe{jit};
     jit.setDebugMap(path.string());
     bool rejected = false;
     try { jit.setDebugMap(path.string()); } catch (const std::runtime_error &) { rejected = true; }
@@ -269,6 +287,59 @@ static void debugMapTests() {
     std::filesystem::remove(folder);
 }
 
+static void linkedContextTests() {
+    // ADC's carry spill uses offset 104. It must not overwrite chain budget or
+    // packed totals; that collision was visible in Word's kernel startup path.
+    {
+        auto c = make({0x83, 0xd0, 1, 0x75, 0xfb, 0xf4});
+        c.r[AX] = 0xfffffffc;
+        c.flags = 2;
+        CPU ref = c;
+        Jit jit(c, true, 0, 65536);
+        jit.setDirectLinks(true, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(c.halted && part.instructions == 9 && part.dispatches == 5,
+              "carry spill changed linked accounting");
+        check(jit.directLinkTransitions >= 2, "carry loop did not use direct edges");
+    }
+    for (bool paged : {false, true})
+        for (unsigned mutation = 0; mutation < 6; ++mutation) {
+            auto c = make({0x83, 0xc0, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4}, paged);
+            c.r[CX] = 10000;
+            CPU ref = c;
+            Jit jit(c, true, 0, 65536);
+            jit.setDirectLinks(true, 0);
+            auto advance = [&]() {
+                auto part = jit.runBatch();
+                check(part.instructions && part.instructions <= 127, "linked context budget");
+                for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+                equal(c, ref);
+            };
+            advance();
+            check(jit.directLinkTransitions > 0, "context mutation lacks live direct edges");
+            if (mutation == 0) {
+                auto replacement = c.generation;
+                c.generation.swap(replacement);
+            } else if (mutation == 1) {
+                auto replacement = c.mem;
+                c.mem.swap(replacement);
+            } else if (mutation == 2) {
+                ++c.executionEpoch;
+            } else if (mutation == 3) {
+                c.a20 = ref.a20 = false;
+            } else if (mutation == 4) {
+                c.write(2, 2, 1);
+                ref.write(2, 2, 1);
+            } else {
+                c.flushTLB();
+                ref.flushTLB();
+            }
+            for (unsigned i = 0; i < 8; ++i) advance();
+        }
+}
+
 int main() {
     try {
         CPU probe(1024 * 1024);
@@ -277,12 +348,17 @@ int main() {
             std::cout << "Skipped: native JIT unavailable\n";
             return 0;
         }
-        memoryTests();
-        cycleTests();
+        for (bool enabled : {false, true}) {
+            linksMode = enabled;
+            memoryTests();
+            cycleTests();
+        }
+        check(observedLinks > 0, "direct links were never exercised");
+        linkedContextTests();
         debugMapTests();
         std::cout << "Passed " << checks
                   << " cached batch checks; multi-dispatch batches=" << multiDispatchBatches
-                  << "\n";
+                  << "; linked transitions=" << observedLinks << "\n";
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';
         return 1;

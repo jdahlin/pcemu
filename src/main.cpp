@@ -47,6 +47,8 @@ int main(int argc, char **argv) {
     size_t ramMB = 16;
     bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true, traceJit = false;
     std::string machineId = "pc-legacy", backendId = "auto";
+    bool directLinks = false;
+    unsigned linkWarmup = 256;
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = false, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
@@ -75,6 +77,10 @@ int main(int argc, char **argv) {
                 enableNetwork = false;
             else if (arg == "--execute-vgabios")
                 executeVga = true;
+            else if (arg == "--jit-link-warmup")
+                linkWarmup = std::stoul(value());
+            else if (arg == "--jit-direct-links")
+                directLinks = true;
             else if (arg == "--jit-debug-map")
                 jitDebugMapPath = value();
             else if (arg == "--load-snapshot")
@@ -158,6 +164,8 @@ int main(int argc, char **argv) {
                              "  --benchmark-memory-bytes (byte loads/stores with wraparound)\n"
                              "    --backend jit|interpreter selects one benchmark engine\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --jit-link-warmup N (native entries before link promotion; default 256)\n"
+                             "  --jit-direct-links (experimental same-page native links)\n"
                              "  --jit-debug-map FILE (timestamped generated-code diagnostics)\n"
                              "  --jit-traces (experimental conditional branch traces)\n"
                              "  --jit-basic-blocks (disable default same-page jump joining)\n"
@@ -255,6 +263,7 @@ int main(int argc, char **argv) {
         Jit jit(c, enableJit, 8, 16 * 1024 * 1024,
                 traceJit ? Jit::BlockMode::Trace
                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
+        jit.setDirectLinks(directLinks, linkWarmup);
         if (!jitDebugMapPath.empty()) jit.setDebugMap(jitDebugMapPath);
         std::ofstream trace;
         if (!tracePath.empty() && !afterBreak)
