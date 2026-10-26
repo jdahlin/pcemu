@@ -24,7 +24,7 @@ void Machine::bindDevices() {
     cpu.output = [this](uint16_t p, uint32_t v, int w) { out(p, v, w); };
 }
 int64_t Machine::rtcTime() const {
-    return rtc.now();
+    return rtc.time_seconds();
 }
 void Machine::restart() {
     // Preserve RAM, ROM assets, disk backing, diagnostics and the monotonic host

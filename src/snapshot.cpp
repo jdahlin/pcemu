@@ -257,7 +257,7 @@ class SnapshotCodec {
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
-            m.rtc.setTime(rtc);
+            m.rtc.set_time(rtc);
         }
     }
     static void validate(const Machine &m) {

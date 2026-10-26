@@ -115,10 +115,10 @@ void Machine::bindIoPorts() {
             speakerWrite(p, v, w);
         });
     ioPorts.map("cmos", 0x70, 2,
-        counted([this](uint16_t p, int) -> uint32_t { return p == 0x71 ? rtc.readData() : ports[p]; }),
+        counted([this](uint16_t p, int) -> uint32_t { return p == 0x71 ? rtc.read_data_register() : ports[p]; }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            if (p == 0x70) rtc.select(v);
+            if (p == 0x70) rtc.select_register(v);
         }));
     ioPorts.map("system-control", 0x92, 1,
         counted([this](uint16_t, int) -> uint32_t { return port92.read(cpu.a20); }),

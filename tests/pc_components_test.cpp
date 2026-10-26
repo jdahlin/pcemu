@@ -101,22 +101,22 @@ int main() {
     int64_t host = 1700000000;
     CmosRtc rtc([&] { return host; });
     rtc.configure({32 * 1024 * 1024, true, false});
-    rtc.select(0x8b); check(rtc.state.index == 0x8b && rtc.readData() == 2);
-    rtc.select(0x17); check(rtc.readData() == 0);
-    rtc.select(0x18); check(rtc.readData() == 124);
-    rtc.select(0x12); check(rtc.readData() == 0xf0);
-    rtc.select(0x10); check(rtc.readData() == 0);
+    rtc.select_register(0x8b); check(rtc.state.index == 0x8b && rtc.read_data_register() == 2);
+    rtc.select_register(0x17); check(rtc.read_data_register() == 0);
+    rtc.select_register(0x18); check(rtc.read_data_register() == 124);
+    rtc.select_register(0x12); check(rtc.read_data_register() == 0xf0);
+    rtc.select_register(0x10); check(rtc.read_data_register() == 0);
     rtc.configure({16 * 1024 * 1024, false, true});
-    rtc.select(0x12); check(rtc.readData() == 0);
-    rtc.select(0x10); check(rtc.readData() == 0x40);
-    rtc.select(0x14); check(rtc.readData() == 0x21);
-    rtc.setTime(1000); host += 7;
-    check(rtc.now() == 1007);
-    auto now = std::time_t(rtc.now());
+    rtc.select_register(0x12); check(rtc.read_data_register() == 0);
+    rtc.select_register(0x10); check(rtc.read_data_register() == 0x40);
+    rtc.select_register(0x14); check(rtc.read_data_register() == 0x21);
+    rtc.set_time(1000); host += 7;
+    check(rtc.time_seconds() == 1007);
+    auto now = std::time_t(rtc.time_seconds());
     auto local = *std::localtime(&now);
-    rtc.select(0); check(rtc.readData() == unsigned((local.tm_sec / 10) * 16 + local.tm_sec % 10));
-    rtc.reset(); check(rtc.state.index == 0 && rtc.now() == 1007);
-    rtc.select(0x7f); check(rtc.readData() == 0);
+    rtc.select_register(0); check(rtc.read_data_register() == unsigned((local.tm_sec / 10) * 16 + local.tm_sec % 10));
+    rtc.reset(); check(rtc.state.index == 0 && rtc.time_seconds() == 1007);
+    rtc.select_register(0x7f); check(rtc.read_data_register() == 0);
 
     // A single temporary boot sector is enough to exercise firmware handoff.
     auto bootPath = std::filesystem::temp_directory_path() /
