@@ -40,12 +40,12 @@ void ArmVirtMachine::bindDevices() {
     mmio.map("pl031", 0x09010000, 0x1000,
         [this](MmioAccess &a, uint64_t offset) {
             if (offset % a.width) throw std::runtime_error("Unaligned PL031 access");
-            if (!a.discard) a.value = rtc.read(offset & ~3u) >> (8 * (offset & 3));
+            if (!a.discard) a.value = rtc.read_register(offset & ~3u) >> (8 * (offset & 3));
             updateRtcInterrupt();
         }, [this](MmioAccess &a, uint64_t offset) {
             if (offset % a.width) throw std::runtime_error("Unaligned PL031 access");
             if (offset % 4 || a.width != 4) throw std::runtime_error("PL031 writes require 32 bits");
-            rtc.write(offset, uint32_t(a.value));
+            rtc.write_register(offset, uint32_t(a.value));
             updateRtcInterrupt();
         }, 1 | 2 | 4);
     mmio.map("fw-cfg", 0x09020000, 0x18,

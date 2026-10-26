@@ -383,7 +383,7 @@ std::string ArmVirtMachine::hypervReport() const {
     return report + "}}";
 }
 void ArmVirtMachine::updateRtcInterrupt() {
-    bool level = rtc.irq();
+    bool level = rtc.rtcintr_asserted();
     if (level == rtcInterruptLevel) return;
     vm.setSPI(34, level);
     rtcInterruptLevel = level;

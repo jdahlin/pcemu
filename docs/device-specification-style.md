@@ -7,42 +7,77 @@ changes separate from naming and documentation changes.
 ## Source and scope
 
 Start each device header with the hardware model, specification title/document ID,
-revision and authoritative URL. Put short section/table references beside the
-relevant implementation. Distinguish chip semantics from machine wiring, firmware
-policy and host services. A reference establishes provenance, not full conformance.
+revision and authoritative URL. Every function definition must have a purpose
+comment and a direct link to its relevant specification section immediately
+above it, as in Ladybird. Include the document ID and section title. Use HTML
+section anchors when available; for PDFs, use `#page=N` with the one-based PDF
+page number (including front matter), and name the printed section as well.
+A document ID or a link at the top of the file alone is insufficient. Distinguish
+chip semantics from machine wiring, firmware policy and host services. A reference establishes provenance, not full conformance.
 If evidence is unavailable, say so rather than inventing a specification citation.
+
+Start the implementation file with a plain-language device overview. Explain
+its purpose, its major parts and how they interact, the guest's view of the
+device, and the boundary with machine wiring and host services. Define acronyms
+on first use and state model limitations. A reader should not need prior chip
+knowledge to understand the register handlers.
 
 ## Names and constants
 
 Use the specification's terms for operations and state, expressed in the local
-C++ style. Use descriptive snake_case for new private helpers and state; retain
-public APIs when renaming would cause unrelated churn. Canonical register names
-such as `RTCMR` are preferable to invented synonyms. Name offsets, command values,
+C++ style. Use descriptive snake_case for methods and state. Rename generic
+methods in the migrated device and update their callers as part of the migration. Use the
+specification's operation, register and signal names: `write_match_register()`
+for RTCMR, `write_load_register()` for RTCLR, and `rtcintr_asserted()` for the
+RTCINTR output. Bus adapters can use `read_register()` and `write_register()`;
+the specification does not name an algorithm for every C++ boundary. Do not
+invent a specification algorithm name for host-only helpers. Canonical register
+names such as `RTCMR` are preferable to invented synonyms. Name offsets, command values,
 bit masks and timing quantities; include units in timing names. Keep definitions
-local unless callers need them. Identity bytes may remain literal values when
-paired with named registers and a table reference. Ordinary zero/one values and
-arithmetic need no decorative constants.
+local unless callers need them. Document every constant: explain the register's
+purpose, the effect of a bit or command, or the quantity and units represented.
+For offsets, state that they are relative to the device's mapped base address.
+Explain acronyms and encoded fields rather than merely repeating the identifier.
+Identity bytes may remain literal values when paired with named registers,
+a table reference and an explanation of their encoded meaning. Ordinary zero/one
+values and arithmetic need no decorative constants.
 
 ## Inline documentation
 
-Use sentence comments explaining the hardware rule or reason, not narrating C++.
-The following searchable prefixes distinguish the origin of behavior:
+Each function's comment must explain what it does, its result or side effects,
+and the relevant hardware rule. Keep the explanation next to the definition,
+with a short interface contract in the header. Split substantial register
+operations into methods named after the corresponding specification construct.
+Do not extract trivial getters merely to add more comments.
 
-- `SPEC: <document ID>, section <number> (<topic>).` identifies specified behavior.
-  Paraphrase accurately. For numbered algorithms, preserve step numbers; hardware
-  register tables need register/bit names and section references instead.
+For example, the PL031 implementation follows this shape:
+
+```cpp
+// Store RTCMR, the Match Register, and recognize a match at the current RTC value.
+// ARM DDI 0224C, 3.3.2 Match Register, RTCMR.
+// https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=24
+void ArmPl031::write_match_register(uint32_t value) {
+    // Implementation of the register operation.
+}
+```
+
+Inside an algorithm, put the relevant specification steps beside the matching
+code, preserving original step numbers and wording when quoting. Do not invent
+numbered steps for register tables. Paraphrases must be clearly explanatory
+prose, rather than presented as quotations. A `SPEC:` label is not a substitute
+for the URL and explanation.
+
 - `AD-HOC: <policy and reason>.` identifies emulator decisions such as host clock
   selection, polling, reserved-access fallback or compatibility behavior.
-- `FIXME: <reference>: <gap and required behavior>.` records a known conformance
-  gap or bug next to the affected code. Explain any compatibility constraint.
+- `FIXME: <gap and required behavior>.` records a conformance gap or bug next to
+  the affected code, with a direct specification link and section reference.
+  Explain any compatibility constraint.
 - `TODO: <concrete follow-up and reason>.` records maintenance work that does not
-  represent an existing correctness gap. Do not use vague “implement properly”
-  notes, attribution or dates; link an issue when one exists.
+  represent an existing correctness gap. Link the relevant spec or issue when
+  applicable. Do not use vague “implement properly” notes, attribution or dates.
 
-Do not label an entire function SPEC when it mixes specified and emulator-specific
-behavior without identifying the latter. Remove resolved TODO/FIXME comments in
-the same commit as the implementation. Find remaining work with
-`rg -n 'SPEC:|AD-HOC:|FIXME:|TODO:' src/<device>*`.
+Remove resolved TODO/FIXME comments in the same commit as the implementation.
+Find remaining work with `rg -n 'AD-HOC:|FIXME:|TODO:' src/<device>*`.
 
 ## PL031 pilot
 
@@ -65,7 +100,8 @@ current compatibility behavior; they are not conformance claims.
 
 1. Identify the exact reference and inventory registers, state and known gaps.
 2. Replace hardware literals with named constants and align private helper names.
-3. Add local references and distinguish host policy and conformance gaps.
+3. Document every function with its purpose and a direct section link; put spec
+   steps beside the matching code and identify host policy and conformance gaps.
 4. Check behavior using deterministic device tests with literal bus addresses,
    so tests independently check the register map. Cover observable side effects.
 5. Run relevant headless checks and commit the device, tests and documentation.
