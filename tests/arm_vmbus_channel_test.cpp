@@ -86,32 +86,32 @@ int main() {
     put(packet,8,123,8); put(packet,16,0x12345678,8);
     bool notify=false;
     eventFail=true;
-    check(outbound.push(packet,notify)==ArmVmbusRing::Result::Ok && notify);
+    check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok && notify);
     check(bus.signalChannel(7)==0); bus.service();
     check(calls==1 && events==1 && bus.needsService());
     std::vector<uint8_t> received;
-    check(inbound.pop(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
+    check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     eventFail=false; bus.service(); check(calls==1 && events==2 && !bus.needsService());
     // One service call may consume at most sixteen packets from each channel.
     for(unsigned i=0;i<40;++i) {
-        put(packet,8,i,8); check(outbound.push(packet,notify)==ArmVmbusRing::Result::Ok);
+        put(packet,8,i,8); check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
     }
     check(bus.signalChannel(7)==0); bus.service(); check(calls==17 && bus.needsService());
     bus.service(); check(calls==33 && bus.needsService()); bus.service(); check(calls==41);
     for(unsigned i=0;i<40;++i) {
-        check(inbound.pop(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==i);
+        check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==i);
     }
-    check(inbound.pop(received,notify)==ArmVmbusRing::Result::Empty);
+    check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Empty);
     // A full response ring must retain one response and stop reading further requests.
     auto large=packet; large.resize(4080); put(large,4,510,2);
     for(unsigned i=0;i<3;++i) {
         put(large,8,200+i,8);
-        check(outbound.push(large,notify)==ArmVmbusRing::Result::Ok);
+        check(outbound.write_packet(large,notify)==ArmVmbusRing::Result::Ok);
         check(bus.signalChannel(7)==0); bus.service();
     }
     check(calls==43); // First response queued, second retained, third still in RX.
     for(unsigned i=0;i<3;++i) {
-        check(inbound.pop(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==200+i);
+        check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && get(received,8,8)==200+i);
         bus.service();
     }
     check(calls==44 && !bus.needsService());
@@ -138,9 +138,9 @@ int main() {
     auto silentOpen=open; put(silentOpen,20,UINT32_MAX);
     check(bus.receive(1,silentOpen)==0); bus.service(); check(get(replies.back(),16)==0);
     auto eventCount=events;
-    check(outbound.push(packet,notify)==ArmVmbusRing::Result::Ok);
+    check(outbound.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
     check(bus.signalChannel(7)==0); bus.service();
-    check(inbound.pop(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
+    check(inbound.read_packet(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     check(events==eventCount); // Disabled interrupt target does not suppress ring traffic.
     check(bus.receive(1,msg(16))==0); bus.service(); check(closes==3);
     check(bus.report().find("\"deliveredUnloadReplies\":1")!=std::string::npos);
@@ -197,14 +197,14 @@ int main() {
     ArmGpadl integratedGuest(integratedRam,base);
     check(integratedGuest.begin_descriptor(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
     ArmVmbusRing guestTx(integratedGuest,7,42,0,8192), guestRx(integratedGuest,7,42,8192,8192);
-    check(guestTx.push(packet,notify)==ArmVmbusRing::Result::Ok);
+    check(guestTx.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
     auto signal=[&](uint64_t input) {
         r={}; r[0]=0x1005d; r[1]=input; check(hv.call(1,r,1)); return r[0];
     };
     check(signal(16|(1ull<<32))==5); // Dedicated port permits only relative flag zero.
     check(signal(19)==0x12); // Unknown connection.
     check(signal(16)==0); hv.service();
-    check(guestRx.pop(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
+    check(guestRx.read_packet(received,notify)==ArmVmbusRing::Result::Ok && received==packet);
     check((integratedRam[8192+512] & (1u<<7))!=0);
     post(msg(7,12)); check(signal(16)==0x15);
     {

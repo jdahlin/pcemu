@@ -136,7 +136,7 @@ uint16_t ArmVmbus::sendChannelPacket(uint32_t id, std::span<const uint8_t> packe
     auto &channel=it->second;
     if(!channel.pending.empty()) return 0x13;
     bool notify=false;
-    auto result=channel.tx->push(packet,notify);
+    auto result=channel.tx->write_packet(packet,notify);
     if(result==ArmVmbusRing::Result::Full) return 0x13;
     if(result!=ArmVmbusRing::Result::Ok) { ++faults; close(channel); return 5; }
     channel.notification |= notify; ++packetsOut; return 0;
@@ -245,14 +245,14 @@ void ArmVmbus::service() {
         for (unsigned budget = 0; budget < 16; ++budget) {
             if (!channel.pending.empty()) {
                 bool notify = false;
-                auto result = channel.tx->push(channel.pending, notify);
+                auto result = channel.tx->write_packet(channel.pending, notify);
                 if (result == ArmVmbusRing::Result::Full) break;
                 if (result != ArmVmbusRing::Result::Ok) { ++faults; close(channel); break; }
                 channel.notification |= notify; channel.pending.clear(); ++packetsOut;
             }
             std::vector<uint8_t> packet;
             bool notify = false;
-            auto result = channel.rx->pop(packet, notify);
+            auto result = channel.rx->read_packet(packet, notify);
             if (result == ArmVmbusRing::Result::Empty) { channel.work = false; break; }
             if (result != ArmVmbusRing::Result::Ok) { ++faults; close(channel); break; }
             channel.notification |= notify; ++packetsIn;

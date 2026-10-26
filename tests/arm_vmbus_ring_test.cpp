@@ -41,52 +41,52 @@ int main() {
     put(packet, 8, 0x123456789abcdef0ull, 8);
     for (unsigned i = 16; i < 32; ++i) packet[i] = uint8_t(i);
     bool notify = true;
-    check(ring.pop(output, notify) == R::Empty && !notify && output == std::vector<uint8_t>{0xaa});
+    check(ring.read_packet(output, notify) == R::Empty && !notify && output == std::vector<uint8_t>{0xaa});
     put(header, 0, 8184); put(header, 4, 8184);
-    check(ring.push(packet, notify) == R::Ok && notify && get(header, 0) == 32);
+    check(ring.write_packet(packet, notify) == R::Ok && notify && get(header, 0) == 32);
     check(std::equal(packet.begin(), packet.begin() + 8, ram.begin() + 5 * 4096 + 4088));
     check(std::equal(packet.begin() + 8, packet.end(), ram.begin()));
     check(get(ram, 24) == 0 && get(ram, 28) == 8184); // Independent physical trailer oracle.
-    check(ring.pop(output, notify) == R::Ok && !notify && output == packet && get(header, 4) == 32);
+    check(ring.read_packet(output, notify) == R::Ok && !notify && output == packet && get(header, 4) == 32);
     put(header, 8, 1);
-    check(ring.push(packet, notify) == R::Ok && !notify);
-    check(ring.pop(output, notify) == R::Ok && !notify && output == packet);
+    check(ring.write_packet(packet, notify) == R::Ok && !notify);
+    check(ring.read_packet(output, notify) == R::Ok && !notify && output == packet);
     put(header, 0, 4088); put(header, 4, 4088); put(header, 8, 0);
-    check(ring.push(packet, notify) == R::Ok && notify);
+    check(ring.write_packet(packet, notify) == R::Ok && notify);
     check(std::equal(packet.begin(), packet.begin() + 8, ram.begin() + 4088));
     check(std::equal(packet.begin() + 8, packet.end(), ram.begin() + 5 * 4096));
-    check(ring.pop(output, notify) == R::Ok && output == packet);
+    check(ring.read_packet(output, notify) == R::Ok && output == packet);
     put(header, 0, 0); put(header, 4, 40); put(header, 12, 77); put(header, 64, 0);
     auto noFeature = ram;
-    check(ring.push(packet, notify) == R::Full && !notify && ram == noFeature);
+    check(ring.write_packet(packet, notify) == R::Full && !notify && ram == noFeature);
     put(header, 8, 1);
     // Exactly enough nominal free space is full: keep the empty/full distinction.
     put(header, 0, 0); put(header, 4, 40); put(header, 64, 1);
     const auto beforeFull = ram;
-    check(ring.push(packet, notify) == R::Full && !notify && get(header, 12) == 40);
+    check(ring.write_packet(packet, notify) == R::Full && !notify && get(header, 12) == 40);
     auto expectedFull = beforeFull; put(expectedFull, 3 * 4096 + 12, 40);
     check(ram == expectedFull);
     check(table.write_mapped_bytes(7, 42, 4096 + 40, packet));
-    check(ring.pop(output, notify) == R::Ok && notify && output == packet && get(header, 4) == 80);
-    check(ring.push(packet, notify) == R::Ok && !notify && get(header, 12) == 0);
+    check(ring.read_packet(output, notify) == R::Ok && notify && output == packet && get(header, 4) == 80);
+    check(ring.write_packet(packet, notify) == R::Ok && !notify && get(header, 12) == 0);
     // Malformed packet/index input never consumes data or modifies output.
     for (unsigned at : {2u, 4u}) {
         auto bad = packet; put(bad, at, at == 2 ? 1 : 3, 2);
         const auto before = ram;
-        check(ring.push(bad, notify) == R::Invalid && !notify && ram == before);
+        check(ring.write_packet(bad, notify) == R::Invalid && !notify && ram == before);
     }
     for (auto index : {1u, 8192u, 0xffffffffu}) {
         put(header, 0, index); auto before = ram; auto old = output;
-        check(ring.pop(output, notify) == R::Invalid && !notify && ram == before && output == old);
-        check(ring.push(packet, notify) == R::Invalid && !notify && ram == before);
+        check(ring.read_packet(output, notify) == R::Invalid && !notify && ram == before && output == old);
+        check(ring.write_packet(packet, notify) == R::Invalid && !notify && ram == before);
     }
     put(header, 0, 8); put(header, 4, 0);
     auto before = ram;
-    check(ring.pop(output, notify) == R::Invalid && ram == before);
+    check(ring.read_packet(output, notify) == R::Invalid && ram == before);
     put(header, 0, 40); put(header, 4, 0);
     auto bad = packet; put(bad, 2, 5, 2);
     check(table.write_mapped_bytes(7, 42, 4096, bad)); before = ram;
-    check(ring.pop(output, notify) == R::Invalid && ram == before);
+    check(ring.read_packet(output, notify) == R::Invalid && ram == before);
     // Exercise repeated wraps/backpressure against an independent FIFO oracle.
     std::fill(ram.begin(), ram.end(), 0); put(header, 64, 1);
     std::mt19937 random(0x485652);
@@ -99,10 +99,10 @@ int main() {
             size_t occupied = 0;
             for (const auto &entry : fifo) occupied += entry.size() + 8;
             const bool full = 8192 - occupied <= next.size() + 8;
-            check(ring.push(next, notify) == (full ? R::Full : R::Ok));
+            check(ring.write_packet(next, notify) == (full ? R::Full : R::Ok));
             if (!full) fifo.push_back(next);
         } else {
-            const auto result = ring.pop(output, notify);
+            const auto result = ring.read_packet(output, notify);
             check(result == (fifo.empty() ? R::Empty : R::Ok));
             if (!fifo.empty()) { check(output == fifo.front()); fifo.pop_front(); }
         }
@@ -112,8 +112,8 @@ int main() {
     check(table.teardown_descriptor(7, 42) == ArmGpadl::Result::Ok);
     check(table.begin_descriptor(7, 42, 32, 1, descriptor) == ArmGpadl::Result::Ok);
     check(table.mapping_generation(7, 42) != generation); before = ram;
-    check(ring.push(packet, notify) == R::Invalid && ram == before);
-    check(ring.pop(output, notify) == R::Invalid && ram == before);
+    check(ring.write_packet(packet, notify) == R::Invalid && ram == before);
+    check(ring.read_packet(output, notify) == R::Invalid && ram == before);
     auto duplicate = descriptor; put(duplicate, 24, base >> 12, 8);
     check(table.begin_descriptor(7, 43, 32, 1, duplicate) == ArmGpadl::Result::Ok);
     check(!table.valid_ring_mapping(7, 43, 0, 8192));
@@ -132,8 +132,8 @@ int main() {
     check(table.valid_ring_mapping(7, 46, 0, 12288));
     ArmVmbusRing multiRing(table, 7, 46, 0, 12288);
     put(header, 0, 0); put(header, 4, 0);
-    check(multiRing.push(packet, notify) == R::Ok);
-    check(multiRing.pop(output, notify) == R::Ok && output == packet);
+    check(multiRing.write_packet(packet, notify) == R::Ok);
+    check(multiRing.read_packet(output, notify) == R::Ok && output == packet);
     for (unsigned i = 0; i < 128; ++i) {
         put(header, 0, 40); put(header, 4, 0);
         auto corrupt = packet;
@@ -141,7 +141,7 @@ int main() {
         else put(corrupt, 4, i & 2 ? 0 : 65535, 2);
         check(table.write_mapped_bytes(7, 46, 4096, corrupt));
         const auto previous = ram, oldPacket = output;
-        check(multiRing.pop(output, notify) == R::Invalid && !notify && ram == previous && output == oldPacket);
+        check(multiRing.read_packet(output, notify) == R::Invalid && !notify && ram == previous && output == oldPacket);
     }
     std::cout << checks << " VMBus ring checks passed\n";
 }
