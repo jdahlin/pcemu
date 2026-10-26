@@ -450,7 +450,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
                 result.value = -2;
                 if (argument == 0 && target < vm.cpuCount()) result.value = vm.cpuOnline(unsigned(target)) ? 0 : 1;
                 else if (argument > 0 && argument <= 3 && (target >> (8 * argument)) == 0) result.value = 0;
-            } else result = armPsciCall(function, target, argument);
+            } else result = call_psci(function, target, argument);
         }
         powerAction = result.action;
         if (!stopped()) vm.setReg(0, uint64_t(result.value));
