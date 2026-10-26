@@ -1,0 +1,968 @@
+{
+  "decision": "Reject recursive guarded bridge as default: every one of three uninstrumented pairs for each Office task favors baseline. A basis for a cheaper controller, not evidence against cross-block linking in general.",
+  "design": "Normal native exits check transient CPU budget and enter a guarded C++ resolver. Only already-native fast-cache hits can continue; no compilation or interpretation while native frames live. Current Block metadata supplies the callee function, protecting helper lifetime across later metadata replacement. Root C++ run commits aggregated instruction counts; logical dispatch counts preserve batch/control cadence. Early exits bypass continuation. Fetch validation rechecks code generation after page-walk writes.",
+  "sourceIdentity": "Frozen native-batch source, native-batching-2026-10-26.json. Default runtime unchanged.",
+  "patches": {
+    "cpu.hpp": "--- build/native-batch/source/cpu.hpp\t2026-10-25 12:09:32\n+++ build/native-chain-bridge/source/cpu.hpp\t2026-10-26 06:53:10\n@@ -41,6 +41,7 @@\n     uint32_t dr[8]{0, 0, 0, 0, 0, 0, 0xffff0ff0, 0x400};\n     uint32_t gdtBase = 0, idtBase = 0, ldtBase = 0;\n     uint16_t gdtLimit = 0, idtLimit = 0x3ff, ldtLimit = 0, ldtSelector = 0, trSelector = 0;\n+    uint8_t nativeChainBudget = 0, nativeChainDispatches = 0; // transient ABI padding\n     uint32_t trBase = 0, trLimit = 0;\n     bool tr32 = false;\n     bool halted = false, a20 = true;\n",
+    "jit.hpp": "--- build/native-batch/source/jit.hpp\t2026-10-26 01:51:18\n+++ build/native-chain-bridge/source/jit.hpp\t2026-10-26 06:36:25\n@@ -58,6 +58,7 @@\n         Block *block = nullptr;\n     };\n     std::array<FastEntry, 4096> fast{};\n+    static uint32_t continueNative(CPU *, Jit *, uint32_t) noexcept;\n     Block compile(bool translate = true);\n     jit_detail::DecodedBlock decode(Block &block);\n     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);\n",
+    "jit.cpp": "--- build/native-batch/source/jit.cpp\t2026-10-26 01:51:18\n+++ build/native-chain-bridge/source/jit.cpp\t2026-10-26 06:53:10\n@@ -154,13 +154,46 @@\n     }\n     return n;\n }\n+uint32_t Jit::continueNative(CPU *ptr, Jit *jit, uint32_t n) noexcept {\n+    auto &cpu=*ptr;\n+    if (!cpu.nativeChainBudget || n >= cpu.nativeChainBudget) {\n+        cpu.nativeChainBudget=0;return n;\n+    }\n+    cpu.nativeChainBudget-=n;\n+    if(cpu.nativeFallback || cpu.halted || (cpu.flags&TF) ||\n+       (cpu.interruptBlockedThrough && cpu.instructions<=cpu.interruptBlockedThrough)) return n;\n+    uint64_t key=uint64_t(cpu.s[CS].selector)<<48 | uint64_t(cpu.s[CS].big)<<47 | cpu.ip;\n+    auto &entry=jit->fast[(cpu.ip^(cpu.ip>>12)^(cpu.s[CS].selector*31u))&4095];\n+    Block *b=entry.key==key?entry.block:nullptr;\n+    if(!b || !b->fn || b->executionEpoch!=cpu.executionEpoch ||\n+       b->page>=cpu.generation.size() || b->generation!=cpu.generation[b->page] ||\n+       b->cr0!=cpu.cr[0] || b->cr3!=cpu.cr[3] || b->csBase!=cpu.s[CS].base ||\n+       b->a20!=cpu.a20 || b->vm!=bool(cpu.flags&0x20000) ||\n+       b->watched!=bool(cpu.watchWrite) || (b->usesStack && b->stack32!=cpu.s[SS].big) ||\n+       b->ram!=cpu.mem.data() || b->ramSize!=cpu.mem.size() || b->codeBits!=cpu.codeUsed.data()) return n;\n+    auto oldCR2=cpu.cr[2];\n+    try {\n+        if((cpu.cr[0]&0x80000000u) && instructionPage(cpu)!=b->page) return n;\n+        if(b->generation!=cpu.generation[b->page]) return n;\n+    } catch(...) {cpu.cr[2]=oldCR2;return n;}\n+    ++cpu.nativeChainDispatches;\n+    ++jit->cacheHits;\n+    profile::event(profile::Dispatch);profile::event(profile::FastHit);profile::event(profile::NativeCall);\n+    // No compilation, interpretation or callbacks can replace metadata while a\n+    // native frame is live. Load the current function through the stable node.\n+    return n+b->fn(&cpu);\n+}\n Jit::BatchResult Jit::runBatch(unsigned budget) {\n     if (budget > 64) budget = 64;\n     BatchResult result;\n+    struct Reset {CPU &cpu; ~Reset(){cpu.nativeChainBudget=0;}} reset{cpu};\n     const auto before = nativeInstructions;\n     while (result.instructions < budget && !cpu.halted) {\n+        cpu.nativeChainBudget=budget-result.instructions;\n+        cpu.nativeChainDispatches=1;\n         auto n = run();\n-        ++result.dispatches;\n+        cpu.nativeChainBudget=0;\n+        result.dispatches+=cpu.nativeChainDispatches;\n         result.instructions += n;\n         if (!n || nativeInstructions - before != result.instructions)\n             break; // Any interpreter instruction/replay is a device-poll boundary.\n",
+    "jit_arm64.cpp": "--- build/native-batch/source/jit_arm64.cpp\t2026-10-26 01:10:40\n+++ build/native-chain-bridge/source/jit_arm64.cpp\t2026-10-26 06:36:25\n@@ -963,6 +963,14 @@\n     }\n     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);\n     imm(0, ir.size());\n+    static_assert(offsetof(CPU,nativeChainBudget)<4096);\n+    emit(0x39400000u | (offsetof(CPU,nativeChainBudget)<<10) | (19<<5) | 9);\n+    auto noChain=code.size();emit(0x34000009u);\n+    emit(0xaa1303e0u); // CPU pointer\n+    pointer(1,reinterpret_cast<uintptr_t>(this));\n+    imm(2,ir.size());\n+    call(reinterpret_cast<uintptr_t>(&Jit::continueNative));\n+    code[noChain] |= (uint32_t(code.size()-noChain)&0x7ffffu)<<5;\n     for (auto at : exits)\n         code[at] |= uint32_t(code.size() - at) & 0x03ffffffu;\n     for (int k = 0; k < 5; k++)\n"
+  },
+  "commands": {
+    "core-command.json": [
+      "clang++",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/ne2000.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "tests/test.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/core-tests"
+    ],
+    "batch-command.json": [
+      "clang++",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/ne2000.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "tests/jit_batch_test.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/batch-tests"
+    ],
+    "memory-command.json": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_arm64.cpp",
+      "build/native-chain-bridge/memory-tests.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/memory-tests"
+    ],
+    "chain-command.json": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_arm64.cpp",
+      "build/native-chain-bridge/chain-tests.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/chain-tests"
+    ],
+    "context-test-command.json": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/source/jit_arm64.cpp",
+      "build/context-cache/context-tests.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/context-test-tests"
+    ]
+  },
+  "checks": {
+    "batch.log": "{\"batched\":0,\"phase\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":31,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":63,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":127,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":1,\"phase\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":58}\n{\"batched\":1,\"phase\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":59}\n{\"batched\":1,\"phase\":31,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":63,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":127,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":61}\nPassed 3500 native batch checks\n",
+    "memory.log": "Passed 1084 memory-loop checks\n",
+    "chain.log": "Passed 77961 cross-block checks; chained batches=4256\n",
+    "core.log": "Passed 354948 checks\n",
+    "context-test.log": "Passed 759 context mutation checks\n"
+  },
+  "testSources": {
+    "memory-tests.cpp": "#include \"jit.hpp\"\n#include <algorithm>\n#include <iostream>\nusing namespace pc;\nunsigned checks;\nvoid check(bool v, const char *s) {\n    ++checks;\n    if (!v)\n        throw std::runtime_error(s);\n}\nvoid equal(const CPU &a, const CPU &b) {\n    check(a.ip == b.ip && a.flags == b.flags && a.instructions == b.instructions &&\n              a.halted == b.halted,\n          \"control\");\n    check(std::equal(a.r, a.r + 8, b.r), \"GPR\");\n    check(a.mem == b.mem && a.cr[2] == b.cr[2], \"RAM/CR2\");\n}\nCPU make(std::initializer_list<uint8_t> code, bool paging = false) {\n    CPU c(1024 * 1024);\n    c.cr[0] = 0x11;\n    c.s[CS].big = true;\n    c.flags = 0x8d7;\n    std::copy(code.begin(), code.end(), c.mem.begin());\n    if (paging) {\n        c.write(0x80000, 0x81007, 4);\n        for (unsigned i = 0; i < 256; ++i)\n            c.write(0x81000 + 4 * i, (i << 12) | 7, 4);\n        c.cr[3] = 0x80000;\n        c.cr[0] |= 0x80000000;\n        c.flushTLB();\n    }\n    return c;\n}\nvoid compare(CPU c, unsigned batches = 10000) {\n    CPU ref = c, single = c;\n    Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps),\n        one(single, true, 0, 65536, Jit::BlockMode::FollowJumps);\n    for (unsigned k = 0; k < batches && !c.halted; ++k) {\n        auto p = jit.runBatch();\n        Jit::BatchResult q;\n        auto native = one.nativeInstructions;\n        while (q.instructions < 64 && !single.halted) {\n            auto n = one.run();\n            q.instructions += n;\n            ++q.dispatches;\n            if (!n || one.nativeInstructions - native != q.instructions)\n                break;\n        }\n        check(p.instructions == q.instructions && p.dispatches == q.dispatches, \"calendar\");\n        for (unsigned i = 0; i < p.instructions; ++i)\n            ref.step();\n        equal(c, ref);\n        equal(c, single);\n    }\n}\nint main() {\n    try {\n        for (bool paging : {false, true})\n            for (unsigned loops : {1u, 3u, 22u, 64u, 1000u}) {\n                auto c = make({0x8b, 0x03, 0x83, 0xc3, 4, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4}, paging);\n                c.r[BX] = 0x10000;\n                c.r[CX] = loops;\n                for (unsigned i = 0; i < loops; ++i)\n                    c.write(0x10000 + 4 * i, i * 17, 4);\n                compare(c);\n            }\n        for (bool paging : {false, true}) {\n            auto c = make({0x89, 0x03, 0x83, 0xeb, 8, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4}, paging);\n            c.r[BX] = 0x20;\n            c.r[CX] = 100;\n            c.r[AX] = 0x90f4fe75;\n            compare(c, 4);\n        }\n        {\n            auto c = make({0x8b, 0x03, 0x83, 0xc3, 4, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4});\n            c.r[BX] = 0x9fff0;\n            c.r[CX] = 100;\n            CPU ref = c;\n            unsigned callbacks = 0, refCallbacks = 0;\n            c.videoRead = [&](uint32_t) {\n                ++callbacks;\n                check(c.instructions == 17, \"MMIO clock before replay\");\n                return 0x42;\n            };\n            ref.videoRead = [&](uint32_t) {\n                ++refCallbacks;\n                return 0x42;\n            };\n            Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);\n            auto p = jit.runBatch();\n            check(p.instructions == 17 && p.dispatches == 5, \"MMIO prefix/calendar\");\n            for (unsigned i = 0; i < p.instructions; ++i)\n                ref.step();\n            equal(c, ref);\n            check(callbacks == 4 && refCallbacks == 4, \"MMIO exactly once\");\n            check(jit.cacheHits == 5 && c.nativeChainDispatches == 5 && jit.nativeInstructions == 16,\n                  \"MMIO accumulated native prefix\");\n        }\n        // A fault after eight complete iterations must expose the original restart state.\n        {\n            auto c = make({0x8b, 0x03, 0x83, 0xc3, 4, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4}, true);\n            c.r[BX] = 0x4fe0;\n            c.r[CX] = 16;\n            c.s[CS].selector = 3;\n            c.write(0x81000 + 5 * 4, 0, 4);\n            c.flushTLB();\n            for (unsigned i = 0; i < 8; ++i)\n                c.write(0x4fe0 + 4 * i, 100 + i, 4);\n            CPU ref = c;\n            struct Stop {};\n            unsigned faults = 0, refFaults = 0;\n            c.observeFault = [&](const Fault &f) {\n                ++faults;\n                check(f.vector == 14 && f.error == 4, \"native fault type\");\n                throw Stop{};\n            };\n            ref.observeFault = [&](const Fault &f) {\n                ++refFaults;\n                check(f.vector == 14 && f.error == 4, \"interpreter fault type\");\n                throw Stop{};\n            };\n            Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);\n            try {\n                jit.runBatch();\n                check(false, \"missing native fault\");\n            } catch (const Stop &) {\n            }\n            try {\n                for (unsigned i = 0; i < 33; ++i)\n                    ref.step();\n                check(false, \"missing interpreter fault\");\n            } catch (const Stop &) {\n            }\n            equal(c, ref);\n            check(faults == 1 && refFaults == 1 && c.instructions == 33 && c.cr[2] == 0x5000,\n                  \"precise accumulated fault\");\n        }\n        // A data alias replaces the code PTE and evicts its TLB slot without changing\n        // the old physical code page generation. The next iteration must fetch anew.\n        {\n            auto c = make({0x89, 0x03, 0x83, 0xe9, 1, 0x75, 0xf9, 0xf4}, true);\n            std::copy_n(c.mem.begin(), 8, c.mem.begin() + 0x2000);\n            c.mem[0x2000] = 0xff;\n            c.mem[0x2001] = 0xc2;\n            unsigned page = 1024;\n            while (((page ^ (page >> 10)) & (c.tlb.size() - 1)) != 0)\n                ++page;\n            c.write(0x80000 + 4 * (page >> 10), 0x82007, 4);\n            c.write(0x82000 + 4 * (page & 1023), 0x81007, 4);\n            c.r[BX] = page << 12;\n            c.r[CX] = 4;\n            c.r[AX] = 0x2007;\n            c.flushTLB();\n            CPU ref = c;\n            Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps);\n            auto n = jit.runBatch();\n            for (unsigned i = 0; i < n.instructions; ++i)\n                ref.step();\n            equal(c, ref);\n            check(c.halted && c.r[DX] == 3 && c.instructions == 13, \"code remap followed\");\n        }\n        std::cout << \"Passed \" << checks << \" memory-loop checks\\n\";\n    } catch (const std::exception &e) {\n        std::cerr << e.what() << '\\n';\n        return 1;\n    }\n}\n",
+    "chain-tests.cpp": "#include \"jit.hpp\"\n#include <algorithm>\n#include <iostream>\nusing namespace pc;\nstatic unsigned checks;static uint64_t chained;\nvoid check(bool v,const char*s){++checks;if(!v)throw std::runtime_error(s);}\nvoid equal(const CPU&a,const CPU&b){check(a.ip==b.ip&&a.flags==b.flags&&a.instructions==b.instructions&&a.halted==b.halted,\"chain control\");check(std::equal(a.r,a.r+8,b.r),\"chain registers\");check(a.mem==b.mem&&a.cr[2]==b.cr[2],\"chain RAM/CR2\");}\nint main(){try{\nfor(auto mode:{Jit::BlockMode::Basic,Jit::BlockMode::FollowJumps,Jit::BlockMode::Trace})for(bool paging:{false,true})for(bool wide:{false,true})for(bool memory:{false,true})for(unsigned warm:{0u,8u})for(unsigned loops:{1u,3u,22u,64u,1000u}){\n CPU c(1024*1024);c.cr[0]=0x11;c.s[CS].big=wide;c.r[CX]=loops;c.r[BX]=0x1000;c.flags=0x8d7;\n std::vector<uint8_t> code(32,0x90);std::vector<uint8_t> first=memory?std::vector<uint8_t>{0x8b,0x07,0x85,0xc9,0x75,0x0a,0xf4}:std::vector<uint8_t>{0x83,0xc0,1,0x85,0xc9,0x75,9,0xf4};\n // 16-bit addressing uses [BX] via ModRM 07, 32-bit uses [EBX] via 03.\n if(memory&&wide)first[1]=3;\n std::copy(first.begin(),first.end(),code.begin());std::vector<uint8_t> second=memory?std::vector<uint8_t>{0x83,0xc3,4,0x83,0xe9,1,0x75,0xe8,0xf4}:std::vector<uint8_t>{0x83,0xe9,1,0x75,0xeb,0xf4};std::copy(second.begin(),second.end(),code.begin()+16);std::copy(code.begin(),code.end(),c.mem.begin());\n for(unsigned i=0;i<loops;++i)c.write(0x1000+4*i,17*i,4);\n if(paging){c.write(0x80000,0x81007,4);for(unsigned i=0;i<256;++i)c.write(0x81000+4*i,(i<<12)|7,4);c.cr[3]=0x80000;c.cr[0]|=0x80000000;c.flushTLB();}\n CPU ref=c,single=c;Jit jit(c,true,warm,65536,mode),one(single,true,warm,65536,mode);unsigned batches=0;\n while(!c.halted){auto part=jit.runBatch();Jit::BatchResult expected;auto native=one.nativeInstructions;while(expected.instructions<64&&!single.halted){auto n=one.run();expected.instructions+=n;++expected.dispatches;if(!n||one.nativeInstructions-native!=expected.instructions)break;}\n  check(++batches<10000,\"chain hang\");check(part.instructions==expected.instructions&&part.dispatches==expected.dispatches,\"chain dispatch calendar\");check(part.instructions&&part.instructions<=127,\"chain budget\");for(unsigned i=0;i<part.instructions;++i)ref.step();equal(c,ref);equal(c,single);check(c.nativeChainBudget==0,\"chain budget escapes public boundary\");if(c.nativeChainDispatches>1)++chained;\n }\n}\ncheck(chained>0,\"no cross-block bridge used\");std::cout<<\"Passed \"<<checks<<\" cross-block checks; chained batches=\"<<chained<<\"\\n\";\n}catch(const std::exception&e){std::cerr<<e.what()<<'\\n';return 1;}}\n",
+    "layout.cpp": "#include \"cpu.hpp\"\n#include <cstdio>\n#include <cstddef>\nint main(){printf(\"%zu %zu %zu %zu %zu\\n\",sizeof(pc::CPU),offsetof(pc::CPU,nativeValue),offsetof(pc::CPU,tlbEpoch),offsetof(pc::CPU,instructions),offsetof(pc::CPU,trBase));}\n"
+  },
+  "layoutProbe": {
+    "fields": [
+      "sizeofCPU",
+      "nativeValue",
+      "tlbEpoch",
+      "instructions",
+      "trBase"
+    ],
+    "baseline": [
+      21072,
+      196,
+      21024,
+      216,
+      184
+    ],
+    "candidate": [
+      21072,
+      196,
+      21024,
+      216,
+      184
+    ]
+  },
+  "pairs": {
+    "scope": "Three alternating uninstrumented headless pairs per task; restored existing checkpoints, warm guest OS and cold JIT; task CPU includes control/capture. Prototype only, no default change.",
+    "binaries": {
+      "baseline": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+      "candidate": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564"
+    },
+    "startedUnix": 1792995146.854909,
+    "loadBefore": [
+      3.2939453125,
+      2.71337890625,
+      2.35009765625
+    ],
+    "workloads": {
+      "excel": {
+        "pairs": [
+          {
+            "runs": {
+              "baseline": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 22753.479166999998,
+                    "taskResponseMs": 5636.36425,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 5219.502458,
+                      "systemMs": 289.371458,
+                      "totalMs": 5508.873916
+                    },
+                    "instructions": 1402691954,
+                    "nativeInstructions": 1382702065,
+                    "compiledBlocks": 31817,
+                    "executionWallMs": 5124.167674
+                  }
+                ],
+                "medianRestoreReadyMs": 22753.479166999998,
+                "medianTaskResponseMs": 5636.36425,
+                "medianProcessCpuMs": 5508.873916
+              },
+              "candidate": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 937.3502080000001,
+                    "taskResponseMs": 7186.661417000001,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 6611.291459,
+                      "systemMs": 366.228042,
+                      "totalMs": 6977.519501
+                    },
+                    "instructions": 1403627159,
+                    "nativeInstructions": 1383460540,
+                    "compiledBlocks": 31535,
+                    "executionWallMs": 6447.230723
+                  }
+                ],
+                "medianRestoreReadyMs": 937.3502080000001,
+                "medianTaskResponseMs": 7186.661417000001,
+                "medianProcessCpuMs": 6977.519501
+              }
+            },
+            "cpuRatio": 0.7895175234136547,
+            "responseRatio": 0.7842813126923186
+          },
+          {
+            "runs": {
+              "candidate": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 485.185666,
+                    "taskResponseMs": 7145.20025,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 6626.190625,
+                      "systemMs": 370.858917,
+                      "totalMs": 6997.049542
+                    },
+                    "instructions": 1403126291,
+                    "nativeInstructions": 1383029819,
+                    "compiledBlocks": 31606,
+                    "executionWallMs": 6469.227593
+                  }
+                ],
+                "medianRestoreReadyMs": 485.185666,
+                "medianTaskResponseMs": 7145.20025,
+                "medianProcessCpuMs": 6997.049542
+              },
+              "baseline": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 425.302083,
+                    "taskResponseMs": 6917.6572909999995,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 6411.0055,
+                      "systemMs": 354.84575,
+                      "totalMs": 6765.85125
+                    },
+                    "instructions": 1403247558,
+                    "nativeInstructions": 1383154265,
+                    "compiledBlocks": 31869,
+                    "executionWallMs": 6254.157191
+                  }
+                ],
+                "medianRestoreReadyMs": 425.302083,
+                "medianTaskResponseMs": 6917.6572909999995,
+                "medianProcessCpuMs": 6765.85125
+              }
+            },
+            "cpuRatio": 0.9669577454593933,
+            "responseRatio": 0.968154432200833
+          },
+          {
+            "runs": {
+              "baseline": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 403.97225000000003,
+                    "taskResponseMs": 6345.7955409999995,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 6011.350791,
+                      "systemMs": 308.553666,
+                      "totalMs": 6319.904457
+                    },
+                    "instructions": 1403343718,
+                    "nativeInstructions": 1383225762,
+                    "compiledBlocks": 31837,
+                    "executionWallMs": 5881.228078
+                  }
+                ],
+                "medianRestoreReadyMs": 403.97225000000003,
+                "medianTaskResponseMs": 6345.7955409999995,
+                "medianProcessCpuMs": 6319.904457
+              },
+              "candidate": {
+                "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 434.28129099999995,
+                    "taskResponseMs": 7067.60225,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 6605.316041,
+                      "systemMs": 325.546833,
+                      "totalMs": 6930.862874
+                    },
+                    "instructions": 1403528041,
+                    "nativeInstructions": 1383396383,
+                    "compiledBlocks": 31518,
+                    "executionWallMs": 6451.930159
+                  }
+                ],
+                "medianRestoreReadyMs": 434.28129099999995,
+                "medianTaskResponseMs": 7067.60225,
+                "medianProcessCpuMs": 6930.862874
+              }
+            },
+            "cpuRatio": 0.9118495881238812,
+            "responseRatio": 0.8978710624243179
+          }
+        ],
+        "medianCpuRatio": 0.9118495881238812,
+        "medianResponseRatio": 0.8978710624243179
+      },
+      "word": {
+        "pairs": [
+          {
+            "runs": {
+              "baseline": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 1160.850042,
+                    "taskResponseMs": 682.1592089999999,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 609.493834,
+                      "systemMs": 44.78825,
+                      "totalMs": 654.282084
+                    },
+                    "instructions": 31065899,
+                    "nativeInstructions": 23548564,
+                    "compiledBlocks": 39329,
+                    "executionWallMs": 627.201242
+                  }
+                ],
+                "medianRestoreReadyMs": 1160.850042,
+                "medianTaskResponseMs": 682.1592089999999,
+                "medianProcessCpuMs": 654.282084
+              },
+              "candidate": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 345.080875,
+                    "taskResponseMs": 680.879458,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 627.809375,
+                      "systemMs": 45.406,
+                      "totalMs": 673.215375
+                    },
+                    "instructions": 31342901,
+                    "nativeInstructions": 23692281,
+                    "compiledBlocks": 40915,
+                    "executionWallMs": 626.133012
+                  }
+                ],
+                "medianRestoreReadyMs": 345.080875,
+                "medianTaskResponseMs": 680.879458,
+                "medianProcessCpuMs": 673.215375
+              }
+            },
+            "cpuRatio": 0.9718763241258417,
+            "responseRatio": 1.0018795558963682
+          },
+          {
+            "runs": {
+              "candidate": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 308.281708,
+                    "taskResponseMs": 678.810375,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 627.493292,
+                      "systemMs": 43.398708,
+                      "totalMs": 670.892
+                    },
+                    "instructions": 31241533,
+                    "nativeInstructions": 23636171,
+                    "compiledBlocks": 41175,
+                    "executionWallMs": 626.675489
+                  }
+                ],
+                "medianRestoreReadyMs": 308.281708,
+                "medianTaskResponseMs": 678.810375,
+                "medianProcessCpuMs": 670.892
+              },
+              "baseline": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 307.98904200000004,
+                    "taskResponseMs": 670.3253749999999,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 620.8405,
+                      "systemMs": 43.688125,
+                      "totalMs": 664.528625
+                    },
+                    "instructions": 31347974,
+                    "nativeInstructions": 23773159,
+                    "compiledBlocks": 39426,
+                    "executionWallMs": 619.424002
+                  }
+                ],
+                "medianRestoreReadyMs": 307.98904200000004,
+                "medianTaskResponseMs": 670.3253749999999,
+                "medianProcessCpuMs": 664.528625
+              }
+            },
+            "cpuRatio": 0.9905150530934934,
+            "responseRatio": 0.9875001910511457
+          },
+          {
+            "runs": {
+              "baseline": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 315.144583,
+                    "taskResponseMs": 696.577666,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 639.878542,
+                      "systemMs": 46.202208,
+                      "totalMs": 686.08075
+                    },
+                    "instructions": 31130961,
+                    "nativeInstructions": 23592975,
+                    "compiledBlocks": 38901,
+                    "executionWallMs": 640.245425
+                  }
+                ],
+                "medianRestoreReadyMs": 315.144583,
+                "medianTaskResponseMs": 696.577666,
+                "medianProcessCpuMs": 686.08075
+              },
+              "candidate": {
+                "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                "jit": true,
+                "profiled": false,
+                "followJumps": true,
+                "traces": false,
+                "emulatorSha256": "8d555c3774ace39de7e8b97feeb908e18ffac8a94a64cca1eed56bb9528a2564",
+                "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                "restoreTimeoutSeconds": 90.0,
+                "guestProfiled": false,
+                "frontend": "headless",
+                "hostInputSuppressed": false,
+                "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge/pcemu",
+                "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                "samples": [
+                  {
+                    "restoreReadyMs": 352.64991599999996,
+                    "taskResponseMs": 741.932291,
+                    "processCpuTime": {
+                      "status": "available",
+                      "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                      "userMs": 689.890542,
+                      "systemMs": 45.909125,
+                      "totalMs": 735.799667
+                    },
+                    "instructions": 31673565,
+                    "nativeInstructions": 23927211,
+                    "compiledBlocks": 41615,
+                    "executionWallMs": 687.819834
+                  }
+                ],
+                "medianRestoreReadyMs": 352.64991599999996,
+                "medianTaskResponseMs": 741.932291,
+                "medianProcessCpuMs": 735.799667
+              }
+            },
+            "cpuRatio": 0.9324287313111816,
+            "responseRatio": 0.9388695901901378
+          }
+        ],
+        "medianCpuRatio": 0.9718763241258417,
+        "medianResponseRatio": 0.9875001910511457
+      }
+    },
+    "finishedUnix": 1792995221.6826382,
+    "loadAfter": [
+      3.0,
+      2.76904296875,
+      2.4013671875
+    ]
+  },
+  "pairDriver": "from pathlib import Path\nimport json,subprocess,statistics,os,time,hashlib\nroot=Path.cwd();out=root/'build/native-chain-bridge/office-pairs';out.mkdir(exist_ok=True)\nbins={'baseline':'build/native-batch/pcemu','candidate':'build/native-chain-bridge/pcemu'}\nr={'scope':'Three alternating uninstrumented headless pairs per task; restored existing checkpoints, warm guest OS and cold JIT; task CPU includes control/capture. Prototype only, no default change.','binaries':{k:hashlib.sha256(Path(v).read_bytes()).hexdigest() for k,v in bins.items()},'startedUnix':time.time(),'loadBefore':os.getloadavg(),'workloads':{}}\nfor workload,snapshot,task in [('excel','/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered','build/flag-pair/task-120.json'),('word','/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026','build/word-memory-call-probe/task.json')]:\n pairs=[]\n for i in range(3):\n  runs={}\n  for mode in (['baseline','candidate'] if i%2==0 else ['candidate','baseline']):\n   d=out/f'{workload}-{i}-{mode}';cmd=['python3','tools/bench_snapshot_task.py',snapshot,'--task',task,'--repeat','1','--emulator',bins[mode],'--restore-timeout','90','--output',str(d)]\n   with (out/(d.name+'.log')).open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)\n   runs[mode]=json.loads((d/'result.json').read_text());print(workload,i,mode,runs[mode]['medianProcessCpuMs'],flush=True)\n  b=runs['baseline']['samples'][0];c=runs['candidate']['samples'][0];pairs.append({'runs':runs,'cpuRatio':b['processCpuTime']['totalMs']/c['processCpuTime']['totalMs'],'responseRatio':b['taskResponseMs']/c['taskResponseMs']})\n  r['workloads'][workload]={'pairs':pairs,'medianCpuRatio':statistics.median(x['cpuRatio'] for x in pairs),'medianResponseRatio':statistics.median(x['responseRatio'] for x in pairs)};(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n')\nr['finishedUnix']=time.time();r['loadAfter']=os.getloadavg();(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n')\n",
+  "diagnostic": {
+    "stats": {
+      "roots": 28543791,
+      "linked": 310941122,
+      "chains": [
+        {
+          "length": 1,
+          "count": 4535485
+        },
+        {
+          "length": 2,
+          "count": 1394274
+        },
+        {
+          "length": 3,
+          "count": 953612
+        },
+        {
+          "length": 4,
+          "count": 508484
+        },
+        {
+          "length": 5,
+          "count": 368621
+        },
+        {
+          "length": 6,
+          "count": 197405
+        },
+        {
+          "length": 7,
+          "count": 307816
+        },
+        {
+          "length": 8,
+          "count": 118342
+        },
+        {
+          "length": 9,
+          "count": 523390
+        },
+        {
+          "length": 10,
+          "count": 303523
+        },
+        {
+          "length": 11,
+          "count": 193959
+        },
+        {
+          "length": 12,
+          "count": 223714
+        },
+        {
+          "length": 13,
+          "count": 881652
+        },
+        {
+          "length": 14,
+          "count": 2570078
+        },
+        {
+          "length": 15,
+          "count": 2203703
+        },
+        {
+          "length": 16,
+          "count": 4311767
+        },
+        {
+          "length": 17,
+          "count": 4757091
+        },
+        {
+          "length": 18,
+          "count": 1942433
+        },
+        {
+          "length": 19,
+          "count": 2094284
+        },
+        {
+          "length": 20,
+          "count": 93484
+        },
+        {
+          "length": 21,
+          "count": 3289
+        },
+        {
+          "length": 22,
+          "count": 3131
+        },
+        {
+          "length": 23,
+          "count": 1014
+        },
+        {
+          "length": 24,
+          "count": 802
+        },
+        {
+          "length": 25,
+          "count": 1619
+        },
+        {
+          "length": 26,
+          "count": 2633
+        },
+        {
+          "length": 27,
+          "count": 47867
+        },
+        {
+          "length": 28,
+          "count": 120
+        },
+        {
+          "length": 29,
+          "count": 17
+        },
+        {
+          "length": 30,
+          "count": 28
+        },
+        {
+          "length": 31,
+          "count": 18
+        },
+        {
+          "length": 32,
+          "count": 136
+        }
+      ]
+    },
+    "linkedFraction": 0.9159202959926529,
+    "meanNativeCallsPerRoot": 11.893476693407683,
+    "events": {
+      "dispatch": 359724373,
+      "fastHit": 354020602,
+      "mapHit": 4995225,
+      "lookupMiss": 326649,
+      "metadataRebuild": 380447,
+      "translate": 54442,
+      "interpretedDispatch": 20239342,
+      "negativeHit": 18383480,
+      "nativeCall": 339484913,
+      "nativeReplay": 110792,
+      "devicePoll": 39865223,
+      "diskReadSectorsIncludingParents": 1224,
+      "diskWriteSectors": 70,
+      "cowDecompress": 49,
+      "cowCacheHit": 1
+    },
+    "taskResult": {
+      "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+      "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+      "jit": true,
+      "profiled": false,
+      "followJumps": true,
+      "traces": false,
+      "emulatorSha256": "0b7211a7b607a3122e0374d9df3ca6be3441426a933b7f99291dedfe7246c332",
+      "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+      "restoreTimeoutSeconds": 90.0,
+      "guestProfiled": true,
+      "frontend": "headless",
+      "hostInputSuppressed": false,
+      "emulator": "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/pcemu-profile",
+      "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+      "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+      "samples": [
+        {
+          "restoreReadyMs": 28296.641625,
+          "taskResponseMs": 5963.174165999998,
+          "processCpuTime": {
+            "status": "available",
+            "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+            "userMs": 5497.4535,
+            "systemMs": 313.2935,
+            "totalMs": 5810.747
+          },
+          "instructions": 1403597174,
+          "nativeInstructions": 1383432370,
+          "compiledBlocks": 31530,
+          "executionWallMs": 5498.657014
+        }
+      ],
+      "medianRestoreReadyMs": 28296.641625,
+      "medianTaskResponseMs": 5963.174165999998,
+      "medianProcessCpuMs": 5810.747
+    },
+    "command": [
+      "clang++",
+      "-DPCEMU_PROFILE",
+      "-I/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/main.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/network.cpp",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/source/frontend_sdl.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/native-chain-bridge-profile/pcemu-profile"
+    ],
+    "patch": "--- build/native-chain-bridge/source/jit.cpp\t2026-10-26 06:53:10\n+++ build/native-chain-bridge-profile/source/jit.cpp\t2026-10-26 08:47:27\n@@ -2,11 +2,14 @@\n #include \"jit_ir.hpp\"\n #include \"profile.hpp\"\n #include <utility>\n+#include <cstdlib>\n #if defined(__APPLE__) && defined(__aarch64__)\n #include <sys/mman.h>\n #endif\n namespace pc {\n using jit_detail::Kind;\n+static uint64_t rootNativeCalls=0,linkedNativeCalls=0;\n+static std::map<unsigned,uint64_t> chainLengths;\n // The dispatcher asks for this on every cached paged block entry. Reuse a\n // current permitted read translation without the address()/physical() call\n // pair; misses and segment faults retain the reference CPU's slow path.\n@@ -44,6 +47,11 @@\n #endif\n }\n Jit::~Jit() {\n+    if(const char *path=std::getenv(\"PCEMU_CHAIN_STATS\")) {\n+        std::ofstream f(path);f<<\"{\\\"roots\\\":\"<<rootNativeCalls<<\",\\\"linked\\\":\"<<linkedNativeCalls<<\",\\\"chains\\\":[\";bool first=true;\n+        for(auto [n,count]:chainLengths){f<<(first?\"\":\",\")<<\"{\\\"length\\\":\"<<n<<\",\\\"count\\\":\"<<count<<\"}\";first=false;}f<<\"]}\\n\";\n+    }\n+\n #if defined(__APPLE__) && defined(__aarch64__)\n     if (arena)\n         munmap(arena, capacity);\n@@ -143,7 +151,9 @@\n     cacheHits++;\n     profile::event(profile::NativeCall);\n     cpu.nativeFallback = false;\n+    if(profile::active)++rootNativeCalls;\n     auto n = b.fn(&cpu);\n+    if(profile::active)++chainLengths[cpu.nativeChainDispatches];\n     cpu.instructions += n;\n     nativeInstructions += n;\n     if (cpu.nativeFallback) {\n@@ -177,6 +187,7 @@\n         if(b->generation!=cpu.generation[b->page]) return n;\n     } catch(...) {cpu.cr[2]=oldCR2;return n;}\n     ++cpu.nativeChainDispatches;\n+    if(profile::active)++linkedNativeCalls;\n     ++jit->cacheHits;\n     profile::event(profile::Dispatch);profile::event(profile::FastHit);profile::event(profile::NativeCall);\n     // No compilation, interpretation or callbacks can replace metadata while a\n",
+    "accountingChecks": "Histogram root sum and weighted native-call sum exactly match root/linked counters and normal guest-profile NativeCall event."
+  },
+  "limits": [
+    "Shared host; three paired runs per task, all favor baseline; no formal confidence estimate.",
+    "Diagnostic counts are separate from uninstrumented timing comparisons. Instrumented timing is not a speed result.",
+    "Bridge still resolves in C++ and retains nested frames. These are possible costs, not isolated causes.",
+    "Transient CPU fields occupy existing padding and are reset on every batch exit including exceptions; ordinary run() uses its original single-block behavior.",
+    "The MMIO-specific test expects five native function frames rather than the earlier same-block prototype one frame; exact callbacks, logical dispatches and committed instruction clock remain checked.",
+    "Existing external checkpoints reused, expected pixels pass, successful small disk children removed. No new OS acceptance claim for this rejected private prototype."
+  ]
+}

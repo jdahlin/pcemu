@@ -1388,3 +1388,12 @@ register-only self-loops are observed. Word's hot addresses are more diffuse.
 This explains why same-block repetition was a weak target and motivates bounded
 cross-block linking, which is not implemented or proven by this diagnostic.
 See [transition profiles](native-transition-profiling.md).
+
+### Guarded cross-block bridge: correct tested path, performance rejected
+
+A private bridge passes 77,961 cross-block, 1,084 memory, 3,500 batch/timer,
+354,948 core and 759 context-mutation checks. A diagnostic confirms 91.59% of
+native calls bypass ordinary dispatcher entry. Its recursive C++ resolver still
+loses all three Office pairs per task (CPU ratios Excel 0.912, Word 0.972).
+The default is unchanged; the next controller needs less resolver/frame work.
+See [bridge evidence](native-chain-bridge.md).
