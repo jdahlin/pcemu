@@ -1,0 +1,792 @@
+{
+  "scope": "Three headless loaded Excel recalculation host profiles with emitted-code region maps. Diagnostic-only frozen source logging and 128 MiB virtual JIT arena to prevent address reuse. These are wall-stack shares, not exact CPU times or normal-arena application performance.",
+  "buildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/jit-map-profile/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/jit-map-profile/pcemu"
+  ],
+  "binarySha256": "e56430b0f350e0e728c63279ef92d93f962c46dd3411598644576d5d1ae61358",
+  "productionSourceReference": "native-memory-push-2026-10-26.json",
+  "sourcePatches": {
+    "main.cpp": "--- reference/main.cpp\n+++ diagnostic/main.cpp\n@@ -248,7 +248,7 @@\n         }\n         if (snapshotPath.empty())\n             m.boot(fromFloppy);\n-        Jit jit(c, enableJit, 8, 16 * 1024 * 1024,\n+        Jit jit(c, enableJit, 8, 128 * 1024 * 1024,\n                 traceJit ? Jit::BlockMode::Trace\n                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);\n         std::ofstream trace;\n",
+    "jit_arm64.cpp": "--- reference/jit_arm64.cpp\n+++ diagnostic/jit_arm64.cpp\n@@ -3,6 +3,9 @@\n #include \"jit_flags.hpp\"\n #include \"jit_runtime.hpp\"\n #include <algorithm>\n+#include <fstream>\n+#include <cstdlib>\n+#include <unistd.h>\n #include <bit>\n #include <cstddef>\n #include <cstring>\n@@ -280,7 +283,9 @@\n     };\n     std::vector<size_t> exits;\n     int last = -1;\n+    std::vector<size_t> regionOffsets;\n     for (size_t n = 0; n < ir.size(); n++) {\n+        regionOffsets.push_back(code.size()*4);\n         auto i = ir[n];\n         if (i.kind == Kind::Nop)\n             continue;\n@@ -952,6 +957,7 @@\n         dirtyRegisters |= 1u << i.dst;\n         insert(dst, 10, i.w, i.dstShift);\n     }\n+    const auto finishOffset = code.size()*4;\n     flushRegisters(dirtyRegisters);\n     bool branch = ir.back().kind == Kind::Branch;\n     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&\n@@ -984,6 +990,22 @@\n     std::memcpy(arena + used, code.data(), bytes);\n     pthread_jit_write_protect_np(1);\n     sys_icache_invalidate(arena + used, bytes);\n+    static std::ofstream mapFile(std::getenv(\"PCEMU_JIT_MAP\") ? std::getenv(\"PCEMU_JIT_MAP\") : \"/dev/null\");\n+    if (!mapFile) throw std::runtime_error(\"Cannot write JIT map\");\n+    mapFile << \"{\\\"pid\\\":\" << getpid() << \",\\\"start\\\":\" << reinterpret_cast<uintptr_t>(arena+used)\n+            << \",\\\"end\\\":\" << reinterpret_cast<uintptr_t>(arena+used+bytes)\n+            << \",\\\"recycles\\\":\" << cacheRecycles << \",\\\"ip\\\":\" << cpu.ip\n+            << \",\\\"cs\\\":\" << cpu.s[CS].selector << \",\\\"regions\\\":[{\\\"offset\\\":0,\\\"kind\\\":\\\"prologue\\\"}\";\n+    const char *names[]={\"Move\",\"Alu\",\"Test\",\"Nop\",\"Branch\",\"Memory\",\"Lea\",\"CounterBranch\",\"Exchange\",\"Multiply\",\"Shift\",\"IndirectJump\",\"MultiplyByte\",\"DoubleShift\",\"BitTest\",\"LoadFlags\"};\n+    for (size_t n=0;n<ir.size();++n) {\n+        const auto &i=ir[n];\n+        mapFile << \",{\\\"offset\\\":\" << regionOffsets[n] << \",\\\"kind\\\":\\\"\" << names[int(i.kind)]\n+                << \"\\\",\\\"width\\\":\" << i.w << \",\\\"store\\\":\" << i.memory.store\n+                << \",\\\"stackDelta\\\":\" << i.stackDelta << \",\\\"call\\\":\" << i.nearCall\n+                << \",\\\"return\\\":\" << i.nearReturn << \",\\\"memoryCall\\\":\" << i.memoryCall\n+                << \",\\\"memoryPush\\\":\" << i.memoryPush << \",\\\"op\\\":\" << i.op << \"}\";\n+    }\n+    mapFile << \",{\\\"offset\\\":\" << finishOffset << \",\\\"kind\\\":\\\"finish\\\"}]}\\n\";\n     block.fn = reinterpret_cast<Function>(arena + used);\n     used = (used + bytes + 15) & ~size_t(15);\n     compiledBlocks++;\n"
+  },
+  "runs": [
+    {
+      "analysis": {
+        "mainThreadTaskSamples": 6352,
+        "mappedSamples": 1544,
+        "unmappedSamples": 4808,
+        "regions": [
+          {
+            "region": "finish",
+            "scope": "generated self",
+            "samples": 593,
+            "percentOfMain": 9.335642317380353
+          },
+          {
+            "region": "Memory/read",
+            "scope": "generated self",
+            "samples": 258,
+            "percentOfMain": 4.061712846347607
+          },
+          {
+            "region": "Memory/stack",
+            "scope": "generated self",
+            "samples": 182,
+            "percentOfMain": 2.8652392947103276
+          },
+          {
+            "region": "prologue",
+            "scope": "generated self",
+            "samples": 162,
+            "percentOfMain": 2.5503778337531484
+          },
+          {
+            "region": "Memory/write",
+            "scope": "generated self",
+            "samples": 105,
+            "percentOfMain": 1.6530226700251889
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "generated self",
+            "samples": 64,
+            "percentOfMain": 1.0075566750629723
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "generated self",
+            "samples": 51,
+            "percentOfMain": 0.802896725440806
+          },
+          {
+            "region": "Alu",
+            "scope": "generated self",
+            "samples": 49,
+            "percentOfMain": 0.7714105793450882
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "helper descendants",
+            "samples": 34,
+            "percentOfMain": 0.535264483627204
+          },
+          {
+            "region": "DoubleShift",
+            "scope": "generated self",
+            "samples": 10,
+            "percentOfMain": 0.1574307304785894
+          },
+          {
+            "region": "Memory/read",
+            "scope": "helper descendants",
+            "samples": 8,
+            "percentOfMain": 0.12594458438287154
+          },
+          {
+            "region": "Move",
+            "scope": "generated self",
+            "samples": 7,
+            "percentOfMain": 0.11020151133501259
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "helper descendants",
+            "samples": 6,
+            "percentOfMain": 0.09445843828715365
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "generated self",
+            "samples": 5,
+            "percentOfMain": 0.0787153652392947
+          },
+          {
+            "region": "Test",
+            "scope": "generated self",
+            "samples": 4,
+            "percentOfMain": 0.06297229219143577
+          },
+          {
+            "region": "Memory/write",
+            "scope": "helper descendants",
+            "samples": 3,
+            "percentOfMain": 0.04722921914357683
+          },
+          {
+            "region": "Shift",
+            "scope": "generated self",
+            "samples": 2,
+            "percentOfMain": 0.031486146095717885
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "helper descendants",
+            "samples": 1,
+            "percentOfMain": 0.015743073047858942
+          }
+        ],
+        "sample": "build/excel-jit-map-profile/run-0/sample.txt",
+        "codeMap": "build/jit-map-profile/excel-map.jsonl",
+        "sampleSha256": "794fbe9f96f486a474fd96844312f8c649e020c9b37f673ea8ce8d6a676529d7",
+        "codeMapSha256": "e48e72e7d4f7d6ea005ebd5116e401fee753df4118a04b3c13f6c337921f3176",
+        "blocks": 24194,
+        "scope": "Wall-stack samples, not exact CPU time. Helper samples inherit their emitted caller region. Unmapped samples remain explicit."
+      },
+      "taskResult": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+        "jit": true,
+        "profiled": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "e56430b0f350e0e728c63279ef92d93f962c46dd3411598644576d5d1ae61358",
+        "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+        "restoreTimeoutSeconds": 90.0,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/jit-map-profile/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 31968.919958000002,
+            "taskResponseMs": 7356.33,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6564.630542,
+              "systemMs": 378.54875,
+              "totalMs": 6943.179292
+            },
+            "instructions": 1403079130,
+            "nativeInstructions": 1383178608,
+            "compiledBlocks": 21337,
+            "executionWallMs": 6748.497469
+          }
+        ],
+        "medianRestoreReadyMs": 31968.919958000002,
+        "medianTaskResponseMs": 7356.33,
+        "medianProcessCpuMs": 6943.179292
+      },
+      "nativeCodeBytes": 24420260,
+      "noCacheRecycles": true,
+      "normalQuitTrailer": "Executed 7959545617 guest instructions in 10.4398s; native=1387029240, blocks=24194, recycles=0, stopped=budget/quit"
+    },
+    {
+      "analysis": {
+        "mainThreadTaskSamples": 6285,
+        "mappedSamples": 1502,
+        "unmappedSamples": 4783,
+        "regions": [
+          {
+            "region": "finish",
+            "scope": "generated self",
+            "samples": 581,
+            "percentOfMain": 9.244232299124901
+          },
+          {
+            "region": "Memory/read",
+            "scope": "generated self",
+            "samples": 276,
+            "percentOfMain": 4.391408114558472
+          },
+          {
+            "region": "prologue",
+            "scope": "generated self",
+            "samples": 169,
+            "percentOfMain": 2.6889419252187747
+          },
+          {
+            "region": "Memory/stack",
+            "scope": "generated self",
+            "samples": 165,
+            "percentOfMain": 2.6252983293556085
+          },
+          {
+            "region": "Memory/write",
+            "scope": "generated self",
+            "samples": 109,
+            "percentOfMain": 1.7342879872712809
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "generated self",
+            "samples": 55,
+            "percentOfMain": 0.8750994431185362
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "generated self",
+            "samples": 42,
+            "percentOfMain": 0.6682577565632458
+          },
+          {
+            "region": "Alu",
+            "scope": "generated self",
+            "samples": 36,
+            "percentOfMain": 0.5727923627684964
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "helper descendants",
+            "samples": 25,
+            "percentOfMain": 0.39777247414478917
+          },
+          {
+            "region": "Memory/read",
+            "scope": "helper descendants",
+            "samples": 12,
+            "percentOfMain": 0.1909307875894988
+          },
+          {
+            "region": "DoubleShift",
+            "scope": "generated self",
+            "samples": 7,
+            "percentOfMain": 0.11137629276054097
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "helper descendants",
+            "samples": 7,
+            "percentOfMain": 0.11137629276054097
+          },
+          {
+            "region": "Memory/write",
+            "scope": "helper descendants",
+            "samples": 4,
+            "percentOfMain": 0.06364359586316627
+          },
+          {
+            "region": "Move",
+            "scope": "generated self",
+            "samples": 3,
+            "percentOfMain": 0.0477326968973747
+          },
+          {
+            "region": "Memory/stack",
+            "scope": "helper descendants",
+            "samples": 2,
+            "percentOfMain": 0.031821797931583136
+          },
+          {
+            "region": "Test",
+            "scope": "generated self",
+            "samples": 2,
+            "percentOfMain": 0.031821797931583136
+          },
+          {
+            "region": "LoadFlags",
+            "scope": "generated self",
+            "samples": 2,
+            "percentOfMain": 0.031821797931583136
+          },
+          {
+            "region": "Shift",
+            "scope": "generated self",
+            "samples": 2,
+            "percentOfMain": 0.031821797931583136
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "helper descendants",
+            "samples": 1,
+            "percentOfMain": 0.015910898965791568
+          },
+          {
+            "region": "BitTest",
+            "scope": "generated self",
+            "samples": 1,
+            "percentOfMain": 0.015910898965791568
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "generated self",
+            "samples": 1,
+            "percentOfMain": 0.015910898965791568
+          }
+        ],
+        "sample": "build/excel-jit-map-profile-2/run-0/sample.txt",
+        "codeMap": "build/jit-map-profile/excel-map-2.jsonl",
+        "sampleSha256": "321b34160e1fb8e94cd1eb83a87c0e9a1ebd00162668ed1841de06b6353b8311",
+        "codeMapSha256": "b8bbb57ceee11b7622c02f849e0e14f3dcb6860edc1edf164e28931334fdba4a",
+        "blocks": 23181,
+        "scope": "Wall-stack samples, not exact CPU time. Helper samples inherit their emitted caller region. Unmapped samples remain explicit."
+      },
+      "taskResult": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+        "jit": true,
+        "profiled": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "e56430b0f350e0e728c63279ef92d93f962c46dd3411598644576d5d1ae61358",
+        "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+        "restoreTimeoutSeconds": 90.0,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/jit-map-profile/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 613.120708,
+            "taskResponseMs": 7277.771124999999,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6491.304916,
+              "systemMs": 358.39625,
+              "totalMs": 6849.701166
+            },
+            "instructions": 1402622725,
+            "nativeInstructions": 1382959780,
+            "compiledBlocks": 20733,
+            "executionWallMs": 6660.361007
+          }
+        ],
+        "medianRestoreReadyMs": 613.120708,
+        "medianTaskResponseMs": 7277.771124999999,
+        "medianProcessCpuMs": 6849.701166
+      },
+      "nativeCodeBytes": 23308524,
+      "noCacheRecycles": true,
+      "normalQuitTrailer": "Executed 7957000827 guest instructions in 10.3505s; native=1384980398, blocks=23181, recycles=0, stopped=budget/quit"
+    },
+    {
+      "analysis": {
+        "mainThreadTaskSamples": 6386,
+        "mappedSamples": 1550,
+        "unmappedSamples": 4836,
+        "regions": [
+          {
+            "region": "finish",
+            "scope": "generated self",
+            "samples": 558,
+            "percentOfMain": 8.737864077669903
+          },
+          {
+            "region": "Memory/read",
+            "scope": "generated self",
+            "samples": 309,
+            "percentOfMain": 4.838709677419355
+          },
+          {
+            "region": "Memory/stack",
+            "scope": "generated self",
+            "samples": 170,
+            "percentOfMain": 2.662073285311619
+          },
+          {
+            "region": "prologue",
+            "scope": "generated self",
+            "samples": 165,
+            "percentOfMain": 2.5837770122142185
+          },
+          {
+            "region": "Memory/write",
+            "scope": "generated self",
+            "samples": 116,
+            "percentOfMain": 1.816473535859693
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "generated self",
+            "samples": 55,
+            "percentOfMain": 0.8612590040714062
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "generated self",
+            "samples": 47,
+            "percentOfMain": 0.7359849671155653
+          },
+          {
+            "region": "Alu",
+            "scope": "generated self",
+            "samples": 44,
+            "percentOfMain": 0.689007203257125
+          },
+          {
+            "region": "Memory/CALL",
+            "scope": "helper descendants",
+            "samples": 34,
+            "percentOfMain": 0.5324146570623238
+          },
+          {
+            "region": "Memory/read",
+            "scope": "helper descendants",
+            "samples": 14,
+            "percentOfMain": 0.2192295646727216
+          },
+          {
+            "region": "DoubleShift",
+            "scope": "generated self",
+            "samples": 9,
+            "percentOfMain": 0.140933291575321
+          },
+          {
+            "region": "Move",
+            "scope": "generated self",
+            "samples": 6,
+            "percentOfMain": 0.09395552771688068
+          },
+          {
+            "region": "LoadFlags",
+            "scope": "generated self",
+            "samples": 4,
+            "percentOfMain": 0.06263701847792046
+          },
+          {
+            "region": "Memory/write",
+            "scope": "helper descendants",
+            "samples": 4,
+            "percentOfMain": 0.06263701847792046
+          },
+          {
+            "region": "Test",
+            "scope": "generated self",
+            "samples": 3,
+            "percentOfMain": 0.04697776385844034
+          },
+          {
+            "region": "Shift",
+            "scope": "generated self",
+            "samples": 3,
+            "percentOfMain": 0.04697776385844034
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "helper descendants",
+            "samples": 2,
+            "percentOfMain": 0.03131850923896023
+          },
+          {
+            "region": "Memory/PUSH source and stack",
+            "scope": "generated self",
+            "samples": 2,
+            "percentOfMain": 0.03131850923896023
+          },
+          {
+            "region": "Memory/stack",
+            "scope": "helper descendants",
+            "samples": 1,
+            "percentOfMain": 0.015659254619480114
+          },
+          {
+            "region": "Memory/RET",
+            "scope": "helper descendants",
+            "samples": 1,
+            "percentOfMain": 0.015659254619480114
+          },
+          {
+            "region": "MultiplyByte",
+            "scope": "generated self",
+            "samples": 1,
+            "percentOfMain": 0.015659254619480114
+          },
+          {
+            "region": "CounterBranch",
+            "scope": "generated self",
+            "samples": 1,
+            "percentOfMain": 0.015659254619480114
+          },
+          {
+            "region": "Lea",
+            "scope": "generated self",
+            "samples": 1,
+            "percentOfMain": 0.015659254619480114
+          }
+        ],
+        "sample": "build/excel-jit-map-profile-3/run-0/sample.txt",
+        "codeMap": "build/jit-map-profile/excel-map-3.jsonl",
+        "sampleSha256": "a3633485b31048f178ffcea0305c1910414248f496219ab231ed4f4e131a07a5",
+        "codeMapSha256": "4d50c66af47ed9f0bd79b6c844235daa42c1b11a128b4f22cf77852831518987",
+        "blocks": 23143,
+        "scope": "Wall-stack samples, not exact CPU time. Helper samples inherit their emitted caller region. Unmapped samples remain explicit."
+      },
+      "taskResult": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+        "jit": true,
+        "profiled": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "e56430b0f350e0e728c63279ef92d93f962c46dd3411598644576d5d1ae61358",
+        "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+        "restoreTimeoutSeconds": 90.0,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/jit-map-profile/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 445.976458,
+            "taskResponseMs": 7405.782375000001,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6633.36025,
+              "systemMs": 378.558084,
+              "totalMs": 7011.918334
+            },
+            "instructions": 1402967812,
+            "nativeInstructions": 1383223570,
+            "compiledBlocks": 20705,
+            "executionWallMs": 6815.922442
+          }
+        ],
+        "medianRestoreReadyMs": 445.976458,
+        "medianTaskResponseMs": 7405.782375000001,
+        "medianProcessCpuMs": 7011.918334
+      },
+      "nativeCodeBytes": 23288944,
+      "noCacheRecycles": true,
+      "normalQuitTrailer": "Executed 7957622265 guest instructions in 10.4842s; native=1385516828, blocks=23143, recycles=0, stopped=budget/quit"
+    }
+  ],
+  "artifacts": {
+    "emitted-code-profile-2026-10-26.run-1.map.zst": {
+      "rawSha256": "e48e72e7d4f7d6ea005ebd5116e401fee753df4118a04b3c13f6c337921f3176",
+      "rawBytes": 15429620,
+      "compressedBytes": 671541
+    },
+    "emitted-code-profile-2026-10-26.run-1.sample.zst": {
+      "rawSha256": "794fbe9f96f486a474fd96844312f8c649e020c9b37f673ea8ce8d6a676529d7",
+      "rawBytes": 338544,
+      "compressedBytes": 47928
+    },
+    "emitted-code-profile-2026-10-26.run-2.map.zst": {
+      "rawSha256": "b8bbb57ceee11b7622c02f849e0e14f3dcb6860edc1edf164e28931334fdba4a",
+      "rawBytes": 14751212,
+      "compressedBytes": 642794
+    },
+    "emitted-code-profile-2026-10-26.run-2.sample.zst": {
+      "rawSha256": "321b34160e1fb8e94cd1eb83a87c0e9a1ebd00162668ed1841de06b6353b8311",
+      "rawBytes": 335128,
+      "compressedBytes": 47713
+    },
+    "emitted-code-profile-2026-10-26.run-3.map.zst": {
+      "rawSha256": "4d50c66af47ed9f0bd79b6c844235daa42c1b11a128b4f22cf77852831518987",
+      "rawBytes": 14735825,
+      "compressedBytes": 641463
+    },
+    "emitted-code-profile-2026-10-26.run-3.sample.zst": {
+      "rawSha256": "a3633485b31048f178ffcea0305c1910414248f496219ab231ed4f4e131a07a5",
+      "rawBytes": 342555,
+      "compressedBytes": 47579
+    }
+  },
+  "limits": [
+    "128 MiB arena changes code-cache behavior; do not transfer timing or exact shares to the default 16 MiB configuration.",
+    "Finish regions include GPR/IP commit, flags, branch decision, return count and host epilogue, not exclusively flags.",
+    "Memory regions include address/guard/replay handling; region attribution is not individual ARM instruction latency.",
+    "Helper descendants inherit their nearest mapped anonymous caller.",
+    "Aggregate stacks cannot identify code lifetimes after address reuse; maps reject overlap.",
+    "Shared desktop host and capture/quit margins remain."
+  ],
+  "aggregate": {
+    "mainThreadTaskSamples": 19023,
+    "mappedSamples": 4596,
+    "unmappedSamples": 14427,
+    "regions": [
+      {
+        "region": "finish",
+        "scope": "generated self",
+        "samples": 1732,
+        "percentOfMain": 9.104767912526942
+      },
+      {
+        "region": "Memory/read",
+        "scope": "generated self",
+        "samples": 843,
+        "percentOfMain": 4.431477684907743
+      },
+      {
+        "region": "Memory/stack",
+        "scope": "generated self",
+        "samples": 517,
+        "percentOfMain": 2.7177627083004783
+      },
+      {
+        "region": "prologue",
+        "scope": "generated self",
+        "samples": 496,
+        "percentOfMain": 2.607370025758293
+      },
+      {
+        "region": "Memory/write",
+        "scope": "generated self",
+        "samples": 330,
+        "percentOfMain": 1.734742154234348
+      },
+      {
+        "region": "Memory/CALL",
+        "scope": "generated self",
+        "samples": 174,
+        "percentOfMain": 0.9146822267781107
+      },
+      {
+        "region": "Memory/RET",
+        "scope": "generated self",
+        "samples": 140,
+        "percentOfMain": 0.7359512169479052
+      },
+      {
+        "region": "Alu",
+        "scope": "generated self",
+        "samples": 129,
+        "percentOfMain": 0.6781264784734269
+      },
+      {
+        "region": "Memory/CALL",
+        "scope": "helper descendants",
+        "samples": 93,
+        "percentOfMain": 0.48888187982967984
+      },
+      {
+        "region": "Memory/read",
+        "scope": "helper descendants",
+        "samples": 34,
+        "percentOfMain": 0.17873100983020554
+      },
+      {
+        "region": "DoubleShift",
+        "scope": "generated self",
+        "samples": 26,
+        "percentOfMain": 0.13667665457603953
+      },
+      {
+        "region": "Move",
+        "scope": "generated self",
+        "samples": 16,
+        "percentOfMain": 0.08410871050833202
+      },
+      {
+        "region": "Memory/PUSH source and stack",
+        "scope": "helper descendants",
+        "samples": 15,
+        "percentOfMain": 0.07885191610156127
+      },
+      {
+        "region": "Memory/write",
+        "scope": "helper descendants",
+        "samples": 11,
+        "percentOfMain": 0.05782473847447826
+      },
+      {
+        "region": "Test",
+        "scope": "generated self",
+        "samples": 9,
+        "percentOfMain": 0.04731114966093676
+      },
+      {
+        "region": "Memory/PUSH source and stack",
+        "scope": "generated self",
+        "samples": 8,
+        "percentOfMain": 0.04205435525416601
+      },
+      {
+        "region": "Shift",
+        "scope": "generated self",
+        "samples": 7,
+        "percentOfMain": 0.03679756084739526
+      },
+      {
+        "region": "LoadFlags",
+        "scope": "generated self",
+        "samples": 6,
+        "percentOfMain": 0.03154076644062451
+      },
+      {
+        "region": "Memory/RET",
+        "scope": "helper descendants",
+        "samples": 3,
+        "percentOfMain": 0.015770383220312253
+      },
+      {
+        "region": "Memory/stack",
+        "scope": "helper descendants",
+        "samples": 3,
+        "percentOfMain": 0.015770383220312253
+      },
+      {
+        "region": "BitTest",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.005256794406770751
+      },
+      {
+        "region": "MultiplyByte",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.005256794406770751
+      },
+      {
+        "region": "CounterBranch",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.005256794406770751
+      },
+      {
+        "region": "Lea",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.005256794406770751
+      }
+    ]
+  }
+}

@@ -46,8 +46,9 @@ individual experiments and must not be multiplied into a cumulative claim.
 stack samples from actual process CPU accounting. Loaded Excel spends many
 samples in dispatch/validation and device polling; compilation contributes under
 1%. Word launch has much more interpreter and compilation work. Anonymous
-emitted ARM64 frames still need finer attribution before choosing the next
-native-code optimization.
+emitted ARM64 frames now have diagnostic region attribution: [mapped Excel
+profiles](emitted-code-profiling.md) identify block finishing as a substantial
+bucket, while finer flags/commit/return separation remains open.
 
 [Native FF /6 PUSH](native-memory-push.md) passes 8,682 focused memory checks,
 43,600 stack checks, 354,948 core checks and 8,677 existing memory CALL checks.
@@ -1197,3 +1198,18 @@ The private compressed child and orphan index are removed. Evidence and
 screenshots are in `fresh-win95-validation.md` and
 `measurements/fresh-win95-memory-push-2026-10-26.json`. This closes the latest
 lowering's installer gate; no broader performance completion is claimed.
+
+
+## Emitted ARM64 region attribution collected (26 October)
+
+Three headless loaded Excel profiles use PID-tagged code maps and a diagnostic
+128 MiB arena to avoid address reuse. Every output pixel gate passes; maps and
+quit trailers show no recycles. Of 19,023 main-thread task samples, 4,596 map to
+emitted regions. Block finishing alone contains 1,732 self samples (9.10% of
+main-thread task samples), versus ALU regions' 129 (0.68%). Finishing includes
+flags, branch decisions, register/IP commit and host return, so this does not
+isolate flag cost. Roughly 24 MB of emitted code per process also motivates a
+separate cache-capacity experiment. Diagnostic timings do not establish a
+production speedup. Twelve analyzer tests pass; maps/stacks are compressed with
+verified round trips and duplicate raw maps removed. Production runtime remains
+unchanged. See `emitted-code-profiling.md` and its full measurement record.
