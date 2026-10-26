@@ -133,3 +133,46 @@ the external volume; no Office reinstall or raw large disk was made. Successful
 per-run overlays and the stopped setup probe's child are removed. The Word
 checkpoint's parent is the existing immutable recovered desktop disk, not the
 removed probe child.
+
+## Current bounded-batch executable: follow-up host profiles
+
+The earlier tables above describe the memory-CALL executable, before native
+PUSH and bounded batching. For the frozen current `build/native-batch/pcemu`,
+three loaded Excel runs and three newly collected Word runs give:
+
+| Main-thread sampled work | Excel recalculation | Word warm launch |
+| --- | ---: | ---: |
+| Dispatch/cache/validation | 44.1% | 23.7% |
+| Generated code/native helpers | 30.7% | 10.9% |
+| Interpreter/MMU/faults | 11.5% | 31.5% |
+| Device polling/interrupts | 4.5% | 8.8% |
+| Compilation | 1.7% | 13.2% |
+| Capture/video/control | 4.3% | 5.4% |
+| Disk/compression | 0.5% | 1.0% |
+| Other host work | 2.7% | 5.5% |
+
+The Excel collection has 12,771 task samples. Word has 1,741 task samples;
+its short launch makes individual source-site attribution less certain.
+Word's independently measured process CPU intervals are 667.8, 663.9 and
+665.5 ms; responses are 705.7, 699.0 and 702.9 ms. These sampled runs include
+profiler overhead and are not speed comparisons. All three Word restores
+pass the expected screen checks. Existing snapshots and small disposable disk
+children were reused; no installation media or large disk was recreated.
+
+Dispatch is the clearest target for sustained Excel work: keeping execution
+inside generated code across safe block boundaries could amortize lookup,
+validation and entry/exit. Word needs separate attention to interpreted short
+fragments and cold compilation. Disk compression is not a leading cost here.
+Higher relative dispatch share after batching does not mean dispatch got slower;
+removing polling changes the denominator. Removing all compilation alone would
+barely affect loaded Excel. No single bucket establishes a twofold speedup.
+
+The existing finer emitted-code profile separates flags from register commits
+and return, but uses a larger diagnostic arena and an earlier source set. Its
+percentages must not be combined numerically with this normal-arena collection.
+
+[Excel raw traces and attribution](measurements/post-batch-host-profile-2026-10-26.json)
+and [Word raw traces and attribution](measurements/word-post-batch-host-profile-2026-10-26.json)
+record executable/task hashes, CPU intervals and per-run spread. Raw traces
+are stored as verified zstd files. Thirteen analyzer tests pass. Production
+runtime code is unchanged by this collection.

@@ -44,8 +44,10 @@ individual experiments and must not be multiplied into a cumulative claim.
 
 [Current Office host profiles](office-current-profiling.md) separate main-thread
 stack samples from actual process CPU accounting. Loaded Excel spends many
-samples in dispatch/validation and device polling; compilation contributes under
-1%. Word launch has much more interpreter and compilation work. Anonymous
+samples in dispatch/validation (44.1% after bounded batching); polling is now
+4.5%, and compilation 1.7%. The matched current Word launch profiles show
+31.5% interpreter and 13.2% compilation work. These are sampled wall-stack
+shares, not exact CPU durations. Anonymous
 emitted ARM64 frames now have diagnostic region attribution: [mapped Excel
 profiles](emitted-code-profiling.md) identify block finishing as a substantial
 bucket and separate its flags, commits and return. The next optimization must

@@ -1,0 +1,3127 @@
+{
+  "scope": "Three headless restored warm Word launches, cold JIT, frozen ordinary native-batch executable; sampled wall stacks are not exact CPU durations. Restore and attachment excluded; capture/quit margins remain. No runtime changes.",
+  "taskResults": {
+    "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+    "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+    "jit": true,
+    "profiled": true,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "e3cae937385e152219b7c8f173aec72933d550e842b8dbf75b8c90fd86717b94",
+    "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+    "restoreTimeoutSeconds": 90.0,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/native-batch/pcemu",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+    "samples": [
+      {
+        "restoreReadyMs": 497.39079100000004,
+        "taskResponseMs": 705.7393329999999,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 631.641625,
+          "systemMs": 36.147292,
+          "totalMs": 667.788917
+        },
+        "instructions": 31706341,
+        "nativeInstructions": 23938585,
+        "compiledBlocks": 37754,
+        "executionWallMs": 656.404708
+      },
+      {
+        "restoreReadyMs": 319.2690420000002,
+        "taskResponseMs": 699.0148339999997,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 629.4265,
+          "systemMs": 34.508834,
+          "totalMs": 663.935334
+        },
+        "instructions": 31764331,
+        "nativeInstructions": 23872257,
+        "compiledBlocks": 36375,
+        "executionWallMs": 658.966954
+      },
+      {
+        "restoreReadyMs": 366.97279099999844,
+        "taskResponseMs": 702.8541659999999,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 628.996333,
+          "systemMs": 36.50725,
+          "totalMs": 665.503583
+        },
+        "instructions": 31612747,
+        "nativeInstructions": 23744638,
+        "compiledBlocks": 35672,
+        "executionWallMs": 653.173247
+      }
+    ],
+    "medianRestoreReadyMs": 366.97279099999844,
+    "medianTaskResponseMs": 702.8541659999999,
+    "medianProcessCpuMs": 665.503583
+  },
+  "summary": {
+    "files": [
+      "build/word-post-batch-host-profile/run-0/sample.txt",
+      "build/word-post-batch-host-profile/run-1/sample.txt",
+      "build/word-post-batch-host-profile/run-2/sample.txt"
+    ],
+    "samples": 1741,
+    "attachmentBarrierSamplesExcluded": 6662,
+    "workerThreads": {},
+    "scope": "main-thread wall-stack samples; attachment barrier excluded; worker blocking stacks reported separately; small attachment/exit margins remain; profiled timings are not benchmarks",
+    "categories": [
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 549,
+        "percent": 31.533601378518092
+      },
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 413,
+        "percent": 23.721998851234922
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 229,
+        "percent": 13.15336013785181
+      },
+      {
+        "name": "Generated code and native helpers",
+        "samples": 189,
+        "percent": 10.855829982768524
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 153,
+        "percent": 8.788052843193567
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 96,
+        "percent": 5.514072372199885
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 94,
+        "percent": 5.399195864445721
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      }
+    ],
+    "perFile": [
+      {
+        "file": "build/word-post-batch-host-profile/run-0/sample.txt",
+        "samples": 573,
+        "attachmentBarrierSamplesExcluded": 2097,
+        "categories": [
+          {
+            "name": "Interpreter (including MMU and guest faults)",
+            "samples": 189,
+            "percent": 32.98429319371728
+          },
+          {
+            "name": "JIT dispatch/cache/validation",
+            "samples": 130,
+            "percent": 22.68760907504363
+          },
+          {
+            "name": "JIT compilation (including decode exceptions)",
+            "samples": 80,
+            "percent": 13.961605584642234
+          },
+          {
+            "name": "Generated code and native helpers",
+            "samples": 68,
+            "percent": 11.8673647469459
+          },
+          {
+            "name": "Device polling and interrupt delivery",
+            "samples": 35,
+            "percent": 6.108202443280978
+          },
+          {
+            "name": "Capture/video/control output",
+            "samples": 34,
+            "percent": 5.93368237347295
+          },
+          {
+            "name": "Main loop/other host work",
+            "samples": 33,
+            "percent": 5.7591623036649215
+          },
+          {
+            "name": "Disk and compression",
+            "samples": 4,
+            "percent": 0.6980802792321117
+          }
+        ]
+      },
+      {
+        "file": "build/word-post-batch-host-profile/run-1/sample.txt",
+        "samples": 577,
+        "attachmentBarrierSamplesExcluded": 2282,
+        "categories": [
+          {
+            "name": "Interpreter (including MMU and guest faults)",
+            "samples": 171,
+            "percent": 29.636048526863085
+          },
+          {
+            "name": "JIT dispatch/cache/validation",
+            "samples": 148,
+            "percent": 25.64991334488735
+          },
+          {
+            "name": "JIT compilation (including decode exceptions)",
+            "samples": 74,
+            "percent": 12.824956672443674
+          },
+          {
+            "name": "Device polling and interrupt delivery",
+            "samples": 65,
+            "percent": 11.265164644714039
+          },
+          {
+            "name": "Generated code and native helpers",
+            "samples": 56,
+            "percent": 9.705372616984402
+          },
+          {
+            "name": "Main loop/other host work",
+            "samples": 32,
+            "percent": 5.545927209705373
+          },
+          {
+            "name": "Capture/video/control output",
+            "samples": 23,
+            "percent": 3.9861351819757367
+          },
+          {
+            "name": "Disk and compression",
+            "samples": 8,
+            "percent": 1.3864818024263432
+          }
+        ]
+      },
+      {
+        "file": "build/word-post-batch-host-profile/run-2/sample.txt",
+        "samples": 591,
+        "attachmentBarrierSamplesExcluded": 2283,
+        "categories": [
+          {
+            "name": "Interpreter (including MMU and guest faults)",
+            "samples": 189,
+            "percent": 31.97969543147208
+          },
+          {
+            "name": "JIT dispatch/cache/validation",
+            "samples": 135,
+            "percent": 22.84263959390863
+          },
+          {
+            "name": "JIT compilation (including decode exceptions)",
+            "samples": 75,
+            "percent": 12.690355329949238
+          },
+          {
+            "name": "Generated code and native helpers",
+            "samples": 65,
+            "percent": 10.998307952622673
+          },
+          {
+            "name": "Device polling and interrupt delivery",
+            "samples": 53,
+            "percent": 8.967851099830796
+          },
+          {
+            "name": "Capture/video/control output",
+            "samples": 37,
+            "percent": 6.260575296108291
+          },
+          {
+            "name": "Main loop/other host work",
+            "samples": 31,
+            "percent": 5.2453468697123515
+          },
+          {
+            "name": "Disk and compression",
+            "samples": 6,
+            "percent": 1.015228426395939
+          }
+        ]
+      }
+    ],
+    "selfSites": [
+      {
+        "name": "???",
+        "samples": 172,
+        "percent": 9.879379666858128
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 77,
+        "percent": 4.422745548535325
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:78]",
+        "samples": 71,
+        "percent": 4.0781160252728315
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:124]",
+        "samples": 71,
+        "percent": 4.0781160252728315
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:87]",
+        "samples": 49,
+        "percent": 2.8144744399770247
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:89]",
+        "samples": 42,
+        "percent": 2.4124066628374496
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:108]",
+        "samples": 40,
+        "percent": 2.2975301550832854
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:722]",
+        "samples": 37,
+        "percent": 2.1252153934520392
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:81]",
+        "samples": 36,
+        "percent": 2.067777139574957
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 29,
+        "percent": 1.665709362435382
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:684]",
+        "samples": 27,
+        "percent": 1.5508328546812178
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:721]",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 24,
+        "percent": 1.3785180930499712
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:0]",
+        "samples": 23,
+        "percent": 1.321079839172889
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:172]",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:106]",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:83]",
+        "samples": 16,
+        "percent": 0.9190120620333142
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:99]",
+        "samples": 16,
+        "percent": 0.9190120620333142
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:77]",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:711]",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:107]",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "_free",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:74]",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:96]",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:0]",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:710]",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:123]",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:63]",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:98]",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:157]",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:0]",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:152]",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:109]",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::CPU::fetch(int) [cpu.cpp:275]",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:160]",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:709]",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:978]",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "main [main.cpp:351]",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:0]",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:158]",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:78]",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:156]",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "__bzero",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:110]",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:88]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:782]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:679]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const [jit_arm64.cpp:43]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "main [main.cpp:333]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:169]",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:311]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:206]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int) [cpu.cpp:377]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:360]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::fetch(int) [cpu.cpp:277]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1821]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:481]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:62]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:108]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:149]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:161]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const [vga.cpp:386]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:136]",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:289]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:0]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const [cpu.cpp:219]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:807]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:0]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:105]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:60]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:120]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "main [main.cpp:0]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:159]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int) [cpu.cpp:216]",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int) [cpu.cpp:403]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int) [cpu.cpp:282]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:0]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:940]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:188]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:796]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&) [jit_flags.cpp:5]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:97]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:100]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const [vga.cpp:378]",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:320]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int) [cpu.cpp:0]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:0]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:359]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:297]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:929]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int) [cpu.cpp:211]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const [cpu.cpp:221]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short) [cpu.cpp:233]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:718]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:719]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:802]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:898]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:917]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::fetch(int) [cpu.cpp:274]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&) [jit_flags.cpp:19]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:877]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:75]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:113]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:102]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "main [main.cpp:334]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:738]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:792]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1415]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(int, int, int, int) const [jit_arm64.cpp:31]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:64]",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:315]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int) [cpu.cpp:376]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int) [cpu.cpp:443]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1475]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:740]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1062]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:817]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&) [jit_flags.cpp:9]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(int, int, int, int) const [jit_arm64.cpp:29]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:317]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, int, int, int) const [jit_arm64.cpp:38]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:82]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:140]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:58]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool) [cpu.cpp:131]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:100]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "main [main.cpp:362]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "__munmap",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:183]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1520]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:775]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:803]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:895]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:296]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:147]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:266]",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "main [main.cpp:366]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:316]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:296]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:300]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:339]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_ostream<char>::flush()",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:354]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:185]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int) [cpu.cpp:362]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char) [vga.cpp:0]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int) [cpu.cpp:0]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int) [cpu.cpp:404]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:783]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1160]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1195]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1288]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1297]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1444]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1715]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::pop(int) [cpu.cpp:285]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:683]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::step() [cpu.cpp:693]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:126]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const [jit_arm64.cpp:42]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const [jit_arm64.cpp:235]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:884]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:734]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:875]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const [jit_arm64.cpp:263]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:294]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:8]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:55]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int) [cpu.cpp:63]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int) [cpu.cpp:62]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:32]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:61]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:106]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:134]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:164]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const [vga.cpp:382]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fflush",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fstat",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::type_info::operator==[abi:nqe210106](std::type_info const&) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:308]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:0]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:318]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:336]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int) [cpu.cpp:441]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int) [cpu.cpp:474]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int) [cpu.cpp:480]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "unw_getcontext",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1494]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool) [cpu.cpp:106]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char) [vga.cpp:157]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1043]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1061]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1112]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1372]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1488]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::condition(int) const [cpu.cpp:410]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1609]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1690]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:173]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1737]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int) [cpu.cpp:366]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:723]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:725]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:754]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&) [jit_flags.cpp:48]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:627]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, unsigned int) const [jit_arm64.cpp:45]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const [jit_arm64.cpp:39]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:937]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:955]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:255]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const [jit_decode.cpp:40]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:27]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::compile(bool) [jit.cpp:185]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::compile(bool) [jit.cpp:206]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:75]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:0]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:118]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:119]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$_platform_bzero",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const [vga.cpp:384]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const [pc_display.cpp:63]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const [pc_display.cpp:77]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__lseek",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "main [main.cpp:345]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "main [main.cpp:373]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:86]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:935]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int) [cpu.cpp:365]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char) [vga.cpp:174]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int) [cpu.cpp:661]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int) [machine.cpp:136]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindIoPorts()::$_6::operator()(std::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:948]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1026]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1080]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1351]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1388]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1393]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:1421]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int) [cpu.cpp:174]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:767]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::stepImpl() [cpu.cpp:955]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const [jit_arm64.cpp:0]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:285]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:617]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:628]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&) [jit_arm64.cpp:873]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const [jit_arm64.cpp:219]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const [jit_arm64.cpp:41]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()() const [jit_arm64.cpp:694]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:240]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&) [jit_decode.cpp:87]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:31]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:20]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int) [jit_runtime.cpp:19]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:115]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::run() [jit.cpp:80]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::poll() [machine.cpp:116]",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_istream<char>::sentry::sentry(std::basic_istream<char>&, bool)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 334,
+        "percent": 19.184376794945432
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 205,
+        "percent": 11.774842044801838
+      },
+      {
+        "name": "???",
+        "samples": 172,
+        "percent": 9.879379666858128
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 153,
+        "percent": 8.788052843193567
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 84,
+        "percent": 4.824813325674899
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 77,
+        "percent": 4.422745548535325
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 55,
+        "percent": 3.1591039632395175
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 53,
+        "percent": 3.0442274554853532
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 40,
+        "percent": 2.2975301550832854
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 37,
+        "percent": 2.1252153934520392
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 34,
+        "percent": 1.9529006318207927
+      },
+      {
+        "name": "main",
+        "samples": 29,
+        "percent": 1.665709362435382
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 29,
+        "percent": 1.665709362435382
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 24,
+        "percent": 1.3785180930499712
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 16,
+        "percent": 0.9190120620333142
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 15,
+        "percent": 0.8615738081562321
+      },
+      {
+        "name": "_free",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "__bzero",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(int, int, int, int) const",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "__munmap",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "std::basic_ostream<char>::flush()",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fflush",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fstat",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::type_info::operator==[abi:nqe210106](std::type_info const&) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "unw_getcontext",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$_platform_bzero",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__lseek",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindIoPorts()::$_6::operator()(std::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()() const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_istream<char>::sentry::sentry(std::basic_istream<char>&, bool)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      }
+    ],
+    "inclusiveFunctions": [
+      {
+        "name": "start",
+        "samples": 1741,
+        "percent": 100.0
+      },
+      {
+        "name": "main",
+        "samples": 1670,
+        "percent": 95.92188397472717
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 1390,
+        "percent": 79.83917288914417
+      },
+      {
+        "name": "pc::Jit::run()",
+        "samples": 1311,
+        "percent": 75.30155083285469
+      },
+      {
+        "name": "Thread_836121   DispatchQueue_1: com.apple.main-thread  (serial)",
+        "samples": 591,
+        "percent": 33.94600804135554
+      },
+      {
+        "name": "Thread_836032   DispatchQueue_1: com.apple.main-thread  (serial)",
+        "samples": 577,
+        "percent": 33.14187248707639
+      },
+      {
+        "name": "Thread_835905   DispatchQueue_1: com.apple.main-thread  (serial)",
+        "samples": 573,
+        "percent": 32.91211947156806
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 567,
+        "percent": 32.56748994830557
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 495,
+        "percent": 28.431935669155656
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 229,
+        "percent": 13.15336013785181
+      },
+      {
+        "name": "???",
+        "samples": 186,
+        "percent": 10.683515221137277
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 180,
+        "percent": 10.338885697874785
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 153,
+        "percent": 8.788052843193567
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 101,
+        "percent": 5.801263641585296
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 84,
+        "percent": 4.824813325674899
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::basic_string<char> const&, bool) const",
+        "samples": 81,
+        "percent": 4.652498564043653
+      },
+      {
+        "name": "std::basic_filebuf<char>::~basic_filebuf()",
+        "samples": 79,
+        "percent": 4.5376220562894884
+      },
+      {
+        "name": "std::basic_filebuf<char>::close()",
+        "samples": 79,
+        "percent": 4.5376220562894884
+      },
+      {
+        "name": "fclose",
+        "samples": 77,
+        "percent": 4.422745548535325
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 77,
+        "percent": 4.422745548535325
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 58,
+        "percent": 3.331418724870764
+      },
+      {
+        "name": "fwrite",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "_swrite",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "__swrite",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "pc::Machine::~Machine()",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "std::unique_ptr<pc::Disk>::~unique_ptr[abi:nqe210106]()",
+        "samples": 54,
+        "percent": 3.1016657093624356
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 52,
+        "percent": 2.9867892016082713
+      },
+      {
+        "name": "std::basic_filebuf<char>::overflow(int)",
+        "samples": 48,
+        "percent": 2.7570361860999424
+      },
+      {
+        "name": "__sflush",
+        "samples": 48,
+        "percent": 2.7570361860999424
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 46,
+        "percent": 2.642159678345778
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 43,
+        "percent": 2.469844916714532
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 36,
+        "percent": 2.067777139574957
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 33,
+        "percent": 1.8954623779437105
+      },
+      {
+        "name": "std::__hash_table<std::__hash_value_type<unsigned long long, pc::Jit::Block>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block&>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&)",
+        "samples": 33,
+        "percent": 1.8954623779437105
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 32,
+        "percent": 1.8380241240666284
+      },
+      {
+        "name": "std::basic_streambuf<char>::xsputn(char const*, long)",
+        "samples": 32,
+        "percent": 1.8380241240666284
+      },
+      {
+        "name": "std::basic_ostream<char>::write(char const*, long)",
+        "samples": 31,
+        "percent": 1.7805858701895463
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 30,
+        "percent": 1.7231476163124642
+      },
+      {
+        "name": "dyld4::APIs::_dyld_find_unwind_sections(void*, dyld_unwind_sections*)",
+        "samples": 29,
+        "percent": 1.665709362435382
+      },
+      {
+        "name": "__cxa_throw",
+        "samples": 26,
+        "percent": 1.4933946008041357
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 26,
+        "percent": 1.4933946008041357
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 25,
+        "percent": 1.4359563469270533
+      },
+      {
+        "name": "unwind_phase2",
+        "samples": 24,
+        "percent": 1.3785180930499712
+      },
+      {
+        "name": "std::basic_filebuf<char>::sync()",
+        "samples": 22,
+        "percent": 1.263641585295807
+      },
+      {
+        "name": "std::basic_ostream<char>::flush()",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 20,
+        "percent": 1.1487650775416427
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 19,
+        "percent": 1.0913268236645606
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 19,
+        "percent": 1.0913268236645606
+      },
+      {
+        "name": "pc::Machine::service(unsigned char, bool)",
+        "samples": 19,
+        "percent": 1.0913268236645606
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 19,
+        "percent": 1.0913268236645606
+      },
+      {
+        "name": "mach_o::UnsafeHeader::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 19,
+        "percent": 1.0913268236645606
+      },
+      {
+        "name": "pc::Disk::write(unsigned long long, unsigned int, unsigned char const*)",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 18,
+        "percent": 1.0338885697874785
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 17,
+        "percent": 0.9764503159103963
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 16,
+        "percent": 0.9190120620333142
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 15,
+        "percent": 0.8615738081562321
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_18::operator()(unsigned int) const",
+        "samples": 15,
+        "percent": 0.8615738081562321
+      },
+      {
+        "name": "_Unwind_Resume",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "invocation function for block in mach_o::UnsafeHeader::forEachSection(void (mach_o::UnsafeHeader::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, unsigned int) const",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 13,
+        "percent": 0.7466973004020678
+      },
+      {
+        "name": "_free",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::vector<pc::jit_detail::Instruction> const&)",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::VGA::render(std::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 12,
+        "percent": 0.6892590465249856
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_15::operator()(int, int, unsigned int) const",
+        "samples": 11,
+        "percent": 0.6318207926479035
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 10,
+        "percent": 0.5743825387708213
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 9,
+        "percent": 0.5169442848937392
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "__bzero",
+        "samples": 8,
+        "percent": 0.4595060310166571
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "main::$_6::operator()() const",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "std::__pad_and_output[abi:nqe210106]<char>(std::ostreambuf_iterator<char>, char const*, char const*, char const*, std::ios_base&, char)",
+        "samples": 7,
+        "percent": 0.402067777139575
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(int, int, int, int) const",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "_xzm_xzone_madvise_batch",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "xzm_reclaim_mark_free_locked",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_vm_reclaim_ring_resize",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_vm_deferred_reclamation_buffer_resize",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_msg2_internal",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "std::__put_character_sequence[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, unsigned long)",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "std::basic_istream<char>::seekg(std::fpos<__mbstate_t>)",
+        "samples": 6,
+        "percent": 0.3446295232624928
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "std::basic_ofstream<char>::basic_ofstream(std::basic_string<char> const&, unsigned int)",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "std::basic_filebuf<char>::open(char const*, unsigned int)",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "fopen",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "open$NOCANCEL",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "std::basic_filebuf<char>::seekpos(std::fpos<__mbstate_t>, unsigned int)",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "fseeko",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "_fseeko",
+        "samples": 5,
+        "percent": 0.2871912693854107
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_9::operator()(int, unsigned long) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)::$_1::operator()(bool) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__srefill1",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "_sread",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__sread",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "pc::dumpCpu(pc::CPU&)",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 4,
+        "percent": 0.22975301550832855
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::VGA::write(unsigned int, unsigned char)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::ioPermission(unsigned short, int)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "fflush",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::Jit::~Jit()",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 3,
+        "percent": 0.1723147616312464
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_4::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::written(unsigned int, unsigned int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num_integer_promote[abi:nqe210106]<unsigned int>(unsigned int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "__munmap",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "_sseek",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "std::function<void (unsigned short, unsigned int, int)>::operator()(unsigned short, unsigned int, int) const",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.11487650775416428
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_1::operator()(unsigned int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::writeMachineState(std::basic_ostream<char>&, pc::Machine&, pc::Jit const&, pc::CaptureContext const&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__swsetup",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__smakebuf",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__swhatbuf",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fstat",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_ostream<char>::sentry::sentry(std::basic_ostream<char>&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::__stdoutbuf<char>::sync()",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DyldSharedCache::forEachCache(void (DyldSharedCache const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "invocation function for block in DyldSharedCache::forEachRange(void (char const*, unsigned long long, unsigned long long, unsigned int, unsigned long long, unsigned int, unsigned int, bool&) block_pointer, void (DyldSharedCache const*, unsigned int) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DyldSharedCache::forEachRegion(void (void const*, unsigned long long, unsigned long long, unsigned int, unsigned int, unsigned long long, unsigned long long, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getReg(int)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__cxxabiv1::__class_type_info::can_catch(__cxxabiv1::__shim_type_info const*, void*&) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::type_info::operator==[abi:nqe210106](std::type_info const&) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "unw_getcontext",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$_platform_bzero",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__lseek",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_ostream<char>::__put_num[abi:nqe210106]<unsigned long long>(unsigned long long)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::num_put<char, std::ostreambuf_iterator<char>>::__do_put_integral[abi:nqe210106]<unsigned long long>(std::ostreambuf_iterator<char>, std::ios_base&, char, unsigned long long) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::num_put<char, std::ostreambuf_iterator<char>>::__do_put_integral[abi:nqe210106]<unsigned long>(std::ostreambuf_iterator<char>, std::ios_base&, char, unsigned long) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_Unwind_GetIP",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__cxa_allocate_exception",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__cxxabiv1::__aligned_malloc_with_fallback(unsigned long)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "malloc_type_aligned_alloc",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::__function::__func<pc::Machine::bindIoPorts()::$_6::operator()(std::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__cxa_decrement_exception_refcount",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_xzm_xzone_free_freelist",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()() const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_xzm_xzone_find_and_malloc_from_freelist_chunk",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "xzm_chunk_mark_used",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_xzm_reclaim_mark_used",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "_xzm_reclaim_mark_used_locked",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_istream<char>::sentry::sentry(std::basic_istream<char>&, bool)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::chrono::steady_clock::now()",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "clock_gettime",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "clock_gettime_nsec_np",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::getline[abi:nqe210106]<char>(std::basic_istream<char>&, std::basic_string<char>&, char)",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "std::basic_filebuf<char>::underflow()",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "fread",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      },
+      {
+        "name": "__fread",
+        "samples": 1,
+        "percent": 0.05743825387708214
+      }
+    ]
+  },
+  "artifacts": {
+    "word-post-batch-host-profile-2026-10-26.run-0.zst": {
+      "rawSha256": "f4dcd435d8e23e40abd73793874fb4440093421c3b0ac1681a75e7583807178d",
+      "rawBytes": 179685
+    },
+    "word-post-batch-host-profile-2026-10-26.run-1.zst": {
+      "rawSha256": "139a3194c7818bd6cf95a64a3f80de705c0c1b5e7974d348cd7e321941ae901d",
+      "rawBytes": 167961
+    },
+    "word-post-batch-host-profile-2026-10-26.run-2.zst": {
+      "rawSha256": "e15b95f09000251bbba597b30dabc043c3cb1e798250a1b57241f9cb9e8f7f4e",
+      "rawBytes": 180199
+    }
+  },
+  "checks": "All three expected initial/final pixel checks pass; 13 analyzer tests pass; zstd byte-for-byte round trips pass."
+}
