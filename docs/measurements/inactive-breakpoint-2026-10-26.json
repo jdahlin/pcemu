@@ -1,0 +1,1405 @@
+{
+  "scope": "Skip CPU::address when breakpoint address lies outside the 32-bit linear domain, including disabled sentinel. Frozen arena/policy/emitter unchanged; only main condition differs. Uninstrumented headless Office pairs and actual CLI breakpoint/trace gates.",
+  "buildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu"
+  ],
+  "binarySha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+  "referenceBinarySha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+  "sourcePatch": "--- reference/main.cpp\n+++ candidate/main.cpp\n@@ -330,7 +330,7 @@\n                 else m.nic.outgoing.clear();\n                 const auto batchStarted = std::chrono::steady_clock::now();\n                 for (int batch = 0; batch < 20000 && !c.halted; batch++) {\n-                    if (c.address(CS, c.ip) == breakAt) {\n+                    if (breakAt <= UINT32_MAX && c.address(CS, c.ip) == breakAt) {\n                         std::cerr << \"Guest breakpoint at \" << c.location() << '\\n';\n                         if (!afterBreak) {\n                             quit = true;\n",
+  "sourceDifferences": [
+    "main.cpp"
+  ],
+  "cli": [
+    {
+      "case": "default-jit",
+      "command": [
+        "build/breakpoint-fastpath/pcemu",
+        "--headless",
+        "--no-network",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "--steps",
+        "20000000",
+        "--state-json",
+        "build/breakpoint-fastpath/default-jit.json",
+        "--until-text",
+        "PCEMU MS-DOS ready"
+      ],
+      "state": {
+        "ip": 42665,
+        "flags": 582,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          1792,
+          249,
+          127,
+          1,
+          2694,
+          0,
+          269,
+          24
+        ],
+        "segments": [
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 25,
+            "base": 400,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 10068603,
+        "resets": 0,
+        "resetRequested": 0,
+        "nativeInstructions": 5514206,
+        "executionWallNs": 337603380,
+        "nativeMemoryCalls": 636,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "jit",
+        "jitFollowJumps": 1,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "compiledBlocks": 1288,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 6,
+          "shiftMode": 0,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            0,
+            79,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            199,
+            40,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 0,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 11972
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "log": "PIC mask=fc base=8 pending scan bytes=0\nStarting MS-DOS...\n\n\nMS-DOS Version 6.22\n\nPCEMU MS-DOS ready\nC:\\>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCPU 0019:0000a6a9 instructions=10068603 flags=246 CR0=10 CR3=0 CR2=0\nEAX=00000700 ECX=000000f9 EDX=0000007f EBX=00000001 ESP=00000a86 EBP=00000000 ESI=0000010d EDI=00000018 \nS0=0116(base 00001160) S1=0019(base 00000190) S2=0116(base 00001160) S3=0116(base 00001160) S4=0000(base 00000000) S5=0000(base 00000000) \nExecuted 10068603 guest instructions in 0.342848s; native=5514206, blocks=1288, recycles=0, stopped=budget/quit\n"
+    },
+    {
+      "case": "default-interpreter",
+      "command": [
+        "build/breakpoint-fastpath/pcemu",
+        "--headless",
+        "--no-network",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "--steps",
+        "20000000",
+        "--state-json",
+        "build/breakpoint-fastpath/default-interpreter.json",
+        "--no-jit",
+        "--until-text",
+        "PCEMU MS-DOS ready"
+      ],
+      "state": {
+        "ip": 17549,
+        "flags": 514,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          2,
+          249,
+          39148,
+          349,
+          2322,
+          0,
+          15855,
+          47
+        ],
+        "segments": [
+          {
+            "selector": 38150,
+            "base": 610400,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 25,
+            "base": 400,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 10060000,
+        "resets": 0,
+        "resetRequested": 0,
+        "nativeInstructions": 0,
+        "executionWallNs": 201647086,
+        "nativeMemoryCalls": 0,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "interpreter",
+        "jitFollowJumps": 0,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "compiledBlocks": 0,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 6,
+          "shiftMode": 0,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            0,
+            79,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            199,
+            40,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 0,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 16272
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "log": "PIC mask=fc base=8 pending scan bytes=0\nStarting MS-DOS...\n\n\nMS-DOS Version 6.22\n\nPCEMU MS-DOS ready\nC:\\>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCPU 0019:0000448d instructions=10060000 flags=202 CR0=10 CR3=0 CR2=0\nEAX=00000002 ECX=000000f9 EDX=000098ec EBX=0000015d ESP=00000912 EBP=00000000 ESI=00003def EDI=0000002f \nS0=9506(base 00095060) S1=0019(base 00000190) S2=0116(base 00001160) S3=0116(base 00001160) S4=0000(base 00000000) S5=0000(base 00000000) \nExecuted 10060000 guest instructions in 0.209884s; native=0, blocks=0, recycles=0, stopped=budget/quit\n"
+    },
+    {
+      "case": "break-entry",
+      "command": [
+        "build/breakpoint-fastpath/pcemu",
+        "--headless",
+        "--no-network",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "--steps",
+        "20000000",
+        "--state-json",
+        "build/breakpoint-fastpath/break-entry.json",
+        "--break-at",
+        "0x7c00"
+      ],
+      "state": {
+        "ip": 31744,
+        "flags": 2,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          0,
+          0,
+          128,
+          0,
+          31744,
+          0,
+          0,
+          0
+        ],
+        "segments": [
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 0,
+        "resets": 0,
+        "resetRequested": 0,
+        "nativeInstructions": 0,
+        "executionWallNs": 88500,
+        "nativeMemoryCalls": 0,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "jit",
+        "jitFollowJumps": 1,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "compiledBlocks": 0,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 6,
+          "shiftMode": 0,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            0,
+            79,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            199,
+            40,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 0,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 0
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "log": "Guest breakpoint at 0000:00007c00\nPIC mask=fc base=8 pending scan bytes=0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCPU 0000:00007c00 instructions=0 flags=2 CR0=10 CR3=0 CR2=0\nEAX=00000000 ECX=00000000 EDX=00000080 EBX=00000000 ESP=00007c00 EBP=00000000 ESI=00000000 EDI=00000000 \nS0=0000(base 00000000) S1=0000(base 00000000) S2=0000(base 00000000) S3=0000(base 00000000) S4=0000(base 00000000) S5=0000(base 00000000) \nExecuted 0 guest instructions in 0.000451875s; native=0, blocks=0, recycles=0, stopped=budget/quit\n"
+    },
+    {
+      "case": "break-after",
+      "command": [
+        "build/breakpoint-fastpath/pcemu",
+        "--headless",
+        "--no-network",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "--steps",
+        "20000000",
+        "--state-json",
+        "build/breakpoint-fastpath/break-after.json",
+        "--no-jit",
+        "--break-at",
+        "0x7c00",
+        "--after-break",
+        "3",
+        "--trace",
+        "build/breakpoint-fastpath/after.trace"
+      ],
+      "state": {
+        "ip": 31749,
+        "flags": 70,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          0,
+          0,
+          128,
+          0,
+          31744,
+          0,
+          0,
+          0
+        ],
+        "segments": [
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 3,
+        "resets": 0,
+        "resetRequested": 0,
+        "nativeInstructions": 0,
+        "executionWallNs": 163500,
+        "nativeMemoryCalls": 0,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "interpreter",
+        "jitFollowJumps": 0,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/dos.pcd",
+        "compiledBlocks": 0,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 6,
+          "shiftMode": 0,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            0,
+            79,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            199,
+            40,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 0,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 0
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "log": "Guest breakpoint at 0000:00007c00\nPIC mask=fc base=8 pending scan bytes=0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCPU 0000:00007c05 instructions=3 flags=46 CR0=10 CR3=0 CR2=0\nEAX=00000000 ECX=00000000 EDX=00000080 EBX=00000000 ESP=00007c00 EBP=00000000 ESI=00000000 EDI=00000000 \nS0=0000(base 00000000) S1=0000(base 00000000) S2=0000(base 00000000) S3=0000(base 00000000) S4=0000(base 00000000) S5=0000(base 00000000) \nExecuted 3 guest instructions in 0.000347708s; native=0, blocks=0, recycles=0, stopped=budget/quit\n"
+    }
+  ],
+  "addressSamples": {
+    "scope": "Direct-main CPU::address self samples from finer 128 MiB diagnostic; excludes JIT/interpreter descendants, not exact CPU duration",
+    "mainSamples": 14742,
+    "directMainAddressSelf": 283,
+    "percent": 1.9196852530185864
+  },
+  "pairs": {
+    "excel": {
+      "scope": "Three alternating matched-source pairs with process CPU accounting testing inactive breakpoint CS:IP translation guard only; ordinary uninstrumented FollowJumps in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.",
+      "pairs": [
+        {
+          "pair": 1,
+          "runs": {
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 32389.850917000003,
+                  "taskResponseMs": 9416.841833999995,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 8350.607417,
+                    "systemMs": 776.571459,
+                    "totalMs": 9127.178876
+                  },
+                  "instructions": 1403315822,
+                  "nativeInstructions": 1383227688,
+                  "compiledBlocks": 31786,
+                  "executionWallMs": 8274.942088
+                }
+              ],
+              "medianRestoreReadyMs": 32389.850917000003,
+              "medianTaskResponseMs": 9416.841833999995,
+              "medianProcessCpuMs": 9127.178876
+            },
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 666.6719999999999,
+                  "taskResponseMs": 8456.633917,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 7496.816458,
+                    "systemMs": 633.908167,
+                    "totalMs": 8130.724625
+                  },
+                  "instructions": 1403051644,
+                  "nativeInstructions": 1382973074,
+                  "compiledBlocks": 31795,
+                  "executionWallMs": 7479.685356
+                }
+              ],
+              "medianRestoreReadyMs": 666.6719999999999,
+              "medianTaskResponseMs": 8456.633917,
+              "medianProcessCpuMs": 8130.724625
+            }
+          },
+          "responseRatio": 1.113544931284034,
+          "executionWallRatio": 1.1063222173325868,
+          "processCpuRatio": 1.122554175298982
+        },
+        {
+          "pair": 2,
+          "runs": {
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 586.293459,
+                  "taskResponseMs": 7857.0351660000015,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 7168.044083,
+                    "systemMs": 531.955542,
+                    "totalMs": 7699.999625
+                  },
+                  "instructions": 1403111240,
+                  "nativeInstructions": 1383049421,
+                  "compiledBlocks": 31893,
+                  "executionWallMs": 7126.127939
+                }
+              ],
+              "medianRestoreReadyMs": 586.293459,
+              "medianTaskResponseMs": 7857.0351660000015,
+              "medianProcessCpuMs": 7699.999625
+            },
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 419.662958,
+                  "taskResponseMs": 9271.075417,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 8238.471792,
+                    "systemMs": 712.479417,
+                    "totalMs": 8950.951209
+                  },
+                  "instructions": 1403263375,
+                  "nativeInstructions": 1383175759,
+                  "compiledBlocks": 31856,
+                  "executionWallMs": 8173.485322
+                }
+              ],
+              "medianRestoreReadyMs": 419.662958,
+              "medianTaskResponseMs": 9271.075417,
+              "medianProcessCpuMs": 8950.951209
+            }
+          },
+          "responseRatio": 1.179971225929982,
+          "executionWallRatio": 1.1469742603508428,
+          "processCpuRatio": 1.1624612525873987
+        },
+        {
+          "pair": 3,
+          "runs": {
+            "baseline": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 25017.528875,
+                  "taskResponseMs": 9289.620083,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 8198.505459,
+                    "systemMs": 721.925708,
+                    "totalMs": 8920.431167
+                  },
+                  "instructions": 1402950310,
+                  "nativeInstructions": 1382930199,
+                  "compiledBlocks": 31897,
+                  "executionWallMs": 8097.868939
+                }
+              ],
+              "medianRestoreReadyMs": 25017.528875,
+              "medianTaskResponseMs": 9289.620083,
+              "medianProcessCpuMs": 8920.431167
+            },
+            "candidate": {
+              "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+              "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 556.754042,
+                  "taskResponseMs": 10117.975625,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 9024.656625,
+                    "systemMs": 860.705667,
+                    "totalMs": 9885.362292
+                  },
+                  "instructions": 1403315822,
+                  "nativeInstructions": 1383227688,
+                  "compiledBlocks": 31786,
+                  "executionWallMs": 8876.067431
+                }
+              ],
+              "medianRestoreReadyMs": 556.754042,
+              "medianTaskResponseMs": 10117.975625,
+              "medianProcessCpuMs": 9885.362292
+            }
+          },
+          "responseRatio": 0.9181303086011339,
+          "executionWallRatio": 0.9123262077435202,
+          "processCpuRatio": 0.9023878845815397
+        }
+      ],
+      "loadBefore": [
+        3.15380859375,
+        3.240234375,
+        3.24951171875
+      ],
+      "startedUnix": 1792975488.96795,
+      "binaries": {
+        "baseline": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+        "candidate": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0"
+      },
+      "medianPairedProcessCpuRatio": 1.122554175298982,
+      "loadAfter": [
+        3.73828125,
+        3.482421875,
+        3.3466796875
+      ],
+      "finishedUnix": 1792975604.679039,
+      "medianPairedResponseRatio": 1.113544931284034,
+      "medianPairedExecutionWallRatio": 1.1063222173325868
+    },
+    "word": {
+      "scope": "Three alternating matched-source pairs with process CPU accounting testing inactive breakpoint CS:IP translation guard only; ordinary uninstrumented FollowJumps in a restored, warm Word launch task. Restore is separate; response includes control/capture/poll overhead.",
+      "pairs": [
+        {
+          "pair": 1,
+          "runs": {
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 1584.486625,
+                  "taskResponseMs": 1116.6428750000002,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 849.010291,
+                    "systemMs": 88.837292,
+                    "totalMs": 937.847583
+                  },
+                  "instructions": 31244447,
+                  "nativeInstructions": 23688121,
+                  "compiledBlocks": 39655,
+                  "executionWallMs": 1000.463265
+                }
+              ],
+              "medianRestoreReadyMs": 1584.486625,
+              "medianTaskResponseMs": 1116.6428750000002,
+              "medianProcessCpuMs": 937.847583
+            },
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 568.354541,
+                  "taskResponseMs": 928.600083,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 823.530458,
+                    "systemMs": 87.012,
+                    "totalMs": 910.542458
+                  },
+                  "instructions": 31351603,
+                  "nativeInstructions": 23718361,
+                  "compiledBlocks": 37753,
+                  "executionWallMs": 831.061298
+                }
+              ],
+              "medianRestoreReadyMs": 568.354541,
+              "medianTaskResponseMs": 928.600083,
+              "medianProcessCpuMs": 910.542458
+            }
+          },
+          "responseRatio": 1.2025013732418546,
+          "executionWallRatio": 1.2038381132747684,
+          "processCpuRatio": 1.0299877559361432
+        },
+        {
+          "pair": 2,
+          "runs": {
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 477.40416700000003,
+                  "taskResponseMs": 1365.0441660000001,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 1157.610458,
+                    "systemMs": 159.507584,
+                    "totalMs": 1317.118042
+                  },
+                  "instructions": 31156104,
+                  "nativeInstructions": 23622123,
+                  "compiledBlocks": 39258,
+                  "executionWallMs": 1171.480606
+                }
+              ],
+              "medianRestoreReadyMs": 477.40416700000003,
+              "medianTaskResponseMs": 1365.0441660000001,
+              "medianProcessCpuMs": 1317.118042
+            },
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 536.281209,
+                  "taskResponseMs": 1890.444167,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 1597.92725,
+                    "systemMs": 242.523042,
+                    "totalMs": 1840.450292
+                  },
+                  "instructions": 32045584,
+                  "nativeInstructions": 24257068,
+                  "compiledBlocks": 40866,
+                  "executionWallMs": 1607.630423
+                }
+              ],
+              "medianRestoreReadyMs": 536.281209,
+              "medianTaskResponseMs": 1890.444167,
+              "medianProcessCpuMs": 1840.450292
+            }
+          },
+          "responseRatio": 1.3848959719300393,
+          "executionWallRatio": 1.3723064767493043,
+          "processCpuRatio": 1.397331319830178
+        },
+        {
+          "pair": 3,
+          "runs": {
+            "baseline": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/memory-push/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 622.6052920000001,
+                  "taskResponseMs": 1578.814666,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 1353.695583,
+                    "systemMs": 189.121917,
+                    "totalMs": 1542.8175
+                  },
+                  "instructions": 31148673,
+                  "nativeInstructions": 23613092,
+                  "compiledBlocks": 39292,
+                  "executionWallMs": 1356.198827
+                }
+              ],
+              "medianRestoreReadyMs": 622.6052920000001,
+              "medianTaskResponseMs": 1578.814666,
+              "medianProcessCpuMs": 1542.8175
+            },
+            "candidate": {
+              "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+              "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+              "jit": true,
+              "profiled": false,
+              "followJumps": true,
+              "traces": false,
+              "emulatorSha256": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0",
+              "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+              "restoreTimeoutSeconds": 90.0,
+              "guestProfiled": false,
+              "frontend": "headless",
+              "hostInputSuppressed": false,
+              "emulator": "/Users/johandahlin/dev/pcemu/build/breakpoint-fastpath/pcemu",
+              "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+              "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+              "samples": [
+                {
+                  "restoreReadyMs": 602.690708,
+                  "taskResponseMs": 1330.450959,
+                  "processCpuTime": {
+                    "status": "available",
+                    "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                    "userMs": 1141.66,
+                    "systemMs": 144.891875,
+                    "totalMs": 1286.551875
+                  },
+                  "instructions": 31331107,
+                  "nativeInstructions": 23730071,
+                  "compiledBlocks": 39220,
+                  "executionWallMs": 1142.194332
+                }
+              ],
+              "medianRestoreReadyMs": 602.690708,
+              "medianTaskResponseMs": 1330.450959,
+              "medianProcessCpuMs": 1286.551875
+            }
+          },
+          "responseRatio": 1.1866763335543584,
+          "executionWallRatio": 1.1873625958424034,
+          "processCpuRatio": 1.1991879456862164
+        }
+      ],
+      "loadBefore": [
+        3.73828125,
+        3.482421875,
+        3.3466796875
+      ],
+      "startedUnix": 1792975604.73206,
+      "binaries": {
+        "baseline": "9c2f690866d29a8ca381a9e1c37b0a09a860463f4dd36981d9cb2a38028fdf29",
+        "candidate": "d9522fa25f242c3b72aab0e4d4cc7c9a3831fb5131d23ac42c7e1f1e938340d0"
+      },
+      "medianPairedProcessCpuRatio": 1.1991879456862164,
+      "loadAfter": [
+        3.6591796875,
+        3.47509765625,
+        3.345703125
+      ],
+      "finishedUnix": 1792975618.802869,
+      "medianPairedResponseRatio": 1.2025013732418546,
+      "medianPairedExecutionWallRatio": 1.2038381132747684
+    }
+  },
+  "drivers": {
+    "run-pairs.py": "from pathlib import Path\nimport json,subprocess,statistics,os,hashlib,time\nroot=Path.cwd();out=root/'build/excel-breakpoint-pairs';out.mkdir(exist_ok=True)\nsnapshot='/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered'\ntask='build/flag-pair/task-120.json'\nr={'scope':'Three alternating matched-source pairs with process CPU accounting testing inactive breakpoint CS:IP translation guard only; ordinary uninstrumented FollowJumps in a restored, loaded Excel dependent-recalculation task. Restore is separate; response includes control/capture/poll overhead.','pairs':[],'loadBefore':os.getloadavg(),'startedUnix':time.time(),'binaries':{m:hashlib.sha256((root/({'baseline':'build/memory-push/pcemu','candidate':'build/breakpoint-fastpath/pcemu'}[m])).read_bytes()).hexdigest() for m in ('baseline','candidate')}}\nfor n in range(3):\n runs={}\n for m in (('baseline','candidate') if n%2==0 else ('candidate','baseline')):\n  d=out/('pair-'+str(n+1)+'-'+m)\n  cmd=['python3','tools/bench_snapshot_task.py',snapshot,'--task',task,'--repeat','1','--emulator',{'baseline':'build/memory-push/pcemu','candidate':'build/breakpoint-fastpath/pcemu'}[m],'--restore-timeout','90','--output',str(d)]\n  with (out/(d.name+'.log')).open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)\n  runs[m]=json.loads((d/'result.json').read_text());print('Finished',n+1,m,runs[m]['medianTaskResponseMs'],flush=True)\n b=runs['baseline']['samples'][0];c=runs['candidate']['samples'][0]\n r['pairs'].append({'pair':n+1,'runs':runs,'responseRatio':b['taskResponseMs']/c['taskResponseMs'],'executionWallRatio':b['executionWallMs']/c['executionWallMs'],'processCpuRatio':b['processCpuTime']['totalMs']/c['processCpuTime']['totalMs']})\n (out/'partial.json').write_text(json.dumps(r,indent=2)+'\\n')\nr['medianPairedProcessCpuRatio']=statistics.median(p['processCpuRatio'] for p in r['pairs'])\nr['loadAfter']=os.getloadavg();r['finishedUnix']=time.time()\nr['medianPairedResponseRatio']=statistics.median(p['responseRatio'] for p in r['pairs'])\nr['medianPairedExecutionWallRatio']=statistics.median(p['executionWallRatio'] for p in r['pairs'])\n(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n');print('PASS',r['medianPairedResponseRatio'],r['medianPairedExecutionWallRatio'],flush=True)\n",
+    "run-word-pairs.py": "from pathlib import Path\nimport json,subprocess,statistics,os,hashlib,time\nroot=Path.cwd();out=root/'build/word-breakpoint-pairs';out.mkdir(exist_ok=True)\nsnapshot='/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026'\ntask='build/word-memory-call-probe/task.json'\nr={'scope':'Three alternating matched-source pairs with process CPU accounting testing inactive breakpoint CS:IP translation guard only; ordinary uninstrumented FollowJumps in a restored, warm Word launch task. Restore is separate; response includes control/capture/poll overhead.','pairs':[],'loadBefore':os.getloadavg(),'startedUnix':time.time(),'binaries':{m:hashlib.sha256((root/({'baseline':'build/memory-push/pcemu','candidate':'build/breakpoint-fastpath/pcemu'}[m])).read_bytes()).hexdigest() for m in ('baseline','candidate')}}\nfor n in range(3):\n runs={}\n for m in (('baseline','candidate') if n%2==0 else ('candidate','baseline')):\n  d=out/('pair-'+str(n+1)+'-'+m)\n  cmd=['python3','tools/bench_snapshot_task.py',snapshot,'--task',task,'--repeat','1','--emulator',{'baseline':'build/memory-push/pcemu','candidate':'build/breakpoint-fastpath/pcemu'}[m],'--restore-timeout','90','--output',str(d)]\n  with (out/(d.name+'.log')).open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)\n  runs[m]=json.loads((d/'result.json').read_text());print('Finished',n+1,m,runs[m]['medianTaskResponseMs'],flush=True)\n b=runs['baseline']['samples'][0];c=runs['candidate']['samples'][0]\n r['pairs'].append({'pair':n+1,'runs':runs,'responseRatio':b['taskResponseMs']/c['taskResponseMs'],'executionWallRatio':b['executionWallMs']/c['executionWallMs'],'processCpuRatio':b['processCpuTime']['totalMs']/c['processCpuTime']['totalMs']})\n (out/'partial.json').write_text(json.dumps(r,indent=2)+'\\n')\nr['medianPairedProcessCpuRatio']=statistics.median(p['processCpuRatio'] for p in r['pairs'])\nr['loadAfter']=os.getloadavg();r['finishedUnix']=time.time()\nr['medianPairedResponseRatio']=statistics.median(p['responseRatio'] for p in r['pairs'])\nr['medianPairedExecutionWallRatio']=statistics.median(p['executionWallRatio'] for p in r['pairs'])\n(out/'result.json').write_text(json.dumps(r,indent=2)+'\\n');print('PASS',r['medianPairedResponseRatio'],r['medianPairedExecutionWallRatio'],flush=True)\n"
+  },
+  "limits": [
+    "Three alternating pairs per workload on a shared desktop host.",
+    "Wide spread and one unfavorable Excel pair; no stable application speedup percentage claimed.",
+    "Direct-main address samples are wall-stack shares, not exact CPU durations or the isolated benefit of removing the call.",
+    "Current repository pcemu CMake target also compiles, including concurrent frontend work; frozen executable excludes those unrelated differences.",
+    "No additional fresh Setup gate claimed for this main-loop guard."
+  ]
+}

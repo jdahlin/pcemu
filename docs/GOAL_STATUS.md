@@ -48,7 +48,8 @@ samples in dispatch/validation and device polling; compilation contributes under
 1%. Word launch has much more interpreter and compilation work. Anonymous
 emitted ARM64 frames now have diagnostic region attribution: [mapped Excel
 profiles](emitted-code-profiling.md) identify block finishing as a substantial
-bucket, while finer flags/commit/return separation remains open.
+bucket and separate its flags, commits and return. The next optimization must
+be measured against those costs.
 
 [Native FF /6 PUSH](native-memory-push.md) passes 8,682 focused memory checks,
 43,600 stack checks, 354,948 core checks and 8,677 existing memory CALL checks.
@@ -1238,3 +1239,17 @@ or arena change is retained. The exact map/stack round trips and diagnostic
 patches are in `jit-finish-profile-2026-10-26.json`; see
 `emitted-code-profiling.md`. This narrows the hot bucket while confirming that
 flag work alone cannot deliver the twofold useful-work target.
+
+
+## Inactive breakpoint translation removed (26 October)
+
+The main loop skips CS:IP translation when the breakpoint is outside the 32-bit
+linear domain, including the disabled sentinel. The old direct-main call has
+283 self samples (1.92% of main-thread task samples) in the finer diagnostic.
+Actual DOS JIT/interpreter boot, boot-entry breakpoint and exactly-three-step
+post-break trace checks pass; the current CMake pcemu target compiles. Six
+headless Office pairs pass expected pixels. CPU ratios are favorable in two of
+three Excel pairs and all Word pairs, but spread is wide and no stable gain is
+claimed. No CPU/emitter/cache policy changes. Evidence is in
+`inactive-breakpoint.md` and its measurement record; the useful-work goal stays
+active.

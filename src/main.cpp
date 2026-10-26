@@ -352,7 +352,7 @@ int main(int argc, char **argv) {
                 else m.nic.outgoing.clear();
                 const auto batchStarted = std::chrono::steady_clock::now();
                 for (int batch = 0; batch < 20000 && !c.halted; batch++) {
-                    if (c.address(CS, c.ip) == breakAt) {
+                    if (breakAt <= UINT32_MAX && c.address(CS, c.ip) == breakAt) {
                         std::cerr << "Guest breakpoint at " << c.location() << '\n';
                         if (!afterBreak) {
                             quit = true;
