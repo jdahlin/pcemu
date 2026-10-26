@@ -1,9 +1,47 @@
 # Small Windows 11 ARM64 installation
 
 Research checked against Microsoft deployment documentation on 2026-10-26.
-This is the proposed installation profile; it has not yet been applied in a
-fresh installation. Disk-format migration and image compression are separate
-from changing the guest's Windows installation.
+The `/Compact` deployment was completed and booted on this host on that date.
+The other measures below remain recommendations until individually verified.
+Disk-format compression is separate from changing the guest's Windows files.
+
+## Fresh installation verified on this host
+
+The Microsoft ARM64 ISO `Windows11_Client_arm64_en-us_26300_9457.iso` was copied
+from the mounted archive to ignored `build/windows11-install/source.iso`; its
+SHA-256 matched Microsoft's published
+`8992f2d2cfd2fa647e579e9eb31fc21f34da8333c29b6170fde17d2ed6623e9c`.
+WinPE applied Windows 11 Pro (index 3) with `DISM /Apply-Image /Compact
+/CheckIntegrity /Verify` to a fresh sparse 64 GiB disk. The install report
+reached 100%, installed the signed ARM64 VirtIO storage, network and RNG
+drivers, and created EFI boot files. A non-formatting WinPE follow-up added the
+local account files and fallback ARM64 EFI loader.
+
+The installed disk booted without installation media. The first-logon report
+at `build/windows11-install/retry-reports/report-1793029782373557000.log`
+passed `tools/verify_windows_boot.py`: Windows build 26300.9457, PCEmu desktop
+logon, started VirtIO storage/network/RNG, a DHCP lease, HTTP traffic and RNG
+provider I/O. The guest posted an 800×600 desktop capture at
+`build/windows11-install/desktop.png`. The normal 4 GiB, two-CPU VMBus/MSI
+profile then reached the lock screen headless and powered off through the
+guest shutdown service. Its capture is `build/windows11-qcow2/headless.png`.
+
+The active, ignored files are `media/windows11-arm64/system.qcow2`, its writable
+`system-live.qcow2` overlay, and `build/windows11-qcow2/installed-vars.bin`.
+The standalone base has 64 GiB logical capacity and about 16.4 GiB host
+allocation. `qemu-img check` passed, and `qemu-img compare` found every logical
+byte identical to the stopped installation chain. The base uses zstd QCOW2
+clusters; the live overlay is standard writable QCOW2. Start it with
+`./run11.sh`; firmware and build dependencies are available locally.
+
+This deployment retained the existing installer flow, which staged the 7.6 GB
+WIM on the target volume and then deleted it. The deleted WIM's old clusters
+may remain allocated in QCOW2. Because this host has ample space, that did not
+block bringing up the guest. CompactOS was requested during DISM application,
+but an in-guest `compact.exe /CompactOS:query` has not yet been captured;
+hibernation, pagefile and component-store changes below have not been applied.
+The stopped installation chain and failed first transfer remain in ignored
+local media as recovery and diagnostic artifacts.
 
 ## Main finding in our current installer
 

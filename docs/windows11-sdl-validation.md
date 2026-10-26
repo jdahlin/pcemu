@@ -1,7 +1,7 @@
 # Windows 11 SDL input and startup validation
 
 Start the local installation with `./run11.sh` (4 GiB, two CPUs, user networking,
-read-only qcow2 base and writable local `.pcd` overlay). Click to capture the
+read-only QCOW2 base and writable local `.qcow2` overlay). Click to capture the
 mouse; Cmd+G releases it. Shut down in Windows before closing when possible.
 The launcher packages the signed executable inside `build/PCEmu11.app`, then
 executes that bundled binary with the repository as its working directory.
