@@ -52,7 +52,7 @@ and [large-document benchmark](measurements/word5m-m1-2026-10-26.md) do **not**
 support an application speedup. The latter exercises about 100 million guest
 instructions and 5.3 million linked transitions, but linked CPU time remains
 higher in the preliminary comparison. The prototype remains opt-in. No
-application performance acceptance gate has passed.
+Word startup performance acceptance gate has passed.
 
 Core, bounded-batch and cached-batch suites pass. The latter includes
 checks with independent interpreter comparison, real links, self-modifying
@@ -91,3 +91,30 @@ still does not pass the performance gate: five rotating rounds gave median CPU
 are in [the ownership report](measurements/direct-links-unique-word5m-2026-10-26.json).
 Absolute timings across separate experiments should not be compared as speed
 changes; each experiment contains its own rotating baseline measurements.
+
+## First application-level performance gate
+
+The frozen committed implementation (`202d2ed`) passes the first performance
+gate on the existing Excel 97 4,096-row dependent recalculation task. Five
+rotating sequential rounds compare original baseline `57ce863`, current links
+on at warmup 256, and current links off. Every linked run consumes less process
+CPU than its same-round baseline (11.6–14.7% reduction). Median original baseline
+CPU is 7341.6 ms versus linked 6400.1 ms, a 12.8% reduction; current links-off
+median is 7659.5 ms. All fifteen independent restores reach the expected rendered
+SUM value (33591296) and exit cleanly. Approximately 1.403 billion guest
+instructions and 166 million actual linked transitions execute per linked run.
+This is a complete application recalculation measurement, including capture,
+control and device work, rather than a native microbenchmark.
+
+A fresh Release build from a clean archive of `202d2ed` matches the tested
+candidate executable byte-for-byte. Its core, bounded-batch and cached-batch
+suites pass, including code invalidation/PTE remapping, partial faults, MMIO
+exactly-once replay, context replacement, incoming-source replacement with arena
+recycling, and interrupt deadlines. See the
+[measurement and reproduction notes](measurements/direct-links-excel-m1-2026-10-26.md)
+and [raw results/build provenance](measurements/direct-links-excel-m1-2026-10-26.json).
+
+The benefit is workload-dependent. Word startup remains slower with linking;
+the flag stays off by default. This milestone supports continued investigation
+of repeated native chains, but does not establish a general application speedup
+or justify enabling the feature globally.

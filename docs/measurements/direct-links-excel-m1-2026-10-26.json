@@ -1,0 +1,836 @@
+{
+  "scope": "Complete Excel 97 dependent 4096-row recalculation, command through exact rendered SUM result; headless process user+system CPU includes emulator control/capture work. Five sequential rounds rotate baseline/linked/off order; no discarded runs and no concurrent build/profile in timing runs.",
+  "sourceCommit": "202d2edcd4e6b0fc45004db272d20ef013492670",
+  "summary": {
+    "baseline": {
+      "cpuMs": [
+        7341.6415,
+        7875.675833,
+        7835.595042,
+        7293.961249,
+        7308.019833
+      ],
+      "medianCpuMs": 7341.6415,
+      "medianWallMs": 7361.837792210281
+    },
+    "off": {
+      "cpuMs": [
+        7856.7165,
+        7766.590292,
+        7659.535126,
+        7371.327792,
+        7354.111125
+      ],
+      "medianCpuMs": 7659.535126,
+      "medianWallMs": 7671.93483421579
+    },
+    "unique256": {
+      "cpuMs": [
+        6400.070417,
+        6959.955042,
+        6687.032834,
+        6377.418334,
+        6367.496792
+      ],
+      "medianCpuMs": 6400.070417,
+      "medianWallMs": 6428.8232498802245
+    }
+  },
+  "pairedCpuReductionPercent": [
+    12.825075740895276,
+    11.627202673363268,
+    14.658264009861789,
+    12.565777136883716,
+    12.869738485834247
+  ],
+  "fixture": {
+    "source": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+    "local": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+    "backing": "/Users/johandahlin/dev/pcemu/build/snapshots/word-launch-local/disk.raw",
+    "sharedLegacyParent": "/Volumes/data/pcemu/snapshots/office97-recovered-desktop/disk.raw",
+    "sourceCowSha256": "f039421b8b2e9aa8092d5c48cfea0579d8e77454992f4f72a593d5d88d95a7ca",
+    "wordCowSha256": "e5f5ecc7be0ecfc4818737d03ac09ed3d284877797ba360b9a04cb80ccf2f2e1",
+    "wordBlocks": 42,
+    "excelBlocks": 83,
+    "unionBlocksReadbackVerified": 114,
+    "logicalBytes": 2147475456,
+    "overlayBytes": 2424832,
+    "proof": "Source Excel and previously byte-verified flattened Word differ only in the union of their legacy child block indices; every union block was replaced by source Excel data and readback compared. Outside that union both inherit the same immutable parent."
+  },
+  "build": {
+    "commit": "202d2ed",
+    "gitRevision": "202d2edcd4e6b0fc45004db272d20ef013492670",
+    "files": {
+      "src/jit.cpp": "b5584dc9b0ab0ee76c75529f6c4a2d8e3b22465809910c7396016f5ca84d1b0a",
+      "src/jit.hpp": "4fac39a19ac39c36d1f33e43e8c6e864c6d8433a830bd07a7817030cd306c44a",
+      "src/jit_arm64.cpp": "e13d0cd1ea5fff1525c2c24fee7d6093ba26769f9104644e53b4e1be989ac0e4",
+      "src/jit_decode.cpp": "3b152e321df93d5317a996580bed61be7fe61aa27300b21fc49de229a94ff3b8",
+      "src/jit_flags.cpp": "5f0d9c03a41f7756664854102b9cdb8d755db76448fca978d1e892607d34838f",
+      "src/jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+      "src/main.cpp": "eeeb72efcf7e8f9a7753fb50a8f84bca77dd465a6f0d41b1fcc4547537628f37",
+      "tests/jit_batch_test.cpp": "955525ef2d3baeefcd1638ca0658bc278ab02247d13298213fff3655f0b05d26",
+      "tests/jit_cached_batch_test.cpp": "a7cfb8f8f0a2ad0fe380e8af51277cc34f6c4c66200974f9fa06a258067dc0ae"
+    },
+    "build/direct-links-final/pcemu": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+    "build/direct-links-baseline/pcemu": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+    "build/direct-links-unique/pcemu": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823"
+  },
+  "checks": {
+    "frozenReleaseCtest": "Test project /Users/johandahlin/dev/pcemu/build/direct-links-final\n    Start 1: tests\n1/3 Test #1: tests ............................   Passed    2.13 sec\n    Start 5: jit-batch-tests\n2/3 Test #5: jit-batch-tests ..................   Passed    0.29 sec\n    Start 6: jit-cached-batch-tests\n3/3 Test #6: jit-cached-batch-tests ...........   Passed    1.21 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   3.63 sec\n",
+    "debugMapTests": 4,
+    "instrumentsAnalysisTests": 2,
+    "cachedBatchChecks": 151150
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "mode": "baseline",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.8811661414802,
+            "taskResponseMs": 7350.294250063598,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6902.721,
+              "systemMs": 438.9205,
+              "totalMs": 7341.6415
+            },
+            "instructions": 1403645236,
+            "nativeInstructions": 1383449521,
+            "compiledBlocks": 31924,
+            "nativeMemoryCalls": 12184393,
+            "executionWallMs": 6718.745923,
+            "shutdownWaitMs": 46.742457896471024,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.8811661414802,
+        "medianTaskResponseMs": 7350.294250063598,
+        "medianProcessCpuMs": 7341.6415
+      }
+    },
+    {
+      "round": 0,
+      "mode": "unique256",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 180.71137508377433,
+            "taskResponseMs": 6428.8232498802245,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6009.163584,
+              "systemMs": 390.906833,
+              "totalMs": 6400.070417
+            },
+            "instructions": 1403592508,
+            "nativeInstructions": 1383413959,
+            "compiledBlocks": 31787,
+            "nativeMemoryCalls": 12174835,
+            "directLinkTransitions": 166117284,
+            "directLinkPromotions": 3911,
+            "directLinkBlocks": 3911,
+            "executionWallMs": 5847.440471,
+            "shutdownWaitMs": 22.782583720982075,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 180.71137508377433,
+        "medianTaskResponseMs": 6428.8232498802245,
+        "medianProcessCpuMs": 6400.070417
+      }
+    },
+    {
+      "round": 0,
+      "mode": "off",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.4871673323214,
+            "taskResponseMs": 7881.389207672328,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7362.028708,
+              "systemMs": 494.687792,
+              "totalMs": 7856.7165
+            },
+            "instructions": 1403235742,
+            "nativeInstructions": 1383164832,
+            "compiledBlocks": 31725,
+            "nativeMemoryCalls": 12174010,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 7162.422378,
+            "shutdownWaitMs": 46.83358268812299,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.4871673323214,
+        "medianTaskResponseMs": 7881.389207672328,
+        "medianProcessCpuMs": 7856.7165
+      }
+    },
+    {
+      "round": 1,
+      "mode": "unique256",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.49483397975564,
+            "taskResponseMs": 6982.71383298561,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6494.863209,
+              "systemMs": 465.091833,
+              "totalMs": 6959.955042
+            },
+            "instructions": 1403031542,
+            "nativeInstructions": 1382974244,
+            "compiledBlocks": 31803,
+            "nativeMemoryCalls": 12165297,
+            "directLinkTransitions": 166086210,
+            "directLinkPromotions": 3869,
+            "directLinkBlocks": 3869,
+            "executionWallMs": 6311.779465,
+            "shutdownWaitMs": 22.75849971920252,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.49483397975564,
+        "medianTaskResponseMs": 6982.71383298561,
+        "medianProcessCpuMs": 6959.955042
+      }
+    },
+    {
+      "round": 1,
+      "mode": "off",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 187.25462490692735,
+            "taskResponseMs": 7789.944792166352,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7282.042667,
+              "systemMs": 484.547625,
+              "totalMs": 7766.590292
+            },
+            "instructions": 1403260798,
+            "nativeInstructions": 1383162233,
+            "compiledBlocks": 31849,
+            "nativeMemoryCalls": 12171021,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 7089.055797,
+            "shutdownWaitMs": 46.82770883664489,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 187.25462490692735,
+        "medianTaskResponseMs": 7789.944792166352,
+        "medianProcessCpuMs": 7766.590292
+      }
+    },
+    {
+      "round": 1,
+      "mode": "baseline",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 193.47550021484494,
+            "taskResponseMs": 7910.69445759058,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7377.366,
+              "systemMs": 498.309833,
+              "totalMs": 7875.675833
+            },
+            "instructions": 1403274737,
+            "nativeInstructions": 1383191497,
+            "compiledBlocks": 31785,
+            "nativeMemoryCalls": 12175033,
+            "executionWallMs": 7177.533156,
+            "shutdownWaitMs": 46.93604167550802,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 193.47550021484494,
+        "medianTaskResponseMs": 7910.69445759058,
+        "medianProcessCpuMs": 7875.675833
+      }
+    },
+    {
+      "round": 2,
+      "mode": "off",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 196.6742081567645,
+            "taskResponseMs": 7671.93483421579,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7202.043417,
+              "systemMs": 457.491709,
+              "totalMs": 7659.535126
+            },
+            "instructions": 1403544344,
+            "nativeInstructions": 1383418833,
+            "compiledBlocks": 31884,
+            "nativeMemoryCalls": 12179012,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 7002.013863,
+            "shutdownWaitMs": 45.61350028961897,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 196.6742081567645,
+        "medianTaskResponseMs": 7671.93483421579,
+        "medianProcessCpuMs": 7659.535126
+      }
+    },
+    {
+      "round": 2,
+      "mode": "baseline",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 209.96354101225734,
+            "taskResponseMs": 7871.434750035405,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7312.3915,
+              "systemMs": 523.203542,
+              "totalMs": 7835.595042
+            },
+            "instructions": 1403669509,
+            "nativeInstructions": 1383464765,
+            "compiledBlocks": 32029,
+            "nativeMemoryCalls": 12175849,
+            "executionWallMs": 7104.736237,
+            "shutdownWaitMs": 44.4365837611258,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 209.96354101225734,
+        "medianTaskResponseMs": 7871.434750035405,
+        "medianProcessCpuMs": 7835.595042
+      }
+    },
+    {
+      "round": 2,
+      "mode": "unique256",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-unique/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 183.70570801198483,
+            "taskResponseMs": 6736.6305841133,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6277.876709,
+              "systemMs": 409.156125,
+              "totalMs": 6687.032834
+            },
+            "instructions": 1403558294,
+            "nativeInstructions": 1383435051,
+            "compiledBlocks": 31791,
+            "nativeMemoryCalls": 12175950,
+            "directLinkTransitions": 166122960,
+            "directLinkPromotions": 3880,
+            "directLinkBlocks": 3880,
+            "executionWallMs": 6103.97302,
+            "shutdownWaitMs": 84.00241704657674,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 183.70570801198483,
+        "medianTaskResponseMs": 6736.6305841133,
+        "medianProcessCpuMs": 6687.032834
+      }
+    },
+    {
+      "round": 3,
+      "mode": "baseline",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 182.68475029617548,
+            "taskResponseMs": 7305.546916555613,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6865.493208,
+              "systemMs": 428.468041,
+              "totalMs": 7293.961249
+            },
+            "instructions": 1403047779,
+            "nativeInstructions": 1382974391,
+            "compiledBlocks": 31898,
+            "nativeMemoryCalls": 12167464,
+            "executionWallMs": 6677.578744,
+            "shutdownWaitMs": 46.75550013780594,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 182.68475029617548,
+        "medianTaskResponseMs": 7305.546916555613,
+        "medianProcessCpuMs": 7293.961249
+      }
+    },
+    {
+      "round": 3,
+      "mode": "unique256",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 491.3446670398116,
+            "taskResponseMs": 6404.706874862313,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 5991.484542,
+              "systemMs": 385.933792,
+              "totalMs": 6377.418334
+            },
+            "instructions": 1403187484,
+            "nativeInstructions": 1383116097,
+            "compiledBlocks": 31645,
+            "nativeMemoryCalls": 12169078,
+            "directLinkTransitions": 166102239,
+            "directLinkPromotions": 3857,
+            "directLinkBlocks": 3857,
+            "executionWallMs": 5830.384799,
+            "shutdownWaitMs": 22.767249960452318,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 491.3446670398116,
+        "medianTaskResponseMs": 6404.706874862313,
+        "medianProcessCpuMs": 6377.418334
+      }
+    },
+    {
+      "round": 3,
+      "mode": "off",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.1054591871798,
+            "taskResponseMs": 7384.358291979879,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6947.697875,
+              "systemMs": 423.629917,
+              "totalMs": 7371.327792
+            },
+            "instructions": 1403247558,
+            "nativeInstructions": 1383154265,
+            "compiledBlocks": 31869,
+            "nativeMemoryCalls": 12163062,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6760.277292,
+            "shutdownWaitMs": 46.73954099416733,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.1054591871798,
+        "medianTaskResponseMs": 7384.358291979879,
+        "medianProcessCpuMs": 7371.327792
+      }
+    },
+    {
+      "round": 4,
+      "mode": "unique256",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 188.08600027114153,
+            "taskResponseMs": 6389.638749882579,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 5990.642625,
+              "systemMs": 376.854167,
+              "totalMs": 6367.496792
+            },
+            "instructions": 1403242856,
+            "nativeInstructions": 1383173158,
+            "compiledBlocks": 31686,
+            "nativeMemoryCalls": 12171703,
+            "directLinkTransitions": 166107850,
+            "directLinkPromotions": 3866,
+            "directLinkBlocks": 3866,
+            "executionWallMs": 5826.412082,
+            "shutdownWaitMs": 22.756250109523535,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 188.08600027114153,
+        "medianTaskResponseMs": 6389.638749882579,
+        "medianProcessCpuMs": 6367.496792
+      }
+    },
+    {
+      "round": 4,
+      "mode": "off",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "07e80d7ca9ba78c23fa3f3f9ebf0002484832689406d40ad866e033e7f489823",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 188.444834202528,
+            "taskResponseMs": 7366.697792429477,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6938.404,
+              "systemMs": 415.707125,
+              "totalMs": 7354.111125
+            },
+            "instructions": 1403182784,
+            "nativeInstructions": 1383108720,
+            "compiledBlocks": 31716,
+            "nativeMemoryCalls": 12168612,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6755.258683,
+            "shutdownWaitMs": 45.76358338817954,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 188.444834202528,
+        "medianTaskResponseMs": 7366.697792429477,
+        "medianProcessCpuMs": 7354.111125
+      }
+    },
+    {
+      "round": 4,
+      "mode": "baseline",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-recalc-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 188.66062490269542,
+            "taskResponseMs": 7361.837792210281,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6881.252375,
+              "systemMs": 426.767458,
+              "totalMs": 7308.019833
+            },
+            "instructions": 1403684447,
+            "nativeInstructions": 1383476036,
+            "compiledBlocks": 31966,
+            "nativeMemoryCalls": 12185014,
+            "executionWallMs": 6695.709798,
+            "shutdownWaitMs": 43.67104219272733,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 188.66062490269542,
+        "medianTaskResponseMs": 7361.837792210281,
+        "medianProcessCpuMs": 7308.019833
+      }
+    }
+  ]
+}
