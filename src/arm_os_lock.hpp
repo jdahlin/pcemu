@@ -5,7 +5,10 @@ namespace pc {
 // Breakpoint/watchpoint execution remains owned by Hypervisor.framework.
 class ArmOsLock {
   public:
-    bool access(uint64_t syndrome, uint64_t &value);
+    // Read/write a supported OS lock register from a trapped instruction syndrome.
+    // False means unhandled; reads replace value and writes consume its control bit.
+    bool access_system_register(uint64_t syndrome, uint64_t &value);
+
   private:
     bool locked = true, doubleLocked = false;
 };

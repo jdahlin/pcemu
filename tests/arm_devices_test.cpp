@@ -163,32 +163,32 @@ int main() {
     check(armMmioLoad(UINT64_MAX, 8, false, true) == UINT64_MAX);
     ArmOsLock osLock;
     uint64_t lockValue = 0;
-    check(osLock.access(0x62280503, lockValue) && lockValue == 10);
+    check(osLock.access_system_register(0x62280503, lockValue) && lockValue == 10);
     lockValue = 0;
-    check(osLock.access(0x62280400, lockValue));
-    check(osLock.access(0x622807e3, lockValue) && lockValue == 8); // Rt=XZR.
+    check(osLock.access_system_register(0x62280400, lockValue));
+    check(osLock.access_system_register(0x622807e3, lockValue) && lockValue == 8); // Rt=XZR.
     lockValue = UINT64_MAX;
-    check(osLock.access(0x62280420, lockValue));
-    check(osLock.access(0x62280403, lockValue) && lockValue == 10);
-    check(!osLock.access(0x62280401, lockValue)); // OSLAR is write-only.
-    check(!osLock.access(0x62280402, lockValue)); // OSLSR is read-only.
-    check(!osLock.access(0x62280409, lockValue)); // Other CRm.
-    check(!osLock.access(0x62080403, lockValue)); // Other op0.
-    check(!osLock.access(0x60280403, lockValue)); // Invalid IL.
-    check(!osLock.access(0x66280403, lockValue)); // Other EC.
+    check(osLock.access_system_register(0x62280420, lockValue));
+    check(osLock.access_system_register(0x62280403, lockValue) && lockValue == 10);
+    check(!osLock.access_system_register(0x62280401, lockValue)); // OSLAR is write-only.
+    check(!osLock.access_system_register(0x62280402, lockValue)); // OSLSR is read-only.
+    check(!osLock.access_system_register(0x62280409, lockValue)); // Other CRm.
+    check(!osLock.access_system_register(0x62080403, lockValue)); // Other op0.
+    check(!osLock.access_system_register(0x60280403, lockValue)); // Invalid IL.
+    check(!osLock.access_system_register(0x66280403, lockValue)); // Other EC.
     ArmOsLock freshLock;
-    check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
+    check(freshLock.access_system_register(0x62280403, lockValue) && lockValue == 10);
     lockValue = 0;
-    check(freshLock.access(0x622807e6, lockValue)); // Linux clears OSDLR via XZR.
-    check(freshLock.access(0x62280407, lockValue) && lockValue == 0);
+    check(freshLock.access_system_register(0x622807e6, lockValue)); // Linux clears OSDLR via XZR.
+    check(freshLock.access_system_register(0x62280407, lockValue) && lockValue == 0);
     lockValue = 1;
-    check(freshLock.access(0x62280406, lockValue));
+    check(freshLock.access_system_register(0x62280406, lockValue));
     lockValue = 0;
-    check(freshLock.access(0x62280406, lockValue));
-    check(freshLock.access(0x62280407, lockValue) && lockValue == 1);
+    check(freshLock.access_system_register(0x62280406, lockValue));
+    check(freshLock.access_system_register(0x62280407, lockValue) && lockValue == 1);
     lockValue = 0;
-    check(freshLock.access(0x62280400, lockValue));
-    check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
+    check(freshLock.access_system_register(0x62280400, lockValue));
+    check(freshLock.access_system_register(0x62280403, lockValue) && lockValue == 10);
     ArmPl011 uart;
     check(uart.read_register(0x18) == 0x90);
     uart.write_register(0, 'X'); check(uart.transmitted_output().empty()); // UART disabled at reset.

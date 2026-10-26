@@ -421,7 +421,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x18) {
         unsigned reg = (exit.syndrome >> 5) & 31;
         uint64_t value = reg < 31 ? vm.reg(reg) : 0;
-        if (osLocks[vm.currentCPU()].access(exit.syndrome, value)) {
+        if (osLocks[vm.currentCPU()].access_system_register(exit.syndrome, value)) {
             if ((exit.syndrome & 1) && reg < 31) vm.setReg(reg, value);
             vm.setPC(exit.pc + 4);
             return;
