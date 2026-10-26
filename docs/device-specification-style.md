@@ -42,7 +42,8 @@ purpose, the effect of a bit or command, or the quantity and units represented.
 For offsets, state that they are relative to the device's mapped base address.
 Explain acronyms and encoded fields rather than merely repeating the identifier.
 Identity bytes may remain literal values when paired with named registers,
-a table reference and an explanation of their encoded meaning. Ordinary zero/one
+a table reference and an explanation beside each returned value of its encoded
+meaning, including field positions, combined identifiers and revision mappings. Ordinary zero/one
 values and arithmetic need no decorative constants.
 
 ## Inline documentation

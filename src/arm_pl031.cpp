@@ -127,7 +127,7 @@ uint32_t ArmPl031::read_register(unsigned offset) {
         // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=25
         // FIXME: ARM DDI 0224C, section 3.3.4: Implement RTCCR enable/reset behavior.
         // AD-HOC: Preserve the existing always-running clock until compatibility is tested.
-        return 1;
+        return 1; // Bit 0 is RTC start: one reports the clock enabled; other bits are zero.
     // ARM DDI 0224C, 3.3.5-3.3.7 (mask and interrupt status).
     // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=25
     case Register::InterruptMaskSetOrClearRegister:
@@ -139,24 +139,34 @@ uint32_t ArmPl031::read_register(unsigned offset) {
     // ARM DDI 0224C, 3.4 Peripheral identification registers.
     // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=27
     case Register::PeripheralIdentificationRegister0:
+        // PartNumber0: bits 7:0 of the PL031 part number, 0x031.
         return 0x31;
     case Register::PeripheralIdentificationRegister1:
+        // The two Designer fields combine to ARM's designer ID, 0x41.
+        // Designer0 = 0x1 in bits 7:4; PartNumber1 = 0x0 in bits 3:0.
         return 0x10;
     case Register::PeripheralIdentificationRegister2:
+        // Revision = 0x0 (r1p3) in bits 7:4; Designer1 = 0x4 in bits 3:0.
         return 0x04;
     case Register::PeripheralIdentificationRegister3:
+        // Configuration = 0: this peripheral has no configuration option bits set.
         return 0x00;
     // ARM DDI 0224C, 3.5 PrimeCell identification registers.
     // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=29
     case Register::PrimeCellIdentificationRegister0:
+        // Bits 7:0 of the standard PrimeCell identification value, 0xb105f00d.
         return 0x0d;
     case Register::PrimeCellIdentificationRegister1:
+        // Bits 15:8 of 0xb105f00d, returned in the low byte of this register.
         return 0xf0;
     case Register::PrimeCellIdentificationRegister2:
+        // Bits 23:16 of 0xb105f00d, returned in the low byte of this register.
         return 0x05;
     case Register::PrimeCellIdentificationRegister3:
+        // Bits 31:24 of 0xb105f00d, returned in the low byte of this register.
         return 0xb1;
-    // AD-HOC: Unimplemented and reserved registers read as zero.
+    // AD-HOC: No register value is implemented here; return an all-zero word.
+    // This also covers the write-only Interrupt Clear Register; zero is model policy.
     default:
         return 0;
     }
