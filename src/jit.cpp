@@ -40,10 +40,10 @@ void Jit::debugReset() {
     debugState->records.push_back(std::move(record));
 }
 void Jit::debugBlock(const Block &block, const std::vector<uint32_t> &code,
-                     const std::vector<DebugRegion> &regions) {
+                     const std::vector<DebugRegion> &regions, uintptr_t address) {
     if (!debugState || !debugState->stream.is_open()) return;
     debugState->records.push_back({debugTimeNs(), debugState->generation,
-        reinterpret_cast<uintptr_t>(block.fn), cpu.s[CS].selector, block.csBase, cpu.ip,
+        address ? address : reinterpret_cast<uintptr_t>(block.fn), cpu.s[CS].selector, block.csBase, cpu.ip,
         block.cr3, block.page, block.generation, code, regions});
 }
 void Jit::flushDebugMap() {
@@ -197,9 +197,9 @@ void Jit::patchIncoming(uint64_t key) {
     auto target = blocks.find(key);
     auto &list = pending->second;
     std::erase_if(list, [&](const IncomingLink &edge) {
-        auto state = edge.state.lock();
         auto source = blocks.find(edge.source);
-        if (!state || source == blocks.end() || source->second.link != state) return true;
+        if (source == blocks.end() || source->second.fn != edge.sourceEntry || !source->second.link)
+            return true;
         auto &a = source->second;
         if (target == blocks.end()) { setLinkTarget(a, edge.slot, 0); return false; }
         uintptr_t destinationEntry = 0;
@@ -222,7 +222,7 @@ void Jit::patchIncoming(uint64_t key) {
 void Jit::publishLinks(uint64_t key, Block &block) {
     for (unsigned slot = 0; slot < block.link->count; ++slot) {
         auto destination = (key & 0xffffffff00000000ull) | block.link->ips[slot];
-        incomingLinks[destination].push_back({key, slot, block.link});
+        incomingLinks[destination].push_back({key, slot, block.fn});
         patchIncoming(destination);
     }
     patchIncoming(key);
@@ -232,12 +232,11 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     // No native frame is live here. Remove incoming references before releasing
     // helper metadata embedded in the old code, then publish compatible edges.
     if (auto it = incomingLinks.find(key); it != incomingLinks.end())
-        for (auto &edge : it->second)
-            if (auto state = edge.state.lock()) {
-                auto source = blocks.find(edge.source);
-                if (source != blocks.end() && source->second.link == state)
-                    setLinkTarget(source->second, edge.slot, 0);
-            }
+        for (auto &edge : it->second) {
+            auto source = blocks.find(edge.source);
+            if (source != blocks.end() && source->second.fn == edge.sourceEntry && source->second.link)
+                setLinkTarget(source->second, edge.slot, 0);
+        }
     auto &stored = blocks.insert_or_assign(key, std::move(block)).first->second;
     if (stored.link && stored.link->promoted) publishLinks(key, stored);
     patchIncoming(key);

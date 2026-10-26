@@ -31,7 +31,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             return i.kind == Kind::Memory || i.nearCall || i.indirectCall || i.memoryPush;
         });
     if (linkCandidate) {
-        block.link = std::make_shared<LinkState>();
+        block.link = std::make_unique<LinkState>();
         block.link->startIP = cpu.ip;
         block.link->generationData = cpu.generation.data();
     }
@@ -1229,9 +1229,7 @@ bool Jit::promoteBlock(Block &block) {
     sys_icache_invalidate(reinterpret_cast<void *>(start), bytes);
     sys_icache_invalidate(reinterpret_cast<void *>(base), link.codeBytes);
     if (debugState) {
-        auto stub = block;
-        stub.fn = reinterpret_cast<Function>(start);
-        debugBlock(stub, code, regions);
+        debugBlock(block, code, regions, start);
         for (auto [address, instruction] : patches) debugPatch(address, instruction);
     }
     const auto delta = uint32_t(start-base);

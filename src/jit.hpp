@@ -63,7 +63,7 @@ class Jit {
     };
     void debugReset();
     void debugBlock(const Block &block, const std::vector<uint32_t> &code,
-                    const std::vector<DebugRegion> &regions);
+                    const std::vector<DebugRegion> &regions, uintptr_t address = 0);
     using Function = uint64_t (*)(CPU *, unsigned);
     struct LinkState {
         std::array<uintptr_t, 2> target{};
@@ -89,7 +89,7 @@ class Jit {
         size_t ramSize = 0;
         unsigned visits = 0;
         std::shared_ptr<std::vector<NativeMemoryMove>> memory;
-        std::shared_ptr<LinkState> link;
+        std::unique_ptr<LinkState> link;
     };
     CPU &cpu;
     uint8_t *arena = nullptr;
@@ -114,7 +114,8 @@ class Jit {
     std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.
     bool directLinks = false;
     unsigned linkWarmup = 32;
-    struct IncomingLink { uint64_t source; unsigned slot; std::weak_ptr<LinkState> state; };
+    // Native entry addresses are unique until recycle, which clears this table.
+    struct IncomingLink { uint64_t source; unsigned slot; Function sourceEntry; };
     std::unordered_map<uint64_t, std::vector<IncomingLink>> incomingLinks;
     Block *installBlock(uint64_t key, Block block);
     void patchIncoming(uint64_t key);

@@ -358,6 +358,34 @@ static void delayedPromotionTest() {
     check(jit.directLinkTransitions > 100, "hot native stub is unused");
 }
 
+static void replacedIncomingSourceTest() {
+    auto c = make({0x8b, 0x03, 0x83, 0xc0, 1, 0xeb, 9});
+    const uint8_t second[] = {0x83, 0xe9, 1, 0x75, 0xeb, 0xf4};
+    std::copy(std::begin(second), std::end(second), c.mem.begin() + 16);
+    c.r[BX] = 0x1000;
+    c.write(0x1000, 123, 4);
+    CPU ref = c;
+    Jit jit(c, true, 0, 65536);
+    jit.setDirectLinks(true, 0);
+    for (unsigned replacement = 0; replacement < 500; ++replacement) {
+        // Invalidate both ends while old incoming edges and memory-helper
+        // descriptors exist. Repeated replacement also forces arena reuse.
+        c.write(4, 1 + (replacement & 1), 1);
+        ref.write(4, 1 + (replacement & 1), 1);
+        c.ip = ref.ip = 0;
+        c.halted = ref.halted = false;
+        c.r[CX] = ref.r[CX] = 50;
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            check(part.instructions && part.instructions <= 127, "replacement budget");
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+    }
+    check(jit.directLinkTransitions > 1000, "replacement test did not exercise links");
+    check(jit.cacheRecycles > 0, "replacement test did not recycle native addresses");
+}
+
 int main() {
     try {
         CPU probe(1024 * 1024);
@@ -385,6 +413,7 @@ int main() {
         check(observedLinks > 0, "direct links were never exercised");
         linkedContextTests();
         delayedPromotionTest();
+        replacedIncomingSourceTest();
         debugMapTests();
         std::cout << "Passed " << checks
                   << " cached batch checks; multi-dispatch batches=" << multiDispatchBatches

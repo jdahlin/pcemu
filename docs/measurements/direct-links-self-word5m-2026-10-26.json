@@ -1,0 +1,787 @@
+{
+  "scope": "Five rotating sequential rounds; Word 97 4.8 MB DOC first-page readiness. All runs retained. Candidate hashes are in individual reports.",
+  "summary": {
+    "baseline": {
+      "cpuMs": [
+        2307.92675,
+        2149.980458,
+        2143.094542,
+        2099.351584,
+        2117.307792
+      ],
+      "medianCpuMs": 2143.094542
+    },
+    "self256": {
+      "cpuMs": [
+        2329.46925,
+        2215.407208,
+        2227.719083,
+        2232.110083,
+        2203.885
+      ],
+      "medianCpuMs": 2227.719083
+    },
+    "self32": {
+      "cpuMs": [
+        2272.028459,
+        2217.276416,
+        2197.007292,
+        2211.802042,
+        2164.695958
+      ],
+      "medianCpuMs": 2211.802042
+    }
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 218.70254212990403,
+            "taskResponseMs": 2382.855167146772,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2086.264833,
+              "systemMs": 221.661917,
+              "totalMs": 2307.92675
+            },
+            "instructions": 100278201,
+            "nativeInstructions": 86155619,
+            "compiledBlocks": 57566,
+            "nativeMemoryCalls": 1717807,
+            "executionWallMs": 2112.196946,
+            "shutdownWaitMs": 46.84220813214779,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 218.70254212990403,
+        "medianTaskResponseMs": 2382.855167146772,
+        "medianProcessCpuMs": 2307.92675
+      }
+    },
+    {
+      "round": 0,
+      "mode": "self256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 441.19566725566983,
+            "taskResponseMs": 2397.3978334106505,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2118.424791,
+              "systemMs": 211.044459,
+              "totalMs": 2329.46925
+            },
+            "instructions": 99506958,
+            "nativeInstructions": 85377012,
+            "compiledBlocks": 57542,
+            "nativeMemoryCalls": 1712511,
+            "directLinkTransitions": 611422,
+            "directLinkPromotions": 101,
+            "directLinkBlocks": 101,
+            "executionWallMs": 2133.259583,
+            "shutdownWaitMs": 21.948333829641342,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 441.19566725566983,
+        "medianTaskResponseMs": 2397.3978334106505,
+        "medianProcessCpuMs": 2329.46925
+      }
+    },
+    {
+      "round": 0,
+      "mode": "self32",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 226.02475015446544,
+            "taskResponseMs": 2338.321624789387,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2069.495334,
+              "systemMs": 202.533125,
+              "totalMs": 2272.028459
+            },
+            "instructions": 100768692,
+            "nativeInstructions": 86599192,
+            "compiledBlocks": 57729,
+            "nativeMemoryCalls": 1726801,
+            "directLinkTransitions": 632937,
+            "directLinkPromotions": 195,
+            "directLinkBlocks": 195,
+            "executionWallMs": 2096.547025,
+            "shutdownWaitMs": 45.41420890018344,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 226.02475015446544,
+        "medianTaskResponseMs": 2338.321624789387,
+        "medianProcessCpuMs": 2272.028459
+      }
+    },
+    {
+      "round": 1,
+      "mode": "self256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 199.65283386409283,
+            "taskResponseMs": 2271.7375410720706,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2026.860292,
+              "systemMs": 188.546916,
+              "totalMs": 2215.407208
+            },
+            "instructions": 99857464,
+            "nativeInstructions": 85713545,
+            "compiledBlocks": 57646,
+            "nativeMemoryCalls": 1718062,
+            "directLinkTransitions": 612510,
+            "directLinkPromotions": 101,
+            "directLinkBlocks": 101,
+            "executionWallMs": 2039.842108,
+            "shutdownWaitMs": 42.17875003814697,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 199.65283386409283,
+        "medianTaskResponseMs": 2271.7375410720706,
+        "medianProcessCpuMs": 2215.407208
+      }
+    },
+    {
+      "round": 1,
+      "mode": "self32",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.26583375409245,
+            "taskResponseMs": 2276.5123331919312,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2027.251583,
+              "systemMs": 190.024833,
+              "totalMs": 2217.276416
+            },
+            "instructions": 100102845,
+            "nativeInstructions": 85905436,
+            "compiledBlocks": 57692,
+            "nativeMemoryCalls": 1721558,
+            "directLinkTransitions": 631931,
+            "directLinkPromotions": 195,
+            "directLinkBlocks": 195,
+            "executionWallMs": 2042.819275,
+            "shutdownWaitMs": 43.986874632537365,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.26583375409245,
+        "medianTaskResponseMs": 2276.5123331919312,
+        "medianProcessCpuMs": 2217.276416
+      }
+    },
+    {
+      "round": 1,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 215.1412912644446,
+            "taskResponseMs": 2206.563665997237,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1969.443,
+              "systemMs": 180.537458,
+              "totalMs": 2149.980458
+            },
+            "instructions": 100551505,
+            "nativeInstructions": 86380751,
+            "compiledBlocks": 57810,
+            "nativeMemoryCalls": 1725173,
+            "executionWallMs": 1986.604643,
+            "shutdownWaitMs": 40.21204216405749,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 215.1412912644446,
+        "medianTaskResponseMs": 2206.563665997237,
+        "medianProcessCpuMs": 2149.980458
+      }
+    },
+    {
+      "round": 2,
+      "mode": "self32",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 201.3211245648563,
+            "taskResponseMs": 2255.671084392816,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2001.900834,
+              "systemMs": 195.106458,
+              "totalMs": 2197.007292
+            },
+            "instructions": 99593617,
+            "nativeInstructions": 85454807,
+            "compiledBlocks": 57570,
+            "nativeMemoryCalls": 1717101,
+            "directLinkTransitions": 630775,
+            "directLinkPromotions": 195,
+            "directLinkBlocks": 195,
+            "executionWallMs": 2022.951489,
+            "shutdownWaitMs": 46.78279208019376,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 201.3211245648563,
+        "medianTaskResponseMs": 2255.671084392816,
+        "medianProcessCpuMs": 2197.007292
+      }
+    },
+    {
+      "round": 2,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 201.6829578205943,
+            "taskResponseMs": 2199.5567502453923,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1962.499417,
+              "systemMs": 180.595125,
+              "totalMs": 2143.094542
+            },
+            "instructions": 99831726,
+            "nativeInstructions": 85723549,
+            "compiledBlocks": 57699,
+            "nativeMemoryCalls": 1715958,
+            "executionWallMs": 1979.163268,
+            "shutdownWaitMs": 38.70945796370506,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 201.6829578205943,
+        "medianTaskResponseMs": 2199.5567502453923,
+        "medianProcessCpuMs": 2143.094542
+      }
+    },
+    {
+      "round": 2,
+      "mode": "self256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 197.12775014340878,
+            "taskResponseMs": 2288.9277497306466,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2033.0125,
+              "systemMs": 194.706583,
+              "totalMs": 2227.719083
+            },
+            "instructions": 100216388,
+            "nativeInstructions": 86103686,
+            "compiledBlocks": 57609,
+            "nativeMemoryCalls": 1716903,
+            "directLinkTransitions": 611966,
+            "directLinkPromotions": 103,
+            "directLinkBlocks": 103,
+            "executionWallMs": 2055.628184,
+            "shutdownWaitMs": 22.814583033323288,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 197.12775014340878,
+        "medianTaskResponseMs": 2288.9277497306466,
+        "medianProcessCpuMs": 2227.719083
+      }
+    },
+    {
+      "round": 3,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 196.17174984887242,
+            "taskResponseMs": 2157.7533753588796,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1925.222875,
+              "systemMs": 174.128709,
+              "totalMs": 2099.351584
+            },
+            "instructions": 100261306,
+            "nativeInstructions": 86094531,
+            "compiledBlocks": 57833,
+            "nativeMemoryCalls": 1722639,
+            "executionWallMs": 1935.938186,
+            "shutdownWaitMs": 22.82420778647065,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 196.17174984887242,
+        "medianTaskResponseMs": 2157.7533753588796,
+        "medianProcessCpuMs": 2099.351584
+      }
+    },
+    {
+      "round": 3,
+      "mode": "self256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 197.7656246162951,
+            "taskResponseMs": 2289.2734999768436,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2036.574667,
+              "systemMs": 195.535416,
+              "totalMs": 2232.110083
+            },
+            "instructions": 100346688,
+            "nativeInstructions": 86174265,
+            "compiledBlocks": 57815,
+            "nativeMemoryCalls": 1721541,
+            "directLinkTransitions": 614202,
+            "directLinkPromotions": 103,
+            "directLinkBlocks": 103,
+            "executionWallMs": 2055.763573,
+            "shutdownWaitMs": 22.779916878789663,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 197.7656246162951,
+        "medianTaskResponseMs": 2289.2734999768436,
+        "medianProcessCpuMs": 2232.110083
+      }
+    },
+    {
+      "round": 3,
+      "mode": "self32",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 194.97708417475224,
+            "taskResponseMs": 2278.43154175207,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2021.238833,
+              "systemMs": 190.563209,
+              "totalMs": 2211.802042
+            },
+            "instructions": 99796948,
+            "nativeInstructions": 85623282,
+            "compiledBlocks": 57605,
+            "nativeMemoryCalls": 1716531,
+            "directLinkTransitions": 630607,
+            "directLinkPromotions": 194,
+            "directLinkBlocks": 194,
+            "executionWallMs": 2039.612979,
+            "shutdownWaitMs": 36.513874772936106,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 194.97708417475224,
+        "medianTaskResponseMs": 2278.43154175207,
+        "medianProcessCpuMs": 2211.802042
+      }
+    },
+    {
+      "round": 4,
+      "mode": "self256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 198.51462496444583,
+            "taskResponseMs": 2288.2547918707132,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2006.9205,
+              "systemMs": 196.9645,
+              "totalMs": 2203.885
+            },
+            "instructions": 100539091,
+            "nativeInstructions": 86367101,
+            "compiledBlocks": 57844,
+            "nativeMemoryCalls": 1725980,
+            "directLinkTransitions": 613980,
+            "directLinkPromotions": 102,
+            "directLinkBlocks": 102,
+            "executionWallMs": 2025.106978,
+            "shutdownWaitMs": 37.294124718755484,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 198.51462496444583,
+        "medianTaskResponseMs": 2288.2547918707132,
+        "medianProcessCpuMs": 2203.885
+      }
+    },
+    {
+      "round": 4,
+      "mode": "self32",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "f6ff33b72f01a0facfa313ff698012ce59456cd766e67f23082c4e7e44d51e48",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-self/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 193.92020907253027,
+            "taskResponseMs": 2220.5709577538073,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1982.688125,
+              "systemMs": 182.007833,
+              "totalMs": 2164.695958
+            },
+            "instructions": 99945905,
+            "nativeInstructions": 85760020,
+            "compiledBlocks": 57665,
+            "nativeMemoryCalls": 1719106,
+            "directLinkTransitions": 631177,
+            "directLinkPromotions": 195,
+            "directLinkBlocks": 195,
+            "executionWallMs": 1994.630843,
+            "shutdownWaitMs": 42.51333326101303,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 193.92020907253027,
+        "medianTaskResponseMs": 2220.5709577538073,
+        "medianProcessCpuMs": 2164.695958
+      }
+    },
+    {
+      "round": 4,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 194.11008385941386,
+            "taskResponseMs": 2176.1986250057817,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1941.944667,
+              "systemMs": 175.363125,
+              "totalMs": 2117.307792
+            },
+            "instructions": 100346078,
+            "nativeInstructions": 86175562,
+            "compiledBlocks": 57833,
+            "nativeMemoryCalls": 1723663,
+            "executionWallMs": 1952.921661,
+            "shutdownWaitMs": 44.809124898165464,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 194.11008385941386,
+        "medianTaskResponseMs": 2176.1986250057817,
+        "medianProcessCpuMs": 2117.307792
+      }
+    }
+  ]
+}

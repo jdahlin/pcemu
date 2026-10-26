@@ -19,7 +19,10 @@ edges recheck fetch tag, epoch, physical page and user permission. A missing
 translation returns to ordinary lookup and fault handling. Partial exits and
 replays always return to C++ with accumulated instruction and dispatch counts.
 
-Incoming edges are tracked with weak metadata references. Before replacing a
+Incoming edges record the source guest key and native entry address. Each block
+uniquely owns its link metadata; incoming edges never dereference freed metadata.
+Native entries are unique within an arena lifetime, and recycling clears incoming
+edges before addresses can be reused. Before replacing a
 target, its incoming branch slots are restored to their source's fallback exit,
 while no native frame is live. This protects helper metadata embedded in old
 code. Cache recycling drops all links before arena reuse. Patching uses macOS
@@ -66,3 +69,25 @@ Body and stub publications can interleave in address order. The debug-map loader
 maintains a sorted interval index and checks both neighbors on insertion.
 Direct links reject misaligned arenas and allocations spanning 128 MiB or more;
 constructor allocation arithmetic also rejects overflow.
+
+## Selectivity and metadata experiments
+
+A self-loop-only emitter restriction was tested and rejected: five rotating
+Word document-launch rounds yielded median CPU 2143.1 ms baseline, 2227.7 ms
+self-only warmup 256, and 2211.8 ms self-only warmup 32. It reduced promotions
+to roughly 100–200 but removed most useful cross-block transitions. The source
+restriction is not retained; the exact experimental patch remains local in
+`build/direct-links-self/source.patch`. Individual measurements are in
+[the self-link report](measurements/direct-links-self-word5m-2026-10-26.json).
+
+Replacing shared link metadata ownership with unique ownership and native-entry
+identity removes a control block and reduces the link field in every cached
+block from two pointers to one. A new replacement/recycling test repeatedly
+changes both ends of a linked loop containing a memory helper, compares every
+batch against the interpreter, and requires real links and arena recycling.
+The cached-batch suite now passes 151,150 checks. This representation alone
+still does not pass the performance gate: five rotating rounds gave median CPU
+2023.9 ms baseline, 2101.2 ms warmup 256 and 2089.0 ms warmup 1024. Those runs
+are in [the ownership report](measurements/direct-links-unique-word5m-2026-10-26.json).
+Absolute timings across separate experiments should not be compared as speed
+changes; each experiment contains its own rotating baseline measurements.
