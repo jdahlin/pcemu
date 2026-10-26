@@ -620,9 +620,9 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     break;
                 }
                 if (al <= 10)
-                    c.set(CX, pci.read(bdf, offset, width), width);
+                    c.set(CX, pci.read_configuration(bdf, offset, width), width);
                 else
-                    pci.write(bdf, offset, c.get(CX, width), width);
+                    pci.write_configuration(bdf, offset, c.get(CX, width), width);
                 ok();
                 break;
             }

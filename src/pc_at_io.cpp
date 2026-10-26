@@ -70,8 +70,8 @@ void Machine::bindIoPorts() {
             return pit.read_counter(p - 0x40, cpu.instructions / 4);
         }, [this](uint16_t p, uint32_t v, int) { pit.write_register(p - 0x40, v, cpu.instructions / 4); });
     ioPorts.map("pci-config", 0xcf8, 8,
-        counted([this](uint16_t p, int w) { return pci.in(p, w); }),
-        [this](uint16_t p, uint32_t v, int w) { pci.out(p, v, w); });
+        counted([this](uint16_t p, int w) { return pci.read_io_register(p, w); }),
+        [this](uint16_t p, uint32_t v, int w) { pci.write_io_register(p, v, w); });
     ioPorts.map("dispi", 0x1ce, 2,
         counted([this](uint16_t p, int) -> uint32_t {
             return vga.dispiPortRead(p == 0x1cf);

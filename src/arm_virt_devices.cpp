@@ -59,17 +59,17 @@ void ArmVirtMachine::bindDevices() {
         }, 4);
     mmio.map("pci-ecam", 0x3f000000, 0x100000,
         [this](MmioAccess &a, uint64_t o) {
-            a.value = pciBus.configRead(o, a.width);
+            a.value = pciBus.read_configuration(o, a.width);
             checkDeviceErrors();
         }, [this](MmioAccess &a, uint64_t o) {
-            pciBus.configWrite(o, a.value, a.width);
+            pciBus.write_configuration(o, a.value, a.width);
             checkDeviceErrors();
         });
     mmio.mapDynamic("pci-bars",
         [this](const MmioAccess &a) { return pciBus.contains(a.address, a.width); },
         [this](MmioAccess &a, uint64_t) {
-            if (a.write) pciBus.write(a.address, a.value, a.width);
-            else a.value = *pciBus.read(a.address, a.width);
+            if (a.write) pciBus.write_bar(a.address, a.value, a.width);
+            else a.value = *pciBus.read_bar(a.address, a.width);
             checkDeviceErrors();
         });
     mmio.map("virtio-mmio", 0x0a000000, 0x200,

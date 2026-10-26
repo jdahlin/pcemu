@@ -61,19 +61,19 @@ int main() {
             [&](uint64_t, uint64_t value, unsigned) { seen = value; });
     };
     attach(2, 0x1234);
-    check(bus.configRead(2 * 0x8000, 4) == 0x1234);
-    check(bus.configRead(2 * 0x8000 + 0x1000, 4) == UINT64_MAX); // Function one.
-    check(bus.configRead(0, 4) == UINT64_MAX);
-    check(bus.configRead(0x100000, 4) == UINT64_MAX);
-    check(bus.read(bar, 4) == 0x1234 && !bus.read(bar + 16, 1));
-    check(bus.write(bar, 55, 4) && seen == 55);
-    bus.configWrite(2 * 0x8000 + 0x10, 0x20000000, 4);
+    check(bus.read_configuration(2 * 0x8000, 4) == 0x1234);
+    check(bus.read_configuration(2 * 0x8000 + 0x1000, 4) == UINT64_MAX); // Function one.
+    check(bus.read_configuration(0, 4) == UINT64_MAX);
+    check(bus.read_configuration(0x100000, 4) == UINT64_MAX);
+    check(bus.read_bar(bar, 4) == 0x1234 && !bus.read_bar(bar + 16, 1));
+    check(bus.write_bar(bar, 55, 4) && seen == 55);
+    bus.write_configuration(2 * 0x8000 + 0x10, 0x20000000, 4);
     check(seen == 0x10 && !bus.contains(0x10000000, 4) && bus.contains(bar, 4));
     enabled = false; check(!bus.contains(bar, 4)); enabled = true;
     attach(3, 0x5678);
-    check(bus.read(bar, 4) == 0x5678); // Last registered BAR wins.
+    check(bus.read_bar(bar, 4) == 0x5678); // Last registered BAR wins.
     rejects([&] { attach(2, 1); }); rejects([&] { attach(32, 1); });
-    bus.clear(); check(!bus.contains(bar, 1) && bus.configRead(0, 4) == UINT64_MAX);
+    bus.clear(); check(!bus.contains(bar, 1) && bus.read_configuration(0, 4) == UINT64_MAX);
 
     std::vector<uint8_t> ram(64), descriptor(28);
     auto field = [&](size_t offset, unsigned width, uint64_t value) {

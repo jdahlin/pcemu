@@ -7,13 +7,34 @@ namespace pc {
 class PCI {
   public:
     uint32_t address = 0;
-    void reset() { address = 0; display_ = VgaPciDevice{}; }
-    VgaPciDevice &display() { return display_; }
-    const VgaPciDevice &display() const { return display_; }
-    uint32_t read(uint16_t bdf, unsigned offset, unsigned width) const;
-    void write(uint16_t bdf, unsigned offset, uint32_t value, unsigned width);
-    uint32_t in(uint16_t port, unsigned width) const;
-    void out(uint16_t port, uint32_t value, unsigned width);
+    // Restore the address latch and firmware-initialized display configuration.
+    // IMPLEMENTATION NOTE: Board initialization around PCI configuration mechanism 1.
+    // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=50
+    void reset() {
+        address = 0;
+        display_ = VgaPciDevice{};
+    }
+    // Expose the attached display configuration for host inspection/snapshots.
+    // IMPLEMENTATION NOTE: Host endpoint access, not a PCI transaction.
+    // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=50
+    VgaPciDevice &display() {
+        return display_;
+    }
+    // Inspect the attached display without changing guest state.
+    // IMPLEMENTATION NOTE: Host endpoint access, not a PCI transaction.
+    // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=50
+    const VgaPciDevice &display() const {
+        return display_;
+    }
+    // Read configuration bytes at a packed bus/device/function address.
+    uint32_t read_configuration(uint16_t bdf, unsigned offset, unsigned width) const;
+    // Write configuration bytes to the selected endpoint.
+    void write_configuration(uint16_t bdf, unsigned offset, uint32_t value, unsigned width);
+    // Read the configuration address latch or selected data bytes.
+    uint32_t read_io_register(uint16_t port, unsigned width) const;
+    // Write the configuration address latch or selected data bytes.
+    void write_io_register(uint16_t port, uint32_t value, unsigned width);
+
   private:
     friend class SnapshotCodec;
     VgaPciDevice display_;

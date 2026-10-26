@@ -205,3 +205,4 @@ while retaining this repository's formatting.
 | ARM NOR variable store | Intel StrataFlash 290667-011, April 2002 | Interleaved x16 command sequences, erase/program rules, named IDs, persistent versus visible bytes, dirty remapping and incomplete timing/protection behavior. |
 | ARM RAM framebuffer | QEMU RAMFBCfg wire layout and Linux DRM XRGB8888 | Big-endian descriptor, little-endian pixels, padded rows, host captures/change detection, fixed selector and host size limits. |
 | ARM OS debug lock | Arm AArch64 system-register descriptions: ESR_EL2, OSLAR_EL1, OSLSR_EL1, OSDLR_EL1 | Trap encoding/direction, lock-model identification, per-CPU reset policy and sticky double-lock compatibility boundaries. |
+| PCI configuration buses | PCI Local Bus 3.0, 3.2.2.3.2; AMD PG055 v2.9, Table 2-24 ECAM map | CONFIG_ADDRESS/DATA masks, fixed PC display BDF, single-bus/function-zero ECAM routing, live BAR decoding and host overlap precedence. |
