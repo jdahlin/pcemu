@@ -1315,3 +1315,20 @@ establish a broad gain. Production stays unchanged; the exact source patch,
 disassembly and all measurements are in `batch-inline-evaluation.md` and its
 record. No extra candidate OS gate is claimed. Reusing invariant context checks
 inside native batches is a more substantive next candidate and remains unimplemented.
+
+
+## CPU-context cache prototype rejected after standalone control (26 October)
+
+A lazy native-batch context signature retains per-entry code-generation/fetch
+checks and passes 3,500 batch/timer, 759 mutation and 354,948 core checks. A
+separate diagnostic exercises 307.72M context reuses out of 339.46M native calls.
+Twelve uninstrumented Office pairs pass expected pixels. Excel favors it in
+five of six pairs (median CPU ratio 1.097); Word is roughly neutral (1.014).
+However, standalone public-run RAM controls mostly regress, with case medians
+0.946–1.001. Metadata grows eight bytes per block, with layout and ordering
+changes; the measurements do not isolate one cause. No production code is
+retained, and no extra full-OS/fresh-Setup gate is claimed. Exact source,
+commands, mutation fixture and all measurements are in
+`context-cache-evaluation.md` and its measurement record. The next design must
+preserve the standalone path/footprint or use local invariants instead of
+persistent block stamps. The broader goal remains active.
