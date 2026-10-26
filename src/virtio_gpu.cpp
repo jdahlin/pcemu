@@ -384,7 +384,8 @@ uint32_t VirtioGpu::pixel(const Resource &r, size_t index) {
     }
     return (alpha << 24) | (red << 16) | (green << 8) | blue;
 }
-bool VirtioGpu::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const {
+bool VirtioGpu::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height,
+                       bool compositeCursor) const {
     if (!active()) {
         width = height = 0;
         return false;
@@ -398,7 +399,7 @@ bool VirtioGpu::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned 
             output[size_t(y) * width + x] =
                 pixel(resource, size_t(scanout.y + y) * resource.width + scanout.x + x) |
                 0xff000000;
-    if (cursorResource) {
+    if (compositeCursor && cursorResource) {
         const auto &r = resources.at(cursorResource);
         for (unsigned y = 0; y < 64; ++y)
             for (unsigned x = 0; x < 64; ++x) {
@@ -419,15 +420,32 @@ bool VirtioGpu::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned 
     }
     return true;
 }
-bool VirtioGpu::changedPixels(std::vector<uint32_t> &output, unsigned &width,
-                              unsigned &height) const {
+bool VirtioGpu::changedPixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height,
+                              bool compositeCursor) const {
     width = active() ? scanout.width : 0;
     height = active() ? scanout.height : 0;
-    if (!active() || displayedGeneration == generation)
+    if (!active() || (displayedGeneration == generation && displayedComposite == compositeCursor))
         return false;
-    pixels(output, width, height);
+    pixels(output, width, height, compositeCursor);
+    displayedComposite = compositeCursor;
     displayedGeneration = generation;
     return true;
+}
+PointerShape VirtioGpu::pointerShape() const {
+    PointerShape shape;
+    shape.active = active();
+    shape.visible = shape.active && cursorResource;
+    shape.revision = generation;
+    if (shape.visible) {
+        shape.width = shape.height = 64;
+        shape.hotX = hotX;
+        shape.hotY = hotY;
+        const auto &resource = resources.at(cursorResource);
+        shape.pixels.resize(4096);
+        for (size_t i = 0; i < shape.pixels.size(); ++i)
+            shape.pixels[i] = pixel(resource, i);
+    }
+    return shape;
 }
 std::string VirtioGpu::mode() const {
     return active() ? std::to_string(scanout.width) + "x" + std::to_string(scanout.height) + "x32"

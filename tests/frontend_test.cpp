@@ -50,7 +50,11 @@ int main() {
         auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);
         check(!SDL_GetHintBoolean(SDL_HINT_MOUSE_RELATIVE_SCALING, SDL_TRUE),
               "relative mouse counts stay independent of logical display scaling");
-        auto *window = SDL_GetWindowFromID(1);
+        // SDL2 compatibility runtimes need not assign window ID one.
+        SDL_PumpEvents();
+        SDL_Event created{};
+        auto found = SDL_PeepEvents(&created, 1, SDL_PEEKEVENT, SDL_WINDOWEVENT, SDL_WINDOWEVENT);
+        auto *window = found > 0 ? SDL_GetWindowFromID(created.window.windowID) : SDL_GetWindowFromID(1);
         check(window != nullptr, "headless window exists");
         auto *renderer = SDL_GetRenderer(window);
         int windowWidth, windowHeight;
@@ -163,6 +167,7 @@ int main() {
         e = {};
         e.type = SDL_MOUSEWHEEL;
         e.wheel.y = 1;
+        e.wheel.preciseY = 1.0f; // SDL2-compat translates through the precise SDL3 field.
         e.wheel.direction = SDL_MOUSEWHEEL_FLIPPED;
         SDL_PushEvent(&e);
         e = {};

@@ -160,6 +160,25 @@ class SDLFrontend final : public Frontend {
         nativeCursor = next;
         cursorVisibility();
     }
+    void setPointerShape(const PointerShape &shape) override {
+        uint32_t signature = 2166136261u;
+        for (auto pixel : shape.pixels) signature = (signature ^ pixel) * 16777619u;
+        signature = (signature ^ shape.hotX) * 16777619u ^ shape.hotY;
+        if (nativeActive == shape.active && nativeVisible == shape.visible && cursorSignature == signature) return;
+        SDL_Cursor *next = nullptr;
+        if (shape.visible && shape.width && shape.height && shape.hotX < shape.width && shape.hotY < shape.height && shape.pixels.size() == size_t(shape.width) * shape.height) {
+            auto *surface = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<uint32_t *>(shape.pixels.data()), shape.width, shape.height, 32, shape.width * 4, SDL_PIXELFORMAT_ARGB8888);
+            if (surface) {
+                next = SDL_CreateColorCursor(surface, shape.hotX, shape.hotY);
+                SDL_FreeSurface(surface);
+            }
+            if (!next) throw std::runtime_error(std::string("Cannot create host cursor: ") + SDL_GetError());
+        }
+        SDL_SetCursor(next ? next : SDL_GetDefaultCursor());
+        if (nativeCursor) SDL_FreeCursor(nativeCursor);
+        nativeCursor = next; nativeActive = shape.active; nativeVisible = shape.visible; cursorSignature = signature;
+        cursorVisibility();
+    }
     bool capturePointer(bool enabled) override {
         if (absolutePointer) {
             SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -211,10 +230,13 @@ class SDLFrontend final : public Frontend {
                 if (absolutePointer) pointerPosition(events, e.motion.x, e.motion.y);
                 else events.push_back({K::Motion, 0, false, 0, e.motion.xrel, e.motion.yrel});
             }
-            else if (e.type == SDL_MOUSEWHEEL)
-                events.push_back(
-                    {K::Wheel, 0, false, 0, 0,
-                     e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -e.wheel.y : e.wheel.y});
+            else if (e.type == SDL_MOUSEWHEEL) {
+                // SDL2-compat can preserve a full precise step while leaving
+                // the integer field zero (notably for queued SDL2 events).
+                int wheel = e.wheel.y ? e.wheel.y : int(std::clamp(e.wheel.preciseY, -127.0f, 127.0f));
+                events.push_back({K::Wheel, 0, false, 0, 0,
+                    e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -wheel : wheel});
+            }
         }
         return events;
     }

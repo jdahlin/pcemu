@@ -1,5 +1,6 @@
 #include "hvf_machine.hpp"
 #include "arm_virt.hpp"
+#include "frontend_spice.hpp"
 #include "arm_vmbus.hpp"
 #include "machine_profile.hpp"
 #include "hyperv_kvp_roundtrip.hpp"
@@ -792,6 +793,8 @@ int main(int argc, char **argv) {
             return 0;
         }
         bool gui = false;
+        unsigned spicePort = 0;
+        std::string spicePasswordFile;
         bool test = false, timeoutExplicit = false, uefiOptions = false, cpuState = false, serialStdio = false, runForever = false;
         bool dtbExplicit = false, acpiExplicit = false;
         bool kvpProbe=false,kvpRoundtrip=false;
@@ -874,6 +877,8 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--network-capture") { uefi.networkCapture = value(); uefiOptions = true; }
             else if (arg == "--serial-stdio") { serialStdio = true; uefiOptions = true; }
+            else if (arg == "--spice-port") { auto text = value(); size_t consumed = 0; auto port = std::stoul(text, &consumed); if (consumed != text.size() || !port || port > 65535) throw std::runtime_error("Invalid SPICE port"); spicePort = unsigned(port); uefi.spiceAgent = true; uefiOptions = true; }
+            else if (arg == "--spice-password-file") { spicePasswordFile = value(); uefiOptions = true; }
             else if (arg == "--gui") { gui = true; uefiOptions = true; }
             else if (arg == "--run-forever") { runForever = true; uefiOptions = true; }
             else if (arg == "--disk-overlay") { uefi.diskOverlay = value(); uefiOptions = true; }
@@ -908,7 +913,7 @@ int main(int argc, char **argv) {
                              "  --kernel FILE [--timeout-ms 1..60000]\n"
                              "Raw AArch64 code loaded at 0x40000000; EL1h, 2 MiB RAM, MMU off.\n"
                              "HVC #0 returns to host.\n"
-                             "UEFI: --machine arm64-uefi [--gui] [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
+                             "UEFI: --machine arm64-uefi [--gui | --spice-port PORT] [--spice-password-file FILE] [--firmware FILE --dtb FILE --vars PRIVATE_FILE]\n"
                              "      [--disk IMAGE [--disk-overlay PRIVATE_COW] --disk-controller virtio|nvme --virtio-transport pci|mmio]\n"
                              "      [--shell-command TEXT --until-text TEXT --timeout-ms N]\n"
                              "      [--ram-mb 256..16384 --hyperv off|basic|synic|vmbus --hyperv-stats FILE]\n"
@@ -945,7 +950,14 @@ int main(int argc, char **argv) {
                 throw std::runtime_error("The UEFI platform uses --firmware, not --kernel or --self-test");
             if (!timeoutExplicit) timeout = 30000;
             std::unique_ptr<pc::Frontend> frontend;
-            if (gui) frontend = pc::createFrontend(800, 600);
+            if (gui && spicePort) throw std::runtime_error("Choose --gui or --spice-port");
+            if (!spicePasswordFile.empty() && !spicePort) throw std::runtime_error("--spice-password-file requires --spice-port");
+            pc::SpiceFrontend *spice = nullptr;
+            if (spicePort) {
+                auto remote = std::make_unique<pc::SpiceFrontend>(spicePort, spicePasswordFile);
+                spice = remote.get(); frontend = std::move(remote);
+                std::cerr << "SPICE listening on 127.0.0.1:" << spicePort << "\n";
+            } else if (gui) frontend = pc::createFrontend(800, 600);
             std::vector<uint32_t> displayPixels;
             if(kvpRoundtrip && (!uefi.hypervVmbus || kvpProbe)) throw std::runtime_error("--hyperv-kvp-roundtrip requires VMBus and excludes --hyperv-kvp-probe");
             if(kvpProbe && !uefi.hypervVmbus) throw std::runtime_error("--hyperv-kvp-probe requires --hyperv vmbus");
@@ -987,6 +999,11 @@ int main(int argc, char **argv) {
                     executionStarted = true;
                 }
                 pc::FrontendInput hostInput(frontend.get(), vm.guestInput());
+                if (frontend) hostInput.setAbsolutePointer(true);
+                struct AgentDetach {
+                    pc::SpiceFrontend *spice;
+                    ~AgentDetach() { if (spice) spice->pumpAgent(nullptr); }
+                } agentDetach{spice};
                 auto saveHypervStats = [&](const std::string &path, bool required = false) {
                     if (path.empty()) return;
                     auto temporary = path + ".tmp-" + std::to_string(getpid());
@@ -1040,10 +1057,12 @@ int main(int argc, char **argv) {
                         }
                     }
                     if (interrupted) break;
+                    if (spice) spice->pumpAgent(vm.spiceSerial());
                     vm.run(std::chrono::milliseconds(frontend ? 16 : 100));
                     if (frameDue && !interrupted) {
                         unsigned width = 0, height = 0;
-                        bool changed = vm.display(displayPixels, width, height);
+                        bool changed = vm.display(displayPixels, width, height, false);
+                        frontend->setPointerShape(vm.pointerShape());
                         if (width && height && (changed || redraw))
                             frontend->present(displayPixels, width, height);
                     }

@@ -1,5 +1,6 @@
 #pragma once
 #include "host_cursor.hpp"
+#include "pointer_shape.hpp"
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -25,6 +26,7 @@ class Frontend {
     // Absolute motion uses 0..65535 coordinates over the visible guest image.
     virtual void setAbsolutePointer(bool) {}
     virtual void setHostCursor(const HostCursor &) {}
+    virtual void setPointerShape(const PointerShape &) {}
     virtual bool capturePointer(bool enabled) = 0;
 };
 // Each frontend executable supplies one factory. The machine and execution

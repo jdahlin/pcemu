@@ -1,4 +1,5 @@
 #pragma once
+#include "pointer_shape.hpp"
 #include "virtio_device.hpp"
 #include <array>
 #include <map>
@@ -10,8 +11,11 @@ class VirtioGpu : public VirtioDevice {
     bool active() const {
         return scanoutResource != 0;
     }
-    bool pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const;
-    bool changedPixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const;
+    bool pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height,
+                bool compositeCursor = true) const;
+    bool changedPixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height,
+                       bool compositeCursor = true) const;
+    PointerShape pointerShape() const;
     std::string mode() const;
     void save(const std::string &path) const;
     uint64_t commands = 0, commandErrors = 0, transfers = 0, flushes = 0, cursorUpdates = 0;
@@ -46,6 +50,7 @@ class VirtioGpu : public VirtioDevice {
     uint32_t events = 0;
     uint64_t generation = 1;
     mutable uint64_t displayedGeneration = 0;
+    mutable bool displayedComposite = true;
     std::optional<uint32_t> handle(unsigned queue, const Chain &chain) override;
     std::vector<uint8_t> control(std::span<const uint8_t> request, size_t responseCapacity);
     void cursor(std::span<const uint8_t> request);

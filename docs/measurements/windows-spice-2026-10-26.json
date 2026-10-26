@@ -1,0 +1,76 @@
+{
+  "verified": true,
+  "date": "2026-10-26",
+  "platform": "Windows 11 ARM64 build 26300.9457 on macOS HVF",
+  "spiceServer": "0.16.0",
+  "spiceClient": "0.43",
+  "display": {
+    "width": 1280,
+    "height": 720,
+    "nativeClientCapture": "build/windows11-spice/native-cursor.ppm",
+    "captureSHA256": "50c8db4a3b4b6dd62d87970016c3b6a50930943f4e4f89da63e622b9d9934304",
+    "cursorInFrame": false
+  },
+  "cursor": {
+    "separateChannel": true,
+    "width": 64,
+    "height": 64,
+    "nativeObservedSetCount": 4,
+    "guestCommandCount": 58
+  },
+  "absolutePointer": {
+    "device": "USB HID tablet, root port 3",
+    "clientPosition": [
+      35,
+      35
+    ],
+    "doubleClickResult": "Recycle Bin opened",
+    "captureSHA256": "b9b6d83f7efbb9e2130e3ec83f3b0ee30ead960f5b5dabfb5a2592a43023b2f6"
+  },
+  "clipboard": {
+    "hostToGuest": "PCEMU_HOST_TO_GUEST_20261026",
+    "guestToHost": "PCEMU_GUEST_TO_HOST_20261026",
+    "exactBytesEachDirection": 28,
+    "reportSHA256": "75bd4ed9ca1f03cb37a681a8d62152c89b46105819c07fd316bd82318f2776fc",
+    "probeSource": "tools/windows/check_spice.ps1",
+    "probeSHA256": "c600ad94147a8786f3f655f06aa90df997a0d28794d76dbd0f8c6da3a1a1386a"
+  },
+  "agent": {
+    "architecture": "ARM64",
+    "service": "vdservice",
+    "serviceState": "Running",
+    "process": "vdagent",
+    "installerSHA256": "d3691378dffcde986c2e09e391f449477a096818113b3e5e46c40f4a6c89f23c",
+    "installReportSHA256": "87e8fe1f10043920dc9f86b5df0de94e559cc9aa2f87317b0d12fabb9219f12d"
+  },
+  "guestGpu": {
+    "active": true,
+    "commands": 2335,
+    "commandErrors": 0,
+    "transfers": 1143,
+    "flushes": 1118,
+    "cursorUpdates": 58,
+    "scanoutCommands": 3,
+    "lastErrorCommand": 0,
+    "lastErrorResponse": 0,
+    "resourceBytes": 3702784,
+    "messageInterrupts": 1699
+  },
+  "guestSerial": {
+    "ready": true,
+    "open": false,
+    "received": 816,
+    "transmitted": 640,
+    "completions": 62,
+    "messageInterrupts": 50
+  },
+  "passwordChange": "Windows confirmed change; subsequent normal logon succeeded",
+  "shutdown": "Hyper-V guest service, power-off, host exit 0",
+  "disk": {
+    "path": "media/windows11-arm64/system-spice-live.qcow2",
+    "backing": "media/windows11-arm64/system.qcow2",
+    "check": "No errors",
+    "compare": "Images are identical"
+  },
+  "scope": "SPICE software 2D display, native cursor, USB input, real ARM64 agent and clipboard; no audio, GL, USB redirection or WebDAV interfaces"
+}

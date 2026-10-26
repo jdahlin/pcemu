@@ -13,6 +13,7 @@ find_package(PkgConfig REQUIRED)
 find_package(ZLIB REQUIRED)
 pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
 pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
+pkg_check_modules(SPICE QUIET IMPORTED_TARGET spice-server glib-2.0)
 set_property(GLOBAL PROPERTY JOB_POOLS compile_pool=4 link_pool=2)
 set(CMAKE_JOB_POOL_COMPILE compile_pool)
 set(CMAKE_JOB_POOL_LINK link_pool)
@@ -141,6 +142,10 @@ function(pcemu_program name)
       target_include_directories(${object} PRIVATE src)
       target_link_libraries(${object} PRIVATE PkgConfig::SDL2 PkgConfig::ZSTD)
       target_compile_options(${object} PRIVATE -Wall -Wextra -Wpedantic)
+      if(source STREQUAL "src/frontend_spice.cpp" AND SPICE_FOUND)
+        target_compile_definitions(${object} PRIVATE PCEMU_HAVE_SPICE)
+        target_link_libraries(${object} PRIVATE PkgConfig::SPICE)
+      endif()
       if(P_PROFILE)
         target_compile_definitions(${object} PRIVATE PCEMU_PROFILE)
       endif()
@@ -155,6 +160,9 @@ function(pcemu_program name)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
   endif()
   set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
+  if(SPICE_FOUND AND "src/frontend_spice.cpp" IN_LIST P_SOURCES)
+    target_link_libraries(${name} PRIVATE PkgConfig::SPICE)
+  endif()
   if(P_SDL)
     target_link_libraries(${name} PRIVATE PkgConfig::SDL2)
   endif()
@@ -342,6 +350,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/src/usb_xhci.cpp")
 endif()
 pcemu_program(pcemu-hvf SDL ZSTD HVF
   SOURCES
+    src/frontend_spice.cpp
+    src/host_keyboard.cpp
     ${HVF_USB_SOURCE}
     src/frontend_sdl.cpp
     src/hvf_machine.cpp
@@ -643,3 +653,24 @@ pcemu_program(virtio-gpu-tests
 pcemu_program(virtio-gpu-sanitized-tests SANITIZE
   SOURCES src/virtio_device.cpp src/virtio_gpu.cpp tests/virtio_gpu_test.cpp
 )
+
+pkg_check_modules(SPICE_CLIENT QUIET IMPORTED_TARGET spice-client-glib-2.0)
+if(SPICE_FOUND AND SPICE_CLIENT_FOUND)
+  pcemu_program(spice-tests SOURCES src/frontend_spice.cpp src/host_keyboard.cpp
+    src/virtio_device.cpp src/virtio_serial.cpp tests/spice_test.cpp)
+  target_link_libraries(spice-tests PRIVATE PkgConfig::SPICE_CLIENT)
+  target_link_libraries(obj_tests_spice_test_cpp_FALSE_FALSE PRIVATE PkgConfig::SPICE_CLIENT)
+endif()
+if(SPICE_CLIENT_FOUND)
+  pcemu_program(spice-probe SOURCES tools/spice_probe.cpp)
+  target_link_libraries(spice-probe PRIVATE PkgConfig::SPICE_CLIENT)
+  target_link_libraries(obj_tools_spice_probe_cpp_FALSE_FALSE PRIVATE PkgConfig::SPICE_CLIENT)
+endif()
+if(SPICE_FOUND AND SPICE_CLIENT_FOUND)
+  pcemu_program(spice-sanitized-tests SANITIZE SOURCES src/frontend_spice.cpp src/host_keyboard.cpp
+    src/virtio_device.cpp src/virtio_serial.cpp tests/spice_test.cpp)
+  target_link_libraries(spice-sanitized-tests PRIVATE PkgConfig::SPICE_CLIENT)
+  target_link_libraries(obj_tests_spice_test_cpp_FALSE_TRUE PRIVATE PkgConfig::SPICE_CLIENT)
+  set_tests_properties(spice-tests spice-sanitized-tests PROPERTIES
+    ENVIRONMENT "GST_PLUGIN_SYSTEM_PATH_1_0=;GST_PLUGIN_PATH_1_0=" TIMEOUT 45)
+endif()

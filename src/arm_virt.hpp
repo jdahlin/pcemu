@@ -41,6 +41,7 @@ class ArmVirtMachine {
         bool network = false;
         bool virtioMsix = false;
         bool virtioSerial = false;
+        bool spiceAgent = false;
         bool virtioGpu = false;
         bool virtioBalloon = false;
         bool balloonLegacyPfn64 = false;
@@ -73,8 +74,10 @@ class ArmVirtMachine {
     bool stopped() const { return powerAction != ArmPowerAction::None; }
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
+    VirtioSerial *spiceSerial() { return serial.get(); }
     GuestInput &guestInput() { return *usbInput; }
-    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const;
+    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height, bool compositeCursor = true) const;
+    PointerShape pointerShape() const { return gpu ? gpu->pointerShape() : PointerShape{}; }
     std::string usbReport() const;
     std::string framebuffer() const { return gpu && gpu->active() ? gpu->mode() : ramfb.mode(); }
     void saveFramebuffer(const std::string &path) const { if (gpu) gpu->save(path); else ramfb.save(path); }

@@ -94,10 +94,10 @@ void ArmVirtMachine::bindDevices() {
             vm.setSPI(33, uart.irq());
         }, 1 | 2 | 4);
 }
-bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const {
+bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height, bool compositeCursor) const {
     if (gpu && gpu->active()) {
         displayWasGpu = true;
-        return gpu->changedPixels(pixels, width, height);
+        return gpu->changedPixels(pixels, width, height, compositeCursor);
     }
     if (displayWasGpu) {
         displayWasGpu = false;

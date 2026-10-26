@@ -50,7 +50,8 @@ class HvfCLI(unittest.TestCase):
                  ('--vars', 'any', '--self-test'),
                  ('--cpus', '0'), ('--cpus', '9'), ('--cpus', '2oops'),
                  ('--cpus', '2', '--self-test'), ('--network', 'broken'), ('--ssh-port', '65536'),
-                 ('--ssh-port', '22oops'), ('--run-forever', '--self-test')]
+                 ('--ssh-port', '22oops'), ('--spice-port', '0'), ('--spice-port', '65536'),
+                 ('--spice-port', '4294967297'), ('--spice-port', '5930oops'), ('--run-forever', '--self-test')]
         for args in cases:
             with self.subTest(args=args):
                 result = self.invoke(*args)

@@ -34,8 +34,10 @@ Installing additional driver packages alone does not accelerate these devices.
 The stable ISO supplies x86/x64 QEMU guest-agent MSI files and x86/x64 combined
 guest-tools installers. It has no native ARM64 agent MSI. More importantly,
 the [VirtIO serial agent channel](virtio-guest-tools.md) is now implemented. A
-compatible ARM64 guest-agent service and SPICE server remain absent, so no
-unused guest-agent/balloon/display service was started. VirtIO-GPU 2D display also does not imply 3D acceleration.
+compatible ARM64 QEMU guest-agent service remains absent. The subsequent
+[SPICE installation](spice.md) added a running native ARM64 agent service and
+verified bidirectional clipboard sharing. The balloon statistics service has
+not been installed. VirtIO-GPU 2D display also does not imply 3D acceleration.
 
 One pre-existing unknown device remains: ACPI QEMU0002 (fw_cfg), problem code 28.
 The stable fwcfg and qemufwcfg INF models cover x86/x64 only; they were not forced

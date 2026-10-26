@@ -257,3 +257,8 @@ test-virtio-gpu: build/virtio-gpu-tests
 	./build/virtio-gpu-tests
 
 test test-hvf: test-virtio-gpu
+
+.PHONY: test-spice
+test-spice: build/spice-tests build/spice-sanitized-tests
+	GST_PLUGIN_SYSTEM_PATH_1_0= GST_PLUGIN_PATH_1_0= ./build/spice-tests
+	GST_PLUGIN_SYSTEM_PATH_1_0= GST_PLUGIN_PATH_1_0= ./build/spice-sanitized-tests

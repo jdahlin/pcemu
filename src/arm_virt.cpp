@@ -219,13 +219,15 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             [this](unsigned o, unsigned w) { return rng->read(o, w); },
             [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
             4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); }, msi);
-        if (c.virtioSerial || !c.guestAgentSocket.empty()) {
+        if (c.virtioSerial || c.spiceAgent || !c.guestAgentSocket.empty()) {
+            std::vector<std::string> names{"org.qemu.guest_agent.0"};
+            if (c.spiceAgent) names.push_back("com.redhat.spice.0");
             serial = std::make_unique<VirtioSerial>(vm.ram(), HvfMachine::ramBase,
-                [this](bool level, unsigned queue) { if (serialPci) serialPci->irq(level, queue); });
+                [this](bool level, unsigned queue) { if (serialPci) serialPci->irq(level, queue); }, names);
             serialPci = std::make_unique<VirtioPciDevice>(
                 [this](unsigned o, unsigned w) { return serial->read(o, w); },
                 [this](unsigned o, uint64_t v, unsigned w) { serial->write(o, v, w); },
-                3, 0x07800001, 4, [this](bool level) { vm.setSPI(53, level); }, msi);
+                3, 0x07800001, c.spiceAgent ? 6 : 4, [this](bool level) { vm.setSPI(53, level); }, msi);
             if (!c.guestAgentSocket.empty()) agentSocket = std::make_unique<GuestAgentSocket>(c.guestAgentSocket);
         }
         if (c.virtioBalloon || c.balloonTargetMB) {
@@ -336,6 +338,7 @@ std::string ArmVirtMachine::hypervReport() const {
     if (gpu) report += ",\"virtioGpu\":{\"active\":" + std::string(gpu->active() ? "true" : "false") +
         ",\"commands\":" + std::to_string(gpu->commands) + ",\"commandErrors\":" + std::to_string(gpu->commandErrors) +
         ",\"transfers\":" + std::to_string(gpu->transfers) + ",\"flushes\":" + std::to_string(gpu->flushes) +
+        ",\"cursorUpdates\":" + std::to_string(gpu->cursorUpdates) +
         ",\"scanoutCommands\":" + std::to_string(gpu->scanoutCommands) +
         ",\"lastErrorCommand\":" + std::to_string(gpu->lastErrorCommand) +
         ",\"lastErrorResponse\":" + std::to_string(gpu->lastErrorResponse) +

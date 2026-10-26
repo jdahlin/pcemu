@@ -27,7 +27,7 @@ profile then reached the lock screen headless and powered off through the
 guest shutdown service. Its capture is `build/windows11-qcow2/headless.png`.
 
 The active, ignored files are `media/windows11-arm64/system.qcow2`, its writable
-`system-tools-live.qcow2` overlay, and `build/windows11-qcow2/installed-vars.bin`.
+`system-spice-live.qcow2` overlay, and `build/windows11-qcow2/installed-vars.bin`.
 The standalone base has 64 GiB logical capacity and about 16.4 GiB host
 allocation. `qemu-img check` passed, and `qemu-img compare` found every logical
 byte identical to the stopped installation chain. The base uses zstd QCOW2

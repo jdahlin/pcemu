@@ -129,6 +129,13 @@ int main() {
     };
     sendCursor();
     check(gpu.changedPixels(output, width, height) && output[3] == 0xffff0000);
+    auto shape = gpu.pointerShape();
+    check(shape.active && shape.visible && shape.width == 64 && shape.height == 64);
+    check(shape.pixels[0] == 0xffff0000 && shape.hotX == 0 && shape.hotY == 0);
+    check(gpu.changedPixels(output, width, height, false));
+    check(output[3] != 0xffff0000); // Native host cursor must not appear in streamed pixels.
+    check(!gpu.changedPixels(output, width, height, false));
+    check(gpu.changedPixels(output, width, height, true) && output[3] == 0xffff0000);
     put(cursor, 0, 0x301);
     put(cursor, 28, 0);
     put(cursor, 32, 0);
@@ -137,6 +144,7 @@ int main() {
     auto unref = request(0x102, 32);
     put(unref, 24, 2);
     check(send(unref) == 0x1100);
+    check(!gpu.pointerShape().visible);
     check(gpu.changedPixels(output, width, height) && output[0] == (0xff000000 | 5 * 0x010203));
     auto detach = request(0x107, 32);
     put(detach, 24, 1);

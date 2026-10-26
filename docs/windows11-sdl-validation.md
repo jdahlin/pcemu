@@ -1,8 +1,10 @@
 # Windows 11 SDL input and startup validation
 
 Start the local installation with `./run11.sh` (4 GiB, two CPUs, user networking,
-read-only QCOW2 base and writable local `.qcow2` overlay). Click to capture the
-mouse; Cmd+G releases it. Shut down in Windows before closing when possible.
+read-only QCOW2 base and writable local `.qcow2` overlay). The current GPU
+profile uses a seamless absolute USB tablet and native host cursor. Shut down
+in Windows before closing when possible. Use `./run11.sh --spice` for the
+[SPICE frontend](spice.md), including native ARM64 agent clipboard integration.
 The launcher packages the signed executable inside `build/PCEmu11.app`, then
 executes that bundled binary with the repository as its working directory.
 This matches the native macOS app launch used for the successful interactive

@@ -138,9 +138,14 @@ subsequent ordinary cold boot reached the lock screen on the GPU and shut down
 through the Hyper-V guest service. [Native evidence](measurements/windows-virtio-gpu-2026-10-26.json).
 
 `run11.sh` enables these devices with the pinned balloon PFN64 compatibility
-option and a zero balloon target. Its active disk is
+option and a zero balloon target. The three-device milestone used
 `media/windows11-arm64/system-tools-live.qcow2`, safely rebased onto the existing
 immutable `system.qcow2` and checked byte-for-byte against the stopped validated
 chain. The previous live disk remains available for recovery. This supplies
-working device drivers; QEMU guest-agent, SPICE and balloon statistics user
-services have not been installed by these probes.
+working device drivers; those probes did not install QEMU guest-agent, SPICE
+or balloon statistics user services.
+
+[SPICE display and guest integration](spice.md) now supplies a separate agent
+port, native host cursor and verified ARM64 clipboard service. The historical
+three-device probe above did not install these services; the subsequent SPICE
+installation did. The active launcher disk is now `system-spice-live.qcow2`.
