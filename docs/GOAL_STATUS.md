@@ -1,52 +1,70 @@
 # Boot and performance status
 
-Updated 2026-10-25. Work remains in progress.
+Updated 2026-10-26. The full goal remains active. The sections below the current
+status retain historical investigations; old failures and pending gates there
+must not be read as the latest result.
 
-- MS-DOS 6.22: recovered external QCOW2 base with a small compressed working
-  child; real boot prints the version and ready marker. No multi-GiB raw copy.
-- Windows 3.11: original unattended Setup /h completed from 460 verified source
-  files. Its standalone external QCOW2 passes cold boot, Notepad save, return
-  to DOS and exact file readback.
-- Windows 95 OSR2: fresh Setup completed both firmware reboots to Explorer,
-  then was consolidated to standalone external QCOW2 with full byte comparison.
-  Independent cold boot, Calculator/clipboard/Notepad, exact file persistence
-  and guest restart pass, including under the native bit-test candidate. See
-  `measurements/recovered-win95-qcow2-2026-10-25.json`.
-- rtts/win95: recovered logical disk matches the original Git LFS SHA-256.
-  Its compressed image and tiny QCOW2 zero parent live externally. Current
-  candidate passes Calculator/clipboard/Notepad persistence and firmware restart.
-- Office 97: reinstalled on a compressed child of the recovered Win95 QCOW2.
-  Word text and Excel formula/result survive save, restart and reopen. A compact
-  external desktop checkpoint restores independently. The dependent-recalculation
-  checkpoint has been rebuilt and passes independent positive/negative gates. See
-  `measurements/office97-qcow2-recovery-2026-10-25.json`.
-- Performance: native AArch64 register operations, direct branches and guarded
-  RAM moves support paged guests. Register BT/BTS/BTR/BTC now join native MUL
-  and SHRD; targeted bit-test kernels improve 6.88x over the previous JIT.
-  Three matched Excel recalculation pairs observe a modest 3.6% paired improvement
-  after bit tests. Admitting the measured two-SHRD fragment adds a separately
-  observed 4.5% paired improvement on that task. Neither establishes general
-  application/Rosetta performance. Native LAHF adds a separately measured 4.9%
-  paired improvement and raises task native coverage to about 91.4%. Many
-  instruction forms remain interpreted. Native ADC/SBB adds an observed 12.0%
-  median paired improvement on the same task, with about 94.1% native coverage.
-  Warmed ALU/Jcc pairs add a separately observed 7.5% median paired improvement
-  on this task, with about 96.5% native coverage. Rosetta-class application
-  performance has not been demonstrated. Native CL shifts add a separately
-  observed 6.7% paired improvement and raise this task to about 97.1% native
-  coverage. Work
-  continues; the full goal is not complete. See
-  `measurements/native-bit-test-2026-10-25.json`.
+## Current verified state
 
-The implementation now includes original ATA PIO, dual 8259 PICs, an
-instruction-clocked 8254 PIT, VM86 transitions, paging permissions and a software
-TLB. An opt-in guest VGA ROM path avoids host BIOS shortcuts inside the VMM.
-Hardware and CPU coverage remain incomplete; no existing emulator core is used.
+- **MS-DOS 6.22:** the recovered external QCOW2/PCD parent boots through its
+  version and ready marker using the native PUSH candidate.
+- **Windows 3.11:** its completed installation boots headless, saves in Notepad,
+  returns to DOS and passes exact 25-byte file readback with the same candidate.
+- **rtts/win95 and installed OSR2:** both cold boot, run Calculator 2+2, copy the
+  result through the clipboard into Notepad, save a fresh file, restart through
+  firmware and pass exact stopped-guest 38-byte file readback.
+- **Fresh OSR2 Setup:** the memory-indirect CALL reference completes clean-DOS
+  installation, all first-boot configuration and application/restart/persistence
+  in one guest process. A fresh run of the newer PUSH candidate is underway;
+  installation completion for that newer executable is not yet claimed.
+- **Office 97:** existing compressed checkpoints are reused. Loaded Excel's
+  4096-row dependent calculation and Word's warm launch reach the expected
+  rendered results with the PUSH candidate. Earlier persistence checks cover
+  Word text and Excel formulas across save/restart/reopen; this turn does not
+  repeat those full document-persistence checks.
+- **Snapshots/storage:** compressed machine snapshots and small compressed disk
+  children are implemented. Restores do not preserve JIT code or its heat.
+  Recovered parents and retained checkpoints live on the external volume.
+  Successful smoke/task disks are removed; installation media, disks and builds
+  stay out of Git. Raw RAM dumps remain diagnostic artifacts, not snapshots.
 
-Original archives and the downloaded rtts source disk are preserved. Installer
-and boot experiments use writable private copies. `--control-file` permits guest
-keyboard input and captures during headless testing; RAM dumps are diagnostics,
-not restorable machine snapshots.
+The emulator uses an original x86 core, AArch64 JIT, software TLB, ATA PIO,
+8259 PICs, 8254 PIT, PS/2 input and guest VGA path; it does not reuse another
+emulator's CPU or device implementation. Instruction and device coverage remain
+incomplete. Native instruction coverage alone does not establish good application
+performance.
+
+## Performance evidence and open work
+
+The user's practical stretch target is roughly another 2× on useful Win95 work;
+Rosetta equivalence is not the current acceptance target. That twofold useful-work
+improvement is **not demonstrated**. Historical percentages below describe
+individual experiments and must not be multiplied into a cumulative claim.
+
+[Current Office host profiles](office-current-profiling.md) separate main-thread
+stack samples from actual process CPU accounting. Loaded Excel spends many
+samples in dispatch/validation and device polling; compilation contributes under
+1%. Word launch has much more interpreter and compilation work. Anonymous
+emitted ARM64 frames still need finer attribution before choosing the next
+native-code optimization.
+
+[Native FF /6 PUSH](native-memory-push.md) passes 8,682 focused memory checks,
+43,600 stack checks, 354,948 core checks and 8,677 existing memory CALL checks.
+Its deliberately PUSH-heavy RAM loop improves 2.63–2.85× across eight mode cases;
+this is not a general Win95 or Office gain. Separate Excel counters reduce
+interpreted FF /6 attempts from 1.33M to 60K. No Office-wide timing gain is
+claimed for this change. Frozen source/binary identities and OS gates are in
+[the measurement record](measurements/native-memory-push-2026-10-26.json).
+
+[Global conditional traces](conditional-trace-evaluation.md) help loaded Excel
+but do not consistently help Word launch. The subsequent [adaptive prototype](adaptive-traces.md)
+is rejected: the disabled-path controls do not establish acceptable overhead,
+and other workloads started during those controls. Production JIT policy remains
+unchanged. Both favorable and unfavorable measurements are retained.
+
+The remaining completion work includes fresh Setup on the latest lowering,
+continued useful-work performance improvement with reproducible comparisons,
+and verification of any broader supported behavior claimed for the final build.
 
 ## Windows 95 investigation history
 
