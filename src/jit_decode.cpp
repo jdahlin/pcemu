@@ -231,13 +231,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.kind = Kind::Nop; // A masked zero count preserves all flags/GPRs.
             } else if (op == 0x69 || op == 0x6b) {
                 auto m = byte();
-                if ((m >> 6) != 3) {
-                    pos = begin;
-                    break;
-                }
-                i.kind = Kind::Multiply; // Three-operand signed register multiply.
+                i.kind = (m >> 6) == 3 ? Kind::Multiply : Kind::Memory;
                 i.dst = (m >> 3) & 7;
                 i.src = m & 7;
+                if (i.kind == Kind::Memory) {
+                    i.memoryMultiply = true;
+                    i.memory = memoryOperand(m, address32, overrideSegment);
+                }
                 i.immediate = true;
                 i.imm = op == 0x6b ? uint32_t(int32_t(int8_t(byte()))) : immediate(w);
             } else if (op == 0x98 || op == 0x99) {
@@ -396,7 +396,14 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             } else if (op == 0xf6 || op == 0xf7) {
                 i.w = op == 0xf6 ? 1 : w;
                 auto m = byte();
-                if (op == 0xf6 && (m & 0x38) == 0x20 && (m >> 6) == 3) {
+                if ((m & 0x38) == 0x10) {
+                    i.kind = (m >> 6) == 3 ? Kind::Invert : Kind::Memory;
+                    i.immediate = true; // Unary operation: no register RHS.
+                    if (i.kind == Kind::Memory) {
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                        i.memory.invert = i.memory.store = true;
+                    } else i.dst = m & 7;
+                } else if (op == 0xf6 && (m & 0x38) == 0x20 && (m >> 6) == 3) {
                     i.kind = Kind::MultiplyByte;
                     i.dst = AX;
                     i.src = m & 3;
@@ -467,13 +474,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     }
                 } else if (extended == 0xaf) {
                     auto m = byte();
-                    if ((m >> 6) != 3) {
-                        pos = begin;
-                        break;
-                    }
-                    i.kind = Kind::Multiply;
+                    i.kind = (m >> 6) == 3 ? Kind::Multiply : Kind::Memory;
                     i.dst = (m >> 3) & 7;
                     i.src = m & 7;
+                    if (i.kind == Kind::Memory) {
+                        i.memoryMultiply = true;
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                    }
                 } else if (extended == 0xb6 || extended == 0xb7 || extended == 0xbe || extended == 0xbf) {
                     auto m = byte();
                     i.kind = (m >> 6) == 3 ? Kind::Move : Kind::Memory;
@@ -515,7 +522,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate)) {
+            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != Kind::Memory) {

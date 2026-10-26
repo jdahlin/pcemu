@@ -475,6 +475,190 @@ static void stringMoveTests() {
     }
 }
 
+static void invertAndMemoryMultiplyTests() {
+    auto append = [](std::vector<uint8_t> &code, uint32_t value, unsigned width) {
+        for (unsigned b = 0; b < width; ++b) code.push_back(uint8_t(value >> (8 * b)));
+    };
+    for (bool code32 : {false, true})
+     for (unsigned width : {1u, 2u, 4u})
+      for (unsigned reg = 0; reg < 8; ++reg)
+       for (uint32_t value : {0u, 1u, 0x80u, 0x8000u, 0x80000000u, 0xffffffffu}) {
+        auto c = make({}); c.s[CS].big = code32;
+        std::fill_n(c.r, 8, value);
+        unsigned p = 0;
+        if (width != 1 && code32 != (width == 4)) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xf6 : 0xf7;
+        c.mem[p++] = uint8_t(0xd0 | reg); c.mem[p] = 0xf4;
+        compare(c);
+    }
+    compare(make({0x83, 0xc0, 1, 0xf6, 0xd4, 0x83, 0xd2, 0, 0xf4})); // Deferred carry survives NOT AH.
+    for (bool paging : {false, true})
+     for (bool code32 : {false, true})
+      for (bool address32 : {false, true})
+       for (unsigned width : {1u, 2u, 4u})
+        for (bool warm : {false, true}) {
+            auto c = make({}, paging); c.s[CS].big = code32;
+            c.s[FS].base = 0x2000; c.r[BX] = address32 ? 0x1000 : 0x12341000;
+            c.r[SI] = address32 ? 0x10 : 0xabcd0010;
+            std::vector<uint8_t> code{0x83, 0xc0, 1, 0x64};
+            if (code32 != address32) code.push_back(0x67);
+            if (width != 1 && code32 != (width == 4)) code.push_back(0x66);
+            code.push_back(width == 1 ? 0xf6 : 0xf7);
+            code.push_back(address32 ? 0x54 : 0x50);
+            if (address32) code.push_back(0x73);
+            code.push_back(0x20); code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            const auto address = address32 ? 0x3040 : 0x3030;
+            if (warm) c.write(address, 0x81ab7f00, width);
+            else for (unsigned b = 0; b < width; ++b) c.mem[address + b] = uint8_t(0x81ab7f00 >> (b * 8));
+            c.r[AX] = 0x7fffffff;
+            compare(c);
+        }
+    for (bool paging : {false, true})
+     for (bool code32 : {false, true})
+      for (bool address32 : {false, true})
+       for (unsigned width : {2u, 4u})
+        for (unsigned form : {0u, 1u, 2u})
+         for (uint32_t value : {0u, 1u, 0xffffffffu, 0x7fffu, 0x8000u, 0x7fffffffu, 0x80000000u})
+          for (uint32_t factor : {0u, 1u, 0xffffffffu, 0x7fu, 0x80u, 0x7fffu, 0x80000000u}) {
+            auto c = make({}, paging); c.s[CS].big = code32; c.s[FS].base = 0x2000;
+            c.r[BX] = address32 ? 0x1000 : 0x12341000;
+            c.r[SI] = address32 ? 0x10 : 0xabcd0010;
+            c.r[DX] = form ? 0x12345678 : factor;
+            c.flags = value & 1 ? 0xcd7 : 2;
+            std::vector<uint8_t> code{0x64};
+            if (code32 != address32) code.push_back(0x67);
+            if (code32 != (width == 4)) code.push_back(0x66);
+            if (!form) { code.push_back(0x0f); code.push_back(0xaf); }
+            else code.push_back(form == 1 ? 0x69 : 0x6b);
+            code.push_back(address32 ? 0x54 : 0x50);
+            if (address32) code.push_back(0x73);
+            code.push_back(0x20);
+            if (form) append(code, factor, form == 1 ? width : 1);
+            code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            const auto address = address32 ? 0x3040 : 0x3030;
+            if (factor & 1) c.write(address, value, width);
+            else for (unsigned b = 0; b < width; ++b) c.mem[address + b] = uint8_t(value >> (b * 8));
+            compare(c);
+        }
+    for (unsigned form : {0u, 1u, 2u}) {
+        auto c = form == 0 ? make({0x0f, 0xaf, 0x1b, 0xf4}, true)
+                 : form == 1 ? make({0x69, 0x1b, 0xfe, 0xff, 0xff, 0xff, 0xf4}, true)
+                             : make({0x6b, 0x1b, 0xfe, 0xf4}, true);
+        c.r[BX] = 0x1000; c.write(0x1000, 0x80000000, 4);
+        compare(c); // Destination aliases the address base.
+        c = make({0x67, 0x66, 0x0f, 0xaf, 0x1f, 0xf4}, true);
+        c.r[BX] = 0x12341000; c.write(0x1000, 0x8000, 2);
+        compare(c);
+    }
+    for (unsigned form : {0u, 1u, 2u, 3u, 4u}) {
+        auto c = form == 0 ? make({0xf7, 0xd2, 0xf4})
+                 : form == 1 ? make({0xf7, 0x13, 0xf4}, true)
+                 : form == 2 ? make({0x0f, 0xaf, 0x13, 0xf4}, true)
+                 : form == 3 ? make({0x69, 0x13, 0xfe, 0xff, 0xff, 0xff, 0xf4}, true)
+                             : make({0x6b, 0x13, 0xfe, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[DX] = 0x7fffffff;
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(jit.nativeInstructions == 1 && c.halted, "NOT/memory IMUL did not execute natively");
+    }
+    {
+        auto c = make({0xf7, 0x13, 0xf4}, true);
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024);
+        c.flushTLB(); c.r[BX] = 0x9024;
+        compare(c);
+    }
+    {
+        auto c = make({0xf6, 0x13, 0x0b, 0x90, 0xf4});
+        c.r[BX] = 2; compare(c); // NOT rewrites the next opcode to HLT.
+    }
+    for (bool multiply : {false, true})
+     for (bool watched : {false, true}) {
+        auto c = multiply ? make({0x83, 0xc0, 1, 0x0f, 0xaf, 0x13, 0xf4})
+                          : make({0x83, 0xc0, 1, 0xf7, 0x13, 0xf4});
+        c.r[BX] = 0xa0000; c.r[AX] = 0x7fffffff; c.r[DX] = 0x80000000;
+        CPU ref = c; std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) { trace.push_back(p); trace.push_back((uint64_t(c.r[DX]) << 32) | c.flags); return uint8_t(p + 0x40); };
+        ref.videoRead = [&](uint32_t p) { refTrace.push_back(p); refTrace.push_back((uint64_t(ref.r[DX]) << 32) | ref.flags); return uint8_t(p + 0x40); };
+        c.videoWrite = [&](uint32_t p, uint8_t v) { trace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        ref.videoWrite = [&](uint32_t p, uint8_t v) { refTrace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        if (watched) {
+            c.watchStart = ref.watchStart = 0xa0000; c.watchLength = ref.watchLength = 4;
+            c.watchWrite = [&](uint32_t, uint32_t, int) { trace.push_back((2ull << 60) | c.flags); };
+            ref.watchWrite = [&](uint32_t, uint32_t, int) { refTrace.push_back((2ull << 60) | ref.flags); };
+        }
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() == (multiply ? 8u : 12u + unsigned(watched)), "NOT/IMUL callback order or prior flags/registers");
+        check(c.nativeMemoryCalls, "NOT/IMUL MMIO did not exercise native replay");
+    }
+    for (bool multiply : {false, true})
+     for (bool crossPage : {false, true}) {
+        auto c = multiply ? make({0x83, 0xc0, 1, 0x0f, 0xaf, 0x13, 0xf4}, true)
+                          : make({0x83, 0xc0, 1, 0xf7, 0x13, 0xf4}, true);
+        c.s[CS].selector = 3; c.r[AX] = 0x7fffffff; c.r[DX] = 0x12345678;
+        c.r[BX] = crossPage ? 0x4fff : 0x5000;
+        uint32_t pte = multiply ? 0x5004 : 0x5005;
+        std::copy_n(reinterpret_cast<uint8_t *>(&pte), 4, c.mem.begin() + 0x81014);
+        c.mem[0x4fff] = 0x7f; c.flushTLB();
+        CPU ref = c; unsigned faults = 0;
+        c.observeFault = ref.observeFault = [&](const Fault &f) {
+            check(f.vector == 14 && f.error == (multiply ? 4u : 7u), "NOT/IMUL fault type");
+            ++faults; throw std::runtime_error("NOT/IMUL fault");
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "missing native NOT/IMUL fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "NOT/IMUL fault", "native NOT/IMUL fault"); }
+        try { ref.step(); ref.step(); check(false, "missing reference NOT/IMUL fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "NOT/IMUL fault", "reference NOT/IMUL fault"); }
+        equal(c, ref);
+        check(faults == 2 && c.ip == 3 && c.r[DX] == 0x12345678 && c.mem[0x4fff] == 0x7f, "NOT/IMUL fault committed data or destination");
+    }
+    {
+        auto c = make({0x0f, 0xaf, 0x13, 0x8b, 0x0f, 0xf7, 0x17, 0xf4}, true);
+        c.flags = 2; c.r[BX] = 0x1000; c.r[DI] = 0x2000; c.r[DX] = 0x7fffffff;
+        c.write(0x1000, 2, 4); c.write(0x2000, 0x12345678, 4);
+        compare(c); // Deferred product survives ordinary memory reads and NOT.
+        c = make({0x0f, 0xaf, 0x13, 0xf6, 0x17, 0x0b, 0x90, 0xf4});
+        c.flags = 2; c.r[BX] = 0x1000; c.r[DI] = 5; c.r[DX] = 0x7fffffff;
+        c.write(0x1000, 2, 4);
+        compare(c); // Code-changing NOT must expose IMUL's exact CF/OF.
+    }
+    {
+        auto c = make({0x0f, 0xaf, 0x13, 0x8b, 0x0f, 0xf4});
+        c.r[BX] = 0x1000; c.r[DI] = 0xa0000; c.r[DX] = 0x7fffffff;
+        c.write(0x1000, 2, 4); c.flags = 2;
+        CPU ref = c; std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) { trace.push_back((uint64_t(c.r[DX]) << 32) | c.flags); return uint8_t(p); };
+        ref.videoRead = [&](uint32_t p) { refTrace.push_back((uint64_t(ref.r[DX]) << 32) | ref.flags); return uint8_t(p); };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() == 4 && jit.nativeInstructions,
+              "deferred IMUL flags/registers lost at later MMIO replay");
+    }
+    for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0xf7, 0x13, 0x0f, 0xaf, 0x13, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[CX] = 1000; c.r[DX] = 3; c.write(0x1000, 0x80000001, 4);
+        compare(c, 10000, mode);
+        c = make({0x0f, 0xaf, 0x13, 0xeb, 0, 0x83, 0xd0, 0, 0x83, 0xe9, 1, 0x75, 0xf3, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[CX] = 1000; c.r[DX] = 0x7fffffff; c.r[AX] = 0;
+        c.write(0x1000, 2, 4);
+        compare(c, 10000, mode); // Deferred product CF survives a block/link boundary into ADC.
+    }
+}
+
 static void rotateAndSignExtendTests() {
     for (bool code32 : {false, true})
      for (unsigned width : {2u, 4u})
@@ -1221,6 +1405,7 @@ int main() {
             memoryBitStringTests();
             leaveTests();
             rotateAndSignExtendTests();
+            invertAndMemoryMultiplyTests();
             hotShortFragmentTests();
             cycleTests();
         }

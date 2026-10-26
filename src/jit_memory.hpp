@@ -6,6 +6,7 @@ struct NativeMemoryMove {
     int base = -1, index = -1, scale = 0, segment = DS, reg = 0, width = 4;
     uint32_t displacement = 0, begin = 0, end = 0;
     bool address32 = false, store = false;
+    bool invert = false; // Unary NOT: RMW without flag changes or a register source.
     bool exchange = false; // XCHG returns the original memory value after a successful store.
     int delta = 0; // Nonzero for guarded memory INC/DEC; return original value for flags.
     int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.

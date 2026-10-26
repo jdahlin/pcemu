@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend
+    LoadFlags, Direction, Rotate, SignExtend, Invert
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -14,6 +14,7 @@ struct Instruction {
     uint32_t imm, end;
     uint32_t start = 0; // Guest start, including prefixes and followed jumps.
     bool immediate;
+    bool memoryMultiply = false; // Two/three-operand signed multiply after a successful read.
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
     bool leaveFrame = false; // LEAVE reads at BP/EBP and commits SP/BP after success.

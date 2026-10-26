@@ -89,7 +89,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction)
             continue;
-        if (!(i.kind == Kind::Memory && (i.immediate || i.nearReturn)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -210,7 +210,24 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             emit(0x2a000000u | (14 << 16) | (13 << 5) | 13);
         }
     };
+    // x13 contains the full signed product; all non-CF/OF flags stay intact.
+    auto multiplyFlags = [&](unsigned width) {
+        emit(0x93400000u | ((width * 8 - 1) << 10) | (13 << 5) | 14);
+        emit(0xeb00001fu | (14 << 16) | (13 << 5)); // cmp full,sign-extended low
+        emit(0x1a9f07ebu); // cset w11,ne: signed overflow sets both CF and OF
+        load(12, 19, offsetof(CPU, flags));
+        imm(14, ~(CF | OF));
+        emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
+        for (unsigned bit : {0u, 11u})
+            emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
+        store(12, 19, offsetof(CPU, flags));
+    };
     auto finishFlags = [&](int last, int condition, uint32_t target) {
+        if (last >= 0 && ir[last].memoryMultiply) {
+            emit(0xf9400000u | (12u << 10) | (31 << 5) | 13); // ldr x13,[sp,#96]
+            multiplyFlags(ir[last].w);
+            last = -1;
+        }
         if (last < 0 && condition < 0)
             return;
         // Materialize supported ALU flags without a host helper. Match the
@@ -327,11 +344,23 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         block.link()->resetFlagOffset = code.size()*4;
         emit(0xd503201fu); // Remains a NOP until a linked frame exists.
     }
+    // Signed operands arrive in w11/w12. Register and memory forms share
+    // overflow detection and exact preservation of the other guest flags.
+    auto multiplyResult = [&](const jit_detail::Instruction &i, bool flags, bool defer = false) {
+        emit(0x9b207c00u | (12 << 16) | (11 << 5) | 13); // smull x13,w11,w12
+        if (defer) {
+            // A later full flag writer can discard this product. Fault/code
+            // exits materialize its CF/OF from the saved complete 64-bit value.
+            emit(0xf9000000u | (12u << 10) | (31 << 5) | 13); // str x13,[sp,#96]
+        } else if (flags) multiplyFlags(i.w);
+        insert(20 + i.dst, 13, i.w, 0);
+        dirtyRegisters |= 1u << i.dst;
+    };
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -378,6 +407,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             load(11, 19, offsetof(CPU, flags));
             insert(20 + AX, 11, 1, 8);
             dirtyRegisters |= 1u << AX;
+            continue;
+        }
+        if (i.kind == Kind::Invert) {
+            extract(11, 20 + i.dst, i.w, i.dstShift);
+            emit(0x2a2003e0u | (11 << 16) | 11); // mvn w11,w11
+            insert(20 + i.dst, 11, i.w, i.dstShift);
+            dirtyRegisters |= 1u << i.dst;
             continue;
         }
         if (i.kind == Kind::SignExtend) {
@@ -661,20 +697,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 emit(0x13000000u | ((i.w * 8 - 1) << 10) | (12 << 5) | 12);
             } else
                 emit(0x13000000u | ((i.w * 8 - 1) << 10) | ((20 + i.src) << 5) | 12);
-            emit(0x9b207c00u | (12 << 16) | (11 << 5) | 13); // smull x13,w11,w12
-            if (neededFlags[n]) {
-                emit(0x93400000u | ((i.w * 8 - 1) << 10) | (13 << 5) | 14);
-                emit(0xeb00001fu | (14 << 16) | (13 << 5)); // cmp full,sign-extended low
-                emit(0x1a9f07ebu); // cset w11,ne: signed overflow sets both CF and OF
-                load(12, 19, offsetof(CPU, flags));
-                imm(14, ~(CF | OF));
-                emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
-                for (unsigned bit : {0u, 11u})
-                    emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
-                store(12, 19, offsetof(CPU, flags));
-            }
-            insert(20 + i.dst, 13, i.w, 0);
-            dirtyRegisters |= 1u << i.dst;
+            multiplyResult(i, neededFlags[n]);
             continue;
         }
         if (i.kind == Kind::Exchange) {
@@ -751,9 +774,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
             }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
-            if (i.memory.delta || memoryCarry || i.memory.bit >= 4) {
+            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiply) {
                 // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
-                // all other flags. Publish the exact restart state before
+                // all other flags; IMUL preserves its undefined flags too.
+                // Publish the exact restart state before
                 // access/replay and capture carry across helpers.
                 finishFlags(last, -1, 0);
                 last = -1;
@@ -767,6 +791,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto beforeLoad = dirtyRegisters;
             auto metadata = &block.native->memory[memoryIndex++];
             auto finishMove = [&]() {
+                if (i.memoryMultiply) {
+                    emit(0x13000000u | ((i.w * 8 - 1) << 10) | (10 << 5) | 11);
+                    if (i.immediate) imm(12, i.imm);
+                    else mov(12, 20 + i.dst);
+                    emit(0x13000000u | ((i.w * 8 - 1) << 10) | (12 << 5) | 12);
+                    multiplyResult(i, true, true);
+                    return;
+                }
                 if (i.memory.bit >= 4) {
                     // Preserve every flag except CF, including undefined flags
                     // retained by the interpreter. Publish only after success.
@@ -985,10 +1017,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4) {
+                if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4 || i.memory.invert) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
-                    if (i.memory.bit > 4) {
+                    if (i.memory.invert)
+                        emit(0x2a2003e0u | (10 << 16) | 13); // mvn result,old
+                    else if (i.memory.bit > 4) {
                         if (i.immediate) imm(9, i.imm);
                         else bits(9, 20 + i.dst, 0, i.w == 2 ? 4 : 5);
                         imm(12, 1);
@@ -1056,7 +1090,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
-            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4) {
+            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4 || i.memory.invert) {
                 load(10, 19, offsetof(CPU, nativeValue));
             }
             finishMove();
@@ -1065,7 +1099,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             emit(0x54000000u); // b.eq continuation
             // Successful memory access changed code: commit through this instruction.
             flushRegisters(dirtyRegisters);
-            finishFlags(i.memoryAlu ? int(n) : last, -1, 0);
+            finishFlags(i.memoryAlu || i.memoryMultiply ? int(n) : last, -1, 0);
             if (!i.nearReturn && !i.indirectJump && !i.indirectCall) {
                 imm(9, i.memory.end);
                 store(9, 19, offsetof(CPU, ip));
@@ -1092,7 +1126,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             code[continuation] |= uint32_t(code.size() - continuation) << 5;
             if (fastSuccess != size_t(-1))
                 code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
-            if (i.memoryAlu)
+            if (i.memoryAlu || i.memoryMultiply)
                 last = n;
             continue;
         }

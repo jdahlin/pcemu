@@ -1928,3 +1928,16 @@ The complete candidate uses 20.9% less CPU than the original Word baseline and
 8.0% less than the original Excel baseline in the fresh matched comparison.
 Incremental median reductions versus LEAVE are 1.5% and 2.5%, with small effects
 and host-variation limits documented in the [full report](measurements/office-register-rotate-2026-10-27.md).
+
+### Word and Excel: NOT and memory IMUL (2026-10-27)
+
+NOT now lowers natively for all register widths/high bytes and guarded memory.
+Memory IMUL covers 0F AF and 69/6B, with shared signed overflow logic and a saved
+64-bit product for deferred flags. Cached validation passes 9,469,038 checks,
+including faults, self-PTE/code writes, MMIO and linked flag consumers. Word's
+interpreted memory IMUL operands fall from 189,473 to 743; NOT groups also fall
+substantially in both applications. Native shares reach 94.12% and 99.43%.
+All 60 final restores pass. The complete candidate is 21.7% below the original
+Word baseline and 9.7% below the original Excel baseline; incremental timing is
+about 1.3% lower for Word and neutral for Excel. Eager/deferred flag strategies
+are indistinguishable within timing noise. See the [full comparison and limits](measurements/office-not-imul-2026-10-27.md).
