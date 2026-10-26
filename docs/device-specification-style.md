@@ -1,121 +1,191 @@
 # Specification-oriented device code
 
-Use this convention for new devices and when migrating existing devices. The first
-example is `src/arm_pl031.{hpp,cpp}`. Migrate one device at a time; keep behavior
-changes separate from naming and documentation changes.
+Apply this convention to every new device and when migrating an existing device.
+The PL031 RTC in `src/arm_pl031.{hpp,cpp}` is the first example. Migrate one device
+at a time. Keep naming/documentation refactors separate from hardware behavior
+changes so reviewers can verify both independently.
 
-## Source and scope
+The intended reader knows C++ but may know nothing about this chip. Explain what
+an operation or value means, why it exists, and what guest software does with it.
+Expanding an acronym or listing bit positions alone is not enough.
 
-Start each device header with the hardware model, specification title/document ID,
-revision and authoritative URL. Every function definition must have a purpose
-comment and a direct link to its relevant specification section immediately
-above it, as in Ladybird. Include the document ID and section title. Use HTML
-section anchors when available; for PDFs, use `#page=N` with the one-based PDF
-page number (including front matter), and name the printed section as well.
-A document ID or a link at the top of the file alone is insufficient. Distinguish
-chip semantics from machine wiring, firmware policy and host services. A reference establishes provenance, not full conformance.
-If evidence is unavailable, say so rather than inventing a specification citation.
+## Device overview
 
-Start the implementation file with a plain-language device overview. Explain
-its purpose, its major parts and how they interact, the guest's view of the
-device, and the boundary with machine wiring and host services. Define acronyms
-on first use and state model limitations. A reader should not need prior chip
-knowledge to understand the register handlers.
+Start the implementation file with a plain-language overview covering:
 
-## Names and constants
+- What the device does and how the guest OS or application uses it.
+- Its major parts and how data, control and interrupts flow between them.
+- The register interface, state, timing and externally visible side effects.
+- Which responsibilities belong to machine wiring or host services.
+- Emulator policies, unsupported functionality and known specification gaps.
 
-Use the specification's terms for operations and state, expressed in the local
-C++ style. Use descriptive snake_case for methods and state. Rename generic
-methods in the migrated device and update their callers as part of the migration. Use the
-specification's operation, register and signal names: `write_match_register()`
-for RTCMR, `write_load_register()` for RTCLR, and `rtcintr_asserted()` for the
-RTCINTR output. Bus adapters can use `read_register()` and `write_register()`;
-the specification does not name an algorithm for every C++ boundary. Do not
-invent a specification algorithm name for host-only helpers. Use the full register titles from the specification as scoped constants, such
-as `Register::DataRegister`, `Register::ControlRegister`, and
-`Register::InterruptMaskSetOrClearRegister`. Retain hardware abbreviations such
-as RTCDR in documentation and section references so readers can search the
-manual. Prefer descriptive names over unexplained acronyms in executable code. Name offsets, command values,
-bit masks and timing quantities; include units in timing names. Keep definitions
-local unless callers need them. Document every constant: explain the register's
-purpose, the effect of a bit or command, or the quantity and units represented.
-For offsets, state that they are relative to the device's mapped base address.
-Explain acronyms and encoded fields rather than merely repeating the identifier.
-Identity bytes may remain literal values when paired with named registers,
-a table reference and an explanation beside each returned value of its encoded
-meaning, including field positions, combined identifiers and revision mappings. Ordinary zero/one
-values and arithmetic need no decorative constants.
+Define acronyms on first use. For example, explain that the RTC exposes seconds,
+software converts those seconds to calendar dates, the alarm compares against a
+programmed time, and masking suppresses the interrupt output without clearing
+latched status. Explain signal terminology such as active-high when introducing
+it. State that register offsets are relative to the device's mapped base address.
 
-Explain the meaning and purpose of fixed signatures and identifiers, not only
-which byte or bit is returned. State what software learns from them, how split
-fields combine, and how a shared family signature differs from a device-specific
-part number. For example, `0xb105f00d` identifies the PrimeCell identification
-scheme; the separate peripheral part number identifies the PL031 RTC.
+Include the hardware model, specification title, document ID, revision and an
+authoritative URL in the header and implementation overview. Do not imply full
+conformance merely because a reference is present.
 
-## Inline documentation
+## Specification links and function documentation
 
-Each function's comment must explain what it does, its result or side effects,
-and the relevant hardware rule. Keep the explanation next to the definition,
-with a short interface contract in the header. Split substantial register
-operations into methods named after the corresponding specification construct.
-Do not extract trivial getters merely to add more comments.
+Every function definition needs a purpose comment immediately above it. Describe
+what it does, its result and side effects, and the hardware rule it implements.
+Include the specification section title/number and a direct URL to that section.
+A document ID alone, a `SPEC:` label, or one URL at the top of the file does not
+replace these local links. Keep a short interface contract in the header too.
 
-For example, the PL031 implementation follows this shape:
+Use HTML section anchors when available. For PDFs, use `#page=N`, where N is the
+one-based PDF page number including front matter, and name the printed section.
+Check the target against the actual manual; printed page 3-4 is not PDF page 4.
 
 ```cpp
 // Store RTCMR, the Match Register, and recognize a match at the current RTC value.
 // ARM DDI 0224C, 3.3.2 Match Register, RTCMR.
 // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=24
 void ArmPl031::write_match_register(uint32_t value) {
-    // Implementation of the register operation.
+    match_register = value;
+    if (match_register == uint32_t(previous_counter))
+        raw_interrupt = true;
 }
 ```
 
-Inside an algorithm, put the relevant specification steps beside the matching
-code, preserving original step numbers and wording when quoting. Do not invent
-numbered steps for register tables. Paraphrases must be clearly explanatory
-prose, rather than presented as quotations. A `SPEC:` label is not a substitute
-for the URL and explanation.
+For specification algorithms, put the relevant steps beside their implementation.
+Preserve original step numbers and wording when quoting. Explanatory paraphrases
+must not be presented as quotations. Do not invent numbered algorithms for
+register tables; identify the registers, fields and table instead. Add local
+links inside a function when its branches implement different sections.
 
-- `AD-HOC: <policy and reason>.` identifies emulator decisions such as host clock
-  selection, polling, reserved-access fallback or compatibility behavior.
-- `FIXME: <gap and required behavior>.` records a conformance gap or bug next to
-  the affected code, with a direct specification link and section reference.
-  Explain any compatibility constraint.
-- `TODO: <concrete follow-up and reason>.` records maintenance work that does not
-  represent an existing correctness gap. Link the relevant spec or issue when
-  applicable. Do not use vague “implement properly” notes, attribution or dates.
+For a host-only helper, describe its implementation role and label the policy.
+Link the hardware requirement it supports when applicable, but do not invent a
+specification origin. If evidence is unavailable, state that explicitly.
 
-Remove resolved TODO/FIXME comments in the same commit as the implementation.
-Find remaining work with `rg -n 'AD-HOC:|FIXME:|TODO:' src/<device>*`.
+## Function and state names
 
-## PL031 pilot
+Use the specification's operation, register and signal terminology, expressed as
+descriptive snake_case method/state names. Rename generic methods and update
+callers as part of the device migration. Examples from PL031:
 
-Reference: [ARM PrimeCell Real Time Clock (PL031) Technical Reference Manual,
-ARM DDI 0224C, r1p3](https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e).
-Register accesses, match interrupts and identification are annotated in the code.
-The injected host clock and sampling are emulator policy. Guest writes adjust
-only the VM clock. Existing behavior is preserved, including these limitations:
+| Construct | Method |
+|---|---|
+| Match Register, RTCMR | `write_match_register()` |
+| Load Register, RTCLR | `write_load_register()` |
+| Interrupt mask, RTCIMSC | `write_interrupt_mask()` |
+| Interrupt Clear Register, RTCICR | `clear_interrupt()` |
+| RTCINTR output signal | `rtcintr_asserted()` |
+| RTC value and Update block | `update_rtc_value()` |
+| Register bus access | `read_register()` / `write_register()` |
 
-- RTCCR always reads enabled and ignores writes; its enable/reset semantics remain
-  a FIXME. The counter starts from host time rather than the hardware reset value.
-- Integration test registers are unimplemented.
-- Reserved/unimplemented reads return zero and unsupported writes are ignored.
+Split substantial register operations into methods named after their hardware
+purpose. Avoid vague names such as `update()` or `irq()` when a more precise name
+is available. Do not extract trivial getters just to add more documentation.
+The specification need not name an algorithm for every C++ adapter or helper.
 
-`tests/arm_devices_test.cpp` covers clock loads, skipped matches, masking, clearing,
-backward host time and wraparound. Tests for reserved accesses and RTCCR preserve
-current compatibility behavior; they are not conformance claims.
+## Constants and encoded values
 
-## Migration checklist
+Use full register titles as scoped constants, retaining abbreviations in comments
+so readers can find them in the manual:
 
-1. Identify the exact reference and inventory registers, state and known gaps.
-2. Replace hardware literals with named constants and align private helper names.
-3. Document every function with its purpose and a direct section link; put spec
-   steps beside the matching code and identify host policy and conformance gaps.
-4. Check behavior using deterministic device tests with literal bus addresses,
-   so tests independently check the register map. Cover observable side effects.
-5. Run relevant headless checks and commit the device, tests and documentation.
+```cpp
+// ARM DDI 0224C, 3.2 Summary of RTC registers, Table 3-1.
+// https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=23
+enum class Register : unsigned {
+    // Data Register: reads the current RTC seconds value.
+    DataRegister = 0x00,
+    // Control Register: controls startup; this model always reports enabled.
+    ControlRegister = 0x0c,
+};
+```
 
-This borrows specification naming and comment practices from
+Prefer `Register::DataRegister` to `RTCDR` in executable code. Name hardware
+commands, bit masks, fixed identifiers and timing quantities as well; timing
+names must include units. Keep constants local unless callers need them.
+Document every constant's purpose and source, including register effects, bit
+meaning, field positions and units. Do not merely repeat its name.
+
+A fixed multi-byte signature should have one named value; derive the register
+bytes from it rather than scattering literal bytes through read handlers:
+
+```cpp
+// Fixed signature identifying ARM's PrimeCell identification scheme across devices.
+// The Peripheral Identification registers separately identify the PL031 part.
+// ARM DDI 0224C, 3.5 PrimeCell identification registers.
+// https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=29
+constexpr uint32_t PrimeCellIdentification = 0xb105f00d;
+
+// In read_register():
+case Register::PrimeCellIdentificationRegister1:
+    // Return identification bits 15:8 in the low byte; upper register bits are zero.
+    return uint8_t(PrimeCellIdentification >> 8);
+```
+
+Explain what software learns from the value. Here, PrimeCell is ARM's family of
+reusable peripheral designs; the shared signature identifies its identification
+scheme, while separate peripheral registers identify the PL031 part. Explain how
+software reconstructs split values, and distinguish byte significance from
+register spacing: these byte-valued registers are four bytes apart.
+
+For other encoded read results, explain the fields beside the return expression.
+For example, `0x10` contains designer bits in its high nibble and part-number bits
+in its low nibble. Explain how those fields combine with adjacent registers and
+what revision encodings represent. Likewise explain a returned control value of
+one as an enabled bit, or a zero fallback as emulator policy. Ordinary arithmetic
+and zero/one values need no decorative constants when their meaning is clear.
+
+## Implementation choices and outstanding work
+
+Keep specified behavior distinct from emulator policy and known gaps:
+
+- `IMPLEMENTATION NOTE:` explains a deliberate implementation choice and its
+  reason, such as sampling an injected host clock or detecting skipped alarms.
+  It does not imply a temporary hack or a specification defect.
+- `COMPATIBILITY:` explains behavior retained for existing guests. State what is
+  retained and why; a known specification violation also needs a FIXME.
+- `FIXME:` identifies a bug or conformance gap, with the required behavior and a
+  direct specification link/section reference. Explain compatibility constraints.
+- `TODO:` identifies concrete maintenance work and its reason, without implying
+  an existing correctness gap. Link the relevant spec or issue when applicable.
+
+The pilot's older `AD-HOC:` comments mean behavior chosen by the emulator rather
+than prescribed by the hardware specification. For future device migrations,
+use the more precise `IMPLEMENTATION NOTE:` or `COMPATIBILITY:` labels above.
+Do not use attribution, dates or vague notes such as “implement properly.” Remove
+resolved TODO/FIXME comments in the same commit as their implementation.
+
+Find these comments with:
+
+```sh
+rg -n 'IMPLEMENTATION NOTE:|COMPATIBILITY:|AD-HOC:|FIXME:|TODO:' src/<device>*
+```
+
+## Validation and migration checklist
+
+1. Read the authoritative reference and record its exact model/revision. Inventory
+   registers, state, interactions and known gaps before annotating behavior.
+2. Write the device overview for a reader unfamiliar with the hardware.
+3. Align function/state names and scoped register constants with the specification;
+   update callers, and explain every hardware constant and encoded read value.
+4. Give every function a purpose comment and direct relevant section link. Put
+   algorithm steps beside their code and separate host policy from hardware rules.
+5. Preserve existing behavior during this refactor. Document conformance gaps
+   honestly; do not silently turn compatibility behavior into a hardware claim.
+6. Run relevant deterministic, headless device checks and compile affected machine
+   integrations. Test observable register effects, interrupts and timing boundaries.
+   Use literal bus addresses/expected values in tests to check the map independently
+   of implementation constants. Documentation-only changes need link/reference
+   review and a diff check, rather than new behavior tests.
+7. Review the overview, every function and every constant for unexplained jargon
+   or magic values. Commit the code, caller updates, tests and documentation.
+
+The PL031 pilot covers clock loads, skipped matches, masking, clearing, backward
+host time and wraparound. It preserves the always-enabled RTCCR behavior and
+unsupported-access fallback; integration test registers remain unimplemented.
+Its tests preserve that compatibility behavior and do not establish full hardware
+conformance. A future device must identify and test its own boundaries.
+
+This convention follows the specification naming and local reference pattern in
 [Ladybird's coding style](https://github.com/LadybirdBrowser/ladybird/blob/master/Documentation/CodingStyle.md)
-while retaining this repository's formatting and existing public APIs.
+and [AbortSignal implementation](https://github.com/LadybirdBrowser/ladybird/blob/master/Libraries/LibWeb/DOM/AbortSignal.cpp),
+while retaining this repository's formatting.
