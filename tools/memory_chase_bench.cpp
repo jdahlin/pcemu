@@ -3,6 +3,7 @@
 #include "jit.hpp"
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -86,6 +87,8 @@ int main(int argc, char **argv) {
                 Jit jit(cpu, backend == "jit", 8, 16 * 1024 * 1024, Jit::BlockMode::FollowJumps);
                 require(backend != "jit" || jit.enabled(), "Native JIT unavailable");
                 const uint64_t expected = uint64_t(loops) * 4 + 1;
+                auto cpuStart = std::clock();
+                require(cpuStart != std::clock_t(-1), "Process CPU clock unavailable");
                 auto start = std::chrono::steady_clock::now();
                 while (!cpu.halted && cpu.instructions < expected) {
                     if (dispatch == "batch")
@@ -95,6 +98,10 @@ int main(int argc, char **argv) {
                 }
                 auto seconds =
                     std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+                auto cpuEnd = std::clock();
+                require(cpuEnd != std::clock_t(-1) && cpuEnd >= cpuStart,
+                        "Process CPU clock unavailable or wrapped");
+                auto cpuSeconds = double(cpuEnd - cpuStart) / CLOCKS_PER_SEC;
                 require(cpu.halted && cpu.ip == sizeof(code) && cpu.instructions == expected &&
                             cpu.r[CX] == 0 && cpu.r[AX] == loops &&
                             cpu.r[BX] == base + order[loops % order.size()] * stride,
@@ -107,6 +114,7 @@ int main(int argc, char **argv) {
                 std::cout << (first ? "" : ",") << "{\"bytes\":" << bytes
                           << ",\"paged\":" << (paged ? "true" : "false")
                           << ",\"hostSeconds\":" << seconds
+                          << ",\"hostCpuSeconds\":" << cpuSeconds
                           << ",\"guestInstructions\":" << cpu.instructions
                           << ",\"nativeInstructions\":" << jit.nativeInstructions
                           << ",\"nativeCalls\":" << jit.cacheHits

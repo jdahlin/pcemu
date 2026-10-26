@@ -1842,3 +1842,16 @@ or new native coverage is claimed.
 
 [All samples, source hashes and decision](measurements/rejected-shrd-dead-flags-2026-10-25.json),
 [rejected patch](measurements/rejected-shrd-dead-flags-2026-10-25.patch).
+
+## CPU accounting for the diskless dependent-load harness (26 October)
+
+`tools/memory_chase_bench.cpp` reports `hostCpuSeconds` alongside the existing
+`hostSeconds` wall interval. The process CPU clock surrounds the same execution
+loop, including cold compilation and dispatch but excluding setup and result
+verification. It excludes time descheduled or blocked; it is not isolated
+memory latency and does not remove shared-cache, frequency or contention effects.
+The benchmark rejects unavailable/wrapped CPU clocks instead of inventing a
+measurement. Very short CPU intervals may round to zero at clock resolution;
+use sufficiently long workloads for comparisons. Existing wall-based consumers
+remain compatible. Sixteen JIT/interpreter, flat/paged cases pass exact guest
+results and positive CPU/wall intervals at one million/20,000 iterations.
