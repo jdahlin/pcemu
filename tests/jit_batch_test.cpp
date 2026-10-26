@@ -26,7 +26,7 @@ static void paging(CPU &c) {
     c.cr[0] |= 0x80000000;
     c.flushTLB();
 }
-static void timerTests(bool shortLoop = false) {
+static void timerTests(bool shortLoop = false, bool memoryLoop = false) {
     for (bool batched : {false, true})
         for (unsigned phase : {0u, 1u, 31u, 63u, 127u}) {
             Machine m("", "", 1024 * 1024);
@@ -40,7 +40,10 @@ static void timerTests(bool shortLoop = false) {
             c.r[SP] = 0x9000;
             c.r[CX] = 10000;
             c.instructions = phase;
-            const std::vector<uint8_t> loop = shortLoop
+            c.r[BX] = 0x4000;
+            const std::vector<uint8_t> loop = memoryLoop
+                ? std::vector<uint8_t>{0x83, 0x07, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4}
+                : shortLoop
                 ? std::vector<uint8_t>{0x83, 0xc0, 1, 0xf8, 0x83, 0xe9, 1, 0x75, 0xf7, 0xf4}
                 : std::vector<uint8_t>{0x83, 0xc0, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4};
             std::copy(std::begin(loop), std::end(loop), c.mem.begin() + 0x1000);
@@ -74,15 +77,17 @@ static void timerTests(bool shortLoop = false) {
                     check(c.instructions - deadline <= 127, "timer latency exceeds batch bound");
                 }
             }
-            check(c.halted && c.r[CX] == 0 && c.r[AX] == 10000 && c.r[SP] == 0x9000,
+            check(c.halted && c.r[CX] == 0 && c.r[AX] == (memoryLoop ? 0u : 10000u) && c.r[SP] == 0x9000,
                   "timer ISR failed to preserve execution");
+            if (memoryLoop) check(c.read(0x4000, 2) == 10000, "timer loop lost a native RMW update");
             check(delivered >= 7 && c.read(0x3000, 2) == delivered,
                   "timer EOI/IRET delivery mismatch");
-            if (shortLoop)
+            if (shortLoop || memoryLoop)
                 check(jit.nativeInstructions > 25000,
-                      "timer test did not promote its short ADD fragment");
+                      "timer test did not execute its short/RMW ADD natively");
             std::cout << "{\"batched\":" << batched << ",\"phase\":" << phase
                       << ",\"shortLoop\":" << shortLoop
+                      << ",\"memoryLoop\":" << memoryLoop
                       << ",\"instructions\":" << c.instructions << ",\"interrupts\":" << delivered
                       << ",\"worstLatencyInstructions\":" << worst << "}\n";
         }
@@ -235,7 +240,10 @@ int main() {
             }
             check(c.r[AX] == 512 && jit.cacheRecycles > 0, "batch cache recycling coverage");
         }
-        for (bool enabled : {false, true}) { linksMode = enabled; timerTests(); timerTests(true); }
+        for (bool enabled : {false, true}) {
+            linksMode = enabled;
+            timerTests(); timerTests(true); timerTests(false, true);
+        }
         std::cout << "Passed " << checks << " native batch checks\n";
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';

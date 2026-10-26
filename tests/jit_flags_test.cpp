@@ -541,7 +541,9 @@ int main() {
                 else
                     code.insert(code.end(), {0xa3, 0, 1, 0, 0});
                 auto continuation = code.size();
-                code.insert(code.end(), {0x31, 0xff, 0x75, 0x10});
+                // Bound trace fallthrough explicitly: zero-filled RAM now
+                // decodes as native ADD [mem],reg rather than ending the block.
+                code.insert(code.end(), {0x31, 0xff, 0x75, 0x10, 0xf4});
                 struct Stop {};
                 unsigned faults = 0;
                 for (auto c : {&expected, &native}) {

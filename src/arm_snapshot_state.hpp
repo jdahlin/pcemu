@@ -152,4 +152,23 @@ template<class T> void ArmSnapshotAccess::fields(StateArchive &a, T &v) {
     }
     else static_assert(std::is_same_v<T,void>, "Missing explicit snapshot state inventory");
 }
+// Host checkpoint access stays in this adapter; peripheral headers never name
+// the concrete board/execution type or take a dependency on its implementation.
+template<class T> uint64_t ArmSnapshotAccess::sampleReference(T &v) {
+    return v.reference_time_100ns();
+}
+// Read the serialized partition time before rebasing its new host clock origin.
+template<class T> uint64_t ArmSnapshotAccess::savedReference(T &v) {
+    return v.referenceTime;
+}
+// Preserve guest reference time while optionally replacing the host origin.
+template<class T> void ArmSnapshotAccess::setReference(T &v,uint64_t time,bool rebase) {
+    v.referenceTime=time;
+    if (rebase) v.clockOrigin=v.clock()-time;
+}
+// Force the first restored framebuffer to be published to the frontend.
+template<class T> void ArmSnapshotAccess::invalidateFramebuffer(T &v) {
+    v.previousDescriptor.clear(); v.previousPixels.clear();
+}
+
 }

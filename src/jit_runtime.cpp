@@ -35,19 +35,30 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
         }
         // RMW probes read translation first. A declined device access must
         // replay its read before dirty-bit updates or a write callback.
-        auto physical = cpu->physical(linear, op->store && !op->delta);
+        const bool rmw = op->delta || op->alu >= 0;
+        auto physical = cpu->physical(linear, op->store && !rmw);
         if (uint64_t(physical) + op->width > cpu->mem.size() ||
             (physical < 0xb0000 && uint64_t(physical) + op->width > 0xa0000)) {
             cpu->nativeFallback = true;
             return 0;
         }
         if (op->store) {
-            if (op->delta) {
+            if (rmw) {
                 physical = cpu->physical(linear, true);
                 uint32_t original = 0;
                 std::memcpy(&original, cpu->mem.data() + physical, op->width);
                 cpu->nativeValue = original;
-                value = original + uint32_t(op->delta);
+                if (op->delta) value = original + uint32_t(op->delta);
+                else switch (op->alu) {
+                    case 0: value = original + value; break;
+                    case 1: value = original | value; break;
+                    case 2: value = original + value + (cpu->flags & CF); break;
+                    case 3: value = original - value - (cpu->flags & CF); break;
+                    case 4: value = original & value; break;
+                    case 5: value = original - value; break;
+                    case 6: value = original ^ value; break;
+                    default: cpu->nativeFallback = true; return 0;
+                }
             }
             if (op->width == 4)
                 std::memcpy(cpu->mem.data() + physical, &value, 4);

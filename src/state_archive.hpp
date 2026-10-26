@@ -13,6 +13,10 @@ namespace pc {
 class StateArchive;
 struct ArmSnapshotAccess {
     template<class T> static void fields(StateArchive &, T &);
+    template<class T> static uint64_t sampleReference(T &);
+    template<class T> static uint64_t savedReference(T &);
+    template<class T> static void setReference(T &, uint64_t, bool rebase);
+    template<class T> static void invalidateFramebuffer(T &);
 };
 // Host-only snapshot codec. Runtime objects explicitly enumerate state fields;
 // pointers, callbacks, file descriptors and RAM views are never persisted.

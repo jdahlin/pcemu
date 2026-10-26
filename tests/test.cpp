@@ -685,6 +685,9 @@ int main() {
                     ref.mem[p++] = 0xc0 | (src << 3) | dst;
                 }
             }
+            // Keep this 32-instruction program bounded explicitly. Zero-filled
+            // trailing RAM is now a supported ADD [mem],reg, not a decode barrier.
+            ref.mem[p++] = 0xf4;
             if (trial & 2) {
                 std::copy_n(ref.mem.begin(), p, ref.mem.begin() + 0x3000);
                 ref.write(0x1000, 0x2007, 4);
@@ -1461,8 +1464,10 @@ int main() {
             paged.write(0x2000, 0x3007, 4);
             paged.write(0x3000, 0x111111b8, 4);
             paged.write(0x3004, 0x11, 1);
+            paged.write(0x3005, 0xf4, 1);
             paged.write(0x4000, 0x222222b8, 4);
             paged.write(0x4004, 0x22, 1);
+            paged.write(0x4005, 0xf4, 1);
             paged.cr[3] = 0x1000;
             paged.cr[0] = 0x80000011;
             Jit jit(paged, true, 0);

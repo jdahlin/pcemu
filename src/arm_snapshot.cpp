@@ -123,10 +123,9 @@ void restoreRam(const fs::path &path, std::span<uint8_t> ram) {
 // https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/tlfs/timers#reference-counter
 void ArmVirtMachine::pauseClock(bool paused) {
     if (paused==clockPaused) return;
-    if (paused) { pausedReference=hyperv.reference_time_100ns(); vm.pauseClock(true); }
+    if (paused) { pausedReference=ArmSnapshotAccess::sampleReference(hyperv); vm.pauseClock(true); }
     else {
-        hyperv.clockOrigin=hyperv.clock()-pausedReference;
-        hyperv.referenceTime=pausedReference;
+        ArmSnapshotAccess::setReference(hyperv,pausedReference,true);
         vm.pauseClock(false);
         audioServiceTime=std::chrono::steady_clock::now();
     }
@@ -168,7 +167,7 @@ void ArmVirtMachine::saveSnapshot(const std::string &directory) {
             if (fs::canonical(checkDisk.backingPath())!=parent) throw std::runtime_error("Snapshot disk backing mismatch");
         }
         StateArchive devices;
-        hyperv.referenceTime=pausedReference;
+        ArmSnapshotAccess::setReference(hyperv,pausedReference,false);
         devices(nor,fwCfg,uart,rtc,osLocks,hyperv,rtcInterruptLevel,powerAction);
         auto device=[&](auto &pointer) { bool exists=bool(pointer); devices(exists); if (exists) devices(*pointer); };
         device(block); device(pci); device(net); device(netPci); device(rng); device(rngPci);
@@ -219,9 +218,10 @@ void ArmVirtMachine::restoreSnapshot(const std::string &directory) {
     vm.writeMemory(0x04000000,nor.bytes());
     auto cpu=unpack(readFile(fs::path(directory)/"cpu.zst",16*1024*1024),16*1024*1024);
     vm.restoreState(cpu);
-    pausedReference=hyperv.referenceTime; hyperv.clockOrigin=hyperv.clock()-pausedReference;
+    pausedReference=ArmSnapshotAccess::savedReference(hyperv);
+    ArmSnapshotAccess::setReference(hyperv,pausedReference,true);
     clockPaused=true;
-    ramfb.previousDescriptor.clear(); ramfb.previousPixels.clear(); displayWasGpu=false;
+    ArmSnapshotAccess::invalidateFramebuffer(ramfb); displayWasGpu=false;
     audioServiceTime=std::chrono::steady_clock::now();
 }
 }

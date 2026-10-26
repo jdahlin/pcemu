@@ -685,11 +685,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     invalidCalls.push_back(code.size()); emit(0x54000008u); // b.hi replay before stack write
                 }
             }
-            if (i.memory.delta) {
-                // INC/DEC preserve CF. Publish the preceding flags before any
-                // access or replay, then replace arithmetic flags on success.
+            const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
+            if (i.memory.delta || memoryCarry) {
+                // INC/DEC preserve CF; ADC/SBB consume it. Publish preceding
+                // flags before access/replay and capture carry across helpers.
                 finishFlags(last, -1, 0);
                 last = -1;
+                if (memoryCarry) {
+                    load(13, 19, offsetof(CPU, flags));
+                    bits(13, 13, 0, 1);
+                    store(13, 31, 104);
+                }
             }
             const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
@@ -713,11 +719,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                         // The address/read completed with the original cached
                         // GPRs. Commit the register result only after success,
                         // retaining both original operands for precise flags.
-                        uint32_t op = i.op == 0 ? 0x0b000000u
+                        uint32_t op = i.op == 0 || i.op == 2 ? 0x0b000000u
                                       : i.op == 1 ? 0x2a000000u
                                       : i.op == 4 ? 0x0a000000u
                                       : i.op == 6 ? 0x4a000000u : 0x4b000000u;
                         emit(op | (10 << 16) | (12 << 5) | 11);
+                        if (memoryCarry) {
+                            load(14, 31, 104);
+                            emit((i.op == 2 ? 0x0b000000u : 0x4b000000u) | (14 << 16) | (11 << 5) | 11);
+                        }
                         insert(20 + i.dst, 11, i.w, i.dstShift);
                         dirtyRegisters |= 1u << i.dst;
                     }
@@ -887,10 +897,23 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memory.delta) {
+                if (i.memory.delta || i.memory.alu >= 0) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
-                    emit((i.memory.delta > 0 ? 0x11000400u : 0x51000400u) | (10 << 5) | 13);
+                    if (i.memory.delta)
+                        emit((i.memory.delta > 0 ? 0x11000400u : 0x51000400u) | (10 << 5) | 13);
+                    else {
+                        if (i.immediate) imm(12, i.imm);
+                        else extract(12, 20 + i.dst, i.w, i.dstShift);
+                        uint32_t op = i.op == 0 || i.op == 2 ? 0x0b000000u : i.op == 1 ? 0x2a000000u
+                                      : i.op == 4 ? 0x0a000000u : i.op == 6 ? 0x4a000000u
+                                      : 0x4b000000u;
+                        emit(op | (12 << 16) | (10 << 5) | 13);
+                        if (memoryCarry) {
+                            load(14, 31, 104);
+                            emit((i.op == 2 ? 0x0b000000u : 0x4b000000u) | (14 << 16) | (13 << 5) | 13);
+                        }
+                    }
                     emit((accessWidth == 4 ? 0xb9000000u : accessWidth == 2 ? 0x79000000u : 0x39000000u) |
                          (11 << 5) | 13);
                 } else if (i.memory.store) {
@@ -936,7 +959,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
-            if (!i.memory.store || i.memory.delta) {
+            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0) {
                 load(10, 19, offsetof(CPU, nativeValue));
             }
             finishMove();

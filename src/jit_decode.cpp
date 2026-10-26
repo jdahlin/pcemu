@@ -238,6 +238,20 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.dst = op & 7;
                 i.immediate = true;
                 i.imm = immediate(i.w);
+            } else if (op == 0xc6 || op == 0xc7) {
+                auto m = byte();
+                if (m & 0x38) { pos = begin; break; }
+                i.w = (op & 1) ? w : 1;
+                i.immediate = true;
+                if ((m >> 6) == 3) {
+                    i.kind = Kind::Move;
+                    i.dst = m & 7;
+                } else {
+                    i.kind = Kind::Memory;
+                    i.memory = memoryOperand(m, address32, overrideSegment);
+                    i.memory.store = true;
+                }
+                i.imm = immediate(i.w);
             } else if (op == 0x86 || op == 0x87) {
                 auto m = byte();
                 if ((m >> 6) != 3) {
@@ -305,15 +319,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 } else {
                     auto m = byte();
                     if ((m >> 6) != 3) {
-                        if (i.op == 2 || i.op == 3 || (i.op != 7 && !(op & 2))) {
-                            pos = begin;
-                            break;
-                        }
                         i.kind = Kind::Memory;
                         i.memoryAlu = true;
                         i.memoryResult = i.op != 7;
                         i.reverse = op & 2;
                         i.memory = memoryOperand(m, address32, overrideSegment);
+                        if (i.op != 7 && !(op & 2)) {
+                            i.memory.store = true;
+                            i.memory.alu = i.op;
+                            i.memoryResult = false;
+                        }
                         i.dst = (m >> 3) & 7;
                     } else {
                         i.dst = (op & 2) ? (m >> 3) & 7 : m & 7;
@@ -325,12 +340,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 auto m = byte();
                 i.op = (m >> 3) & 7;
                 if ((m >> 6) != 3) {
-                    if (i.op != 7) {
-                        pos = begin;
-                        break;
-                    }
                     i.memoryAlu = true;
                     i.memory = memoryOperand(m, address32, overrideSegment);
+                    if (i.op != 7) {
+                        i.memory.store = true;
+                        i.memory.alu = i.op;
+                    }
                 }
                 i.kind = i.memoryAlu ? Kind::Memory : Kind::Alu;
                 i.dst = i.memoryAlu ? 0 : m & 7;

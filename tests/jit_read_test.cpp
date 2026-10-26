@@ -384,13 +384,13 @@ int main() {
             }
         {
             CPU c(65536);
-            c.mem[0] = 0xfc; // CLD remains an interpreted negative-cache entry.
+            c.mem[0] = 0xfa; // CLI remains interpreted; CLD now has native coverage.
             Jit hot(c, true, 0);
             for (unsigned n = 0; n < 12; ++n) {
                 c.ip = 0;
-                c.flags |= DF;
+                c.flags |= IF;
                 hot.run();
-                check(!(c.flags & DF) && c.ip == 1,
+                check(!(c.flags & IF) && c.ip == 1,
                       "negative cache executes current interpreter state");
             }
             // A formerly unsupported address must become native immediately
