@@ -87,3 +87,11 @@ remains a separate major dispatch optimization.
 include both variants, source/binary hashes, commands, correctness outputs and
 OS persistence records. Private sources/binaries remain in ignored
 `build/softmmu-tags`. The shipping runtime is unchanged by this report.
+
+## Word follow-up
+
+[The subsequent Word investigation](word-softmmu-investigation.md) finds millions
+of unnecessary context checks on interpreted dispatches and moves them to native
+entry in a validated private variant. Larger balanced timing controls do not
+reproduce a stable overall 6% Word penalty; the small-series table above remains
+historical evidence, not the current confidence in a general regression.
