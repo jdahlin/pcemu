@@ -342,7 +342,7 @@ std::string ArmVirtMachine::hypervReport() const {
         ",\"scanoutCommands\":" + std::to_string(gpu->scanoutCommands) +
         ",\"lastErrorCommand\":" + std::to_string(gpu->lastErrorCommand) +
         ",\"lastErrorResponse\":" + std::to_string(gpu->lastErrorResponse) +
-        ",\"resourceBytes\":" + std::to_string(gpu->resourceBytes()) +
+        ",\"resourceBytes\":" + std::to_string(gpu->resource_bytes()) +
         ",\"messageInterrupts\":" + std::to_string(gpuPci->messageInterrupts) + "}";
     report += ",\"instructionContextBarriers\":[";
     for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {

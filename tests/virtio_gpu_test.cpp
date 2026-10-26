@@ -101,16 +101,16 @@ int main() {
     std::copy(pixels.begin() + 10, pixels.end(), m.ram.begin() + 0x31000);
     check(transfer(1, 4, 3) == 0x1100);
     check(transfer(1, 4, 3, UINT64_MAX) == 0x1205);
-    check(scanout(1, 1, 1, 2, 2) == 0x1100 && gpu.mode() == "2x2x32");
+    check(scanout(1, 1, 1, 2, 2) == 0x1100 && gpu.mode_description() == "2x2x32");
     std::vector<uint32_t> output;
     unsigned width = 0, height = 0;
-    check(gpu.changedPixels(output, width, height));
+    check(gpu.changed_pixels(output, width, height));
     check(width == 2 && height == 2 && output[0] == (0xff000000 | 5 * 0x010203) &&
           output[3] == (0xff000000 | 10 * 0x010203));
-    check(!gpu.changedPixels(output, width, height));
+    check(!gpu.changed_pixels(output, width, height));
     auto flush = box(0x104, 48, 0, 0, 4, 3);
     put(flush, 40, 1);
-    check(send(flush) == 0x1100 && gpu.changedPixels(output, width, height));
+    check(send(flush) == 0x1100 && gpu.changed_pixels(output, width, height));
     check(scanout(1, 3, 2, 2, 2) == 0x1205);
     check(scanout(9, 0, 0, 1, 1) == 0x1203);
     // Alpha cursor is composited over the selected resource and clipped to scanout.
@@ -128,24 +128,24 @@ int main() {
         check(gpu.error().empty());
     };
     sendCursor();
-    check(gpu.changedPixels(output, width, height) && output[3] == 0xffff0000);
-    auto shape = gpu.pointerShape();
+    check(gpu.changed_pixels(output, width, height) && output[3] == 0xffff0000);
+    auto shape = gpu.pointer_shape();
     check(shape.active && shape.visible && shape.width == 64 && shape.height == 64);
     check(shape.pixels[0] == 0xffff0000 && shape.hotX == 0 && shape.hotY == 0);
-    check(gpu.changedPixels(output, width, height, false));
+    check(gpu.changed_pixels(output, width, height, false));
     check(output[3] != 0xffff0000); // Native host cursor must not appear in streamed pixels.
-    check(!gpu.changedPixels(output, width, height, false));
-    check(gpu.changedPixels(output, width, height, true) && output[3] == 0xffff0000);
+    check(!gpu.changed_pixels(output, width, height, false));
+    check(gpu.changed_pixels(output, width, height, true) && output[3] == 0xffff0000);
     put(cursor, 0, 0x301);
     put(cursor, 28, 0);
     put(cursor, 32, 0);
     sendCursor();
-    check(gpu.changedPixels(output, width, height) && output[0] == 0xffff0000);
+    check(gpu.changed_pixels(output, width, height) && output[0] == 0xffff0000);
     auto unref = request(0x102, 32);
     put(unref, 24, 2);
     check(send(unref) == 0x1100);
-    check(!gpu.pointerShape().visible);
-    check(gpu.changedPixels(output, width, height) && output[0] == (0xff000000 | 5 * 0x010203));
+    check(!gpu.pointer_shape().visible);
+    check(gpu.changed_pixels(output, width, height) && output[0] == (0xff000000 | 5 * 0x010203));
     auto detach = request(0x107, 32);
     put(detach, 24, 1);
     check(send(detach) == 0x1100 && transfer(1, 4, 3) == 0x1205);
@@ -161,7 +161,7 @@ int main() {
         check(attach(100 + format, 0x32000, 4) == 0x1100);
         check(transfer(100 + format, 1, 1) == 0x1100);
         check(scanout(100 + format, 0, 0, 1, 1) == 0x1100);
-        gpu.pixels(output, width, height);
+        gpu.read_pixels(output, width, height);
         check(output[0] == 0xff112233);
     }
     check(scanout(0, 0, 0, 0, 0) == 0x1100 && !gpu.active());
@@ -170,7 +170,7 @@ int main() {
     auto path = (std::filesystem::temp_directory_path() /
                  ("pcemu-gpu-" + std::to_string(getpid()) + ".ppm"))
                     .string();
-    gpu.save(path);
+    gpu.save_ppm(path);
     std::ifstream capture(path, std::ios::binary);
     std::string saved((std::istreambuf_iterator<char>(capture)), std::istreambuf_iterator<char>());
     check(saved == std::string("P6\n1 1\n255\n") + char(0x11) + char(0x22) + char(0x33));
@@ -184,9 +184,9 @@ int main() {
     for (unsigned i = 1; i <= 128; ++i)
         check(create(i, 1, 1) == 0x1100);
     check(create(129, 1, 1) == 0x1201);
-    check(gpu.resourceBytes() == 512);
+    check(gpu.resource_bytes() == 512);
     gpu.write(0x70, 0);
-    check(!gpu.active() && gpu.resourceBytes() == 0);
+    check(!gpu.active() && gpu.resource_bytes() == 0);
     setup();
     m.descriptor(0, 0, 0x20000, 24, 1, 1);
     m.descriptor(0, 1, 0x22000, 4, 2);

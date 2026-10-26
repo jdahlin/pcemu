@@ -97,7 +97,7 @@ void ArmVirtMachine::bindDevices() {
 bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height, bool compositeCursor) const {
     if (gpu && gpu->active()) {
         displayWasGpu = true;
-        return gpu->changedPixels(pixels, width, height, compositeCursor);
+        return gpu->changed_pixels(pixels, width, height, compositeCursor);
     }
     if (displayWasGpu) {
         displayWasGpu = false;
