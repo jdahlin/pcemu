@@ -203,6 +203,18 @@ def desktop(timeout):
              else 'key 011b', settle=.8)
     raise RuntimeError('Desktop not verified before timeout; live guest left intact')
 
+def dismiss_delayed_welcome():
+    # Escape does not reliably close the modeless first-boot window when
+    # desktop focus has changed. Close only after identifying its active title.
+    for attempt in range(4):
+        header = a.frame.read_bytes().split(b'\n', 3)
+        width, height = map(int, header[1].split())
+        if 'welcome' in read_blue_titles(header[3], width, height):
+            shortcut(0x38, 0x3e)  # Alt+F4, with the known Welcome window active.
+            return
+        shortcut(0x38, 0x0f)  # Alt+Tab; inspect the selected window before closing.
+    raise RuntimeError('Could not focus the known delayed Welcome window')
+
 def wait_text(*tokens, absent=(), timeout=30):
     end = time.monotonic() + timeout
     while time.monotonic() < end:
@@ -214,7 +226,10 @@ def wait_text(*tokens, absent=(), timeout=30):
             # First-boot Welcome can appear after Explorer readiness and cover
             # the Run dialog. Dismiss this known popup, then verify the target.
             print('Handling delayed welcome during application check', flush=True)
-            send('key 011b', settle=.8)
+            dismiss_delayed_welcome()
+            if tokens == ('type the name', 'windows will open it'):
+                shortcut(0x1d, 0x01)
+                send('text r', settle=.3)
             continue
         time.sleep(.2)
     screenshot('application-failure.png')

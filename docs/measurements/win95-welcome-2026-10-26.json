@@ -1,0 +1,98 @@
+{
+  "scope": "Recovery of observed delayed, inactive modeless Welcome during OSR2 automated application launch. This is a harness fix, not evidence of a guest page fault.",
+  "failedPrototypeLog": "Win95 guest PID 98156; evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl\nHandling clock warning\nHandling date/time properties\nExplorer ready; initial reset count 0\nChecking Calculator and clipboard transfer\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nHandling delayed welcome during application check\nTraceback (most recent call last):\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 276, in <module>\n    apps = applications() if a.applications else None\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 240, in applications\n    launch('calc.exe')\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 231, in launch\n    wait_text('type the name', 'windows will open it')\n  File \"/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py\", line 221, in wait_text\n    raise RuntimeError('Application text not verified: ' + repr(tokens))\nRuntimeError: Application text not verified: ('type the name', 'windows will open it')\nFAIL: owned guest PID 98156 left alive; disk and diagnostics retained in /Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl\nTraceback (most recent call last):\n  File \"/Users/johandahlin/dev/pcemu/build/softmmu-tags/smoke_win95.py\", line 103, in <module>\n    subprocess.run(checker, cwd=root, check=True)\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py\", line 528, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command '['python3', '/Users/johandahlin/dev/pcemu/tools/check_win95_restart.py', '/Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl/control.txt', '/Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl/frame.ppm', '/Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl/state', '/Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl/disk.pcd', '--pid', '98156', '--output', '/Users/johandahlin/dev/pcemu/build/win95-smoke-ykyj06cl/verification', '--timeout', '600.0', '--restart-only', '--applications']' returned non-zero exit status 1.\n",
+  "referenceControlLog": "Win95 guest PID 98580; evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q\nHandling clock warning\nHandling date/time properties\nHandling welcome\nExplorer ready; initial reset count 0\nChecking Calculator and clipboard transfer\nSaving a fresh Notepad file\nGuest Restart requested\nFirmware reset observed: 1\nHandling welcome\nPASS: Explorer returned after guest restart. Evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q/verification\nPASS: Win95 verified; private compressed disk removed; evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q\n",
+  "fixedCheckerLog": "Win95 guest PID 98969; evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l\nHandling clock warning\nHandling date/time properties\nExplorer ready; initial reset count 0\nChecking Calculator and clipboard transfer\nHandling delayed welcome during application check\nSaving a fresh Notepad file\nGuest Restart requested\nFirmware reset observed: 1\nHandling welcome\nPASS: Explorer returned after guest restart. Evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l/verification\nPASS: Win95 verified; private compressed disk removed; evidence: /Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l\n",
+  "referenceControl": {
+    "pid": 98580,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-prun5_3q/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "b522376d0f91ad2ef5a3486a9c684dd752512d74",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 645753807,
+      "afterInstructions": 1732631803,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\PCB050E9.TXT",
+        "fatName": "PCB050E9TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications CB050E99.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "d57a0d660c3af532eed841f9747aa0db5eb836324126aede49e26e16084841d8"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "fixedChecker": {
+    "pid": 98969,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/softmmu-tags/candidate-pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-glv6l17l/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "f470723249026bd02a017cce906d2cae4b6b4ad96b0dd273ed3182a426a5ba48",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "aa8b03c9c36f019ec00694776169e96105b1583c",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 535914061,
+      "afterInstructions": 1512508482,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\P58623C8.TXT",
+        "fatName": "P58623C8TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications 58623C8C.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "06d8127dc4a9d24e899a0fa2920ddc39b9e7ca03e48590765b673401b9997f1d"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "checkerSha256": "86f6119858984e5ea927689793a69fd056db5bbf920e59d4f4efb29c1583fbf1",
+  "unitTests": "4 pass: focus-before-close, already active, never close unrelated active title, reopen Run after dismissal"
+}
