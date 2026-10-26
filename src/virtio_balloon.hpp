@@ -2,22 +2,38 @@
 #include "virtio_device.hpp"
 #include <map>
 namespace pc {
+// Traditional Virtio balloon: guest PFN accounting, host reclamation and statistics.
 class VirtioBalloon : public VirtioDevice {
   public:
     using Discard = std::function<bool(uint64_t, size_t)>;
+    // Bind RAM and optional reclaim callback; granule must be aligned and a power of two.
     VirtioBalloon(std::span<uint8_t> ram, uint64_t base, Interrupt irq, size_t hostPageSize = 4096,
                   Discard discard = {}, bool legacyPfn64 = false);
-    void setTargetPages(uint32_t pages);
-    void requestStats();
-    uint32_t targetPages() const {
+    // Request a guest balloon target in 4096-byte pages.
+    void set_requested_pages(uint32_t pages);
+    // Return the retained statistics buffer so the driver supplies a fresh report.
+    void request_statistics();
+    // Read the host target, which survives a device reset.
+    // IMPLEMENTATION NOTE: Host inspection of Virtio 1.2 balloon state.
+    // https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-3240006
+    uint32_t requested_pages() const {
         return target;
     }
-    uint32_t actualPages() const {
+    // Read the guest-reported balloon size, distinct from tracked PFNs.
+    // IMPLEMENTATION NOTE: Host inspection of Virtio 1.2 balloon state.
+    // https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-3240006
+    uint32_t actual_pages() const {
         return actual;
     }
-    uint32_t inflatedPages() const {
+    // Read the number of distinct PFNs currently accounted as inflated.
+    // IMPLEMENTATION NOTE: Host inspection of Virtio 1.2 balloon state.
+    // https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-3240006
+    uint32_t inflated_pages() const {
         return inflatedCount;
     }
+    // Inspect the last guest statistics by tag; values/units depend on each tag.
+    // IMPLEMENTATION NOTE: Host inspection of Virtio 1.2 balloon state.
+    // https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-3240006
     const std::map<uint16_t, uint64_t> &statistics() const {
         return stats;
     }

@@ -240,7 +240,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 [this](unsigned o, unsigned w) { return balloon->read(o, w); },
                 [this](unsigned o, uint64_t v, unsigned w) { balloon->write(o, v, w); },
                 5, 0x05800001, 3, [this](bool level) { vm.setSPI(54, level); }, msi);
-            balloon->setTargetPages(c.balloonTargetMB * 256);
+            balloon->set_requested_pages(c.balloonTargetMB * 256);
         }
         if (c.virtioGpu) {
             gpu = std::make_unique<VirtioGpu>(vm.ram(), HvfMachine::ramBase,
@@ -319,9 +319,9 @@ std::string ArmVirtMachine::hypervReport() const {
         ",\"received\":" + std::to_string(serial->received) + ",\"transmitted\":" + std::to_string(serial->transmitted) +
         ",\"completions\":" + std::to_string(serial->completions) + ",\"messageInterrupts\":" + std::to_string(serialPci->messageInterrupts) + "}";
     if (balloon) {
-        report += ",\"virtioBalloon\":{\"targetPages\":" + std::to_string(balloon->targetPages()) +
-            ",\"actualPages\":" + std::to_string(balloon->actualPages()) +
-            ",\"inflatedPages\":" + std::to_string(balloon->inflatedPages()) +
+        report += ",\"virtioBalloon\":{\"targetPages\":" + std::to_string(balloon->requested_pages()) +
+            ",\"actualPages\":" + std::to_string(balloon->actual_pages()) +
+            ",\"inflatedPages\":" + std::to_string(balloon->inflated_pages()) +
             ",\"inflatePages\":" + std::to_string(balloon->inflatePages) +
             ",\"deflatePages\":" + std::to_string(balloon->deflatePages) +
             ",\"discardHintBytes\":" + std::to_string(balloon->discardBytes) +
@@ -400,7 +400,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
         slice = std::min(slice, std::chrono::milliseconds(10));
     }
     if (balloon && std::chrono::steady_clock::now() >= nextBalloonStats) {
-        balloon->requestStats();
+        balloon->request_statistics();
         nextBalloonStats = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     }
     checkDeviceErrors();

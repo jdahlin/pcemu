@@ -27,26 +27,26 @@ int main() {
         m.submit(balloon, q);
     };
     setup();
-    balloon.setTargetPages(64);
+    balloon.set_requested_pages(64);
     check(balloon.read(0x100) == 64 && balloon.read(0xfc) == 1 && irq);
     balloon.write(0x64, 2);
     check(!irq);
     pages(0, {0x40000, 0x41000, 0x42000});
-    check(discards == 0 && balloon.inflatedPages() == 3);
+    check(discards == 0 && balloon.inflated_pages() == 3);
     pages(0, {0x43000});
-    check(discards == 1 && balloon.inflatedPages() == 4 && balloon.discardBytes == 16384);
+    check(discards == 1 && balloon.inflated_pages() == 4 && balloon.discardBytes == 16384);
     pages(0, {0x43000, 0x43000});
-    check(discards == 1 && balloon.inflatedPages() == 4);
+    check(discards == 1 && balloon.inflated_pages() == 4);
     balloon.write(0x104, 4);
-    check(balloon.actualPages() == 4 && balloon.read(0x104, 2) == 4);
+    check(balloon.actual_pages() == 4 && balloon.read(0x104, 2) == 4);
     pages(1, {0x41000});
-    check(balloon.inflatedPages() == 3);
+    check(balloon.inflated_pages() == 3);
     pages(0, {0x41000});
     check(discards == 2);
-    balloon.setTargetPages(0);
+    balloon.set_requested_pages(0);
     check(balloon.read(0x100) == 0 && (balloon.read(0x60) & 2));
     pages(1, {0x40000, 0x41000, 0x42000, 0x43000});
-    check(balloon.inflatedPages() == 0);
+    check(balloon.inflated_pages() == 0);
     // Packed 10-byte statistics, including an unknown tag, and pull/requeue semantics.
     m.put(0x21000, 4, 2);
     m.put(0x21002, 123456789, 8);
@@ -55,7 +55,7 @@ int main() {
     m.descriptor(2, 0, 0x21000, 20, 0);
     m.submit(balloon, 2);
     check(m.get(m.used(2) + 2, 2) == 0 && balloon.statistics().at(4) == 123456789);
-    balloon.requestStats();
+    balloon.request_statistics();
     check(m.get(m.used(2) + 2, 2) == 1 && balloon.statistics().at(99) == UINT64_MAX);
     m.put(0x21002, 42, 8);
     m.submit(balloon, 2);
@@ -63,7 +63,7 @@ int main() {
     // Invalid late PFNs must not release even valid earlier pages.
     setup();
     pages(0, {0x40000, 0x41000, 0x42000, unsigned(m.ram.size())});
-    check(!balloon.error().empty() && balloon.inflatedPages() == 0 && discards == 0);
+    check(!balloon.error().empty() && balloon.inflated_pages() == 0 && discards == 0);
     setup();
     m.descriptor(0, 0, 0x20000, 3, 0);
     m.submit(balloon, 0);
@@ -82,7 +82,7 @@ int main() {
     setup();
     bool refused = false;
     try {
-        balloon.setTargetPages(UINT32_MAX);
+        balloon.set_requested_pages(UINT32_MAX);
     } catch (const std::runtime_error &) {
         refused = true;
     }
@@ -92,7 +92,7 @@ int main() {
     m.configure(balloon, 3, 2);
     discards = 0;
     pages(0, {0x40000, 0x41000, 0x42000, 0x43000});
-    check(balloon.error().empty() && balloon.inflatedPages() == 4 && discards == 0);
+    check(balloon.error().empty() && balloon.inflated_pages() == 4 && discards == 0);
     setup();
     VirtioPciDevice pci([&](unsigned o, unsigned w) { return balloon.read(o, w); },
                         [&](unsigned o, uint64_t v, unsigned w) { balloon.write(o, v, w); }, 5,
@@ -100,15 +100,15 @@ int main() {
     check(pci.configRead(0, 4) == 0x10451af4);
     pci.configWrite(0x10, 0x10000000, 4);
     pci.configWrite(4, 6, 2);
-    balloon.setTargetPages(16);
+    balloon.set_requested_pages(16);
     check(pci.read(0x10000015, 1) == balloon.read(0xfc));
     check(pci.read(0x10003000, 4) == 16);
     pci.write(0x10003004, 12, 4);
-    check(balloon.actualPages() == 12);
+    check(balloon.actual_pages() == 12);
     pci.write(0x10003000, 99, 4);
-    check(balloon.targetPages() == 16);
+    check(balloon.requested_pages() == 16);
     balloon.write(0x70, 0);
-    check(balloon.actualPages() == 0 && balloon.targetPages() == 16 &&
+    check(balloon.actual_pages() == 0 && balloon.requested_pages() == 16 &&
           balloon.statistics().empty());
     VirtioBalloon legacy(m.ram, m.base, [](bool, unsigned) {}, 4096, {}, true);
     m.configure(legacy, 3, 2);
@@ -116,10 +116,10 @@ int main() {
     m.put(0x20008, (m.base + 0x41000) / 4096, 8);
     m.descriptor(0, 0, 0x20000, 16, 0);
     m.submit(legacy, 0);
-    check(legacy.error().empty() && legacy.inflatedPages() == 2);
+    check(legacy.error().empty() && legacy.inflated_pages() == 2);
     m.descriptor(1, 0, 0x20000, 16, 0);
     m.submit(legacy, 1);
-    check(legacy.inflatedPages() == 0);
+    check(legacy.inflated_pages() == 0);
     m.put(0x20000, UINT64_MAX, 8);
     m.submit(legacy, 0);
     check(!legacy.error().empty());
