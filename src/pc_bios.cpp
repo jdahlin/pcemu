@@ -474,7 +474,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 ok();
                 break;
             case 1:
-                ps2.mouse().defaults();
+                ps2.mouse().set_defaults();
                 biosMouseCount = 0;
                 c.set(BX, 0xaa, 2);
                 ok();
@@ -506,13 +506,13 @@ bool Machine::service(uint8_t n, bool guestStub) {
                     error(2);
                     break;
                 }
-                ps2.mouse().defaults();
+                ps2.mouse().set_defaults();
                 biosMouseCount = 0;
                 ok();
                 break;
             case 6:
                 if (bh == 0) {
-                    c.set(BX, (c.get(BX, 2) & 0xff00) | ps2.mouse().status(), 2);
+                    c.set(BX, (c.get(BX, 2) & 0xff00) | ps2.mouse().read_status(), 2);
                     c.set(CX, (c.get(CX, 2) & 0xff00) | ps2.mouse().resolution, 2);
                     c.set(DX, (c.get(DX, 2) & 0xff00) | ps2.mouse().rate, 2);
                 } else if (bh <= 2)

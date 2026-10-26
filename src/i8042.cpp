@@ -5,12 +5,12 @@ I8042Device::Irqs I8042Device::poll(uint64_t now, IrqState inputs) {
     // No output-buffer/IRQ work is possible until queued input is ready or
     // the mouse sample deadline arrives. Inspect live state so guest I/O,
     // host input and restored snapshots need no cached-deadline invalidation.
-    if (!state_.keyboardFull && !state_.mouse.packetDue(now) &&
+    if (!state_.keyboardFull && !state_.mouse.packet_due(now) &&
         (now < state_.keyboardNextAt ||
          (state_.keyboardReplies.empty() && state_.mouse.replies.empty() && state_.scanCodes.empty() &&
           state_.mouse.packets.empty())))
         return result;
-    state_.mouse.poll(now);
+    state_.mouse.poll_due_report(now);
     // Backpressure the injected scan stream until the current IRQ service ends.
     // Command replies can still arrive while a handler is waiting for an ACK.
     if (!state_.keyboardFull && now >= state_.keyboardNextAt) {
@@ -122,7 +122,7 @@ I8042Device::Effects I8042Device::write(uint8_t value) {
         else if (command == 0xd3)
             state_.mouse.replies.push_back(value);
         else if (command == 0xd4)
-            state_.mouse.command(value);
+            state_.mouse.write_command(value);
         return result;
     }
     if (state_.keyboardParameter) {

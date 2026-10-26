@@ -30,7 +30,7 @@ class I8042Device {
     // Conservative board-side gate: false means poll cannot change state or
     // raise an IRQ. Read live state so I/O, input and restore need no cache.
     bool pollDue(uint64_t now) const {
-        if (state_.mouse.packetDue(now))
+        if (state_.mouse.packet_due(now))
             return true;
         if (state_.keyboardFull)
             return state_.keyboardAux ? (state_.keyboardCommandByte & 2) && !state_.mouseLine
@@ -45,7 +45,7 @@ class I8042Device {
     Effects command(uint8_t value, bool a20);
     Effects write(uint8_t value);
     void enqueueScan(uint8_t byte) { state_.scanCodes.push_back(byte); }
-    void motion(int x, int y, uint8_t buttons, int wheel = 0) { state_.mouse.motion(x, y, buttons, wheel); }
+    void motion(int x, int y, uint8_t buttons, int wheel = 0) { state_.mouse.accumulate_motion(x, y, buttons, wheel); }
     PS2Mouse &mouse() { return state_.mouse; }
     const PS2Mouse &mouse() const { return state_.mouse; }
     void enableAuxiliaryInterface() { state_.keyboardCommandByte = (state_.keyboardCommandByte & ~0x20) | 2; }

@@ -191,7 +191,7 @@ int main() {
         check(m.pic[1].irr & 0x10, "AUX data raises IRQ12");
         check(!(m.pic[0].irr & 2), "AUX data does not raise IRQ1");
         check(readByte() == 0xfa, "enable reporting ACK");
-        ps2State(m).mouse.motion(-255, 255, 1);
+        ps2State(m).mouse.accumulate_motion(-255, 255, 1);
         c.instructions += 4000;
         check(!(m.in(0x64, 1) & 1),
               "masked host mouse reporting cannot block shared keyboard buffer");
@@ -200,7 +200,7 @@ int main() {
         m.pic[1].mask &= ~0x10;
         check(readByte() == 0x19 && readByte() == 1 && readByte() == 255,
               "signed 9-bit movement and left button");
-        ps2State(m).mouse.motion(0, 0, 0);
+        ps2State(m).mouse.accumulate_motion(0, 0, 0);
         check(readByte() == 8 && readByte() == 0 && readByte() == 0,
               "button release retained without motion");
         for (unsigned rate : {200, 100, 80}) {
@@ -211,13 +211,13 @@ int main() {
         }
         mouseCommand(0xf2);
         check(readByte() == 0xfa && readByte() == 3, "wheel mouse negotiation");
-        ps2State(m).mouse.motion(10, -3, 2, -1);
+        ps2State(m).mouse.accumulate_motion(10, -3, 2, -1);
         check(readByte() == 0x2a && readByte() == 10 && readByte() == 253 && readByte() == 255,
               "four-byte wheel packet");
         mouseCommand(0xf0);
         check(readByte() == 0xfa, "remote mode ACK");
-        ps2State(m).mouse.motion(4, 5, 0);
-        ps2State(m).mouse.poll(c.instructions + 100000);
+        ps2State(m).mouse.accumulate_motion(4, 5, 0);
+        ps2State(m).mouse.poll_due_report(c.instructions + 100000);
         check(ps2State(m).mouse.packets.empty(), "remote mode waits for request");
         mouseCommand(0xeb);
         check(readByte() == 0xfa && readByte() == 8 && readByte() == 4 && readByte() == 5 &&
@@ -225,7 +225,7 @@ int main() {
               "remote read packet");
         // Exercise actual ROM code and its far callback stack, rather than only
         // testing host-side BIOS service helpers.
-        ps2State(m).mouse.defaults();
+        ps2State(m).mouse.set_defaults();
         c.segment(CS, 0);
         c.ip = 0x500;
         c.segment(SS, 0);
@@ -247,7 +247,7 @@ int main() {
         c.segment(DS, 0);
         c.r[AX] = 0xabcd;
         c.r[BX] = 0x1234;
-        ps2State(m).mouse.motion(7, -4, 1);
+        ps2State(m).mouse.accumulate_motion(7, -4, 1);
         for (unsigned byte = 0; byte < 3; ++byte) {
             c.instructions += 4000;
             m.in(0x64, 1);
@@ -413,7 +413,7 @@ int main() {
         c.write(VGA::lfbBase, 0x34, 1);
         c.write(VGA::lfbBase + 1, 0x12, 1);
         check(m.vga.pixel(0, 0) == 0xff001234, "packed 24-bit rendering");
-        ps2State(m).mouse.motion(13, -9, 2);
+        ps2State(m).mouse.accumulate_motion(13, -9, 2);
         m.pollPs2();
         m.pci.address = 0x80001010;
         m.pci.display().barProbe = true;
@@ -473,7 +473,7 @@ int main() {
             ps2State(scheduled).mouse.enabled = true;
             ps2State(scheduled).mouse.nextAt = 1000;
             ps2State(scheduled).keyboardNextAt = 5000;
-            ps2State(scheduled).mouse.motion(5, -3, 0);
+            ps2State(scheduled).mouse.accumulate_motion(5, -3, 0);
             scheduled.cpu.instructions = 999;
             scheduled.pollPs2();
             check(!ps2State(scheduled).keyboardFull && ps2State(scheduled).mouse.packets.empty() && ps2State(scheduled).mouse.dx == 5,
@@ -522,7 +522,7 @@ int main() {
             buttons.pic[1].mask = 0;
             ps2State(buttons).mouse.enabled = true;
             ps2State(buttons).mouse.nextAt = 1000000;
-            ps2State(buttons).mouse.motion(0, 0, 1);
+            ps2State(buttons).mouse.accumulate_motion(0, 0, 1);
             buttons.pollPs2();
             check(ps2State(buttons).keyboardFull && ps2State(buttons).keyboardAux && (buttons.pic[1].irr & 0x10),
                   "queued mouse button transitions bypass the future movement sample deadline");

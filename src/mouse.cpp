@@ -1,157 +1,214 @@
+// PS/2 mouse byte protocol converts host relative input into motion reports and
+// command responses delivered by the separate i8042 controller. Stream mode emits
+// reports when enabled and a sampling deadline/button transition is due; remote
+// mode waits for READ DATA. Wrap mode echoes commands except RESET/RESET WRAP.
+// Replies and motion packets have separate queues so the controller can prioritize
+// acknowledgements. X/Y counts include sign bits, buttons use low packet bits,
+// and the common IntelliMouse rate handshake enables a fourth signed wheel byte.
+//
+// IBM's two-button PS/1 mouse reference defines the baseline commands, defaults,
+// resolution/status/report and nonlinear 2:1 scaling. Three-button framing and
+// wheel ID negotiation are compatibility extensions referenced against Linux's
+// primary PS/2 driver; this is not a copy of that driver's implementation.
+// IMPLEMENTATION NOTE: Host input is already in motion counts: resolution is
+// reported/stored but does not rescale frontend input. Sampling uses instruction
+// ticks; immediate button reports retain down/up ordering within one host batch.
+// Accumulators saturate at signed 16-bit host bounds. There are no electrical
+// clock/parity/timing or real self-test operations.
+// COMPATIBILITY: Excess movement is retained for later packets instead of being
+// cleared with overflow flags. RESEND returns lastSent byte rather than a prior
+// whole packet; invalid input always asks for resend without IBM's second-error
+// escalation. Mode changes preserve most pending movement. FIXME: Implement the
+// specified counter-clearing/overflow/resend/error rules before claiming full IBM
+// mouse behavior; preserve current guest compatibility in this migration.
+// IBM PS/1 Technical Reference (1990), section 6; Linux intellimouse_detect.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=3
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=10
+// https://github.com/torvalds/linux/blob/master/drivers/input/mouse/psmouse-base.c#L532
+
 #include "mouse.hpp"
 #include <algorithm>
 namespace pc {
-void PS2Mouse::defaults() {
+// Restore command defaults and clear pending motion/report data, retaining current button state.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=3
+void PS2Mouse::set_defaults() {
     enabled = remote = wrap = scaling2 = false;
-    resolution = 2;
-    rate = 100;
-    id = parameter = 0;
+    resolution = DefaultResolution;
+    rate = DefaultSampleRate;
+    id = StandardMouseId;
+    parameter = 0;
     rates = {};
     dx = dy = wheel = 0;
     nextAt = 0;
     reportedButtons = buttons;
     packets.clear();
 }
-uint8_t PS2Mouse::status() const {
-    return (remote ? 64 : 0) | (enabled ? 32 : 0) | (scaling2 ? 16 : 0) | ((buttons & 1) << 2) |
-           ((buttons & 2) >> 1) | ((buttons & 4) >> 1);
+// Encode mode, enable, scaling and button state in status-response bit order.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=7
+uint8_t PS2Mouse::read_status() const {
+    return (remote ? RemoteStatus : 0) | (enabled ? EnabledStatus : 0) |
+           (scaling2 ? Scaling2Status : 0) | ((buttons & LeftButton) << 2) |
+           ((buttons & RightButton) >> 1) | ((buttons & MiddleButton) >> 1);
 }
-void PS2Mouse::command(uint8_t value) {
-    if (wrap && value != 0xec && value != 0xff) {
+// Handle commands/parameters/wrap echo and append acknowledgement/status/report responses.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=4
+void PS2Mouse::write_command(uint8_t value) {
+    if (wrap && value != Command::ResetWrapMode && value != Command::Reset) {
         replies.push_back(value);
         return;
     }
     if (parameter) {
-        if (parameter == 0xe8) {
-            if (value > 3) {
-                replies.push_back(0xfe);
+        if (parameter == Command::SetResolution) {
+            if (value > MaximumResolution) {
+                replies.push_back(RequestResend);
                 return;
             }
             resolution = value;
         } else {
+            // IBM Figure 6-2 defines exactly these report rates (reports per second).
+            // https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=6
             if (value != 10 && value != 20 && value != 40 && value != 60 && value != 80 &&
                 value != 100 && value != 200) {
-                replies.push_back(0xfe);
+                replies.push_back(RequestResend);
                 return;
             }
             rate = value;
             rates = {rates[1], rates[2], value};
-            if (rates == std::array<uint8_t, 3>{200, 100, 80})
-                id = 3;
+            if (rates == WheelEnableSequence)
+                id = WheelMouseId;
         }
         parameter = 0;
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         return;
     }
-    if (value == 0xfe) {
+    if (value == Command::Resend) {
         replies.push_back(lastSent);
         return;
     }
     switch (value) {
-    case 0xff:
-        defaults();
+    case Command::Reset:
+        set_defaults();
         replies.clear();
-        replies.insert(replies.end(), {0xfa, 0xaa, 0});
+        replies.insert(replies.end(), {Acknowledge, SelfTestPassed, StandardMouseId});
         break;
-    case 0xf6:
-        defaults();
-        replies.push_back(0xfa);
+    case Command::SetDefault:
+        set_defaults();
+        replies.push_back(Acknowledge);
         break;
-    case 0xf4:
+    case Command::Enable:
         enabled = true;
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xf5:
+    case Command::Disable:
         enabled = false;
         packets.clear();
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xf3:
-    case 0xe8:
+    case Command::SetSamplingRate:
+    case Command::SetResolution:
         parameter = value;
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xf2:
-        replies.insert(replies.end(), {0xfa, id});
+    case Command::ReadDeviceType:
+        replies.insert(replies.end(), {Acknowledge, id});
         break;
-    case 0xf0:
+    case Command::SetRemoteMode:
         remote = true;
         packets.clear();
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xea:
+    case Command::SetStreamMode:
         remote = false;
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xee:
+    case Command::SetWrapMode:
         wrap = true;
         packets.clear();
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xec:
+    case Command::ResetWrapMode:
         wrap = false;
-        replies.push_back(0xfa);
+        replies.push_back(Acknowledge);
         break;
-    case 0xeb:
-        replies.push_back(0xfa);
-        packet(replies);
+    case Command::ReadData:
+        replies.push_back(Acknowledge);
+        append_data_report(replies);
         break;
-    case 0xe9:
-        replies.insert(replies.end(), {0xfa, status(), resolution, rate});
+    case Command::StatusRequest:
+        replies.insert(replies.end(), {Acknowledge, read_status(), resolution, rate});
         break;
-    case 0xe6:
-    case 0xe7:
-        scaling2 = value == 0xe7;
-        replies.push_back(0xfa);
+    case Command::ResetScaling:
+    case Command::SetScaling2To1:
+        scaling2 = value == Command::SetScaling2To1;
+        replies.push_back(Acknowledge);
         break;
     default:
-        replies.push_back(0xfe);
+        replies.push_back(RequestResend);
         break;
     }
 }
-void PS2Mouse::packet(std::deque<uint8_t> &destination) {
-    int limit = scaling2 ? 127 : 255;
+// Emit bounded signed coordinate bytes, button bits and optional wheel; retain excess counts.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=9
+void PS2Mouse::append_data_report(std::deque<uint8_t> &destination) {
+    int limit = scaling2 ? ScaledInputLimit : UnscaledReportLimit;
     int x = std::clamp(dx, -limit, limit), y = std::clamp(dy, -limit, limit);
     dx -= x;
     dy -= y;
-    auto scale = [&](int value) {
+    // Apply IBM Set Scaling 2:1 to one bounded coordinate, preserving its sign.
+    // https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=8
+    auto scale_coordinate = [&](int value) {
         if (!scaling2)
             return value;
         int magnitude = value < 0 ? -value : value;
-        const int small[] = {0, 1, 1, 3, 6, 9};
-        int result = magnitude < 6 ? small[magnitude] : magnitude * 2;
+        // Nonlinear 2:1 mapping for magnitudes 0..5; larger values double.
+        // IBM Figure 6-5; the sign is restored after scaling the magnitude.
+        // https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=8
+        const int SmallMagnitudeOutput[] = {0, 1, 1, 3, 6, 9};
+        int result = magnitude < 6 ? SmallMagnitudeOutput[magnitude] : magnitude * 2;
         return value < 0 ? -result : result;
     };
-    x = scale(x);
-    y = scale(y);
-    destination.push_back(8 | buttons | (x < 0 ? 16 : 0) | (y < 0 ? 32 : 0));
+    x = scale_coordinate(x);
+    y = scale_coordinate(y);
+    destination.push_back(PacketSynchronization | buttons | (x < 0 ? NegativeX : 0) |
+                          (y < 0 ? NegativeY : 0));
     destination.push_back(uint8_t(x));
     destination.push_back(uint8_t(y));
-    if (id == 3) {
-        int z = std::clamp(wheel, -127, 127);
+    if (id == WheelMouseId) {
+        int z = std::clamp(wheel, -WheelReportLimit, WheelReportLimit);
         wheel -= z;
         destination.push_back(uint8_t(z));
     } else
         wheel = 0;
     reportedButtons = buttons;
 }
-void PS2Mouse::motion(int x, int y, uint8_t held, int scroll) {
-    bool changed = buttons != (held & 7);
-    buttons = held & 7;
+// Accumulate enabled host input and queue immediate button transitions in stream mode.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=9
+void PS2Mouse::accumulate_motion(int x, int y, uint8_t held, int scroll) {
+    bool changed = buttons != (held & ButtonMask);
+    buttons = held & ButtonMask;
     if (!enabled)
         return;
-    dx = int32_t(std::clamp(int64_t(dx) + x, int64_t(-32768), int64_t(32767)));
-    dy = int32_t(std::clamp(int64_t(dy) + y, int64_t(-32768), int64_t(32767)));
-    if (id == 3)
-        wheel = int32_t(std::clamp(int64_t(wheel) + scroll, int64_t(-32768), int64_t(32767)));
+    dx = int32_t(std::clamp(int64_t(dx) + x, int64_t(INT16_MIN), int64_t(INT16_MAX)));
+    dy = int32_t(std::clamp(int64_t(dy) + y, int64_t(INT16_MIN), int64_t(INT16_MAX)));
+    if (id == WheelMouseId)
+        wheel =
+            int32_t(std::clamp(int64_t(wheel) + scroll, int64_t(INT16_MIN), int64_t(INT16_MAX)));
     // Keep down/up transitions even when both arrive in one frontend batch.
-    if (changed && !remote && !wrap && packets.size() < 512)
-        packet(packets);
+    if (changed && !remote && !wrap && packets.size() < ImmediateReportBacklogThreshold)
+        append_data_report(packets);
 }
-void PS2Mouse::poll(uint64_t instructions) {
-    if (packetDue(instructions)) {
-        packet(packets);
-        nextAt = instructions + 4772728 / rate;
+// Append a due stream report and schedule the next instruction-derived sampling deadline.
+// IBM mouse section 6; host bounds and compatibility extensions are described above.
+// https://ftp.infania.net/pub/DOS%20Drivers/IBM%20PS1/Section%206.%20Mouse.pdf#page=9
+void PS2Mouse::poll_due_report(uint64_t instructions) {
+    if (packet_due(instructions)) {
+        append_data_report(packets);
+        nextAt = instructions + InstructionTicksPerSecond / rate;
     }
 }
 } // namespace pc
