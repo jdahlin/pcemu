@@ -1,0 +1,65 @@
+# Windows ARM64 guest drivers and device coverage
+
+The 2026-10-26 Windows inventory and installation used the signed ARM64 packages
+from the [official stable VirtIO 0.1.302 ISO](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/).
+The working viostor 0.1.285 boot package was retained for the current INTx-only
+controller; the later package has a known interrupt setup incompatibility.
+
+Windows validated all twelve catalogs as Microsoft Windows Hardware
+Compatibility Publisher signatures. All twelve driver families are in the
+Driver Store. Five families were newly added: viogpudo, pvpanic, viofs, viomem
+and viosock. Packages without matching hardware are staged, not active.
+
+| Family | Guest package | Host device / guest state at installation |
+| --- | --- | --- |
+| Block | viostor 0.1.285 | PCI 1AF4:1042; signed, running |
+| Network | NetKVM 0.1.302 | PCI 1AF4:1041; signed, running; DNS and HTTP verified |
+| Entropy | viorng 0.1.302 | PCI 1AF4:1044; signed; device problem code 0 |
+| SCSI | vioscsi 0.1.302 | Staged; separate virtio-scsi controller absent |
+| Serial | vioserial 0.1.302 | Staged; virtio-console/agent channel absent |
+| Input | vioinput 0.1.302 | Staged; current input uses working USB HID |
+| Balloon | Balloon 0.1.302 | Staged; balloon device absent |
+| Display | viogpudo 0.1.302 | Staged; currently RAMFB with Microsoft Basic Display |
+| Shared filesystem | viofs 0.1.302 | Staged; host filesystem device/backend absent |
+| Memory hotplug | viomem 0.1.302 | Staged; host memory-hotplug device absent |
+| Guest sockets | viosock 0.1.302 | Staged; host vsock device/backend absent |
+| Panic notification | pvpanic 0.1.302 | Staged; panic device absent |
+
+Microsoft's inbox VMBus, heartbeat, time synchronization, guest shutdown and data
+exchange drivers were already installed. The four corresponding integration
+services were running. Current keyboard/mouse use Microsoft's inbox USB drivers.
+Installing additional driver packages alone does not accelerate these devices.
+
+The stable ISO supplies x86/x64 QEMU guest-agent MSI files and x86/x64 combined
+guest-tools installers. It has no native ARM64 agent MSI. More importantly,
+pcemu currently lacks the virtio-serial agent channel and SPICE server, so no
+unused guest-agent/balloon/display service was started. Those require working
+host counterparts first. VirtIO-GPU 2D display also does not imply 3D acceleration.
+
+One pre-existing unknown device remains: ACPI QEMU0002 (fw_cfg), problem code 28.
+The stable fwcfg and qemufwcfg INF models cover x86/x64 only; they were not forced
+onto ARM64 and no signature requirements were relaxed.
+
+## Reproduce preparation and import
+
+```sh
+python3 tools/fetch_virtio_arm64.py --all-drivers --destination media/virtio-arm64-complete-0.1.302
+python3 tools/fetch_virtio_arm64.py --viostor-intx --destination media/viostor-arm64-intx-0.1.285
+python3 tools/build_windows_driver_bundle.py --output build/windows-drivers.zip
+```
+
+Existing destination directories are intentionally not overwritten. Transfer and
+extract the ZIP to `C:\PCEMU\VirtIO-ARM64`, then run
+`tools/windows/install_guest_drivers.ps1` in an elevated native ARM64 PowerShell.
+It checks manifest hashes and catalog trust before importing individual INFs,
+preserves an already-running viostor boot driver, rescans hardware, and records
+both active drivers and the Driver Store. It does not install optional services.
+PnPUtil return 259 is recorded as no device update (no matching device or an
+existing preferred driver), consistent with [Microsoft's return-value documentation](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/pnputil-return-values).
+
+The native run completed without a reboot requirement. Post-installation checks
+confirmed unchanged working disk/network/RNG devices, loaded NetKVM and viostor,
+DNS and HTTP download/upload, and no new device problem codes. No performance
+improvement is claimed from staging unused packages. The next work is implementing
+and validating the missing host devices, starting with display and transport
+interrupt support, alongside the corresponding Hyper-V device paths.

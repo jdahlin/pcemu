@@ -16,13 +16,17 @@ INTX_SOURCE = ('https://fedorapeople.org/groups/virt/virtio-win/direct-downloads
                'archive-virtio/virtio-win-0.1.285-1/virtio-win-0.1.285.iso')
 INTX_ISO_BYTES = 789645312
 PACKAGES = ('viostor', 'vioscsi', 'viorng', 'vioserial', 'vioinput', 'Balloon')
+ALL_PACKAGES = PACKAGES + ('NetKVM', 'viogpudo', 'pvpanic', 'viofs', 'viomem', 'viosock')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--destination', type=Path, default=ROOT / 'media/virtio-arm64-0.1.302')
     parser.add_argument('--viostor-intx', action='store_true', help='Stage the pre-regression viostor 0.1.285 package for INTx-only devices')
+    parser.add_argument('--all-drivers', action='store_true', help='Include all ARM64 driver families present in the pinned ISO, including GPU and filesystem drivers')
     args = parser.parse_args()
+    if args.all_drivers and args.viostor_intx:
+        parser.error('--all-drivers and --viostor-intx select different source releases')
     if args.destination.exists():
         parser.error('Refusing an existing destination')
     source_url = INTX_SOURCE if args.viostor_intx else SOURCE
@@ -33,7 +37,8 @@ def main():
     iso = pycdlib.PyCdlib(); iso.open_fp(remote)
     files = {}
     try:
-        for package in (('viostor',) if args.viostor_intx else PACKAGES):
+        packages = ('viostor',) if args.viostor_intx else (ALL_PACKAGES if args.all_drivers else PACKAGES)
+        for package in packages:
             directory = '/' + package + '/w11/ARM64'
             names = [record.file_identifier().decode() for record in iso.list_children(iso_path=directory)]
             for name in names:
@@ -58,7 +63,7 @@ def main():
         iso.get_file_from_iso_fp(stream, iso_path='/virtio-win_license.txt', blocksize=remote.block_size)
         files['virtio-win_license.txt'] = stream.getvalue()
         report = {'source': source_url, 'sourceISOBytes': remote.size, 'sourceETag': remote.etag,
-                  'downloadedBytes': remote.fetched, 'architecture': 'ARM64',
+                  'downloadedBytes': remote.fetched, 'architecture': 'ARM64', 'packages': list(packages),
                   'windowsSignatureValidated': False, 'installed': False,
                   'files': [{'name': name, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
                             for name, data in files.items()]}

@@ -1,0 +1,267 @@
+{
+  "date": "2026-10-26",
+  "catalogs": [
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\Balloon\\balloon.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\NetKVM\\netkvm.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\pvpanic\\pvpanic.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viofs\\viofs.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viogpudo\\viogpudo.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\vioinput\\vioinput.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viomem\\viomem.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viorng\\viorng.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\vioscsi\\vioscsi.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\vioserial\\vioser.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viosock\\viosock.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    },
+    {
+      "file": "C:\\PCEMU\\VirtIO-ARM64\\viostor\\viostor.cat",
+      "status": "Valid",
+      "signer": "CN=Microsoft Windows Hardware Compatibility Publisher, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    }
+  ],
+  "results": [
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\Balloon\\balloon.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  balloon.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem0.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\NetKVM\\netkvm.inf",
+      "action": "staged-no-device-update",
+      "exitCode": 259,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  netkvm.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem6.inf\r\nDriver package is up-to-date on device: PCI\\VEN_1AF4&DEV_1041&SUBSYS_00411AF4&REV_01\\3&11583659&0&10\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  0\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\pvpanic\\pvpanic.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  pvpanic.inf\r\nDriver package added successfully.\r\nPublished Name:         oem8.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viofs\\viofs.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  viofs.inf\r\nDriver package added successfully.\r\nPublished Name:         oem9.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viogpudo\\viogpudo.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  viogpudo.inf\r\nDriver package added successfully.\r\nPublished Name:         oem10.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\vioinput\\vioinput.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  vioinput.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem1.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viomem\\viomem.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  viomem.inf\r\nDriver package added successfully.\r\nPublished Name:         oem11.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viorng\\viorng.inf",
+      "action": "staged-no-device-update",
+      "exitCode": 259,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  viorng.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem2.inf\r\nDriver package is up-to-date on device: PCI\\VEN_1AF4&DEV_1044&SUBSYS_00441AF4&REV_01\\3&11583659&0&18\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  0\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\vioscsi\\vioscsi.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  vioscsi.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem3.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\vioserial\\vioser.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  vioser.inf\r\nDriver package added successfully. (Already exists in the system)\r\nPublished Name:         oem4.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viosock\\viosock.inf",
+      "action": "add-and-match",
+      "exitCode": 0,
+      "output": "Microsoft PnP Utility\r\n\r\nAdding driver package:  viosock.inf\r\nDriver package added successfully.\r\nPublished Name:         oem12.inf\r\n\r\nTotal driver packages:  1\r\nAdded driver packages:  1\r\n"
+    },
+    {
+      "inf": "C:\\PCEMU\\VirtIO-ARM64\\viostor\\viostor.inf",
+      "action": "preserved-active-boot-driver",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "activeDrivers": [
+    {
+      "DeviceName": "VirtIO RNG Device",
+      "DeviceID": "PCI\\VEN_1AF4&DEV_1044&SUBSYS_00441AF4&REV_01\\3&11583659&0&18",
+      "DriverVersion": "100.103.104.30200",
+      "InfName": "oem2.inf",
+      "IsSigned": true
+    },
+    {
+      "DeviceName": "Red Hat VirtIO Ethernet Adapter",
+      "DeviceID": "PCI\\VEN_1AF4&DEV_1041&SUBSYS_00411AF4&REV_01\\3&11583659&0&10",
+      "DriverVersion": "100.103.104.30200",
+      "InfName": "oem6.inf",
+      "IsSigned": true
+    },
+    {
+      "DeviceName": "Red Hat VirtIO SCSI controller",
+      "DeviceID": "PCI\\VEN_1AF4&DEV_1042&SUBSYS_00421AF4&REV_01\\3&11583659&0&00",
+      "DriverVersion": "100.101.104.28500",
+      "InfName": "oem5.inf",
+      "IsSigned": true
+    }
+  ],
+  "driverStore": [
+    {
+      "Driver": "oem0.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\balloon.inf_arm64_a947a1d1e9f89785\\balloon.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem1.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\vioinput.inf_arm64_1057b3615b93e2fc\\vioinput.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "HIDClass",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem10.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viogpudo.inf_arm64_d2a29f252d2d6a05\\viogpudo.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "Display",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem11.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viomem.inf_arm64_f72340008da94c63\\viomem.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "MTD",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem12.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viosock.inf_arm64_24791b64987c90c6\\viosock.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem2.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viorng.inf_arm64_153d7e2c2469ced1\\viorng.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem3.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\vioscsi.inf_arm64_69dbd3a18ad1eead\\vioscsi.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "SCSIAdapter",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem4.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\vioser.inf_arm64_b01aab34275c43fb\\vioser.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem5.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viostor.inf_arm64_b295a7c6a3fb1916\\viostor.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "SCSIAdapter",
+      "Version": "100.101.104.28500"
+    },
+    {
+      "Driver": "oem6.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\netkvm.inf_arm64_0f0866362e4e8b3a\\netkvm.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "Net",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem7.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\prnms009.inf_arm64_023db06c1074c092\\prnms009.inf",
+      "ProviderName": "Microsoft",
+      "ClassName": "Printer",
+      "Version": "10.0.26100.4484"
+    },
+    {
+      "Driver": "oem8.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\pvpanic.inf_arm64_ecf10e248edcece5\\pvpanic.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    },
+    {
+      "Driver": "oem9.inf",
+      "OriginalFileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\viofs.inf_arm64_dd9a0479130e6da0\\viofs.inf",
+      "ProviderName": "Red Hat, Inc.",
+      "ClassName": "System",
+      "Version": "100.103.104.30200"
+    }
+  ],
+  "rebootRequired": false,
+  "httpVerified": true,
+  "dnsVerified": true,
+  "remainingProblemDevices": [
+    {
+      "Name": null,
+      "PNPDeviceID": "ACPI\\QEMU0002\\2&DABA3FF&0",
+      "Service": null,
+      "ConfigManagerErrorCode": 28,
+      "Status": "Error"
+    }
+  ]
+}
