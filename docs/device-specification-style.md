@@ -46,6 +46,12 @@ a table reference and an explanation beside each returned value of its encoded
 meaning, including field positions, combined identifiers and revision mappings. Ordinary zero/one
 values and arithmetic need no decorative constants.
 
+Explain the meaning and purpose of fixed signatures and identifiers, not only
+which byte or bit is returned. State what software learns from them, how split
+fields combine, and how a shared family signature differs from a device-specific
+part number. For example, `0xb105f00d` identifies the PrimeCell identification
+scheme; the separate peripheral part number identifies the PL031 RTC.
+
 ## Inline documentation
 
 Each function's comment must explain what it does, its result or side effects,

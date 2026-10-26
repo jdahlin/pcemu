@@ -151,6 +151,14 @@ uint32_t ArmPl031::read_register(unsigned offset) {
     case Register::PeripheralIdentificationRegister3:
         // Configuration = 0: this peripheral has no configuration option bits set.
         return 0x00;
+    // PrimeCell is ARM's family of reusable peripheral designs. Its fixed
+    // identification signature, 0xb105f00d, lets software recognize the standard
+    // PrimeCell identification scheme. The separate Peripheral Identification
+    // registers above identify this particular device as an ARM PL031 RTC.
+    // Software reconstructs the signature from four register reads:
+    // ID0 | (ID1 << 8) | (ID2 << 16) | (ID3 << 24).
+    // Each register returns one byte in bits 7:0, with the remaining bits zero;
+    // the registers themselves are four bytes apart in the memory map.
     // ARM DDI 0224C, 3.5 PrimeCell identification registers.
     // https://documentation-service.arm.com/static/5fa13c81b1a7c5445f29021e#page=29
     case Register::PrimeCellIdentificationRegister0:
