@@ -674,3 +674,23 @@ if(SPICE_FOUND AND SPICE_CLIENT_FOUND)
   set_tests_properties(spice-tests spice-sanitized-tests PROPERTIES
     ENVIRONMENT "GST_PLUGIN_SYSTEM_PATH_1_0=;GST_PLUGIN_PATH_1_0=" TIMEOUT 45)
 endif()
+
+# Host-only synthetic timer scheduling benchmark; no guest images or HVF.
+pcemu_program(hyperv-timer-bench SOURCES src/arm_hyperv_timers.cpp tools/benchmark_hyperv_timers.cpp)
+
+pcemu_program(arm-hyperv-sanitized-tests SANITIZE
+  SOURCES
+    src/arm_gpadl.cpp
+    src/arm_vmbus_ring.cpp
+    src/arm_vmbus.cpp
+    src/arm_hyperv_timers.cpp
+    src/arm_synic.cpp
+    src/arm_hyperv_heartbeat.cpp
+    src/arm_hyperv_timesync.cpp
+    src/arm_hyperv_shutdown.cpp
+    src/arm_hyperv_reference_clock.cpp
+    src/arm_hyperv_kvp_codec.cpp
+    src/arm_hyperv_kvp.cpp
+    src/arm_hyperv.cpp
+    tests/arm_hyperv_test.cpp
+)

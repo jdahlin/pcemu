@@ -37,6 +37,7 @@ uint16_t ArmHyperVTimers::write(uint32_t name, unsigned vp, uint64_t value, uint
     auto &timer = timers[vp][(name - 0xb0000) / 2];
     const bool wasArmed = timer.armed;
     const auto oldDeadline = timer.deadline;
+    const bool wasLazy = timer.config & 4;
     if (name & 1) {
         ++writes.countWrites;
         writes.repeatedCountWrites += timer.count == value;
@@ -56,11 +57,19 @@ uint16_t ArmHyperVTimers::write(uint32_t name, unsigned vp, uint64_t value, uint
     arm(timer, observe(now));
     writes.periodicRearms += timer.armed && (timer.config & 2);
     writes.unchangedArmedDeadline += wasArmed && timer.armed && oldDeadline == timer.deadline;
+    // Preserve all register/rearm effects. Only the derived minimum deadlines
+    // can be reused when their armed/deadline/lazy inputs did not change.
+    if (wasArmed != timer.armed || (timer.armed &&
+        (oldDeadline != timer.deadline || wasLazy != bool(timer.config & 4))))
+        deadlinesDirty = true;
     return 0;
 }
 void ArmHyperVTimers::service(uint64_t now) {
     ++services;
     const auto current = observe(now);
+    refreshDeadlines();
+    if (!earliest || current < *earliest) { ++fastReturns; return; }
+    deadlinesDirty = true; // Expiration/retry/periodic advance can change minima.
     for (unsigned vp = 0; vp < cpus; ++vp) for (unsigned index = 0; index < 4; ++index) {
         auto &timer = timers[vp][index];
         ++visits;
@@ -79,15 +88,23 @@ void ArmHyperVTimers::service(uint64_t now) {
         }
     }
 }
+void ArmHyperVTimers::refreshDeadlines() const {
+    if (!deadlinesDirty) return;
+    earliest.reset(); earliestNonLazy.reset();
+    ++rebuilds;
+    for (unsigned vp = 0; vp < cpus; ++vp) for (const auto &timer : timers[vp]) {
+        ++deadlineVisits;
+        if (!timer.armed) continue;
+        if (!earliest || timer.deadline < *earliest) earliest = timer.deadline;
+        if (!(timer.config & 4) && (!earliestNonLazy || timer.deadline < *earliestNonLazy))
+            earliestNonLazy = timer.deadline;
+    }
+    deadlinesDirty = false;
+}
 std::optional<ArmHyperVTimers::Time> ArmHyperVTimers::deadline(bool includeLazy) const {
     ++queries;
-    std::optional<Time> result;
-    for (unsigned vp = 0; vp < cpus; ++vp) for (auto &timer : timers[vp]) {
-        ++deadlineVisits;
-        if (timer.armed && (includeLazy || !(timer.config & 4)) && (!result || timer.deadline < *result))
-            result = timer.deadline;
-    }
-    return result;
+    refreshDeadlines();
+    return includeLazy ? earliest : earliestNonLazy;
 }
 std::optional<uint64_t> ArmHyperVTimers::nextDeadline(bool includeLazy) const {
     auto value = deadline(includeLazy);

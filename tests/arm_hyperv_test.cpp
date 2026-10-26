@@ -659,9 +659,50 @@ int main() {
     check(activity.zeroCountWrites == 1 && activity.autoEnableWrites == 1);
     check(activity.periodicRearms == 2 && activity.unchangedArmedDeadline == 2);
     check(activity.configFlags[8] == 1 && activity.configFlags[9] == 1 && activity.configFlags[11] == 1);
-    check(observed.serviceCalls() == 3 && observed.serviceTimerVisits() == 24);
+    check(observed.serviceCalls() == 3 && observed.serviceTimerVisits() == 8 && observed.serviceFastReturns() == 2);
     check(observed.deadlineQueries() == 2 && observed.deadlineTimerVisits() == 16);
     check(observed.deliveryRetries() == 1);
+    // The derived minima must follow lazy changes, cancellation and earlier
+    // deadlines even when a previously cached minimum belonged to another VP.
+    ArmHyperVTimers minima(2);
+    check(minima.write(0xb0001, 0, 1000, 0) == 0);
+    check(minima.write(0xb0000, 0, 0x1105, 0) == 0); // Lazy.
+    check(minima.write(0xb0003, 1, 2000, 0) == 0);
+    check(minima.write(0xb0002, 1, 0x1101, 0) == 0);
+    check(minima.nextDeadline() == 1000 && minima.nextDeadline(false) == 2000);
+    check(minima.write(0xb0000, 0, 0x1101, 0) == 0);
+    check(minima.nextDeadline(false) == 1000);
+    check(minima.write(0xb0001, 0, 0, 0) == 0);
+    check(minima.nextDeadline() == 2000);
+    check(minima.write(0xb0003, 1, 500, 0) == 0);
+    check(minima.nextDeadline(false) == 500);
+    const auto visitsBeforeIdle = minima.deadlineTimerVisits();
+    for (unsigned now = 1; now < 500; ++now) {
+        minima.service(now);
+        check(minima.nextDelay(now, false) == 500 - now);
+    }
+    check(minima.deadlineTimerVisits() == visitsBeforeIdle && minima.serviceTimerVisits() == 0);
+    minima.service(500); // Busy/missing backend keeps the due timer for retry.
+    check(minima.nextDelay(501) == 0 && minima.deliveryRetries() == 1);
+    minima.setDelivery([](unsigned, unsigned, uint64_t, uint64_t expiration, uint64_t now) {
+        check(expiration == 500 && now == 501); return true;
+    });
+    minima.service(501);
+    check(minima.delivered() == 1 && !minima.nextDeadline());
+    // One consistent clock sample serves all deadline sources in a query.
+    std::vector<uint8_t> snapshotRam(16384);
+    unsigned clockReads = 0;
+    ArmHyperV clockSnapshot(true, snapshotRam, base, 2, [&] { ++clockReads; return uint64_t(1000); });
+    clockSnapshot.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
+    clockSnapshot.advertiseSynic(true);
+    clockSnapshot.enableVmbus();
+    clockSnapshot.enableHeartbeat();
+    clockSnapshot.enableTimeSync([] { return uint64_t(116444736000000000ull); });
+    clockSnapshot.enableShutdown();
+    clockSnapshot.enableKvp();
+    clockReads = 0;
+    clockSnapshot.serviceDelay100ns();
+    check(clockReads == 1);
     ArmHyperVTimers timerModel(2);
     check(!timerModel.nextDeadline());
     for (unsigned vp = 0; vp < 2; ++vp) for (uint32_t reg = 0xb0000; reg <= 0xb0007; ++reg)

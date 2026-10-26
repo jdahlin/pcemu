@@ -87,22 +87,23 @@ void ArmHyperV::service() {
 }
 std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     if (!enabled) return {};
-    auto delay = timers.nextDelay(timeNow(), false);
+    const auto now = timeNow();
+    auto delay = timers.nextDelay(now, false);
     if (heartbeatEnabled) {
-        auto next=heartbeat.delay(timeNow());
+        auto next=heartbeat.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX), std::max(*next,uint64_t(10000)));
     }
     if (timesyncEnabled) {
-        auto next=timesync.delay(timeNow());
+        auto next=timesync.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (shutdownEnabled) {
-        auto next=shutdown.delay(timeNow());
+        auto next=shutdown.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (synic.needsService() || (vmbusEnabled && vmbus.needsService())) return std::min(delay.value_or(10000), uint64_t(10000));
     if (kvpEnabled) {
-        auto next=kvp.delay(timeNow());
+        auto next=kvp.delay(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     return delay;
@@ -701,6 +702,8 @@ std::string ArmHyperV::report() const {
       << ",\"serviceTimerVisits\":" << timers.serviceTimerVisits()
       << ",\"deadlineQueries\":" << timers.deadlineQueries()
       << ",\"deadlineTimerVisits\":" << timers.deadlineTimerVisits()
+      << ",\"deadlineRebuilds\":" << timers.deadlineRebuilds()
+      << ",\"serviceFastReturns\":" << timers.serviceFastReturns()
       << ",\"deliveryRetries\":" << timers.deliveryRetries()
       << ",\"configFlags\":[";
     for (unsigned i = 0; i < activity.configFlags.size(); ++i) {
