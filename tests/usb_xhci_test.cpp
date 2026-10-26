@@ -87,13 +87,28 @@ struct TestFrontend : Frontend {
 };
 int main() {
     {
+        Guest g; g.device(3);
+        g.request((uint64_t(64) << 48) | (uint64_t(0x2200) << 16) | 0x681, 64);
+        assert(g.get(g.data, 2) == 0x105);
+        g.interruptEndpoint();
+        UsbGuestInput input(g.usb);
+        input.absolutePointer(65535, 0, -1, 5);
+        g.trb(g.intr, g.data, 8, (1 << 10) | 32); g.w(0x2004, 3);
+        assert(g.get(g.data, 6) == 0xff00007fff05ull);
+        g.trb(g.intr + 16, g.data, 8, (1 << 10) | 32); g.w(0x2004, 3);
+        input.release();
+        assert(g.get(g.data, 6) == 0x0000007fff00ull); // Release buttons without moving.
+        assert(g.usb.error().empty());
+    }
+
+    {
         Guest g;
         assert(g.usb.configRead(0, 4) == 0x000d1b36);
         g.usb.configWrite(0x10, 0xffffffff, 4);
         assert(g.usb.configRead(0x10, 4) == 0xffffc000);
         g.usb.configWrite(0x10, Guest::bar, 4);
-        assert(g.r(4) == ((2u << 24) | (1 << 8) | 8));
-        assert(g.r(0x3008) == 0x201);
+        assert(g.r(4) == ((3u << 24) | (1 << 8) | 8));
+        assert(g.r(0x3008) == 0x301);
         g.device(1);
         assert(g.irq);
         g.w(0x1020, 1);

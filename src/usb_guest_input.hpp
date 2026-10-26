@@ -15,6 +15,9 @@ class UsbGuestInput final : public GuestInput {
     void pointer(int dx, int dy, int wheel, uint8_t buttons) override {
         usb.mouse(dx, dy, wheel, buttons);
     }
+    void absolutePointer(int x, int y, int wheel, uint8_t buttons) override {
+        usb.absoluteMouse(x, y, wheel, buttons);
+    }
     void release() override {
         keys.release();
         usb.releaseAll();

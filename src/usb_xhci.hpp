@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 namespace pc {
-// Two fixed USB2 HID devices. Single interrupter, 32-byte contexts, INTx.
+// Three fixed USB2 HID devices: keyboard, relative mouse and absolute tablet. Single interrupter, 32-byte contexts, INTx.
 // All guest DMA and ring walks are bounded; serviced on the VM owning thread.
 class UsbXhci {
   public:
@@ -18,6 +18,7 @@ class UsbXhci {
     void write(uint64_t address, uint64_t value, unsigned width);
     void key(uint16_t usage, bool released);
     void mouse(int dx, int dy, int wheel, uint8_t buttons);
+    void absoluteMouse(int x, int y, int wheel, uint8_t buttons);
     void releaseAll();
     uint64_t commands = 0, transfers = 0, reports = 0;
     std::string inputState() const;
@@ -51,10 +52,11 @@ class UsbXhci {
     bool eventCycle = true, probe = false;
     Ring commandRing;
     std::array<Slot, 9> slots{};
-    std::array<uint32_t, 2> ports{};
-    std::array<std::deque<std::vector<uint8_t>>, 2> pending;
+    std::array<uint32_t, 3> ports{};
+    std::array<std::deque<std::vector<uint8_t>>, 3> pending;
     std::array<bool, 256> keys{};
     uint8_t buttons = 0;
+    unsigned tabletX = 16384, tabletY = 16384;
     std::string failure;
     uint64_t keyInputs = 0, pointerInputs = 0;
     uint64_t get(uint64_t address, unsigned width) const;

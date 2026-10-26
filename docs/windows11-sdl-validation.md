@@ -80,3 +80,10 @@ This is a single observation; repeated cold-boot performance is not yet measured
 Local diagnostic outputs are ignored under `build/windows11-usb-debug/`,
 `build/windows11-usb-software/`, and `build/windows11-usb-evaluate-fixed/`.
 Temporary protocol tracing and input-injection hooks were removed from source.
+
+The xHCI controller also exposes a third USB HID device: an absolute tablet.
+It uses Microsoft's inbox HID mouse stack, with 16-bit X/Y axes (0..32767),
+three buttons and a relative wheel. The frontend's normalized 0..65535 input
+is clamped and scaled into that range. Releasing input preserves the tablet
+position while releasing all buttons. The original relative mouse remains
+available for guests and frontends that request captured motion.

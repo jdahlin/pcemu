@@ -18,6 +18,13 @@ const std::vector<uint8_t> mouseDescriptor = {
     1,    0x29, 3,    0x15, 0,    0x25, 1,    0x95, 3,    0x75, 1,    0x81, 2,
     0x95, 1,    0x75, 5,    0x81, 1,    0x05, 1,    0x09, 0x30, 0x09, 0x31, 0x09,
     0x38, 0x15, 0x81, 0x25, 0x7f, 0x75, 8,    0x95, 3,    0x81, 6,    0xc0, 0xc0};
+const std::vector<uint8_t> tabletDescriptor = {
+    0x05,1, 0x09,2, 0xa1,1, 0x09,1, 0xa1,0,
+    0x05,9, 0x19,1, 0x29,3, 0x15,0, 0x25,1, 0x95,3, 0x75,1, 0x81,2,
+    0x95,1, 0x75,5, 0x81,1,
+    0x05,1, 0x09,0x30, 0x09,0x31, 0x15,0, 0x26,0xff,0x7f,
+    0x75,16, 0x95,2, 0x81,2,
+    0x09,0x38, 0x15,0x81, 0x25,0x7f, 0x75,8, 0x95,1, 0x81,6, 0xc0,0xc0};
 } // namespace
 UsbXhci::UsbXhci(std::span<uint8_t> r, uint64_t b, std::function<void(bool)> i)
     : ram(r), ramBase(b), interrupt(std::move(i)) {
@@ -61,6 +68,7 @@ void UsbXhci::reset() {
     pending = {};
     keys = {};
     buttons = 0;
+    tabletX = tabletY = 16384;
     irq();
 }
 void UsbXhci::irq() {
@@ -117,7 +125,7 @@ uint32_t UsbXhci::reg(unsigned o) const {
     case 0:
         return 0x01000040; // version 1.0, operational offset 0x40
     case 4:
-        return (2u << 24) | (1 << 8) | 8; // ports, interrupters, slots
+        return (3u << 24) | (1 << 8) | 8; // ports, interrupters, slots
     case 0x10:
         return 1 | (0xc00u << 16); // 64-bit addresses, 32-byte contexts
     case 0x14:
@@ -159,9 +167,9 @@ uint32_t UsbXhci::reg(unsigned o) const {
     case 0x3004:
         return 0x20425355; // "USB "
     case 0x3008:
-        return 1 | (2 << 8); // first port, port count
+        return 1 | (3 << 8); // first port, port count
     default:
-        if (o == 0x440 || o == 0x450)
+        if (o == 0x440 || o == 0x450 || o == 0x460)
             return ports[(o - 0x440) / 16];
         return 0;
     }
@@ -236,7 +244,7 @@ void UsbXhci::regWrite(unsigned o, uint32_t v) {
         part(erdp, true);
         break;
     default:
-        if (o == 0x440 || o == 0x450) {
+        if (o == 0x440 || o == 0x450 || o == 0x460) {
             auto &p = ports[(o - 0x440) / 16];
             p &= ~(v & 0xfe0000); // RW1C change bits
             if (v & 0x10) {
@@ -379,7 +387,7 @@ void UsbXhci::command() {
                     add = 3;
                 if (type == 11) {
                     s.port = (get(input + 32 + 4, 4) >> 16) & 255;
-                    if (s.port < 1 || s.port > 2)
+                    if (s.port < 1 || s.port > 3)
                         cc = 17;
                 }
                 if (cc == 1) {
@@ -433,7 +441,7 @@ void UsbXhci::command() {
 }
 void UsbXhci::setup(Slot &s, uint64_t p) {
     unsigned request = (p >> 8) & 255, value = (p >> 16) & 65535, length = p >> 48;
-    const auto &report = s.port == 1 ? keyboardDescriptor : mouseDescriptor;
+    const auto &report = s.port == 1 ? keyboardDescriptor : s.port == 2 ? mouseDescriptor : tabletDescriptor;
     s.control.clear();
     s.controlIn = p & 0x80;
     if (request == 6) {
@@ -458,8 +466,8 @@ void UsbXhci::setup(Slot &s, uint64_t p) {
                          0,
                          1,
                          3,
-                         1,
-                         uint8_t(s.port == 1 ? 1 : 2),
+                         uint8_t(s.port == 3 ? 0 : 1),
+                         uint8_t(s.port == 1 ? 1 : s.port == 2 ? 2 : 0),
                          0,
                          9,
                          0x21,
@@ -505,7 +513,7 @@ void UsbXhci::setup(Slot &s, uint64_t p) {
     else if (request == 2 && (p & 0x60) == 0x20)
         s.control = {uint8_t(s.idle)};
     else if (request == 1 && (p & 0x60) == 0x20)
-        s.control = std::vector<uint8_t>(s.port == 1 ? 8 : 4);
+        s.control = std::vector<uint8_t>(s.port == 1 ? 8 : s.port == 2 ? 4 : 6);
     else if (request == 1 || request == 3 || request == 5 || request == 11 || request == 0x0a) {
     } else
         throw std::runtime_error("Unsupported USB request");
@@ -654,11 +662,23 @@ void UsbXhci::mouse(int dx, int dy, int wheel, uint8_t b) {
         wheel -= z;
     } while (dx || dy || wheel);
 }
+void UsbXhci::absoluteMouse(int x, int y, int wheel, uint8_t b) {
+    ++pointerInputs;
+    tabletX = unsigned(std::clamp(x, 0, 65535)) * 32767u / 65535u;
+    tabletY = unsigned(std::clamp(y, 0, 65535)) * 32767u / 65535u;
+    do {
+        int z = std::clamp(wheel, -127, 127);
+        queue(3, {uint8_t(b & 7), uint8_t(tabletX), uint8_t(tabletX >> 8),
+                  uint8_t(tabletY), uint8_t(tabletY >> 8), uint8_t(z)});
+        wheel -= z;
+    } while (wheel);
+}
 void UsbXhci::releaseAll() {
     keys = {};
     buttons = 0;
     queue(1, std::vector<uint8_t>(8));
     queue(2, std::vector<uint8_t>(4));
+    queue(3, {0, uint8_t(tabletX), uint8_t(tabletX >> 8), uint8_t(tabletY), uint8_t(tabletY >> 8), 0});
 }
 } // namespace pc
 
