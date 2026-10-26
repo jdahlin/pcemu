@@ -5,7 +5,7 @@
 #include <stdexcept>
 namespace pc {
 std::string ArmRamFb::mode() const {
-    auto bytes = fwCfg.file(0x20);
+    auto bytes = fwCfg.file_data(0x20);
     if (bytes.size() != 28) return "invalid";
     auto field = [&](size_t offset, size_t count) {
         uint64_t value = 0;
@@ -25,7 +25,7 @@ std::string ArmRamFb::mode() const {
 bool ArmRamFb::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const {
     auto current = mode();
     if (current == "inactive" || current == "invalid") return false;
-    auto bytes = fwCfg.file(0x20);
+    auto bytes = fwCfg.file_data(0x20);
     auto field = [&](unsigned offset, unsigned count) {
         uint64_t value = 0;
         for (unsigned i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];
@@ -50,7 +50,7 @@ bool ArmRamFb::changedPixels(std::vector<uint32_t> &output, unsigned &width, uns
         width = height = 0;
         return false;
     }
-    auto descriptor = fwCfg.file(0x20);
+    auto descriptor = fwCfg.file_data(0x20);
     auto field = [&](unsigned offset, unsigned count) {
         uint64_t value = 0;
         for (unsigned i = 0; i < count; ++i) value = (value << 8) | descriptor[offset + i];
@@ -76,7 +76,7 @@ bool ArmRamFb::changedPixels(std::vector<uint32_t> &output, unsigned &width, uns
 void ArmRamFb::save(const std::string &path) const {
     auto currentMode = mode();
     if (currentMode == "inactive" || currentMode == "invalid") throw std::runtime_error("No valid GOP framebuffer");
-    auto bytes = fwCfg.file(0x20);
+    auto bytes = fwCfg.file_data(0x20);
     auto field = [&](size_t offset, size_t count) {
         uint64_t value = 0;
         for (size_t i = 0; i < count; ++i) value = (value << 8) | bytes[offset + i];

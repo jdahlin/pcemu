@@ -49,8 +49,8 @@ void ArmVirtMachine::bindDevices() {
             updateRtcInterrupt();
         }, 1 | 2 | 4);
     mmio.map("fw-cfg", 0x09020000, 0x18,
-        [this](MmioAccess &a, uint64_t o) { a.value = fwCfg.read(o, a.width); },
-        [this](MmioAccess &a, uint64_t o) { fwCfg.write(o, a.value, a.width); });
+        [this](MmioAccess &a, uint64_t o) { a.value = fwCfg.read_register(o, a.width); },
+        [this](MmioAccess &a, uint64_t o) { fwCfg.write_register(o, a.value, a.width); });
     mmio.map("nor-flash", 0x04000000, 0xc0000, {},
         [this](MmioAccess &a, uint64_t o) {
             nor.write(o, uint32_t(a.value));

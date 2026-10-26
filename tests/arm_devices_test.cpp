@@ -81,43 +81,43 @@ int main() {
     check(call_psci(0x80000000, 0, 0).value == -1);
     std::vector<uint8_t> memory(4096);
     ArmFwCfg cfg(memory, 0x40000000);
-    check(cfg.read(0, 4) == 0x554d4551);
-    cfg.write(8, 0x100, 2);
-    check(cfg.read(0, 4) == 3);
+    check(cfg.read_register(0, 4) == 0x554d4551);
+    cfg.write_register(8, 0x100, 2);
+    check(cfg.read_register(0, 4) == 3);
     ArmFwCfg multicpu(memory, 0x40000000, 4);
-    multicpu.write(8, 0x500, 2);
-    check(multicpu.read(0, 2) == 4);
-    multicpu.write(8, 0x0f00, 2);
-    check(multicpu.read(0, 2) == 4);
-    auto key = cfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
+    multicpu.write_register(8, 0x500, 2);
+    check(multicpu.read_register(0, 2) == 4);
+    multicpu.write_register(8, 0x0f00, 2);
+    check(multicpu.read_register(0, 2) == 4);
+    auto key = cfg.add_file("etc/ramfb", std::vector<uint8_t>(28), true);
     check(key == 0x20);
-    rejects([&] { cfg.addFile("etc/ramfb", {}); });
-    cfg.write(8, 0x1900, 2);
-    check(cfg.read(0, 4) == 0x01000000);
-    check(cfg.read(0, 4) == 0x1c000000);
-    check(cfg.read(0, 2) == 0x2000);
+    rejects([&] { cfg.add_file("etc/ramfb", {}); });
+    cfg.write_register(8, 0x1900, 2);
+    check(cfg.read_register(0, 4) == 0x01000000);
+    check(cfg.read_register(0, 4) == 0x1c000000);
+    check(cfg.read_register(0, 2) == 0x2000);
     auto putBe = [&](size_t offset, uint64_t value, size_t count) {
         for (size_t i = count; i; --i) { memory[offset + i - 1] = value; value >>= 8; }
     };
     auto transfer = [&](uint32_t control, uint32_t length, uint64_t target) {
         putBe(0, control, 4); putBe(4, length, 4); putBe(8, target, 8);
-        cfg.write(16, 0, 4); cfg.write(20, 0x40, 4);
+        cfg.write_register(16, 0, 4); cfg.write_register(20, 0x40, 4);
         return memory[3];
     };
     memory[128] = 0x42;
     check(transfer((key << 16) | 8 | 16, 1, 0x40000080) == 0);
-    check(cfg.file(key)[0] == 0x42);
+    check(cfg.file_data(key)[0] == 0x42);
     check(transfer((key << 16) | 8 | 2, 32, 0x40000100) == 0);
     check(memory[256] == 0x42 && memory[284] == 0 && memory[287] == 0);
     check(transfer((key << 16) | 8 | 16, 29, 0x40000080) == 1);
-    check(cfg.file(key)[0] == 0x42);
+    check(cfg.file_data(key)[0] == 0x42);
     check(transfer(8 | 16, 1, 0x40000080) == 1); // Read-only signature.
     check(transfer(8 | 2, 32, 0x40000fff) == 1);
     check(transfer((key << 16) | 8 | 4, 27, 0) == 0);
     check(transfer(16, 2, 0x40000080) == 1); // No partial write beyond item.
-    cfg.write(8, 0xffff, 2); check(cfg.read(0, 8) == 0);
-    check(cfg.read(16, 8) == 0x47464320554d4551ull);
-    rejects([&] { cfg.write(16, 0xffffffffffffffffull, 8); }); // Out-of-RAM descriptor is a platform error.
+    cfg.write_register(8, 0xffff, 2); check(cfg.read_register(0, 8) == 0);
+    check(cfg.read_register(16, 8) == 0x47464320554d4551ull);
+    rejects([&] { cfg.write_register(16, 0xffffffffffffffffull, 8); }); // Out-of-RAM descriptor is a platform error.
     std::vector<uint8_t> blank(0x80000, 0xff);
     ArmNorFlash flash(blank);
     flash.write(0, 0x00900090);

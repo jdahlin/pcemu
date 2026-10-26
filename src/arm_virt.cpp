@@ -117,12 +117,12 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     });
     // A second firmware framebuffer becomes a permanent Windows BasicDisplay
     // adapter. Select one boot display so the signed GPU driver owns the primary.
-    if (!c.virtioGpu) fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
+    if (!c.virtioGpu) fwCfg.add_file("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
     validateCpuTables(tables, c.cpus, c.hyperv, c.hypervVmbus, c.virtioMsix);
-    fwCfg.addFile("etc/acpi/tables", std::move(tables));
-    fwCfg.addFile("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
-    fwCfg.addFile("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
+    fwCfg.add_file("etc/acpi/tables", std::move(tables));
+    fwCfg.add_file("etc/acpi/rsdp", load(c.acpiDirectory + "/rsdp", 36));
+    fwCfg.add_file("etc/table-loader", load(c.acpiDirectory + "/table-loader", 64 * 1024));
     const auto working = fs::absolute(c.variables).lexically_normal();
     config.variables = working.string();
     const auto original = fs::absolute(c.variableTemplate).lexically_normal();
