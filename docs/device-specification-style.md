@@ -214,3 +214,4 @@ while retaining this repository's formatting.
 | Virtio console/serial ports | OASIS Virtio 1.2, 5.3 | Multiport queue numbering, control packet fields/events, DEVICE_READY/PORT_READY/open handshake, host byte streams, backpressure and fixed-port/buffer policy. |
 | Virtio entropy | OASIS Virtio 1.2, 5.4 plus MMIO/split-ring clauses | Modern discovery/features, writable direct request chains, host cryptographic entropy, partial fills, completion lengths and retained queue-reset/status compatibility. |
 | Virtio block | OASIS Virtio 1.2, 5.2 plus MMIO/split-ring clauses | Capacity/features, IN/OUT/FLUSH/GET_ID request/status fields, used lengths, scatter/gather ordering, streamed host I/O limits and retained transport compatibility. |
+| Virtio network | OASIS Virtio 1.2, 5.1 plus MMIO/split-ring clauses; RFC 1071 checksum | MAC/link/MTU fields, receive/transmit headers, checksum completion, EVENT_IDX, used-ring publication and host frame/backlog bounds. |
