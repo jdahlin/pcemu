@@ -201,3 +201,12 @@ both capture states expose the counter. This excludes snapshot restoration and
 pre-task idle activity; final cumulative counters must not be compared as task
 costs. The optional field preserves compatibility with older executables.
 The disk-free shutdown fixture verifies a known seven-call delta.
+
+## M1 Pro Instruments follow-up
+
+The [M1 Pro Word launch profile](word-m1-instruments.md) uses a standalone local
+copy of the Word checkpoint and three headless Instruments Time Profiler traces.
+It filters samples to timestamped, pixel-verified task windows and retains the
+native `.trace` bundles locally for inspection. The source and hardware differ
+from the earlier M4 collections above, so their percentages are not a direct
+before/after comparison.

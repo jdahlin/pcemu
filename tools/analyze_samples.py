@@ -42,7 +42,8 @@ def category(node):
     if 'pc::CPU::step()' in chain:
         return 'Interpreter (including MMU and guest faults)'
     if 'pc::Jit::run()' in chain or 'pc::Jit::runBatch(' in chain:
-        if '???' in chain or 'pc::native' in chain or 'pc::jit_detail::native' in chain:
+        if ('???' in chain or node['symbol'].startswith('0x') or
+                'pc::native' in chain or 'pc::jit_detail::native' in chain):
             return 'Generated code and native helpers'
         return 'JIT dispatch/cache/validation'
     if 'SDL_' in chain or 'SDL2' in chain:

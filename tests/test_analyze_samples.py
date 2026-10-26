@@ -13,7 +13,8 @@ class HostSampleAccounting(unittest.TestCase):
         parent = ['pc::Jit::runBatch(unsigned int)']
         self.assertEqual(category({'ancestors': parent, 'symbol': 'pc::CPU::address()'}),
                          'JIT dispatch/cache/validation')
-        for symbol in ('???  (in <unknown binary>)', 'pc::jit_detail::nativeMemory()'):
+        for symbol in ('???  (in <unknown binary>)', '0x10a4f32b5',
+                       'pc::jit_detail::nativeMemory()'):
             self.assertEqual(category({'ancestors': parent, 'symbol': symbol}),
                              'Generated code and native helpers')
         self.assertEqual(category({'ancestors': parent, 'symbol': 'pc::CPU::step()'}),

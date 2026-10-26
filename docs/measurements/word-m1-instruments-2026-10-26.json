@@ -1,0 +1,753 @@
+{
+  "scope": "Apple M1 Pro Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1; three independent headless restores with Instruments Time Profiler, plus three unprofiled runs and one separate guest-counter run. No emulator runtime change.",
+  "machine": {
+    "model": "MacBookPro18,1",
+    "chip": "Apple M1 Pro",
+    "xctrace": "16.0 (17F113)",
+    "buildType": "Debug -O1 -g"
+  },
+  "checkpoint": {
+    "original": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+    "local": "/Users/johandahlin/dev/pcemu/build/snapshots/word-launch-local",
+    "sourceDiskSha256": "e5f5ecc7be0ecfc4818737d03ac09ed3d284877797ba360b9a04cb80ccf2f2e1",
+    "stateSha256": "3d62f107e6933e65d5d5e4e0157a9aa19bd6f5dbbdd65793e2117bf9b4d06e46",
+    "localDiskSha256": "218bcfaeb25bd9699c8ba1b44ed8815264b7f6620da359a7ce9481741d3b88c1",
+    "localDiskBytes": 651100160,
+    "guestVisibleBytes": 2147475456,
+    "conversion": "tools/convert_qcow2.py created a standalone zstd QCOW2; qemu-img check and whole-disk guest-byte comparison passed; original left in place"
+  },
+  "task": {
+    "fixture": "docs/measurements/word-m1-instruments-2026-10-26.task.json",
+    "sha256": "899b2f249f83c6a0325a23e4ebbe9f4f071e4c350e5594d61f7e1d5363770cc7",
+    "readiness": "exact RGB patch of Word Page 1 / Sec 1 status",
+    "command": [
+      "key 1c0d"
+    ]
+  },
+  "emulatorSha256": "5674f0720bf0c45db07aa2fe6bd1d5157b565427916908957f376dec6d10548e",
+  "instruments": {
+    "taskResults": [
+      {
+        "restoreReadyMs": 162.9419168457389,
+        "taskResponseMs": 1044.7351248003542,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 958.048833,
+          "systemMs": 83.465375,
+          "totalMs": 1041.514208
+        },
+        "instructions": 34637000,
+        "nativeInstructions": 27395295,
+        "compiledBlocks": 36180,
+        "taskStartUtc": "2026-10-26T14:09:43.658887+00:00",
+        "taskEndUtc": "2026-10-26T14:09:44.703589+00:00",
+        "instrumentsTrace": "build/word-m1-instruments-repeat/run-0/instruments.trace",
+        "nativeMemoryCalls": 1005436,
+        "executionWallMs": 915.455052,
+        "shutdownWaitMs": 2069.204084109515,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 164.1617496497929,
+        "taskResponseMs": 1055.2283748984337,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 959.509167,
+          "systemMs": 84.740416,
+          "totalMs": 1044.249583
+        },
+        "instructions": 35261109,
+        "nativeInstructions": 27927453,
+        "compiledBlocks": 36407,
+        "taskStartUtc": "2026-10-26T14:09:52.118053+00:00",
+        "taskEndUtc": "2026-10-26T14:09:53.173259+00:00",
+        "instrumentsTrace": "build/word-m1-instruments-repeat/run-1/instruments.trace",
+        "nativeMemoryCalls": 1016920,
+        "executionWallMs": 916.695073,
+        "shutdownWaitMs": 2045.3749997541308,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 165.94154201447964,
+        "taskResponseMs": 1014.2143336124718,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 934.240333,
+          "systemMs": 77.387333,
+          "totalMs": 1011.627666
+        },
+        "instructions": 34552273,
+        "nativeInstructions": 27368200,
+        "compiledBlocks": 35830,
+        "taskStartUtc": "2026-10-26T14:10:00.561750+00:00",
+        "taskEndUtc": "2026-10-26T14:10:01.575945+00:00",
+        "instrumentsTrace": "build/word-m1-instruments-repeat/run-2/instruments.trace",
+        "nativeMemoryCalls": 977979,
+        "executionWallMs": 898.099751,
+        "shutdownWaitMs": 2057.7164590358734,
+        "exitStatus": 0
+      }
+    ],
+    "summary": {
+      "scope": "Instruments Time Profiler CPU samples on the main thread, filtered to host task-command through verified-pixel response UTC timestamps; capture and control work inside this window remain included. Sample shares are not exact function CPU durations.",
+      "samples": 3087,
+      "outsideTaskSamples": 1853,
+      "workerSamples": {},
+      "runs": [
+        {
+          "trace": "build/word-m1-instruments-repeat/run-0/instruments.trace",
+          "windowStartNs": 3627887000,
+          "windowEndNs": 4672589000,
+          "mainThreadSamples": 1041,
+          "categories": {
+            "Interpreter (including MMU and guest faults)": 323,
+            "Generated code and native helpers": 150,
+            "JIT dispatch/cache/validation": 243,
+            "Device polling and interrupt delivery": 30,
+            "Capture/video/control output": 116,
+            "Main loop/other host work": 48,
+            "JIT compilation (including decode exceptions)": 131
+          }
+        },
+        {
+          "trace": "build/word-m1-instruments-repeat/run-1/instruments.trace",
+          "windowStartNs": 3616053000,
+          "windowEndNs": 4671259000,
+          "mainThreadSamples": 1043,
+          "categories": {
+            "Generated code and native helpers": 129,
+            "Capture/video/control output": 117,
+            "Interpreter (including MMU and guest faults)": 319,
+            "JIT dispatch/cache/validation": 270,
+            "JIT compilation (including decode exceptions)": 118,
+            "Main loop/other host work": 49,
+            "Device polling and interrupt delivery": 41
+          }
+        },
+        {
+          "trace": "build/word-m1-instruments-repeat/run-2/instruments.trace",
+          "windowStartNs": 3619750000,
+          "windowEndNs": 4633945000,
+          "mainThreadSamples": 1003,
+          "categories": {
+            "JIT dispatch/cache/validation": 236,
+            "Capture/video/control output": 107,
+            "Interpreter (including MMU and guest faults)": 307,
+            "JIT compilation (including decode exceptions)": 132,
+            "Generated code and native helpers": 144,
+            "Device polling and interrupt delivery": 39,
+            "Main loop/other host work": 38
+          }
+        }
+      ],
+      "categories": [
+        {
+          "name": "Interpreter (including MMU and guest faults)",
+          "samples": 949,
+          "percent": 30.741820537738906
+        },
+        {
+          "name": "JIT dispatch/cache/validation",
+          "samples": 749,
+          "percent": 24.263038548752835
+        },
+        {
+          "name": "Generated code and native helpers",
+          "samples": 423,
+          "percent": 13.70262390670554
+        },
+        {
+          "name": "JIT compilation (including decode exceptions)",
+          "samples": 381,
+          "percent": 12.342079689018465
+        },
+        {
+          "name": "Capture/video/control output",
+          "samples": 340,
+          "percent": 11.01392938127632
+        },
+        {
+          "name": "Main loop/other host work",
+          "samples": 135,
+          "percent": 4.373177842565598
+        },
+        {
+          "name": "Device polling and interrupt delivery",
+          "samples": 110,
+          "percent": 3.563330093942339
+        }
+      ],
+      "timeQuartiles": [
+        {
+          "index": 1,
+          "samples": 777,
+          "categories": {
+            "Interpreter (including MMU and guest faults)": 263,
+            "Generated code and native helpers": 107,
+            "JIT dispatch/cache/validation": 206,
+            "Device polling and interrupt delivery": 36,
+            "Capture/video/control output": 96,
+            "Main loop/other host work": 33,
+            "JIT compilation (including decode exceptions)": 36
+          }
+        },
+        {
+          "index": 2,
+          "samples": 768,
+          "categories": {
+            "JIT dispatch/cache/validation": 194,
+            "Generated code and native helpers": 89,
+            "Interpreter (including MMU and guest faults)": 211,
+            "Main loop/other host work": 34,
+            "Capture/video/control output": 79,
+            "Device polling and interrupt delivery": 24,
+            "JIT compilation (including decode exceptions)": 137
+          }
+        },
+        {
+          "index": 3,
+          "samples": 767,
+          "categories": {
+            "JIT dispatch/cache/validation": 164,
+            "Generated code and native helpers": 98,
+            "Capture/video/control output": 86,
+            "JIT compilation (including decode exceptions)": 117,
+            "Interpreter (including MMU and guest faults)": 249,
+            "Device polling and interrupt delivery": 23,
+            "Main loop/other host work": 30
+          }
+        },
+        {
+          "index": 4,
+          "samples": 775,
+          "categories": {
+            "Interpreter (including MMU and guest faults)": 226,
+            "Generated code and native helpers": 129,
+            "JIT dispatch/cache/validation": 185,
+            "JIT compilation (including decode exceptions)": 91,
+            "Capture/video/control output": 79,
+            "Device polling and interrupt delivery": 27,
+            "Main loop/other host work": 38
+          }
+        }
+      ],
+      "selfSites": [
+        {
+          "name": "pc::Jit::run()",
+          "samples": 226,
+          "percent": 7.321023647554259
+        },
+        {
+          "name": "__write_nocancel",
+          "samples": 145,
+          "percent": 4.697116942014901
+        },
+        {
+          "name": "pc::CPU::stepImpl() [cpu.cpp:921]",
+          "samples": 108,
+          "percent": 3.498542274052478
+        },
+        {
+          "name": "pc::CPU::stepImpl()",
+          "samples": 107,
+          "percent": 3.4661483641075477
+        },
+        {
+          "name": "pc::CPU::stepImpl() [cpu.cpp:721]",
+          "samples": 100,
+          "percent": 3.2393909944930352
+        },
+        {
+          "name": "pc::VGA::render(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const [vga.cpp:386]",
+          "samples": 76,
+          "percent": 2.4619371558147067
+        },
+        {
+          "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:88]",
+          "samples": 70,
+          "percent": 2.2675736961451247
+        },
+        {
+          "name": "std::__1::__constrain_hash[abi:nqe210106](unsigned long, unsigned long) [__hash_table:162]",
+          "samples": 63,
+          "percent": 2.0408163265306123
+        },
+        {
+          "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:77]",
+          "samples": 63,
+          "percent": 2.0408163265306123
+        },
+        {
+          "name": "pc::CPU::address(int, unsigned int) const [cpu.cpp:219]",
+          "samples": 58,
+          "percent": 1.8788467768059605
+        },
+        {
+          "name": "pc::Jit::runCached(unsigned int) [jit.cpp:178]",
+          "samples": 57,
+          "percent": 1.84645286686103
+        },
+        {
+          "name": "pc::Jit::runBatch(unsigned int) [jit.cpp:206]",
+          "samples": 56,
+          "percent": 1.8140589569160999
+        },
+        {
+          "name": "pc::CPU::physical(unsigned int, bool) [cpu.cpp:78]",
+          "samples": 55,
+          "percent": 1.7816650469711695
+        },
+        {
+          "name": "main [main.cpp:388]",
+          "samples": 55,
+          "percent": 1.7816650469711695
+        },
+        {
+          "name": "pc::instructionPage(pc::CPU&) [jit.cpp:15]",
+          "samples": 54,
+          "percent": 1.749271137026239
+        },
+        {
+          "name": "pc::Machine::poll() [machine.cpp:126]",
+          "samples": 53,
+          "percent": 1.7168772270813086
+        },
+        {
+          "name": "pc::Jit::runCached(unsigned int) [jit.cpp:191]",
+          "samples": 49,
+          "percent": 1.5873015873015872
+        },
+        {
+          "name": "pc::CPU::step() [cpu.cpp:687]",
+          "samples": 47,
+          "percent": 1.5225137674117266
+        },
+        {
+          "name": "pc::Jit::runCached(unsigned int) [jit.cpp:168]",
+          "samples": 43,
+          "percent": 1.3929381276320052
+        },
+        {
+          "name": "_platform_memmove",
+          "samples": 40,
+          "percent": 1.2957563977972142
+        },
+        {
+          "name": "pc::Segment::Segment() [cpu.hpp:32]",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "sys_icache_invalidate",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "_xzm_free",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:156]",
+          "samples": 36,
+          "percent": 1.1661807580174928
+        },
+        {
+          "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:172]",
+          "samples": 34,
+          "percent": 1.101392938127632
+        },
+        {
+          "name": "pc::CPU::read(unsigned int, int) [cpu.cpp:159]",
+          "samples": 32,
+          "percent": 1.0366051182377714
+        },
+        {
+          "name": "_xzm_xzone_malloc_tiny",
+          "samples": 32,
+          "percent": 1.0366051182377714
+        },
+        {
+          "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const [pc_display.cpp:54]",
+          "samples": 31,
+          "percent": 1.004211208292841
+        },
+        {
+          "name": "std::__1::vector<unsigned char, std::__1::allocator<unsigned char>>::size[abi:nqe210106]() const [vector.h:388]",
+          "samples": 29,
+          "percent": 0.9394233884029802
+        },
+        {
+          "name": "__open_nocancel",
+          "samples": 28,
+          "percent": 0.9070294784580499
+        },
+        {
+          "name": "pc::CPU::decode(unsigned char, bool, int) [cpu.cpp:311]",
+          "samples": 25,
+          "percent": 0.8098477486232588
+        },
+        {
+          "name": "mach_absolute_time",
+          "samples": 24,
+          "percent": 0.7774538386783285
+        },
+        {
+          "name": "std::__1::vector<unsigned int, std::__1::allocator<unsigned int>>::push_back[abi:nqe210106](unsigned int const&) [vector.h:455]",
+          "samples": 23,
+          "percent": 0.7450599287333981
+        },
+        {
+          "name": "std::__1::__bucket_list_deallocator<std::__1::allocator<std::__1::__hash_node_base<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>*>>::size[abi:nqe210106]() const [__hash_table:600]",
+          "samples": 22,
+          "percent": 0.7126660187884678
+        },
+        {
+          "name": "pc::PS2Mouse::packetDue(unsigned long long) const [mouse.hpp:17]",
+          "samples": 21,
+          "percent": 0.6802721088435374
+        },
+        {
+          "name": "pc::loadRAM(unsigned char const*, int) [cpu.cpp:28]",
+          "samples": 20,
+          "percent": 0.6478781988986071
+        },
+        {
+          "name": "<deduplicated_symbol>",
+          "samples": 20,
+          "percent": 0.6478781988986071
+        },
+        {
+          "name": "std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::find<unsigned long long>(unsigned long long const&) [__hash_table:1811]",
+          "samples": 18,
+          "percent": 0.5830903790087464
+        },
+        {
+          "name": "std::__1::equal_to<unsigned long long>::operator()[abi:nqe210106](unsigned long long const&, unsigned long long const&) const [operations.h:300]",
+          "samples": 18,
+          "percent": 0.5830903790087464
+        },
+        {
+          "name": "__close_nocancel",
+          "samples": 16,
+          "percent": 0.5183025591188857
+        }
+      ],
+      "selfFunctions": [
+        {
+          "name": "pc::CPU::stepImpl()",
+          "samples": 315,
+          "percent": 10.204081632653061
+        },
+        {
+          "name": "pc::Jit::run()",
+          "samples": 226,
+          "percent": 7.321023647554259
+        },
+        {
+          "name": "pc::CPU::physical(unsigned int, bool)",
+          "samples": 188,
+          "percent": 6.0900550696469065
+        },
+        {
+          "name": "pc::Jit::runCached(unsigned int)",
+          "samples": 149,
+          "percent": 4.826692581794623
+        },
+        {
+          "name": "__write_nocancel",
+          "samples": 145,
+          "percent": 4.697116942014901
+        },
+        {
+          "name": "pc::CPU::read(unsigned int, int)",
+          "samples": 102,
+          "percent": 3.304178814382896
+        },
+        {
+          "name": "pc::VGA::render(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+          "samples": 76,
+          "percent": 2.4619371558147067
+        },
+        {
+          "name": "pc::instructionPage(pc::CPU&)",
+          "samples": 73,
+          "percent": 2.364755425979916
+        },
+        {
+          "name": "pc::CPU::address(int, unsigned int) const",
+          "samples": 70,
+          "percent": 2.2675736961451247
+        },
+        {
+          "name": "std::__1::__constrain_hash[abi:nqe210106](unsigned long, unsigned long)",
+          "samples": 64,
+          "percent": 2.0732102364755427
+        },
+        {
+          "name": "pc::Jit::runBatch(unsigned int)",
+          "samples": 56,
+          "percent": 1.8140589569160999
+        },
+        {
+          "name": "main",
+          "samples": 55,
+          "percent": 1.7816650469711695
+        },
+        {
+          "name": "pc::Machine::poll()",
+          "samples": 53,
+          "percent": 1.7168772270813086
+        },
+        {
+          "name": "pc::CPU::step()",
+          "samples": 47,
+          "percent": 1.5225137674117266
+        },
+        {
+          "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+          "samples": 43,
+          "percent": 1.3929381276320052
+        },
+        {
+          "name": "_platform_memmove",
+          "samples": 40,
+          "percent": 1.2957563977972142
+        },
+        {
+          "name": "pc::CPU::decode(unsigned char, bool, int)",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "pc::Segment::Segment()",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "sys_icache_invalidate",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "_xzm_free",
+          "samples": 38,
+          "percent": 1.2309685779073534
+        },
+        {
+          "name": "pc::PS2Mouse::packetDue(unsigned long long) const",
+          "samples": 34,
+          "percent": 1.101392938127632
+        },
+        {
+          "name": "pc::loadRAM(unsigned char const*, int)",
+          "samples": 32,
+          "percent": 1.0366051182377714
+        },
+        {
+          "name": "_xzm_xzone_malloc_tiny",
+          "samples": 32,
+          "percent": 1.0366051182377714
+        },
+        {
+          "name": "std::__1::vector<unsigned char, std::__1::allocator<unsigned char>>::size[abi:nqe210106]() const",
+          "samples": 29,
+          "percent": 0.9394233884029802
+        },
+        {
+          "name": "__open_nocancel",
+          "samples": 28,
+          "percent": 0.9070294784580499
+        },
+        {
+          "name": "pc::Jit::decode(pc::Jit::Block&)",
+          "samples": 24,
+          "percent": 0.7774538386783285
+        },
+        {
+          "name": "mach_absolute_time",
+          "samples": 24,
+          "percent": 0.7774538386783285
+        },
+        {
+          "name": "std::__1::vector<unsigned int, std::__1::allocator<unsigned int>>::push_back[abi:nqe210106](unsigned int const&)",
+          "samples": 23,
+          "percent": 0.7450599287333981
+        },
+        {
+          "name": "std::__1::__bucket_list_deallocator<std::__1::allocator<std::__1::__hash_node_base<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>*>>::size[abi:nqe210106]() const",
+          "samples": 22,
+          "percent": 0.7126660187884678
+        },
+        {
+          "name": "pc::PIT8254::Counter::eventDue(unsigned long long) const",
+          "samples": 20,
+          "percent": 0.6478781988986071
+        },
+        {
+          "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+          "samples": 20,
+          "percent": 0.6478781988986071
+        },
+        {
+          "name": "<deduplicated_symbol>",
+          "samples": 20,
+          "percent": 0.6478781988986071
+        },
+        {
+          "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+          "samples": 19,
+          "percent": 0.6154842889536767
+        },
+        {
+          "name": "std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::find<unsigned long long>(unsigned long long const&)",
+          "samples": 18,
+          "percent": 0.5830903790087464
+        },
+        {
+          "name": "std::__1::equal_to<unsigned long long>::operator()[abi:nqe210106](unsigned long long const&, unsigned long long const&) const",
+          "samples": 18,
+          "percent": 0.5830903790087464
+        },
+        {
+          "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+          "samples": 17,
+          "percent": 0.550696469063816
+        },
+        {
+          "name": "__close_nocancel",
+          "samples": 16,
+          "percent": 0.5183025591188857
+        },
+        {
+          "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+          "samples": 16,
+          "percent": 0.5183025591188857
+        },
+        {
+          "name": "std::__1::deque<unsigned char, std::__1::allocator<unsigned char>>::size[abi:nqe210106]() const",
+          "samples": 15,
+          "percent": 0.4859086491739553
+        },
+        {
+          "name": "void std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__do_rehash<true>(unsigned long)",
+          "samples": 14,
+          "percent": 0.45351473922902497
+        }
+      ],
+      "selfSiteListLimit": 40,
+      "selfFunctionListLimit": 40
+    },
+    "traces": [
+      {
+        "path": "build/word-m1-instruments-repeat/run-0/instruments.trace",
+        "bytes": 9760601,
+        "sha256Tree": "a51575fb9919bd4b151114318d02ee70871890dd207745a66738c9a90b4a6b1f"
+      },
+      {
+        "path": "build/word-m1-instruments-repeat/run-1/instruments.trace",
+        "bytes": 9770383,
+        "sha256Tree": "a0147d079dcc4bb6b8ed26f7fac5216eaa48e14cb0d16ffbd70f2f72492b47fd"
+      },
+      {
+        "path": "build/word-m1-instruments-repeat/run-2/instruments.trace",
+        "bytes": 9801155,
+        "sha256Tree": "90a63290504e7d011a73c3e7bde0f282ce4d49b22f9dd4251a5b65da12095003"
+      }
+    ],
+    "fullLocalSummary": "build/word-m1-instruments-repeat/summary.json",
+    "traceDigestMethod": "SHA-256 over sorted relative file path, NUL byte, and file contents for each file in the .trace bundle"
+  },
+  "unprofiled": {
+    "samples": [
+      {
+        "restoreReadyMs": 170.35162495449185,
+        "taskResponseMs": 1081.808333285153,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 975.219125,
+          "systemMs": 101.718708,
+          "totalMs": 1076.937833
+        },
+        "instructions": 31390619,
+        "nativeInstructions": 23805883,
+        "compiledBlocks": 39487,
+        "nativeMemoryCalls": 912486,
+        "executionWallMs": 947.604576,
+        "shutdownWaitMs": 43.50583394989371,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 161.94912465289235,
+        "taskResponseMs": 1091.0048331134021,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 983.322041,
+          "systemMs": 102.989583,
+          "totalMs": 1086.311624
+        },
+        "instructions": 31327534,
+        "nativeInstructions": 23746453,
+        "compiledBlocks": 39834,
+        "nativeMemoryCalls": 916930,
+        "executionWallMs": 949.853118,
+        "shutdownWaitMs": 22.656999994069338,
+        "exitStatus": 0
+      },
+      {
+        "restoreReadyMs": 161.2268751487136,
+        "taskResponseMs": 1116.8086673133075,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 997.455416,
+          "systemMs": 104.205959,
+          "totalMs": 1101.661375
+        },
+        "instructions": 31926247,
+        "nativeInstructions": 24170287,
+        "compiledBlocks": 40557,
+        "nativeMemoryCalls": 938574,
+        "executionWallMs": 964.61815,
+        "shutdownWaitMs": 44.91383396089077,
+        "exitStatus": 0
+      }
+    ],
+    "scope": "Control/capture/poll response and process CPU; not a controlled performance comparison with Instruments runs"
+  },
+  "guestCounters": {
+    "guestInstructions": 32085540,
+    "interpretedAttempts": 7775462,
+    "events": {
+      "dispatch": 14641278,
+      "fastHit": 12117114,
+      "mapHit": 2051949,
+      "lookupMiss": 437237,
+      "metadataRebuild": 538154,
+      "translate": 69641,
+      "interpretedDispatch": 7708527,
+      "negativeHit": 5715153,
+      "nativeCall": 6932501,
+      "nativeReplay": 66935,
+      "devicePoll": 7835101,
+      "diskReadSectorsIncludingParents": 16,
+      "diskWriteSectors": 58,
+      "cowDecompress": 0,
+      "cowCacheHit": 0
+    },
+    "negativeHitPercentOfDispatch": 39.03452280600095,
+    "scope": "Separate PCEMU_PROFILE run; timings not compared",
+    "fullLocalProfile": "build/word-m1-guest-profile/summary.json"
+  },
+  "checks": [
+    "qemu-img check build/snapshots/word-launch-local/disk.raw",
+    "python3 -m unittest discover -s tests -p test_analyze_instruments.py",
+    "python3 -m unittest discover -s tests -p test_analyze_samples.py",
+    "python3 -m unittest discover -s tests -p test_snapshot_task_shutdown.py"
+  ]
+}

@@ -8,8 +8,10 @@ private disk deltas and temporary frames. Failure leaves its live guest intact.
 """
 import argparse
 import base64
+from datetime import datetime, timezone
 import hashlib
 import json
+import signal
 import shutil
 import statistics
 import subprocess
@@ -27,6 +29,7 @@ p.add_argument('--output', type=Path, required=True)
 p.add_argument('--no-jit', action='store_true')
 p.add_argument('--emulator', type=Path, help='alternate executable for controlled comparisons')
 p.add_argument('--sample', action='store_true', help='macOS sample call stacks during the task; profiled timings include sampler overhead')
+p.add_argument('--instruments', action='store_true', help='record a macOS Instruments Time Profiler trace around the task')
 p.add_argument('--guest-profile', action='store_true', help='record opcode/dispatch counters with build/pcemu-profile')
 p.add_argument('--gui', action='store_true', help='include the normal SDL frontend rather than headless operation')
 p.add_argument('--sample-wait-ms', type=int, default=3000, help='named guest-side attachment barrier; requires a current emulator (0 for older executables)')
@@ -53,6 +56,10 @@ if not engine.is_file():
 engine_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
 if a.sample and not shutil.which('sample'):
     p.error('macOS sample tool is unavailable')
+if a.instruments and (a.sample or a.guest_profile):
+    p.error('--instruments cannot be combined with --sample or --guest-profile')
+if a.instruments and not shutil.which('xcrun'):
+    p.error('xcrun is unavailable')
 host_input_suppressed = a.gui and '--no-host-input' in subprocess.run(
     [str(engine), '--help'], check=True, capture_output=True, text=True).stdout
 snapshot = a.snapshot.resolve()
@@ -105,6 +112,8 @@ for index in range(a.repeat):
                              start_new_session=True)
     sampler = None
     sampler_log = None
+    instruments = None
+    instruments_log = None
     def send(*commands):
         with control.open('a') as f:
             f.write(''.join(command+'\n' for command in commands))
@@ -138,6 +147,18 @@ for index in range(a.repeat):
             raise RuntimeError('Guest jump joining mode differs from requested mode')
         if initial['executionEpoch'] != 1:
             raise RuntimeError('Guest did not start from the requested snapshot')
+        if a.instruments:
+            instruments_log = (work/'instruments.log').open('w')
+            instruments = subprocess.Popen([
+                'xcrun', 'xctrace', 'record', '--template', 'Time Profiler',
+                '--attach', str(child.pid), '--time-limit', '45s',
+                '--output', str((work/'instruments.trace').resolve()), '--no-prompt',
+            ], stdout=instruments_log, stderr=subprocess.STDOUT)
+            deadline = time.monotonic()+15
+            while 'Ctrl-C to stop the recording' not in (work/'instruments.log').read_text():
+                if instruments.poll() is not None or time.monotonic() > deadline:
+                    raise RuntimeError('Instruments did not attach; see instruments.log')
+                time.sleep(.01)
         if a.sample:
             sampler_log = (work/'sampler.log').open('w')
             sampler = subprocess.Popen(['sample', str(child.pid), '120', '1', '-mayDie',
@@ -152,6 +173,9 @@ for index in range(a.repeat):
             if a.sample_wait_ms:
                 send('profile-wait '+str(a.sample_wait_ms))
             initial = observe(before, a.restore_timeout)
+        if a.instruments and a.sample_wait_ms:
+            send('profile-wait '+str(a.sample_wait_ms))
+            initial = observe(before, a.restore_timeout)
         if a.guest_profile:
             send('profile-start')
         cpu_before = None
@@ -161,8 +185,10 @@ for index in range(a.repeat):
         except (OSError, ValueError, NotImplementedError) as error:
             cpu_measurement = {'status': 'unavailable', 'reason': str(error)}
         began = time.perf_counter()
+        task_start_utc = datetime.now(timezone.utc).isoformat() if a.instruments else None
         send(*task['commands'])
         final = observe(after, task.get('timeout',10))
+        task_end_utc = datetime.now(timezone.utc).isoformat() if a.instruments else None
         task_ms = (time.perf_counter()-began)*1000
         if cpu_before is not None:
             try:
@@ -174,6 +200,10 @@ for index in range(a.repeat):
                   'instructions':final['instructions']-initial['instructions'],
                   'nativeInstructions':final['nativeInstructions']-initial['nativeInstructions'],
                   'compiledBlocks':final['compiledBlocks']-initial['compiledBlocks']}
+        if a.instruments:
+            sample['taskStartUtc'] = task_start_utc
+            sample['taskEndUtc'] = task_end_utc
+            sample['instrumentsTrace'] = str(work/'instruments.trace')
         if 'nativeMemoryCalls' in final and 'nativeMemoryCalls' in initial:
             sample['nativeMemoryCalls'] = final['nativeMemoryCalls'] - initial['nativeMemoryCalls']
         if 'executionWallNs' in final and 'executionWallNs' in initial:
@@ -183,6 +213,13 @@ for index in range(a.repeat):
             subprocess.run(['sips','-s','format','png',str(frame),'--out',str(a.output/'last.png')],
                            check=True,stdout=subprocess.DEVNULL)
         shutdown_started = time.perf_counter()
+        if instruments:
+            instruments.send_signal(signal.SIGINT)
+            if instruments.wait(timeout=30):
+                raise RuntimeError('Instruments recording failed; see instruments.log')
+            instruments_log.close()
+            if not (work/'instruments.trace').exists():
+                raise RuntimeError('Instruments did not save a trace')
         if a.guest_profile:
             send('profile-stop '+str((work/'guest-profile.json').resolve()), 'quit')
         else:
@@ -213,6 +250,11 @@ for index in range(a.repeat):
         frame.unlink(missing_ok=True)
         print(f'Run {index+1}: ready {restore_ms:.1f} ms; task {task_ms:.1f} ms',flush=True)
     except Exception:
+        if instruments and instruments.poll() is None:
+            instruments.terminate()
+            instruments.wait(timeout=5)
+        if instruments_log and not instruments_log.closed:
+            instruments_log.close()
         if sampler and sampler.poll() is None:
             sampler.terminate()
             sampler.wait(timeout=5)
@@ -224,6 +266,7 @@ if hashlib.sha256(engine.read_bytes()).hexdigest() != engine_hash or \
         hashlib.sha256(a.task.read_bytes()).hexdigest() != task_hash:
     raise RuntimeError('Emulator or task changed during measurement; results not accepted')
 report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profiled':a.sample,
+        'instrumentsProfiled':a.instruments,
         'followJumps':follow_jumps_mode, 'traces':trace_mode,
         'emulatorSha256':engine_hash,
         'taskSha256':task_hash, 'restoreTimeoutSeconds':a.restore_timeout,
