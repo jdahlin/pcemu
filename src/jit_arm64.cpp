@@ -1110,94 +1110,94 @@ bool Jit::promoteBlock(Block &block) {
     const auto fullExit = code.size();
     std::vector<size_t> normalExit, packedExit;
     size_t earlyExit = 0;
-        auto conditionalExit = [&](std::vector<size_t> &list, uint32_t instruction) {
-            list.push_back(code.size()); emit(instruction);
-        };
-        auto aggregate = [&]() {
-            load(9, 31, 112);
-            conditionalExit(normalExit, 0x34000009u); // cbz w9, ordinary epilogue
-            load(10, 31, 116);
-            emit(0x0b00014au); // add w10,w10,w0: completed instructions
-            emit(0x1140414au); // add w10,w10,#16,lsl #12: one logical dispatch
-            store(10, 31, 116);
-        };
-        mark("Direct-link checks", block.link->startIP);
-        aggregate();
-        emit(0x6b00013fu); // cmp w9,w0
-        conditionalExit(packedExit, 0x54000009u); // b.ls: budget exhausted
-        emit(0x4b000129u); // sub w9,w9,w0
-        store(9, 31, 112);
-        if (block.link->count) {
-            // Supported native operations do not change CPU execution context.
-            // Recheck code identity and the cached fetch mapping at each edge;
-            // any eviction/remap goes through ordinary permission/fault handling.
-            // Every completed slow memory operation already checks source
-            // code generation, and inline stores reject marked code bytes.
-            // Only a slow memory helper can evict/change the fetch TLB slot.
-            size_t noHelper = 0;
-            if (block.link->fetchCheck) {
-                load(9, 31, 120);
-                noHelper = code.size(); emit(0x34000009u);
-                const uint32_t page = uint32_t(block.csBase + block.link->startIP) >> 12;
-                auto index = (page ^ (page >> 10)) & (cpu.tlb.size()-1);
-                pointer(16, reinterpret_cast<uintptr_t>(&cpu.tlb[index]));
-                load(11, 16, offsetof(CPU::TLBEntry, epoch));
-                cpuAddress(17, offsetof(CPU, tlbEpoch));
-                load(12, 17, 0);
-                emit(0x6b0c017fu);
-                conditionalExit(packedExit, 0x54000001u);
-                load(11, 16, offsetof(CPU::TLBEntry, tag));
-                imm(12, page);
-                emit(0x6b0c017fu);
-                conditionalExit(packedExit, 0x54000001u);
-                load(11, 16, offsetof(CPU::TLBEntry, base));
-                if (!block.a20) {
-                    imm(12, ~(1u << 20));
-                    emit(0x0a0c016bu); // and w11,w11,w12
-                }
-                imm(12, block.page << 12);
-                emit(0x6b0c017fu);
-                conditionalExit(packedExit, 0x54000001u);
-                if (cpu.cpl() == 3) {
-                    emit(0x39400000u | (offsetof(CPU::TLBEntry, permissions) << 10) | (16 << 5) | 11);
-                    bits(11, 11, 2, 1);
-                    conditionalExit(packedExit, 0x3400000bu);
-                }
-                code[noHelper] |= uint32_t(code.size()-noHelper) << 5;
+    auto conditionalExit = [&](std::vector<size_t> &list, uint32_t instruction) {
+        list.push_back(code.size()); emit(instruction);
+    };
+    auto aggregate = [&]() {
+        load(9, 31, 112);
+        conditionalExit(normalExit, 0x34000009u); // cbz w9, ordinary epilogue
+        load(10, 31, 116);
+        emit(0x0b00014au); // add w10,w10,w0: completed instructions
+        emit(0x1140414au); // add w10,w10,#16,lsl #12: one logical dispatch
+        store(10, 31, 116);
+    };
+    mark("Direct-link checks", block.link->startIP);
+    aggregate();
+    emit(0x6b00013fu); // cmp w9,w0
+    conditionalExit(packedExit, 0x54000009u); // b.ls: budget exhausted
+    emit(0x4b000129u); // sub w9,w9,w0
+    store(9, 31, 112);
+    if (block.link->count) {
+        // Supported native operations do not change CPU execution context.
+        // Recheck code identity and the cached fetch mapping at each edge;
+        // any eviction/remap goes through ordinary permission/fault handling.
+        // Every completed slow memory operation already checks source
+        // code generation, and inline stores reject marked code bytes.
+        // Only a slow memory helper can evict/change the fetch TLB slot.
+        size_t noHelper = 0;
+        if (block.link->fetchCheck) {
+            load(9, 31, 120);
+            noHelper = code.size(); emit(0x34000009u);
+            const uint32_t page = uint32_t(block.csBase + block.link->startIP) >> 12;
+            auto index = (page ^ (page >> 10)) & (cpu.tlb.size()-1);
+            pointer(16, reinterpret_cast<uintptr_t>(&cpu.tlb[index]));
+            load(11, 16, offsetof(CPU::TLBEntry, epoch));
+            cpuAddress(17, offsetof(CPU, tlbEpoch));
+            load(12, 17, 0);
+            emit(0x6b0c017fu);
+            conditionalExit(packedExit, 0x54000001u);
+            load(11, 16, offsetof(CPU::TLBEntry, tag));
+            imm(12, page);
+            emit(0x6b0c017fu);
+            conditionalExit(packedExit, 0x54000001u);
+            load(11, 16, offsetof(CPU::TLBEntry, base));
+            if (!block.a20) {
+                imm(12, ~(1u << 20));
+                emit(0x0a0c016bu); // and w11,w11,w12
             }
-            if (block.link->count == 2) {
-                load(11, 19, offsetof(CPU, ip));
-                imm(12, block.link->ips[0]);
-                emit(0x6b0c017fu);
-                emit(0x54000041u); // b.ne over the first unconditional link slot
+            imm(12, block.page << 12);
+            emit(0x6b0c017fu);
+            conditionalExit(packedExit, 0x54000001u);
+            if (cpu.cpl() == 3) {
+                emit(0x39400000u | (offsetof(CPU::TLBEntry, permissions) << 10) | (16 << 5) | 11);
+                bits(11, 11, 2, 1);
+                conditionalExit(packedExit, 0x3400000bu);
             }
-            for (unsigned slot = 0; slot < block.link->count; ++slot) {
-                block.link->branchOffsets[slot] = code.size()*4;
-                packedExit.push_back(code.size()); emit(0x14000000u);
-            }
-        } else {
+            code[noHelper] |= uint32_t(code.size()-noHelper) << 5;
+        }
+        if (block.link->count == 2) {
+            load(11, 19, offsetof(CPU, ip));
+            imm(12, block.link->ips[0]);
+            emit(0x6b0c017fu);
+            emit(0x54000041u); // b.ne over the first unconditional link slot
+        }
+        for (unsigned slot = 0; slot < block.link->count; ++slot) {
+            block.link->branchOffsets[slot] = code.size()*4;
             packedExit.push_back(code.size()); emit(0x14000000u);
         }
-        earlyExit = code.size();
-        aggregate(); // A partial prefix/replay must never follow a direct edge.
-        auto nonzeroPrefix = code.size(); emit(0x35000000u); // cbnz w0, packed
-        load(10, 31, 116);
-        imm(11, 0x80000000u); // Carry a zero-ending prefix through the packed return.
-        emit(0x2a0b014au); // orr w10,w10,w11
-        store(10, 31, 116);
-        code[nonzeroPrefix] |= uint32_t(code.size()-nonzeroPrefix) << 5;
-        const auto packed = code.size();
-        block.link->fallbackOffset = packed*4;
-        for (auto at : packedExit) {
-            if ((code[at] & 0xfc000000u) == 0x14000000u)
-                code[at] |= uint32_t(packed-at);
-            else code[at] |= uint32_t(packed-at) << 5;
-        }
-        load(10, 31, 116);
-        bits(0, 10, 0, 16);
-        bits(1, 10, 16, 16);
-        emit(0xaa018000u); // orr x0,x0,x1,lsl #32
-    
+    } else {
+        packedExit.push_back(code.size()); emit(0x14000000u);
+    }
+    earlyExit = code.size();
+    aggregate(); // A partial prefix/replay must never follow a direct edge.
+    auto nonzeroPrefix = code.size(); emit(0x35000000u); // cbnz w0, packed
+    load(10, 31, 116);
+    imm(11, 0x80000000u); // Carry a zero-ending prefix through the packed return.
+    emit(0x2a0b014au); // orr w10,w10,w11
+    store(10, 31, 116);
+    code[nonzeroPrefix] |= uint32_t(code.size()-nonzeroPrefix) << 5;
+    const auto packed = code.size();
+    block.link->fallbackOffset = packed*4;
+    for (auto at : packedExit) {
+        if ((code[at] & 0xfc000000u) == 0x14000000u)
+            code[at] |= uint32_t(packed-at);
+        else code[at] |= uint32_t(packed-at) << 5;
+    }
+    load(10, 31, 116);
+    bits(0, 10, 0, 16);
+    bits(1, 10, 16, 16);
+    emit(0xaa018000u); // orr x0,x0,x1,lsl #32
+
     for (auto at : normalExit) code[at] |= uint32_t(code.size()-at) << 5;
     mark("Linked host epilogue", link.startIP);
     for (int k = 0; k < 5; ++k)
