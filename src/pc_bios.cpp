@@ -168,7 +168,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
     case 0x10:
         switch (ah) {
         case 0:
-            vga.mode(al & 127, !(al & 128));
+            vga.set_bios_mode(al & 127, !(al & 128));
             videoMode = al & 127;
             columns = videoMode == 0 || videoMode == 1 ? 40 : 80;
             rows = 25;

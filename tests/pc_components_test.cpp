@@ -167,7 +167,7 @@ int main() {
     // Both presentation entry points must preserve reference VGA pixels,
     // including odd row lengths and a non-default DAC mask.
     for (unsigned mode : {0x12u, 0x13u}) {
-        machine.vga.mode(mode, true);
+        machine.vga.set_bios_mode(mode, true);
         machine.vga.width = 19; machine.vga.height = 9; machine.vga.dacMask = 15;
         for (unsigned p = 0; p < 4; ++p)
             for (unsigned a = 0; a < 100; ++a) machine.vga.planes[p][a] = a * 31 + p * 53;
@@ -181,7 +181,7 @@ int main() {
         check(data.size() == graphicsHeader.size() + 19 * 9 * 3);
         check(data.substr(0, graphicsHeader.size()) == graphicsHeader);
         for (unsigned y = 0; y < 9; ++y) for (unsigned x = 0; x < 19; ++x) {
-            auto expected = machine.vga.pixel(x, y);
+            auto expected = machine.vga.pixel_color(x, y);
             check(pixels[y * 19 + x] == expected);
             auto at = graphicsHeader.size() + (y * 19 + x) * 3;
             check(uint8_t(data[at]) == uint8_t(expected >> 16) &&

@@ -387,7 +387,7 @@ int main() {
         check(m.vga.graphics && m.vga.width == 800 && m.vga.height == 600,
               "DISPI enables true-colour geometry");
         c.write(VGA::lfbBase, 0x123456, 4);
-        check(c.read(VGA::lfbBase, 4) == 0x123456 && m.vga.pixel(0, 0) == 0xff123456,
+        check(c.read(VGA::lfbBase, 4) == 0x123456 && m.vga.pixel_color(0, 0) == 0xff123456,
               "CPU linear framebuffer read/write and BGR rendering");
         reg(5, 1);
         c.write(0xa0000, 0xabcdef, 4);
@@ -396,23 +396,23 @@ int main() {
         reg(8, 1);
         reg(9, 1);
         c.write(VGA::lfbBase + (1024 + 1) * 4, 0x654321, 4);
-        check(m.vga.pixel(0, 0) == 0xff654321, "virtual pitch and panning");
+        check(m.vga.pixel_color(0, 0) == 0xff654321, "virtual pitch and panning");
         reg(4, 0);
         reg(3, 16);
         reg(4, 0x41);
         c.write(VGA::lfbBase, 0xf800, 2);
-        check(m.vga.pixel(0, 0) == 0xffff0000, "RGB565 rendering");
+        check(m.vga.pixel_color(0, 0) == 0xffff0000, "RGB565 rendering");
         reg(4, 0);
         reg(3, 15);
         reg(4, 0x41);
         c.write(VGA::lfbBase, 0x03e0, 2);
-        check(m.vga.pixel(0, 0) == 0xff00ff00, "RGB555 rendering");
+        check(m.vga.pixel_color(0, 0) == 0xff00ff00, "RGB555 rendering");
         reg(4, 0);
         reg(3, 24);
         reg(4, 0x41);
         c.write(VGA::lfbBase, 0x34, 1);
         c.write(VGA::lfbBase + 1, 0x12, 1);
-        check(m.vga.pixel(0, 0) == 0xff001234, "packed 24-bit rendering");
+        check(m.vga.pixel_color(0, 0) == 0xff001234, "packed 24-bit rendering");
         ps2State(m).mouse.accumulate_motion(13, -9, 2);
         m.pollPs2();
         m.pci.address = 0x80001010;

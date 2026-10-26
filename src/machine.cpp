@@ -17,8 +17,8 @@ void Machine::bindDevices() {
     ata.disk = disk.get();
     rtc.configure({cpu.mem.size(), bool(disk), bool(floppy)});
     bindIoPorts();
-    cpu.videoRead = [this](uint32_t a) { return vga.read(a); };
-    cpu.videoWrite = [this](uint32_t a, uint8_t v) { vga.write(a, v); };
+    cpu.videoRead = [this](uint32_t a) { return vga.read_memory(a); };
+    cpu.videoWrite = [this](uint32_t a, uint8_t v) { vga.write_memory(a, v); };
     cpu.bios = [this](uint8_t n) { return bios(n); };
     cpu.input = [this](uint16_t p, int w) { return in(p, w); };
     cpu.output = [this](uint16_t p, uint32_t v, int w) { out(p, v, w); };

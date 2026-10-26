@@ -23,7 +23,7 @@ void PcDisplay::loadFont(std::span<const uint8_t> bytes) {
 }
 void PcDisplay::refresh(Machine &m, bool executeVga) {
     auto &c = m.cpu;
-    m.vga.updateGeometry();
+    m.vga.update_display_geometry();
     if (!executeVga)
         return;
     auto mode = c.mem[0x449] & 127;
@@ -57,7 +57,7 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
     std::vector<uint32_t> graphics;
     if (m.vga.graphics) {
         graphics.resize(size_t(width) * height);
-        m.vga.render(graphics, width, height);
+        m.vga.render_graphics(graphics, width, height);
     }
     for (unsigned y = 0; y < height; y++)
         for (unsigned x = 0; x < width; x++) {
@@ -82,7 +82,7 @@ void PcDisplay::render(Machine &m, std::span<uint32_t> pixels, unsigned displayW
                        unsigned displayHeight, uint64_t frameTicks) const {
     auto &c = m.cpu;
     if (m.vga.graphics) {
-        m.vga.render(pixels, displayWidth, displayHeight);
+        m.vga.render_graphics(pixels, displayWidth, displayHeight);
         return;
     }
     for (unsigned y = 0; y < displayHeight; y++)

@@ -1964,65 +1964,65 @@ int main() {
         nofpu.step();
         check(faultVector == 7 && nofpu.ip == 0, "CR0.EM sends x87 instruction to #NM handler");
         VGA vga;
-        vga.mode(0x12, true);
+        vga.set_bios_mode(0x12, true);
         vga.gfx[0] = 5;
         vga.gfx[1] = 15;
-        vga.write(0xa0000, 255);
+        vga.write_memory(0xa0000, 255);
         check(vga.planes[0][0] == 255 && vga.planes[1][0] == 0 && vga.planes[2][0] == 255,
               "VGA set/reset planes");
-        vga.read(0xa0000);
+        vga.read_memory(0xa0000);
         vga.gfx[5] = 1;
-        vga.write(0xa0001, 0);
+        vga.write_memory(0xa0001, 0);
         check(vga.planes[0][1] == 255 && vga.planes[2][1] == 255, "VGA write mode 1 uses latches");
         vga.gfx[5] = 8;
         vga.gfx[2] = 5;
         vga.gfx[7] = 15;
-        check(vga.read(0xa0000) == 255, "VGA read color compare");
-        vga.mode(0x13, true);
-        vga.write(0xa0007, 42);
-        check(vga.planes[3][1] == 42 && vga.read(0xa0007) == 42, "VGA chain-4 addressing");
+        check(vga.read_memory(0xa0000) == 255, "VGA read color compare");
+        vga.set_bios_mode(0x13, true);
+        vga.write_memory(0xa0007, 42);
+        check(vga.planes[3][1] == 42 && vga.read_memory(0xa0007) == 42, "VGA chain-4 addressing");
         {
             VGA display;
-            display.mode(0x13, true);
-            display.updateGeometry();
+            display.set_bios_mode(0x13, true);
+            display.update_display_geometry();
             check(display.width == 320 && display.height == 200,
                   "CRTC geometry preserves standard chained 320x200 mode");
             display.dac[42][0] = 63;
             display.dac[42][1] = display.dac[42][2] = 0;
-            display.write(0xa0000 + 199 * 320 + 319, 42);
-            check(display.pixel(319, 199) == 0xffff0000,
+            display.write_memory(0xa0000 + 199 * 320 + 319, 42);
+            check(display.pixel_color(319, 199) == 0xffff0000,
                   "chained 256-color scanout uses CRTC stride and all four planes");
             display.seq[4] &= ~8;
             display.crtc[9] = 0;
-            display.updateGeometry();
+            display.update_display_geometry();
             check(display.width == 320 && display.height == 400,
                   "Mode X scanout derives 400 rows independently of BIOS mode number");
             for (unsigned plane = 0; plane < 4; plane++) {
                 display.seq[2] = 1u << plane;
-                display.write(0xa0000 + 399 * 80, 42);
-                check(display.pixel(plane, 399) == 0xffff0000,
+                display.write_memory(0xa0000 + 399 * 80, 42);
+                check(display.pixel_color(plane, 399) == 0xffff0000,
                       "unchained Mode X retains 256-color plane-interleaved scanout");
             }
             display.crtc[12] = 0;
             display.crtc[13] = 5;
             display.planes[0][5] = 42;
-            check(display.pixel(0, 0) == 0xffff0000, "Mode X display start uses plane offsets");
+            check(display.pixel_color(0, 0) == 0xffff0000, "Mode X display start uses plane offsets");
             display.crtc[9] = 0x80;
-            display.updateGeometry();
+            display.update_display_geometry();
             check(display.height == 200, "CRTC scan doubling repeats each memory row");
             display.crtc[9] = 0x81;
-            display.updateGeometry();
+            display.update_display_geometry();
             check(display.height == 100, "maximum scan line and double scan combine");
-            display.mode(0x12, true);
-            display.updateGeometry();
+            display.set_bios_mode(0x12, true);
+            display.update_display_geometry();
             check(display.width == 640 && display.height == 480,
                   "CRTC overflow bits retain planar 640x480 geometry");
             display.crtc[0x12] = 0x57;
             display.crtc[7] = 0x40;
-            display.updateGeometry();
+            display.update_display_geometry();
             check(display.height == 600, "vertical display end includes overflow bit nine");
-            display.mode(3, true);
-            display.updateGeometry();
+            display.set_bios_mode(3, true);
+            display.update_display_geometry();
             check(!display.graphics, "text mode remains separate from graphics scanout");
         }
         // INT 13h/AH=08 must preserve ES:DI on fixed disks (DOS relies on DI).
@@ -2101,7 +2101,7 @@ int main() {
             fixed.pic[0].isr = 2;
             ps2State(fixed).keyboardFull = true;
             ps2State(fixed).scanCodes = {0x1e};
-            fixed.vga.mode(0x13, true);
+            fixed.vga.set_bios_mode(0x13, true);
             if (resetSource == 1) {
                 fixed.cpu.cr[0] = 0x80000011;
                 fixed.cpu.cr[3] = 0x2000;
