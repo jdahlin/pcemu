@@ -262,6 +262,23 @@ pcemu_program(memory-bench ZSTD
     tools/memory_bench.cpp
 )
 
+pcemu_program(memory-chase-bench
+  SOURCES
+    src/cpu.cpp
+    src/jit.cpp
+    src/jit_decode.cpp
+    src/jit_flags.cpp
+    src/jit_runtime.cpp
+    src/jit_arm64.cpp
+    tools/memory_chase_bench.cpp
+)
+add_test(NAME memory-chase-interpreter
+  COMMAND memory-chase-bench --backend interpreter --loops 1000)
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+  add_test(NAME memory-chase-jit
+    COMMAND memory-chase-bench --backend jit --loops 1000)
+endif()
+
 pcemu_program(guest-bench ZSTD
   SOURCES
     ${CORE}
