@@ -1,0 +1,3495 @@
+{
+  "scope": "Address-bias prototype, default unchanged; core/native/snapshot correctness verified, no fresh OS/installer acceptance.",
+  "checks": {
+    "core": "Passed 354964 checks",
+    "snapshot": "Passed 2900 snapshot/COW checks",
+    "jit-read": "Passed 255535 read JIT checks",
+    "jit-rmw": "Passed 947820 RMW JIT checks",
+    "jit-bytes": "Passed 2957189 byte JIT checks",
+    "jit-jump": "17861 indirect jump checks passed",
+    "jit-flags": "Passed 91745234 flag-liveness checks",
+    "jit-stack": "Passed 43600 stack JIT checks"
+  },
+  "commands": {
+    "candidate": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-I/Users/johandahlin/dev/pcemu/build/tlb-bias/source",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_arm64.cpp",
+      "tools/memory_chase_bench.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-bench"
+    ],
+    "core": [
+      "clang++",
+      "-Itests",
+      "-I/Users/johandahlin/dev/pcemu/build/tlb-bias/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/network.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "build/tlb-bias/core-tests.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/core-tests"
+    ],
+    "snapshot": [
+      "clang++",
+      "-Itests",
+      "-I/Users/johandahlin/dev/pcemu/build/tlb-bias/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/network.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "build/tlb-bias/snapshot-tests.cpp",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/snapshot-tests"
+    ],
+    "emulator": [
+      "clang++",
+      "-I/Users/johandahlin/dev/pcemu/build/tlb-bias/source",
+      "-I/opt/homebrew/opt/zstd/include",
+      "-I/opt/homebrew/include",
+      "-I/opt/homebrew/include/SDL2",
+      "-D_THREAD_SAFE",
+      "-std=c++20",
+      "-O3",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/machine.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_at_io.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_firmware.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_video.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8042.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_input.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cmos_rtc.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_bios_disk.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ata.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pic.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/i8259_pair.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_decode.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_flags.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_runtime.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/jit_arm64.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/snapshot.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/mouse.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/vga_pci.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/host_keyboard.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/ne2000.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/pc_display.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/session_diagnostics.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/cpu_benchmarks.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/main.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/network.cpp",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/source/frontend_sdl.cpp",
+      "-L/opt/homebrew/lib",
+      "-lSDL2",
+      "-L/opt/homebrew/opt/zstd/lib",
+      "-lzstd",
+      "-o",
+      "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu"
+    ]
+  },
+  "binaries": {
+    "candidate-bench": "508575ab01d35ecdbe58f44989b2378f11f3d90d8b628cebc90e3c2df9727715",
+    "candidate-pcemu": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553"
+  },
+  "patch": "--- a/src/cpu.hpp\n+++ b/src/cpu.hpp\n@@ -92,7 +92,7 @@\n     std::string location() const;\n \n     struct TLBEntry {\n-        uint32_t tag = 0, epoch = 0, base = 0, pteAddress = 0;\n+        uint32_t tag = 0, epoch = 0, bias = 0, pteAddress = 0;\n         uint8_t permissions = 0;\n         bool dirty = false;\n     };\n--- a/src/cpu.cpp\n+++ b/src/cpu.cpp\n@@ -83,7 +83,7 @@\n         if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) &&\n             cpl() == 3 && !systemAccess)\n             return physicalSlow(a, wr);\n-        a = entry.base | (a & 4095);\n+        a = entry.bias + a;\n     }\n     if (!a20) a &= ~(1u << 20);\n     return a;\n@@ -132,7 +132,7 @@\n             std::memcpy(&mem[pdeAddress], &pde, 4);\n             written(pteAddress, 4);\n             std::memcpy(&mem[pteAddress], &pte, 4);\n-            entry = {page,          tlbEpoch, pte & ~4095u, pteAddress, uint8_t(permissions),\n+            entry = {page,          tlbEpoch, (pte & ~4095u) - (page << 12), pteAddress, uint8_t(permissions),\n                      bool(pte & 64)};\n         }\n         if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) && user())\n@@ -142,7 +142,7 @@\n             mem[entry.pteAddress] |= 64;\n             entry.dirty = true;\n         }\n-        a = entry.base | (a & 4095);\n+        a = entry.bias + a;\n     }\n     if (!a20)\n         a &= ~(1u << 20);\n@@ -1079,7 +1079,7 @@\n                         ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&\n                                 entry.tag == page && entry.dirty &&\n                                 (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);\n-                        physicalStart = entry.base | (dst & 4095);\n+                        physicalStart = entry.bias + dst;\n                     }\n                     uint32_t bytes = elements * bw;\n                     ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&\n@@ -1126,7 +1126,7 @@\n                                 (cpl() == 3 && !systemAccess &&\n                                  (entry.permissions & permissions) != permissions))\n                                 return false;\n-                            physicalStart = entry.base | (linear & 4095);\n+                            physicalStart = entry.bias + linear;\n                         }\n                         if (uint64_t(physicalStart) + bytes > mem.size() ||\n                             (physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000))\n--- a/src/jit.cpp\n+++ b/src/jit.cpp\n@@ -18,7 +18,7 @@\n         const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size() - 1)];\n         if (cpu.tlbCR3 == cpu.cr[3] && entry.epoch == cpu.tlbEpoch && entry.tag == page &&\n             ((entry.permissions & 4) || cpu.cpl() != 3 || cpu.systemAccess)) {\n-            uint32_t physical = entry.base | (linear & 4095);\n+            uint32_t physical = entry.bias + linear;\n             if (!cpu.a20) physical &= ~(1u << 20);\n             return physical >> 12;\n         }\n--- a/src/jit_arm64.cpp\n+++ b/src/jit_arm64.cpp\n@@ -779,9 +779,8 @@\n                         emit(0x3940458du);  // ldrb w13,[x12,#dirty]\n                         guard(0x3400000du); // cbz w13,slow\n                     }\n-                    emit(0x12002d2eu); // and w14,w9,#4095\n-                    load(13, 12, offsetof(CPU::TLBEntry, base));\n-                    emit(0x2a0e01a9u); // orr w9,w13,w14\n+                    load(13, 12, offsetof(CPU::TLBEntry, bias));\n+                    emit(0x0b0d0129u); // add w9,w9,w13\n                 }\n                 if (!block.a20) {\n                     imm(10, 1u << 20);\n--- a/src/snapshot.cpp\n+++ b/src/snapshot.cpp\n@@ -172,8 +172,12 @@\n         a(c.cr, c.dr, c.gdtBase, c.idtBase, c.ldtBase, c.gdtLimit, c.idtLimit, c.ldtLimit,\n           c.ldtSelector, c.trSelector, c.trBase, c.trLimit, c.tr32, c.halted, c.a20, c.instructions,\n           c.interruptBlockedThrough, c.systemAccess);\n-        for (auto &e : c.tlb)\n-            a(e.tag, e.epoch, e.base, e.pteAddress, e.permissions, e.dirty);\n+        for (auto &e : c.tlb) {\n+            uint32_t frame = e.bias + (e.tag << 12);\n+            a(e.tag, e.epoch, frame, e.pteAddress, e.permissions, e.dirty);\n+            if constexpr (A::loading)\n+                e.bias = frame - (e.tag << 12);\n+        }\n         a(c.tlbEpoch, c.tlbCR3);\n         auto &r = c.repeatResume;\n         a(r.valid, r.selector, r.base, r.ip, r.initialFlags, r.lastFlags, r.ax, r.cx, r.si, r.di);\n--- a/tests/test.cpp\n+++ b/tests/test.cpp\n@@ -86,13 +86,13 @@\n             for (unsigned permissions = 0; permissions < 256; ++permissions)\n             for (bool dirty : {false, true}) {\n                 auto &entry = c.tlb[9];\n-                entry = {9, c.tlbEpoch, base, 0x100, uint8_t(permissions), dirty};\n-                check(entry.base == base && entry.permissions == permissions && entry.dirty == dirty,\n+                entry = {9, c.tlbEpoch, uint32_t(base - 0x9000), 0x100, uint8_t(permissions), dirty};\n+                check(entry.bias == uint32_t(base - 0x9000) && entry.permissions == permissions && entry.dirty == dirty,\n                       \"TLB frame and metadata retain every bit\");\n                 check(c.physical(0x9abc) == (base | 0xabc),\n                       \"TLB metadata cannot change a physical address\");\n                 entry.dirty = true;\n-                check(entry.dirty && entry.base == base && entry.permissions == permissions,\n+                check(entry.dirty && entry.bias == uint32_t(base - 0x9000) && entry.permissions == permissions,\n                       \"dirty update preserves frame and permissions\");\n             }\n         }\n@@ -117,7 +117,7 @@\n             c.a20 = a20;\n             auto page = linear >> 12;\n             auto &entry = c.tlb[(page ^ (page >> 10)) & (c.tlb.size() - 1)];\n-            entry = {page, c.tlbEpoch, 0x180000, pte, uint8_t(permissions), dirty};\n+            entry = {page, c.tlbEpoch, uint32_t(0x180000 - (page << 12)), pte, uint8_t(permissions), dirty};\n             if (cache == 1) entry.tag ^= 1;\n             if (cache == 2) --entry.epoch;\n             if (cache == 3) c.tlbCR3 ^= 0x1000;\n--- a/tests/snapshot_test.cpp\n+++ b/tests/snapshot_test.cpp\n@@ -186,7 +186,7 @@\n         m.cpu.interruptBlockedThrough = 12345679;\n         m.cpu.s[FS] = {0x123400, 0xffff, 0x31, false, true};\n         m.cpu.repeatResume = {true, 7, 0x1234, 0x20, 0x202, 0x246, 1, 2, 3, 4};\n-        m.cpu.tlb[17] = {0x19, m.cpu.tlbEpoch, 0x5000, 0x1a00, 6, true};\n+        m.cpu.tlb[17] = {0x19, m.cpu.tlbEpoch, uint32_t(0x5000 - 0x19000), 0x1a00, 6, true};\n         m.cpu.write(0x5000, 0xaabbccdd, 4);\n         m.pic[0].irr = 5;\n         m.pic[1].isr = 0x40;\n@@ -247,7 +247,7 @@\n               \"CPU RAM and cache identity restore\");\n         check(m.disk->isOverlay() && fs::file_size(m.disk->path) < 1024,\n               \"restore allocates only an empty compressed delta\");\n-        check(m.cpu.tlb[17].base == 0x5000 && m.cpu.tlb[17].pteAddress == 0x1a00 &&\n+        check(m.cpu.tlb[17].bias == uint32_t(0x5000 - 0x19000) && m.cpu.tlb[17].pteAddress == 0x1a00 &&\n                   m.cpu.tlb[17].permissions == 6 && m.cpu.tlb[17].dirty,\n               \"legacy snapshot fields restore frame/permission/dirty state\");\n         m.saveSnapshot((root / \"roundtrip\").string());\n",
+  "office": [
+    {
+      "scope": "Three alternating uninstrumented headless pairs per task; restored existing checkpoints, warm guest OS and cold JIT; task CPU includes control/capture. Address-bias prototype only, no default change.",
+      "binaries": {
+        "baseline": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+        "candidate": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553"
+      },
+      "startedUnix": 1793015585.731005,
+      "loadBefore": [
+        4.47705078125,
+        3.560546875,
+        3.20458984375
+      ],
+      "workloads": {
+        "excel": {
+          "pairs": [
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 31900.364459000004,
+                      "taskResponseMs": 5872.411125,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5281.173166,
+                        "systemMs": 370.208167,
+                        "totalMs": 5651.381333
+                      },
+                      "instructions": 1403354978,
+                      "nativeInstructions": 1383237129,
+                      "compiledBlocks": 31882,
+                      "executionWallMs": 5326.482333,
+                      "shutdownWaitMs": 230.4277920000004,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 31900.364459000004,
+                  "medianTaskResponseMs": 5872.411125,
+                  "medianProcessCpuMs": 5651.381333
+                },
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 1135.605292,
+                      "taskResponseMs": 6053.856624999999,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5376.879291,
+                        "systemMs": 439.376584,
+                        "totalMs": 5816.255875
+                      },
+                      "instructions": 1403471605,
+                      "nativeInstructions": 1383337940,
+                      "compiledBlocks": 31985,
+                      "executionWallMs": 5393.73194,
+                      "shutdownWaitMs": 127.89495799999972,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 1135.605292,
+                  "medianTaskResponseMs": 6053.856624999999,
+                  "medianProcessCpuMs": 5816.255875
+                }
+              },
+              "cpuRatio": 0.9716528045630387,
+              "responseRatio": 0.9700281141032143
+            },
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 670.373792,
+                      "taskResponseMs": 6289.067083,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5346.78075,
+                        "systemMs": 445.041167,
+                        "totalMs": 5791.821917
+                      },
+                      "instructions": 1403253685,
+                      "nativeInstructions": 1383152854,
+                      "compiledBlocks": 31910,
+                      "executionWallMs": 5439.255629,
+                      "shutdownWaitMs": 127.59933400000011,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 670.373792,
+                  "medianTaskResponseMs": 6289.067083,
+                  "medianProcessCpuMs": 5791.821917
+                },
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 6952.3372500000005,
+                      "taskResponseMs": 5942.872874999999,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5397.105,
+                        "systemMs": 408.466375,
+                        "totalMs": 5805.571375
+                      },
+                      "instructions": 1402691954,
+                      "nativeInstructions": 1382702065,
+                      "compiledBlocks": 31817,
+                      "executionWallMs": 5392.694273,
+                      "shutdownWaitMs": 130.34979200000052,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 6952.3372500000005,
+                  "medianTaskResponseMs": 5942.872874999999,
+                  "medianProcessCpuMs": 5805.571375
+                }
+              },
+              "cpuRatio": 1.0023739435012053,
+              "responseRatio": 0.9449530107675589
+            },
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 616.358375,
+                      "taskResponseMs": 6517.298333000001,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5813.076,
+                        "systemMs": 501.114584,
+                        "totalMs": 6314.190584
+                      },
+                      "instructions": 1403537748,
+                      "nativeInstructions": 1383398235,
+                      "compiledBlocks": 31890,
+                      "executionWallMs": 5791.782356,
+                      "shutdownWaitMs": 231.55854100000005,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 616.358375,
+                  "medianTaskResponseMs": 6517.298333000001,
+                  "medianProcessCpuMs": 6314.190584
+                },
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 790.0359169999999,
+                      "taskResponseMs": 5466.073124999999,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 4988.17375,
+                        "systemMs": 333.175917,
+                        "totalMs": 5321.349667
+                      },
+                      "instructions": 1402686596,
+                      "nativeInstructions": 1382694319,
+                      "compiledBlocks": 31893,
+                      "executionWallMs": 4935.822552,
+                      "shutdownWaitMs": 131.2228329999998,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 790.0359169999999,
+                  "medianTaskResponseMs": 5466.073124999999,
+                  "medianProcessCpuMs": 5321.349667
+                }
+              },
+              "cpuRatio": 1.1865768985558376,
+              "responseRatio": 1.1923181750335625
+            }
+          ],
+          "medianCpuRatio": 1.0023739435012053,
+          "medianResponseRatio": 0.9700281141032143
+        },
+        "word": {
+          "pairs": [
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 1480.6850419999998,
+                      "taskResponseMs": 871.2384169999998,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 763.702792,
+                        "systemMs": 77.979667,
+                        "totalMs": 841.682459
+                      },
+                      "instructions": 31926247,
+                      "nativeInstructions": 24170287,
+                      "compiledBlocks": 40557,
+                      "executionWallMs": 787.016615,
+                      "shutdownWaitMs": 181.34362500000023,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 1480.6850419999998,
+                  "medianTaskResponseMs": 871.2384169999998,
+                  "medianProcessCpuMs": 841.682459
+                },
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 696.0460830000001,
+                      "taskResponseMs": 791.8959169999999,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 718.383583,
+                        "systemMs": 64.873791,
+                        "totalMs": 783.257374
+                      },
+                      "instructions": 31217290,
+                      "nativeInstructions": 23673832,
+                      "compiledBlocks": 39501,
+                      "executionWallMs": 717.612914,
+                      "shutdownWaitMs": 127.39579099999987,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 696.0460830000001,
+                  "medianTaskResponseMs": 791.8959169999999,
+                  "medianProcessCpuMs": 783.257374
+                }
+              },
+              "cpuRatio": 1.0745924480756948,
+              "responseRatio": 1.1001930914110267
+            },
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 649.184375,
+                      "taskResponseMs": 817.465917,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 737.133166,
+                        "systemMs": 71.95575,
+                        "totalMs": 809.088916
+                      },
+                      "instructions": 31335512,
+                      "nativeInstructions": 23734958,
+                      "compiledBlocks": 39286,
+                      "executionWallMs": 740.620959,
+                      "shutdownWaitMs": 182.82104200000003,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 649.184375,
+                  "medianTaskResponseMs": 817.465917,
+                  "medianProcessCpuMs": 809.088916
+                },
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 727.4687080000001,
+                      "taskResponseMs": 821.050958,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 738.785917,
+                        "systemMs": 72.311458,
+                        "totalMs": 811.097375
+                      },
+                      "instructions": 31130961,
+                      "nativeInstructions": 23592975,
+                      "compiledBlocks": 38901,
+                      "executionWallMs": 741.558919,
+                      "shutdownWaitMs": 73.16725000000002,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 727.4687080000001,
+                  "medianTaskResponseMs": 821.050958,
+                  "medianProcessCpuMs": 811.097375
+                }
+              },
+              "cpuRatio": 1.0024823711711803,
+              "responseRatio": 1.0043855540952176
+            },
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 527.589333,
+                      "taskResponseMs": 821.074458,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 741.924833,
+                        "systemMs": 71.238166,
+                        "totalMs": 813.162999
+                      },
+                      "instructions": 31347852,
+                      "nativeInstructions": 23751428,
+                      "compiledBlocks": 39834,
+                      "executionWallMs": 741.461132,
+                      "shutdownWaitMs": 127.00120800000003,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 527.589333,
+                  "medianTaskResponseMs": 821.074458,
+                  "medianProcessCpuMs": 813.162999
+                },
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 639.539958,
+                      "taskResponseMs": 857.641041,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 760.551916,
+                        "systemMs": 79.787291,
+                        "totalMs": 840.339207
+                      },
+                      "instructions": 32190391,
+                      "nativeInstructions": 24365874,
+                      "compiledBlocks": 40949,
+                      "executionWallMs": 762.347198,
+                      "shutdownWaitMs": 122.627292,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 639.539958,
+                  "medianTaskResponseMs": 857.641041,
+                  "medianProcessCpuMs": 840.339207
+                }
+              },
+              "cpuRatio": 0.9676604307241373,
+              "responseRatio": 0.9573637672966726
+            }
+          ],
+          "medianCpuRatio": 1.0024823711711803,
+          "medianResponseRatio": 1.0043855540952176
+        }
+      },
+      "finishedUnix": 1793015678.0213592,
+      "loadAfter": [
+        4.015625,
+        3.62109375,
+        3.25830078125
+      ]
+    },
+    {
+      "scope": "Three alternating uninstrumented headless pairs per task; restored existing checkpoints, warm guest OS and cold JIT; task CPU includes control/capture. Address-bias prototype only, no default change.",
+      "binaries": {
+        "baseline": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+        "candidate": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553"
+      },
+      "startedUnix": 1793015736.6898901,
+      "loadBefore": [
+        4.1416015625,
+        3.71923828125,
+        3.31689453125
+      ],
+      "workloads": {
+        "excel": {
+          "pairs": [
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 29647.597875,
+                      "taskResponseMs": 6309.108416999998,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5411.77925,
+                        "systemMs": 426.024,
+                        "totalMs": 5837.80325
+                      },
+                      "instructions": 1403587707,
+                      "nativeInstructions": 1383418522,
+                      "compiledBlocks": 31989,
+                      "executionWallMs": 5483.969807,
+                      "shutdownWaitMs": 177.92720799999984,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 29647.597875,
+                  "medianTaskResponseMs": 6309.108416999998,
+                  "medianProcessCpuMs": 5837.80325
+                },
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 1122.3509999999999,
+                      "taskResponseMs": 5466.6370830000005,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 4972.678208,
+                        "systemMs": 342.896708,
+                        "totalMs": 5315.574916
+                      },
+                      "instructions": 1403322451,
+                      "nativeInstructions": 1383228608,
+                      "compiledBlocks": 31876,
+                      "executionWallMs": 4960.656007,
+                      "shutdownWaitMs": 131.16337500000074,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 1122.3509999999999,
+                  "medianTaskResponseMs": 5466.6370830000005,
+                  "medianProcessCpuMs": 5315.574916
+                }
+              },
+              "cpuRatio": 0.9105436905568888,
+              "responseRatio": 0.8664674501820346
+            },
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 891.3807499999999,
+                      "taskResponseMs": 6116.679625,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5157.688416,
+                        "systemMs": 433.798875,
+                        "totalMs": 5591.487291
+                      },
+                      "instructions": 1403376594,
+                      "nativeInstructions": 1383274663,
+                      "compiledBlocks": 31877,
+                      "executionWallMs": 5128.839034,
+                      "shutdownWaitMs": 234.87070799999987,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 891.3807499999999,
+                  "medianTaskResponseMs": 6116.679625,
+                  "medianProcessCpuMs": 5591.487291
+                },
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 653.1261659999999,
+                      "taskResponseMs": 5507.000375,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 4989.032083,
+                        "systemMs": 365.330958,
+                        "totalMs": 5354.363041
+                      },
+                      "instructions": 1403109075,
+                      "nativeInstructions": 1383006764,
+                      "compiledBlocks": 32042,
+                      "executionWallMs": 4908.17334,
+                      "shutdownWaitMs": 120.77737500000029,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 653.1261659999999,
+                  "medianTaskResponseMs": 5507.000375,
+                  "medianProcessCpuMs": 5354.363041
+                }
+              },
+              "cpuRatio": 1.0442861733850073,
+              "responseRatio": 1.110709861718504
+            },
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 657.860125,
+                      "taskResponseMs": 5865.716667,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5049.569917,
+                        "systemMs": 403.032,
+                        "totalMs": 5452.601917
+                      },
+                      "instructions": 1402834595,
+                      "nativeInstructions": 1382814386,
+                      "compiledBlocks": 31983,
+                      "executionWallMs": 5002.559208,
+                      "shutdownWaitMs": 131.39591699999986,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 657.860125,
+                  "medianTaskResponseMs": 5865.716667,
+                  "medianProcessCpuMs": 5452.601917
+                },
+                "baseline": {
+                  "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 25248.276542,
+                      "taskResponseMs": 6990.291042000003,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 5418.849584,
+                        "systemMs": 435.824833,
+                        "totalMs": 5854.674417
+                      },
+                      "instructions": 1402844561,
+                      "nativeInstructions": 1382827821,
+                      "compiledBlocks": 31890,
+                      "executionWallMs": 5402.146264,
+                      "shutdownWaitMs": 127.40462499999694,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 25248.276542,
+                  "medianTaskResponseMs": 6990.291042000003,
+                  "medianProcessCpuMs": 5854.674417
+                }
+              },
+              "cpuRatio": 1.0737395661961728,
+              "responseRatio": 1.191719859454985
+            }
+          ],
+          "medianCpuRatio": 1.0442861733850073,
+          "medianResponseRatio": 1.110709861718504
+        },
+        "word": {
+          "pairs": [
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 1489.317041,
+                      "taskResponseMs": 847.1619170000002,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 741.057,
+                        "systemMs": 73.136916,
+                        "totalMs": 814.193916
+                      },
+                      "instructions": 31085740,
+                      "nativeInstructions": 23602633,
+                      "compiledBlocks": 38246,
+                      "executionWallMs": 755.245048,
+                      "shutdownWaitMs": 175.7914170000001,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 1489.317041,
+                  "medianTaskResponseMs": 847.1619170000002,
+                  "medianProcessCpuMs": 814.193916
+                },
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 620.606584,
+                      "taskResponseMs": 1351.813375,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 919.581542,
+                        "systemMs": 123.41025,
+                        "totalMs": 1042.991792
+                      },
+                      "instructions": 31926247,
+                      "nativeInstructions": 24170287,
+                      "compiledBlocks": 40557,
+                      "executionWallMs": 987.696813,
+                      "shutdownWaitMs": 73.90170799999973,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 620.606584,
+                  "medianTaskResponseMs": 1351.813375,
+                  "medianProcessCpuMs": 1042.991792
+                }
+              },
+              "cpuRatio": 1.2810115274798983,
+              "responseRatio": 1.5956965815780404
+            },
+            {
+              "runs": {
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 756.219791,
+                      "taskResponseMs": 888.5542090000001,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 764.595583,
+                        "systemMs": 85.850458,
+                        "totalMs": 850.446041
+                      },
+                      "instructions": 31478595,
+                      "nativeInstructions": 23873681,
+                      "compiledBlocks": 39498,
+                      "executionWallMs": 765.537731,
+                      "shutdownWaitMs": 236.77166700000018,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 756.219791,
+                  "medianTaskResponseMs": 888.5542090000001,
+                  "medianProcessCpuMs": 850.446041
+                },
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 796.826375,
+                      "taskResponseMs": 1548.1160419999997,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 884.844375,
+                        "systemMs": 124.211208,
+                        "totalMs": 1009.055583
+                      },
+                      "instructions": 31370074,
+                      "nativeInstructions": 23803947,
+                      "compiledBlocks": 38945,
+                      "executionWallMs": 892.075335,
+                      "shutdownWaitMs": 126.38912499999977,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 796.826375,
+                  "medianTaskResponseMs": 1548.1160419999997,
+                  "medianProcessCpuMs": 1009.055583
+                }
+              },
+              "cpuRatio": 0.8428138700462451,
+              "responseRatio": 0.5739584016273634
+            },
+            {
+              "runs": {
+                "candidate": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "88ff59700d28a65ef7597d295666cfb7996d97bd81b261ea230cf4fdb41b5553",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-bias/candidate-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 761.108084,
+                      "taskResponseMs": 968.390083,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 817.078291,
+                        "systemMs": 107.059209,
+                        "totalMs": 924.1375
+                      },
+                      "instructions": 31928719,
+                      "nativeInstructions": 24163293,
+                      "compiledBlocks": 40343,
+                      "executionWallMs": 833.627373,
+                      "shutdownWaitMs": 75.50949999999989,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 761.108084,
+                  "medianTaskResponseMs": 968.390083,
+                  "medianProcessCpuMs": 924.1375
+                },
+                "baseline": {
+                  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+                  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+                  "jit": true,
+                  "profiled": false,
+                  "followJumps": true,
+                  "traces": false,
+                  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+                  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+                  "restoreTimeoutSeconds": 3600.0,
+                  "shutdownTimeoutSeconds": 60.0,
+                  "guestProfiled": false,
+                  "frontend": "headless",
+                  "hostInputSuppressed": false,
+                  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+                  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+                  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+                  "samples": [
+                    {
+                      "restoreReadyMs": 677.724291,
+                      "taskResponseMs": 960.813208,
+                      "processCpuTime": {
+                        "status": "available",
+                        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+                        "userMs": 810.77,
+                        "systemMs": 103.562791,
+                        "totalMs": 914.332791
+                      },
+                      "instructions": 32063658,
+                      "nativeInstructions": 24269730,
+                      "compiledBlocks": 40528,
+                      "executionWallMs": 822.211133,
+                      "shutdownWaitMs": 129.60983400000003,
+                      "exitStatus": 0
+                    }
+                  ],
+                  "medianRestoreReadyMs": 677.724291,
+                  "medianTaskResponseMs": 960.813208,
+                  "medianProcessCpuMs": 914.332791
+                }
+              },
+              "cpuRatio": 0.9893904218798609,
+              "responseRatio": 0.9921758027751303
+            }
+          ],
+          "medianCpuRatio": 0.9893904218798609,
+          "medianResponseRatio": 0.9921758027751303
+        }
+      },
+      "finishedUnix": 1793015847.157687,
+      "loadAfter": [
+        3.01416015625,
+        3.4267578125,
+        3.24609375
+      ]
+    }
+  ],
+  "memory": {
+    "scope": "Three alternating O3 CPU-only dependent-load pairs per backend; equal guest work and exact result checks; Physical-frame entries versus same-size address-bias entries.",
+    "loadBefore": [
+      4.07861328125,
+      3.6826171875,
+      3.29541015625
+    ],
+    "backends": {
+      "jit": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.136853833,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.134190833,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.154861458,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.676228625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.201605041,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.194842125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.248045709,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.298459084,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.138902458,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.148424625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.173705125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.715205,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.193458167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.18916175,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.202671458,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.05931675,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.134318333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.133703042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.14868025,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.377815958,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.195805916,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.198057083,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.207567792,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.211378375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.151374417,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.156864292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.209590167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.640322292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.202857375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.205155333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.247602042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.420846375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.13601375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.143821417,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.165430417,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.892942292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.207748584,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.214686625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.286368,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.252159917,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.139064084,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.144870166,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.170446834,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.3060815,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.195159292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.183132958,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.201524875,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.873141125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        }
+      ],
+      "interpreter": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013794667,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013871333,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.014467042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.02577,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017267208,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.018267833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.018149042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.023351542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013524417,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013201042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013270291,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.013991958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017789667,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.0161345,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.016567125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.021079792,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013467,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013909542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013331667,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.018774,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017347375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016909167,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.017072041,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.023342209,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013431167,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013751208,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013935042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.01519225,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.016814125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016224958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.016290417,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.022262083,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013180791,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013358625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.014236208,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.024314583,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017025708,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.017271542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.018194459,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.028341959,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.014701375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.014697125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.014077083,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.021388292,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.01790775,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.017527834,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.017348833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.021006541,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "loadAfter": [
+      4.1416015625,
+      3.71923828125,
+      3.31689453125
+    ]
+  },
+  "overlappedMemoryExcluded": {
+    "scope": "Three alternating O3 CPU-only dependent-load pairs per backend; equal guest work and exact result checks; Physical-frame entries versus same-size address-bias entries.",
+    "loadBefore": [
+      2.744140625,
+      3.0576171875,
+      3.01220703125
+    ],
+    "backends": {
+      "jit": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.127454666,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.12686275,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.144277,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.326625459,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.182401375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.18130725,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.240030167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.883187334,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.17605,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.187964666,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.341426125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 1.419009834,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.184430667,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.186662333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.196082917,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.621441125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.133518916,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.142439792,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.157698,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 2.029151292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.218437125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.20752475,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.226052625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 2.094874084,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.15127025,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.144614708,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.176181792,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 1.906638542,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.205972125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.2116845,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.263984208,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 2.695811333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.21507725,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.200091458,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.250688292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 2.078359125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.311868791,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.309528042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.345493167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 2.674923625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.215202666,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.185017125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.263480291,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 2.037210667,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.254254834,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.271095125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.261785042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 2.587704917,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        }
+      ],
+      "interpreter": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.018887666,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.017733125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.020481375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.03258325,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.020758084,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.022907958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.021170167,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.040324084,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.017406833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.018055458,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.018749042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.030094625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.021181875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.021365875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.020835042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.034569333,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.015690042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.014640792,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.015402291,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.02743625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.018798083,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.018771541,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.019607625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.033762958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.014693709,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.016924833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.016499291,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.028373208,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017861417,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.018796875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.020107292,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.033345084,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.01482925,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.015835917,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.015630833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.030803583,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.021979958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.022053416,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.024667792,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.040054542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.017843375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.017762959,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.018942875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.033485542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.022759958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.022735,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.023300916,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.039182375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "loadAfter": [
+      4.80615234375,
+      3.51611328125,
+      3.17822265625
+    ]
+  }
+}
