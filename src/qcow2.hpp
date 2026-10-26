@@ -17,7 +17,13 @@ class Qcow2 {
     uint64_t fileSize, virtualSize = 0, cluster = 0, l1At = 0, l1Size = 0;
     unsigned version = 0, clusterBits = 0, compression = 0;
     uint64_t cachedEntry = 0;
-    std::vector<uint8_t> cachedCluster;
+    std::vector<uint8_t> cachedCluster, l1, l2;
+    uint64_t cachedL2 = 0;
+    static uint64_t bigEntry(const uint8_t *p) {
+        uint64_t result=0;
+        for (unsigned i=0;i<8;++i) result=(result<<8)|p[i];
+        return result;
+    }
     void compressed(uint64_t entry) {
         if (cachedEntry == entry && !cachedCluster.empty()) return;
         if (entry & copied) fail("Invalid compressed cluster flags");
@@ -110,14 +116,18 @@ class Qcow2 {
         if (!l1At || l1At % cluster || l1Size > (32ull << 20) / 8 ||
             l1Size < (virtualSize + coverage - 1) / coverage) fail("Invalid L1 table");
         bounds(l1At, l1Size * 8);
+        l1.resize(l1Size*8); load(l1At,l1);
     }
     uint64_t size() const { return virtualSize; }
     void read(uint64_t at, std::span<uint8_t> out) {
         if (at > virtualSize || out.size() > virtualSize - at) fail("Read beyond virtual disk");
         while (!out.empty()) {
             auto index = at / cluster;
-            auto l2 = alignedOffset(integer(l1At + index / (cluster / 8) * 8, 8), copied);
-            uint64_t entry = l2 ? integer(l2 + index % (cluster / 8) * 8, 8) : 0;
+            auto table = alignedOffset(bigEntry(l1.data()+index/(cluster/8)*8),copied);
+            if (table && table!=cachedL2) {
+                l2.resize(cluster); load(table,l2); cachedL2=table;
+            }
+            uint64_t entry = table ? bigEntry(l2.data()+index%(cluster/8)*8) : 0;
             size_t within = at % cluster, count = std::min<uint64_t>(out.size(), cluster - within);
             if (entry & (1ull << 62)) {
                 compressed(entry);
@@ -126,7 +136,12 @@ class Qcow2 {
             }
             auto offset = alignedOffset(entry, copied | (version == 3 ? 1 : 0));
             if (!offset && (entry & copied)) fail("Invalid allocated cluster");
-            if (offset && !(entry & 1)) load(offset + within, out.first(count));
+            if (offset && !(entry & 1)) {
+                if (cachedEntry!=entry || cachedCluster.empty()) {
+                    cachedCluster.resize(cluster); load(offset,cachedCluster); cachedEntry=entry;
+                }
+                std::copy_n(cachedCluster.data()+within,count,out.data());
+            }
             else std::fill_n(out.begin(), count, 0);
             at += count;
             out = out.subspan(count);

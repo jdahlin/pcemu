@@ -43,7 +43,7 @@ class ISOStaging(unittest.TestCase):
             iso = work / 'tiny.iso'
             iso.write_bytes(image)
             for compressed in (False, True):
-                disk = work / ('child.pcd' if compressed else 'copy.raw')
+                disk = work / ('child.qcow2' if compressed else 'copy.raw')
                 if compressed:
                     subprocess.run([str(ROOT/'build/disk-tool'), 'overlay', str(disk), str(parent)], check=True)
                 else:

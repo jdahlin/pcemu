@@ -215,7 +215,7 @@ int main() {
                 }
                 check(load(p, 5 * MB - 512, 512) ==
                       Bytes(512, 0x77)); // Existing payload changed in place.
-                check(!fs::exists(p.string() + ".pcd"));
+                check(!fs::exists(p.string() + ".qcow2"));
                 auto first = load(p, 65536, 4096), second = load(p, 131072, 4096);
                 auto h = get(first, 8, 8) > get(second, 8, 8) ? first : second;
                 check(std::all_of(h.begin() + 48, h.begin() + 64, [](auto x) { return x == 0; }));
@@ -296,7 +296,7 @@ int main() {
         fs::resize_file(p, 5 * MB);
         rejects([&] { Disk d(p.string(), false, true); });
         fixture(p);
-        auto cow = dir / "optional.pcd";
+        auto cow = dir / "optional.qcow2";
         Disk::createOverlay(cow.string(), p.string());
         {
             Disk d(cow.string());

@@ -56,7 +56,7 @@ def main():
                        '\r\nPCEMU_VIRTIO_WRITE_OK\r\n'))
     if any(digest(directory / name) != checksum for name, checksum in parent_hash.items()):
         raise RuntimeError('Immutable disk parent changed')
-    delta = directory / 'pci-data.vars.pcd'
+    delta = directory / 'pci-data.vars.qcow2'
     if delta.stat().st_size > 1024 * 1024:
         raise RuntimeError('Unexpectedly large COW delta for a tiny guest file')
     summary = {'passed': True, 'runs': results, 'parentSHA256': parent_hash,

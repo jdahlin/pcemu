@@ -50,7 +50,7 @@ subprocess.run(['make', '-s', *targets], cwd=ROOT, check=True)
 work = (args.output.resolve() if args.output else
         Path(tempfile.mkdtemp(prefix='guest-perf-', dir=ROOT / 'build')))
 work.mkdir(parents=True, exist_ok=True)
-disk = work / 'disk.pcd'
+disk = work / 'disk.qcow2'
 if disk.exists():
     parser.error('Destination disk already exists; choose a new output directory')
 subprocess.run(['python3', str(ROOT / 'tools/build_guest_perf.py'), '--suite', args.suite,

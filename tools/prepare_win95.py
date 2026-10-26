@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / 'media/win95-install.pcd')
+    parser.add_argument('--output', type=Path, default=ROOT / 'media/win95-install.qcow2')
     parser.add_argument('--dos', type=Path, help='clean DOS raw/PCD parent; defaults to a sparse conversion of the supplied VHD')
     parser.add_argument('--source', type=Path, default=ROOT / 'media/win95-install/win95')
     parser.add_argument('--batch-inf', type=Path, help='optional user-authored MSBATCH.INF')

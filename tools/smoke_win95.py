@@ -48,7 +48,7 @@ runner = root / 'build' / ('pcemu-profile' if args.guest_profile else 'pcemu')
 subprocess.run(['make', '-s', str(runner.relative_to(root)), 'build/disk-tool'], cwd=root, check=True)
 work = Path(tempfile.mkdtemp(prefix='win95-smoke-', dir=root / 'build'))
 disk, control, frame, state = (work / name for name in
-                              ['disk.pcd', 'control.txt', 'frame.ppm', 'state'])
+                              ['disk.qcow2', 'control.txt', 'frame.ppm', 'state'])
 subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)
 control.write_text('profile-wait 3000\n' if args.sample else '')
 emulator_hash = hashlib.sha256(runner.read_bytes()).hexdigest()

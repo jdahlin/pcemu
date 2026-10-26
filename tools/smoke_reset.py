@@ -23,7 +23,7 @@ programs = {
     'FAST.COM': bytes.fromhex('b0 03 e6 92 f4'),
 }
 for name, code in programs.items():
-    disk = work / (name.split('.')[0].lower() + '.pcd')
+    disk = work / (name.split('.')[0].lower() + '.qcow2')
     subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk),
                     str(root / 'media/dos.raw')], check=True)
     fat = Writer(CowFile(disk))

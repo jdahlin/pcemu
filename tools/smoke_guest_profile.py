@@ -26,7 +26,7 @@ for suite in ('coremark', 'micro'):
         assert data['profiled'] and data['returnedToDos']
         assert not data.get('publishedScoreEligible', False)
         assert data['crcValidated' if suite == 'coremark' else 'microValidated']
-        assert not (target / 'disk.pcd').exists()
+        assert not (target / 'disk.qcow2').exists()
         current = []
         for sample in data['samples']:
             counters = json.loads(Path(sample['guestProfile']).read_text())

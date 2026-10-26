@@ -30,7 +30,7 @@ if not source.is_file():
     p.error('Missing local source disk: ' + str(source))
 subprocess.run(['make', '-s', 'build/pcemu', 'build/disk-tool'], cwd=root, check=True)
 work = Path(tempfile.mkdtemp(prefix='win311-smoke-', dir=root / 'build'))
-disk, control, frame = (work / n for n in ['disk.pcd', 'control.txt', 'frame.ppm'])
+disk, control, frame = (work / n for n in ['disk.qcow2', 'control.txt', 'frame.ppm'])
 ram = work / 'ram.bin'
 subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)
 emulator_hash = hashlib.sha256((root / 'build/pcemu').read_bytes()).hexdigest()

@@ -37,7 +37,7 @@ for suite in ['coremark', 'micro']:
 # Original real-mode probe: select ALU16, begin/end, then report zero instead
 # of the required 17 * 48 = 816. A fast but wrong guest must fail validation.
 bad = bytes.fromhex('b0 10 e6 e6 b0 01 e6 e7 b0 02 e6 e7 66 31 c0 66 e7 e5 b8 00 4c cd 21')
-disk = work / 'bad-result.pcd'
+disk = work / 'bad-result.qcow2'
 subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk),
                 str(ROOT / 'media/dos.raw')], check=True)
 with CowFile(disk) as handle:

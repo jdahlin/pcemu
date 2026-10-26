@@ -23,11 +23,11 @@ in progress.
 The supplied rtts Windows 95 image also reaches Explorer and runs Calculator
 and Notepad. The original downloaded image is preserved; `media/win95.raw` is a
 private working copy or a link to a preserved QCOW2 base. Use `./run95.sh` to open it.
-The seamless-mouse disk `media/win95-mouse.pcd` is selected by default when
+The seamless-mouse disk `media/win95-mouse.qcow2` is selected by default when
 available, providing a 1440×900, 32-bit desktop with a configured monitor profile. Use `./run95.sh --vga` for the
 original VGA disk. Earlier monitor and SVGA disks remain available as fallbacks. Driver setup for a fresh disk is described in
 [input and display integration](docs/input-video.md).
-For a QCOW2 base, the launcher creates and reuses `media/win95-working.pcd`,
+For a QCOW2 base, the launcher creates and reuses `media/win95-working.qcow2`,
 a compressed writable overlay that retains Windows changes between runs. Keep
 its base image available; raw disks and existing native overlays open directly. Network and configured Cirrus hardware are absent, so that older disk uses VGA
 fallback. Original PS/2 mouse and VBE/DISPI display hardware are now available;
@@ -35,7 +35,7 @@ see [input and display integration](docs/input-video.md) for guest driver setup.
 restart, exact saved-file survival and clean shutdown to the full safe-to-turn-off
 screen on the inline RAM backend. The separate OSR2
 installer has completed installation. The current compressed installed disk is
-`media/win95-fresh-installed.pcd`, with backing in `build/snapshots`. Historical
+`media/win95-fresh-installed.qcow2`, with backing in `build/snapshots`. Historical
 intermediate raw disks have been removed; original media and saved checkpoints
 are retained. Guest reset requests now have a firmware bootstrap path. A Win95 Restart
 check returned to Explorer in the same process and verified exact Notepad file
@@ -77,8 +77,8 @@ keyboard-operated: Option maps to Alt, and Tab/Enter/arrows and function keys ar
 available. Program Manager's Alt+F, R opens Run; try `notepad.exe` or `calc.exe`.
 Mouse support is not implemented yet.
 
-Dependencies are Xcode command-line tools, CMake, Ninja, SDL2 and zstd
-(`brew install cmake ninja sdl2 zstd pkg-config`). Build with `./tools/build.sh`
+Dependencies are Xcode command-line tools, CMake, Ninja, SDL2, zstd and QEMU
+(`brew install cmake ninja sdl2 zstd pkg-config qemu`). Build with `./tools/build.sh`
 or `cmake -S . -B build -G Ninja && cmake --build build --target pcemu`.
 Ninja caches individual objects, tracks included headers, and shares core objects
 between executables. Development builds default to `-O1 -g`; opt into `-O3` with
@@ -104,7 +104,7 @@ sips -s format png build/desktop.ppm --out build/desktop.png
 
 For a cold boot followed by a guest-requested restart, run
 `python3 tools/smoke_win95.py --restart`. Use
-`--disk media/win95-fresh-installed.pcd` to verify the locally installed OSR2 disk.
+`--disk media/win95-fresh-installed.qcow2` to verify the locally installed OSR2 disk.
 The test handles known startup dialogs, checks an unobscured Explorer desktop,
 and verifies exactly one firmware reset when restart is requested. Successful
 runs remove their private disk; failures retain their owned guest and diagnostics
@@ -119,7 +119,7 @@ For application and file-persistence validation, run:
 
 ```sh
 python3 tools/smoke_win95.py --applications
-python3 tools/smoke_win95.py --applications --disk media/win95-fresh-installed.pcd
+python3 tools/smoke_win95.py --applications --disk media/win95-fresh-installed.qcow2
 ```
 
 This implies restart, calculates 2+2, copies Calculator's result into a fresh
@@ -159,12 +159,11 @@ Or start directly from a checkpoint, with an isolated writable disk delta:
 ./build/pcemu --load-snapshot build/snapshots/win95-desktop
 ```
 
-RAM state omits zero pages and uses zstd level 1. Disk changes use an original
-compressed COW format with 4 KiB blocks, checksums, unchanged-write elision and
-automatic compaction of obsolete records. The first checkpoint shares its raw
-backing through an APFS clone; later checkpoints and restores share immutable
-parents and store compressed changes. Keep parent checkpoints with their
-children. JIT code and host callbacks are rebuilt after restore.
+RAM state omits zero pages and uses zstd level 1. Disk changes and snapshot
+layers use standard QCOW2. The first checkpoint shares its backing through an
+APFS clone; later checkpoints and restores share immutable parents. Keep parent
+checkpoints with their children. JIT code and host callbacks are rebuilt after
+restore. The legacy PCEMUCOW reader remains read-only for migration and recovery.
 
 Two local checkpoints are ready: `win95-desktop` and `win95-calculator-zero`.
 The latter contains a recorded Calculator task with pixel checks for 0 and 4:
@@ -282,33 +281,40 @@ Local storage was reduced from about 15 GiB to 3.4 GiB while preserving original
 archives, current boot disks and snapshots. Smoke tests now discard successful
 scratch disks by default. See [storage cleanup](docs/storage.md).
 
-QCOW2 v2/v3 images are detected by their header and supported as read-only,
-parentless base disks (standard, uncompressed L1/L2 clusters, including sparse
-and v3 zero clusters). To run a writable guest, create a native overlay:
+QCOW2 v2/v3 images are detected by their header. Immutable standalone bases
+support sparse, zero, deflate and zstd-compressed clusters through a cached native
+reader. Writable disks and backing chains use QEMU's maintained QCOW2 implementation
+through a private Unix NBD socket (`qemu-nbd`); PCEmu does not implement its own
+refcount or allocation writer. Each backend is owned and reaped by its disk.
+Flush requests reach QEMU before snapshots and orderly shutdown.
 
 ```sh
-./build/disk-tool overlay build/guest.pcd /path/to/base.qcow2
-./build/pcemu --disk build/guest.pcd
+./build/disk-tool overlay build/guest.qcow2 /path/to/base.qcow2
+./build/pcemu --disk build/guest.qcow2
 ```
 
-Keep the base image with its overlay. Direct QCOW2 writes, backing-file chains,
-encryption, compressed clusters and incompatible feature flags (including dirty
-images and extended L2 entries) are unsupported. Unsupported headers fail at
-open; unsupported cluster descriptors fail the read. Validate with
-`make test-qcow2`; `make test-qcow2-interop` additionally checks small images
-created by `qemu-img`. Mapping follows the [QEMU QCOW2 specification](https://www.qemu.org/docs/master/interop/qcow2.html).
+The overlay is standard QCOW2, readable by `qemu-img` and other compatible tools.
+New writes use ordinary QCOW2 clusters for write performance. Offline conversion
+packs them with zstd; compression is not performed on every guest write.
 
-To flatten an existing PCEMU overlay into a standalone qcow2 base, stop guests
-using it, then run (requires `qemu-img`):
+To flatten a stopped disk into a standalone zstd-compressed QCOW2 file:
 
 ```sh
-make build/disk-tool
-python3 tools/convert_qcow2.py media/windows11-arm64/system.pcd \
-  media/windows11-arm64/system.qcow2 --size 68719476736
+./tools/build.sh disk-tool
+python3 tools/convert_qcow2.py SOURCE NEW.qcow2 --size GUEST_SIZE_BYTES
 ```
 
-The converter serves the logical disk through a private read-only Unix NBD
-socket, avoiding a RAW staging copy. It keeps the originals, checks QCOW2
-metadata and compares every guest-visible byte before publishing the output.
-Use a new native COW overlay on the resulting qcow2 base for guest writes.
-`python3 tests/test_qcow2_conversion.py` tests conversion of a small COW disk.
+This uses an existing read-only NBD bridge, avoids a raw staging copy, runs
+`qemu-img check`, and compares every guest-visible byte before publishing output.
+The source is retained. To migrate a set of legacy `.pcd` images together:
+
+```sh
+python3 tools/migrate_qcow2.py media/old.pcd media/child.pcd \
+  --remove-originals --report build/storage-cleanup/migration.json
+```
+
+All sources and ancestors must be stopped. The migration tool locks the chain,
+refuses unlisted dependents, and completes every verified conversion before
+removing originals. Snapshot disks with legacy contents also need conversion
+before writable restore. Never delete a backing file still used by another disk.
+See [storage](docs/storage.md) for implementation and validation details.

@@ -3,10 +3,33 @@
 #include <array>
 #include <filesystem>
 #include <iostream>
+#include <chrono>
 
 // Offline conversion only. Neither input may be attached to a running guest.
 int main(int argc, char **argv) {
     try {
+        if (argc == 4 && std::string(argv[1]) == "benchmark-read") {
+            const bool readonly=std::string(argv[3])=="readonly";
+            pc::Disk disk(argv[2],false,readonly);
+            std::array<uint8_t,4096> data{};
+            volatile uint64_t sum=0;
+            auto bench=[&](bool random) {
+                uint32_t seed=17;
+                auto started=std::chrono::steady_clock::now();
+                for (unsigned i=0;i<8192;++i) {
+                    seed=seed*1664525u+1013904223u;
+                    uint64_t at=random?(uint64_t(seed)%std::max<uint64_t>(1,disk.sectors/8))*8:
+                        (uint64_t(i)*8)%std::max<uint64_t>(8,disk.sectors-7);
+                    if (!disk.read(at,8,data.data())) throw std::runtime_error("Benchmark read failed");
+                    sum=sum+data[0];
+                }
+                return std::chrono::duration<double>(std::chrono::steady_clock::now()-started).count();
+            };
+            auto sequential=bench(false), random=bench(true);
+            std::cout << "{\"sequentialMiBs\":" << 32/sequential << ",\"random4kIOPs\":" << 8192/random
+                      << ",\"checksum\":" << sum << "}\n";
+            return 0;
+        }
         if (argc == 3 && std::string(argv[1]) == "size") {
             pc::Disk disk(argv[2], false, true);
             std::cout << disk.sectors * 512 << '\n';

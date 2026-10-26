@@ -7,7 +7,7 @@ with tempfile.TemporaryDirectory(prefix='pcemu-convert-test-') as directory:
     root = pathlib.Path(directory)
     raw = root / 'base.raw'
     raw.write_bytes(bytes(16384))
-    overlay = root / 'disk.pcd'
+    overlay = root / 'disk.qcow2'
     subprocess.run(['./build/disk-tool', 'overlay', str(overlay), str(raw)], check=True)
     import struct
     writer = subprocess.Popen(['./build/disk-tool', 'serve', str(overlay)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)

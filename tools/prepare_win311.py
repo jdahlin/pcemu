@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dos', type=Path, default=ROOT / 'media/dos.raw')
-    parser.add_argument('--output', type=Path, default=ROOT / 'media/win311-install.pcd')
+    parser.add_argument('--output', type=Path, default=ROOT / 'media/win311-install.qcow2')
     parser.add_argument('--answer-file', type=Path, help='optional Windows Setup SHH file staged as C:\\PCEMU\\INSTALL.SHH')
     parser.add_argument('--source', type=Path, help='flat extracted installer directory; otherwise use media/install-files or DISK*.IMG')
     args = parser.parse_args()

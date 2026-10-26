@@ -155,7 +155,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             std::array<char, 8> signature{};
             probe.read(signature.data(), signature.size());
             bool direct = c.diskOverlay.empty() && std::string(signature.data(), signature.size()) == "vhdxfile";
-            auto overlay = direct ? parent : c.diskOverlay.empty() ? config.variables + ".pcd" : fs::absolute(c.diskOverlay).string();
+            auto overlay = direct ? parent : c.diskOverlay.empty() ? config.variables + ".qcow2" : fs::absolute(c.diskOverlay).string();
             fs::create_directories(fs::path(overlay).parent_path());
             if (!direct && fs::exists(overlay) && fs::equivalent(parent, overlay))
                 throw std::runtime_error("Virtio disk overlay must differ from immutable parent");
@@ -179,7 +179,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         } else if (!c.diskOverlay.empty()) throw std::runtime_error("--disk-overlay requires --disk");
         if (!c.extraDisk.empty()) {
             auto parent = fs::canonical(c.extraDisk).string();
-            auto overlay = c.extraDiskOverlay.empty() ? config.variables + ".extra.pcd" : fs::absolute(c.extraDiskOverlay).string();
+            auto overlay = c.extraDiskOverlay.empty() ? config.variables + ".extra.qcow2" : fs::absolute(c.extraDiskOverlay).string();
             fs::create_directories(fs::path(overlay).parent_path());
             if (fs::exists(overlay) && fs::equivalent(parent, overlay))
                 throw std::runtime_error("Extra disk overlay must differ from immutable parent");

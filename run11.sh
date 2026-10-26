@@ -11,7 +11,7 @@ if [ "${1:-}" = --help ]; then
 fi
 
 for file in media/windows11-arm64/system.qcow2 \
-            media/windows11-arm64/system-live.pcd \
+            media/windows11-arm64/system-live.qcow2 \
             build/windows11-qcow2/installed-vars.bin; do
     if [ ! -f "$file" ]; then
         echo "Missing installed Windows file: $file" >&2
@@ -28,7 +28,7 @@ exec ./build/PCEmu11.app/Contents/MacOS/pcemu-hvf --machine arm64-uefi --gui --r
     --ram-mb 4096 --cpus 2 --hyperv vmbus --network user --virtio-msix \
     --disk-controller virtio --virtio-transport pci \
     --disk media/windows11-arm64/system.qcow2 \
-    --disk-overlay media/windows11-arm64/system-live.pcd \
+    --disk-overlay media/windows11-arm64/system-live.qcow2 \
     --vars build/windows11-qcow2/installed-vars.bin --cpu-state \
     --hyperv-stats build/windows11-sdl/hyperv.json \
     --framebuffer-ppm build/windows11-sdl/framebuffer.ppm "$@"

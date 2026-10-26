@@ -62,7 +62,7 @@ int main() {
     auto directory = fs::temp_directory_path() / ("pcemu-virtio-" + std::to_string(getpid()));
     fs::create_directory(directory);
     try {
-        auto parent = directory / "base.raw", child = directory / "delta.pcd";
+        auto parent = directory / "base.raw", child = directory / "delta.qcow2";
         { std::ofstream out(parent, std::ios::binary); std::array<char, 8192> zeros{}; out.write(zeros.data(), zeros.size()); }
         // Firmware may submit an EFI image larger than 16 MiB as one DMA
         // buffer when it has not negotiated SIZE_MAX. Exercise both directions.

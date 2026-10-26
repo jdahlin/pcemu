@@ -16,7 +16,7 @@ states, runs = [], []
 for name in ('pcemu', 'pcemu-profile'):
     directory = work / name
     directory.mkdir()
-    disk = directory / 'disk.pcd'
+    disk = directory / 'disk.qcow2'
     subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk),
                     str(root / 'media/rtts-win95.img')], check=True)
     executable = root / 'build' / name
@@ -44,7 +44,7 @@ for name in ('pcemu', 'pcemu-profile'):
     # Preserve a failed run for diagnosis; successful children are removed below.
 assert states[0] == states[1], 'Diagnostic instrumentation changed captured guest/device state'
 for name in ('pcemu', 'pcemu-profile'):
-    (work / name / 'disk.pcd').unlink()
+    (work / name / 'disk.qcow2').unlink()
 result = {'scope': '300M instruction startup prefix; captured guest/device and JIT counts match; not full boot or bytewise RAM equality; instrumented timings are not benchmarks',
           'runs': runs, 'state': states[0], 'profile': profile, 'privateDisksRemoved': True}
 (work / 'result.json').write_text(json.dumps(result, indent=2) + '\n')

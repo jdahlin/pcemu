@@ -44,23 +44,6 @@ int main(int argc, char **argv) {
         bool rejected = false;
         try { pc::Disk writable(path); } catch (const std::runtime_error &) { rejected = true; }
         assert(rejected);
-        auto overlay = (root / "write.pcd").string();
-        pc::Disk::createOverlay(overlay, path);
-        {
-            pc::Disk disk(overlay);
-            std::array<uint8_t, 512> b{};
-            assert(disk.read(0, 1, b.data()) && b[0] == 42);
-            b[0] = 77;
-            assert(disk.write(0, 1, b.data()));
-        }
-        {
-            pc::Disk disk(overlay);
-            std::array<uint8_t, 512> b{};
-            assert(disk.read(0, 1, b.data()) && b[0] == 77);
-            pc::Disk base(path, false, true);
-            assert(base.read(0, 1, b.data()) && b[0] == 42);
-        }
-        std::filesystem::remove(overlay);
         for (auto mutation : {0, 1, 2, 3}) {
             auto original = image;
             if (mutation == 0) put(20, 8, 4);
@@ -86,6 +69,25 @@ int main(int argc, char **argv) {
             assert(!compressed.read(0, 1, b.data()));
         }
     }
+    auto raw = (root/"writable.raw").string();
+    { std::ofstream f(raw,std::ios::binary); f.seekp(1024*1024-1); f.put(0); }
+    auto overlay = (root/"write.qcow2").string();
+    pc::Disk::createOverlay(overlay,raw);
+    {
+        pc::Disk disk(overlay);
+        std::array<uint8_t,1024> data{}; data[0]=42; data[512]=99;
+        assert(disk.isOverlay() && disk.backingPath()==raw);
+        assert(disk.write(127,2,data.data())); disk.flush();
+    }
+    {
+        pc::Disk disk(overlay,false,true);
+        std::array<uint8_t,1024> data{};
+        assert(disk.read(127,2,data.data()) && data[0]==42 && data[512]==99);
+        assert(!disk.write(0,1,data.data()));
+        pc::Disk original(raw,false,true);
+        assert(original.read(127,2,data.data()) && data[0]==0 && data[512]==0);
+    }
+    pc::runStorageTool({"qemu-img","check",overlay});
     std::filesystem::remove_all(root);
     std::cout << "QCOW2 tests passed\n";
 }

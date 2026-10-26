@@ -34,40 +34,40 @@ class Run95Test(unittest.TestCase):
             base = root / 'media/base.qcow2'
             base.write_bytes(b'QFI\xfb' + bytes(508))
             (root / 'media/win95.raw').symlink_to(base)
-            self.assertEqual(run(), 'media/win95-working.pcd')
-            overlay = root / 'media/win95-working.pcd'
+            self.assertEqual(run(), 'media/win95-working.qcow2')
+            overlay = root / 'media/win95-working.qcow2'
             overlay.write_bytes(b'saved guest changes')
-            self.assertEqual(run(), 'media/win95-working.pcd')
+            self.assertEqual(run(), 'media/win95-working.qcow2')
             self.assertEqual(overlay.read_bytes(), b'saved guest changes')
             self.assertEqual((root / 'calls').read_text(), 'created\n')
             self.assertEqual(base.read_bytes()[:4], b'QFI\xfb')
             for signature in (bytes(4), b'PCEM'):
                 base.write_bytes(signature + bytes(508))
                 self.assertEqual(run(), 'media/win95.raw')
-            svga = root / 'media/win95-svga.pcd'
+            svga = root / 'media/win95-svga.qcow2'
             svga.write_bytes(b'configured SVGA disk')
-            self.assertEqual(run(), 'media/win95-svga.pcd')
+            self.assertEqual(run(), 'media/win95-svga.qcow2')
             self.assertEqual(run('--vga'), 'media/win95.raw')
             self.assertNotIn('--vga', (root / 'args').read_text().splitlines())
             base.write_bytes(b'QFI\xfb' + bytes(508))
-            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
-            self.assertEqual(run(), 'media/win95-svga.pcd')
+            self.assertEqual(run('--vga'), 'media/win95-working.qcow2')
+            self.assertEqual(run(), 'media/win95-svga.qcow2')
             self.assertEqual(svga.read_bytes(), b'configured SVGA disk')
-            monitor = root / 'media/win95-monitor.pcd'
+            monitor = root / 'media/win95-monitor.qcow2'
             monitor.write_bytes(b'configured monitor and widescreen modes')
-            self.assertEqual(run(), 'media/win95-monitor.pcd')
-            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
+            self.assertEqual(run(), 'media/win95-monitor.qcow2')
+            self.assertEqual(run('--vga'), 'media/win95-working.qcow2')
             self.assertEqual(svga.read_bytes(), b'configured SVGA disk')
             self.assertEqual(monitor.read_bytes(), b'configured monitor and widescreen modes')
-            seamless = root / 'media/win95-mouse.pcd'
+            seamless = root / 'media/win95-mouse.qcow2'
             seamless.write_bytes(b'configured seamless mouse')
-            self.assertEqual(run(), 'media/win95-mouse.pcd')
-            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
+            self.assertEqual(run(), 'media/win95-mouse.qcow2')
+            self.assertEqual(run('--vga'), 'media/win95-working.qcow2')
             self.assertEqual(seamless.read_bytes(), b'configured seamless mouse')
-            native = root / 'media/win95-native.pcd'
-            native.write_bytes(b'configured native cursor')
-            self.assertEqual(run(), 'media/win95-native.pcd')
-            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
+            native = root / 'media/win95-native.qcow2'
+            native.write_bytes(b'QFI\xfb'+b'configured native cursor')
+            self.assertEqual(run(), 'media/win95-native.qcow2')
+            self.assertEqual(run('--vga'), 'media/win95-working.qcow2')
 
 
 if __name__ == '__main__':

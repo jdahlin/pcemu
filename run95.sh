@@ -5,14 +5,14 @@ cd "$(dirname "$0")"
 disk=media/win95.raw
 if [[ ${1:-} == --vga ]]; then
   shift
-elif [[ -f media/win95-native.pcd ]]; then
-  disk=media/win95-native.pcd
-elif [[ -f media/win95-mouse.pcd ]]; then
-  disk=media/win95-mouse.pcd
-elif [[ -f media/win95-monitor.pcd ]]; then
-  disk=media/win95-monitor.pcd
-elif [[ -f media/win95-svga.pcd ]]; then
-  disk=media/win95-svga.pcd
+elif [[ -f media/win95-native.qcow2 ]]; then
+  disk=media/win95-native.qcow2
+elif [[ -f media/win95-mouse.qcow2 ]]; then
+  disk=media/win95-mouse.qcow2
+elif [[ -f media/win95-monitor.qcow2 ]]; then
+  disk=media/win95-monitor.qcow2
+elif [[ -f media/win95-svga.qcow2 ]]; then
+  disk=media/win95-svga.qcow2
 fi
 if [[ ! -f "$disk" ]]; then
   echo 'No Windows 95 working disk. See README.md for current media requirements.' >&2
@@ -20,8 +20,8 @@ if [[ ! -f "$disk" ]]; then
 fi
 # Detect the contents, including when the historical .raw name is a symlink.
 magic=$(od -An -tx1 -N4 "$disk" | tr -d ' \n')
-if [[ "$magic" == 514649fb ]]; then
-  disk=media/win95-working.pcd
+if [[ "$magic" == 514649fb && "$disk" == media/win95.raw ]]; then
+  disk=media/win95-working.qcow2
   if [[ ! -e "$disk" ]]; then
     ./tools/build.sh disk-tool
     ./build/disk-tool overlay "$disk" media/win95.raw

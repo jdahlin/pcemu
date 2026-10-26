@@ -44,7 +44,7 @@ def main():
                'wallSeconds': time.monotonic() - started,
                'validated': ['EFI GetTime', 'EFI_RNG GetRNG', 'PSCI SYSTEM_OFF'],
                'diskAllocatedBytes': disk.stat().st_blocks * 512,
-               'overlayBytes': (directory / 'vars.bin.pcd').stat().st_size}
+               'overlayBytes': (directory / 'vars.bin.qcow2').stat().st_size}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary, indent=2))
     print(directory)

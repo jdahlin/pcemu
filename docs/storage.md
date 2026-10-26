@@ -228,3 +228,37 @@ flags, unsupported algorithms and malformed descriptors. QEMU-generated v2/v3
 images are checked with `qemu-img check` and read through PCEmu in
 `python3 tests/test_qcow2_interop.py`. No custom disk layout is needed for
 compressed immutable bases.
+
+
+### Writable QCOW2 and retiring PCEMUCOW
+
+All overlay creators and launchers now select `.qcow2`; `Disk::createOverlay`
+invokes `qemu-img create` with explicit backing format and zstd compression type.
+QCOW2 writes, backing resolution, refcounts and flushes are handled by a private
+`qemu-nbd` process. The emulator speaks standard fixed-newstyle NBD on a private
+Unix socket. No TCP port is exposed. The child is reaped on close and startup
+failures retain QEMU's diagnostic. QEMU's image locking rejects concurrent
+writers. Snapshot tests close readers before opening a writer to the same image.
+
+A 64 KiB read cache amortizes IPC for small guest sector reads and is invalidated
+on every write. Standalone read-only bases cache L1, one L2 table and one data
+cluster. New writes are normal QCOW2 clusters, as with QEMU itself; offline
+conversion with `-c` compresses them. The old compressed disk writer and index
+writer have been removed. Only a read-only compatibility reader remains so
+existing disks can be recovered and migrated without throwing away guest data.
+
+`tools/convert_qcow2.py` now produces zstd-compressed output by default, retains
+originals, checks standard metadata, and compares every guest-visible byte.
+`tools/migrate_qcow2.py` converts an entire listed set before removing any source,
+locks source/backing chains, and refuses deletion when unlisted dependents exist.
+Its tests construct a tiny real legacy-format disk, recover its bytes through
+the compatibility reader, verify zstd output with QEMU, and exercise dependency
+and destination protections. Install QEMU (`brew install qemu` on macOS).
+
+Eight core/component/snapshot/storage suites and QEMU interoperation tests pass.
+Disk-only performance results on a small mixed-data fixture are recorded in
+`measurements/qcow2-zstd-read-2026-10-26.json`. They are warm-cache microbenchmarks,
+not Windows application timings. Compression reduced that fixture from 17.1 MB
+to 8.6 MB; native compressed sequential reads and the QEMU-backed read path both
+exceeded 2 GiB/s. The QEMU-backed random 4 KiB read path measured about 38,700 IOPS.
+These numbers do not promise equivalent latency for every guest workload.

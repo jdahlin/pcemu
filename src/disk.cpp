@@ -19,10 +19,6 @@ uint64_t hashBlock(const uint8_t *p, size_t n) {
         h = (h ^ p[i]) * 1099511628211ull;
     return h;
 }
-void put(std::ostream &out, uint64_t value, unsigned bytes) {
-    for (unsigned n = 0; n < bytes; n++)
-        out.put(char(value >> (n * 8)));
-}
 uint64_t get(std::istream &in, unsigned bytes) {
     uint64_t value = 0;
     for (unsigned n = 0; n < bytes; n++) {
@@ -73,6 +69,7 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth, OpenProgre
     file.clear();
     file.seekg(0);
     if (!std::memcmp(signature, cowMagic, 8)) {
+        if (!ro) throw std::runtime_error("Legacy PCEMUCOW is read-only; migrate this disk to QCOW2");
         file.seekg(8);
         auto version = get(file, 4), blockSize = get(file, 4);
         sectors = get(file, 8);
@@ -120,10 +117,27 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth, OpenProgre
         }
         if (progress) progress(fileBytes, fileBytes);
     } else if (!std::memcmp(signature, "QFI\xfb", 4)) {
-        if (fd) throw std::runtime_error("QCOW2 cannot be used as a floppy");
-        if (!ro) throw std::runtime_error("QCOW2 requires read-only access; create a COW overlay for writes");
-        qcow2 = std::make_unique<Qcow2>(path, fileBytes);
-        sectors = qcow2->size() / 512;
+        auto big = [&](uint64_t at, unsigned n) {
+            file.seekg(at); uint64_t value=0;
+            while (n--) { int c=file.get(); if (c<0) throw std::runtime_error("Truncated QCOW2 header"); value=(value<<8)|uint8_t(c); }
+            return value;
+        };
+        auto backingAt=big(8,8), backingSize=big(16,4);
+        if (backingAt) {
+            if (!backingSize || backingSize>1023 || backingAt>fileBytes || backingSize>fileBytes-backingAt)
+                throw std::runtime_error("Invalid QCOW2 backing path");
+            std::string name(backingSize,'\0'); file.seekg(backingAt); file.read(name.data(),name.size());
+            fs::path backing(name);
+            qcowBacking=fs::absolute(backing.is_absolute()?backing:fs::path(path).parent_path()/backing).lexically_normal().string();
+        }
+        if (!ro || !qcowBacking.empty()) {
+            qcowWrite=std::make_unique<Qcow2Nbd>(path,ro);
+            sectors=qcowWrite->size()/512;
+        } else {
+            qcow2=std::make_unique<Qcow2>(path,fileBytes);
+            sectors=qcow2->size()/512;
+        }
+        if (fd) { heads=2; spt=sectors==2400?15:sectors==1440?9:18; }
     } else if (!std::memcmp(signature, "vhdxfile", 8)) {
         if (fd) throw std::runtime_error("VHDX cannot be used as a floppy");
         vhdx = std::make_unique<Vhdx>(path, fileBytes, !ro);
@@ -153,7 +167,7 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth, OpenProgre
         }
     }
     file.clear();
-    if (parent && !fd) {
+    if ((parent || qcow2 || qcowWrite) && !fd) {
         // A compressed import can replace its zero parent's boot sectors.
         // Inheriting that parent's default CHS geometry breaks legacy boot
         // loaders even when every guest-visible byte was preserved.
@@ -170,6 +184,7 @@ Disk::Disk(const std::string &name, bool fd, bool ro, unsigned depth, OpenProgre
             }
         }
     }
+    if (progress) progress(fileBytes,fileBytes);
 }
 namespace {
 // A cache is usable only for exactly the file that produced it. In particular,
@@ -187,16 +202,11 @@ std::array<uint64_t, 7> indexIdentity(const std::string &path) {
             uint64_t(modified.tv_sec), uint64_t(modified.tv_nsec),
             uint64_t(changed.tv_sec), uint64_t(changed.tv_nsec)};
 }
-void appendIndex(std::vector<uint8_t> &bytes, uint64_t value, unsigned width = 8) {
-    for (unsigned i = 0; i < width; ++i) bytes.push_back(value >> (i * 8));
-}
 constexpr size_t indexHeaderBytes = 8 + 7 * 8 + 3 * 8;
 }
 Disk::~Disk() noexcept {
-    if (parent && !readOnly) {
-        try { flush(); saveIndex(); }
-        catch (...) { /* Cache failures must never prevent disk shutdown. */ }
-    }
+    if (qcowWrite && !readOnly) { try { flush(); } catch (...) {} }
+
 }
 bool Disk::loadIndex() {
     try {
@@ -242,54 +252,21 @@ bool Disk::loadIndex() {
         return true;
     } catch (...) { return false; }
 }
-void Disk::saveIndex() {
-    auto identity = indexIdentity(path);
-    std::vector<uint8_t> bytes;
-    bytes.reserve(indexHeaderBytes + blocks.size() * 20 + 8);
-    for (auto c : std::string("PCIDX001")) bytes.push_back(c);
-    for (auto field : identity) appendIndex(bytes, field);
-    appendIndex(bytes, sectors);
-    appendIndex(bytes, headerSize);
-    appendIndex(bytes, blocks.size());
-    for (const auto &[block, entry] : blocks) {
-        appendIndex(bytes, block);
-        appendIndex(bytes, entry.offset);
-        appendIndex(bytes, entry.size, 4);
-    }
-    appendIndex(bytes, hashBlock(bytes.data(), bytes.size()));
-    auto temporary = path + ".idx.tmp.XXXXXX";
-    int fd = mkstemp(temporary.data());
-    if (fd < 0) return;
-    bool success = true;
-    size_t at = 0;
-    while (at < bytes.size()) {
-        auto written = ::write(fd, bytes.data() + at, bytes.size() - at);
-        if (written <= 0) { success = false; break; }
-        at += written;
-    }
-    if (close(fd)) success = false;
-    std::error_code ignored;
-    if (success) fs::rename(temporary, path + ".idx", ignored);
-    fs::remove(temporary, ignored);
-}
 void Disk::createOverlay(const std::string &destination, const std::string &parentName) {
-    auto absolute = fs::absolute(parentName).lexically_normal().string();
-    if (absolute.size() > 4096 || fs::exists(destination))
-        throw std::runtime_error("Invalid COW destination");
-    Disk base(absolute, false, true);
-    std::ofstream out(destination, std::ios::binary);
-    out.write(cowMagic, 8);
-    put(out, 1, 4);
-    put(out, 4096, 4);
-    put(out, base.sectors, 8);
-    put(out, absolute.size(), 4);
-    out.write(absolute.data(), absolute.size());
-    put(out, hashBlock(reinterpret_cast<const uint8_t *>(absolute.data()), absolute.size()), 8);
-    out.close();
-    if (!out)
-        throw std::runtime_error("Cannot create COW disk");
+    auto absolute=fs::absolute(parentName).lexically_normal().string();
+    if (fs::exists(destination)) throw std::runtime_error("QCOW2 destination already exists");
+    std::ifstream input(absolute,std::ios::binary); std::array<char,8> magic{};
+    input.read(magic.data(),magic.size());
+    if (!std::memcmp(magic.data(),cowMagic,8))
+        throw std::runtime_error("Migrate the legacy backing disk to QCOW2 before creating a new overlay");
+    std::string format=!std::memcmp(magic.data(),"QFI\xfb",4)?"qcow2":
+        !std::memcmp(magic.data(),"vhdxfile",8)?"vhdx":"raw";
+    runStorageTool({"qemu-img","create","-q","-f","qcow2","-F",format,"-b",absolute,
+                    "-o","compat=1.1,cluster_size=65536,compression_type=zstd",destination});
 }
+
 void Disk::flush() {
+    if (qcowWrite) { if (!readOnly) qcowWrite->flush(); return; }
     if (vhdx) { vhdx->flush(); return; }
     file.clear();
     file.flush();
@@ -334,6 +311,10 @@ bool Disk::read(uint64_t lba, unsigned count, uint8_t *data) {
     if (lba >= sectors || count > sectors - lba)
         return false;
     try {
+        if (qcowWrite) {
+            while (count) { unsigned n=std::min(count,2048u); qcowWrite->read(lba*512,n*512,data); lba+=n; count-=n; data+=n*512; }
+            return true;
+        }
         if (qcow2) {
             qcow2->read(lba * 512, {data, size_t(count) * 512});
             return true;
@@ -367,6 +348,10 @@ bool Disk::write(uint64_t lba, unsigned count, const uint8_t *data) {
     if (readOnly || lba >= sectors || count > sectors - lba)
         return false;
     try {
+        if (qcowWrite) {
+            while (count) { unsigned n=std::min(count,2048u); qcowWrite->write(lba*512,n*512,data); lba+=n; count-=n; data+=n*512; }
+            return true;
+        }
         if (vhdx) { vhdx->write(lba * 512, {data, size_t(count) * 512}); return true; }
         if (!parent) {
             file.clear();
@@ -375,82 +360,10 @@ bool Disk::write(uint64_t lba, unsigned count, const uint8_t *data) {
             file.flush();
             return bool(file);
         }
-        while (count) {
-            auto index = lba / 8;
-            std::array<uint8_t, 4096> block;
-            readBlock(index, block);
-            unsigned at = lba % 8, n = std::min(count, 8 - at);
-            if (!std::memcmp(block.data() + at * 512, data, n * 512)) {
-                data += n * 512;
-                lba += n;
-                count -= n;
-                continue;
-            }
-            std::memcpy(block.data() + at * 512, data, n * 512);
-            std::vector<uint8_t> packed(ZSTD_compressBound(block.size()));
-            auto size = ZSTD_compress(packed.data(), packed.size(), block.data(), block.size(), 1);
-            if (ZSTD_isError(size))
-                throw std::runtime_error("COW compression failed");
-            file.clear();
-            file.seekp(fileBytes);
-            put(file, index, 8);
-            put(file, size, 4);
-            put(file, 4096, 4);
-            put(file, hashBlock(block.data(), 4096) ^ index, 8);
-            file.write(reinterpret_cast<const char *>(packed.data()), size);
-            file.flush();
-            if (!file)
-                throw std::runtime_error("Cannot write COW block");
-            if (auto old = blocks.find(index); old != blocks.end())
-                liveBytes -= 24 + old->second.size;
-            blocks[index] = {fileBytes, uint32_t(size)};
-            liveBytes += 24 + size;
-            fileBytes += 24 + size;
-            cachedBlock = index;
-            cachedData = block;
-            data += n * 512;
-            lba += n;
-            count -= n;
-        }
-        if (fileBytes > 8 * 1024 * 1024 && fileBytes - headerSize > 2 * liveBytes)
-            compact();
-        return true;
+        throw std::runtime_error("Legacy PCEMUCOW is read-only");
     } catch (const std::exception &) {
         return false;
     }
-}
-void Disk::compact() {
-    auto temporary = path + ".compact";
-    std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
-    std::vector<uint8_t> header(headerSize);
-    file.clear();
-    file.seekg(0);
-    file.read(reinterpret_cast<char *>(header.data()), header.size());
-    out.write(reinterpret_cast<char *>(header.data()), header.size());
-    auto updated = blocks;
-    uint64_t offset = headerSize;
-    for (auto &[index, entry] : updated) {
-        (void)index;
-        std::vector<uint8_t> record(24 + entry.size);
-        file.seekg(entry.offset);
-        file.read(reinterpret_cast<char *>(record.data()), record.size());
-        out.write(reinterpret_cast<char *>(record.data()), record.size());
-        entry.offset = offset;
-        offset += record.size();
-    }
-    out.close();
-    if (!file || !out) {
-        std::error_code ignored;
-        fs::remove(temporary, ignored);
-        throw std::runtime_error("COW compaction failed");
-    }
-    fs::rename(temporary, path);
-    file.close();
-    file.open(path, std::ios::binary | std::ios::in | std::ios::out);
-    if (!file)
-        throw std::runtime_error("Cannot reopen compacted COW disk");
-    blocks = std::move(updated);
-    fileBytes = offset;
 }
 
 } // namespace pc

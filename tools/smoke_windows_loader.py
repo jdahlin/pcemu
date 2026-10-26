@@ -42,7 +42,7 @@ def main():
     summary = {'passed': True, 'milestone': 'Windows Boot Manager reports missing BCD',
                'windowsOsBooted': False, 'wallSeconds': time.monotonic() - started,
                'immutableParent': str(disk),
-               'overlayBytes': (directory / 'vars.bin.pcd').stat().st_size}
+               'overlayBytes': (directory / 'vars.bin.qcow2').stat().st_size}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary, indent=2))
     print(directory)

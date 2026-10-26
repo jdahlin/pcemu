@@ -1,0 +1,20 @@
+{
+  "plain-readonly": {
+    "sequentialMiBs": 2908.35,
+    "random4kIOPs": 104986,
+    "checksum": 1624945,
+    "bytes": 17104896
+  },
+  "compressed-readonly": {
+    "sequentialMiBs": 4735.19,
+    "random4kIOPs": 125837,
+    "checksum": 1624945,
+    "bytes": 8627200
+  },
+  "compressed-writable": {
+    "sequentialMiBs": 2582.51,
+    "random4kIOPs": 38740,
+    "checksum": 1624945,
+    "bytes": 8627200
+  }
+}

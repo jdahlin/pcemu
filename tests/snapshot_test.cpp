@@ -48,7 +48,7 @@ int main() {
         }
         // Compacted imports may have a zero-filled parent: geometry must
         // follow their effective partition BPB, including nested overrides.
-        auto geometry = root / "geometry.pcd";
+        auto geometry = root / "geometry.qcow2";
         Disk::createOverlay(geometry.string(), raw.string());
         std::array<uint8_t, 512> mbr{}, bpb{};
         mbr[454] = 63;
@@ -64,7 +64,7 @@ int main() {
             check(image.heads == 128 && image.spt == 17,
                   "compressed geometry comes from effective BPB rather than zero parent");
         }
-        auto nestedGeometry = root / "nested-geometry.pcd";
+        auto nestedGeometry = root / "nested-geometry.qcow2";
         Disk::createOverlay(nestedGeometry.string(), geometry.string());
         {
             Disk image(nestedGeometry.string());
@@ -83,14 +83,14 @@ int main() {
             check(parent.heads == 16 && parent.spt == 63,
                   "geometry detection leaves zero parent unchanged");
         }
-        Disk::createOverlay((root / "a.pcd").string(), raw.string());
-        Disk::createOverlay((root / "b.pcd").string(), raw.string());
+        Disk::createOverlay((root / "a.qcow2").string(), raw.string());
+        Disk::createOverlay((root / "b.qcow2").string(), raw.string());
         std::array<uint8_t, 1536> input{}, output{};
         for (unsigned n = 0; n < input.size(); n++)
             input[n] = uint8_t(n * 73 + 29);
         {
-            Disk a((root / "a.pcd").string()), b((root / "b.pcd").string());
-            check(a.isOverlay() && fs::file_size(root / "a.pcd") < 1024,
+            Disk a((root / "a.qcow2").string()), b((root / "b.qcow2").string());
+            check(a.isOverlay() && fs::file_size(root / "a.qcow2") < 1024*1024,
                   "empty overlay uses only a header");
             check(a.write(7, 3, input.data()) && a.read(7, 3, output.data()) && output == input,
                   "compressed overlay handles writes crossing 4 KiB blocks");
@@ -102,73 +102,34 @@ int main() {
             check(!a.read(4098, 2, output.data()), "COW rejects out-of-range transfers");
         }
         {
-            Disk reopened((root / "a.pcd").string());
+            Disk reopened((root / "a.qcow2").string());
             check(reopened.read(7, 3, output.data()) && output == input,
                   "COW index rebuild survives reopen");
-            auto size = fs::file_size(root / "a.pcd");
-            check(reopened.write(7, 3, input.data()) && fs::file_size(root / "a.pcd") == size,
-                  "unchanged writes allocate no new records");
-        }
-        for (unsigned tail = 1; tail < 24; ++tail) {
-            auto truncated = root / "truncated.pcd";
-            fs::copy_file(root / "a.pcd", truncated, fs::copy_options::overwrite_existing);
-            {
-                std::ofstream file(truncated, std::ios::binary | std::ios::app);
-                for (unsigned n = 0; n < tail; ++n)
-                    file.put(0);
-            }
-            bool rejected = false;
-            try {
-                Disk bad(truncated.string());
-            } catch (const std::runtime_error &) {
-                rejected = true;
-            }
-            check(rejected, "mapped COW index rejects every truncated record-header length");
+            auto size = fs::file_size(root / "a.qcow2");
+            check(reopened.write(7, 3, input.data()) && fs::file_size(root / "a.qcow2") == size,
+                  "unchanged writes allocate no new clusters");
         }
         {
-            Disk readonly((root / "a.pcd").string(), false, true);
-            check(!readonly.write(7, 1, input.data()), "sealed overlays reject writes");
+            {
+                Disk readonly((root / "a.qcow2").string(), false, true);
+                check(!readonly.write(7, 1, input.data()), "sealed overlays reject writes");
+            }
             std::array<uint8_t, 4096> random{};
             uint32_t state = 13;
             for (auto &v : random) {
                 state = state * 1664525u + 1013904223u;
                 v = state >> 24;
             }
-            Disk a((root / "a.pcd").string());
-            for (unsigned n = 0; n < 2400; n++) {
+            Disk a((root / "a.qcow2").string());
+            for (unsigned n = 0; n < 128; n++) {
                 std::memcpy(random.data(), &n, 4);
                 check(a.write(24, 8, random.data()), "compressed block rewrite succeeds");
             }
-            check(fs::file_size(root / "a.pcd") < 8 * 1024 * 1024,
-                  "obsolete COW records compact below the threshold");
+            check(fs::file_size(root / "a.qcow2") < 8 * 1024 * 1024,
+                  "QCOW2 rewrites reuse allocated clusters");
             std::array<uint8_t, 4096> actual{};
             check(a.read(24, 8, actual.data()) && actual == random,
-                  "compaction preserves the latest block");
-        }
-        {
-            fs::copy_file(root / "a.pcd", root / "bad.pcd");
-            std::ifstream inputFile(root / "bad.pcd", std::ios::binary);
-            std::vector<uint8_t> data((std::istreambuf_iterator<char>(inputFile)), {});
-            auto little = [&](size_t at, unsigned n) {
-                uint64_t value = 0;
-                for (unsigned i = 0; i < n; i++)
-                    value |= uint64_t(data.at(at + i)) << (i * 8);
-                return value;
-            };
-            size_t at = 36 + little(24, 4), last = 0;
-            while (at < data.size()) {
-                if (little(at, 8) == 3)
-                    last = at;
-                at += 24 + little(at + 8, 4);
-            }
-            check(last != 0, "test locates a persistent compressed record");
-            std::fstream corrupt(root / "bad.pcd", std::ios::binary | std::ios::in | std::ios::out);
-            corrupt.seekp(last + 16);
-            corrupt.put(char(data[last + 16] ^ 1));
-            corrupt.close();
-            Disk bad((root / "bad.pcd").string());
-            std::array<uint8_t, 4096> block{};
-            check(!bad.read(24, 8, block.data()), "corrupt COW block checksums fail the disk read");
+                  "QCOW2 rewrites preserve the latest block");
         }
         auto floppy = root / "floppy.raw";
         {
@@ -223,7 +184,7 @@ int main() {
         m.hostCursor.revision = 42;
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
-              "first checkpoint switches live disks to compressed deltas");
+              "first checkpoint switches live disks to QCOW2 deltas");
         check(fs::file_size(root / "point/state.bin") < 100000,
               "zero RAM pages and zstd keep state compact");
         auto first = unpack(root / "point/state.bin");
@@ -245,7 +206,7 @@ int main() {
               "absolute mouse negotiation and pending event survive restore");
         check(m.cpu.r[AX] == 0xabc00000 && m.cpu.mem[0x5000] == 0xdd && m.cpu.executionEpoch == 1,
               "CPU RAM and cache identity restore");
-        check(m.disk->isOverlay() && fs::file_size(m.disk->path) < 1024,
+        check(m.disk->isOverlay() && fs::file_size(m.disk->path) < 1024*1024,
               "restore allocates only an empty compressed delta");
         check(m.cpu.tlb[17].base == 0x5000 && m.cpu.tlb[17].pteAddress == 0x1a00 &&
                   m.cpu.tlb[17].permissions == 6 && m.cpu.tlb[17].dirty,

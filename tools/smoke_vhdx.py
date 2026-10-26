@@ -33,7 +33,7 @@ def main():
         if result.returncode or expected.encode() not in (directory / (name + '.serial.log')).read_bytes():
             raise RuntimeError(f'Direct VHDX {name} failed; inspect {directory}')
         host_log = (directory / (name + '.host.log')).read_text()
-        if f'disk={disk}' not in host_log or list(directory.glob('*.pcd')):
+        if f'disk={disk}' not in host_log or list(directory.glob('*.qcow2')):
             raise RuntimeError('VHDX was not attached directly')
     summary = {'passed': True, 'diskController': args.disk_controller, 'directReadWrite': True, 'cowFilesCreated': 0,
                'logicalDiskBytes': 64 * 1024 * 1024, 'containerBytes': disk.stat().st_size,

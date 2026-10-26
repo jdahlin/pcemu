@@ -26,7 +26,7 @@ def exact(stream, length):
     return bytes(result)
 
 
-def convert(source, destination, size):
+def convert(source, destination, size, compression="zstd"):
     if size <= 0 or size % 512:
         raise ValueError('Size must be a positive multiple of 512')
     if destination.exists():
@@ -103,11 +103,11 @@ def convert(source, destination, size):
                     # unsupported, while the actual guest data stays at destination.
                     empty = Path(directory) / 'empty.qcow2'
                     subprocess.run(['qemu-img', 'create', '-q', '-f', 'qcow2',
-                                    '-o', 'compat=1.1,cluster_size=65536', str(empty), str(size)], check=True)
+                                    '-o', 'compat=1.1,cluster_size=65536,compression_type='+compression, str(empty), str(size)], check=True)
                     shutil.copyfile(empty, partial)
                     target = ('driver=qcow2,file.driver=file,file.filename=' +
                               str(partial).replace(',', ',,') + ',file.locking=off')
-                    subprocess.run(['qemu-img', 'convert', '-p', '-n', '-f', 'raw',
+                    subprocess.run(['qemu-img', 'convert', '-p', '-c', '-n', '-f', 'raw',
                                     '--target-image-opts', url, target], check=True)
                     subprocess.run(['qemu-img', 'check', '--image-opts', target], check=True)
                     subprocess.run(['qemu-img', 'compare', '-p', '--image-opts',
