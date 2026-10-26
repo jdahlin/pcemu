@@ -21,6 +21,7 @@ p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('snapshot', type=Path)
 p.add_argument('--task', type=Path, required=True)
 p.add_argument('--restore-timeout', type=float, default=10, help='seconds to wait for initial snapshot pixels; separate from task completion timeout')
+p.add_argument('--shutdown-timeout', type=float, default=30, help='seconds to allow clean shutdown and disk flush after task timing ends')
 p.add_argument('--repeat', type=int, default=5)
 p.add_argument('--output', type=Path, required=True)
 p.add_argument('--no-jit', action='store_true')
@@ -39,6 +40,8 @@ if a.jit_follow_jumps and a.no_jit:
     p.error('--jit-follow-jumps requires JIT execution')
 if not 0 < a.restore_timeout <= 3600:
     p.error('--restore-timeout must be positive and at most 3600 seconds')
+if not 0 < a.shutdown_timeout <= 3600:
+    p.error('--shutdown-timeout must be positive and at most 3600 seconds')
 if not 1 <= a.repeat <= 100:
     p.error('--repeat must be 1..100')
 if not 0 <= a.sample_wait_ms <= 10000:
@@ -177,11 +180,16 @@ for index in range(a.repeat):
         if index == a.repeat-1:
             subprocess.run(['sips','-s','format','png',str(frame),'--out',str(a.output/'last.png')],
                            check=True,stdout=subprocess.DEVNULL)
+        shutdown_started = time.perf_counter()
         if a.guest_profile:
             send('profile-stop '+str((work/'guest-profile.json').resolve()), 'quit')
         else:
             send('quit')
-        child.wait(timeout=5)
+        child.wait(timeout=a.shutdown_timeout)
+        sample['shutdownWaitMs'] = (time.perf_counter()-shutdown_started)*1000
+        sample['exitStatus'] = child.returncode
+        if child.returncode != 0:
+            raise RuntimeError(f'Guest shutdown failed with status {child.returncode}; files retained')
         if sampler:
             # -mayDie retains symbols and ends collection when the guest exits.
             # This bounds sampling to the task instead of appending idle time.
@@ -217,6 +225,7 @@ report={'task':task['name'],'snapshot':str(snapshot),'jit':not a.no_jit,'profile
         'followJumps':follow_jumps_mode, 'traces':trace_mode,
         'emulatorSha256':engine_hash,
         'taskSha256':task_hash, 'restoreTimeoutSeconds':a.restore_timeout,
+        'shutdownTimeoutSeconds':a.shutdown_timeout,
         'guestProfiled':a.guest_profile,
         'frontend':'SDL' if a.gui else 'headless',
         'hostInputSuppressed':bool(host_input_suppressed),

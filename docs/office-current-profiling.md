@@ -176,3 +176,22 @@ and [Word raw traces and attribution](measurements/word-post-batch-host-profile-
 record executable/task hashes, CPU intervals and per-run spread. Raw traces
 are stored as verified zstd files. Thirteen analyzer tests pass. Production
 runtime code is unchanged by this collection.
+
+## Benchmark shutdown acceptance (26 October)
+
+`bench_snapshot_task.py` allows `--shutdown-timeout SECONDS` (default 30,
+positive and at most 3,600). This replaces a fixed five-second wait that could
+expire during compressed-overlay flushing on external storage. Task response
+and process CPU measurements end before shutdown; each sample separately
+records `shutdownWaitMs` and `exitStatus`, and the report records the configured
+limit. A nonzero emulator exit rejects the run even if task pixels matched.
+Timeouts and failed exits retain guest files for inspection; successful clean
+exits keep the existing narrowly scoped temporary-overlay cleanup.
+
+Four disk-free fixture tests cover delayed clean shutdown, nonzero exit,
+timeout retention and invalid limits. Run them with
+`python3 -m unittest discover -s tests -p test_snapshot_task_shutdown.py`.
+A real headless restored Word task also passes with exit status zero using
+an existing checkpoint and a small disposable child, removed after success.
+[Its report](measurements/snapshot-shutdown-2026-10-26.json) is a harness smoke
+check, not a performance comparison. No emulator runtime behavior changed.

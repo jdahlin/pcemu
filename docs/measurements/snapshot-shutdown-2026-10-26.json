@@ -1,0 +1,40 @@
+{
+  "task": "Word 97 warm launch from prepared Run dialog to first rendered Page 1 / Sec 1 status; not steady-state document work",
+  "snapshot": "/Volumes/data/pcemu/snapshots/word-launch-recovered-20261026",
+  "jit": true,
+  "profiled": false,
+  "followJumps": true,
+  "traces": false,
+  "emulatorSha256": "4b14e4c8ce18a113f56c7a103cbd0b8e7477bcc6bdf183a6cdc24a4bf0ce616d",
+  "taskSha256": "1af125b3a3ad6da80627880ef6f47c5460d2976b25378b52d297b29a2390a455",
+  "restoreTimeoutSeconds": 3600.0,
+  "shutdownTimeoutSeconds": 60.0,
+  "guestProfiled": false,
+  "frontend": "headless",
+  "hostInputSuppressed": false,
+  "emulator": "/Users/johandahlin/dev/pcemu/build/tlb-hot16/baseline-pcemu",
+  "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+  "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+  "samples": [
+    {
+      "restoreReadyMs": 33531.55925,
+      "taskResponseMs": 1079.5039169999968,
+      "processCpuTime": {
+        "status": "available",
+        "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+        "userMs": 843.364125,
+        "systemMs": 96.289958,
+        "totalMs": 939.654083
+      },
+      "instructions": 31179684,
+      "nativeInstructions": 23620933,
+      "compiledBlocks": 39036,
+      "executionWallMs": 958.07596,
+      "shutdownWaitMs": 180.24587500000422,
+      "exitStatus": 0
+    }
+  ],
+  "medianRestoreReadyMs": 33531.55925,
+  "medianTaskResponseMs": 1079.5039169999968,
+  "medianProcessCpuMs": 939.654083
+}
