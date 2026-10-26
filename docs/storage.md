@@ -262,3 +262,32 @@ not Windows application timings. Compression reduced that fixture from 17.1 MB
 to 8.6 MB; native compressed sequential reads and the QEMU-backed read path both
 exceeded 2 GiB/s. The QEMU-backed random 4 KiB read path measured about 38,700 IOPS.
 These numbers do not promise equivalent latency for every guest workload.
+
+### Local migration results (2026-10-26)
+
+The old Windows 11 writable installation was explicitly discarded at the user's
+request. Its clean installed QCOW2 base was repacked with zstd, checked and
+compared byte-for-byte before replacement. `run11.sh` now uses that compressed
+base and a fresh standard QCOW2 layer. A private headless validation booted the
+installed Windows setup, negotiated Hyper-V services and powered off cleanly;
+its disposable disk was removed. It did not apply a new lean installation.
+
+Nine Windows 95 states were converted to standalone compressed QCOW2 files and
+verified before removing their old `.pcd` sources. Conversion found one corrupt
+compressed record in the native-cursor source. An earlier valid record with the
+same expected checksum recovered that block; a compressed pre-repair backup
+was retained externally. The resulting disk still has source-side USER.DAT
+filesystem damage. It was preserved, not truncated by ScanDisk. A known-good
+mouse checkpoint booted headless at 1440×900, passed mouse/menu checks and shut
+down with its disks flushed, validating the storage path independently.
+
+No `.pcd` files remain under `media` or `build`. Old test disks were removed;
+large diagnostics were losslessly compressed and the unused extracted
+PowerShell research package was archived after verifying every regular file's
+SHA-256. The project is now about 19.5 GiB, roughly half the earlier 39 GiB.
+The original Win11 base shrank from 17.18 GiB to 15.89 GiB; much of the saving
+came from discarding the 18.8 GiB obsolete writable history rather than from
+compressing already compressed OS/install data.
+
+See `measurements/qcow2-migration-2026-10-26.json` for validation and allocation,
+and [small-install research](windows11-small-install.md) before a fresh install.

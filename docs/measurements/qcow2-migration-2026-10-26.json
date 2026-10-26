@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-26",
+  "projectGiBAfter": 19.496646881103516,
+  "projectGiBBeforeApproximate": 39,
+  "filesystemFreeBytesAfter": 32764116992,
+  "activeDiskFormat": "standard QCOW2",
+  "compression": "zstd",
+  "windows11BaseBytes": 17066754048,
+  "windows11FreshOverlayBytes": 197632,
+  "windows11OriginalBaseByteComparisonPassed": true,
+  "oldWindows11WritableInstallationDiscardedWithUserAuthorization": true,
+  "pcdFilesRemainingInBuildAndMedia": 0,
+  "windows11HeadlessValidation": {
+    "bootedInstalledWindowsToSetup": true,
+    "hypervServicesNegotiated": true,
+    "cleanPowerOff": true,
+    "freshInstallOptimizationsApplied": false
+  },
+  "windows95HeadlessValidation": {
+    "mode": [
+      1440,
+      900,
+      32
+    ],
+    "absoluteActive": true,
+    "target": [
+      960,
+      300
+    ],
+    "cursorBounds": [
+      960,
+      300,
+      970,
+      318
+    ],
+    "nativeCursor": false,
+    "hostCursor": {
+      "active": 0,
+      "visible": 0,
+      "size": 0,
+      "revision": 0,
+      "shapeHash": 2166136261,
+      "hotX": 0,
+      "hotY": 0
+    },
+    "absoluteClickOpenedStart": true,
+    "absoluteRightClickOpenedMenu": true,
+    "queueDrained": true,
+    "hostGuiInput": false
+  },
+  "windows95NativeCursorSourceIssue": "One damaged compressed record recovered using an earlier valid record with the same expected checksum. Converted current disk retains pre-existing USER.DAT filesystem damage; it was not truncated or rolled back.",
+  "windows95Recovery": {
+    "sourceSha256Before": "7ecf9daeddb91cf0d8066a56c2447db90bef6f84d29d02b7e34ffd45ec9ca9c6",
+    "sourceSha256After": "ed4c85ce18dcd0f931b0957543771832f84fb081acd05ee3b3dfd2353b90d67c",
+    "backup": "/Volumes/data/pcemu/migrations/2026-10-26/win95-native-pre-repair.pcd.zst",
+    "repairs": [
+      {
+        "block": 24956,
+        "offset": 723746,
+        "verifiedDuplicateOffset": 264573,
+        "expectedChecksum": "0x5b2e6f8afbc6dc14",
+        "packedBytes": 2696
+      }
+    ]
+  },
+  "standardStorageTestsPassed": true,
+  "leanInstallResearch": "docs/windows11-small-install.md",
+  "researchConclusion": "Installer already uses Compact OS. Move the WIM off the target Windows volume for future installations; deleting it does not reclaim its allocated image clusters."
+}
