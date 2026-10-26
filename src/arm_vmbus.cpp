@@ -74,7 +74,7 @@ uint16_t ArmVmbus::receive(uint32_t messageType, std::span<const uint8_t> input,
             ++offers;
         } else {
             for (auto &[id, channel] : channels) {
-                close(channel); gpadls.clearChannel(id); channel.offered = false;
+                close(channel); gpadls.clear_channel(id); channel.offered = false;
             }
             connected = false; version = 0; ++unloads;
         }
@@ -162,7 +162,7 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
             size_t bytes = size_t(get(input, 16, 2));
             input = input.first(20 + std::min(bytes, size_t(216)));
         } else if (kind == 9) {
-            auto remaining = gpadls.remainingBytes(uint32_t(get(input, 12, 4)));
+            auto remaining = gpadls.remaining_descriptor_bytes(uint32_t(get(input, 12, 4)));
             if (remaining && *remaining) input = input.first(16 + std::min(*remaining, size_t(224)));
         }
     }
@@ -170,14 +170,14 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
     if (kind == 9) {
         if (input.size() <= 16 || ((input.size() - 16) & 7)) return reject(5);
         const uint32_t gpadl = uint32_t(get(input, 12, 4));
-        const auto owner = gpadls.owner(gpadl);
+        const auto owner = gpadls.descriptor_owner(gpadl);
         if (!owner) return reject(5);
         id = *owner;
-        auto result = gpadls.append(gpadl, input.subspan(16));
+        auto result = gpadls.append_descriptor(gpadl, input.subspan(16));
         if (result == ArmGpadl::Result::InUse) return reject(0x15);
         if (result != ArmGpadl::Result::Ok) {
-            gpadls.remove(id, gpadl); response(10, id, gpadl, 0xc000000d);
-        } else if (gpadls.byteSize(id, gpadl)) response(10, id, gpadl, 0);
+            gpadls.teardown_descriptor(id, gpadl); response(10, id, gpadl, 0xc000000d);
+        } else if (gpadls.mapped_byte_count(id, gpadl)) response(10, id, gpadl, 0);
         return 0;
     }
     auto it = channels.find(id);
@@ -190,11 +190,11 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
     if (kind == 8) {
         if (input.size() < 20 || ((input.size() - 20) & 7)) return reject(5);
         const uint32_t gpadl = uint32_t(get(input, 12, 4));
-        auto result = gpadls.begin(id, gpadl, uint16_t(get(input, 16, 2)),
+        auto result = gpadls.begin_descriptor(id, gpadl, uint16_t(get(input, 16, 2)),
                                    uint16_t(get(input, 18, 2)), input.subspan(20));
         if (result != ArmGpadl::Result::Ok)
             response(10, id, gpadl, result == ArmGpadl::Result::Limit ? 0xc000009a : 0xc000000d);
-        else if (gpadls.byteSize(id, gpadl)) response(10, id, gpadl, 0);
+        else if (gpadls.mapped_byte_count(id, gpadl)) response(10, id, gpadl, 0);
         return 0;
     }
     if (kind == 11) {
@@ -202,7 +202,7 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
         const uint32_t gpadl = uint32_t(get(input, 12, 4));
         if (!gpadl) return reject(5);
         if (channel.rx && channel.ringGpadl == gpadl) return reject(0x15);
-        auto result = gpadls.remove(id, gpadl);
+        auto result = gpadls.teardown_descriptor(id, gpadl);
         if (result == ArmGpadl::Result::WrongChannel) return reject(5);
         std::vector<uint8_t> message(12);
         put(message, 0, 12, 4); put(message, 8, gpadl, 4);
@@ -216,7 +216,7 @@ uint16_t ArmVmbus::channelMessage(uint32_t kind, std::span<const uint8_t> input)
     const uint32_t openId = uint32_t(get(input, 12, 4)), gpadl = uint32_t(get(input, 16, 4));
     const uint32_t vp = uint32_t(get(input, 20, 4));
     const uint64_t split = get(input, 24, 4) * 4096;
-    const auto size = gpadls.byteSize(id, gpadl);
+    const auto size = gpadls.mapped_byte_count(id, gpadl);
     if (channel.rx || !size || *size > UINT32_MAX || split > *size ||
         (vp != UINT32_MAX && vp >= cpus)) {
         response(6, id, openId, 0xc000000d); return 0;
@@ -283,7 +283,7 @@ std::string ArmVmbus::report() const {
         << ",\"deliveredChannelReplies\":" << deliveredTypes[4]
         << ",\"rejectedMessages\":" << rejected << ",\"offeredChannels\":" << offered << ",\"openChannels\":" << open
         << ",\"channelOffers\":" << channelOffers << ",\"channelOpens\":" << opens << ",\"channelCloses\":" << closes
-        << ",\"gpadls\":" << gpadls.count() << ",\"packetsReceived\":" << packetsIn
+        << ",\"gpadls\":" << gpadls.descriptor_count() << ",\"packetsReceived\":" << packetsIn
         << ",\"packetsSent\":" << packetsOut << ",\"channelFaults\":" << faults << '}';
     return out.str();
 }

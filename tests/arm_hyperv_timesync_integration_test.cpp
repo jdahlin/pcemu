@@ -37,7 +37,7 @@ int main(){
     auto header=message(8,60);put(header,12,42);put(header,16,40,2);put(header,18,1,2);put(header,20,16384);
     for(unsigned i=0;i<4;++i)put(header,28+8*i,(base>>12)+8+i,8);
     post(header);auto open=message(5,148);put(open,12,100);put(open,16,42);put(open,24,2);post(open);
-    ArmGpadl guest(ram,base);check(guest.begin(2,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
+    ArmGpadl guest(ram,base);check(guest.begin_descriptor(2,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
     ArmVmbusRing tx(guest,2,42,0,8192),rx(guest,2,42,8192,8192);
     bool notify=false;std::vector<uint8_t> request;
     check(rx.pop(request,notify)==ArmVmbusRing::Result::Ok&&get(request,28,2)==0);

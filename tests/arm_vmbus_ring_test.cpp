@@ -29,11 +29,11 @@ int main() {
     put(descriptor, 16, base >> 12, 8);
     put(descriptor, 24, (base >> 12) + 5, 8);
     ArmGpadl table(ram, base);
-    check(table.begin(7, 42, 32, 1, descriptor) == ArmGpadl::Result::Ok);
-    check(table.ringMapping(7, 42, 0, 12288));
-    check(!table.ringMapping(8, 42, 0, 12288));
-    check(!table.ringMapping(7, 42, 1, 8192));
-    check(!table.ringMapping(7, 42, 4096, 12288));
+    check(table.begin_descriptor(7, 42, 32, 1, descriptor) == ArmGpadl::Result::Ok);
+    check(table.valid_ring_mapping(7, 42, 0, 12288));
+    check(!table.valid_ring_mapping(8, 42, 0, 12288));
+    check(!table.valid_ring_mapping(7, 42, 1, 8192));
+    check(!table.valid_ring_mapping(7, 42, 4096, 12288));
     auto header = std::span(ram).subspan(3 * 4096, 4096);
     ArmVmbusRing ring(table, 7, 42, 0, 12288);
     std::vector<uint8_t> packet(32), output{0xaa};
@@ -66,7 +66,7 @@ int main() {
     check(ring.push(packet, notify) == R::Full && !notify && get(header, 12) == 40);
     auto expectedFull = beforeFull; put(expectedFull, 3 * 4096 + 12, 40);
     check(ram == expectedFull);
-    check(table.write(7, 42, 4096 + 40, packet));
+    check(table.write_mapped_bytes(7, 42, 4096 + 40, packet));
     check(ring.pop(output, notify) == R::Ok && notify && output == packet && get(header, 4) == 80);
     check(ring.push(packet, notify) == R::Ok && !notify && get(header, 12) == 0);
     // Malformed packet/index input never consumes data or modifies output.
@@ -85,7 +85,7 @@ int main() {
     check(ring.pop(output, notify) == R::Invalid && ram == before);
     put(header, 0, 40); put(header, 4, 0);
     auto bad = packet; put(bad, 2, 5, 2);
-    check(table.write(7, 42, 4096, bad)); before = ram;
+    check(table.write_mapped_bytes(7, 42, 4096, bad)); before = ram;
     check(ring.pop(output, notify) == R::Invalid && ram == before);
     // Exercise repeated wraps/backpressure against an independent FIFO oracle.
     std::fill(ram.begin(), ram.end(), 0); put(header, 64, 1);
@@ -108,28 +108,28 @@ int main() {
         }
     }
     // Teardown and ID reuse invalidate existing rings, even for the same PFNs.
-    const auto generation = table.generation(7, 42);
-    check(table.remove(7, 42) == ArmGpadl::Result::Ok);
-    check(table.begin(7, 42, 32, 1, descriptor) == ArmGpadl::Result::Ok);
-    check(table.generation(7, 42) != generation); before = ram;
+    const auto generation = table.mapping_generation(7, 42);
+    check(table.teardown_descriptor(7, 42) == ArmGpadl::Result::Ok);
+    check(table.begin_descriptor(7, 42, 32, 1, descriptor) == ArmGpadl::Result::Ok);
+    check(table.mapping_generation(7, 42) != generation); before = ram;
     check(ring.push(packet, notify) == R::Invalid && ram == before);
     check(ring.pop(output, notify) == R::Invalid && ram == before);
     auto duplicate = descriptor; put(duplicate, 24, base >> 12, 8);
-    check(table.begin(7, 43, 32, 1, duplicate) == ArmGpadl::Result::Ok);
-    check(!table.ringMapping(7, 43, 0, 8192));
+    check(table.begin_descriptor(7, 43, 32, 1, duplicate) == ArmGpadl::Result::Ok);
+    check(!table.valid_ring_mapping(7, 43, 0, 8192));
     bool rejected = false;
     try { ArmVmbusRing alias(table, 7, 43, 0, 8192); } catch (const std::runtime_error &) { rejected = true; }
     check(rejected);
-    check(table.begin(7, 44, 32, 1, std::span(descriptor).first(16)) == ArmGpadl::Result::Ok);
-    check(!table.generation(7, 44) && !table.ringMapping(7, 44, 0, 8192));
+    check(table.begin_descriptor(7, 44, 32, 1, std::span(descriptor).first(16)) == ArmGpadl::Result::Ok);
+    check(!table.mapping_generation(7, 44) && !table.valid_ring_mapping(7, 44, 0, 8192));
     auto partial = descriptor; put(partial, 0, 8192); put(partial, 4, 8);
-    check(table.begin(7, 45, 32, 1, partial) == ArmGpadl::Result::Ok);
-    check(!table.ringMapping(7, 45, 0, 8192));
+    check(table.begin_descriptor(7, 45, 32, 1, partial) == ArmGpadl::Result::Ok);
+    check(!table.valid_ring_mapping(7, 45, 0, 8192));
     std::vector<uint8_t> multi(40);
     put(multi, 0, 8192); put(multi, 8, (base >> 12) + 3, 8); put(multi, 16, base >> 12, 8);
     put(multi, 24, 4096); put(multi, 32, (base >> 12) + 5, 8);
-    check(table.begin(7, 46, 40, 2, multi) == ArmGpadl::Result::Ok);
-    check(table.ringMapping(7, 46, 0, 12288));
+    check(table.begin_descriptor(7, 46, 40, 2, multi) == ArmGpadl::Result::Ok);
+    check(table.valid_ring_mapping(7, 46, 0, 12288));
     ArmVmbusRing multiRing(table, 7, 46, 0, 12288);
     put(header, 0, 0); put(header, 4, 0);
     check(multiRing.push(packet, notify) == R::Ok);
@@ -139,7 +139,7 @@ int main() {
         auto corrupt = packet;
         if (i & 1) put(corrupt, 2, i & 2 ? 0 : 1, 2);
         else put(corrupt, 4, i & 2 ? 0 : 65535, 2);
-        check(table.write(7, 46, 4096, corrupt));
+        check(table.write_mapped_bytes(7, 46, 4096, corrupt));
         const auto previous = ram, oldPacket = output;
         check(multiRing.pop(output, notify) == R::Invalid && !notify && ram == previous && output == oldPacket);
     }

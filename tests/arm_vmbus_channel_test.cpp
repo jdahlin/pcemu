@@ -80,7 +80,7 @@ int main() {
     check(get(replies.back(),0)==6 && get(replies.back(),12)==100 && get(replies.back(),16)==0);
     check(bus.receive(1,open)==0); bus.service(); check(get(replies.back(),16)==0xc000000d);
     ArmGpadl guest(ram,base);
-    check(guest.begin(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
+    check(guest.begin_descriptor(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
     ArmVmbusRing outbound(guest,7,42,0,8192), inbound(guest,7,42,8192,8192);
     auto packet=msg(6,24); put(packet,0,6,2); put(packet,2,2,2); put(packet,4,3,2);
     put(packet,8,123,8); put(packet,16,0x12345678,8);
@@ -195,7 +195,7 @@ int main() {
     post(header); check(get(integratedRam,4096+512+16)==10);
     post(open); check(get(integratedRam,4096+512+32)==0);
     ArmGpadl integratedGuest(integratedRam,base);
-    check(integratedGuest.begin(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
+    check(integratedGuest.begin_descriptor(7,42,40,1,std::span(header).subspan(20))==ArmGpadl::Result::Ok);
     ArmVmbusRing guestTx(integratedGuest,7,42,0,8192), guestRx(integratedGuest,7,42,8192,8192);
     check(guestTx.push(packet,notify)==ArmVmbusRing::Result::Ok);
     auto signal=[&](uint64_t input) {

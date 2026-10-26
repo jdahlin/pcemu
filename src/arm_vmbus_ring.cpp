@@ -13,30 +13,30 @@ uint32_t get(std::span<const uint8_t> b, unsigned at, unsigned count = 4) {
 }
 ArmVmbusRing::ArmVmbusRing(ArmGpadl &m, uint32_t ch, uint32_t handle, uint64_t start, uint32_t bytes)
     : memory(m), channel(ch), id(handle), capacity(bytes >= 4096 ? bytes - 4096 : 0), offset(start), lease(0) {
-    if (!memory.ringMapping(ch, handle, start, bytes)) throw std::runtime_error("Invalid VMBus ring mapping");
-    lease = *memory.generation(ch, handle);
+    if (!memory.valid_ring_mapping(ch, handle, start, bytes)) throw std::runtime_error("Invalid VMBus ring mapping");
+    lease = *memory.mapping_generation(ch, handle);
 }
 bool ArmVmbusRing::header(Header &out) const {
-    if (memory.generation(channel, id) != lease) return false;
+    if (memory.mapping_generation(channel, id) != lease) return false;
     std::array<uint8_t, 68> bytes{};
-    if (!memory.read(channel, id, offset, bytes)) return false;
+    if (!memory.read_mapped_bytes(channel, id, offset, bytes)) return false;
     out = {get(bytes, 0), get(bytes, 4), get(bytes, 8), get(bytes, 12), get(bytes, 64)};
     return out.write < capacity && out.read < capacity && !(out.write & 7) && !(out.read & 7);
 }
 bool ArmVmbusRing::copy(uint32_t at, std::span<uint8_t> bytes) const {
     const auto first = std::min<size_t>(bytes.size(), capacity - at);
-    return memory.read(channel, id, offset + 4096 + at, bytes.first(first)) &&
-           memory.read(channel, id, offset + 4096, bytes.subspan(first));
+    return memory.read_mapped_bytes(channel, id, offset + 4096 + at, bytes.first(first)) &&
+           memory.read_mapped_bytes(channel, id, offset + 4096, bytes.subspan(first));
 }
 bool ArmVmbusRing::store(uint32_t at, std::span<const uint8_t> bytes) {
     const auto first = std::min<size_t>(bytes.size(), capacity - at);
-    return memory.write(channel, id, offset + 4096 + at, bytes.first(first)) &&
-           memory.write(channel, id, offset + 4096, bytes.subspan(first));
+    return memory.write_mapped_bytes(channel, id, offset + 4096 + at, bytes.first(first)) &&
+           memory.write_mapped_bytes(channel, id, offset + 4096, bytes.subspan(first));
 }
 bool ArmVmbusRing::field(unsigned at, uint32_t value) {
     std::array<uint8_t, 4> bytes{};
     for (unsigned i = 0; i < 4; ++i) bytes[i] = uint8_t(value >> (8 * i));
-    return memory.write(channel, id, offset + at, bytes);
+    return memory.write_mapped_bytes(channel, id, offset + at, bytes);
 }
 bool ArmVmbusRing::validPacket(std::span<const uint8_t> packet) {
     if (packet.size() < 16 || (packet.size() & 7)) return false;
