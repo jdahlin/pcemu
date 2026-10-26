@@ -25,12 +25,12 @@ void Machine::bindIoPorts() {
             }
         });
     auto ataRead = [this](uint16_t p, int w) {
-        auto value = ata.in(p, w);
+        auto value = ata.read_register(p, w);
         if (p == 0x1f7)
             ataLine = false;
         return value;
     };
-    auto ataWrite = [this](uint16_t p, uint32_t v, int w) { ata.out(p, v, w); };
+    auto ataWrite = [this](uint16_t p, uint32_t v, int w) { ata.write_register(p, v, w); };
     ioPorts.map("ata-primary", 0x1f0, 8, ataRead, ataWrite);
     ioPorts.map("ata-control", 0x3f6, 1, ataRead, ataWrite);
     ioPorts.map("ne2000", NE2000::base, 32,

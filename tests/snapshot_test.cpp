@@ -27,12 +27,12 @@ static std::vector<uint8_t> unpack(const fs::path &path) {
     return data;
 }
 static void command(ATA &ata, uint8_t op, unsigned lba, unsigned count = 2) {
-    ata.out(0x1f6, 0xe0, 1);
-    ata.out(0x1f2, count, 1);
-    ata.out(0x1f3, lba, 1);
-    ata.out(0x1f4, 0, 1);
-    ata.out(0x1f5, 0, 1);
-    ata.out(0x1f7, op, 1);
+    ata.write_register(0x1f6, 0xe0, 1);
+    ata.write_register(0x1f2, count, 1);
+    ata.write_register(0x1f3, lba, 1);
+    ata.write_register(0x1f4, 0, 1);
+    ata.write_register(0x1f5, 0, 1);
+    ata.write_register(0x1f7, op, 1);
 }
 int main() {
     auto root = fs::temp_directory_path() /
@@ -176,7 +176,7 @@ int main() {
         m.ticks = 921;
         command(m.ata, 0x20, 2);
         for (unsigned n = 0; n < 73; n++)
-            m.ata.in(0x1f0, 2);
+            m.ata.read_register(0x1f0, 2);
         m.absoluteMouse.enabled = m.absoluteMouse.absolute = true;
         m.absoluteMouse.motion(1234, 5678, 0, 1);
         m.hostCursor.active = m.hostCursor.uploading = true;
@@ -226,7 +226,7 @@ int main() {
         for (unsigned n = 73; n < 512; n++)
             check(m.cpu.input(0x1f0, 2) == 0, "routed pending PIO read resumes after snapshot rebinding");
         m.cpu.output(0x1f2, 7, 1);
-        check(m.ata.in(0x1f2, 1) == 7, "restored ATA port writes bind the destination machine");
+        check(m.ata.read_register(0x1f2, 1) == 7, "restored ATA port writes bind the destination machine");
         m.cpu.output(0x70, 9, 1);
         check(m.rtc.state.index == 9, "restored I/O callbacks bind the destination machine");
         command(m.ata, 0x30, 10);
@@ -234,14 +234,14 @@ int main() {
         for (unsigned n = 0; n < 37; n++) {
             uint16_t v = 0x6000 + n;
             std::memcpy(expected.data() + n * 2, &v, 2);
-            m.ata.out(0x1f0, v, 2);
+            m.ata.write_register(0x1f0, v, 2);
         }
         m.saveSnapshot((root / "write").string());
         m.loadSnapshot((root / "write").string());
         for (unsigned n = 37; n < 512; n++) {
             uint16_t v = 0x7000 + n;
             std::memcpy(expected.data() + n * 2, &v, 2);
-            m.ata.out(0x1f0, v, 2);
+            m.ata.write_register(0x1f0, v, 2);
         }
         std::array<uint8_t, 1024> actual{};
         check(m.disk->read(10, 2, actual.data()) && actual == expected,

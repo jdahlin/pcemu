@@ -207,3 +207,4 @@ while retaining this repository's formatting.
 | ARM OS debug lock | Arm AArch64 system-register descriptions: ESR_EL2, OSLAR_EL1, OSLSR_EL1, OSDLR_EL1 | Trap encoding/direction, lock-model identification, per-CPU reset policy and sticky double-lock compatibility boundaries. |
 | PCI configuration buses | PCI Local Bus 3.0, 3.2.2.3.2; AMD PG055 v2.9, Table 2-24 ECAM map | CONFIG_ADDRESS/DATA masks, fixed PC display BDF, single-bus/function-zero ECAM routing, live BAR decoding and host overlap precedence. |
 | VGA PCI function | PCI Local Bus 3.0, 6.2.1/6.2.2/6.2.5; QEMU Standard VGA PCI convention | Named vendor/device/class fields, fixed framebuffer/ROM addresses, size probing, firmware initialization and unsupported relocation/decoding controls. |
+| Primary ATA PIO disk | T13/1153D revision 18, ATA/ATAPI-4, clauses 7-9 | Task-file/command names, CHS/LBA progression, status/error/IRQ semantics, IDENTIFY words and synchronous/no-op compatibility boundaries. |

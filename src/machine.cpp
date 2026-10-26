@@ -109,7 +109,7 @@ void Machine::poll() {
         pic[0].raise_interrupt(0);
     if (ps2.pollDue(cpu.instructions))
         pollPs2();
-    if (ata.interruptLevel() && !ataLine) {
+    if (ata.interrupt_level() && !ataLine) {
         pic[1].raise_interrupt(6);
         ataLine = true;
     }

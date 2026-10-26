@@ -39,19 +39,19 @@ int main() {
         }
         Disk disk((root / "disk.raw").string());
         ATA ata(&disk);
-        ata.out(0x1f7, 0xec, 1);
-        check(ata.interruptLevel() && (ata.in(0x3f6, 1) & 8));
-        check(ata.interruptLevel());
-        check(ata.in(0x1f7, 1) & 8); check(!ata.interruptLevel());
-        check(ata.in(0x1f0, 2) == 0x40);
-        for (unsigned i = 1; i < 256; ++i) ata.in(0x1f0, 2);
-        ata.out(0x1f2, 1, 1); ata.out(0x1f3, 2, 1); ata.out(0x1f6, 0xe0, 1);
-        ata.out(0x1f7, 0x30, 1);
-        for (unsigned i = 0; i < 256; ++i) ata.out(0x1f0, 0x5a5a, 2);
+        ata.write_register(0x1f7, 0xec, 1);
+        check(ata.interrupt_level() && (ata.read_register(0x3f6, 1) & 8));
+        check(ata.interrupt_level());
+        check(ata.read_register(0x1f7, 1) & 8); check(!ata.interrupt_level());
+        check(ata.read_register(0x1f0, 2) == 0x40);
+        for (unsigned i = 1; i < 256; ++i) ata.read_register(0x1f0, 2);
+        ata.write_register(0x1f2, 1, 1); ata.write_register(0x1f3, 2, 1); ata.write_register(0x1f6, 0xe0, 1);
+        ata.write_register(0x1f7, 0x30, 1);
+        for (unsigned i = 0; i < 256; ++i) ata.write_register(0x1f0, 0x5a5a, 2);
         std::array<uint8_t, 512> sector{};
         check(disk.read(2, 1, sector.data()) && sector.front() == 0x5a && sector.back() == 0x5a);
-        check(ata.interruptLevel()); ata.out(0x3f6, 2, 1); check(!ata.interruptLevel());
-        ata.reset(&disk); check(!ata.interruptLevel());
+        check(ata.interrupt_level()); ata.write_register(0x3f6, 2, 1); check(!ata.interrupt_level());
+        ata.reset(&disk); check(!ata.interrupt_level());
 
         I8259PairDevice pic;
         pic[0].base = 0x20; pic[1].base = 0x28;
