@@ -218,6 +218,12 @@ pcemu_program(jit-stack-tests ZSTD
     tests/jit_stack_test.cpp
 )
 
+pcemu_program(jit-memory-push-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_memory_push_test.cpp
+)
+
 pcemu_program(jit-flags-tests ZSTD
   SOURCES
     ${CORE}

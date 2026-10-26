@@ -1145,3 +1145,22 @@ changes are restored. The complete rejected patch and all final/intermediate
 measurements remain in `adaptive-traces.md` and its measurement record. No
 adaptive OS smoke or fresh Setup gate is claimed. Six production sample
 analyzer tests pass. The twofold goal remains unachieved.
+
+
+## Native FF /6 PUSH lowering validated (26 October)
+
+The current Excel guest profile identifies 1.33M interpreted FF /6 operations.
+Register aliases now reuse guarded PUSH, and memory forms read their source with
+old SP/ESP through the RAM helper before the existing guarded stack write.
+8,682 memory PUSH, 43,600 stack, 354,948 core and 8,677 memory CALL checks pass.
+A RAM-only 50M-instruction PUSH/POP/checksum loop across eight code/stack/paging
+cases has three-pair median ratios of 2.63–2.85; this is not an application gain.
+Excel and Word render the expected results. Separate Excel counters show FF /6
+interpreter attempts down to 60,228; no application timing gain is claimed.
+
+The frozen matched-source executable passes DOS 6.22, Win3.11 exact save/readback,
+rtts and installed OSR2 applications, restart and exact 38-byte file readback.
+Temporary compressed smoke disks and orphan indexes are removed. Fresh Setup
+is not repeated for this lowering and remains a completion gate. The twofold
+useful-work target remains unproven. See `native-memory-push.md` and its complete
+measurement record.

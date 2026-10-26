@@ -155,6 +155,22 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.memory.address32 = block.stack32;
                         i.memory.displacement = uint32_t(-w);
                         block.usesStack = true;
+                    } else if (op == 0xff && ((m >> 3) & 7) == 6) {
+                        i.kind = Kind::Memory;
+                        i.memoryPush = (m >> 6) != 3;
+                        i.immediate = i.memoryPush;
+                        if (i.memoryPush) {
+                            i.callPointer = memoryOperand(m, address32, overrideSegment);
+                            i.callPointer.width = w;
+                            i.callPointer.begin = begin;
+                        } else i.dst = i.memory.reg = m & 7;
+                        i.memory.store = true;
+                        i.stackDelta = -w;
+                        i.memory.base = SP;
+                        i.memory.segment = SS;
+                        i.memory.address32 = block.stack32;
+                        i.memory.displacement = uint32_t(-w);
+                        block.usesStack = true;
                     } else if (op == 0xff && ((m >> 3) & 7) == 4) {
                         i.indirectJump = true;
                         i.imm = 0;
@@ -170,7 +186,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         pos = begin;
                         break;
                     }
-                    if (!i.indirectJump && !i.indirectCall) {
+                    if (!i.indirectJump && !i.indirectCall && !i.stackDelta) {
                         i.w = op == 0xfe ? 1 : w;
                         i.op = 8 + ((m >> 3) & 1);
                         if ((m >> 6) != 3) {

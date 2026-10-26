@@ -88,7 +88,7 @@ int main() {
             for (bool operandOverride : {false, true})
                 for (bool addressOverride : {false, true})
                     for (bool store : {false, true})
-                        for (unsigned reg = 0; reg < 10; ++reg)
+                        for (unsigned reg = 0; reg < 18; ++reg)
                             for (bool paging : {false, true})
                                 for (unsigned edge : {0u, 1u, 2u, 3u})
                                     // Innermost: change SS.B without changing code or CS.
@@ -109,6 +109,9 @@ int main() {
                                         } else if (reg == 9) {
                                             code.push_back(0x6a);
                                             code.push_back(edge & 1 ? 0x80 : 0x7f);
+                                        } else if (reg >= 10) {
+                                            code.push_back(0xff);
+                                            code.push_back(0xf0 | (reg - 10));
                                         } else
                                             code.push_back((store ? 0x50 : 0x58) | reg);
                                         code.push_back(0x70 | (edge * 4 + reg % 4));

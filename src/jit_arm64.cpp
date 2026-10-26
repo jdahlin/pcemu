@@ -52,7 +52,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     unsigned usedRegisters = 0;
     for (auto i : ir) {
         if (i.indirectCall && !i.memoryCall) usedRegisters |= 1u << i.src;
-        if (i.memoryCall) {
+        if (i.memoryCall || i.memoryPush) {
             if (i.callPointer.base >= 0) usedRegisters |= 1u << i.callPointer.base;
             if (i.callPointer.index >= 0) usedRegisters |= 1u << i.callPointer.index;
         }
@@ -263,10 +263,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     };
     auto neededFlags = jit_detail::analyzeFlagLiveness(ir);
     block.memory = std::make_shared<std::vector<NativeMemoryMove>>();
-    block.memory->reserve(ir.size() + unsigned(ir.back().memoryCall));
+    block.memory->reserve(ir.size() + std::count_if(ir.begin(), ir.end(), [](const auto &i) {
+        return i.memoryCall || i.memoryPush;
+    }));
     for (auto i : ir)
         if (i.kind == Kind::Memory) {
-            if (i.memoryCall) block.memory->push_back(i.callPointer);
+            if (i.memoryCall || i.memoryPush) block.memory->push_back(i.callPointer);
             block.memory->push_back(i.memory);
         }
     size_t memoryIndex = 0;
@@ -594,9 +596,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if (i.kind == Kind::Memory) {
             std::vector<size_t> invalidCalls;
-            if (i.nearCall) {
-                if (i.memoryCall) {
-                    // Read the target with the old SP/ESP and guarded RAM-only
+            if (i.nearCall || i.memoryPush) {
+                if (i.memoryCall || i.memoryPush) {
+                    // Read the source with the old SP/ESP and guarded RAM-only
                     // semantics. A later stack failure may replay this plain RAM
                     // read; no device callback or guest write has occurred.
                     const auto &op = i.callPointer;
@@ -620,9 +622,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     extract(9, 20 + i.src, i.w, 0);
                     store(9, 31, 108);
                 } else imm(9, i.target);
-                load(10, 19, offsetof(CPU, s) + CS * sizeof(Segment) + offsetof(Segment, limit));
-                emit(0x6b00001fu | (10 << 16) | (9 << 5));
-                invalidCalls.push_back(code.size()); emit(0x54000008u); // b.hi replay before stack write
+                if (i.nearCall) {
+                    load(10, 19, offsetof(CPU, s) + CS * sizeof(Segment) + offsetof(Segment, limit));
+                    emit(0x6b00001fu | (10 << 16) | (9 << 5));
+                    invalidCalls.push_back(code.size()); emit(0x54000008u); // b.hi replay before stack write
+                }
             }
             if (i.memory.delta) {
                 // INC/DEC preserve CF. Publish the preceding flags before any
@@ -821,7 +825,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                          (11 << 5) | 13);
                 } else if (i.memory.store) {
                     int source = 20 + i.dst;
-                    if (i.immediate) {
+                    if (i.memoryPush) {
+                        load(10, 31, 108);
+                        source = 10;
+                    } else if (i.immediate) {
                         imm(10, i.imm);
                         source = 10;
                     } else if (i.dstShift) {
@@ -846,7 +853,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
             emit(0xaa1303e0u);
             pointer(1, reinterpret_cast<uintptr_t>(metadata));
-            if (i.immediate)
+            if (i.memoryPush)
+                load(3, 31, 108);
+            else if (i.immediate)
                 imm(3, i.imm);
             else if (i.dstShift)
                 extract(3, 20 + i.dst, i.w, i.dstShift);

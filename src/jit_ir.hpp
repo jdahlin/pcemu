@@ -15,7 +15,7 @@ struct Instruction {
     bool immediate;
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
-    bool indirectJump = false, indirectCall = false, memoryCall = false;
+    bool indirectJump = false, indirectCall = false, memoryCall = false, memoryPush = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;
     bool negate = false; // Register NEG uses the ordinary 0 - operand flag path.
