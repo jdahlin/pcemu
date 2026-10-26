@@ -198,3 +198,4 @@ while retaining this repository's formatting.
 | PL011 UART | ARM DDI 0183G, r1p5 with revision history | Revision-1 identity, immediate transmit transcript, host receive queue, approximate interrupts and stored-only baud/FIFO configuration. |
 | PSCI fallback | ARM DEN 0022C, PSCI 0.2 behavior | Firmware function IDs and errors, argument widths, one online boot CPU, immediate standby and machine-owned shutdown/reset. |
 | 8259A and cascaded PC/AT pair | Intel 231468-003, December 1988 | IRR/IMR/ISR, priority rotation, ICW/OCW commands, fixed cascade wiring, polling and snapshot mirrors; unsupported electrical/processor modes are explicit. |
+| 8254 PIT | Intel 231164-005, September 1993 | Named count modes and control fields, count/status latches, instruction-derived ticks, gate handling, coalesced periods and documented CLK/reload timing gaps. |

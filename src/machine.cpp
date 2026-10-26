@@ -105,7 +105,7 @@ void Machine::poll() {
         restart();
         return;
     }
-    if (pit.tick(cpu.instructions / 4))
+    if (pit.timer_interrupt_due(cpu.instructions / 4))
         pic[0].raise_interrupt(0);
     if (ps2.pollDue(cpu.instructions))
         pollPs2();

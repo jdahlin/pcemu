@@ -281,26 +281,26 @@ int main() {
                                   "requests");
                         }
         PIT8254 pit;
-        pit.write(3, 0x34, 0);
-        pit.write(0, 0, 0);
-        pit.write(0, 0, 0);
-        pit.write(3, 0, 7);
-        auto low = pit.read(0, 100);
-        auto high = pit.read(0, 200);
+        pit.write_register(3, 0x34, 0);
+        pit.write_register(0, 0, 0);
+        pit.write_register(0, 0, 0);
+        pit.write_register(3, 0, 7);
+        auto low = pit.read_counter(0, 100);
+        auto high = pit.read_counter(0, 200);
         check((low | (high << 8)) == 65529, "PIT latch holds both bytes across time changes");
-        pit.write(3, 0, 300);
-        low = pit.read(0, 301);
-        high = pit.read(0, 302);
+        pit.write_register(3, 0, 300);
+        low = pit.read_counter(0, 301);
+        high = pit.read_counter(0, 302);
         check((low | (high << 8)) == 65236, "subsequent PIT latch captures fresh count");
-        pit.write(3, 0xe2, 400);
-        check((pit.read(0, 400) & 0x3f) == 0x34, "8254 read-back latches channel status");
-        check(!pit.tick(65535) && pit.tick(65536) && !pit.tick(65537),
+        pit.write_register(3, 0xe2, 400);
+        check((pit.read_counter(0, 400) & 0x3f) == 0x34, "8254 read-back latches channel status");
+        check(!pit.timer_interrupt_due(65535) && pit.timer_interrupt_due(65536) && !pit.timer_interrupt_due(65537),
               "PIT period creates a single rising edge");
-        pit.write(3, 0xb6, 0);
-        pit.write(2, 10, 0);
-        pit.write(2, 0, 0);
-        pit.counters[2].setGate(true, 0);
-        check(pit.counters[2].output(4) && !pit.counters[2].output(5) && pit.counters[2].output(10),
+        pit.write_register(3, 0xb6, 0);
+        pit.write_register(2, 10, 0);
+        pit.write_register(2, 0, 0);
+        pit.counters[2].set_gate(true, 0);
+        check(pit.counters[2].output_high(4) && !pit.counters[2].output_high(5) && pit.counters[2].output_high(10),
               "PIT square-wave output and speaker gate");
         for (unsigned mode = 0; mode < 6; ++mode)
             for (unsigned reload : {1u, 2u, 3u, 17u, 65536u})
@@ -309,7 +309,7 @@ int main() {
                         PIT8254 scheduled;
                         auto &counter = scheduled.counters[0];
                         counter.mode = mode;
-                        counter.load(uint16_t(reload), 0);
+                        counter.load_count(uint16_t(reload), 0);
                         counter.gate = gate;
                         counter.nullCount = nullCount;
                         uint64_t previous = 0;
@@ -324,11 +324,11 @@ int main() {
                                 else
                                     previous = edges;
                             }
-                            check(scheduled.tick(now) == raised && counter.lastEdge == previous,
+                            check(scheduled.timer_interrupt_due(now) == raised && counter.lastEdge == previous,
                                   "PIT deadline guard preserves edge counts, skipped periods and clock rewinds");
                         }
-                        counter.load(3, 200000);
-                        check(!scheduled.tick(200002) && scheduled.tick(200003) == gate,
+                        counter.load_count(3, 200000);
+                        check(!scheduled.timer_interrupt_due(200002) && scheduled.timer_interrupt_due(200003) == gate,
                               "PIT reload immediately changes the next edge deadline");
                     }
         CPU c;
