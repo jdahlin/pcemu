@@ -46,8 +46,8 @@ ArmHyperVReferenceClock::Sample ArmHyperV::referenceSample() const {
 }
 void ArmHyperV::rebaseReferenceClock(bool before) {
     if (!counterProvider) return;
-    if (before) referenceClock.invalidate();
-    else if (referenceClock.registration()&1) referenceClock.update(referenceSample());
+    if (before) referenceClock.invalidate_reference_page();
+    else if (referenceClock.registration()&1) referenceClock.update_reference_mapping(referenceSample());
 }
 uint64_t ArmHyperV::timeNow() const {
     auto now = clock();
@@ -296,7 +296,7 @@ uint16_t ArmHyperV::writeRegister(uint32_t name, unsigned vp, std::array<uint64_
         if (!counterProvider) return invalidParameter;
         if (!guestId) return accessDenied;
         if (value[1]) return invalidParameter;
-        return referenceClock.configure(value[0], (value[0]&1) ? referenceSample() : ArmHyperVReferenceClock::Sample{}) ? 0 : invalidParameter;
+        return referenceClock.configure_reference_page(value[0], (value[0]&1) ? referenceSample() : ArmHyperVReferenceClock::Sample{}) ? 0 : invalidParameter;
     }
     if (name >= 0xb0000 && name <= 0xb0007) {
         if (!guestId) return accessDenied;
