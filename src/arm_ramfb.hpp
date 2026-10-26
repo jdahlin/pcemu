@@ -27,6 +27,8 @@ class ArmRamFb {
     void save_ppm(const std::string &path) const;
 
   private:
+    friend class ArmVirtMachine;
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     ArmFwCfg &fwCfg;
     std::span<const uint8_t> ram;
     uint64_t ramBase;

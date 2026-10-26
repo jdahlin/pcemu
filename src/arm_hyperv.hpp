@@ -134,6 +134,8 @@ class ArmHyperV {
     std::string take_crash_report();
 
   private:
+    friend class ArmVirtMachine;
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Counts {
         uint64_t reads = 0, writes = 0, failures = 0;
         // One last write per bounded SynIC/timer register counter, no payloads.

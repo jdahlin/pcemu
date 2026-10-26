@@ -34,6 +34,7 @@ class ArmVirtMachine {
     struct Config {
         Disk::OpenProgress initializationProgress;
         HvfMachine::InitializationStage initializationStage;
+        bool restoringSnapshot = false;
         unsigned cpus = 1;
         size_t memoryBytes = ramBytes;
         std::string firmware, dtb, variableTemplate, variables;
@@ -67,6 +68,11 @@ class ArmVirtMachine {
     void input(const std::string &text) { uart.receive_host_input(text); vm.setSPI(33, uart.uartintr_asserted()); }
     const std::string &output() const { return uart.transmitted_output(); }
     void saveVariables();
+    // Host checkpoints require stopped VPs and retain private disk clones.
+    void saveSnapshot(const std::string &directory);
+    static Config snapshotConfig(const std::string &directory, const std::string &runDirectory);
+    void restoreSnapshot(const std::string &directory);
+    void pauseClock(bool paused);
     std::string diskPath() const { return disk ? disk->path : std::string{}; }
     uint64_t diskRequests() const { return nvme ? nvme->requests : block ? block->requests : 0; }
     uint64_t networkTransmitted() const { return net ? net->transmitted : 0; }
@@ -97,6 +103,9 @@ class ArmVirtMachine {
         return hyperv.request_shutdown(action);
     }
   private:
+    friend struct ArmSnapshotAccess;
+    uint64_t pausedReference = 0;
+    bool clockPaused = false;
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);
     Config config;
     HvfMachine vm;

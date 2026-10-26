@@ -38,6 +38,7 @@ class VirtioGpu : public VirtioDevice {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Rect {
         uint32_t x, y, width, height;
     };

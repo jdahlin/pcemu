@@ -36,6 +36,7 @@ class ArmHyperVTimeSync {
     std::string report() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     enum class State { Closed, SendVersion, WaitVersion, Ready, WaitSample, Failed };
     State state = State::Closed;
     uint16_t framework = 0;

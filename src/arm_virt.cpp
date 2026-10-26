@@ -82,7 +82,7 @@ std::vector<uint8_t> ArmVirtMachine::load(const std::string &path, size_t maximu
     return data;
 }
 ArmVirtMachine::ArmVirtMachine(const Config &c)
-    : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus, c.initializationStage), nor(load(c.variableTemplate, 0xc0000)),
+    : config(c), vm(c.memoryBytes, c.hypervSynic ? HvfMachine::GicProfile::HyperVNonsecure : HvfMachine::GicProfile::Native, {}, c.cpus, c.initializationStage, c.restoringSnapshot), nor(load(c.variableTemplate, 0xc0000)),
       fwCfg(vm.ram(), HvfMachine::ramBase, c.cpus), ramfb(fwCfg, vm.ram(), HvfMachine::ramBase), osLocks(c.cpus),
       hyperv(c.hyperv, vm.ram(), HvfMachine::ramBase, c.cpus) {
     auto stage = [&](const char *name) { if (c.initializationStage) c.initializationStage(name); };

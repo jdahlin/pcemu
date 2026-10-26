@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-26",
+  "profile": {
+    "memoryMiB": 4096,
+    "vcpus": 2,
+    "disk": "media/windows11-arm64/system-tools-live.qcow2",
+    "storage": "private temporary compressed child of existing stopped image",
+    "display": "headless supplied Frontend; no SDL/native guest window"
+  },
+  "checks": {
+    "cpuAndDeviceDiagnosticsRestoredExactly": true,
+    "framebufferRestoredExactly": true,
+    "imageDimensions": [
+      1280,
+      720
+    ],
+    "resumedHeartbeatResponsive": true,
+    "heartbeatResponsesBefore": 1,
+    "heartbeatResponsesAfter": 8,
+    "vmbusChannelFaultsAfter": 0,
+    "usbEnterOpensPasswordPrompt": "visually verified in input.png",
+    "sharedSessionRebootReturnsLockScreen": "visually verified in rebooted.png",
+    "temporarySnapshotsAndDisksRemoved": true
+  },
+  "framebufferPpmBytesIdentical": true,
+  "imageSha256": {
+    "before": "645d8b6948e9da8fb626347daf51a4f5211b7fae7d7671d4efb03d7b95fd8f69",
+    "restored": "645d8b6948e9da8fb626347daf51a4f5211b7fae7d7671d4efb03d7b95fd8f69",
+    "resumed": "659a370a77ffbc356660f7f6ddb2a40a96f711f937687fa14cb4765ae28f7d00",
+    "input": "46176491d3d352d721168c85cf05db9e3e658d6365c00100f717eb0a582f3563",
+    "rebooted": "6f20ac10fb990e1ea059f89b2538d36cd9b25b847cfdbd471044e9ea04ab179e"
+  },
+  "evidenceDirectory": "build/arm-snapshot-test-90013",
+  "scope": "Full Windows device/RAM/CPU/disk round trip plus headless presentation/input/reboot; SwiftUI interaction was not automated because Computer Use permission is unavailable. Archive/schema checks and native SMP/GIC/clock checks are separate synthetic tests."
+}

@@ -68,6 +68,7 @@ class ArmGpadl {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Range {
         uint32_t offset, bytes;
         std::vector<uint64_t> pages;

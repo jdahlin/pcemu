@@ -1,5 +1,6 @@
 #include "hvf_machine.hpp"
 #include "hvf_secondary.hpp"
+#include "state_archive.hpp"
 #include "arm_gic_ns.hpp"
 #if !defined(__APPLE__) || !defined(__aarch64__)
 #error "The HVF ARM64 backend requires an Apple Silicon macOS host"
@@ -34,6 +35,8 @@ void check(hv_return_t result, const char *operation) {
 }
 }
 struct HvfMachine::Impl {
+    bool restoring = false, clockPaused = false;
+    uint64_t frozenCounter = 0;
     bool hypervGicEnabled=false;
     std::array<uint32_t,13> gicIdentifiers{};
     std::thread::id owner = std::this_thread::get_id();
@@ -186,7 +189,7 @@ struct HvfMachine::Impl {
         sleepBaseline = sleepTicks();
         if (enableGic) {
             check(hv_vcpu_set_sys_reg(vcpu, HV_SYS_REG_MPIDR_EL1, 0x80000000), "set MPIDR_EL1");
-            if(hypervGic) {
+            if(hypervGic && !restoring) {
                 uint64_t typer=0;
                 check(hv_gic_get_distributor_reg(HV_GIC_DISTRIBUTOR_REG_GICD_TYPER,&typer),"Read native GIC interrupt range");
                 unsigned count=std::min(1020u,unsigned((typer&31)+1)*32);
@@ -206,7 +209,7 @@ struct HvfMachine::Impl {
         uint64_t timerOffset = 0;
         check(hv_vcpu_get_vtimer_offset(vcpu, &timerOffset), "get initial virtual timer offset");
         for (unsigned i = 1; i < cpuCount; ++i)
-            secondary.push_back(std::make_unique<HvfSecondary>(i, timerOffset, ramBase + size, hypervGic));
+            secondary.push_back(std::make_unique<HvfSecondary>(i, timerOffset, ramBase + size, hypervGic && !restoring));
         progress("starting hypervisor watchdog");
         watchdog = std::thread([this] {
             std::unique_lock lock(mutex);
@@ -275,10 +278,11 @@ bool HvfMachine::supported() {
     size_t size = sizeof(value);
     return sysctlbyname("kern.hv_support", &value, &size, nullptr, 0) == 0 && value;
 }
-HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage)
+HvfMachine::HvfMachine(size_t ramBytes, bool enableGic, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage, bool restoring)
     : HvfMachine(ramBytes,enableGic ? GicProfile::Native : GicProfile::Disabled,
-                 std::move(sleepTicks),cpuCount,std::move(stage)) {}
-HvfMachine::HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage) : impl(std::make_unique<Impl>()) {
+                 std::move(sleepTicks),cpuCount,std::move(stage),restoring) {}
+HvfMachine::HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks, unsigned cpuCount, InitializationStage stage, bool restoring) : impl(std::make_unique<Impl>()) {
+    impl->restoring = restoring;
     impl->sleepTicks = std::move(sleepTicks);
     impl->initialize(ramBytes, profile!=GicProfile::Disabled, cpuCount, stage, profile==GicProfile::HyperVNonsecure);
 }
@@ -436,7 +440,7 @@ HvfMachine::VirtualCounterSample HvfMachine::virtualCounterSample() const {
     impl->requireOwner();
     uint64_t offset=0;
     check(hv_vcpu_get_vtimer_offset(impl->vcpu, &offset), "sample virtual timer offset");
-    return {mach_absolute_time()-offset, impl->clockPeriod, impl->sleepApplied};
+    return {impl->clockPaused ? impl->frozenCounter : mach_absolute_time()-offset, impl->clockPeriod, impl->sleepApplied};
 }
 void HvfMachine::requestExit() noexcept {
     std::lock_guard lock(impl->mutex);
@@ -719,3 +723,133 @@ uint64_t HvfMachine::exits() const {
     return result;
 }
 } // namespace pc
+
+namespace pc {
+namespace {
+#include "hvf_snapshot_registers.inc"
+struct SnapshotCpu {
+    bool online = false, timerMasked = false;
+    std::array<uint64_t, HV_REG_CPSR + 1> registers{};
+    std::array<uint8_t, 32 * 16> simd{};
+    std::vector<std::pair<uint16_t,uint64_t>> system, icc;
+};
+// Save/set registers on their creating VP thread. Apple requires the complete
+// CPU interface alongside hv_gic_state_create/hv_gic_set_state.
+// https://developer.apple.com/documentation/hypervisor/hv_gic_set_state(_:_:)
+void snapshotCpu(hv_vcpu_t id, SnapshotCpu &cpu, bool loading, bool gic) {
+    if (!loading) if (__builtin_available(macOS 15.2, *)) {
+        hv_vcpu_sme_state_t sme{};
+        if (hv_vcpu_get_sme_state(id,&sme)==HV_SUCCESS &&
+            (sme.streaming_sve_mode_enabled || sme.za_storage_enabled))
+            throw std::runtime_error("Checkpoint of active SME/ZA vector state is not supported");
+    }
+    for (unsigned r = 0; r <= HV_REG_CPSR; ++r) {
+        if (loading) check(hv_vcpu_set_reg(id, static_cast<hv_reg_t>(r), cpu.registers[r]), "restore VP register");
+        else check(hv_vcpu_get_reg(id, static_cast<hv_reg_t>(r), &cpu.registers[r]), "save VP register");
+    }
+    for (unsigned r = 0; r < 32; ++r) {
+        hv_simd_fp_uchar16_t value{};
+        if (loading) { std::memcpy(&value,cpu.simd.data()+r*16,16); check(hv_vcpu_set_simd_fp_reg(id,static_cast<hv_simd_fp_reg_t>(r),value),"restore SIMD"); }
+        else { check(hv_vcpu_get_simd_fp_reg(id,static_cast<hv_simd_fp_reg_t>(r),&value),"save SIMD"); std::memcpy(cpu.simd.data()+r*16,&value,16); }
+    }
+    if (!loading) {
+        for (auto reg : SnapshotSystemRegisters) {
+            uint64_t value = 0;
+            if (hv_vcpu_get_sys_reg(id,static_cast<hv_sys_reg_t>(reg),&value)==HV_SUCCESS) cpu.system.emplace_back(reg,value);
+        }
+        if (gic) for (auto reg : SnapshotIccRegisters) {
+            uint64_t value = 0;
+            if (hv_gic_get_icc_reg(id,static_cast<hv_gic_icc_reg_t>(reg),&value)==HV_SUCCESS) cpu.icc.emplace_back(reg,value);
+        }
+        check(hv_vcpu_get_vtimer_mask(id,&cpu.timerMasked),"save virtual timer mask");
+    } else {
+        for (auto [reg,value] : cpu.system) {
+            if (std::find(std::begin(SnapshotSystemRegisters),std::end(SnapshotSystemRegisters),reg)==std::end(SnapshotSystemRegisters))
+                throw std::runtime_error("Invalid snapshot system register");
+            auto status = hv_vcpu_set_sys_reg(id,static_cast<hv_sys_reg_t>(reg),value);
+            if (status != HV_SUCCESS) {
+                uint64_t current = 0;
+                check(hv_vcpu_get_sys_reg(id,static_cast<hv_sys_reg_t>(reg),&current),"check immutable CPU feature");
+                if (current != value) throw std::runtime_error("Snapshot CPU feature mismatch");
+            }
+        }
+        for (auto [reg,value] : cpu.icc) {
+            if (!gic || std::find(std::begin(SnapshotIccRegisters),std::end(SnapshotIccRegisters),reg)==std::end(SnapshotIccRegisters))
+                throw std::runtime_error("Invalid snapshot CPU interrupt register");
+            check(hv_gic_set_icc_reg(id,static_cast<hv_gic_icc_reg_t>(reg),value),"restore GIC CPU interface");
+        }
+        check(hv_vcpu_set_vtimer_mask(id,cpu.timerMasked),"restore virtual timer mask");
+    }
+}
+}
+// Host pause policy freezes CNTVCT, preserving the remaining time to CVAL on all
+// VPs. The Hyper-V reference page is invalidated/rebased around offset changes.
+// https://developer.apple.com/documentation/hypervisor/hv_vcpu_set_vtimer_offset(_:_:)
+void HvfMachine::pauseClock(bool paused) {
+    impl->requireOwner();
+    if (paused == impl->clockPaused) return;
+    if (paused) {
+        impl->frozenCounter = virtualCounterSample().value;
+        impl->clockPaused = true;
+    } else {
+        if (impl->counterRebase) impl->counterRebase(true);
+        const auto offset = mach_absolute_time() - impl->frozenCounter;
+        check(hv_vcpu_set_vtimer_offset(impl->vcpu,offset),"resume paused virtual counter");
+        for (auto &cpu : impl->secondary) cpu->setOffset(offset);
+        impl->clockPaused = false;
+        if (impl->counterRebase) impl->counterRebase(false);
+    }
+}
+// Snapshot only at the platform boundary, after every VP has left hv_vcpu_run.
+// https://developer.apple.com/documentation/hypervisor/hv_gic_state_create()
+std::vector<uint8_t> HvfMachine::saveState() {
+    impl->requireOwner();
+    if (!impl->active.empty() || impl->armed) throw std::runtime_error("Snapshot requires stopped VPs");
+    StateArchive archive;
+    auto count = cpuCount();
+    uint64_t counter = impl->clockPaused ? impl->frozenCounter : virtualCounterSample().value;
+    archive(count,counter,impl->selected,impl->pending,impl->gicIdentifiers);
+    std::vector<uint8_t> gic;
+    if (impl->gicEnabled) {
+        auto state = hv_gic_state_create();
+        if (!state) throw std::runtime_error("Cannot capture native GIC state");
+        size_t bytes = 0;
+        auto status = hv_gic_state_get_size(state,&bytes);
+        if (status==HV_SUCCESS) { gic.resize(bytes); status=hv_gic_state_get_data(state,gic.data()); }
+        os_release(state); check(status,"save native GIC");
+    }
+    archive(gic);
+    for (unsigned i = 0; i < count; ++i) {
+        SnapshotCpu cpu; cpu.online = cpuOnline(i);
+        auto read = [&](hv_vcpu_t id) { snapshotCpu(id,cpu,false,impl->gicEnabled); };
+        if (i) impl->secondary[i-1]->snapshotContext(read); else read(impl->vcpu);
+        archive(cpu.online,cpu.timerMasked,cpu.registers,cpu.simd,cpu.system,cpu.icc);
+    }
+    return archive.take();
+}
+// Restore the GIC before any guest instruction runs, then each VP on its owner.
+// https://developer.apple.com/documentation/hypervisor/hv_gic_set_state(_:_:)
+void HvfMachine::restoreState(std::span<const uint8_t> bytes) {
+    impl->requireOwner();
+    if (!impl->restoring || impl->exitCount) throw std::runtime_error("Restore requires a fresh restoring VM");
+    StateArchive archive(bytes);
+    unsigned count = 0; uint64_t counter = 0;
+    archive(count,counter,impl->selected,impl->pending,impl->gicIdentifiers);
+    if (count != cpuCount() || impl->selected >= count || impl->pending.size() > count)
+        throw std::runtime_error("Snapshot CPU topology mismatch");
+    for (const auto &exit : impl->pending) if (exit.cpu >= count) throw std::runtime_error("Invalid pending VP exit");
+    std::vector<uint8_t> gic; archive(gic);
+    if (bool(gic.size()) != impl->gicEnabled) throw std::runtime_error("Snapshot GIC profile mismatch");
+    if (!gic.empty()) check(hv_gic_set_state(gic.data(),gic.size()),"restore native GIC (host OS compatibility)");
+    const auto offset = mach_absolute_time() - counter;
+    for (unsigned i = 0; i < count; ++i) {
+        SnapshotCpu cpu;
+        archive(cpu.online,cpu.timerMasked,cpu.registers,cpu.simd,cpu.system,cpu.icc);
+        auto restore = [&](hv_vcpu_t id) { check(hv_vcpu_set_vtimer_offset(id,offset),"restore counter offset"); snapshotCpu(id,cpu,true,impl->gicEnabled); };
+        if (i) { impl->secondary[i-1]->snapshotContext(restore); impl->secondary[i-1]->online=cpu.online; }
+        else { restore(impl->vcpu); impl->primaryOnline=cpu.online; }
+    }
+    archive.finish(); impl->frozenCounter=counter; impl->clockPaused=true;
+    impl->restoring=false;
+}
+}

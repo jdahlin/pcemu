@@ -36,6 +36,7 @@ class VirtioSerial : public VirtioDevice {
     uint64_t received = 0, transmitted = 0;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // IMPLEMENTATION NOTE: Bound each incoming/outgoing port backlog to 1 MiB.
     static constexpr size_t PortBufferBytes = 1024 * 1024;
     struct Port {

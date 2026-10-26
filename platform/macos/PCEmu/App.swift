@@ -5,7 +5,7 @@ import AppKit
     weak var library: Library?
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let library, library.active != nil, !library.activeIsARM else { return .terminateNow }
+        guard let library, library.active != nil else { return .terminateNow }
         library.termination = { NSApp.reply(toApplicationShouldTerminate: true) }
         library.suspend()
         return .terminateLater
@@ -27,11 +27,11 @@ import AppKit
             }
             CommandMenu("Virtual Machine") {
                 Button(library.paused ? "Resume" : "Pause") { library.togglePause() }
-                    .keyboardShortcut("p", modifiers: [.command, .shift]).disabled(library.active == nil || library.activeIsARM || library.suspending)
+                    .keyboardShortcut("p", modifiers: [.command, .shift]).disabled(library.active == nil || library.suspending)
                 Button("Suspend and Save") { library.suspend() }
-                    .keyboardShortcut("s", modifiers: [.command, .shift]).disabled(library.active == nil || library.activeIsARM || library.suspending)
+                    .keyboardShortcut("s", modifiers: [.command, .shift]).disabled(library.active == nil || library.suspending)
                 Button("Reboot…") { library.wantsReboot = true }
-                    .disabled(library.active == nil || library.activeIsARM || library.suspending)
+                    .disabled(library.active == nil || library.suspending)
                 Divider()
                 Button("Release Keyboard and Mouse") { library.releaseInput() }
                     .keyboardShortcut(.escape, modifiers: [.command])
@@ -86,14 +86,7 @@ struct LibraryView: View {
                         }
                     }.padding()
                     Divider()
-                    if library.active == vm.id && vm.isARM {
-                        VStack(spacing: 18) {
-                            Image(systemName: "macwindow.on.rectangle").font(.system(size: 64)).foregroundStyle(.secondary)
-                            Text("Windows 11 is running in its ARM64 window").font(.title2)
-                            Text("Use that window for input and Windows power controls. ARM64 snapshots and native SwiftUI display are not yet supported.")
-                                .foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 450)
-                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if library.active == vm.id {
+                    if library.active == vm.id {
                         GuestDisplay(library: library)
                             .overlay(alignment: .top) {
                                 if library.paused { Text("Paused").padding(8).background(.regularMaterial, in: Capsule()).padding() }
@@ -118,7 +111,7 @@ struct LibraryView: View {
                     }
                 }
                 .toolbar {
-                    if library.active == vm.id && !vm.isARM {
+                    if library.active == vm.id {
                         Button { library.togglePause() } label: { Label(library.paused ? "Resume" : "Pause", systemImage: library.paused ? "play.fill" : "pause.fill") }
                         Button { library.suspend() } label: { Label("Suspend", systemImage: "moon.zzz") }
                         Button { library.wantsReboot = true } label: { Label("Reboot", systemImage: "arrow.clockwise") }
@@ -156,7 +149,7 @@ struct LibraryView: View {
         } message: { Text("Unsaved guest work will be lost.") }
     }
     @ViewBuilder func vmActions(_ vm: VirtualMachine) -> some View {
-        if library.active == vm.id && !vm.isARM {
+        if library.active == vm.id {
             Button(library.paused ? "Resume" : "Pause") { library.togglePause() }
             Button("Suspend and Save") { library.suspend() }
             Button("Reboot…") { library.wantsReboot = true }
@@ -185,6 +178,7 @@ struct VMSettings: View {
                     Text("Legacy PC").tag("pc-legacy")
                     Text("Windows 3.11").tag("win311")
                     Text("Windows 95 / Office 97").tag("win95")
+                    if vm.isARM { Text("Windows 11 ARM64").tag("arm64-uefi") }
                 }.disabled(vm.isARM)
                 Stepper("Memory: \(vm.memory) MB", value: $vm.memory, in: vm.isARM ? 256...16384 : 2...64, step: vm.isARM ? 256 : 1)
                 if vm.isARM {
@@ -192,9 +186,9 @@ struct VMSettings: View {
                 } else { LabeledContent("Virtual CPUs", value: "1 (x86 engine limit)") }
                 Text("Memory applies on cold boot. A restored snapshot includes its original RAM configuration.")
                     .font(.caption).foregroundStyle(.secondary)
-                HStack { TextField("Boot disk", text: $vm.disk); Button("Choose…") { choose(directory: false) { vm.disk = $0 } } }.disabled(vm.isARM)
-                HStack { TextField("Snapshot", text: $vm.snapshot); Button("Choose…") { choose(directory: true) { vm.snapshot = $0 } } }.disabled(vm.isARM)
-                Toggle("Restore saved snapshot by default", isOn: Binding(get: { !vm.isARM && vm.restoreOnOpen }, set: { vm.restoreOnOpen = $0 })).disabled(vm.isARM)
+                HStack { TextField("Boot disk", text: $vm.disk); Button("Choose…") { choose(directory: false) { vm.disk = $0 } } }
+                HStack { TextField("Snapshot", text: $vm.snapshot); Button("Choose…") { choose(directory: true) { vm.snapshot = $0 } } }
+                Toggle("Restore saved snapshot by default", isOn: $vm.restoreOnOpen)
                 Text("Cold boot writes to the selected disk. Snapshot restore creates a private writable disk clone. Suspend saves a new checkpoint; previous checkpoints remain available in Finder.")
                     .font(.caption).foregroundStyle(.secondary)
             }.formStyle(.grouped)

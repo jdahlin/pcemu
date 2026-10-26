@@ -15,8 +15,6 @@ import SwiftUI
     let root: URL
     let directory: URL
     private var pendingSnapshot: URL?
-    private var externalProcess: Process?
-    var activeIsARM: Bool { machines.first { $0.id == active }?.isARM == true }
     private var timer: Timer?
     private var pixels = [UInt32](repeating: 0, count: 2048 * 2048)
     var termination: (() -> Void)?
@@ -48,7 +46,6 @@ import SwiftUI
     }
     func start(_ vm: VirtualMachine, cold: Bool = false) {
         guard active == nil else { return }
-        if vm.isARM { startARM(vm); return }
         do {
             if !cold && vm.restoreOnOpen && !vm.snapshot.isEmpty {
                 guard FileManager.default.fileExists(atPath: vm.snapshot + "/state.bin") else {
@@ -62,41 +59,43 @@ import SwiftUI
             pcemu_native_prepare()
             active = vm.id; selection = vm.id; paused = false; image = nil
             let snapshot = (!cold && vm.restoreOnOpen) ? vm.snapshot : ""
+            let checkout = root
+            let run = directory.appendingPathComponent("Runs/\(UUID().uuidString)")
             let rom = root.appendingPathComponent("roms/vgabios.bin").path
             timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshFrame() }
             }
             DispatchQueue.global(qos: .userInitiated).async {
-                let result = pcemu_native_run(vm.machine, vm.disk, snapshot, rom, UInt32(vm.memory), vm.bootText ?? "", vm.machine == "win95" ? 1 : 0)
-                Task { @MainActor in self.finished(result) }
+                do {
+                    let result: Int32
+                    if vm.isARM {
+                        if snapshot.isEmpty { try Self.prepareARM(root: checkout, memory: vm.memory, cpus: vm.cpuCount) }
+                        result = pcemu_native_run_arm(checkout.path, vm.disk, snapshot, UInt32(vm.memory), UInt32(vm.cpuCount), run.path)
+                    } else {
+                        result = pcemu_native_run(vm.machine, vm.disk, snapshot, rom, UInt32(vm.memory), vm.bootText ?? "", vm.machine == "win95" ? 1 : 0)
+                    }
+                    Task { @MainActor in self.finished(result) }
+                } catch {
+                    Task { @MainActor in self.error = error.localizedDescription; self.finished(1) }
+                }
             }
         } catch { self.error = error.localizedDescription }
     }
-    private func startARM(_ vm: VirtualMachine) {
-        if let app = NSRunningApplication.runningApplications(withBundleIdentifier: "local.pcemu11").first {
-            app.activate(options: [])
-            return
-        }
+    // Firmware tables must describe exactly the selected memory and VP count.
+    nonisolated private static func prepareARM(root: URL, memory: Int, cpus: Int) throws {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = [root.appendingPathComponent("run11.sh").path]
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["python3", root.appendingPathComponent("tools/build_arm_platform.py").path,
+                             "--ram-mb", String(memory), "--cpus", String(cpus), "--hyperv", "--vmbus", "--msi"]
         process.currentDirectoryURL = root
-        var environment = ProcessInfo.processInfo.environment
-        environment["PCEMU_RAM_MB"] = String(vm.memory)
-        environment["PCEMU_CPUS"] = String(vm.cpuCount)
-        process.environment = environment
-        process.terminationHandler = { child in
-            Task { @MainActor in
-                self.externalProcess = nil
-                self.finished(child.terminationStatus)
-            }
+        try process.run(); process.waitUntilExit()
+        if process.terminationStatus != 0 {
+            throw NSError(domain: "PCEmu", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: "Cannot prepare matching ARM64 firmware tables."])
         }
-        do { try process.run(); externalProcess = process; active = vm.id; selection = vm.id }
-        catch { self.error = error.localizedDescription }
     }
     private func finished(_ status: Int32) {
         var message = [CChar](repeating: 0, count: 4096)
-        if !activeIsARM && pcemu_native_error(&message, Int32(message.count)) != 0 { error = String(cString: message) }
+        if pcemu_native_error(&message, Int32(message.count)) != 0 { error = String(cString: message) }
         timer?.invalidate(); timer = nil
         if let snapshot = pendingSnapshot {
             if status == 0 && FileManager.default.fileExists(atPath: snapshot.appendingPathComponent("state.bin").path),
@@ -110,11 +109,11 @@ import SwiftUI
         termination = nil
     }
     func togglePause() {
-        guard active != nil && !activeIsARM && !suspending else { return }
+        guard active != nil && !suspending else { return }
         paused.toggle(); command(paused ? "pause" : "resume")
     }
     func suspend() {
-        guard let id = active, !activeIsARM, !suspending else { return }
+        guard let id = active, !suspending else { return }
         let path = directory.appendingPathComponent("Snapshots/\(id)/\(UUID().uuidString)")
         do { try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true) }
         catch {

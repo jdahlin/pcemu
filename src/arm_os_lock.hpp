@@ -10,6 +10,7 @@ class ArmOsLock {
     bool access_system_register(uint64_t syndrome, uint64_t &value);
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     bool locked = true, doubleLocked = false;
 };
 } // namespace pc

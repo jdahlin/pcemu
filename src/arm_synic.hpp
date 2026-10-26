@@ -67,6 +67,7 @@ class ArmSynic {
                           std::span<const uint8_t> payload);
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     using Message = std::array<uint8_t, MessageBytes>;
     struct Vp {
         uint64_t control = 0, events = 0, messages = 0;

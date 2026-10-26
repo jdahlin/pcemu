@@ -47,6 +47,7 @@ class UsbXhci {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // IMPLEMENTATION NOTE: Fixed topology/capability limits, advertised in HCSPARAMS1.
     // xHCI 5.3.3 Structural Parameters 1.
     // https://cdrdv2-public.intel.com/625472/625472_xHCI_Rev1_2b.pdf#page=348

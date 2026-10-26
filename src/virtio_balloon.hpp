@@ -41,6 +41,7 @@ class VirtioBalloon : public VirtioDevice {
     uint64_t discardBytes = 0, discardFailures = 0, statsReports = 0;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     uint64_t ramBase;
     uint32_t maximumPages, target = 0, actual = 0, inflatedCount = 0;
     size_t hostPageSize, pagesPerHostPage;

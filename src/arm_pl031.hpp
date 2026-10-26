@@ -19,6 +19,7 @@ class ArmPl031 {
     bool rtcintr_asserted();
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     std::function<int64_t()> host_seconds;
     int64_t clock_adjustment = 0, previous_counter = 0;
     uint32_t match_register = 0, load_register = 0;

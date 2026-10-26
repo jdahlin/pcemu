@@ -37,6 +37,7 @@ class VirtioPciDevice {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // PCI MSI-X Message Control enable[15] and function mask[14].
     // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=238
     static constexpr uint16_t MsixEnable = 0x8000, MsixFunctionMask = 0x4000;

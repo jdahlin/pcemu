@@ -15,12 +15,21 @@ app = root / 'build/PCEmu Library.app/Contents'
 (app / 'MacOS').mkdir(parents=True, exist_ok=True)
 sources = root / 'platform/macos/PCEmu'
 deployment = platform.mac_ver()[0]
-flags = shlex.split(subprocess.check_output(['pkg-config', '--libs', 'libzstd'], text=True))
+flags = []
+for flag in shlex.split(subprocess.check_output(['pkg-config', '--libs', 'libzstd', 'sdl2'], text=True)):
+    if flag == '-lSDL2main':
+        continue
+    if flag.startswith('-Wl,'):
+        for argument in flag[4:].split(','):
+            flags.extend(['-Xlinker', argument])
+    else:
+        flags.append(flag)
 with tempfile.TemporaryDirectory(prefix='swiftui-link-', dir=root / 'build') as temporary:
     executable = Path(temporary) / 'PCEmu'
     subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                     '-target', f'arm64-apple-macosx{deployment}', '-import-objc-header', str(sources / 'NativeBridge.h'),
-                    *map(str, sorted(sources.glob('*.swift'))), str(root / 'build/libpcemu-native-core.a'), str(root / 'build/libpcemu-session.a'),
+                    *map(str, sorted(sources.glob('*.swift'))), str(root / 'build/libpcemu-native-core.a'), str(root / 'build/libpcemu-session.a'), str(root / 'build/libpcemu-arm-session.a'),
+                    '-framework', 'Hypervisor',
                     '-lc++', '-lz', *flags, '-o', str(executable)], check=True)
     os.replace(executable, app / 'MacOS/PCEmu')
 (app / 'Info.plist').write_bytes(plistlib.dumps({
@@ -30,5 +39,5 @@ with tempfile.TemporaryDirectory(prefix='swiftui-link-', dir=root / 'build') as 
     'LSMinimumSystemVersion': deployment, 'NSHighResolutionCapable': True,
     'PCEmuCheckout': str(root),
 }))
-subprocess.run(['codesign', '--force', '--sign', '-', str(app.parent)], check=True)
+subprocess.run(['codesign', '--force', '--sign', '-', '--entitlements', str(root / 'platform/macos/hypervisor.entitlements'), str(app.parent)], check=True)
 print(app.parent)

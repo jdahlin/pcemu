@@ -106,6 +106,25 @@ class HvfSecondary {
         if (error) std::rethrow_exception(error);
         return true;
     }
+    // Host checkpoint boundary: settle cached architectural writes, run the
+    // action on the VP owner, then synchronize the worker's register cache.
+    void snapshotContext(const std::function<void(hv_vcpu_t)> &action) {
+        std::exception_ptr snapshotFailure;
+        dispatch([&] {
+            if (needsStart) initializeRegisters();
+            if (offsetDirty) { check(hv_vcpu_set_vtimer_offset(id, offset)); offsetDirty = false; }
+            for (unsigned i = 0; i < 31; ++i) if (dirty[i])
+                check(hv_vcpu_set_reg(id, static_cast<hv_reg_t>(HV_REG_X0+i), registers[i]));
+            if (pcDirty) check(hv_vcpu_set_reg(id, HV_REG_PC, pc));
+            try { action(id); } catch (...) { snapshotFailure=std::current_exception(); }
+            for (unsigned i = 0; i < 31; ++i)
+                check(hv_vcpu_get_reg(id, static_cast<hv_reg_t>(HV_REG_X0+i), &registers[i]));
+            check(hv_vcpu_get_reg(id, HV_REG_PC, &pc));
+            dirty.fill(false); pcDirty = false; needsStart = false;
+        });
+        finish();
+        if (snapshotFailure) std::rethrow_exception(snapshotFailure);
+    }
     void sendPrivateInterrupt(unsigned interrupt) {
         dispatch([&] {
             if (__builtin_available(macOS 15.0, *)) {

@@ -49,6 +49,7 @@ class ArmHyperVKvp {
     std::string report() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     enum class State { Closed, SendVersion, WaitVersion, Ready, SendQuery, WaitResponse, Failed };
     State state = State::Closed;
     uint16_t framework = 0, service = 0;

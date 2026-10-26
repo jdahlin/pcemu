@@ -31,6 +31,7 @@ class ArmNorFlash {
     std::pair<size_t, size_t> take_dirty_range();
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // Two interleaved x16 devices present one four-byte bank word.
     static constexpr size_t BusWordBytes = 4;
     // One chip occupies two adjacent byte lanes within the bank word.

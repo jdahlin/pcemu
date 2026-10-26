@@ -27,6 +27,7 @@ class VirtioRng {
     uint64_t bytesSupplied = 0;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     std::span<uint8_t> ram;
     uint64_t ramBase;
     std::function<void(bool)> interrupt;

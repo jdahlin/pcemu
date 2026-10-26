@@ -29,6 +29,7 @@ class IntelHda {
     void service_elapsed_microseconds(uint64_t microseconds);
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     std::span<uint8_t> ram;
     uint64_t ram_base;
     std::function<void(bool)> interrupt;

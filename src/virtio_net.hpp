@@ -37,6 +37,7 @@ class VirtioNet {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // IMPLEMENTATION NOTE: Bound per-queue state and descriptor cycle tracking.
     static constexpr unsigned MaximumQueueEntries = 256;
     struct Queue {

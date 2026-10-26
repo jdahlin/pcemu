@@ -74,6 +74,7 @@ class ArmVmbus {
     std::string report() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Reply {
         unsigned vp, sint;
         std::vector<uint8_t> payload;

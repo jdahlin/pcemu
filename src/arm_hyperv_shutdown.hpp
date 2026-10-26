@@ -34,6 +34,7 @@ class ArmHyperVShutdown {
     std::string report() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     enum class State {
         Closed,
         SendVersion,

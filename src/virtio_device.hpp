@@ -95,6 +95,7 @@ class VirtioDevice {
     void require_device_reset(const std::string &reason);
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // All four initialization flags are required before processing buffers (2.1).
     static constexpr uint32_t InitializedStatus =
         virtio::Acknowledge | virtio::Driver | virtio::FeaturesOk | virtio::DriverOk;

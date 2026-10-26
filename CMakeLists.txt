@@ -177,7 +177,7 @@ function(pcemu_program name)
   if(P_SANITIZE)
     target_link_options(${name} PRIVATE -fsanitize=address,undefined)
   endif()
-  if(P_HVF)
+  if(P_HVF AND NOT P_STATIC)
     target_link_libraries(${name} PRIVATE "-framework Hypervisor")
     add_custom_command(TARGET ${name} POST_BUILD COMMAND codesign --force --sign -
       --entitlements ${PROJECT_SOURCE_DIR}/platform/macos/hypervisor.entitlements $<TARGET_FILE:${name}>)
@@ -718,3 +718,80 @@ add_test(NAME session-library-tests COMMAND session-library-tests)
 
 pcemu_program(intel-hda-tests SOURCES src/intel_hda.cpp tests/intel_hda_test.cpp)
 pcemu_program(intel-hda-sanitized-tests SANITIZE SOURCES src/intel_hda.cpp tests/intel_hda_test.cpp)
+
+# Embeddable ARM platform: frontend supplied by the host toolkit.
+pcemu_program(pcemu-arm-session STATIC ZSTD HVF
+  SOURCES
+    src/intel_hda.cpp
+    src/host_keyboard.cpp
+    ${HVF_USB_SOURCE}
+    src/hvf_machine.cpp
+    src/arm_virt.cpp
+    src/arm_virt_devices.cpp
+    src/arm_ramfb.cpp
+    ${ARM_BUS}
+    src/arm_fw_cfg.cpp
+    ${ARM_DEVICES}
+    src/disk.cpp
+    src/virtio_blk.cpp
+    src/virtio_pci.cpp
+    src/virtio_net.cpp
+    src/virtio_rng.cpp
+    src/virtio_device.cpp
+    src/virtio_serial.cpp
+    src/virtio_balloon.cpp
+    src/virtio_gpu.cpp
+    src/guest_agent_socket.cpp
+    src/network.cpp
+    src/ne2000.cpp
+    src/nvme.cpp
+    src/arm_session.cpp
+    src/arm_snapshot.cpp
+)
+
+# A schema fingerprint stays stable across ordinary rebuilds and unrelated x86
+# changes, but rejects altered field layouts/inventories before native restore.
+if(TARGET pcemu-arm-session)
+  set(ARM_SNAPSHOT_SCHEMA_FILES
+    src/state_archive.hpp src/arm_snapshot_state.hpp src/hvf_snapshot_registers.inc
+    src/hvf_machine.hpp src/arm_virt.hpp src/virtio_device.hpp src/virtio_gpu.hpp
+    src/virtio_blk.hpp src/virtio_pci.hpp src/virtio_net.hpp src/virtio_rng.hpp
+    src/virtio_serial.hpp src/virtio_balloon.hpp src/usb_xhci.hpp src/intel_hda.hpp
+    src/arm_fw_cfg.hpp src/arm_ramfb.hpp src/arm_nor_flash.hpp src/arm_pl011.hpp
+    src/arm_pl031.hpp src/arm_os_lock.hpp src/arm_hyperv.hpp src/arm_synic.hpp
+    src/arm_hyperv_timers.hpp src/arm_hyperv_reference_clock.hpp src/arm_vmbus.hpp
+    src/arm_gpadl.hpp src/arm_vmbus_ring.hpp src/arm_hyperv_heartbeat.hpp
+    src/arm_hyperv_timesync.hpp src/arm_hyperv_shutdown.hpp src/arm_hyperv_kvp.hpp
+    src/arm_hyperv_kvp_codec.hpp)
+  set(ARM_SNAPSHOT_SCHEMA_INPUT "pcemu-arm-snapshot-v1")
+  foreach(schema_file IN LISTS ARM_SNAPSHOT_SCHEMA_FILES)
+    file(SHA256 "${PROJECT_SOURCE_DIR}/${schema_file}" file_hash)
+    string(APPEND ARM_SNAPSHOT_SCHEMA_INPUT "${file_hash}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/${schema_file}")
+  endforeach()
+  string(SHA256 ARM_SNAPSHOT_SCHEMA "${ARM_SNAPSHOT_SCHEMA_INPUT}")
+  target_compile_definitions(obj_src_arm_snapshot_cpp_FALSE_FALSE PRIVATE
+    PCEMU_ARM_SNAPSHOT_SCHEMA="${ARM_SNAPSHOT_SCHEMA}")
+endif()
+
+if(TARGET pcemu-arm-session)
+  target_include_directories(pcemu-arm-session PUBLIC ${PROJECT_SOURCE_DIR}/src)
+  target_link_libraries(pcemu-arm-session PUBLIC PkgConfig::ZSTD "-framework Hypervisor")
+endif()
+
+pcemu_program(hvf-snapshot-tests HVF ZSTD SOURCES
+  src/hvf_machine.cpp src/arm_gic_ns.cpp tests/hvf_snapshot_test.cpp)
+
+if(TARGET pcemu-arm-session)
+  target_sources(pcemu-native-core PRIVATE src/host_audio_sdl.cpp)
+  target_link_libraries(pcemu-native-core PRIVATE pcemu-arm-session PkgConfig::SDL2)
+endif()
+
+if(TARGET pcemu-arm-session)
+  add_executable(arm-snapshot-tests EXCLUDE_FROM_ALL tests/arm_snapshot_test.cpp)
+  target_link_libraries(arm-snapshot-tests PRIVATE pcemu-arm-session)
+  add_custom_command(TARGET arm-snapshot-tests POST_BUILD COMMAND codesign --force --sign -
+    --entitlements ${PROJECT_SOURCE_DIR}/platform/macos/hypervisor.entitlements $<TARGET_FILE:arm-snapshot-tests>)
+endif()
+
+pcemu_program(state-archive-tests SOURCES tests/state_archive_test.cpp)

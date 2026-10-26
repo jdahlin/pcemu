@@ -5,9 +5,9 @@ Build the Apple Silicon SwiftUI app with `make app-native`, then open
 firmware, dynamically linked Homebrew zstd, and existing guest images.
 
 The sidebar supports VM creation, settings, double-click to open, context menus,
-Finder reveal, and removal from the library. The x86 guest display is embedded in
+Finder reveal, and removal from the library. All three guest displays are embedded in
 the window. Toolbar and VM menu actions pause/resume, reboot, and suspend to a
-new snapshot. Quitting the app suspends an active x86 VM before termination;
+new snapshot. Quitting the app suspends the active VM before termination;
 snapshot failure leaves the session alive and preserves the selected checkpoint.
 Reboot resets guest hardware and loses unsaved guest work.
 
@@ -38,6 +38,10 @@ a later launch once their volume is mounted. Registration reads paths only; it
 does not copy, boot, or modify guest disks. `make register-vms` updates the local
 library without opening a GUI.
 
+Windows 11 now runs inside the same SwiftUI display as the x86 machines; its
+legacy registration field remains readable for existing libraries. `run11.sh`
+continues to provide a separate SDL/SPICE launch when explicitly requested.
+
 The library and default-registration ledger live in
 `~/Library/Application Support/PCEmu/`. Suspend writes unique checkpoints beneath
 its `Snapshots/` directory; earlier checkpoints remain available. Removing a VM
@@ -54,12 +58,26 @@ The embedded x86 session supports 2–64 MiB RAM and one vCPU. The UI exposes th
 actual CPU limit. One x86 VM may run per process; process-global capture signals
 and JIT diagnostics have not been made independent per session.
 
-Windows 11 currently opens in the existing ARM64 SDL window, or activates that
-window if it is already running. Its settings support 256–16384 MiB RAM and
-1–8 vCPUs; the launcher generates matching firmware tables. Input and power
-controls remain in the guest window. ARM64 saved-state restore, library pause and
-reboot, and an embedded SwiftUI ARM64 display are not implemented. Closing the
-library does not terminate that separate guest window.
+Windows 11 uses the embedded Hypervisor.framework ARM64 session, with the same
+pause/resume, reboot, suspend-on-quit, input capture, and restore-on-open actions.
+Its settings support 256–16384 MiB RAM and 1–8 vCPUs; cold boot generates matching
+firmware tables. A checkpoint restores its saved topology. Shut down an existing
+SDL/SPICE VM before opening the same writable disk in SwiftUI; the disk and UEFI
+variable locks prevent concurrent use.
+
+ARM checkpoints are currently schema-versioned snapshots. They include native
+VP/SIMD/system-register and GIC state, pending SMP exits, RAM, firmware assets,
+UEFI flash, VirtIO transports/device queues, GPU resources/cursor, USB transfers,
+Hyper-V/SynIC/VMBus services/rings, and HDA state. Pause freezes the architectural
+virtual counter and Hyper-V reference time so guest timers retain their remaining
+time. Host network sockets reconnect after restore; existing connections may
+close. See [ARM checkpoint design and validation](arm-snapshots.md).
+
+The current ARM checkpoint profile supports the primary VirtIO disk. NVMe,
+extra disks, SPICE agent connections, and external guest-agent sockets are
+rejected explicitly. Disk checkpoints use same-volume APFS clones to freeze
+contents without copying large images; cross-volume/non-clone storage fails
+with an actionable error. The immutable backing chain must remain available.
 
 ## Library boundary
 
@@ -79,12 +97,19 @@ The frontend owns input polling and presentation through `pc::Frontend`.
 `pc::SessionControl::takeCommands()` supplies in-memory lifecycle commands;
 errors are delivered through `reportError`. Supported commands include `pause`,
 `resume`, `reboot`, `save-snapshot PATH`, `load-snapshot PATH`, `suspend PATH`,
-`close` (guest shutdown), and `quit` (immediate stop). `suspend` exits only after a
-successful save. Call the blocking runner on a worker and bridge toolkit work to
+`close` (guest shutdown), and `quit` (immediate stop). The ARM runner supports those lifecycle commands
+except in-place `load-snapshot`; restore uses a fresh native VM before any VP
+runs, as required by Hypervisor.framework. `suspend` exits only after a successful
+save. Call the blocking runner on a worker and bridge toolkit work to
 its UI thread. Sequential sessions are supported. A null frontend factory is
 valid for headless sessions.
 
-The CLI is a thin consumer of the same runner. Configuration parsing happens at
+`pcemu-arm-session` exposes `runArmSession(ArmSessionOptions, factory, controls)`
+with the same frontend and command boundary. It contains no SDL display or audio
+backend: audio playback is an optional host callback. The SwiftUI bridge supplies
+native presentation/input plus SDL audio without creating an SDL window.
+
+The x86 CLI is a thin consumer of the same runner. Configuration parsing happens at
 session startup. Frontend and command calls occur between execution batches;
 the CPU/JIT dispatch path gains no callbacks, locks, or per-instruction indirection.
 SwiftUI copies the latest framebuffer through a mutex-protected C bridge and
@@ -99,3 +124,11 @@ pause/reboot/suspend/restore test, and validates default discovery, migration,
 idempotence, and deliberate removal with temporary placeholder files. No
 installed OS, GUI guest run, or large VM fixture is required. Existing frontend
 input and snapshot/COW tests cover the shared policies and storage behavior.
+
+`make test-arm-native` runs archive-bound checks, native SMP/GIC/register/clock
+restore, and a 256 MiB synthetic full-machine/lifecycle checkpoint test headless.
+For the installed Windows image, prepare its matching platform and run
+`./build/arm-snapshot-tests --windows`. That test uses the existing stopped
+`system-tools-live.qcow2` image with a private compressed child; it never opens
+the live Windows writable overlay. Successful tests remove checkpoint RAM/disk
+files and private children, retaining only small diagnostics and screenshots.

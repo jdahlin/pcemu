@@ -27,6 +27,7 @@ class VirtioBlock {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Buffer {
         uint64_t address;
         uint32_t length;

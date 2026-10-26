@@ -23,6 +23,7 @@ class ArmFwCfg {
     std::span<const uint8_t> file_data(uint16_t selector) const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     struct Item {
         std::string name;
         std::vector<uint8_t> bytes;

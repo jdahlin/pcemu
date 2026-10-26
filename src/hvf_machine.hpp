@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <vector>
 
 namespace pc {
 // ARM64 bare-metal platform, independent of the x86 Machine/CPU/JIT. One VM
@@ -31,10 +32,10 @@ class HvfMachine {
     using InitializationStage = std::function<void(const char *)>;
     using SleepTicks = std::function<uint64_t()>;
     explicit HvfMachine(size_t ramBytes = 2 * 1024 * 1024, bool enableGic = false,
-                        SleepTicks sleepTicks = {}, unsigned cpuCount = 1, InitializationStage stage = {});
+                        SleepTicks sleepTicks = {}, unsigned cpuCount = 1, InitializationStage stage = {}, bool restoring = false);
     enum class GicProfile { Disabled, Native, HyperVNonsecure };
     HvfMachine(size_t ramBytes, GicProfile profile, SleepTicks sleepTicks = {},
-               unsigned cpuCount = 1, InitializationStage stage = {});
+               unsigned cpuCount = 1, InitializationStage stage = {}, bool restoring = false);
     ~HvfMachine();
     HvfMachine(const HvfMachine &) = delete;
     HvfMachine &operator=(const HvfMachine &) = delete;
@@ -97,6 +98,12 @@ class HvfMachine {
     // Called with all VPs stopped, before and after a host-sleep offset change.
     // A failed backend update leaves consumers invalidated; callbacks may throw.
     void setCounterRebaseHandler(std::function<void(bool before)> handler);
+    // Host lifecycle only, all VPs stopped. Freeze virtual time during pause.
+    void pauseClock(bool paused);
+    // Native GIC, VP register/timer and pending-exit state. Restore into a fresh
+    // restoring=true VM before any VP runs; RAM/devices are owned by the platform.
+    std::vector<uint8_t> saveState();
+    void restoreState(std::span<const uint8_t> bytes);
     uint64_t exits() const;
     static bool supported();
 

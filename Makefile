@@ -291,3 +291,12 @@ test-native: app-native
 .PHONY: smoke-audio
 smoke-audio: build/pcemu-hvf firmware-arm64
 	PATH="/opt/homebrew/opt/llvm/bin:$$PATH" python3 tools/smoke_intel_hda.py
+
+.PHONY: test-arm-native
+# Synthetic RAM-only firmware; no installed guest or display server needed.
+test-arm-native:
+	python3 tools/build_arm_platform.py --cpus 2 --ram-mb 256 --hyperv --vmbus --msi
+	./tools/build.sh state-archive-tests hvf-snapshot-tests arm-snapshot-tests
+	./build/state-archive-tests
+	./build/hvf-snapshot-tests
+	./build/arm-snapshot-tests

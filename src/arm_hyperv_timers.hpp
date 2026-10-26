@@ -94,6 +94,7 @@ class ArmHyperVTimers {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     // Four timers per VP are architectural; eight VPs are this backend's storage bound.
     static constexpr unsigned TimersPerVirtualProcessor = 4, MaximumVirtualProcessors = 8;
     using Time = __uint128_t;

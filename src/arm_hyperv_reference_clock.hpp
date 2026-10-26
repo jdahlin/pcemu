@@ -35,6 +35,7 @@ class ArmHyperVReferenceClock {
     }
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     std::span<uint8_t> ram;
     uint64_t base, registered = 0;
     uint32_t generation = 0;

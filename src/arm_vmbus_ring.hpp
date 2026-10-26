@@ -20,6 +20,7 @@ class ArmVmbusRing {
     Result read_packet(std::vector<uint8_t> &packet, bool &notify);
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     ArmGpadl &memory;
     uint32_t channel, id, capacity;
     uint64_t offset, lease;

@@ -9,6 +9,8 @@ extern "C" {
 void pcemu_native_prepare(void);
 int pcemu_native_run(const char *machine, const char *disk, const char *snapshot,
                      const char *rom, unsigned memory, const char *bootText, int initializeVga);
+int pcemu_native_run_arm(const char *root, const char *disk, const char *snapshot,
+                         unsigned memory, unsigned cpus, const char *runDirectory);
 void pcemu_native_command(const char *command);
 int pcemu_native_error(char *message, int capacity);
 void pcemu_native_event(int kind, uint16_t key, int released, int button, int x, int y);

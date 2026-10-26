@@ -21,6 +21,7 @@ class ArmPl011 {
     bool uartintr_asserted() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     std::deque<uint8_t> receive;
     std::string transcript;
     uint32_t control, integer_divisor = 0, fractional_divisor = 0, line_control = 0;

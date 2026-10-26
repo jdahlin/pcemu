@@ -33,6 +33,7 @@ class ArmHyperVHeartbeat {
     std::string report() const;
 
   private:
+    friend struct ArmSnapshotAccess; // Host checkpoint fields; never serialize host bindings.
     enum class State { Closed, SendVersion, WaitVersion, Ready, WaitHeartbeat, Failed };
     State state = State::Closed;
     bool responsive = false, expired = false, unresponsive = false;
