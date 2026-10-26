@@ -202,3 +202,4 @@ while retaining this repository's formatting.
 | PC/AT CMOS/RTC | IBM 6280070, September 1985, and Motorola MC146818A | Calendar BCD fields, divider/status encodings, BIOS equipment/memory bytes, VM-only host-time offset and unsupported writable/interrupt state. |
 | System control ports A/B and debug console | Intel 290562-001, sections 4.2.4.1/4.2.7.2; Bochs port_e9_hack convention | A20/reset effects, timer/speaker status, snapshot latches, host byte sink and compatibility differences from reference behavior. |
 | ARM fw_cfg | QEMU Firmware Configuration interface, including v2.9 DMA writes | Selector/directory formats, discovery signatures, endian conversions, synchronous RAM-only transfers and descriptor error reporting. |
+| ARM NOR variable store | Intel StrataFlash 290667-011, April 2002 | Interleaved x16 command sequences, erase/program rules, named IDs, persistent versus visible bytes, dirty remapping and incomplete timing/protection behavior. |

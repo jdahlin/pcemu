@@ -53,8 +53,8 @@ void ArmVirtMachine::bindDevices() {
         [this](MmioAccess &a, uint64_t o) { fwCfg.write_register(o, a.value, a.width); });
     mmio.map("nor-flash", 0x04000000, 0xc0000, {},
         [this](MmioAccess &a, uint64_t o) {
-            nor.write(o, uint32_t(a.value));
-            auto [begin, end] = nor.takeDirty();
+            nor.write_command_or_data(o, uint32_t(a.value));
+            auto [begin, end] = nor.take_dirty_range();
             if (end > begin) vm.writeMemory(0x04000000 + begin, nor.bytes().subspan(begin, end - begin));
         }, 4);
     mmio.map("pci-ecam", 0x3f000000, 0x100000,

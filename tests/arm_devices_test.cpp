@@ -120,39 +120,39 @@ int main() {
     rejects([&] { cfg.write_register(16, 0xffffffffffffffffull, 8); }); // Out-of-RAM descriptor is a platform error.
     std::vector<uint8_t> blank(0x80000, 0xff);
     ArmNorFlash flash(blank);
-    flash.write(0, 0x00900090);
+    flash.write_command_or_data(0, 0x00900090);
     check(flash.bytes()[0] == 0x89 && flash.bytes()[4] == 0x18 && flash.bytes()[8] == 0);
-    flash.write(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00ff00ff);
     check(flash.bytes()[0] == 0xff && flash.bytes()[8] == 0xff);
-    flash.write(0, 0x00700070);
+    flash.write_command_or_data(0, 0x00700070);
     check(flash.bytes()[0] == 0x80 && flash.bytes()[2] == 0x80);
     check(flash.storage()[0] == 0xff);
-    flash.write(0, 0x00ff00ff);
-    flash.write(0, 0x00400040);
-    flash.write(0, 0x12345678);
+    flash.write_command_or_data(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00400040);
+    flash.write_command_or_data(0, 0x12345678);
     check(flash.storage()[0] == 0x78 && flash.storage()[3] == 0x12);
     check(flash.bytes()[0] == 0x80);
-    flash.write(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00ff00ff);
     check(flash.bytes()[0] == 0x78 && flash.bytes()[3] == 0x12);
-    flash.write(0, 0x00400040); flash.write(0, 0xffffffff); flash.write(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00400040); flash.write_command_or_data(0, 0xffffffff); flash.write_command_or_data(0, 0x00ff00ff);
     check(flash.storage()[0] == 0x78); // Programming cannot set zero bits.
-    flash.write(0x40000, 0x00e800e8);
-    flash.write(0x40000, 0x00010001); // Two x32 words.
-    flash.write(0x40020, 0xaabbccdd); flash.write(0x40024, 0x11223344);
+    flash.write_command_or_data(0x40000, 0x00e800e8);
+    flash.write_command_or_data(0x40000, 0x00010001); // Two x32 words.
+    flash.write_command_or_data(0x40020, 0xaabbccdd); flash.write_command_or_data(0x40024, 0x11223344);
     check(flash.storage()[0x40020] == 0xff); // Buffer is not committed early.
-    flash.write(0x40000, 0x00d000d0); flash.write(0x40000, 0x00ff00ff);
+    flash.write_command_or_data(0x40000, 0x00d000d0); flash.write_command_or_data(0x40000, 0x00ff00ff);
     check(flash.storage()[0x40020] == 0xdd && flash.storage()[0x40024] == 0x44);
-    flash.write(0, 0x00200020); flash.write(0, 0x00d000d0); flash.write(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00200020); flash.write_command_or_data(0, 0x00d000d0); flash.write_command_or_data(0, 0x00ff00ff);
     check(flash.storage()[0] == 0xff && flash.storage()[0x3ffff] == 0xff);
     check(flash.storage()[0x40020] == 0xdd); // Erase stays within its block.
-    flash.write(0, 0x00600060); flash.write(0, 0x00d000d0); flash.write(0, 0x00ff00ff);
+    flash.write_command_or_data(0, 0x00600060); flash.write_command_or_data(0, 0x00d000d0); flash.write_command_or_data(0, 0x00ff00ff);
     check(flash.storage()[0x40020] == 0xdd);
-    auto dirty = flash.takeDirty(); check(dirty.first == 0 && dirty.second >= 0x40028);
-    check(flash.takeDirty().first == SIZE_MAX);
-    rejects([&] { flash.write(1, 0xff); });
-    rejects([&] { flash.write(UINT64_MAX - 3, 0xff); });
-    rejects([&] { flash.write(0x80000, 0xff); });
-    rejects([&] { flash.write(0, 0x1234); });
+    auto dirty = flash.take_dirty_range(); check(dirty.first == 0 && dirty.second >= 0x40028);
+    check(flash.take_dirty_range().first == SIZE_MAX);
+    rejects([&] { flash.write_command_or_data(1, 0xff); });
+    rejects([&] { flash.write_command_or_data(UINT64_MAX - 3, 0xff); });
+    rejects([&] { flash.write_command_or_data(0x80000, 0xff); });
+    rejects([&] { flash.write_command_or_data(0, 0x1234); });
     rejects([] { std::array<uint8_t, 3> bytes{}; ArmNorFlash invalid(bytes); });
 
     check(armMmioLoad(0x1234, 1, false, true) == 0x34);
