@@ -157,22 +157,22 @@ int main() {
     // End-to-end host registration, real PostMessage/SignalEvent and SynIC bitmap.
     std::vector<uint8_t> integratedRam(16*4096);
     ArmHyperV hv(true,integratedRam,base,2);
-    check(!hv.offerVmbusChannel(offer,echo));
-    hv.setPrivateInterruptSender([&](uint64_t mask,unsigned vector) {
+    check(!hv.offer_vmbus_channel(offer,echo));
+    hv.set_private_interrupt_sender([&](uint64_t mask,unsigned vector) {
         check((mask==1 || mask==2) && vector==16); return true;
     });
-    hv.advertiseSynic(true); hv.enableVmbus();
-    check(hv.offerVmbusChannel(offer,echo));
-    check(!hv.removeConnection(16));
+    hv.advertise_synic(true); hv.enable_vmbus();
+    check(hv.offer_vmbus_channel(offer,echo));
+    check(!hv.remove_connection(16));
     auto bad=offer; bad.channel=0; bad.connection=18;
-    check(!hv.offerVmbusChannel(bad,echo));
-    check(hv.bindEventConnection(18,1,[](unsigned,uint16_t) {return uint16_t(0);}));
-    check(hv.removeConnection(18)); // Failed registration released its temporary binding.
+    check(!hv.offer_vmbus_channel(bad,echo));
+    check(hv.bind_event_connection(18,1,[](unsigned,uint16_t) {return uint16_t(0);}));
+    check(hv.remove_connection(18)); // Failed registration released its temporary binding.
     ArmHyperV::Registers r{};
     r[0]=(1ull<<32)|0x10051; r[1]=UINT64_MAX; r[2]=0xfffffffe;
     r[3]=0x90002; r[5]=0x1000a000066bb;
-    check(hv.call(1,r,0) && r[0]==(1ull<<32));
-    auto &synic=hv.synicController();
+    check(hv.handle_hypercall(1,r,0) && r[0]==(1ull<<32));
+    auto &synic=hv.synic_controller();
     for(unsigned vp=0;vp<2;++vp) {
         check(synic.write_vp_register(0xa0010,vp,1)==0);
         check(synic.write_vp_register(0xa0002,vp,16)==0);
@@ -185,7 +185,7 @@ int main() {
         put(integratedRam,0,1); put(integratedRam,8,1); put(integratedRam,12,payload.size());
         std::copy(payload.begin(),payload.end(),integratedRam.begin()+16);
         r={}; r[0]=0x5c; r[1]=base;
-        check(hv.call(1,r,0) && r[0]==0); hv.service();
+        check(hv.handle_hypercall(1,r,0) && r[0]==0); hv.service();
     };
     post(contact); check(get(integratedRam,4096+512+16)==15);
     post(msg(3)); check(get(integratedRam,4096+512+16)==1);
@@ -199,7 +199,7 @@ int main() {
     ArmVmbusRing guestTx(integratedGuest,7,42,0,8192), guestRx(integratedGuest,7,42,8192,8192);
     check(guestTx.write_packet(packet,notify)==ArmVmbusRing::Result::Ok);
     auto signal=[&](uint64_t input) {
-        r={}; r[0]=0x1005d; r[1]=input; check(hv.call(1,r,1)); return r[0];
+        r={}; r[0]=0x1005d; r[1]=input; check(hv.handle_hypercall(1,r,1)); return r[0];
     };
     check(signal(16|(1ull<<32))==5); // Dedicated port permits only relative flag zero.
     check(signal(19)==0x12); // Unknown connection.

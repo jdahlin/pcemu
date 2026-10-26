@@ -84,14 +84,14 @@ class ArmVirtMachine {
     std::string cpuState() const;
     std::string hypervReport() const;
     // Trusted host queries, between run slices with all VPs stopped.
-    bool enumerateGuestKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) { return hyperv.enumerateKvp(pool,index); }
-    bool getGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.getKvp(pool,key); }
-    bool setGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value) { return hyperv.setKvp(pool,key,value); }
-    bool deleteGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.deleteKvp(pool,key); }
-    std::optional<ArmHyperVKvp::Result> takeGuestKvpResult() { return hyperv.takeKvpResult(); }
+    bool enumerateGuestKvp(ArmHyperVKvpCodec::Pool pool,uint32_t index) { return hyperv.enumerate_kvp_value(pool,index); }
+    bool getGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.get_kvp_value(pool,key); }
+    bool setGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key,const ArmHyperVKvpCodec::Value &value) { return hyperv.set_kvp_value(pool,key,value); }
+    bool deleteGuestKvp(ArmHyperVKvpCodec::Pool pool,const std::u16string &key) { return hyperv.delete_kvp_value(pool,key); }
+    std::optional<ArmHyperVKvp::Result> takeGuestKvpResult() { return hyperv.take_kvp_result(); }
     // Call between run slices, with all VPs stopped. Never forces host poweroff.
     bool requestGuestShutdown(ArmHyperVShutdown::Action action = ArmHyperVShutdown::Action::PowerOff) {
-        return hyperv.requestShutdown(action);
+        return hyperv.request_shutdown(action);
     }
   private:
     static std::vector<uint8_t> load(const std::string &path, size_t maximum);

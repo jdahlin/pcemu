@@ -26,24 +26,24 @@ int main() {
     ArmHyperV off(false, memory, base, 2), hv(true, memory, base, 2);
     ArmHyperV::Registers r{};
     r[0] = 0x84000009;
-    check(!hv.call(0, r, 0) && r[0] == 0x84000009); // PSCI reset stays with PSCI
+    check(!hv.handle_hypercall(0, r, 0) && r[0] == 0x84000009); // PSCI reset stays with PSCI
     r[0] = 0x8600ff01;
-    check(!off.call(0, r, 0) && r[0] == 0x8600ff01);
-    check(hv.call(0, r, 0));
+    check(!off.handle_hypercall(0, r, 0) && r[0] == 0x8600ff01);
+    check(hv.handle_hypercall(0, r, 0));
     check(r[0] == 0x4d32ba58 && r[1] == 0xcd244764 && r[2] == 0x8eef6c75 && r[3] == 0x16597024);
     r = {}; r[0] = 0x80000000;
-    check(hv.call(0, r, 0) && r[0] == 0x10002);
+    check(hv.handle_hypercall(0, r, 0) && r[0] == 0x10002);
     r[0] = 0x80000001; r[1] = 0x46000001;
-    check(hv.call(0, r, 0) && r[0] == 0);
+    check(hv.handle_hypercall(0, r, 0) && r[0] == 0);
     r[0] = 0x80000001; r[1] = 0x80008000;
-    check(hv.call(0, r, 0) && r[0] == uint64_t(-1)); // No invented mitigation support
+    check(hv.handle_hypercall(0, r, 0) && r[0] == uint64_t(-1)); // No invented mitigation support
     auto fastRead = [&](uint32_t name, bool smccc = true, unsigned vp = 0) {
         r.fill(0xcccccccccccccccc);
         r[0] = smccc ? 0x46000001 : one | 0x10050;
         auto start = smccc ? 2u : 1u;
         if (smccc) r[1] = one | 0x10050;
         r[start] = uint64_t(-1); r[start + 1] = 0xfffffffe; r[start + 2] = name;
-        check(hv.call(smccc ? 0 : 1, r, vp));
+        check(hv.handle_hypercall(smccc ? 0 : 1, r, vp));
     };
     fastRead(0x200);
     check(r[0] == one && r[6] == features && r[7] == 256);
@@ -59,7 +59,7 @@ int main() {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = 0x90002;
         r[6] = id; r[7] = high;
-        check(hv.call(0, r, vp));
+        check(hv.handle_hypercall(0, r, vp));
     };
     fastWrite(0x1000a000066bbull);
     check(r[0] == one);
@@ -77,7 +77,7 @@ int main() {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = 0x90015;
         r[6] = value; r[7] = high;
-        check(hv.call(0, r, 0));
+        check(hv.handle_hypercall(0, r, 0));
     };
     fastRead(0x90015); check(r[0] == one && r[6] == 0);
     std::fill(memory.begin() + 4096, memory.end(), 0xaa);
@@ -96,7 +96,7 @@ int main() {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name;
         r[6] = value; r[7] = high;
-        check(hv.call(0, r, vp));
+        check(hv.handle_hypercall(0, r, vp));
     };
     writeVp(0x90016, 1); check(r[0] == one);
     fastRead(0x90016); check(r[6] == 1);
@@ -117,7 +117,7 @@ int main() {
     put(memory, 16, 0x90003, 4); put(memory, 20, 0xffffffff, 4);
     auto memoryRead = [&](uint64_t control, uint64_t input = base, uint64_t output = base + 4096) {
         r = {}; r[0] = 0x46000001; r[1] = control; r[2] = input; r[3] = output;
-        check(hv.call(0, r, 1));
+        check(hv.handle_hypercall(0, r, 1));
     };
     std::fill(memory.begin() + 4096, memory.end(), 0xaa);
     memoryRead((2ull << 32) | 0x50);
@@ -144,19 +144,19 @@ int main() {
     put(memory, 16, 0x90002, 4); put(memory, 20, 0, 4); put(memory, 24, 0);
     put(memory, 32, 321); put(memory, 40, 0);
     r = {}; r[0] = one | 0x51; r[1] = base;
-    check(hv.call(1, r, 0) && r[0] == one);
+    check(hv.handle_hypercall(1, r, 0) && r[0] == one);
     fastRead(0x90002); check(r[6] == 321);
     put(memory, 16, 0x90003, 4);
     r = {}; r[0] = one | 0x51; r[1] = base;
-    check(hv.call(1, r, 0) && r[0] == 5);
+    check(hv.handle_hypercall(1, r, 0) && r[0] == 5);
     put(memory, 16, 0x90002, 4); put(memory, 24, 1);
     r = {}; r[0] = one | 0x51; r[1] = base;
-    check(hv.call(1, r, 0) && r[0] == one);
+    check(hv.handle_hypercall(1, r, 0) && r[0] == one);
     r = {}; r[0] = 0x46000001; r[1] = 0xdead;
-    check(hv.call(0, r, 0) && r[0] == 2);
+    check(hv.handle_hypercall(0, r, 0) && r[0] == 2);
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
-    check(!off.call(0, r, 0) && r[0] == 0x46000001);
-    check(!hv.call(2, r, 0));
+    check(!off.handle_hypercall(0, r, 0) && r[0] == 0x46000001);
+    check(!hv.handle_hypercall(2, r, 0));
     // Extended query has no input and exactly eight bytes of output.
     for (bool smccc : {false, true}) {
         for (bool fast : {false, true}) {
@@ -166,7 +166,7 @@ int main() {
             r[smccc ? 2 : 1] = uint64_t(-1); // Unused input must not be dereferenced.
             r[smccc ? 3 : 2] = base + 8192 - 8;
             std::fill(memory.begin() + 8176, memory.end(), 0xaa);
-            check(hv.call(smccc ? 0 : 1, r, 1) && r[0] == 0);
+            check(hv.handle_hypercall(smccc ? 0 : 1, r, 1) && r[0] == 0);
             unsigned out = smccc ? 2 : 15;
             if (fast) check(r[out] == 0 && r[out + 1] == 0 && get(memory, 8184) == 0xaaaaaaaaaaaaaaaaull);
             else check(get(memory, 8184) == 0 && get(memory, 8176) == 0xaaaaaaaaaaaaaaaaull);
@@ -174,28 +174,28 @@ int main() {
     }
     for (auto address : {base - 8, base + 1, base + 8192, uint64_t(-8)}) {
         r = {}; r[0] = 0x8001; r[2] = address;
-        check(hv.call(1, r, 0) && r[0] == 4);
+        check(hv.handle_hypercall(1, r, 0) && r[0] == 4);
     }
     for (auto extra : {1ull << 17, 1ull << 31, 1ull << 32, 1ull << 48, 1ull << 63}) {
         r = {}; r[0] = 0x18001 | extra; r[15] = 123;
-        check(hv.call(1, r, 0) && r[0] == 3 && r[15] == 123);
+        check(hv.handle_hypercall(1, r, 0) && r[0] == 3 && r[15] == 123);
     }
     r = {}; r[0] = 0x18001;
-    check(hv.call(1, r, 2) && r[0] == 3);
+    check(hv.handle_hypercall(1, r, 2) && r[0] == 3);
     for (unsigned code : {0x8002, 0x8003, 0x8004, 0x8005, 0x8006}) {
         r = {}; r[0] = code;
-        check(hv.call(1, r, 0) && r[0] == 2); // No extended services falsely advertised.
+        check(hv.handle_hypercall(1, r, 0) && r[0] == 2); // No extended services falsely advertised.
     }
     fastWrite(0); fastRead(0x90003); check(r[0] == 6);
     fastRead(0x90016); check(r[0] == 6);
     r = {}; r[0] = 0x18001; r[15] = 123;
-    check(hv.call(1, r, 0) && r[0] == 6 && r[15] == 123);
+    check(hv.handle_hypercall(1, r, 0) && r[0] == 6 && r[15] == 123);
     check(hv.report().find("\"code\":32769,\"count\":15,\"failures\":11") != std::string::npos);
     writeVp(0x40400, 0); check(r[0] == one); // Early register may be written without ID
     fastRead(0x40400); check(r[0] == one && r[6] == 0);
     ArmHyperV fresh(true, memory, base, 2);
     r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x40400;
-    check(fresh.call(1, r, 0) && r[0] == one && r[15] == 0); // VM recreation resets state
+    check(fresh.handle_hypercall(1, r, 0) && r[0] == one && r[15] == 0); // VM recreation resets state
     check(hv.report().find("\"guestOsId\":0") != std::string::npos);
     check(off.report().find("\"disabledCalls\":1") != std::string::npos);
     uint64_t ticks = 1000;
@@ -205,7 +205,7 @@ int main() {
         if (smccc) r[1] = one | 0x10050;
         unsigned in = smccc ? 2 : 1;
         r[in] = uint64_t(-1); r[in + 1] = 0xfffffffe; r[in + 2] = 0x90004;
-        check(timed.call(smccc ? 0 : 1, r, vp) && r[0] == one);
+        check(timed.handle_hypercall(smccc ? 0 : 1, r, vp) && r[0] == one);
         check(r[smccc ? 7 : 16] == 0);
         return r[smccc ? 6 : 15];
     };
@@ -219,7 +219,7 @@ int main() {
     check(timeRead(0, false) == 20000001); // Defensive monotonicity for a bad source.
     r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
     r[3] = 0x90004; r[5] = 123;
-    check(timed.call(1, r, 0) && r[0] == 5); // Read-only, no identity needed to reject.
+    check(timed.handle_hypercall(1, r, 0) && r[0] == 5); // Read-only, no identity needed to reject.
     ticks += 10000000;
     check(timeRead(0, true) == 29999500); // Failed write did not alter the epoch.
     ArmHyperV newClock(true, memory, base, 2, [&] { return ticks; });
@@ -228,12 +228,12 @@ int main() {
     auto crashWrite = [&](uint32_t name, uint64_t value, unsigned vp = 0, uint64_t high = 0) {
         r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
         r[3] = name; r[5] = value; r[6] = high;
-        check(crash.call(1, r, vp)); return r[0];
+        check(crash.handle_hypercall(1, r, vp)); return r[0];
     };
     auto crashRead = [&](uint32_t name, unsigned vp = 0) {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name;
-        check(crash.call(0, r, vp) && r[0] == one && r[7] == 0);
+        check(crash.handle_hypercall(0, r, vp) && r[0] == one && r[7] == 0);
         return r[6];
     };
     constexpr uint64_t notify = 1ull << 63, message = 1ull << 62;
@@ -244,15 +244,15 @@ int main() {
         check(crashRead(0x210 + i, 1) == 11 + i);
         check(crashRead(0x210 + i, 0) == 0); // Per-VP banks.
     }
-    check(crash.takeCrashReport().empty());
+    check(crash.take_crash_report().empty());
     check(crashWrite(0x215, notify, 1) == one);
-    auto event = crash.takeCrashReport();
+    auto event = crash.take_crash_report();
     check(event.find("\"parameters\":[11,12,13,14,15]") != std::string::npos);
     check(event.find("\"vp\":1") != std::string::npos);
-    check(crash.takeCrashReport().empty());
+    check(crash.take_crash_report().empty());
     check(crashWrite(0x210, 999, 1) == one);
     check(crash.report().find("\"parameters\":[11,12,13,14,15]") != std::string::npos);
-    check(crashWrite(0x215, 0) == one && crash.takeCrashReport().empty());
+    check(crashWrite(0x215, 0) == one && crash.take_crash_report().empty());
     check(crashWrite(0x215, message) == 5);
     check(crashWrite(0x215, notify | 1) == 5);
     check(crashWrite(0x215, notify, 0, 1) == 5);
@@ -263,14 +263,14 @@ int main() {
     memory[4094] = 0; memory[4095] = 0x1b; memory[4096] = 0xff; memory[4097] = 'A';
     check(crashWrite(0x215, notify | message | (3ull << 58) | (1ull << 61)) == one);
     memory[4094] = 99;
-    event = crash.takeCrashReport();
+    event = crash.take_crash_report();
     check(event.find("\"messageHex\":\"001bff41\"") != std::string::npos);
     check(event.find("\"notifications\":2") != std::string::npos);
     check(crashRead(0x215) == (notify | message)); // Reads return capabilities, not the last command.
     for (auto bad : {uint64_t(4097), uint64_t(-1)}) {
         check(crashWrite(0x214, bad) == one);
         check(crashWrite(0x215, notify | message) == 5);
-        check(crash.takeCrashReport().empty());
+        check(crash.take_crash_report().empty());
     }
     check(crashWrite(0x214, 4) == one);
     for (auto bad : {base - 1, base + memory.size() - 3, uint64_t(-2)}) {
@@ -280,28 +280,28 @@ int main() {
     check(crashWrite(0x213, base) == one);
     check(crashWrite(0x214, 4096) == one);
     check(crashWrite(0x215, notify | message) == one);
-    check(crash.takeCrashReport().size() < 8500); // Bounded even at maximum payload.
+    check(crash.take_crash_report().size() < 8500); // Bounded even at maximum payload.
     ArmHyperV crashReset(true, memory, base, 2);
-    check(crashReset.takeCrashReport().empty());
+    check(crashReset.take_crash_report().empty());
     check(crashReset.report().find("\"notifications\":0") != std::string::npos);
     uint64_t synced = 0;
     unsigned syncCalls = 0;
     ArmHyperV syncing(true, memory, base, 2);
     r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
     r[3] = 0x90002; r[5] = 123;
-    check(syncing.call(1, r, 0) && r[0] == one);
+    check(syncing.handle_hypercall(1, r, 0) && r[0] == one);
     auto sync = [&](uint64_t flags, uint64_t mask, bool smccc, uint64_t control = 0x10019, unsigned vp = 0) {
         r.fill(0x5555555555555555);
         r[0] = smccc ? 0x46000001 : control;
         if (smccc) r[1] = control;
         unsigned in = smccc ? 2 : 1;
         r[in] = flags; r[in + 1] = mask;
-        check(syncing.call(smccc ? 0 : 1, r, vp));
+        check(syncing.handle_hypercall(smccc ? 0 : 1, r, vp));
         check(r[in] == flags && r[in + 1] == mask && r[17] == 0x5555555555555555);
         return r[0];
     };
     check(sync(1, 0, false) == 2); // No backend: never fake successful synchronization.
-    syncing.setContextSynchronizer([&](uint64_t targets) { synced = targets; ++syncCalls; return true; });
+    syncing.set_context_synchronizer([&](uint64_t targets) { synced = targets; ++syncCalls; return true; });
     check(sync(1, 0, false) == 0 && synced == 3 && syncCalls == 1);
     check(sync(0, 2, true, 0x10019, 1) == 0 && synced == 2 && syncCalls == 2);
     check(sync(0, 0, true) == 0 && synced == 0 && syncCalls == 3);
@@ -312,20 +312,20 @@ int main() {
     check(sync(0, 4, true) == 14 && syncCalls == 3);
     check(sync(1, 0, true, 0x10019, 2) == 3 && syncCalls == 3);
     check(sync(1, 0, false, 0x19) == 4 && syncCalls == 3); // Slow unaligned GPA.
-    syncing.setContextSynchronizer([](uint64_t) { return false; });
+    syncing.set_context_synchronizer([](uint64_t) { return false; });
     check(sync(1, 0, true) == 0x71);
     check(syncing.report().find("\"contextSyncRequests\":3") != std::string::npos);
     check(syncing.report().find("\"contextSyncTargetMask\":0") != std::string::npos);
     ArmHyperV earlySync(true, memory, base, 1);
     r = {}; r[0] = 0x10019; r[1] = 1;
-    check(earlySync.call(1, r, 0) && r[0] == 6);
+    check(earlySync.handle_hypercall(1, r, 0) && r[0] == 6);
     ArmHyperV ex(true, memory, base, 2);
     r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
     r[3] = 0x90002; r[5] = 456;
-    check(ex.call(1, r, 0) && r[0] == one);
+    check(ex.handle_hypercall(1, r, 0) && r[0] == one);
     unsigned exCalls = 0;
     uint64_t exTargets = 0;
-    ex.setContextSynchronizer([&](uint64_t targets) { ++exCalls; exTargets = targets; return true; });
+    ex.set_context_synchronizer([&](uint64_t targets) { ++exCalls; exTargets = targets; return true; });
     auto invokeEx = [&](bool smccc, bool fast, unsigned banks = 1, uint64_t address = base,
                         uint64_t extraControl = 0, unsigned vp = 0, uint16_t code = 0x1a) {
         r.fill(0xcccccccccccccccc);
@@ -337,7 +337,7 @@ int main() {
             for (unsigned i = 0; i < std::min(16u, 3 + banks); ++i) r[in + i] = get(memory, i * 8);
         } else { r[in] = address; r[in + 1] = uint64_t(-1); } // No output: ignored GPA.
         auto previous = r;
-        check(ex.call(smccc ? 0 : 1, r, vp));
+        check(ex.handle_hypercall(smccc ? 0 : 1, r, vp));
         check(std::equal(r.begin() + 1, r.end(), previous.begin() + 1));
         return r[0];
     };
@@ -397,18 +397,18 @@ int main() {
         if (fast) for (unsigned i = 0; i < (extended ? 5u : 3u); ++i) r[in + i] = get(memory, i * 8);
         else { r[in] = address; r[in + 1] = uint64_t(-1); }
         auto before = r;
-        check(flushing.call(smccc ? 0 : 1, r, 0));
+        check(flushing.handle_hypercall(smccc ? 0 : 1, r, 0));
         check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
         return r[0];
     };
     check(flushCall(false, false, true, 0, 1) == 6); // Identity before any service.
     r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
     r[3] = 0x90002; r[5] = 789;
-    check(flushing.call(1, r, 0) && r[0] == one);
+    check(flushing.handle_hypercall(1, r, 0) && r[0] == one);
     check(flushCall(false, true, true, 1, uint64_t(-1)) == 2); // No native backend, no success.
     unsigned flushCalls = 0;
     uint64_t flushed = 0;
-    flushing.setTranslationFlusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
+    flushing.set_translation_flusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
     for (bool extended : {false, true}) for (bool smccc : {false, true}) for (bool fast : {false, true}) {
         for (unsigned flags = 0; flags < 8; ++flags) {
             check(flushCall(extended, smccc, fast, flags, flags & 1 ? uint64_t(-1) : 2) == 0);
@@ -432,7 +432,7 @@ int main() {
     check(flushCall(true, true, true, 0, 1, 2) == 3); // Bank mask/length mismatch.
     check(flushCall(true, true, true, 0, 1, 13) == 3); // 136-byte input exceeds fast registers.
     check(flushCalls == beforeBadFlush);
-    flushing.setTranslationFlusher([](uint64_t) { return false; });
+    flushing.set_translation_flusher([](uint64_t) { return false; });
     check(flushCall(false, true, true, 7, 1) == 0x71);
     check(flushing.report().find("\"tlbFlushRequests\":74") != std::string::npos);
     check(flushing.report().find("\"contextSyncRequests\":0") != std::string::npos);
@@ -444,12 +444,12 @@ int main() {
         unsigned in = smccc ? 2 : 1;
         r[in] = uint64_t(-1); r[in + 1] = uint64_t(-1); // Both GPAs are ignored.
         auto before = r;
-        check(flushing.call(smccc ? 0 : 1, r, vp));
+        check(flushing.handle_hypercall(smccc ? 0 : 1, r, vp));
         check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
         return r[0];
     };
     check(drainTlb(false, false, 0) == 0x71); // Existing deliberately failing callback.
-    flushing.setTranslationFlusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
+    flushing.set_translation_flusher([&](uint64_t targets) { ++flushCalls; flushed = targets; return true; });
     for (bool smccc : {false, true}) for (bool fast : {false, true}) for (unsigned vp : {0, 1})
         check(drainTlb(smccc, fast, vp) == 0 && flushed == (1ull << vp));
     auto beforeDrainFailure = flushCalls;
@@ -459,7 +459,7 @@ int main() {
     check(flushing.report().find("\"tlbFlushRequests\":82") != std::string::npos);
     ArmHyperV earlyDrain(true, memory, base, 1);
     r = {}; r[0] = 0xd6;
-    check(earlyDrain.call(1, r, 0) && r[0] == 6);
+    check(earlyDrain.handle_hypercall(1, r, 0) && r[0] == 6);
     ArmHyperV interrupts(true, memory, base, 2);
     auto sendIpi = [&](bool extended, bool smccc, bool fast, uint64_t vector, uint64_t targets,
                        unsigned banks = 1, uint64_t address = base, uint64_t extra = 0, uint64_t format = 0) {
@@ -474,18 +474,18 @@ int main() {
         if (fast) for (unsigned i = 0; i < (extended ? 4u : 2u); ++i) r[in + i] = get(memory, i * 8);
         else { r[in] = address; r[in + 1] = uint64_t(-1); }
         auto before = r;
-        check(interrupts.call(smccc ? 0 : 1, r, 0));
+        check(interrupts.handle_hypercall(smccc ? 0 : 1, r, 0));
         check(std::equal(r.begin() + 1, r.end(), before.begin() + 1));
         return r[0];
     };
     check(sendIpi(false, false, true, 0, 2) == 6);
     r = {}; r[0] = one | 0x10051; r[1] = uint64_t(-1); r[2] = 0xfffffffe;
     r[3] = 0x90002; r[5] = 456;
-    check(interrupts.call(1, r, 0) && r[0] == one);
+    check(interrupts.handle_hypercall(1, r, 0) && r[0] == one);
     check(sendIpi(false, true, true, 0, 2) == 2);
     unsigned sends = 0, sentVector = 99;
     uint64_t sentMask = 0;
-    interrupts.setSoftwareInterruptSender([&](uint64_t mask, unsigned vector) {
+    interrupts.set_software_interrupt_sender([&](uint64_t mask, unsigned vector) {
         ++sends; sentMask = mask; sentVector = vector; return true;
     });
     for (bool extended : {false, true}) for (bool smccc : {false, true}) for (bool fast : {false, true}) {
@@ -504,12 +504,12 @@ int main() {
     check(sendIpi(true, false, true, 0, 1, 2) == 3);
     check(sendIpi(true, true, true, 0, 1, 14) == 3);
     check(sendIpi(false, false, false, 0, 1, 0, base + 4096 - 8) == 4);
-    interrupts.setSoftwareInterruptSender([](uint64_t, unsigned) { return false; });
+    interrupts.set_software_interrupt_sender([](uint64_t, unsigned) { return false; });
     check(sendIpi(false, false, true, 0, 1) == 0x71);
     check(interrupts.report().find("\"ipiRequests\":33") != std::string::npos);
     check(interrupts.report().find("\"ipiTargetRequests\":[9,17]") != std::string::npos);
     r = {}; r[0] = one | 0x10050; r[1] = uint64_t(-1); r[2] = 0xfffffffe; r[3] = 0x201;
-    check(interrupts.call(1, r, 0) && r[15] == 0xffffffff00000004ull); // Real backend enables IPI recommendation.
+    check(interrupts.handle_hypercall(1, r, 0) && r[15] == 0xffffffff00000004ull); // Real backend enables IPI recommendation.
     // SynIC state, message ownership and event coalescing. Guest RAM is only
     // touched while all VPs are stopped, including the injection callback.
     std::vector<uint8_t> zeroBaseRam(4096, 0xaa);
@@ -634,7 +634,7 @@ int main() {
         if (smccc) r[1] = one | 0x10051;
         r[start] = uint64_t(-1); r[start + 1] = 0xfffffffe;
         r[start + 2] = 0xa0010; r[start + 4] = 1;
-        check(hv.call(smccc ? 0 : 1, r, 1) && r[0] == one);
+        check(hv.handle_hypercall(smccc ? 0 : 1, r, 1) && r[0] == one);
         fastRead(0xa0010, smccc, 1);
         check(r[0] == one && r[smccc ? 6 : 15] == 1);
     }
@@ -693,15 +693,15 @@ int main() {
     std::vector<uint8_t> snapshotRam(16384);
     unsigned clockReads = 0;
     ArmHyperV clockSnapshot(true, snapshotRam, base, 2, [&] { ++clockReads; return uint64_t(1000); });
-    clockSnapshot.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
-    clockSnapshot.advertiseSynic(true);
-    clockSnapshot.enableVmbus();
-    clockSnapshot.enableHeartbeat();
-    clockSnapshot.enableTimeSync([] { return uint64_t(116444736000000000ull); });
-    clockSnapshot.enableShutdown();
-    clockSnapshot.enableKvp();
+    clockSnapshot.set_private_interrupt_sender([](uint64_t, unsigned) { return true; });
+    clockSnapshot.advertise_synic(true);
+    clockSnapshot.enable_vmbus();
+    clockSnapshot.enable_heartbeat();
+    clockSnapshot.enable_time_sync([] { return uint64_t(116444736000000000ull); });
+    clockSnapshot.enable_shutdown();
+    clockSnapshot.enable_kvp();
     clockReads = 0;
-    clockSnapshot.serviceDelay100ns();
+    clockSnapshot.next_service_delay_100ns();
     check(clockReads == 1);
     ArmHyperVTimers timerModel(2);
     check(!timerModel.nextDeadline());
@@ -753,7 +753,7 @@ int main() {
     auto timerWrite = [&](uint32_t name, uint64_t low, uint64_t high = 0) {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = name; r[6] = low; r[7] = high;
-        check(timerHv.call(0, r, 0)); return r[0];
+        check(timerHv.handle_hypercall(0, r, 0)); return r[0];
     };
     check(timerWrite(0xb0000, 0) == 6);
     check(timerWrite(0x90002, 0x1000a000066bbull) == one);
@@ -762,23 +762,23 @@ int main() {
     check(timerWrite(0xa0013, base + 1) == one);
     check(timerWrite(0xa0002, 31) == one);
     unsigned timerIrqs = 0;
-    timerHv.setPrivateInterruptSender([&](uint64_t mask, unsigned vector) {
+    timerHv.set_private_interrupt_sender([&](uint64_t mask, unsigned vector) {
         check(mask == 1 && vector == 31); ++timerIrqs; return true;
     });
     check(timerWrite(0xb0000, 0x20008) == one);
     check(timerWrite(0xb0001, 100) == one);
-    check(timerHv.serviceDelay100ns() == 100);
+    check(timerHv.next_service_delay_100ns() == 100);
     timerClock = 1099; timerHv.service(); check(timerIrqs == 0);
-    timerClock = 1100; timerHv.service(); check(timerIrqs == 1 && !timerHv.timersActive());
+    timerClock = 1100; timerHv.service(); check(timerIrqs == 1 && !timerHv.timers_active());
     check(get(timerRam, 512) == 0x0000001880000010ull);
     check(get(timerRam, 512 + 16) == 0 && get(timerRam, 512 + 24) == 100 && get(timerRam, 512 + 32) == 100);
     check(timerWrite(0xb0003, 120) == one);
     check(timerWrite(0xb0002, 0x20001) == one);
     timerClock = 1120; timerHv.service();
-    check(timerIrqs == 1 && timerHv.timersActive() && timerRam[517] == 1);
+    check(timerIrqs == 1 && timerHv.timers_active() && timerRam[517] == 1);
     put(timerRam, 512, 0, 4); // Free slot for timer 1's dedicated pending message.
     timerClock = 1125; timerHv.service();
-    check(timerIrqs == 2 && !timerHv.timersActive());
+    check(timerIrqs == 2 && !timerHv.timers_active());
     check(get(timerRam, 512 + 16) == 1 && get(timerRam, 512 + 24) == 120 && get(timerRam, 512 + 32) == 125);
     check(timerHv.report().find("\"syntheticTimerDeliveries\":2") != std::string::npos);
     check(timerHv.report().find("\"timerActivity\":{\"configWrites\":") != std::string::npos);
@@ -877,7 +877,7 @@ int main() {
     auto connectedWrite = [&](uint32_t reg, uint64_t value) {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = uint64_t(-1); r[3] = 0xfffffffe; r[4] = reg; r[6] = value;
-        check(connected.call(0, r, 0) && r[0] == one);
+        check(connected.handle_hypercall(0, r, 0) && r[0] == one);
     };
     auto connectionCall = [&](bool message, bool smccc, bool fast, uint64_t controlExtra = 0, uint64_t input = base) {
         r.fill(0xabcdef);
@@ -886,25 +886,25 @@ int main() {
         unsigned start = smccc ? 2 : 1;
         r[start] = fast ? get(connectionRam, 0) : input;
         r[start + 1] = UINT64_MAX; // No output buffer; fast pair padding ignored.
-        check(connected.call(smccc ? 0 : 1, r, 1)); return r[0];
+        check(connected.handle_hypercall(smccc ? 0 : 1, r, 1)); return r[0];
     };
     check(connectionCall(false, true, true) == 6);
     connectedWrite(0x90002, 0x1000a000066bbull);
     check(connectionCall(true, false, false) == 6); // No host endpoints or privilege yet.
-    auto &receiver = connected.synicController();
+    auto &receiver = connected.synic_controller();
     check(receiver.write_vp_register(0xa0010, 0, 1) == 0 && receiver.write_vp_register(0xa0012, 0, base + 4096 + 1) == 0);
     check(receiver.write_vp_register(0xa0002, 0, 16) == 0);
     unsigned connectionIrqs = 0;
-    connected.setPrivateInterruptSender([&](uint64_t mask, unsigned vector) {
+    connected.set_private_interrupt_sender([&](uint64_t mask, unsigned vector) {
         check(mask == 1 && vector == 16); ++connectionIrqs; return true;
     });
-    check(connected.bindEventConnection(42, 10, [&](unsigned vp, uint16_t relative) {
+    check(connected.bind_event_connection(42, 10, [&](unsigned vp, uint16_t relative) {
         check(vp == 1); bool newly = false;
         return receiver.signal_event(0, 2, 100 + relative, newly);
     }));
-    check(!connected.bindEventConnection(42, 10, [](unsigned, uint16_t) { return 0; }));
-    check(!connected.bindEventConnection(43, 0, [](unsigned, uint16_t) { return 0; }));
-    check(!connected.bindMessageConnection(0x1000000, [](unsigned, uint32_t, std::span<const uint8_t>) { return 0; }));
+    check(!connected.bind_event_connection(42, 10, [](unsigned, uint16_t) { return 0; }));
+    check(!connected.bind_event_connection(43, 0, [](unsigned, uint16_t) { return 0; }));
+    check(!connected.bind_message_connection(0x1000000, [](unsigned, uint32_t, std::span<const uint8_t>) { return 0; }));
     for (bool smccc : {false, true}) for (bool fast : {false, true}) {
         put(connectionRam, 0, 42 | (3ull << 32));
         check(connectionCall(false, smccc, fast) == 0);
@@ -915,7 +915,7 @@ int main() {
     put(connectionRam, 0, 42 | (1ull << 48)); check(connectionCall(false, true, true) == 5);
     put(connectionRam, 0, 99); check(connectionCall(false, true, true) == 0x12);
     put(connectionRam, 0, 0x8000002a); check(connectionCall(false, true, true) == 0x12);
-    check(connected.bindMessageConnection(7, [&](unsigned vp, uint32_t type, std::span<const uint8_t> payload) {
+    check(connected.bind_message_connection(7, [&](unsigned vp, uint32_t type, std::span<const uint8_t> payload) {
         check(vp == 1 && type == 1 && payload.size() == 240 && payload[0] == 11 && payload[239] == 22);
         return uint16_t(0);
     }));
@@ -939,9 +939,9 @@ int main() {
     put(connectionRam, 12, 240, 4); put(connectionRam, 4, 1, 4); check(connectionCall(true, true, false) == 0);
     put(connectionRam, 4, 0, 4); put(connectionRam, 0, 42, 4); check(connectionCall(true, true, false) == 0x11);
     put(connectionRam, 0, 7); check(connectionCall(false, true, true) == 0x11);
-    check(connected.removeConnection(7) && !connected.removeConnection(7));
-    check(connected.bindMessageConnection(7, [&](unsigned, uint32_t, std::span<const uint8_t>) {
-        check(connected.removeConnection(7)); return uint16_t(0x13);
+    check(connected.remove_connection(7) && !connected.remove_connection(7));
+    check(connected.bind_message_connection(7, [&](unsigned, uint32_t, std::span<const uint8_t>) {
+        check(connected.remove_connection(7)); return uint16_t(0x13);
     }));
     put(connectionRam, 8, 1, 4); put(connectionRam, 12, 0, 4);
     check(connectionCall(true, true, false) == 0x13); // Preserve endpoint backpressure.
@@ -949,11 +949,11 @@ int main() {
     check(connected.report().find("\"postedMessages\":3") != std::string::npos);
     check(connected.report().find("\"signaledEvents\":4") != std::string::npos);
     for (uint32_t id = 100; id < 163; ++id)
-        check(connected.bindMessageConnection(id, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
-    check(!connected.bindMessageConnection(163, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+        check(connected.bind_message_connection(id, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    check(!connected.bind_message_connection(163, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
     r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
-    check(connected.call(0, r, 0) && r[0] == one && r[6] == (features | (1ull << 36) | (1ull << 37)));
+    check(connected.handle_hypercall(0, r, 0) && r[0] == one && r[6] == (features | (1ull << 36) | (1ull << 37)));
     // ARM SynIC sources may target SGIs as well as PPIs. The controller
     // must pass the INTID unchanged, including zero, without an APIC offset.
     std::vector<uint8_t> sgiRam(4096);
@@ -975,22 +975,22 @@ int main() {
     check(sgiSynic.read_vp_register(0xa0001, 0, value) == 0 && value == 31);
     ArmHyperV profile(true, sgiRam, base, 1), disabledProfile(false, sgiRam, base, 1);
     bool rejectedProfile = false;
-    try { profile.advertiseSynic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    try { profile.advertise_synic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
     check(rejectedProfile);
-    disabledProfile.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
+    disabledProfile.set_private_interrupt_sender([](uint64_t, unsigned) { return true; });
     rejectedProfile = false;
-    try { disabledProfile.advertiseSynic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    try { disabledProfile.advertise_synic(true); } catch (const std::runtime_error &) { rejectedProfile = true; }
     check(rejectedProfile);
-    profile.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
-    profile.advertiseSynic(true);
+    profile.set_private_interrupt_sender([](uint64_t, unsigned) { return true; });
+    profile.advertise_synic(true);
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
     r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
-    check(profile.call(0, r, 0) && r[0] == one && r[6] == (features | 4));
+    check(profile.handle_hypercall(0, r, 0) && r[0] == one && r[6] == (features | 4));
     check(profile.report().find("\"mode\":\"synic\"") != std::string::npos);
     rejectedProfile = false;
-    try { profile.setPrivateInterruptSender({}); } catch (const std::runtime_error &) { rejectedProfile = true; }
+    try { profile.set_private_interrupt_sender({}); } catch (const std::runtime_error &) { rejectedProfile = true; }
     check(rejectedProfile);
-    profile.advertiseSynic(false);
+    profile.advertise_synic(false);
     check(profile.report().find("\"mode\":\"basic\"") != std::string::npos);
     std::vector<uint8_t> busRam(16384);
     ArmVmbus bus(busRam, base, 2);
@@ -1057,31 +1057,31 @@ int main() {
         std::vector<uint8_t> integratedRam(16384);
         ArmHyperV integrated(true, integratedRam, base, 2);
         bool rejected = false;
-        try { integrated.enableVmbus(); } catch (const std::runtime_error &) { rejected = true; }
+        try { integrated.enable_vmbus(); } catch (const std::runtime_error &) { rejected = true; }
         check(rejected);
         unsigned notifications = 0;
-        integrated.setPrivateInterruptSender([&](uint64_t mask, unsigned intid) {
+        integrated.set_private_interrupt_sender([&](uint64_t mask, unsigned intid) {
             check(mask == 2 && intid == 16); ++notifications; return true;
         });
-        integrated.advertiseSynic(true);
-        integrated.enableVmbus(); integrated.enableVmbus(); // Idempotent setup.
+        integrated.advertise_synic(true);
+        integrated.enable_vmbus(); integrated.enable_vmbus(); // Idempotent setup.
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10050;
         r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x200;
-        check(integrated.call(0, r, 0) && r[0] == one &&
+        check(integrated.handle_hypercall(0, r, 0) && r[0] == one &&
               r[6] == (features | 0x1c | (1ull << 36) | (1ull << 37)));
         check((r[6] & 0x7e) == 0x7e); // WinHv driver initialization prerequisite.
-        check(!integrated.removeConnection(1) && !integrated.removeConnection(4));
-        check(!integrated.bindMessageConnection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+        check(!integrated.remove_connection(1) && !integrated.remove_connection(4));
+        check(!integrated.bind_message_connection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
         rejected = false;
-        try { integrated.advertiseSynic(false); } catch (const std::runtime_error &) { rejected = true; }
+        try { integrated.advertise_synic(false); } catch (const std::runtime_error &) { rejected = true; }
         check(rejected);
-        auto &controller = integrated.synicController();
+        auto &controller = integrated.synic_controller();
         check(controller.write_vp_register(0xa0010, 1, 1) == 0);
         check(controller.write_vp_register(0xa0013, 1, base + 4096 + 1) == 0);
         check(controller.write_vp_register(0xa0002, 1, 16) == 0);
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0x90002; r[6] = 0x1000a000066bbull;
-        check(integrated.call(0, r, 0) && r[0] == one);
+        check(integrated.handle_hypercall(0, r, 0) && r[0] == one);
         auto post = [&](uint32_t connection, uint32_t kind, unsigned bytes) {
             std::fill(integratedRam.begin(), integratedRam.begin() + 256, 0);
             put(integratedRam, 0, connection, 4); put(integratedRam, 4, 0xfeedbeef, 4);
@@ -1094,8 +1094,8 @@ int main() {
             r = {}; r[0] = smccc ? 0x46000001 : 0x5c;
             r[smccc ? 1 : 0] = 0x5c; r[smccc ? 2 : 1] = base;
             if (smccc) r[0] = 0x46000001;
-            check(integrated.call(smccc ? 0 : 1, r, 0) && r[0] == 0);
-            check(integrated.serviceDelay100ns().value_or(10001) <= 10000);
+            check(integrated.handle_hypercall(smccc ? 0 : 1, r, 0) && r[0] == 0);
+            check(integrated.next_service_delay_100ns().value_or(10001) <= 10000);
             integrated.service();
         };
         post(4, 14, 40);
@@ -1115,18 +1115,18 @@ int main() {
         check(integrated.report().find("\"offeredChannels\":0") != std::string::npos);
     }
     ArmHyperV collision(true, busRam, base, 1);
-    collision.setPrivateInterruptSender([](uint64_t, unsigned) { return true; });
-    collision.advertiseSynic(true);
-    check(collision.bindMessageConnection(1, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    collision.set_private_interrupt_sender([](uint64_t, unsigned) { return true; });
+    collision.advertise_synic(true);
+    check(collision.bind_message_connection(1, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
     bool collisionRejected = false;
-    try { collision.enableVmbus(); } catch (const std::runtime_error &) { collisionRejected = true; }
-    check(collisionRejected && collision.removeConnection(1));
-    check(collision.bindMessageConnection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
+    try { collision.enable_vmbus(); } catch (const std::runtime_error &) { collisionRejected = true; }
+    check(collisionRejected && collision.remove_connection(1));
+    check(collision.bind_message_connection(4, [](unsigned, uint32_t, std::span<const uint8_t>) { return uint16_t(0); }));
     ArmHyperV pageDiagnostic(true, busRam, base, 2);
     auto diagnosticWrite = [&](uint32_t name, uint64_t low, uint64_t high, unsigned vp) {
         r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
         r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = name; r[6] = low; r[7] = high;
-        check(pageDiagnostic.call(0, r, vp)); return r[0];
+        check(pageDiagnostic.handle_hypercall(0, r, vp)); return r[0];
     };
     check(diagnosticWrite(0x90002, 0x5043454d55, 0, 0) == one);
     check(diagnosticWrite(0xa0013, base + busRam.size() + 1, 0, 1) == 5);
@@ -1139,7 +1139,7 @@ int main() {
     r = {}; r[0] = 0x46000001; r[1] = one | 0x10051;
     r[2] = UINT64_MAX; r[3] = 0xfffffffe; r[4] = 0xa0013 | (0xbeefull << 32);
     r[5] = 0x11223344; r[6] = base + 1;
-    check(pageDiagnostic.call(0, r, 0) && r[0] == one);
+    check(pageDiagnostic.handle_hypercall(0, r, 0) && r[0] == one);
     check(pageDiagnostic.report().find("\"lastWriteNamePadding\":48879,\"lastWritePadding\":287454020,\"lastWriteFast\":true") != std::string::npos);
     for (bool smccc : {false, true}) for (bool fast : {false, true}) {
         std::fill(busRam.begin(), busRam.begin() + 256, 0);
@@ -1151,12 +1151,12 @@ int main() {
         unsigned start = smccc ? 2 : 1;
         if (fast) for (unsigned i = 0; i < 6; ++i) r[start + i] = get(busRam, i * 8);
         else r[start] = base;
-        check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == one);
-        check(pageDiagnostic.synicController().read_vp_register(0xa0013, 0, value) == 0 && value == base + 4096 + 1);
+        check(pageDiagnostic.handle_hypercall(smccc ? 0 : 1, r, 0) && r[0] == one);
+        check(pageDiagnostic.synic_controller().read_vp_register(0xa0013, 0, value) == 0 && value == base + 4096 + 1);
         // Padding tolerance does not permit nonzero bits beyond a 64-bit register.
         if (fast) r[start + 5] = 1; else put(busRam, 40, 1);
         r[0] = smccc ? 0x46000001 : (one | 0x51 | (fast ? 0x10000 : 0));
-        check(pageDiagnostic.call(smccc ? 0 : 1, r, 0) && r[0] == 5);
+        check(pageDiagnostic.handle_hypercall(smccc ? 0 : 1, r, 0) && r[0] == 5);
     }
     ArmVmbus ordinaryBus(busRam, base, 2);
     unsigned ordinaryReplies = 0;
@@ -1187,13 +1187,13 @@ int main() {
         auto access=[&](uint32_t name,bool write=false,uint64_t value=0,uint64_t high=0,unsigned vp=0) {
             ArmHyperV::Registers x{};x[0]=0x46000001;x[1]=one|(write?0x10051:0x10050);
             x[2]=~0ull;x[3]=0xfffffffe;x[4]=name;x[6]=value;x[7]=high;
-            check(ref.call(0,x,vp));return x;
+            check(ref.handle_hypercall(0,x,vp));return x;
         };
         check(!(access(0x200)[6]&(1ull<<9)));
         check(access(0x90017)[0]==5);
-        check(!ref.enableReferenceClock([]{return ArmHyperV::CounterSample{0,10000000};}));
-        check(ref.enableReferenceClock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
-        check(!ref.enableReferenceClock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
+        check(!ref.enable_reference_clock([]{return ArmHyperV::CounterSample{0,10000000};}));
+        check(ref.enable_reference_clock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
+        check(!ref.enable_reference_clock([&]{return ArmHyperV::CounterSample{counter,24000000};}));
         check(access(0x200)[6]&(1ull<<9));
         check(access(0x90017)[0]==6);
         check(access(0x90002,true,42)[0]==one);
@@ -1207,9 +1207,9 @@ int main() {
         auto sequence=get(ram,4096,4);check(sequence!=0);
         auto readPage=[&]{return uint64_t((__uint128_t(counter)*get(ram,4104))>>64)+get(ram,4112);};
         check(readPage()==0);
-        ref.rebaseReferenceClock(true);check(get(ram,4096,4)==0);
+        ref.rebase_reference_clock(true);check(get(ram,4096,4)==0);
         counter+=120000000;now+=10000000;
-        ref.rebaseReferenceClock(false);
+        ref.rebase_reference_clock(false);
         check(get(ram,4096,4)!=sequence && get(ram,4096,4)!=0);
         check(readPage()==now);
         check(access(0x90017,true,0)[0]==one && get(ram,4096,4)==0);

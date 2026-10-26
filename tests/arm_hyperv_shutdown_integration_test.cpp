@@ -15,24 +15,24 @@ int main(){
     uint64_t now=0;
     std::vector<uint8_t> ram(16*4096);
     ArmHyperV hv(true,ram,base,1,[&]{return now;});
-    check(!hv.requestShutdown(Action::PowerOff));
-    bool rejected=false;try{hv.enableShutdown();}catch(const std::runtime_error&){rejected=true;}check(rejected);
-    hv.setPrivateInterruptSender([](uint64_t,unsigned){return true;});hv.advertiseSynic(true);hv.enableVmbus();hv.enableShutdown();hv.enableShutdown();
-    check(!hv.requestShutdown(Action::PowerOff));
-    auto& synic=hv.synicController();
+    check(!hv.request_shutdown(Action::PowerOff));
+    bool rejected=false;try{hv.enable_shutdown();}catch(const std::runtime_error&){rejected=true;}check(rejected);
+    hv.set_private_interrupt_sender([](uint64_t,unsigned){return true;});hv.advertise_synic(true);hv.enable_vmbus();hv.enable_shutdown();hv.enable_shutdown();
+    check(!hv.request_shutdown(Action::PowerOff));
+    auto& synic=hv.synic_controller();
     check(synic.write_vp_register(0xa0010,0,1)==0&&synic.write_vp_register(0xa0002,0,16)==0);
     check(synic.write_vp_register(0xa0013,0,base+4096+1)==0&&synic.write_vp_register(0xa0012,0,base+8192+1)==0);
     ArmHyperV::Registers r{};
     r[0]=(1ull<<32)|0x10051;r[1]=UINT64_MAX;r[2]=0xfffffffe;r[3]=0x90002;r[5]=0x1000a000066bb;
-    check(hv.call(1,r,0)&&r[0]==(1ull<<32));
+    check(hv.handle_hypercall(1,r,0)&&r[0]==(1ull<<32));
     r[0]=(1ull<<32)|0x10051;r[1]=UINT64_MAX;r[2]=0xfffffffe;r[3]=0x90002;r[5]=0x1000a000066bb;
-    check(hv.call(1,r,0)&&r[0]==(1ull<<32));
+    check(hv.handle_hypercall(1,r,0)&&r[0]==(1ull<<32));
     auto message=[](unsigned type,size_t size){std::vector<uint8_t> p(size);put(p,0,type);if(size>=12)put(p,8,3);return p;};
     auto post=[&](const std::vector<uint8_t>& p){
         put(ram,4096+512,0);hv.service();put(ram,4096+512,0);
         std::fill(ram.begin(),ram.begin()+256,0);put(ram,0,1);put(ram,8,1);put(ram,12,p.size());
         std::copy(p.begin(),p.end(),ram.begin()+16);r={};r[0]=0x5c;r[1]=base;
-        check(hv.call(1,r,0)&&r[0]==0);hv.service();
+        check(hv.handle_hypercall(1,r,0)&&r[0]==0);hv.service();
     };
     auto contact=message(14,40);put(contact,8,0x60000);post(contact);post(message(3,8));
     check(get(ram,4096+512+16+184)==3);
@@ -44,27 +44,27 @@ int main(){
     bool notify=false;std::vector<uint8_t> request;
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&get(request,28,2)==0);
     auto answer=[&](std::vector<uint8_t> p){p[41]=5;check(tx.write_packet(p,notify)==ArmVmbusRing::Result::Ok);
-        r={};r[0]=0x1005d;r[1]=18;check(hv.call(1,r,0)&&r[0]==0);hv.service();};
-    check(!hv.requestShutdown(Action::PowerOff)); // Negotiation is not complete.
+        r={};r[0]=0x1005d;r[1]=18;check(hv.handle_hypercall(1,r,0)&&r[0]==0);hv.service();};
+    check(!hv.request_shutdown(Action::PowerOff)); // Negotiation is not complete.
     put(request,20,36);put(request,34,16,2);put(request,44,1,2);put(request,46,1,2);
     put(request,52,3);put(request,56,3,2);put(request,58,2,2);
     answer(request);hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Empty); // No implicit operation.
-    check(!hv.serviceDelay100ns());
+    check(!hv.next_service_delay_100ns());
     std::vector<uint8_t> filler(4080);put(filler,0,6,2);put(filler,2,2,2);put(filler,4,510,2);
     check(rx.write_packet(filler,notify)==ArmVmbusRing::Result::Ok);
-    check(hv.requestShutdown(Action::PowerOff));check(!hv.requestShutdown(Action::Reboot));hv.service();
-    check(hv.report().find("\"requests\":0")!=std::string::npos&&hv.serviceDelay100ns()==10000);
+    check(hv.request_shutdown(Action::PowerOff));check(!hv.request_shutdown(Action::Reboot));hv.service();
+    check(hv.report().find("\"requests\":0")!=std::string::npos&&hv.next_service_delay_100ns()==10000);
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&request==filler);hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&request.size()==2104&&get(request,52)==0);
     check(hv.report().find("\"requests\":1")!=std::string::npos);
     auto denied=request;put(denied,36,0x80004005);answer(denied);
     check(hv.report().find("\"denied\":1")!=std::string::npos);
-    check(hv.requestShutdown(Action::Reboot));hv.service();
+    check(hv.request_shutdown(Action::Reboot));hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&get(request,52)==2);
     answer(request);check(hv.report().find("\"accepted\":1")!=std::string::npos);
-    check(!hv.requestShutdown(Action::PowerOff));hv.service();
+    check(!hv.request_shutdown(Action::PowerOff));hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Empty);
-    post(message(7,12));check(!hv.requestShutdown(Action::PowerOff)&&!hv.serviceDelay100ns());
+    post(message(7,12));check(!hv.request_shutdown(Action::PowerOff)&&!hv.next_service_delay_100ns());
     std::cout<<checks<<" shutdown integration checks passed\n";
 }

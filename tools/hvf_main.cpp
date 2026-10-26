@@ -529,20 +529,20 @@ void selfTest() {
         registers[0] = 0x46000001; registers[1] = 0x100010051;
         registers[2] = UINT64_MAX; registers[3] = 0xfffffffe;
         registers[4] = 0x90002; registers[6] = 0x5043454d55;
-        require(hyperv.call(0, registers, 0) && registers[0] == (1ull << 32), "Connection fixture identity failed");
-        auto &synic = hyperv.synicController();
+        require(hyperv.handle_hypercall(0, registers, 0) && registers[0] == (1ull << 32), "Connection fixture identity failed");
+        auto &synic = hyperv.synic_controller();
         require(synic.write_vp_register(0xa0010, 0, 1) == 0 &&
                 synic.write_vp_register(0xa0012, 0, HvfMachine::ramBase + 0x19001) == 0 &&
                 synic.write_vp_register(0xa0013, 0, HvfMachine::ramBase + 0x1a001) == 0 &&
                 synic.write_vp_register(0xa0002, 0, multiclient ? 0 : 31) == 0, "Connection fixture SynIC setup failed");
-        hyperv.setPrivateInterruptSender([&](uint64_t targets, unsigned vector) {
+        hyperv.set_private_interrupt_sender([&](uint64_t targets, unsigned vector) {
             vm.sendPrivateInterrupt(targets, vector); return true;
         });
-        require(hyperv.bindEventConnection(42, 10, [&](unsigned, uint16_t relative) {
+        require(hyperv.bind_event_connection(42, 10, [&](unsigned, uint16_t relative) {
             bool newly = false; return synic.signal_event(0, 2, 100 + relative, newly);
         }), "Native event endpoint binding failed");
-        hyperv.advertiseSynic(true);
-        hyperv.enableVmbus();
+        hyperv.advertise_synic(true);
+        hyperv.enable_vmbus();
         std::array<uint8_t, 256> packet{};
         packet[0] = multiclient ? 4 : 1; packet[4] = 0xa5; packet[8] = 1; packet[12] = 40;
         packet[16] = 14; packet[26] = 6; packet[32] = multiclient ? 2 : 0; // Copper contact, VP0.
@@ -567,7 +567,7 @@ void selfTest() {
             auto immediate = unsigned(exit.syndrome & 0xffff);
             if (immediate <= 1) {
                 for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
-                require(hyperv.call(immediate, registers, 0) && registers[0] == 0,
+                require(hyperv.handle_hypercall(immediate, registers, 0) && registers[0] == 0,
                         "Native connection hypercall failed");
                 hyperv.service();
                 for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);

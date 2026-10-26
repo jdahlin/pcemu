@@ -88,30 +88,30 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
     auto stage = [&](const char *name) { if (c.initializationStage) c.initializationStage(name); };
     stage("loading firmware platform tables");
     if(c.hyperv) {
-        hyperv.enableReferenceClock([this] {
+        hyperv.enable_reference_clock([this] {
             auto sample=vm.virtualCounterSample();
             return ArmHyperV::CounterSample{sample.value,sample.frequency};
         });
-        vm.setCounterRebaseHandler([this](bool before) {hyperv.rebaseReferenceClock(before);});
+        vm.setCounterRebaseHandler([this](bool before) {hyperv.rebase_reference_clock(before);});
     }
-    hyperv.setPrivateInterruptSender([this](uint64_t targets, unsigned interrupt) {
+    hyperv.set_private_interrupt_sender([this](uint64_t targets, unsigned interrupt) {
         vm.sendPrivateInterrupt(targets, interrupt);
         return true;
     });
     if(c.hypervSynic) gicView=std::make_unique<ArmGicNonsecureView>(
         [this](uint32_t offset) {return vm.nativeGicDistributorRead(offset);},
         [this](uint32_t offset,uint64_t value) {vm.nativeGicDistributorWrite(offset,value);});
-    hyperv.advertiseSynic(c.hypervSynic);
-    if (c.hypervVmbus) { hyperv.enableVmbus(); hyperv.enableHeartbeat(); hyperv.enableTimeSync(); hyperv.enableShutdown(); hyperv.enableKvp(); }
-    hyperv.setSoftwareInterruptSender([this](uint64_t targets, unsigned interrupt) {
+    hyperv.advertise_synic(c.hypervSynic);
+    if (c.hypervVmbus) { hyperv.enable_vmbus(); hyperv.enable_heartbeat(); hyperv.enable_time_sync(); hyperv.enable_shutdown(); hyperv.enable_kvp(); }
+    hyperv.set_software_interrupt_sender([this](uint64_t targets, unsigned interrupt) {
         vm.sendSoftwareInterrupt(targets, interrupt);
         return true;
     });
-    hyperv.setContextSynchronizer([this](uint64_t targets) {
+    hyperv.set_context_synchronizer([this](uint64_t targets) {
         vm.synchronizeInstructionContext(targets);
         return true;
     });
-    hyperv.setTranslationFlusher([this](uint64_t targets) {
+    hyperv.set_translation_flusher([this](uint64_t targets) {
         vm.flushTranslationContext(targets);
         return true;
     });
@@ -405,7 +405,7 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     }
     checkDeviceErrors();
     hyperv.service();
-    if (auto delay = hyperv.serviceDelay100ns()) {
+    if (auto delay = hyperv.next_service_delay_100ns()) {
         auto milliseconds = *delay / 10000 + (*delay % 10000 != 0);
         slice = std::min(slice, std::chrono::milliseconds(std::max(uint64_t(1), milliseconds)));
     }
@@ -430,8 +430,8 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (exit.reason == HvfMachine::ExitReason::Exception && exit.exceptionClass() == 0x16) {
         ArmHyperV::Registers registers;
         for (unsigned i = 0; i < registers.size(); ++i) registers[i] = vm.reg(i);
-        if (hyperv.call(unsigned(exit.syndrome & 0xffff), registers, vm.currentCPU())) {
-            auto crash = hyperv.takeCrashReport();
+        if (hyperv.handle_hypercall(unsigned(exit.syndrome & 0xffff), registers, vm.currentCPU())) {
+            auto crash = hyperv.take_crash_report();
             if (!crash.empty()) std::cerr << "Hyper-V guest crash: " << crash << '\n';
             for (unsigned i = 0; i < registers.size(); ++i) vm.setReg(i, registers[i]);
             return; // HVC exits already advance the PC, including legacy HVC #1.

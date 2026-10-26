@@ -97,14 +97,14 @@ int main() {
     uint64_t now=0;
     std::vector<uint8_t> ram(16*4096);
     ArmHyperV hv(true,ram,base,2,[&] {return now;});
-    bool rejected=false; try {hv.enableHeartbeat();} catch(const std::runtime_error &) {rejected=true;}
+    bool rejected=false; try {hv.enable_heartbeat();} catch(const std::runtime_error &) {rejected=true;}
     check(rejected);
-    hv.setPrivateInterruptSender([](uint64_t,unsigned) {return true;});
-    hv.advertiseSynic(true); hv.enableVmbus(); hv.enableHeartbeat(); hv.enableHeartbeat();
+    hv.set_private_interrupt_sender([](uint64_t,unsigned) {return true;});
+    hv.advertise_synic(true); hv.enable_vmbus(); hv.enable_heartbeat(); hv.enable_heartbeat();
     ArmHyperV::Registers r{};
     r[0]=(1ull<<32)|0x10051; r[1]=UINT64_MAX; r[2]=0xfffffffe; r[3]=0x90002; r[5]=0x1000a000066bb;
-    check(hv.call(1,r,0) && r[0]==(1ull<<32));
-    auto &synic=hv.synicController();
+    check(hv.handle_hypercall(1,r,0) && r[0]==(1ull<<32));
+    auto &synic=hv.synic_controller();
     check(synic.write_vp_register(0xa0010,0,1)==0 && synic.write_vp_register(0xa0002,0,16)==0);
     check(synic.write_vp_register(0xa0013,0,base+4096+1)==0 && synic.write_vp_register(0xa0012,0,base+8192+1)==0);
     auto control=[&](unsigned kind,size_t bytes) {std::vector<uint8_t> p(bytes);put(p,0,kind);if(bytes>=12)put(p,8,1);return p;};
@@ -112,7 +112,7 @@ int main() {
         put(ram,4096+512,0); hv.service(); put(ram,4096+512,0);
         std::fill(ram.begin(),ram.begin()+256,0);put(ram,0,1);put(ram,8,1);put(ram,12,p.size());
         std::copy(p.begin(),p.end(),ram.begin()+16); r={};r[0]=0x5c;r[1]=base;
-        check(hv.call(1,r,0) && r[0]==0);hv.service();
+        check(hv.handle_hypercall(1,r,0) && r[0]==0);hv.service();
     };
     auto contact=control(14,40);put(contact,8,0x60000);post(contact);post(control(3,8));
     check(get(ram,4096+512+16)==1 && get(ram,4096+512+16+184)==1);
@@ -127,18 +127,18 @@ int main() {
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && get(request,28,2)==0);
     auto answer=[&](const std::vector<uint8_t>& p) {
         check(tx.write_packet(p,notify)==ArmVmbusRing::Result::Ok);
-        r={};r[0]=0x1005d;r[1]=16;check(hv.call(1,r,0) && r[0]==0);hv.service();
+        r={};r[0]=0x1005d;r[1]=16;check(hv.handle_hypercall(1,r,0) && r[0]==0);hv.service();
     };
     answer(negotiation());hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && get(request,28,2)==1);
     check(hv.report().find("\"responsive\":false")!=std::string::npos);
     now=100;answer(heartbeatReply(request));
-    check(hv.report().find("\"responsive\":true")!=std::string::npos && hv.serviceDelay100ns()==h.ProbeInterval100ns);
+    check(hv.report().find("\"responsive\":true")!=std::string::npos && hv.next_service_delay_100ns()==h.ProbeInterval100ns);
     // Full host-to-guest ring: retain the same candidate, do not count an unsent probe.
     std::vector<uint8_t> filler(4080); put(filler,0,6,2); put(filler,2,2,2); put(filler,4,510,2);
     check(rx.write_packet(filler,notify)==ArmVmbusRing::Result::Ok);
     now+=h.ProbeInterval100ns;hv.service();
-    check(hv.report().find("\"probes\":1")!=std::string::npos && hv.serviceDelay100ns()==10000);
+    check(hv.report().find("\"probes\":1")!=std::string::npos && hv.next_service_delay_100ns()==10000);
     check(rx.read_packet(reply,notify)==ArmVmbusRing::Result::Ok && reply==filler);
     hv.service();check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && get(request,44,8)==4);
     check(hv.report().find("\"probes\":2")!=std::string::npos);
@@ -146,7 +146,7 @@ int main() {
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok);
     answer(heartbeatReply(request));check(hv.report().find("\"responses\":2")!=std::string::npos);
     post(control(7,12));check(hv.report().find("\"state\":\"closed\"")!=std::string::npos);
-    check(!hv.serviceDelay100ns());
+    check(!hv.next_service_delay_100ns());
     auto stale=heartbeatReply(request);
     post(open);check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && get(request,28,2)==0);
     answer(negotiation());hv.service();
@@ -154,7 +154,7 @@ int main() {
     answer(stale);check(hv.report().find("\"responsive\":false")!=std::string::npos);
     answer(heartbeatReply(request));check(hv.report().find("\"responses\":3")!=std::string::npos);
     post(control(16,8));
-    check(hv.report().find("\"state\":\"closed\"")!=std::string::npos && !hv.serviceDelay100ns());
+    check(hv.report().find("\"state\":\"closed\"")!=std::string::npos && !hv.next_service_delay_100ns());
     check(hv.report().find("\"gpadls\":0")!=std::string::npos);
     std::cout << checks << " heartbeat checks passed\n";
 }
