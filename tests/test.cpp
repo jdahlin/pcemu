@@ -145,6 +145,61 @@ int main() {
             check(c.generation[pte >> 12] == writes,
                   "translation preserves page-table code invalidation on A/D writes");
         }
+        // A cached mapping retains its original PTE address until invalidation,
+        // even if the PDE now points at another table. Dirty-bit writes must
+        // not recompute that address from the replacement PDE.
+        for (unsigned privilege : {0u, 3u}) {
+            CPU c(2 * 1024 * 1024);
+            auto put = [&](uint32_t address, uint32_t value) {
+                std::memcpy(c.mem.data() + address, &value, 4);
+            };
+            auto get = [&](uint32_t address) {
+                uint32_t value;
+                std::memcpy(&value, c.mem.data() + address, 4);
+                return value;
+            };
+            constexpr uint32_t directory = 0x80000, oldPte = 0x81024, newPte = 0x82024;
+            put(directory, 0x81007);
+            put(oldPte, 0x100007);
+            put(newPte, 0x110007);
+            c.cr[0] = 0x80000011;
+            c.cr[3] = directory;
+            c.s[CS].selector = privilege;
+            check(c.physical(0x9000) == 0x100000, "initial cached mapping uses original PTE");
+            put(directory, 0x82007);
+            c.markCode(oldPte);
+            c.markCode(newPte);
+            auto oldGeneration = c.generation[oldPte >> 12];
+            auto newGeneration = c.generation[newPte >> 12];
+            c.write(0x9000, 0x55, 1);
+            check(c.mem[0x100000] == 0x55 && c.mem[0x110000] == 0,
+                  "cached dirty transition retains the old physical frame");
+            check((get(oldPte) & 64) && !(get(newPte) & 64) && !(get(directory) & 32),
+                  "cached dirty transition writes only the original PTE");
+            check(c.generation[oldPte >> 12] == oldGeneration + 1 &&
+                      c.generation[newPte >> 12] == newGeneration,
+                  "cached dirty update invalidates the original table's code page");
+            c.flushTLB();
+            c.write(0x9000, 0x77, 1);
+            check(c.mem[0x110000] == 0x77 && c.mem[0x100000] == 0x55 && (get(newPte) & 64),
+                  "TLB flush adopts the replacement table and dirty address");
+            uint32_t collisionPage = 1024;
+            auto slot = [&](uint32_t page) { return (page ^ (page >> 10)) & (c.tlb.size() - 1); };
+            while (slot(collisionPage) != slot(9))
+                ++collisionPage;
+            put(directory + 4 * (collisionPage >> 10), 0x83007);
+            auto aliasPte = 0x83000 + 4 * (collisionPage & 1023);
+            put(aliasPte, 0x120007);
+            check(c.physical(collisionPage << 12) == 0x120000, "colliding tag replaces cached mapping");
+            c.write(0x9000, 0x99, 1);
+            check(c.mem[0x110000] == 0x99 && !(get(aliasPte) & 64),
+                  "tag replacement cannot retain another mapping's dirty address");
+            c.tlbEpoch = UINT32_MAX;
+            c.flushTLB();
+            c.write(0x9000, 0xaa, 1);
+            check(c.tlbEpoch == 1 && c.mem[0x110000] == 0xaa && c.mem[0x100000] == 0x55,
+                  "epoch wrap refills the replacement PTE without touching the old frame");
+        }
         // Lazy privilege evaluation must still encode U/S on nonpresent
         // PDE/PTE faults, including VM86 and supervisor system-read overrides.
         for (unsigned privilege : {0u, 3u})
