@@ -73,9 +73,9 @@ void ArmHyperV::service() {
         }
         if (shutdownEnabled) {
             auto now=timeNow();
-            auto packet=shutdown.packet(now);
-            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVShutdown::channelId,packet))
-                shutdown.sent(now);
+            auto packet=shutdown.pending_packet(now);
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVShutdown::ChannelId,packet))
+                shutdown.packet_published(now);
         }
         if (kvpEnabled) {
             auto now=timeNow();auto packet=kvp.packet(now);
@@ -98,7 +98,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (shutdownEnabled) {
-        auto next=shutdown.delay(now);
+        auto next=shutdown.next_delay_100ns(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (synic.needs_service() || (vmbusEnabled && vmbus.needs_service())) return std::min(delay.value_or(10000), uint64_t(10000));
@@ -180,10 +180,10 @@ void ArmHyperV::enableTimeSync(Clock source) {
 }
 void ArmHyperV::enableShutdown() {
     if(shutdownEnabled) return;
-    if(!offerVmbusChannel(ArmHyperVShutdown::offer(),
+    if(!offerVmbusChannel(ArmHyperVShutdown::channel_offer(),
         [this](std::span<const uint8_t> packet) {
-            shutdown.receive(packet,timeNow()); return std::vector<uint8_t>{};
-        },[this]{shutdown.closed();},[this]{shutdown.opened(timeNow());}))
+            shutdown.receive_response(packet,timeNow()); return std::vector<uint8_t>{};
+        },[this]{shutdown.channel_closed();},[this]{shutdown.channel_opened(timeNow());}))
         throw std::runtime_error("Shutdown requires VMBus and an available channel/connection");
     shutdownEnabled=true;
 }
@@ -212,7 +212,7 @@ std::optional<ArmHyperVKvp::Result> ArmHyperV::takeKvpResult() {
     return kvpEnabled ? kvp.takeResult() : std::nullopt;
 }
 bool ArmHyperV::requestShutdown(ArmHyperVShutdown::Action action,bool force,uint32_t seconds) {
-    return enabled && shutdownEnabled && shutdown.request(action,force,seconds);
+    return enabled && shutdownEnabled && shutdown.request_shutdown(action,force,seconds);
 }
 bool ArmHyperV::bindMessageConnection(uint32_t id, MessageHandler handler) {
     if (id > 0xffffff || !handler || connections.contains(id) || connections.size() >= 64) return false;
