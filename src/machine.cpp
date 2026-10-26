@@ -115,8 +115,8 @@ void Machine::poll() {
     }
     if (!ata.irq)
         ataLine = false;
-    if (nic.irq() && !nicLine) pic[1].raise_interrupt(2);
-    nicLine = nic.irq();
+    if (nic.interrupt_level() && !nicLine) pic[1].raise_interrupt(2);
+    nicLine = nic.interrupt_level();
     const bool ready = (cpu.flags & IF) &&
         !(cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough);
     if (auto vector = pic.next_interrupt_vector(ready)) {

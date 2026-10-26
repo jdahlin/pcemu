@@ -47,16 +47,16 @@ static uint16_t sum(const uint8_t *p, size_t n, uint32_t s = 0) {
 }
 constexpr uint32_t guest = 0x0a00020f, gateway = 0x0a000202;
 static void configure(NE2000 &n) {
-    n.out(0x300, 0x21, 1);
-    n.out(0x301, 0x46, 1);
-    n.out(0x302, 0x80, 1);
-    n.out(0x303, 0x46, 1);
-    n.out(0x30c, 0x14, 1);
-    n.out(0x30e, 0x49, 1);
-    n.out(0x300, 0x61, 1);
-    n.out(0x307, 0x47, 1);
-    n.out(0x300, 0x22, 1);
-    n.out(0x307, 0x7f, 1);
+    n.write_register(0x300, 0x21, 1);
+    n.write_register(0x301, 0x46, 1);
+    n.write_register(0x302, 0x80, 1);
+    n.write_register(0x303, 0x46, 1);
+    n.write_register(0x30c, 0x14, 1);
+    n.write_register(0x30e, 0x49, 1);
+    n.write_register(0x300, 0x61, 1);
+    n.write_register(0x307, 0x47, 1);
+    n.write_register(0x300, 0x22, 1);
+    n.write_register(0x307, 0x7f, 1);
 }
 static Bytes take(NE2000 &n, uint8_t &page) {
     if (page == n.current)
@@ -168,24 +168,24 @@ int main(int argc, char **argv) {
         std::filesystem::temp_directory_path() / ("pcemu-network-" + std::to_string(getpid()));
     try {
         NE2000 n;
-        check(n.in(0x307, 1) == 0x80, "power-on reset status");
-        n.out(0x308, 0, 1);
-        n.out(0x309, 0, 1);
-        n.out(0x30a, 32, 1);
-        n.out(0x30b, 0, 1);
-        n.out(0x300, 0x0a, 1);
-        check(n.in(0x310, 2) == 0x0202, "duplicated station PROM");
+        check(n.read_register(0x307, 1) == 0x80, "power-on reset status");
+        n.write_register(0x308, 0, 1);
+        n.write_register(0x309, 0, 1);
+        n.write_register(0x30a, 32, 1);
+        n.write_register(0x30b, 0, 1);
+        n.write_register(0x300, 0x0a, 1);
+        check(n.read_register(0x310, 2) == 0x0202, "duplicated station PROM");
         for (unsigned i = 2; i < 32; ++i)
-            n.in(0x310, 1);
+            n.read_register(0x310, 1);
         check(n.remoteCount == 0 && (n.isr & 0x40), "remote DMA completion");
-        check(n.in(0x310, 2) == 65535, "completed DMA does not advance");
-        n.out(0x307, 0x40, 1);
+        check(n.read_register(0x310, 2) == 65535, "completed DMA does not advance");
+        n.write_register(0x307, 0x40, 1);
         check(!(n.isr & 0x40), "ISR write-one-clear");
-        n.out(0x308, 0, 1);
-        n.out(0x309, 0x40, 1);
-        n.out(0x30a, 3, 1);
-        n.out(0x300, 0x12, 1);
-        n.out(0x310, 0x44332211, 4);
+        n.write_register(0x308, 0, 1);
+        n.write_register(0x309, 0x40, 1);
+        n.write_register(0x30a, 3, 1);
+        n.write_register(0x300, 0x12, 1);
+        n.write_register(0x310, 0x44332211, 4);
         check(n.memory[0x4000] == 0x11 && n.memory[0x4002] == 0x33 && n.remoteCount == 0,
               "odd DMA count cannot overrun");
         n.reset();
@@ -193,37 +193,37 @@ int main(int argc, char **argv) {
         n.remoteCount = 12;
         n.command = 0x0a;
         for (uint8_t expected : n.physical)
-            check(n.in(0x310, 1) == expected, "WTS byte reads consume full PROM words");
+            check(n.read_register(0x310, 1) == expected, "WTS byte reads consume full PROM words");
         check(n.remote == 12 && !n.remoteCount, "WTS word count and address");
         configure(n);
         Bytes frame(60, 0x41);
         std::copy(n.physical.begin(), n.physical.end(), frame.begin());
-        check(n.receive(frame.data(), frame.size()), "unicast packet accepted");
+        check(n.receive_packet(frame.data(), frame.size()), "unicast packet accepted");
         check(n.memory[0x4700] == 1 && n.memory[0x4701] == 0x48 && n.memory[0x4702] == 64,
               "receive ring header");
         check(n.isr & 1, "receive IRQ status");
-        n.out(0x30f, 1, 1);
-        check(n.irq(), "interrupt mask enables pending IRQ");
-        n.out(0x307, 1, 1);
-        check(!n.irq(), "acknowledged interrupt deasserts");
+        n.write_register(0x30f, 1, 1);
+        check(n.interrupt_level(), "interrupt mask enables pending IRQ");
+        n.write_register(0x307, 1, 1);
+        check(!n.interrupt_level(), "acknowledged interrupt deasserts");
         frame[0] ^= 2;
         n.rcr = 0;
-        check(!n.receive(frame.data(), frame.size()), "unicast address filtering");
+        check(!n.receive_packet(frame.data(), frame.size()), "unicast address filtering");
         std::fill_n(frame.data(), 6, 255);
-        check(!n.receive(frame.data(), frame.size()), "broadcast filter disabled");
+        check(!n.receive_packet(frame.data(), frame.size()), "broadcast filter disabled");
         n.rcr = 4;
-        check(n.receive(frame.data(), frame.size()), "broadcast filter enabled");
+        check(n.receive_packet(frame.data(), frame.size()), "broadcast filter enabled");
         n.rcr = 0x10;
         n.current = 0x7f;
         n.boundary = 0x49;
         frame.resize(600);
-        check(n.receive(frame.data(), frame.size()) && n.current == 0x48 - 0 /* next 48 */,
+        check(n.receive_packet(frame.data(), frame.size()) && n.current == 0x48 - 0 /* next 48 */,
               "ring wraps at PSTOP");
         // The protected boundary must reject an incoming packet before writes.
         n.current = 0x47;
         n.boundary = 0x48;
         auto before = n.memory;
-        check(!n.receive(frame.data(), frame.size()) && n.memory == before && (n.isr & 0x10),
+        check(!n.receive_packet(frame.data(), frame.size()) && n.memory == before && (n.isr & 0x10),
               "overflow preserves unread ring");
         configure(n);
         n.remote = 0x7fff;
@@ -231,12 +231,12 @@ int main(int argc, char **argv) {
         n.command = 0x0a;
         n.memory[0x7fff] = 0xab;
         n.memory[0x4600] = 0xcd;
-        check(n.in(0x310, 2) == 0xcdab && n.remote == 0x4601, "remote DMA ring wrap");
+        check(n.read_register(0x310, 2) == 0xcdab && n.remote == 0x4601, "remote DMA ring wrap");
         n.command = 0x22;
         n.transmitPage = 0x40;
         n.transmitCount = 60;
         std::copy_n(frame.data(), 60, n.memory.data() + 0x4000);
-        n.out(0x300, 0x26, 1);
+        n.write_register(0x300, 0x26, 1);
         check(n.outgoing.size() == 1 && (n.isr & 2) && n.transmitStatus == 1,
               "transmit DMA and PTX");
         n.outgoing.clear();

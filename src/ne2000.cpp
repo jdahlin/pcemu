@@ -1,13 +1,63 @@
+// The NE2000 is a programmed-I/O Ethernet board: guest drivers use the DP8390
+// Network Interface Controller (NIC) registers to configure a station (MAC, media access control)
+// address, receive ring and interrupts. Remote direct memory access (DMA) moves bytes between CPU
+// I/O ports and board memory, not the machine's system RAM. Local DMA sends a contiguous transmit
+// buffer or fills a receive ring in 256-byte pages. A register page selector reuses offsets;
+// direction also changes register meaning. All offsets below are relative to the board's fixed I/O
+// base (300h).
+//
+// The board exposes a duplicated station-address PROM (programmable read-only
+// memory) and 16 KiB packet RAM. The guest uploads a frame through remote DMA,
+// sets transmit page/count and issues TXP. Host frames pass destination filtering
+// and are stored with status, next-page pointer, length and a generated Ethernet
+// frame check sequence (FCS). CURR advances while BNRY protects unread packets.
+// Interrupt Status latches events; Interrupt Mask controls the active-high INT
+// output without clearing them. The machine wires that output to IRQ10; the
+// network backend drains/fills host frame queues outside this controller.
+//
+// IMPLEMENTATION NOTE: Transmits complete synchronously, with no collision,
+// carrier, bus arbitration, first-in/first-out (FIFO) timing or retransmission model. Frames are
+// padded to 60 bytes excluding FCS; host acceptance/queue caps are emulator policy. Reset clears
+// RAM, filters and queues and restores our fixed MAC address, while preserving host traffic
+// counters. Unimplemented/reserved register reads are zero except reserved page 3/absent board
+// memory, which return FFh. COMPATIBILITY: Any TCR loopback mode loops through the same receiver
+// regardless of DCR.LS; RCR.PRO bypasses every destination filter; monitor mode drops without
+// tallying; Page 2 remote/local-next diagnostic pointers expose address high bytes
+// and address counters return zero. Board Reset reads reset state and writes set
+// RST, rather than modeling a physical reset-latch pulse. DCR.WTS consumes an
+// unused upper byte lane on byte I/O; other DCR controls are stored only.
+// FIXME: Implement DCR byte ordering/send-packet DMA, TCR CRC/loopback controls,
+// monitor tallying, physical-only PRO filtering and diagnostic register state to
+// match the cited register definitions. Preserve these guest-visible differences
+// in this documentation/naming migration. Counter saturation at C0h and overflow
+// reset-status behavior also remain unmodeled (10.3 ISR and Network Tally Counters).
+// National Semiconductor DP8390D/NS32490D, July 1995, TL/F/8582, sections 7-11.
+// Original manufacturer datasheet (archived mirror, PDF pages equal printed pages):
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=17
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=22
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=25
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=29
+// NE2000-specific board conventions have an implementation reference, not a
+// separate board specification, in Linux ne.c (PROM signatures/data/reset/RAM):
+// https://github.com/torvalds/linux/blob/master/drivers/net/ethernet/8390/ne.c#L138
+
 #include "ne2000.hpp"
 #include <algorithm>
 #include <cstring>
 namespace pc {
+// Construct a reset board/controller with the emulator station address.
+// DP8390D 11.0 Initialization Procedures.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=29
 NE2000::NE2000() {
     reset();
 }
+// Reset registers, PROM/RAM and outgoing queue; host traffic counters are retained.
+// IMPLEMENTATION NOTE: Memory/address clearing is board policy, not the chip reset bit table.
+// DP8390D 11.0 Initialization Procedures.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=29
 void NE2000::reset() {
-    command = 0x21;
-    isr = 0x80;
+    command = StopController | AbortRemoteDma;
+    isr = ResetStatus;
     imr = 0;
     rcr = tcr = dcr = 0;
     remote = remoteCount = transmitCount = local = 0;
@@ -17,92 +67,118 @@ void NE2000::reset() {
     multicast.fill(0);
     outgoing.clear();
     memory.fill(0);
-    constexpr uint8_t mac[] = {0x02, 0x50, 0x43, 0x45, 0x4d, 0x01};
-    std::copy_n(mac, 6, physical.begin());
+    physical = DefaultStationAddress;
     // NE2000's 16-byte station PROM is duplicated on the 16-bit data bus.
-    for (unsigned i = 0; i < 16; ++i) {
-        uint8_t b = i < 6 ? mac[i] : (i >= 14 ? 0x57 : 0);
+    for (unsigned i = 0; i < StationPromBytes; ++i) {
+        uint8_t b = i < EthernetAddressBytes ? DefaultStationAddress[i]
+                                             : (i >= PromSignatureOffset ? PromSignatureByte : 0);
         memory[i * 2] = memory[i * 2 + 1] = b;
     }
 }
-uint8_t NE2000::readMemory(uint16_t a) const {
-    return a < 32 || (a >= 0x4000 && a < 0x8000) ? memory[a] : 0xff;
+// Read board PROM/RAM; absent locations float high (FFh) by emulator policy.
+// NE2000 board map; not a DP8390 on-chip memory specification.
+// https://github.com/torvalds/linux/blob/master/drivers/net/ethernet/8390/ne.c#L145
+// DP8390D 6.0 Direct Memory Access Control.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=7
+uint8_t NE2000::read_buffer_memory(uint16_t a) const {
+    return a < StationPromBusBytes || (a >= PacketRamStart && a < PacketRamEnd) ? memory[a] : 0xff;
 }
-void NE2000::writeMemory(uint16_t a, uint8_t v) {
-    if (a >= 0x4000 && a < 0x8000)
+// Write populated packet RAM only; PROM/absent writes are ignored.
+// NE2000 board map; not a DP8390 on-chip memory specification.
+// https://github.com/torvalds/linux/blob/master/drivers/net/ethernet/8390/ne.c#L145
+// DP8390D 6.0 Direct Memory Access Control.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=7
+void NE2000::write_buffer_memory(uint16_t a, uint8_t v) {
+    if (a >= PacketRamStart && a < PacketRamEnd)
         memory[a] = v;
 }
-void NE2000::advanceDMA() {
+// Advance remote address with ring wrap, decrement byte count and latch completion.
+// DP8390D 9.0 Remote DMA; 10.7 Remote DMA Registers.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=28
+void NE2000::advance_remote_dma() {
     ++remote;
-    if (stop > start && remote == uint16_t(stop) * 256)
-        remote = uint16_t(start) * 256;
+    if (stop > start && remote == uint16_t(stop) * BufferPageBytes)
+        remote = uint16_t(start) * BufferPageBytes;
     if (remoteCount && --remoteCount == 0)
-        isr |= 0x40;
+        isr |= RemoteDmaCompleteInterrupt;
 }
-uint8_t NE2000::dmaRead() {
-    if (!remoteCount || (command & 0x38) != 0x08)
+// Return the next remote-read byte and consume it; inactive reads return FFh.
+// DP8390D 9.0 Remote DMA, Remote Read.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=13
+uint8_t NE2000::read_remote_dma_byte() {
+    if (!remoteCount || (command & RemoteDmaCommandMask) != RemoteRead)
         return 0xff;
-    uint8_t v = readMemory(remote);
-    advanceDMA();
+    uint8_t v = read_buffer_memory(remote);
+    advance_remote_dma();
     return v;
 }
-void NE2000::dmaWrite(uint8_t v) {
-    if (!remoteCount || (command & 0x38) != 0x10)
+// Consume a remote-write byte only while the command/count are active.
+// DP8390D 9.0 Remote DMA, Remote Write.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=13
+void NE2000::write_remote_dma_byte(uint8_t v) {
+    if (!remoteCount || (command & RemoteDmaCommandMask) != RemoteWrite)
         return;
-    writeMemory(remote, v);
-    advanceDMA();
+    write_buffer_memory(remote, v);
+    advance_remote_dma();
 }
-uint32_t NE2000::in(uint16_t p, int w) {
+// Read the selected register page or little-endian data-port lanes; reset reads reset the board.
+// Board reset/data-port conventions:
+// https://github.com/torvalds/linux/blob/master/drivers/net/ethernet/8390/ne.c#L138
+// DP8390D 10.2 Register Address Assignments.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=17
+uint32_t NE2000::read_register(uint16_t p, int w) {
     unsigned r = p - base;
-    if (r >= 0x10 && r <= 0x17) {
+    if (r >= Register::DataRegister && r <= Register::DataWindowLastRegister) {
         uint32_t v = 0;
         for (int i = 0; i < w; ++i)
-            v |= uint32_t(dmaRead()) << (8 * i);
+            v |= uint32_t(read_remote_dma_byte()) << (8 * i);
         // WTS selects word-wide remote DMA even for a byte host read:
         // the unused upper lane is consumed, rather than read next time.
-        if (w == 1 && (dcr & 1))
-            dmaRead();
+        if (w == 1 && (dcr & WordTransferSelect))
+            read_remote_dma_byte();
         return v;
     }
-    if (r == 0x1f) {
+    if (r == Register::ResetRegister) {
         reset();
         return 0;
     }
-    if (r == 0)
+    if (r == Register::CommandRegister)
         return command;
-    if (r >= 16)
+    if (r >= RegisterWindowSize)
         return 0xff;
-    unsigned page = command >> 6;
+    unsigned page = command >> RegisterPageShift;
     if (page == 1) {
-        if (r <= 6)
-            return physical[r - 1];
-        if (r == 7)
+        if (r <= Register::PhysicalAddressLastRegister)
+            return physical[r - Register::PhysicalAddressFirstRegister];
+        if (r == Register::CurrentPageRegister)
             return current;
-        return multicast[r - 8];
+        return multicast[r - Register::MulticastAddressFirstRegister];
     }
     if (page == 2) {
         switch (r) {
-        case 1:
+        case Register::PageStartRegister:
             return start;
-        case 2:
+        case Register::PageStopRegister:
             return stop;
-        case 3:
+        case Register::RemoteNextPacketRegister:
+            // COMPATIBILITY: Proxy CRDA high byte, not an independent diagnostic pointer.
             return remote >> 8;
-        case 4:
+        case Register::TransmitPageStartRegister:
             return transmitPage;
-        case 5:
+        case Register::LocalNextPacketRegister:
+            // COMPATIBILITY: Proxy CLDA high byte, not an independent diagnostic pointer.
             return local >> 8;
-        case 6:
+        case Register::AddressCounterHighRegister:
             return 0;
-        case 7:
+        case Register::AddressCounterLowRegister:
             return 0;
-        case 12:
+        case Register::ReceiveConfigurationRegister:
             return rcr;
-        case 13:
+        case Register::TransmitConfigurationRegister:
             return tcr;
-        case 14:
+        case Register::DataConfigurationRegister:
             return dcr;
-        case 15:
+        case Register::InterruptMaskRegister:
             return imr;
         default:
             return 0;
@@ -111,214 +187,246 @@ uint32_t NE2000::in(uint16_t p, int w) {
     if (page != 0)
         return 0xff;
     switch (r) {
-    case 1:
+    case Register::CurrentLocalAddressLowRegister:
         return local & 255;
-    case 2:
+    case Register::CurrentLocalAddressHighRegister:
         return local >> 8;
-    case 3:
+    case Register::BoundaryRegister:
         return boundary;
-    case 4:
+    case Register::TransmitStatusRegister:
         return transmitStatus;
-    case 5:
-    case 6:
+    case Register::CollisionCountRegister:
+    case Register::FifoRegister:
         return 0;
-    case 7:
+    case Register::InterruptStatusRegister:
         return isr;
-    case 8:
+    case Register::CurrentRemoteAddressLowRegister:
         return remote & 255;
-    case 9:
+    case Register::CurrentRemoteAddressHighRegister:
         return remote >> 8;
-    case 12:
+    case Register::ReceiveStatusRegister:
         return receiveStatus;
-    case 13:
-    case 14:
-    case 15: {
-        uint8_t v = tally[r - 13];
-        tally[r - 13] = 0;
+    case Register::AlignmentErrorTallyRegister:
+    case Register::CrcErrorTallyRegister:
+    case Register::MissedPacketTallyRegister: {
+        uint8_t v = tally[r - Register::AlignmentErrorTallyRegister];
+        tally[r - Register::AlignmentErrorTallyRegister] = 0;
         return v;
     }
     default:
         return 0;
     }
 }
-void NE2000::out(uint16_t p, uint32_t v, int w) {
+// Write the selected page or DMA lanes; CR starts/stops/transmits, ISR acknowledges events.
+// Board reset-port writes only latch RST here, as described in the overview.
+// DP8390D 10.2 Register Address Assignments; 10.3 Command/Interrupt Status Registers.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=17
+void NE2000::write_register(uint16_t p, uint32_t v, int w) {
     unsigned r = p - base;
-    if (r >= 0x10 && r <= 0x17) {
+    if (r >= Register::DataRegister && r <= Register::DataWindowLastRegister) {
         for (int i = 0; i < w; ++i)
-            dmaWrite(v >> (i * 8));
-        if (w == 1 && (dcr & 1) && remoteCount)
-            advanceDMA();
+            write_remote_dma_byte(v >> (i * 8));
+        if (w == 1 && (dcr & WordTransferSelect) && remoteCount)
+            advance_remote_dma();
         return;
     }
-    if (r == 0x1f) {
-        isr |= 0x80;
+    if (r == Register::ResetRegister) {
+        // COMPATIBILITY: Preserve the existing reset-acknowledge latch behavior.
+        isr |= ResetStatus;
         return;
     }
-    if (r == 0) {
-        command = uint8_t(v) & ~4;
-        if (command & 1)
-            isr |= 0x80;
-        else if (command & 2)
-            isr &= ~0x80;
-        if (((command & 0x38) == 0x08 || (command & 0x38) == 0x10) && !remoteCount)
-            isr |= 0x40;
-        if ((v & 4) && !(command & 1) && (command & 2))
-            transmit();
+    if (r == Register::CommandRegister) {
+        command = uint8_t(v) & ~TransmitPacket;
+        if (command & StopController)
+            isr |= ResetStatus;
+        else if (command & StartController)
+            isr &= ~ResetStatus;
+        if (((command & RemoteDmaCommandMask) == RemoteRead ||
+             (command & RemoteDmaCommandMask) == RemoteWrite) &&
+            !remoteCount)
+            isr |= RemoteDmaCompleteInterrupt;
+        if ((v & TransmitPacket) && !(command & StopController) && (command & StartController))
+            transmit_packet();
         return;
     }
-    if (r >= 16)
+    if (r >= RegisterWindowSize)
         return;
-    unsigned page = command >> 6;
+    unsigned page = command >> RegisterPageShift;
     if (page == 1) {
-        if (r <= 6)
-            physical[r - 1] = v;
-        else if (r == 7)
+        if (r <= Register::PhysicalAddressLastRegister)
+            physical[r - Register::PhysicalAddressFirstRegister] = v;
+        else if (r == Register::CurrentPageRegister)
             current = v;
         else
-            multicast[r - 8] = v;
+            multicast[r - Register::MulticastAddressFirstRegister] = v;
         return;
     }
     if (page != 0)
         return;
     switch (r) {
-    case 1:
+    case Register::PageStartRegister:
         start = v;
         break;
-    case 2:
+    case Register::PageStopRegister:
         stop = v;
         break;
-    case 3:
+    case Register::BoundaryRegister:
         boundary = v;
         break;
-    case 4:
+    case Register::TransmitPageStartRegister:
         transmitPage = v;
         break;
-    case 5:
+    case Register::TransmitCountLowRegister:
         transmitCount = (transmitCount & 0xff00) | uint8_t(v);
         break;
-    case 6:
+    case Register::TransmitCountHighRegister:
         transmitCount = (transmitCount & 255) | uint16_t(v << 8);
         break;
-    case 7:
-        isr &= ~(v & 0x7f);
+    case Register::InterruptStatusRegister:
+        isr &= ~(v & InterruptEventMask);
         break;
-    case 8:
+    case Register::RemoteStartLowRegister:
         remote = (remote & 0xff00) | uint8_t(v);
         break;
-    case 9:
+    case Register::RemoteStartHighRegister:
         remote = (remote & 255) | uint16_t(v << 8);
         break;
-    case 10:
+    case Register::RemoteCountLowRegister:
         remoteCount = (remoteCount & 0xff00) | uint8_t(v);
         break;
-    case 11:
+    case Register::RemoteCountHighRegister:
         remoteCount = (remoteCount & 255) | uint16_t(v << 8);
         break;
-    case 12:
+    case Register::ReceiveConfigurationRegister:
         rcr = v;
         break;
-    case 13:
+    case Register::TransmitConfigurationRegister:
         tcr = v;
         break;
-    case 14:
+    case Register::DataConfigurationRegister:
         dcr = v;
         break;
-    case 15:
-        imr = v & 0x7f;
+    case Register::InterruptMaskRegister:
+        imr = v & InterruptEventMask;
         break;
     }
 }
-void NE2000::transmit() {
-    unsigned address = unsigned(transmitPage) << 8;
-    if (transmitCount < 14 || transmitCount > 1518 || address < 0x4000 ||
-        address + transmitCount > 0x8000) {
-        transmitStatus = 8;
-        isr |= 8;
+// Read TPSR/TBCR data, pad it and complete transmission into loopback or host queue.
+// IMPLEMENTATION NOTE: Invalid buffers report ABT/TXE, not a real collision;
+// a full host queue drops the frame but still reports PTX for compatibility.
+// DP8390D 8.0 Packet Transmission; 10.3 Transmit Status Register.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=12
+void NE2000::transmit_packet() {
+    unsigned address = unsigned(transmitPage) << BufferPageAddressShift;
+    if (transmitCount < EthernetHeaderBytes || transmitCount > MaximumHostFrameBytes ||
+        address < PacketRamStart || address + transmitCount > PacketRamEnd) {
+        transmitStatus = TransmitAborted;
+        isr |= TransmitErrorInterrupt;
         return;
     }
     std::vector<uint8_t> packet(memory.begin() + address, memory.begin() + address + transmitCount);
-    packet.resize(std::max<size_t>(60, packet.size()), 0);
-    if (tcr & 6)
-        receive(packet.data(), packet.size());
-    else if (outgoing.size() < 64)
+    packet.resize(std::max<size_t>(MinimumFrameBytes, packet.size()), 0);
+    if (tcr & LoopbackModeMask)
+        receive_packet(packet.data(), packet.size());
+    else if (outgoing.size() < MaximumQueuedFrames)
         outgoing.push_back(std::move(packet));
-    transmitStatus = 1;
-    isr |= 2;
+    transmitStatus = TransmitSuccessful;
+    isr |= PacketTransmittedInterrupt;
     ++transmitted;
 }
-bool NE2000::receive(const uint8_t *p, size_t n) {
-    if ((command & 1) || !(command & 2) || (rcr & 0x20) || n < 14 || n > 1518)
+// Filter a host Ethernet frame, reserve ring pages, store header/data/FCS and latch PRX.
+// Return false on filtering, invalid ring or lack of space; only resource failures
+// increment the host dropped counter. Host input has no preamble or FCS.
+// DP8390D 7.0 Packet Reception; 10.9 Multicast Address Registers.
+// https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=8
+bool NE2000::receive_packet(const uint8_t *p, size_t n) {
+    if ((command & StopController) || !(command & StartController) || (rcr & MonitorMode) ||
+        n < EthernetHeaderBytes || n > MaximumHostFrameBytes)
         return false;
-    bool broadcast = std::all_of(p, p + 6, [](uint8_t b) { return b == 255; });
+    bool broadcast = std::all_of(p, p + EthernetAddressBytes, [](uint8_t b) { return b == 255; });
+    // The first destination byte's low bit distinguishes group from unicast addresses.
     bool group = p[0] & 1;
-    if (!(rcr & 0x10)) {
+    if (!(rcr & PromiscuousPhysical)) {
         if (broadcast) {
-            if (!(rcr & 4))
+            if (!(rcr & AcceptBroadcast))
                 return false;
         } else if (group) {
-            if (!(rcr & 8))
+            if (!(rcr & AcceptMulticast))
                 return false;
-            uint32_t crc = 0xffffffff;
-            for (unsigned i = 0; i < 6; ++i)
+            // Destination bits enter least-significant bit first; top six CRC
+            // remainder bits choose one of the 64 multicast filter bits (10.9).
+            // https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=28
+            uint32_t crc = InitialCrcRemainder;
+            for (unsigned i = 0; i < EthernetAddressBytes; ++i)
                 for (unsigned bit = 0; bit < 8; ++bit) {
                     bool carry = ((crc >> 31) ^ (p[i] >> bit)) & 1;
                     crc <<= 1;
                     if (carry)
-                        crc ^= 0x04c11db7;
+                        crc ^= EthernetCrcPolynomial;
                 }
-            unsigned index = crc >> 26;
+            unsigned index = crc >> MulticastHashShift;
             if (!(multicast[index >> 3] & (1 << (index & 7))))
                 return false;
-        } else if (std::memcmp(p, physical.data(), 6))
+        } else if (std::memcmp(p, physical.data(), EthernetAddressBytes))
             return false;
     }
-    if (n < 60 && !(rcr & 2))
+    if (n < MinimumFrameBytes && !(rcr & AcceptRuntPackets))
         return false;
-    if (start < 0x40 || stop > 0x80 || start >= stop || current < start || current >= stop ||
-        boundary < start || boundary >= stop) {
+    if (start < PacketRamStart / BufferPageBytes || stop > PacketRamEnd / BufferPageBytes ||
+        start >= stop || current < start || current >= stop || boundary < start ||
+        boundary >= stop) {
         ++dropped;
         return false;
     }
-    size_t bytes = std::max<size_t>(60, n);
-    unsigned pages = unsigned((bytes + 8 + 255) / 256);
+    // Reserve the complete ring header, padded frame and FCS before writing;
+    // crossing BNRY must leave previously unread packet bytes intact (7.0).
+    // https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=8
+    size_t bytes = std::max<size_t>(MinimumFrameBytes, n);
+    unsigned pages =
+        unsigned((bytes + ReceiveRingHeaderBytes + FrameCheckSequenceBytes + BufferPageBytes - 1) /
+                 BufferPageBytes);
     unsigned next = current;
     for (unsigned i = 0; i < pages; ++i) {
         if (++next == stop)
             next = start;
         if (next == boundary) {
-            isr |= 0x10;
-            receiveStatus = 0x10;
+            isr |= RingOverwriteInterrupt;
+            receiveStatus = MissedPacket;
             ++dropped;
-            if (++tally[2] == 0x80)
-                isr |= 0x20;
+            if (++tally[Register::MissedPacketTallyRegister -
+                        Register::AlignmentErrorTallyRegister] == TallyInterruptThreshold)
+                isr |= CounterOverflowInterrupt;
             return false;
         }
     }
-    uint16_t address = uint16_t(current) << 8;
+    uint16_t address = uint16_t(current) << BufferPageAddressShift;
     auto put = [&](uint8_t v) {
         memory[address++] = v;
-        if (address == uint16_t(stop) * 256)
-            address = uint16_t(start) * 256;
+        if (address == uint16_t(stop) * BufferPageBytes)
+            address = uint16_t(start) * BufferPageBytes;
     };
-    receiveStatus = 1 | (group ? 0x20 : 0);
+    receiveStatus = ReceiveSuccessful | (group ? GroupAddressMatch : 0);
+    // Ring header: status, next page, then byte count low/high. Count includes
+    // the FCS and excludes these four header bytes (Completion of Reception).
+    // https://www.ardent-tool.com/datasheets/NS_DP8390D_NS32490D.pdf#page=10
     put(receiveStatus);
     put(next);
-    put((bytes + 4) & 255);
-    put((bytes + 4) >> 8);
+    put((bytes + FrameCheckSequenceBytes) & 255);
+    put((bytes + FrameCheckSequenceBytes) >> 8);
     for (size_t i = 0; i < bytes; ++i)
         put(i < n ? p[i] : 0);
-    uint32_t crc = 0xffffffff;
+    uint32_t crc = InitialCrcRemainder;
     for (size_t i = 0; i < bytes; ++i) {
         crc ^= i < n ? p[i] : 0;
         for (unsigned b = 0; b < 8; ++b)
-            crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+            crc = (crc >> 1) ^ ((crc & 1) ? ReflectedEthernetCrcPolynomial : 0);
     }
     crc = ~crc;
-    for (unsigned i = 0; i < 4; ++i)
+    for (unsigned i = 0; i < FrameCheckSequenceBytes; ++i)
         put(crc >> (8 * i));
     current = next;
     local = address;
-    isr |= 1;
+    isr |= PacketReceivedInterrupt;
     ++received;
     return true;
 }

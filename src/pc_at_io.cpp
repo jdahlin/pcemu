@@ -34,10 +34,10 @@ void Machine::bindIoPorts() {
     ioPorts.map("ata-primary", 0x1f0, 8, ataRead, ataWrite);
     ioPorts.map("ata-control", 0x3f6, 1, ataRead, ataWrite);
     ioPorts.map("ne2000", NE2000::base, 32,
-                [this](uint16_t p, int w) { return nic.in(p, w); },
+                [this](uint16_t p, int w) { return nic.read_register(p, w); },
                 [this](uint16_t p, uint32_t v, int w) {
-                    nic.out(p, v, w);
-                    if (!nic.irq()) nicLine = false;
+                    nic.write_register(p, v, w);
+                    if (!nic.interrupt_level()) nicLine = false;
                 });
 
     // These reads historically advanced the retrace counter; ATA, NIC, PIC and

@@ -609,7 +609,7 @@ uint16_t Network::forwardTCP(uint16_t hostPort, uint16_t guestPort) {
     return port;
 }
 void Network::pump(NE2000 &nic, uint64_t epoch, uint64_t resets) {
-    pump(nic.outgoing, [&](const uint8_t *data, size_t length) { nic.receive(data, length); }, epoch, resets);
+    pump(nic.outgoing, [&](const uint8_t *data, size_t length) { nic.receive_packet(data, length); }, epoch, resets);
 }
 void Network::pump(std::deque<std::vector<uint8_t>> &outgoing, Receiver receive,
                    uint64_t epoch, uint64_t resets) {

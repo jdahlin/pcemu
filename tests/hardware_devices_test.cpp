@@ -90,7 +90,7 @@ int main() {
         bus.write_io_register(0xcf8, 0x80001010, 4); bus.write_io_register(0xcfc, 0xffffffffu, 4);
         check(bus.display().barProbe && bus.read_io_register(0xcfc, 4) == 0xff000000u);
         bus.reset(); check(!bus.address && !bus.display().barProbe);
-        NE2000 nic; check(!nic.irq()); nic.reset();
+        NE2000 nic; check(!nic.interrupt_level()); nic.reset();
         Network gateway; // Host packet backend also links without an execution engine.
         ArmPl011 uart; uart.write_register(0x30, 0x301); uart.write_register(0, 'Z'); check(uart.transmitted_output() == "Z");
         ArmPl031 rtc([] { return int64_t(1000); }); check(rtc.read_register(0) == 1000);
