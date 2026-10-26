@@ -50,6 +50,19 @@ int main() {
     rtc.write(4, 1);
     now += 4;
     check(rtc.read(0) == 2 && rtc.irq());
+    // SPEC: ARM DDI 0224C, sections 3.3.5-3.3.8: Reserved mask bits have no effect.
+    rtc.write(0x10, 2);
+    check(rtc.read(0x10) == 0 && rtc.read(0x14) == 1 && rtc.read(0x18) == 0);
+    rtc.write(0x1c, 2);
+    check(rtc.read(0x14) == 1);
+    rtc.write(0x10, 3);
+    check(rtc.read(0x10) == 1 && rtc.read(0x18) == 1);
+    rtc.write(0x1c, 1);
+    check(rtc.read(0x14) == 0 && rtc.read(0x18) == 0);
+    // AD-HOC: Preserve unsupported-access fallback and the always-enabled RTCCR.
+    rtc.write(0x20, 0xffffffff);
+    rtc.write(0x00, 0);
+    check(rtc.read(0x20) == 0 && rtc.read(0) == 2);
     check(armPsciCall(0x84000000, 0, 0).value == 2);
     check(armPsciCall(0xc4000003, 0, 0).value == -4);
     check(armPsciCall(0xc4000003, 1, 0).value == -2);
