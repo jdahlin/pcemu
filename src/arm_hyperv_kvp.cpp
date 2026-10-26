@@ -20,7 +20,7 @@ bool ArmHyperVKvp::request(ArmHyperVKvpCodec::Operation op,ArmHyperVKvpCodec::Po
  if((op==ArmHyperVKvpCodec::Operation::Set || op==ArmHyperVKvpCodec::Operation::Delete) &&
     requested!=ArmHyperVKvpCodec::Pool::External && requested!=ArmHyperVKvpCodec::Pool::AutoExternal)return false;
  std::vector<uint8_t> body;
- try{body=ArmHyperVKvpCodec::request(op,requested,at,key,value);}catch(const std::invalid_argument&){return false;}
+ try{body=ArmHyperVKvpCodec::encode_request(op,requested,at,key,value);}catch(const std::invalid_argument&){return false;}
  queryBody=std::move(body);queryKey=key;operation=op;pool=requested;index=at;state=State::SendQuery;return true;
 }
 bool ArmHyperVKvp::enumerate(ArmHyperVKvpCodec::Pool p,uint32_t i){return request(ArmHyperVKvpCodec::Operation::Enumerate,p,i);}
@@ -75,10 +75,10 @@ void ArmHyperVKvp::receive(std::span<const uint8_t> p,uint64_t now){
  if(state!=State::WaitResponse || readLE(h,0,2)!=framework || readLE(h,2,2) || readLE(h,4,2)!=2 || readLE(h,6,2)!=service || readLE(h,8,2))return fail();
  std::optional<ArmHyperVKvpCodec::Record> record;
  if(!status){
-  if(operation==ArmHyperVKvpCodec::Operation::Enumerate)record=ArmHyperVKvpCodec::enumeration(body,pool,index);
-  else if(operation==ArmHyperVKvpCodec::Operation::Get)record=ArmHyperVKvpCodec::getResponse(body,pool,queryKey);
+  if(operation==ArmHyperVKvpCodec::Operation::Enumerate)record=ArmHyperVKvpCodec::decode_enumeration(body,pool,index);
+  else if(operation==ArmHyperVKvpCodec::Operation::Get)record=ArmHyperVKvpCodec::decode_get_response(body,pool,queryKey);
   else{
-   if(!ArmHyperVKvpCodec::mutationAcknowledged(body,operation,pool,queryKey))return fail();
+   if(!ArmHyperVKvpCodec::mutation_acknowledged(body,operation,pool,queryKey))return fail();
    ++mutationAcks;
   }
   if(operation==ArmHyperVKvpCodec::Operation::Enumerate || operation==ArmHyperVKvpCodec::Operation::Get){if(!record)return fail();++records;}

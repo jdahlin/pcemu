@@ -57,7 +57,7 @@ int main(){
     check(request[44]==3 && request[45]==2 && get(request,48)==7);
     check(!hv.enumerateKvp(ArmHyperVKvpCodec::Pool::Auto,8));
     ArmHyperVKvpCodec::Value value;value.text=u"Windows 11";
-    auto body=ArmHyperVKvpCodec::request(ArmHyperVKvpCodec::Operation::Set,ArmHyperVKvpCodec::Pool::Auto,0,u"OSName",&value);
+    auto body=ArmHyperVKvpCodec::encode_request(ArmHyperVKvpCodec::Operation::Set,ArmHyperVKvpCodec::Pool::Auto,0,u"OSName",&value);
     std::copy(body.begin()+4,body.begin()+2576,request.begin()+52);answer(request);
     check(!hv.enumerateKvp(ArmHyperVKvpCodec::Pool::Auto,8));
     auto result=hv.takeKvpResult();
@@ -72,7 +72,7 @@ int main(){
     result=hv.takeKvpResult();check(result && result->operation==ArmHyperVKvpCodec::Operation::Set && result->status==0);
     check(hv.getKvp(ArmHyperVKvpCodec::Pool::External,u"ProbeKey"));hv.service();
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok && request[44]==0);
-    body=ArmHyperVKvpCodec::request(ArmHyperVKvpCodec::Operation::Set,ArmHyperVKvpCodec::Pool::External,0,u"ProbeKey",&value);body[0]=0;
+    body=ArmHyperVKvpCodec::encode_request(ArmHyperVKvpCodec::Operation::Set,ArmHyperVKvpCodec::Pool::External,0,u"ProbeKey",&value);body[0]=0;
     std::copy(body.begin(),body.end(),request.begin()+44);answer(request);
     result=hv.takeKvpResult();check(result && result->operation==ArmHyperVKvpCodec::Operation::Get && result->record && result->record->value.text==value.text);
     check(hv.deleteKvp(ArmHyperVKvpCodec::Pool::External,u"ProbeKey"));hv.service();

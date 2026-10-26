@@ -9,7 +9,7 @@ void put(std::span<uint8_t> b,size_t at,uint64_t v,unsigned n=4){for(unsigned i=
 bool has(const ArmHyperVKvp &k,const std::string &s){return k.report().find(s)!=std::string::npos;}
 auto negotiate(ArmHyperVKvp &k,unsigned fw,unsigned service=4){k.opened(0);auto p=k.packet(0);k.sent(0);put(p,20,36);put(p,34,16,2);put(p,44,1,2);put(p,46,1,2);put(p,52,fw);put(p,56,service);p[41]=5;return p;}
 auto answer(std::vector<uint8_t> p){
- C::Value value;value.text=u"Windows 11";auto set=C::request(C::Operation::Set,C::Pool::Auto,0,u"OSName",&value);
+ C::Value value;value.text=u"Windows 11";auto set=C::encode_request(C::Operation::Set,C::Pool::Auto,0,u"OSName",&value);
  std::copy(set.begin()+4,set.begin()+2576,p.begin()+52);p[41]=5;return p;
 }
 }
@@ -45,7 +45,7 @@ int main(){
   k.receive(mutation,11);result=k.takeResult();
   check(result && result->operation==C::Operation::Set && !result->record && result->status==0);
   check(k.get(C::Pool::External,u"ProbeKey"));auto getReply=k.packet(12);k.sent(12);
-  auto encoded=C::request(C::Operation::Set,C::Pool::External,0,u"ProbeKey",&value);encoded[0]=0;
+  auto encoded=C::encode_request(C::Operation::Set,C::Pool::External,0,u"ProbeKey",&value);encoded[0]=0;
   std::copy(encoded.begin(),encoded.end(),getReply.begin()+44);getReply[41]=5;k.receive(getReply,13);
   result=k.takeResult();check(result && result->operation==C::Operation::Get && result->record && result->record->value.text==value.text);
   check(k.erase(C::Pool::External,u"ProbeKey"));mutation=k.packet(14);k.sent(14);mutation[41]=5;k.receive(mutation,15);
