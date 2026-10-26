@@ -38,3 +38,15 @@ RAM loop is insufficient evidence to ship a global policy.
 are preserved. Existing external snapshots were reused; successful disposable
 children were removed by the harness. No Office or OS disk was recreated, and
 no new installer acceptance claim is made for this rejected prototype.
+
+## Register-only isolation
+
+A separate variant excludes all memory operations from repetition, eliminating
+its per-iteration fetch helper. Three alternating paired runs still show no
+consistent improvement: Excel median CPU ratio 0.985, Word 0.978. The existing
+3,500 batch/timer and 232,960 focused register checks pass. This variant is also
+rejected as a default. These measurements do not identify memory revalidation
+as the sole reason the broader prototype failed; emitter size, loop frequency,
+entry/footer overhead and cache effects remain possible contributors.
+
+[Register-only patches, commands and paired results](measurements/native-register-loop-trial-2026-10-26.json).
