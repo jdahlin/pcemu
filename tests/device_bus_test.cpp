@@ -81,12 +81,12 @@ int main() {
     };
     auto mode = [&] {
         ArmFwCfg config(ram, 0x40000000);
-        config.addFile("etc/ramfb", descriptor, true);
+        config.add_file("etc/ramfb", descriptor, true);
         return ArmRamFb(config, ram, 0x40000000).mode();
     };
     ArmFwCfg absent(ram, 0x40000000);
     check(ArmRamFb(absent, ram, 0x40000000).mode() == "invalid");
-    absent.addFile("etc/ramfb", std::vector<uint8_t>(4));
+    absent.add_file("etc/ramfb", std::vector<uint8_t>(4));
     check(ArmRamFb(absent, ram, 0x40000000).mode() == "invalid");
     check(mode() == "inactive");
     field(0, 8, 0x40000008); field(8, 4, 0x34325258);
@@ -95,7 +95,7 @@ int main() {
     field(24, 4, 4); check(mode() == "invalid"); field(24, 4, 12);
     field(0, 8, 0x40000038); check(mode() == "invalid"); field(0, 8, 0x40000008);
     ArmFwCfg config(ram, 0x40000000);
-    config.addFile("etc/ramfb", descriptor, true);
+    config.add_file("etc/ramfb", descriptor, true);
     ArmRamFb fb(config, ram, 0x40000000);
     ram[8] = 3; ram[9] = 2; ram[10] = 1;
     ram[20] = 6; ram[21] = 5; ram[22] = 4;
@@ -118,7 +118,7 @@ int main() {
     // Exercise real writable fw_cfg DMA for mode changes and disable/re-enable.
     std::vector<uint8_t> changeRam(256);
     ArmFwCfg changeConfig(changeRam, 0x40000000);
-    changeConfig.addFile("etc/ramfb", descriptor, true);
+    changeConfig.add_file("etc/ramfb", descriptor, true);
     ArmRamFb changing(changeConfig, changeRam, 0x40000000);
     auto updateDescriptor = [&] {
         std::copy(descriptor.begin(), descriptor.end(), changeRam.begin() + 128);
@@ -130,7 +130,7 @@ int main() {
         put(196, 4, 28); put(200, 8, 0x40000080);
         uint64_t dma = 0x400000c0, swapped = 0;
         for (unsigned i = 0; i < 8; ++i) swapped = (swapped << 8) | ((dma >> (8 * i)) & 255);
-        changeConfig.write(16, swapped, 8);
+        changeConfig.write_register(16, swapped, 8);
         check(changeRam[195] == 0);
     };
     check(changing.changedPixels(argb, width, height));

@@ -96,7 +96,7 @@ int main() {
         ArmPl031 rtc([] { return int64_t(1000); }); check(rtc.read_register(0) == 1000);
         std::vector<uint8_t> flashBytes(0x40000, 0xff), ram(65536);
         ArmNorFlash flash(flashBytes); check(flash.bytes().front() == 0xff);
-        ArmFwCfg config(ram, 0x40000000); config.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
+        ArmFwCfg config(ram, 0x40000000); config.add_file("etc/ramfb", std::vector<uint8_t>(28), true);
         ArmRamFb fb(config, ram, 0x40000000); check(fb.mode() == "inactive");
         auto irq = [](bool) {};
         VirtioBlock block(disk, ram, 0x40000000, irq);
