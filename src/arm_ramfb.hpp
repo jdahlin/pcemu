@@ -12,10 +12,15 @@ class ArmRamFb {
         : fwCfg(config), ram(memory), ramBase(base) {}
     std::string mode() const;
     bool pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const;
+    // Retain output between calls. False leaves its pixels untouched; dimensions
+    // still describe the current mode (zero when invalid/inactive).
+    // Returns true only when visible bytes or the descriptor changed.
+    bool changedPixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const;
     void save(const std::string &path) const;
   private:
     ArmFwCfg &fwCfg;
     std::span<const uint8_t> ram;
     uint64_t ramBase;
+    mutable std::vector<uint8_t> previousDescriptor, previousPixels;
 };
 } // namespace pc

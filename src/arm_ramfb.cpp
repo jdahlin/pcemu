@@ -1,6 +1,7 @@
 #include "arm_ramfb.hpp"
 #include <algorithm>
 #include <fstream>
+#include <cstring>
 #include <stdexcept>
 namespace pc {
 std::string ArmRamFb::mode() const {
@@ -39,6 +40,37 @@ bool ArmRamFb::pixels(std::vector<uint32_t> &output, unsigned &width, unsigned &
             output[size_t(y) * width + x] = 0xff000000u | uint32_t(row[x*4+2]) << 16 |
                 uint32_t(row[x*4+1]) << 8 | row[x*4];
     }
+    return true;
+}
+bool ArmRamFb::changedPixels(std::vector<uint32_t> &output, unsigned &width, unsigned &height) const {
+    auto current = mode();
+    if (current == "inactive" || current == "invalid") {
+        previousDescriptor.clear();
+        previousPixels.clear();
+        width = height = 0;
+        return false;
+    }
+    auto descriptor = fwCfg.file(0x20);
+    auto field = [&](unsigned offset, unsigned count) {
+        uint64_t value = 0;
+        for (unsigned i = 0; i < count; ++i) value = (value << 8) | descriptor[offset + i];
+        return value;
+    };
+    width = field(16, 4); height = field(20, 4);
+    auto address = field(0, 8), stride = field(24, 4);
+    size_t rowBytes = size_t(width) * 4;
+    bool changed = previousDescriptor.size() != descriptor.size() ||
+        !std::equal(descriptor.begin(), descriptor.end(), previousDescriptor.begin());
+    for (unsigned y = 0; !changed && y < height; ++y)
+        changed = std::memcmp(ram.data() + address - ramBase + y * stride,
+                              previousPixels.data() + y * rowBytes, rowBytes) != 0;
+    if (!changed) return false;
+    pixels(output, width, height);
+    previousDescriptor.assign(descriptor.begin(), descriptor.end());
+    previousPixels.resize(rowBytes * height);
+    for (unsigned y = 0; y < height; ++y)
+        std::memcpy(previousPixels.data() + y * rowBytes,
+                    ram.data() + address - ramBase + y * stride, rowBytes);
     return true;
 }
 void ArmRamFb::save(const std::string &path) const {

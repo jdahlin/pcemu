@@ -81,6 +81,16 @@ int main() {
         SDL_RenderGetLogicalSize(renderer, &logicalWidth, &logicalHeight);
         check(logicalWidth == 4 && logicalHeight == 3, "same-size return to VGA restores aspect");
         frontend->poll();
+        for (auto kind : {SDL_WINDOWEVENT_EXPOSED, SDL_WINDOWEVENT_SIZE_CHANGED, SDL_WINDOWEVENT_RESTORED}) {
+            SDL_Event event{};
+            event.type = SDL_WINDOWEVENT;
+            event.window.windowID = SDL_GetWindowID(window);
+            event.window.event = kind;
+            SDL_PushEvent(&event);
+            auto events = frontend->poll();
+            check(events.size() == 1 && events[0].kind == FrontendEvent::Kind::Redraw,
+                  "unchanged guest frames redraw on window damage");
+        }
         SDL_Event motion{};
         motion.type = SDL_MOUSEMOTION;
         motion.motion.windowID = SDL_GetWindowID(window);
@@ -133,6 +143,7 @@ int main() {
         frontend->present(frame, 640, 480, DisplayShape::ClassicVga);
         check(!SDL_RenderGetIntegerScale(renderer), "classic VGA retains monitor aspect correction");
         check(frontend->capturePointer(false), "pointer release works without guest state");
+        frontend->poll(); // Drain resize/expose events before the synthetic input sequence.
         SDL_Event e{};
         e.type = SDL_KEYDOWN;
         e.key.keysym.scancode = SDL_SCANCODE_F12;

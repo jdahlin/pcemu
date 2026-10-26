@@ -63,7 +63,7 @@ class ArmVirtMachine {
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
     GuestInput &guestInput() { return *usbInput; }
-    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const { return ramfb.pixels(pixels, width, height); }
+    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const { return ramfb.changedPixels(pixels, width, height); }
     std::string usbReport() const;
     std::string framebuffer() const { return ramfb.mode(); }
     void saveFramebuffer(const std::string &path) const { ramfb.save(path); }

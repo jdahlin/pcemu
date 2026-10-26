@@ -7,7 +7,7 @@
 namespace pc {
 // UI events use USB HID keyboard usages, never toolkit keycodes or guest scan codes.
 struct FrontendEvent {
-    enum class Kind { Quit, FocusLost, Key, ToggleCapture, Button, Motion, AbsoluteMotion, PointerLeave, Wheel };
+    enum class Kind { Quit, FocusLost, Key, ToggleCapture, Button, Motion, AbsoluteMotion, PointerLeave, Wheel, Redraw };
     Kind kind;
     uint16_t key = 0;
     bool released = false;

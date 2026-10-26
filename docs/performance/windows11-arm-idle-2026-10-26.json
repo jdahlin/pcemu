@@ -1,0 +1,347 @@
+{
+  "date": "2026-10-26",
+  "baseline": {
+    "commit": "069e7bfd5838453b6db8169caad9f589152e89e6",
+    "binarySha256": "2fb89fcf25f9ccd4b3a52f3b951cf789b215f6898d51d248358712c5c040311c",
+    "sourceSnapshot": "build/windows11-idle-profile/source"
+  },
+  "configuration": {
+    "ramMiB": 4096,
+    "vcpus": 2,
+    "guest": "Windows 11 ARM64 10.0.26300.9457",
+    "display": "SDL software 800x600",
+    "network": "user/virtio PCI"
+  },
+  "samples": {
+    "before-idle": {
+      "pid": 73935,
+      "name": "before-idle",
+      "settleSeconds": 15.0,
+      "sampleSeconds": 20,
+      "percentConvention": "100% = one logical CPU",
+      "machTimebase": {
+        "numer": 125,
+        "denom": 3
+      },
+      "samples": [
+        {
+          "wallSeconds": 20.004161500000002,
+          "cpuPercent": 39.86845541280664,
+          "userCpuSeconds": 5.203245,
+          "systemCpuSeconds": 2.772105208333333,
+          "footprintBytes": 7778999616,
+          "packageWakeupsPerSecond": 62.3870188210588,
+          "interruptWakeupsPerSecond": 292.63910911737037,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 13698.349715882867,
+          "diskRequestsPerSecond": 3.649240684244625,
+          "netTxPerSecond": 0.0,
+          "netRxPerSecond": 0.0,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.000233,
+          "cpuPercent": 39.90241409520912,
+          "userCpuSeconds": 5.185257333333333,
+          "systemCpuSeconds": 2.795318458333333,
+          "footprintBytes": 7778999616,
+          "packageWakeupsPerSecond": 71.54916645221083,
+          "interruptWakeupsPerSecond": 291.9465988221237,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 13271.045392321179,
+          "diskRequestsPerSecond": 1.4999825252035812,
+          "netTxPerSecond": 0.0,
+          "netRxPerSecond": 0.0,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.000825041999995,
+          "cpuPercent": 43.61024015267887,
+          "userCpuSeconds": 5.761383041666666,
+          "systemCpuSeconds": 2.9610247916666665,
+          "footprintBytes": 7786667328,
+          "packageWakeupsPerSecond": 58.0476054143767,
+          "interruptWakeupsPerSecond": 288.03811782275983,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 14142.71658324124,
+          "diskRequestsPerSecond": 6.849717434771411,
+          "netTxPerSecond": 0.0,
+          "netRxPerSecond": 0.0,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        }
+      ],
+      "medianCpuPercent": 39.90241409520912
+    },
+    "network-only": {
+      "pid": 75484,
+      "name": "network-only",
+      "settleSeconds": 15.0,
+      "sampleSeconds": 20,
+      "percentConvention": "100% = one logical CPU",
+      "machTimebase": {
+        "numer": 125,
+        "denom": 3
+      },
+      "samples": [
+        {
+          "wallSeconds": 20.001842083000003,
+          "cpuPercent": 36.434139472886194,
+          "userCpuSeconds": 5.338012708333333,
+          "systemCpuSeconds": 1.9494863333333332,
+          "footprintBytes": 5460286736,
+          "packageWakeupsPerSecond": 10.599023785923366,
+          "interruptWakeupsPerSecond": 62.24426704469147,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 6318.318056685958,
+          "diskRequestsPerSecond": 79.94263695137482,
+          "netTxPerSecond": 0.49995395216619654,
+          "netRxPerSecond": 0.8499217186825341,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.003473959000004,
+          "cpuPercent": 36.18581438988805,
+          "userCpuSeconds": 5.09684175,
+          "systemCpuSeconds": 2.1415782083333332,
+          "footprintBytes": 5468658960,
+          "packageWakeupsPerSecond": 11.198054920816265,
+          "interruptWakeupsPerSecond": 67.63825137439467,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 4688.185671759595,
+          "diskRequestsPerSecond": 13.3476815350801,
+          "netTxPerSecond": 1.2497829152696724,
+          "netRxPerSecond": 1.7496960813775413,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.005013875000003,
+          "cpuPercent": 19.127769162819437,
+          "userCpuSeconds": 2.6459240416666665,
+          "systemCpuSeconds": 1.1805888333333332,
+          "footprintBytes": 5469265168,
+          "packageWakeupsPerSecond": 0.4498872160867221,
+          "interruptWakeupsPerSecond": 56.935726569197385,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 4352.20892842295,
+          "diskRequestsPerSecond": 6.248433556760029,
+          "netTxPerSecond": 6.048483682943708,
+          "netRxPerSecond": 7.548107736566115,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        }
+      ],
+      "medianCpuPercent": 36.18581438988805
+    },
+    "network-only-settled": {
+      "pid": 75484,
+      "name": "network-only-settled",
+      "settleSeconds": 15.0,
+      "sampleSeconds": 20,
+      "percentConvention": "100% = one logical CPU",
+      "machTimebase": {
+        "numer": 125,
+        "denom": 3
+      },
+      "samples": [
+        {
+          "wallSeconds": 20.005027541999997,
+          "cpuPercent": 22.700880393519235,
+          "userCpuSeconds": 3.2002722916666664,
+          "systemCpuSeconds": 1.3410450833333332,
+          "footprintBytes": 5611035920,
+          "packageWakeupsPerSecond": 3.899019875690807,
+          "interruptWakeupsPerSecond": 61.184619587763436,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 3538.7104492295334,
+          "diskRequestsPerSecond": 9.69756225492329,
+          "netTxPerSecond": 0.6498366459484678,
+          "netRxPerSecond": 0.6998240802521961,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.005036167,
+          "cpuPercent": 31.022591377452517,
+          "userCpuSeconds": 4.507948083333333,
+          "systemCpuSeconds": 1.6981325416666666,
+          "footprintBytes": 5618638096,
+          "packageWakeupsPerSecond": 8.59783499335675,
+          "interruptWakeupsPerSecond": 56.485776409843766,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 5628.88260036006,
+          "diskRequestsPerSecond": 7.798036389323564,
+          "netTxPerSecond": 0.0,
+          "netRxPerSecond": 0.0,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.005016249999997,
+          "cpuPercent": 96.44427869434999,
+          "userCpuSeconds": 15.810407291666666,
+          "systemCpuSeconds": 3.483286333333333,
+          "footprintBytes": 6123904272,
+          "packageWakeupsPerSecond": 6.148457889905489,
+          "interruptWakeupsPerSecond": 107.47304441704716,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 10017.987363544382,
+          "diskRequestsPerSecond": 515.7706382767873,
+          "netTxPerSecond": 1.5496113381062615,
+          "netRxPerSecond": 2.8992728261342955,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        }
+      ],
+      "medianCpuPercent": 31.022591377452517
+    },
+    "after-idle": {
+      "pid": 76774,
+      "name": "after-idle",
+      "settleSeconds": 15.0,
+      "sampleSeconds": 20,
+      "percentConvention": "100% = one logical CPU",
+      "machTimebase": {
+        "numer": 125,
+        "denom": 3
+      },
+      "samples": [
+        {
+          "wallSeconds": 20.002037791999996,
+          "cpuPercent": 29.0944778669546,
+          "userCpuSeconds": 4.455726833333333,
+          "systemCpuSeconds": 1.363761625,
+          "footprintBytes": 5165964584,
+          "packageWakeupsPerSecond": 2.2997656777949964,
+          "interruptWakeupsPerSecond": 89.44088690380974,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 9091.573663196088,
+          "diskRequestsPerSecond": 146.33508997621638,
+          "netTxPerSecond": 9.149067805140962,
+          "netRxPerSecond": 16.34833427476008,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.005020125,
+          "cpuPercent": 6.3932548364115505,
+          "userCpuSeconds": 0.7854264583333332,
+          "systemCpuSeconds": 0.4935454583333333,
+          "footprintBytes": 5170224424,
+          "packageWakeupsPerSecond": 0.0,
+          "interruptWakeupsPerSecond": 61.484566989407114,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 4599.945384958716,
+          "diskRequestsPerSecond": 18.995232078028213,
+          "netTxPerSecond": 2.0994730191504867,
+          "netRxPerSecond": 3.2991718872364793,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        },
+        {
+          "wallSeconds": 20.001142082999998,
+          "cpuPercent": 8.199693846785953,
+          "userCpuSeconds": 1.093545125,
+          "systemCpuSeconds": 0.5464872916666667,
+          "footprintBytes": 5169028392,
+          "packageWakeupsPerSecond": 0.09999428991106979,
+          "interruptWakeupsPerSecond": 62.84641120910736,
+          "pageinsPerSecond": 0.0,
+          "exitsPerSecond": 4270.75612210179,
+          "diskRequestsPerSecond": 6.5496259891750706,
+          "netTxPerSecond": 0.24998572477767447,
+          "netRxPerSecond": 0.24998572477767447,
+          "reportsPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "pointersPerSecond": 0.0
+        }
+      ],
+      "medianCpuPercent": 8.199693846785953
+    },
+    "after-settled": {
+      "pid": 76774,
+      "sampleSeconds": 20.0,
+      "settleSeconds": 5.0,
+      "percentConvention": "100% = one logical CPU",
+      "machTimebase": {
+        "numer": 125,
+        "denom": 3
+      },
+      "samples": [
+        {
+          "wallSeconds": 20.001721000000003,
+          "cpuPercent": 5.747718117189348,
+          "userCpuSeconds": 0.7000121666666667,
+          "systemCpuSeconds": 0.449630375,
+          "footprintBytes": 5178416424,
+          "packageWakeupsPerSecond": 0.0,
+          "interruptWakeupsPerSecond": 59.04491918470415,
+          "pageinsPerSecond": 0.0,
+          "netRxPerSecond": 0.04999569787019826,
+          "keysPerSecond": 0.0,
+          "exitsPerSecond": 3865.9673335109505,
+          "netTxPerSecond": 0.04999569787019826,
+          "reportsPerSecond": 0.0,
+          "pointersPerSecond": 0.0,
+          "diskRequestsPerSecond": 3.1997246636926886
+        },
+        {
+          "wallSeconds": 20.001774500000003,
+          "cpuPercent": 7.284158088073634,
+          "userCpuSeconds": 0.925107,
+          "systemCpuSeconds": 0.5318538749999999,
+          "footprintBytes": 5186510120,
+          "packageWakeupsPerSecond": 0.0,
+          "interruptWakeupsPerSecond": 61.444548332449195,
+          "pageinsPerSecond": 0.0,
+          "netRxPerSecond": 0.0,
+          "keysPerSecond": 0.0,
+          "exitsPerSecond": 4226.3250193126605,
+          "netTxPerSecond": 0.0,
+          "reportsPerSecond": 0.0,
+          "pointersPerSecond": 0.0,
+          "diskRequestsPerSecond": 9.899121700427129
+        },
+        {
+          "wallSeconds": 20.002640749999998,
+          "cpuPercent": 6.7866559902430215,
+          "userCpuSeconds": 0.7958331666666666,
+          "systemCpuSeconds": 0.56167725,
+          "footprintBytes": 5186608424,
+          "packageWakeupsPerSecond": 0.59992078795896,
+          "interruptWakeupsPerSecond": 58.99221081596439,
+          "pageinsPerSecond": 0.0,
+          "netRxPerSecond": 2.7496369448118996,
+          "keysPerSecond": 0.0,
+          "exitsPerSecond": 3725.908040417114,
+          "netTxPerSecond": 2.6996435458153196,
+          "reportsPerSecond": 0.0,
+          "pointersPerSecond": 0.0,
+          "diskRequestsPerSecond": 3.9994719197263997
+        }
+      ],
+      "medianCpuPercent": 6.7866559902430215
+    }
+  },
+  "combinedBinarySha256": "05ed11401a1ce08d67fb99d8a73b4b6951c280fd1c5c54a7d0ff6dbd3118d087",
+  "notes": [
+    "100% CPU is one host logical CPU. Separate boots share the same guest disk.",
+    "Background-active windows retained for transparency; do not attribute them solely to emulator changes.",
+    "Network-only windows did not reach consistently quiet disk/network state."
+  ]
+}

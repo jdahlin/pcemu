@@ -919,16 +919,21 @@ int main(int argc, char **argv) {
                     // on every exit throttles firmware to the host display rate.
                     auto now = std::chrono::steady_clock::now();
                     bool frameDue = frontend && now >= nextFrame;
+                    bool redraw = false;
                     if (frameDue) {
                         nextFrame = now + std::chrono::milliseconds(16);
-                        for (const auto &event : frontend->poll())
+                        for (const auto &event : frontend->poll()) {
+                            if (event.kind == pc::FrontendEvent::Kind::Redraw) redraw = true;
                             if (!hostInput.event(event)) interrupted = 1;
+                        }
                     }
                     if (interrupted) break;
                     vm.run(std::chrono::milliseconds(frontend ? 16 : 100));
                     if (frameDue && !interrupted) {
                         unsigned width = 0, height = 0;
-                        if (vm.display(displayPixels, width, height)) frontend->present(displayPixels, width, height);
+                        bool changed = vm.display(displayPixels, width, height);
+                        if (width && height && (changed || redraw))
+                            frontend->present(displayPixels, width, height);
                     }
                     if(kvpRoundtripState && !kvpRoundtripReported) {
                         kvpRoundtripState->tick(vm);

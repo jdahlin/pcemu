@@ -180,6 +180,11 @@ class SDLFrontend final : public Frontend {
             if (e.type == SDL_QUIT)
                 events.push_back({K::Quit});
             else if (e.type == SDL_WINDOWEVENT &&
+                     (e.window.event == SDL_WINDOWEVENT_EXPOSED ||
+                      e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                      e.window.event == SDL_WINDOWEVENT_RESTORED))
+                events.push_back({K::Redraw});
+            else if (e.type == SDL_WINDOWEVENT &&
                      (e.window.event == SDL_WINDOWEVENT_LEAVE || e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
                 pointerInside = false;
                 cursorVisibility();

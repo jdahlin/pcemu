@@ -105,6 +105,46 @@ int main() {
     check(width == 2 && height == 2 && argb.size() == 4);
     check(argb[0] == 0xff010203 && argb[2] == 0xff040506); // padded rows, XRGB to ARGB
     check(!ArmRamFb(absent, ram, 0x40000000).pixels(argb, width, height));
+    check(fb.changedPixels(argb, width, height));
+    check(!fb.changedPixels(argb, width, height));
+    check(width == 2 && height == 2 && argb[0] == 0xff010203);
+    ram[16] = 99; // stride padding is not displayed
+    check(!fb.changedPixels(argb, width, height));
+    ram[8] = 7;
+    check(fb.changedPixels(argb, width, height) && argb[0] == 0xff010207);
+    check(!fb.changedPixels(argb, width, height));
+    ram[8] = 3;
+    check(fb.changedPixels(argb, width, height) && argb[0] == 0xff010203);
+    // Exercise real writable fw_cfg DMA for mode changes and disable/re-enable.
+    std::vector<uint8_t> changeRam(256);
+    ArmFwCfg changeConfig(changeRam, 0x40000000);
+    changeConfig.addFile("etc/ramfb", descriptor, true);
+    ArmRamFb changing(changeConfig, changeRam, 0x40000000);
+    auto updateDescriptor = [&] {
+        std::copy(descriptor.begin(), descriptor.end(), changeRam.begin() + 128);
+        auto put = [&](unsigned offset, unsigned count, uint64_t value) {
+            for (unsigned i = 0; i < count; ++i)
+                changeRam[offset + count - 1 - i] = value >> (8 * i);
+        };
+        put(192, 4, (0x20u << 16) | 8 | 16);
+        put(196, 4, 28); put(200, 8, 0x40000080);
+        uint64_t dma = 0x400000c0, swapped = 0;
+        for (unsigned i = 0; i < 8; ++i) swapped = (swapped << 8) | ((dma >> (8 * i)) & 255);
+        changeConfig.write(16, swapped, 8);
+        check(changeRam[195] == 0);
+    };
+    check(changing.changedPixels(argb, width, height));
+    check(!changing.changedPixels(argb, width, height));
+    field(0, 8, 0); updateDescriptor();
+    check(!changing.changedPixels(argb, width, height) && width == 0 && height == 0);
+    field(0, 8, 0x40000008); updateDescriptor();
+    check(changing.changedPixels(argb, width, height));
+    field(24, 4, 4); updateDescriptor();
+    check(!changing.changedPixels(argb, width, height));
+    field(24, 4, 12); updateDescriptor();
+    check(changing.changedPixels(argb, width, height));
+    field(16, 4, 1); updateDescriptor();
+    check(changing.changedPixels(argb, width, height) && width == 1);
     auto output = std::filesystem::temp_directory_path() / ("pcemu-ramfb-" + std::to_string(getpid()) + ".ppm");
     fb.save(output.string());
     std::ifstream input(output, std::ios::binary);
