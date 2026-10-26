@@ -1915,3 +1915,16 @@ coverage improvement: incremental timing versus the preceding bit-string build
 is neutral within measurement noise. The complete candidate remains 19.9% below
 the original Word baseline and 8.6% below the original Excel baseline in the
 fresh comparison. See [measurements and correctness scope](measurements/office-leave-2026-10-27.md).
+
+### Word and Excel: register rotates and sign extension (2026-10-27)
+
+ROL/ROR/RCL/RCR now lower natively for byte/word/dword register operands and
+implicit-one, immediate and CL counts, including high bytes, zero counts and
+the 33-bit carry ring. CBW/CWDE/CWD/CDQ also lower natively. RAM-only exhaustive
+byte comparisons and wider boundary cases bring cached validation to 9,425,162
+checks. Interpreted attempts fall to 6.08 million in Word and 8.39 million in
+Excel; native shares reach 93.88% and 99.41%. All 48 unprofiled restores pass.
+The complete candidate uses 20.9% less CPU than the original Word baseline and
+8.0% less than the original Excel baseline in the fresh matched comparison.
+Incremental median reductions versus LEAVE are 1.5% and 2.5%, with small effects
+and host-variation limits documented in the [full report](measurements/office-register-rotate-2026-10-27.md).

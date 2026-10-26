@@ -475,6 +475,95 @@ static void stringMoveTests() {
     }
 }
 
+static void rotateAndSignExtendTests() {
+    for (bool code32 : {false, true})
+     for (unsigned width : {2u, 4u})
+      for (uint8_t opcode : {uint8_t(0x98), uint8_t(0x99)})
+       for (uint32_t value : {0u, 1u, 0x7fu, 0x80u, 0xffu, 0x100u, 0x7fffu, 0x8000u, 0xffffu, 0x12345678u, 0x80000000u, 0xffffffffu}) {
+        auto c = make({}); c.s[CS].big = code32;
+        c.r[AX] = value; c.r[DX] = 0xabcddcba;
+        std::vector<uint8_t> code{0x83, 0xc3, 1}; // Deferred flags must survive sign extension.
+        if (code32 != (width == 4)) code.push_back(0x66);
+        code.push_back(opcode);
+        if (code32 != (width == 4)) code.push_back(0x66);
+        code.push_back(0x89); code.push_back(0xc6); // Save the result before LAHF overwrites AH.
+        code.push_back(0x9f); code.push_back(0xf4);
+        c.r[BX] = 0x7fffffff;
+        std::copy(code.begin(), code.end(), c.mem.begin());
+        compare(c);
+    }
+    for (uint8_t opcode : {uint8_t(0x98), uint8_t(0x99)}) {
+        auto c = make({opcode, 0xf4}); c.r[AX] = 0x80008080;
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(jit.nativeInstructions == 1 && c.halted, "sign extension did not execute natively");
+    }
+    // Reuse each tiny RAM-only native program across the full byte input/count
+    // space. This avoids allocating an arena or a megabyte of RAM per case.
+    for (unsigned width : {1u, 2u, 4u})
+     for (unsigned operation : {0u, 1u, 2u, 3u})
+      for (bool immediate : {false, true})
+       for (unsigned count = 0; count < 32; ++count)
+        for (unsigned reg : {0u, 1u, 4u, 5u}) {
+            CPU c(16384); c.cr[0] = 0x11; c.s[CS].big = true; c.flags = 2;
+            unsigned p = 0;
+            if (width == 2) c.mem[p++] = 0x66;
+            c.mem[p++] = immediate ? (width == 1 ? 0xc0 : 0xc1) : (width == 1 ? 0xd2 : 0xd3);
+            c.mem[p++] = uint8_t(0xc0 | (operation << 3) | reg);
+            if (immediate) c.mem[p++] = uint8_t(count);
+            c.mem[p] = 0xf4;
+            Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+            const unsigned values = width == 1 ? 256 : 12;
+            const uint32_t wide[] = {0, 1, 0x7f, 0x80, 0xff, 0x100, 0x7fff, 0x8000, 0xffff, 0x7fffffff, 0x80000000, 0xffffffff};
+            for (unsigned sample = 0; sample < values; ++sample)
+             for (uint32_t flags : {2u, 3u, 0xcd6u, 0xcd7u}) {
+                std::fill_n(c.r, 8, 0x12345678);
+                const uint32_t value = width == 1 ? sample : wide[sample];
+                const unsigned dst = width == 1 ? reg & 3 : reg;
+                if (width == 1) {
+                    const unsigned shift = reg & 4 ? 8 : 0;
+                    c.r[dst] = (c.r[dst] & ~(255u << shift)) | (value << shift);
+                } else c.r[dst] = value;
+                if (!immediate) c.r[CX] = (c.r[CX] & ~31u) | count; // Preserve unmasked CL bits, including aliases.
+                c.flags = flags; c.ip = 0; c.instructions = 0; c.halted = false;
+                CPU ref = c; const auto native = jit.nativeInstructions;
+                auto part = jit.runBatch();
+                for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+                equal(c, ref);
+                check(c.halted && jit.nativeInstructions == native + 1, "rotate did not execute natively");
+            }
+        }
+    for (bool code32 : {false, true})
+     for (unsigned width : {1u, 2u, 4u})
+      for (unsigned operation : {0u, 1u, 2u, 3u})
+       for (unsigned reg = 0; reg < 8; ++reg) {
+        auto c = make({}); c.s[CS].big = code32;
+        std::fill_n(c.r, 8, 0x87658123);
+        unsigned p = 0;
+        if (width != 1 && code32 != (width == 4)) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xd0 : 0xd1;
+        c.mem[p++] = uint8_t(0xc0 | (operation << 3) | reg); c.mem[p] = 0xf4;
+        compare(c);
+    }
+    for (bool code32 : {false, true})
+     for (unsigned operation : {0u, 1u, 2u, 3u})
+      for (unsigned count : {0u, 1u, 8u, 9u, 17u, 31u, 32u, 33u, 63u, 64u, 255u}) {
+        auto c = make({0x83, 0xc0, 1, 0xc0, uint8_t(0xc0 | (operation << 3) | 5), uint8_t(count),
+                       0x83, 0xd2, 0, 0x9f, 0xf4});
+        c.s[CS].big = code32; c.r[AX] = 0x7fffffff; c.r[CX] = 0x87658123;
+        compare(c); // Pending flags -> CH rotate -> carry consumer.
+        c.mem[3] = 0xd2; c.mem[5] = 0x90; c.r[CX] = (c.r[CX] & ~255u) | count;
+        compare(c);
+    }
+    for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0xd0, 0xd0, 0x83, 0xe9, 1, 0x75, 0xf9, 0xf4}); // RCL AL,1
+        c.r[CX] = 1000; c.r[AX] = 0x12345681;
+        compare(c, 10000, mode);
+    }
+}
+
 static void leaveTests() {
     for (bool paging : {false, true})
      for (bool code32 : {false, true})
@@ -1131,6 +1220,7 @@ int main() {
             memoryExchangeTests();
             memoryBitStringTests();
             leaveTests();
+            rotateAndSignExtendTests();
             hotShortFragmentTests();
             cycleTests();
         }

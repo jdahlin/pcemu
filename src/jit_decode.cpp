@@ -212,17 +212,21 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 }
             } else if (op == 0xc0 || op == 0xc1 || (op >= 0xd0 && op <= 0xd3)) {
                 auto m = byte();
-                if ((m >> 6) != 3 || ((m >> 3) & 7) < 4) {
+                if ((m >> 6) != 3) {
                     pos = begin;
                     break;
                 }
-                i.kind = Kind::Shift;
+                i.kind = ((m >> 3) & 7) < 4 ? Kind::Rotate : Kind::Shift;
                 i.w = (op & 1) ? w : 1;
                 i.dst = m & 7;
                 i.op = (m >> 3) & 7;
                 i.immediate = op < 0xd2;
                 i.src = CX;
                 i.imm = i.immediate ? (op < 0xd0 ? byte() : 1) & 31 : 0;
+                if (i.kind == Kind::Rotate && i.immediate) {
+                    if (i.op < 2) i.imm %= i.w * 8;
+                    else if (i.w < 4) i.imm %= i.w * 8 + 1;
+                }
                 if (i.immediate && !i.imm)
                     i.kind = Kind::Nop; // A masked zero count preserves all flags/GPRs.
             } else if (op == 0x69 || op == 0x6b) {
@@ -236,6 +240,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.src = m & 7;
                 i.immediate = true;
                 i.imm = op == 0x6b ? uint32_t(int32_t(int8_t(byte()))) : immediate(w);
+            } else if (op == 0x98 || op == 0x99) {
+                i.kind = Kind::SignExtend;
+                i.src = AX;
+                i.dst = op == 0x98 ? AX : DX;
+                i.op = op - 0x98;
+                i.sourceWidth = op == 0x98 ? w / 2 : w;
             } else if (op == 0x9f) {
                 i.kind = Kind::LoadFlags;
                 i.dst = AX;
@@ -505,7 +515,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift)) {
+            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != Kind::Memory) {

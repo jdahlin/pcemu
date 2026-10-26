@@ -30,6 +30,14 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             // A zero count can preserve every live flag; AF is always preserved.
             continue;
         }
+        if (i.kind == Kind::Rotate) {
+            // Rotates preserve all flags except CF and, for normalized count
+            // one, OF. Carry rotates also consume CF, even with dead outputs.
+            // Zero counts preserve the complete input image.
+            neededFlags[n] = true;
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         if (i.kind == Kind::DoubleShift) {
             // Runtime-zero counts and preserved flags require exact input state.
             neededFlags[n] = true;

@@ -331,7 +331,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -378,6 +378,70 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             load(11, 19, offsetof(CPU, flags));
             insert(20 + AX, 11, 1, 8);
             dirtyRegisters |= 1u << AX;
+            continue;
+        }
+        if (i.kind == Kind::SignExtend) {
+            emit(0x13000000u | ((i.sourceWidth * 8 - 1) << 10) | ((20 + AX) << 5) | 11);
+            if (i.op) emit(0x131f7c00u | (11 << 5) | 11); // asr w11,#31: CWD/CDQ sign fill
+            insert(20 + i.dst, 11, i.w, 0);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
+        if (i.kind == Kind::Rotate) {
+            finishFlags(last, -1, 0);
+            last = -1;
+            const unsigned width = i.w * 8;
+            const bool carry = i.op >= 2, left = !(i.op & 1);
+            const unsigned ring = width + unsigned(carry);
+            if (i.immediate) imm(9, i.imm);
+            else {
+                bits(9, 20 + CX, 0, 5);
+                if (!carry && width < 32) bits(9, 9, 0, i.w == 1 ? 3 : 4);
+                else if (carry && width < 32) {
+                    imm(10, ring);
+                    emit(0x1ac00800u | (10 << 16) | (9 << 5) | 14); // udiv quotient,count,ring
+                    emit(0x1b008000u | (10 << 16) | (9 << 10) | (14 << 5) | 9); // msub count,quotient,ring,count
+                }
+            }
+            const auto zero = code.size();
+            if (!i.immediate) emit(0x34000009u); // cbz normalized count: preserve GPRs and every flag
+            extract(11, 20 + i.dst, i.w, i.dstShift);
+            load(12, 19, offsetof(CPU, flags));
+            if (carry) {
+                // Put CF below the operand to form a 9/17/33-bit ring.
+                emit(0xd3400000u | (63u << 16) | (62u << 10) | (11 << 5) | 11); // lsl x11,#1
+                bits(14, 12, 0, 1);
+                emit(0xaa000000u | (14 << 16) | (11 << 5) | 11);
+            }
+            imm(10, ring);
+            emit(0x4b000000u | (9 << 16) | (10 << 5) | 10); // complementary count
+            emit((left ? 0x9ac02000u : 0x9ac02400u) | (9 << 16) | (11 << 5) | 13);
+            emit((left ? 0x9ac02400u : 0x9ac02000u) | (10 << 16) | (11 << 5) | 14);
+            emit(0xaa000000u | (14 << 16) | (13 << 5) | 13);
+            emit(0xd3400000u | ((ring - 1) << 10) | (13 << 5) | 13); // truncate ring, including bit 32
+            bits(14, 13, !carry && !left ? width - 1 : 0, 1);
+            flagBit(14, 0);
+            if (carry)
+                emit(0xd3400000u | (1u << 16) | (63u << 10) | (13 << 5) | 11); // operand = ring >> 1
+            else mov(11, 13);
+            size_t preserveOverflow = size_t(-1);
+            if (!i.immediate) {
+                emit(0x7100053fu); // cmp w9,#1
+                preserveOverflow = code.size(); emit(0x54000001u); // b.ne preserve OF
+            }
+            if (!i.immediate || i.imm == 1) {
+                bits(14, 11, width - 1, 1);
+                if (left) bits(15, 12, 0, 1);
+                else bits(15, 11, width - 2, 1);
+                emit(0x4a000000u | (15 << 16) | (14 << 5) | 14);
+                flagBit(14, 11);
+            }
+            if (preserveOverflow != size_t(-1))
+                code[preserveOverflow] |= uint32_t(code.size() - preserveOverflow) << 5;
+            store(12, 19, offsetof(CPU, flags));
+            insert(20 + i.dst, 11, i.w, i.dstShift);
+            dirtyRegisters |= 1u << i.dst;
+            if (!i.immediate) code[zero] |= uint32_t(code.size() - zero) << 5;
             continue;
         }
         if (i.kind == Kind::Shift && !i.immediate) {
