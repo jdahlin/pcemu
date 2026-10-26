@@ -35,7 +35,7 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
         }
         // RMW probes read translation first. A declined device access must
         // replay its read before dirty-bit updates or a write callback.
-        const bool rmw = op->delta || op->alu >= 0 || op->exchange;
+        const bool rmw = op->delta || op->alu >= 0 || op->exchange || op->bit > 4;
         auto physical = cpu->physical(linear, op->store && !rmw);
         if (uint64_t(physical) + op->width > cpu->mem.size() ||
             (physical < 0xb0000 && uint64_t(physical) + op->width > 0xa0000)) {
@@ -50,7 +50,10 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
                 // write probe updates D in that same guest word.
                 physical = cpu->physical(linear, true);
                 cpu->nativeValue = original;
-                if (op->delta) value = original + uint32_t(op->delta);
+                if (op->bit > 4) {
+                    auto mask = 1u << (value & (op->width * 8 - 1));
+                    value = op->bit == 5 ? original | mask : op->bit == 6 ? original & ~mask : original ^ mask;
+                } else if (op->delta) value = original + uint32_t(op->delta);
                 else if (!op->exchange) switch (op->alu) {
                     case 0: value = original + value; break;
                     case 1: value = original | value; break;

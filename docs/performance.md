@@ -1892,3 +1892,15 @@ median CPU is 17.4% below the original Word baseline and 7.4% below the original
 Excel baseline; the incremental Word timing difference is too small relative to
 control variation to establish a reliable gain. See the
 [coverage, correctness and measurement report](measurements/office-memory-xchg-2026-10-26.md).
+
+### Word and Excel: native memory bit strings (2026-10-27)
+
+Memory BT/BTS/BTR/BTC now lower to the guarded RAM path, including signed
+register bit-string indexes, immediate indexes, precise CF updates and 16-bit
+address wrapping before the word displacement. Interpreter comparisons cover
+faults, MMIO/watch ordering, self-PTE aliases, code changes and linked loops.
+Word's interpreted BT attempts fall from 307,277 to 1,009; Excel's from 80,316
+to 397. Native shares reach 93.25% and 99.34%. All 48 unprofiled restores pass;
+median CPU is 18.7% below the original Word baseline and 8.3% below the original
+Excel baseline, with modest incremental reductions of 1.9% and 1.6% versus the
+XCHG build. See the [full results and limits](measurements/office-memory-bits-2026-10-27.md).

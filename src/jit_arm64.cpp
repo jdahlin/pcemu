@@ -686,9 +686,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
             }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
-            if (i.memory.delta || memoryCarry) {
-                // INC/DEC preserve CF; ADC/SBB consume it. Publish preceding
-                // flags before access/replay and capture carry across helpers.
+            if (i.memory.delta || memoryCarry || i.memory.bit >= 4) {
+                // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
+                // all other flags. Publish the exact restart state before
+                // access/replay and capture carry across helpers.
                 finishFlags(last, -1, 0);
                 last = -1;
                 if (memoryCarry) {
@@ -701,6 +702,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto beforeLoad = dirtyRegisters;
             auto metadata = &block.native->memory[memoryIndex++];
             auto finishMove = [&]() {
+                if (i.memory.bit >= 4) {
+                    // Preserve every flag except CF, including undefined flags
+                    // retained by the interpreter. Publish only after success.
+                    if (i.immediate) imm(9, i.imm);
+                    else bits(9, 20 + i.dst, 0, i.w == 2 ? 4 : 5);
+                    emit(0x1ac02400u | (9 << 16) | (10 << 5) | 13); // lsrv old,index
+                    load(12, 19, offsetof(CPU, flags));
+                    flagBit(13, 0);
+                    store(12, 19, offsetof(CPU, flags));
+                    return;
+                }
                 if (i.memoryAlu) {
                     // w10 contains the successful read. Only now may the new
                     // flags replace the preceding instruction's restart state.
@@ -780,7 +792,16 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                      (2 << 5) | 2);
             if (!i.memory.address32)
                 emit(0x53003c00u | (2 << 5) | 2);
-            // Keep w2 (the original segment offset) intact for the slow helper.
+            if (i.memory.bit >= 4 && !i.immediate) {
+                // Signed register indexes address a bit string. Apply the word
+                // displacement AFTER address-size wrapping; never wrap again
+                // at 16 bits. Arithmetic shift implements floor for negatives.
+                emit(0x13000000u | ((i.w * 8 - 1) << 10) | ((20 + i.dst) << 5) | 13);
+                const unsigned shift = i.w == 2 ? 4 : 5;
+                emit(0x13007c00u | (shift << 16) | (13 << 5) | 13); // asr w13,#shift
+                emit(0x0b000000u | (13 << 16) | ((i.w == 2 ? 1 : 2) << 10) | (2 << 5) | 2);
+            }
+            // Keep w2 (the adjusted segment offset) intact for the slow helper.
             // Inline only side-effect-free TLB hits and ordinary RAM. Misses,
             // dirty-bit updates, code writes and devices retain the precise
             // existing helper/replay path below.
@@ -897,10 +918,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange) {
+                if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
-                    if (i.memory.exchange)
+                    if (i.memory.bit > 4) {
+                        if (i.immediate) imm(9, i.imm);
+                        else bits(9, 20 + i.dst, 0, i.w == 2 ? 4 : 5);
+                        imm(12, 1);
+                        emit(0x1ac02000u | (9 << 16) | (12 << 5) | 12); // lslv mask,index
+                        auto op = i.memory.bit == 5 ? 0x2a000000u : i.memory.bit == 6 ? 0x0a200000u : 0x4a000000u;
+                        emit(op | (12 << 16) | (10 << 5) | 13);
+                    } else if (i.memory.exchange)
                         extract(13, 20 + i.dst, i.w, i.dstShift);
                     else if (i.memory.delta)
                         emit((i.memory.delta > 0 ? 0x11000400u : 0x51000400u) | (10 << 5) | 13);
@@ -961,7 +989,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
-            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0 || i.memory.exchange) {
+            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4) {
                 load(10, 19, offsetof(CPU, nativeValue));
             }
             finishMove();

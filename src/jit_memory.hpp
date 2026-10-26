@@ -8,6 +8,7 @@ struct NativeMemoryMove {
     bool address32 = false, store = false;
     bool exchange = false; // XCHG returns the original memory value after a successful store.
     int delta = 0; // Nonzero for guarded memory INC/DEC; return original value for flags.
+    int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };
 } // namespace pc

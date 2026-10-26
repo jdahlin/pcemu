@@ -475,6 +475,121 @@ static void stringMoveTests() {
     }
 }
 
+static void memoryBitStringTests() {
+    auto append = [](std::vector<uint8_t> &code, uint32_t value, unsigned width) {
+        for (unsigned b = 0; b < width; ++b) code.push_back(uint8_t(value >> (b * 8)));
+    };
+    for (bool paging : {false, true})
+     for (bool code32 : {false, true})
+      for (bool address32 : {false, true})
+       for (unsigned width : {2u, 4u})
+        for (unsigned operation : {4u, 5u, 6u, 7u})
+         for (bool immediate : {false, true})
+          for (int index : {-32768, -65, -33, -16, -1, 0, 1, 15, 16, 31, 32, 65, 255, 32767}) {
+            auto c = make({}, paging);
+            c.s[CS].big = code32; c.s[FS].base = 0x3000;
+            c.r[BX] = address32 ? 0xffee : 0x1234ffee;
+            c.r[SI] = 0xabcd0010; c.r[DX] = uint32_t(index);
+            std::vector<uint8_t> code{0x64};
+            if (code32 != address32) code.push_back(0x67);
+            if (code32 != (width == 4)) code.push_back(0x66);
+            code.push_back(0x0f);
+            code.push_back(immediate ? 0xba : operation == 4 ? 0xa3 : operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb);
+            code.push_back(uint8_t(0x40 | ((immediate ? operation : 2) << 3) | (address32 ? 4 : 0)));
+            if (address32) { code.push_back(0x33); c.r[SI] = 0x10; } // BX + SI
+            code.push_back(0x10); // Base offset wraps at 16 bits before index adjustment.
+            if (immediate) code.push_back(uint8_t(index));
+            code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            // Deterministic data on either side of both effective-address regions.
+            for (uint32_t a : {0x2f00u, 0x12f00u})
+                for (unsigned n = 0; n < 512; ++n) c.mem[a + n] = uint8_t(n * 37 + 0xa5);
+            compare(c);
+        }
+    for (unsigned operation : {4u, 5u, 6u, 7u}) {
+        auto c = make({0x0f, uint8_t(operation == 4 ? 0xa3 : operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb), 0x13, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[DX] = 33;
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(jit.nativeInstructions == 1 && c.halted, "memory bit string did not execute natively");
+    }
+    for (unsigned operation : {4u, 5u, 6u, 7u}) {
+        auto opcode = uint8_t(operation == 4 ? 0xa3 : operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb);
+        auto c = make({0x83, 0xc0, 1, 0x0f, opcode, 0x13, 0x83, 0xd1, 0, 0x9f, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[DX] = 33; c.r[AX] = 0x7fffffff;
+        c.write(0x1004, 2, 4);
+        compare(c); // Pending flags -> CF-only update -> carry consumer.
+        for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+            auto loop = make({0x0f, opcode, 0x13, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4}, true);
+            loop.r[BX] = 0x1000; loop.r[DX] = 33; loop.r[CX] = 1000;
+            compare(loop, 10000, mode);
+        }
+    }
+    // An index that aliases an address register is captured before address adjustment.
+    compare(make({0xbb, 0x01, 0x10, 0, 0, 0x0f, 0xab, 0x1b, 0x0f, 0xa3, 0x1b, 0xf4}, true));
+    for (unsigned operation : {5u, 6u, 7u}) {
+        auto c = make({0x0f, uint8_t(operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb), 0x13, 0xf4}, true);
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024);
+        c.flushTLB(); c.r[BX] = 0x9024; c.r[DX] = 6;
+        compare(c); // CF must observe D before this access's write probe sets it.
+    }
+    {
+        auto c = make({0x0f, 0xab, 0x13, 0x74, 0x03, 0x83, 0xc1, 1, 0xf4});
+        c.r[BX] = 3; c.r[DX] = 7;
+        compare(c); // BTS changes the next opcode from JZ to HLT.
+    }
+    for (unsigned operation : {4u, 5u, 6u, 7u})
+     for (bool watched : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0x0f, uint8_t(operation == 4 ? 0xa3 : operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb), 0x13, 0xf4});
+        c.r[BX] = 0x9fffc; c.r[DX] = 38; c.r[AX] = 0x7fffffff;
+        CPU ref = c;
+        std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) { trace.push_back(p); return uint8_t(p + 0x40); };
+        ref.videoRead = [&](uint32_t p) { refTrace.push_back(p); return uint8_t(p + 0x40); };
+        c.videoWrite = [&](uint32_t p, uint8_t v) { trace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        ref.videoWrite = [&](uint32_t p, uint8_t v) { refTrace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        if (watched) {
+            c.watchStart = ref.watchStart = 0xa0000; c.watchLength = ref.watchLength = 4;
+            c.watchWrite = [&](uint32_t, uint32_t, int) { trace.push_back((2ull << 60) | c.flags); };
+            ref.watchWrite = [&](uint32_t, uint32_t, int) { refTrace.push_back((2ull << 60) | ref.flags); };
+        }
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() == (operation == 4 ? 4u : 8u + unsigned(watched)),
+              "memory bit-string MMIO/watch replay order");
+        check(c.nativeMemoryCalls, "memory bit-string did not exercise native replay");
+    }
+    for (bool crossPage : {false, true})
+     for (unsigned operation : {4u, 5u, 6u, 7u}) {
+        auto c = make({0x83, 0xc0, 1, 0x0f, uint8_t(operation == 4 ? 0xa3 : operation == 5 ? 0xab : operation == 6 ? 0xb3 : 0xbb), 0x13, 0xf4}, true);
+        c.s[CS].selector = 3; c.r[AX] = 0x7fffffff;
+        c.r[BX] = crossPage ? 0x4ffb : 0x4ffc; c.r[DX] = 38;
+        uint32_t pte = operation == 4 ? 0x5004 : 0x5005;
+        std::copy_n(reinterpret_cast<uint8_t *>(&pte), 4, c.mem.begin() + 0x81014);
+        c.mem[0x4fff] = 0x7f; c.flushTLB();
+        CPU ref = c; unsigned faults = 0;
+        c.observeFault = ref.observeFault = [&](const Fault &f) {
+            check(f.vector == 14 && f.error == (operation == 4 ? 4u : 7u), "bit-string fault type");
+            ++faults; throw std::runtime_error("bit fault");
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "missing native bit fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "bit fault", "native bit fault"); }
+        try { ref.step(); ref.step(); check(false, "missing reference bit fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "bit fault", "reference bit fault"); }
+        equal(c, ref);
+        check(faults == 2 && c.ip == 3 && c.cr[2] == 0x5000 && c.mem[0x4fff] == 0x7f,
+              "bit-string fault lost restart flags or committed data");
+    }
+}
+
 static void memoryExchangeTests() {
     for (bool paging : {false, true})
       for (bool code32 : {false, true})
@@ -911,6 +1026,7 @@ int main() {
             stringMoveTests();
             memoryWriteCoverageTests();
             memoryExchangeTests();
+            memoryBitStringTests();
             hotShortFragmentTests();
             cycleTests();
         }
