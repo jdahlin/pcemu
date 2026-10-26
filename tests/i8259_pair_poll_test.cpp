@@ -19,21 +19,21 @@ static std::optional<uint8_t> reference(State &s, bool ready) {
         s.ataInService = s.chips[1].isr & 0x40;
     };
     auto &master = s.chips[0]; auto &slave = s.chips[1];
-    int pendingSlave = (slave.irr & ~slave.mask) ? slave.pending() : -1;
+    int pendingSlave = (slave.irr & ~slave.mask) ? slave.pending_interrupt() : -1;
     if (pendingSlave >= 0 && !s.cascadeLine) {
-        master.raise(2);
+        master.raise_interrupt(2);
         s.cascadeLine = true;
     }
     if (pendingSlave < 0) s.cascadeLine = false;
     mirrors();
     if (!ready || !(master.irr & ~master.mask)) return std::nullopt;
-    int irq = master.pending();
+    int irq = master.pending_interrupt();
     if (irq < 0) return std::nullopt;
-    master.acknowledge(irq);
+    master.acknowledge_interrupt(irq);
     uint8_t vector = master.base + irq;
     if (irq == 2) {
         if (pendingSlave >= 0) {
-            slave.acknowledge(pendingSlave);
+            slave.acknowledge_interrupt(pendingSlave);
             vector = slave.base + pendingSlave;
         } else vector = slave.base + 7;
         s.cascadeLine = false;
@@ -50,7 +50,7 @@ static void compare(State initial, bool ready) {
     // Set otherwise unreachable stale compatibility/cascade states as well.
     const_cast<State &>(device.state()) = initial;
     auto expected = reference(initial, ready);
-    check(device.nextVector(ready) == expected, "PIC vector/readiness differs from reference");
+    check(device.next_interrupt_vector(ready) == expected, "PIC vector/readiness differs from reference");
     const auto &actual = device.state();
     for (unsigned n = 0; n < 2; ++n) {
         check(fields(actual.chips[n]) == fields(initial.chips[n]), "PIC chip state differs");

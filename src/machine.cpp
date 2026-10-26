@@ -93,8 +93,8 @@ I8042Device::IrqState Machine::ps2IrqState() const {
             bool(pic[1].isr & 0x10), bool(pic[1].mask & 0x10)};
 }
 void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {
-    if (irqs.keyboard) pic[0].raise(1);
-    if (irqs.mouse) pic[1].raise(4);
+    if (irqs.keyboard) pic[0].raise_interrupt(1);
+    if (irqs.mouse) pic[1].raise_interrupt(4);
 }
 void Machine::pollPs2() {
     applyPs2Irqs(ps2.poll(cpu.instructions, ps2IrqState()));
@@ -106,27 +106,27 @@ void Machine::poll() {
         return;
     }
     if (pit.tick(cpu.instructions / 4))
-        pic[0].raise(0);
+        pic[0].raise_interrupt(0);
     if (ps2.pollDue(cpu.instructions))
         pollPs2();
     if (ata.interruptLevel() && !ataLine) {
-        pic[1].raise(6);
+        pic[1].raise_interrupt(6);
         ataLine = true;
     }
     if (!ata.irq)
         ataLine = false;
-    if (nic.irq() && !nicLine) pic[1].raise(2);
+    if (nic.irq() && !nicLine) pic[1].raise_interrupt(2);
     nicLine = nic.irq();
     const bool ready = (cpu.flags & IF) &&
         !(cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough);
-    if (auto vector = pic.nextVector(ready)) {
+    if (auto vector = pic.next_interrupt_vector(ready)) {
         cpu.halted = false;
         cpu.interrupt(*vector);
     }
 }
 
 void Machine::timer() {
-    pic[0].raise(0);
+    pic[0].raise_interrupt(0);
     poll();
 }
 uint32_t Machine::in(uint16_t p, int w) {

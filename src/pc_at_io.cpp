@@ -58,10 +58,10 @@ void Machine::bindIoPorts() {
     for (uint16_t base : {0x20, 0xa0})
         ioPorts.map(base == 0x20 ? "pic-master" : "pic-slave", base, 2,
             [this](uint16_t p, int) -> uint32_t {
-                return pic.read(p >= 0xa0, p & 1);
+                return pic.read_register(p >= 0xa0, p & 1);
             }, bytes([this](uint16_t p, uint32_t v, int) {
                 ports[p] = v;
-                pic.write(p >= 0xa0, p & 1, v);
+                pic.write_register(p >= 0xa0, p & 1, v);
                 for (unsigned i = 0; i < 2; ++i) ports[i ? 0xa1 : 0x21] = pic[i].mask;
             }));
     ioPorts.map("pit", 0x40, 4,

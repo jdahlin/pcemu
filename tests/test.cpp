@@ -228,30 +228,30 @@ int main() {
         }
         PIC8259 pic;
         pic.mask = 0;
-        pic.raise(3);
-        pic.raise(1);
-        check(pic.pending() == 1, "PIC fixed priority");
-        pic.acknowledge(1);
-        check(pic.pending() < 0, "PIC blocks lower priority while interrupt in service");
-        pic.raise(0);
-        check(pic.pending() == 0, "PIC allows higher priority nested request");
-        pic.command(0x0b);
-        check(pic.read() == 2 && pic.read() == 2, "OCW3 selects persistent ISR reads");
-        pic.command(0x0a);
-        check(pic.read() == 9, "OCW3 selects IRR independently of ISR");
-        pic.command(0x61);
-        check(pic.isr == 0 && pic.pending() == 0, "specific EOI clears selected in-service level");
-        pic.command(0x11);
-        pic.data(0x50);
-        pic.data(4);
-        pic.data(3);
-        pic.data(0);
-        pic.raise(1);
-        pic.acknowledge(1);
+        pic.raise_interrupt(3);
+        pic.raise_interrupt(1);
+        check(pic.pending_interrupt() == 1, "PIC fixed priority");
+        pic.acknowledge_interrupt(1);
+        check(pic.pending_interrupt() < 0, "PIC blocks lower priority while interrupt in service");
+        pic.raise_interrupt(0);
+        check(pic.pending_interrupt() == 0, "PIC allows higher priority nested request");
+        pic.write_command_register(0x0b);
+        check(pic.read_command_register() == 2 && pic.read_command_register() == 2, "OCW3 selects persistent ISR reads");
+        pic.write_command_register(0x0a);
+        check(pic.read_command_register() == 9, "OCW3 selects IRR independently of ISR");
+        pic.write_command_register(0x61);
+        check(pic.isr == 0 && pic.pending_interrupt() == 0, "specific EOI clears selected in-service level");
+        pic.write_command_register(0x11);
+        pic.write_data_register(0x50);
+        pic.write_data_register(4);
+        pic.write_data_register(3);
+        pic.write_data_register(0);
+        pic.raise_interrupt(1);
+        pic.acknowledge_interrupt(1);
         check(pic.base == 0x50 && pic.isr == 0, "ICW4 automatic EOI does not leave ISR set");
-        pic.raise(4);
-        pic.command(0x0c);
-        check(pic.read() == 0x84 && pic.irr == 0, "PIC poll read acknowledges highest request");
+        pic.raise_interrupt(4);
+        pic.write_command_register(0x0c);
+        check(pic.read_command_register() == 0x84 && pic.irr == 0, "PIC poll read acknowledges highest request");
         for (unsigned lowest = 0; lowest < 8; ++lowest)
             for (unsigned requests : {0u, 1u, 0x80u, 0x55u, 0xaau, 0xffu})
                 for (unsigned service : {0u, 1u, 0x80u, 0x55u, 0xaau, 0xffu})
@@ -276,7 +276,7 @@ int main() {
                                     break;
                                 }
                             }
-                            check(priority.pending() == expected,
+                            check(priority.pending_interrupt() == expected,
                                   "PIC priority respects rotation, masks, nesting and empty "
                                   "requests");
                         }
@@ -2299,7 +2299,7 @@ int main() {
             keyboard.poll();
             check(!(keyboard.in(0x64, 1) & 1) && keyboard.in(0x60, 1) == 0x9e,
                   "scan stream preserves latch while a chained keyboard ISR is active");
-            keyboard.pic[0].command(0x20);
+            keyboard.pic[0].write_command_register(0x20);
             keyboard.poll();
             check(keyboard.in(0x60, 1) == 0x2e, "scan stream resumes after keyboard EOI");
             auto nextByte = [&]() {
