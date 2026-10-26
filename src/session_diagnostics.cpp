@@ -108,7 +108,7 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"loadedAt\":" << counter.loadedAt << ",\"mode\":" << unsigned(counter.mode)
       << ",\"nullCount\":" << counter.nullCount
       << ",\"writeHigh\":" << counter.writeHigh
-      << ",\"value\":" << counter.value(c.instructions / 4) << "},\"keyboard\":{"
+      << ",\"value\":" << counter.counter_value(c.instructions / 4) << "},\"keyboard\":{"
       << "\"full\":" << m.ps2.state().keyboardFull << ",\"data\":" << unsigned(m.ps2.state().keyboardData)
       << ",\"pendingScans\":" << m.ps2.state().scanCodes.size()
       << ",\"pendingReplies\":" << m.ps2.state().keyboardReplies.size()
