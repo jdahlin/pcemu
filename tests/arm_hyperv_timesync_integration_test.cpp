@@ -48,10 +48,10 @@ int main(){
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&get(request,28,2)==4);
     check(get(request,44,8)==utc&&get(request,52,8)==0&&request[60]==1);
     answer(request);check(hv.report().find("\"acknowledgments\":1")!=std::string::npos);
-    check(hv.serviceDelay100ns()==ArmHyperVTimeSync::interval);
+    check(hv.serviceDelay100ns()==ArmHyperVTimeSync::SampleInterval100ns);
     std::vector<uint8_t> filler(4080);put(filler,0,6,2);put(filler,2,2,2);put(filler,4,510,2);
     check(rx.write_packet(filler,notify)==ArmVmbusRing::Result::Ok);
-    now+=ArmHyperVTimeSync::interval;utc+=100;hv.service();
+    now+=ArmHyperVTimeSync::SampleInterval100ns;utc+=100;hv.service();
     check(hv.report().find("\"samples\":1")!=std::string::npos);
     check(hv.serviceDelay100ns()==10000);
     check(rx.read_packet(request,notify)==ArmVmbusRing::Result::Ok&&request==filler);

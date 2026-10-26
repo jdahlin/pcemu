@@ -64,11 +64,11 @@ void ArmHyperV::service() {
         }
         if (timesyncEnabled) {
             auto now=timeNow();
-            auto due=timesync.delay(now);
+            auto due=timesync.next_delay_100ns(now);
             if(due && !*due) {
-                auto packet=timesync.packet(now,utcClock());
-                if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVTimeSync::channelId,packet))
-                    timesync.sent(now);
+                auto packet=timesync.pending_packet(now,utcClock());
+                if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVTimeSync::ChannelId,packet))
+                    timesync.packet_published(now);
             }
         }
         if (shutdownEnabled) {
@@ -94,7 +94,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
         if(next) delay=std::min(delay.value_or(UINT64_MAX), std::max(*next,uint64_t(10000)));
     }
     if (timesyncEnabled) {
-        auto next=timesync.delay(now);
+        auto next=timesync.next_delay_100ns(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX),std::max(*next,uint64_t(10000)));
     }
     if (shutdownEnabled) {
@@ -168,13 +168,13 @@ void ArmHyperV::enableTimeSync(Clock source) {
     if(timesyncEnabled) return;
     if(!source) source=[] {
         using Ticks=std::chrono::duration<int64_t,std::ratio<1,10000000>>;
-        return ArmHyperVTimeSync::utcFromUnix100ns(std::chrono::duration_cast<Ticks>(
+        return ArmHyperVTimeSync::unix_100ns_to_filetime(std::chrono::duration_cast<Ticks>(
             std::chrono::system_clock::now().time_since_epoch()).count());
     };
-    if(!offerVmbusChannel(ArmHyperVTimeSync::offer(),
+    if(!offerVmbusChannel(ArmHyperVTimeSync::channel_offer(),
         [this](std::span<const uint8_t> packet) {
-            timesync.receive(packet,timeNow()); return std::vector<uint8_t>{};
-        },[this]{timesync.closed();},[this]{timesync.opened(timeNow());}))
+            timesync.receive_response(packet,timeNow()); return std::vector<uint8_t>{};
+        },[this]{timesync.channel_closed();},[this]{timesync.channel_opened(timeNow());}))
         throw std::runtime_error("Timesync requires VMBus and an available channel/connection");
     utcClock=std::move(source);timesyncEnabled=true;
 }
