@@ -14,8 +14,8 @@ int main() {
         HvfMachine vm(2*1024*1024,HvfMachine::GicProfile::HyperVNonsecure,{},2);
         ArmGicNonsecureView view([&](uint32_t o){return vm.nativeGicDistributorRead(o);},
                                 [&](uint32_t o,uint64_t v){vm.nativeGicDistributorWrite(o,v);});
-        check((view.read(4,4)&0x400)!=0,"Nonsecure security view missing");
-        check(view.read(0xffe8,4)==0x30,"Native GIC identity cache incorrect");
+        check((view.read_register(4,4)&0x400)!=0,"Nonsecure security view missing");
+        check(view.read_register(0xffe8,4)==0x30,"Native GIC identity cache incorrect");
         check(vm.reg(1)==0 && vm.reg(4)==0,"Bootstrap leaked registers into firmware context");
         check(vm.systemReg(0xc600)==0,"Bootstrap left its unmapped VBAR installed");
         // EL1 guest checks both VPs' PFR0/CurrentEL/private Group1 assignment,
@@ -36,11 +36,11 @@ int main() {
             check(exit.nativeReason==1,"Native exception reason was not preserved");
             if(exit.exceptionClass()==0x24 && (exit.syndrome&(1ull<<24))) {
                 unsigned width=1u<<((exit.syndrome>>22)&3),reg=(exit.syndrome>>16)&31;
-                check(exit.physicalAddress>=ArmGicNonsecureView::guestBase &&
-                      exit.physicalAddress<ArmGicNonsecureView::guestBase+0x10000,"Unexpected native data abort");
-                auto offset=exit.physicalAddress-ArmGicNonsecureView::guestBase;
-                if(exit.syndrome&64)view.write(offset,reg<31?vm.reg(reg):0,width);
-                else {auto value=view.read(offset,width);if(reg<31)vm.setReg(reg,width==4?uint32_t(value):value);}
+                check(exit.physicalAddress>=ArmGicNonsecureView::GuestDistributorBase &&
+                      exit.physicalAddress<ArmGicNonsecureView::GuestDistributorBase+0x10000,"Unexpected native data abort");
+                auto offset=exit.physicalAddress-ArmGicNonsecureView::GuestDistributorBase;
+                if(exit.syndrome&64)view.write_register(offset,reg<31?vm.reg(reg):0,width);
+                else {auto value=view.read_register(offset,width);if(reg<31)vm.setReg(reg,width==4?uint32_t(value):value);}
                 vm.setPC(exit.pc+4);++mmio;continue;
             }
             check(exit.reason==HvfMachine::ExitReason::Exception && exit.exceptionClass()==0x16,"Unexpected native exit");

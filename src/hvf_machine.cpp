@@ -139,7 +139,7 @@ struct HvfMachine::Impl {
             progress("creating GICv3");
             if (__builtin_available(macOS 15.0, *)) {
                 auto config = hv_gic_config_create();
-                auto result = hv_gic_config_set_distributor_base(config, hypervGic ? ArmGicNonsecureView::nativeBase : 0x08000000);
+                auto result = hv_gic_config_set_distributor_base(config, hypervGic ? ArmGicNonsecureView::NativeDistributorBase : 0x08000000);
                 if (result == HV_SUCCESS)
                     result = hv_gic_config_set_redistributor_base(config, 0x080a0000);
                 if (result == HV_SUCCESS)
