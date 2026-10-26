@@ -1292,3 +1292,15 @@ guest 38-byte readback. Its private 154,444,294-byte compressed disk and index a
 removed. All source/PID/reset/exit identities, driver, compressed logs and
 inspected screenshots are in `fresh-win95-native-batch-2026-10-26.json` and
 `fresh-win95-validation.md`. The broader performance target remains active.
+
+
+## Post-batch host profiles identify dispatch as next cost (26 October)
+
+Three ordinary 16 MiB headless Excel profiles pass the result gate and contain
+12,771 main-thread task samples after excluding the named attachment barrier.
+Dispatch/validation is 44.1%, generated/helpers 30.7%, interpreter 11.5%, and
+polling 4.5%. `runBatch` itself has 695 self samples (5.4%). These are wall-stack
+shares, not exact CPU durations or proof that a relative share changed in
+absolute cost. The analyzer now handles batch ancestry; 13 tests pass. All raw
+traces are compressed and verified. The next safe test is inlining the batch's
+call before relaxing any guard. See `post-batch-profiling.md` and its measurement.

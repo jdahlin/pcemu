@@ -9,6 +9,16 @@ from analyze_samples import category, parse, source_site
 
 
 class HostSampleAccounting(unittest.TestCase):
+    def test_batched_dispatch_and_helpers_keep_execution_categories(self):
+        parent = ['pc::Jit::runBatch(unsigned int)']
+        self.assertEqual(category({'ancestors': parent, 'symbol': 'pc::CPU::address()'}),
+                         'JIT dispatch/cache/validation')
+        for symbol in ('???  (in <unknown binary>)', 'pc::jit_detail::nativeMemory()'):
+            self.assertEqual(category({'ancestors': parent, 'symbol': symbol}),
+                             'Generated code and native helpers')
+        self.assertEqual(category({'ancestors': parent, 'symbol': 'pc::CPU::step()'}),
+                         'Interpreter (including MMU and guest faults)')
+
     def test_native_helpers_keep_their_execution_category(self):
         for helper in ('pc::nativeMemory()', 'pc::jit_detail::nativeMemory()',
                        'pc::jit_detail::nativeFinish()'):
