@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DLLS = {
     'bcrypt': 'BCryptOpenAlgorithmProvider BCryptGenRandom BCryptCloseAlgorithmProvider',
     'advapi32': 'StartTraceW EnableTraceEx2 ControlTraceW',
-    'kernel32': 'DeviceIoControl SetFilePointerEx GetStdHandle WriteFile ReadFile CreateFileW GetFileSizeEx CloseHandle GetLastError GetCommandLineW ExitProcess',
+    'kernel32': 'Sleep DeviceIoControl SetFilePointerEx GetStdHandle WriteFile ReadFile CreateFileW GetFileSizeEx CloseHandle GetLastError GetCommandLineW ExitProcess',
     'winhttp': 'WinHttpOpen WinHttpSetTimeouts WinHttpConnect WinHttpOpenRequest WinHttpSendRequest WinHttpWriteData WinHttpReceiveResponse WinHttpReadData WinHttpQueryHeaders WinHttpCloseHandle',
 }
 
@@ -33,7 +33,7 @@ def main():
         libraries.append(str(library))
     for source, name in (('guest_http.c', 'guest-http'), ('trace_viostor.c', 'trace-viostor'),
                          ('verify_install_disk.c', 'verify-install-disk'),
-                         ('check_rng.c', 'check-rng')):
+                         ('check_rng.c', 'check-rng'), ('check_serial.c', 'check-serial')):
         obj = args.output / (name + '.obj')
         exe = args.output / (name + '.exe')
         subprocess.run([clang, '--target=aarch64-pc-windows-msvc', '-ffreestanding', '-fno-stack-protector',

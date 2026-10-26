@@ -1,0 +1,17 @@
+{
+  "verified": true,
+  "binarySHA256": "71470eafa325cb450e5acaa91c6311fa2e01f0d3eee9ac159922bed62838cc7e",
+  "guest": "Microsoft ARM64 Windows PE 26100.9457",
+  "bytesToGuest": 16,
+  "guestReport": "/Users/johandahlin/dev/pcemu/build/windows-serial-c24g2pse/reports/report-1793031682101072000.log",
+  "serial": {
+    "ready": false,
+    "open": false,
+    "received": 16,
+    "transmitted": 45,
+    "completions": 18,
+    "messageInterrupts": 11
+  },
+  "scope": "Signed vioserial driver and original test process; not a QEMU guest-agent service.",
+  "temporaryMediaRemoved": true
+}

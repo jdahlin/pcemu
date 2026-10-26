@@ -7,6 +7,7 @@ void ArmVirtMachine::checkDeviceErrors() const {
             throw std::runtime_error("Virtio device requires reset: " + device->error());
     if (net && !net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
     if (rng && !rng->error().empty()) throw std::runtime_error("Virtio entropy requires reset: " + rng->error());
+    if (serial && !serial->error().empty()) throw std::runtime_error("Virtio serial requires reset: " + serial->error());
 }
 void ArmVirtMachine::bindDevices() {
     mmio.clear();
@@ -28,6 +29,7 @@ void ArmVirtMachine::bindDevices() {
     attach("virtio-net", 2, netPci.get());
     attach("virtio-rng", 3, rngPci.get());
     attach("usb-xhci", 4, usb.get());
+    attach("virtio-serial", 5, serialPci.get());
     // NVMe had precedence over virtio BARs in the original platform decoder.
     attach("nvme", 0, nvme.get());
 

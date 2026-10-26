@@ -239,3 +239,9 @@ test test-hvf: test-arm-hyperv-kvp-integration
 test-hyperv-kvp-roundtrip: build/hyperv-kvp-roundtrip-tests
 	./build/hyperv-kvp-roundtrip-tests
 test test-hvf: test-hyperv-kvp-roundtrip
+
+.PHONY: test-virtio-serial
+test-virtio-serial: build/virtio-serial-tests
+	./build/virtio-serial-tests
+
+test test-hvf: test-virtio-serial

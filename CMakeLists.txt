@@ -117,6 +117,9 @@ set(HARDWARE_MODELS
   src/virtio_blk.cpp
   src/virtio_net.cpp
   src/virtio_rng.cpp
+  src/virtio_device.cpp
+  src/virtio_serial.cpp
+  src/guest_agent_socket.cpp
   src/virtio_pci.cpp
   src/nvme.cpp
 )
@@ -351,6 +354,9 @@ pcemu_program(pcemu-hvf SDL ZSTD HVF
     src/virtio_pci.cpp
     src/virtio_net.cpp
     src/virtio_rng.cpp
+    src/virtio_device.cpp
+    src/virtio_serial.cpp
+    src/guest_agent_socket.cpp
     src/network.cpp
     src/ne2000.cpp
     src/nvme.cpp
@@ -595,3 +601,25 @@ pcemu_program(hyperv-kvp-roundtrip-tests
 )
 
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT pcemu)
+
+pcemu_program(virtio-serial-tests ZSTD
+  SOURCES
+    src/disk.cpp
+    src/virtio_blk.cpp
+    src/virtio_pci.cpp
+    src/virtio_device.cpp
+    src/virtio_serial.cpp
+    src/guest_agent_socket.cpp
+    tests/virtio_serial_test.cpp
+)
+
+pcemu_program(virtio-serial-sanitized-tests SANITIZE ZSTD
+  SOURCES
+    src/disk.cpp
+    src/virtio_blk.cpp
+    src/virtio_pci.cpp
+    src/virtio_device.cpp
+    src/virtio_serial.cpp
+    src/guest_agent_socket.cpp
+    tests/virtio_serial_test.cpp
+)

@@ -216,6 +216,15 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
             [this](unsigned o, unsigned w) { return rng->read(o, w); },
             [this](unsigned o, uint64_t v, unsigned w) { rng->write(o, v, w); },
             4, 0x00ff0001, 1, [this](bool level) { vm.setSPI(51, level); }, msi);
+        if (c.virtioSerial || !c.guestAgentSocket.empty()) {
+            serial = std::make_unique<VirtioSerial>(vm.ram(), HvfMachine::ramBase,
+                [this](bool level, unsigned queue) { if (serialPci) serialPci->irq(level, queue); });
+            serialPci = std::make_unique<VirtioPciDevice>(
+                [this](unsigned o, unsigned w) { return serial->read(o, w); },
+                [this](unsigned o, uint64_t v, unsigned w) { serial->write(o, v, w); },
+                3, 0x07800001, 4, [this](bool level) { vm.setSPI(53, level); }, msi);
+            if (!c.guestAgentSocket.empty()) agentSocket = std::make_unique<GuestAgentSocket>(c.guestAgentSocket);
+        }
         bindDevices();
         stage("loading and mapping firmware ROM");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
@@ -280,6 +289,10 @@ std::string ArmVirtMachine::cpuState() const {
 }
 std::string ArmVirtMachine::hypervReport() const {
     auto report = hyperv.report(); report.resize(report.find_last_of('}'));
+    if (serial) report += ",\"virtioSerial\":{\"ready\":" + std::string(serial->portReady() ? "true" : "false") +
+        ",\"open\":" + std::string(serial->portOpen() ? "true" : "false") +
+        ",\"received\":" + std::to_string(serial->received) + ",\"transmitted\":" + std::to_string(serial->transmitted) +
+        ",\"completions\":" + std::to_string(serial->completions) + ",\"messageInterrupts\":" + std::to_string(serialPci->messageInterrupts) + "}";
     report += ",\"instructionContextBarriers\":[";
     for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
         if (cpu) report += ',';
@@ -330,6 +343,12 @@ void ArmVirtMachine::updateRtcInterrupt() {
 void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (stopped()) return;
     updateRtcInterrupt();
+    if (serial) serial->poll();
+    if (agentSocket) {
+        agentSocket->pump(*serial);
+        slice = std::min(slice, std::chrono::milliseconds(10));
+    }
+    checkDeviceErrors();
     hyperv.service();
     if (auto delay = hyperv.serviceDelay100ns()) {
         auto milliseconds = *delay / 10000 + (*delay % 10000 != 0);

@@ -36,7 +36,7 @@ class HvfCLI(unittest.TestCase):
             self.assertIn('exit=1 ', result.stdout)  # Canceled
 
     def test_validation(self):
-        cases = [('--gui', '--self-test'), ('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'), ('--hyperv', 'vmbus', '--self-test'),
+        cases = [('--virtio-serial', '--self-test'), ('--guest-agent-socket', 'any', '--self-test'), ('--gui', '--self-test'), ('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'), ('--hyperv', 'vmbus', '--self-test'),
                  ('--hyperv-stats', 'any', '--self-test'), (), ('--kernel', '/missing/hvf-guest.bin'),
                  ('--timeout-ms', '0'), ('--timeout-ms', '60001'),
                  ('--timeout-ms', '20ms'), ('--kernel',),
@@ -93,7 +93,7 @@ class HvfCLI(unittest.TestCase):
             self.assertIn('elr_el1=0x', result.stderr)
             self.assertEqual(result.returncode, 0, result.stderr)
             overlay = Path(str(variables) + '.qcow2')
-            self.assertTrue(overlay.read_bytes().startswith(b'PCEMUCOW'))
+            self.assertTrue(overlay.read_bytes().startswith(b'QFI\xfb'))
             self.assertEqual(first.read_bytes(), bytes(8192))
             result = self.invoke(*args, '--disk', str(second))
             self.assertNotEqual(result.returncode, 0)

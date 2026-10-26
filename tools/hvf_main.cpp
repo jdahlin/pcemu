@@ -822,6 +822,8 @@ int main(int argc, char **argv) {
                 return 0;
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
+            else if (arg == "--virtio-serial") { uefi.virtioSerial = true; uefiOptions = true; }
+            else if (arg == "--guest-agent-socket") { uefi.guestAgentSocket = value(); uefiOptions = true; }
             else if (arg == "--virtio-msix") { uefi.virtioMsix = true; uefiOptions = true; }
             else if (arg == "--disk") { uefi.disk = value(); uefiOptions = true; }
             else if (arg == "--extra-disk") { uefi.extraDisk = value(); uefiOptions = true; }
@@ -890,6 +892,7 @@ int main(int argc, char **argv) {
                 std::cout << "pcemu-hvf: experimental ARM64 bare-metal platform on Apple Silicon\n"
                              "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
                              "  --virtio-msix (requires matching --msi platform assets)\n"
+                             "  --virtio-serial [--guest-agent-socket PRIVATE_PATH]\n"
                              "  --self-test\n"
                              "  --benchmark-watchdog (standalone headless RAM-only exit benchmark)\n"
                              "  --kernel FILE [--timeout-ms 1..60000]\n"

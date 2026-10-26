@@ -16,7 +16,7 @@ and viosock. Packages without matching hardware are staged, not active.
 | Network | NetKVM 0.1.302 | PCI 1AF4:1041; signed, running; DNS and HTTP verified |
 | Entropy | viorng 0.1.302 | PCI 1AF4:1044; signed; device problem code 0 |
 | SCSI | vioscsi 0.1.302 | Staged; separate virtio-scsi controller absent |
-| Serial | vioserial 0.1.302 | Staged; virtio-console/agent channel absent |
+| Serial | vioserial 0.1.302 | Named agent port implemented; signed ARM64 WinPE I/O test, opt-in PCI device |
 | Input | vioinput 0.1.302 | Staged; current input uses working USB HID |
 | Balloon | Balloon 0.1.302 | Staged; balloon device absent |
 | Display | viogpudo 0.1.302 | Staged; currently RAMFB with Microsoft Basic Display |
@@ -32,9 +32,9 @@ Installing additional driver packages alone does not accelerate these devices.
 
 The stable ISO supplies x86/x64 QEMU guest-agent MSI files and x86/x64 combined
 guest-tools installers. It has no native ARM64 agent MSI. More importantly,
-pcemu currently lacks the virtio-serial agent channel and SPICE server, so no
-unused guest-agent/balloon/display service was started. Those require working
-host counterparts first. VirtIO-GPU 2D display also does not imply 3D acceleration.
+the [VirtIO serial agent channel](virtio-guest-tools.md) is now implemented. A
+compatible ARM64 guest-agent service and SPICE server remain absent, so no
+unused guest-agent/balloon/display service was started. VirtIO-GPU 2D display also does not imply 3D acceleration.
 
 One pre-existing unknown device remains: ACPI QEMU0002 (fw_cfg), problem code 28.
 The stable fwcfg and qemufwcfg INF models cover x86/x64 only; they were not forced

@@ -127,7 +127,8 @@ uint64_t VirtioPciDevice::commonRead(unsigned offset, unsigned width) const {
     put(common, 0, readReg(0x14), 4); put(common, 4, readReg(0x10), 4);
     put(common, 8, readReg(0x24), 4); put(common, 12, readReg(0x20), 4);
     put(common, 16, configVector, 2); put(common, 18, queueCount, 2);
-    put(common, 20, readReg(0x70), 1); put(common, 22, readReg(0x30), 2);
+    put(common, 20, readReg(0x70), 1); put(common, 21, readReg(0xfc), 1);
+    put(common, 22, readReg(0x30), 2);
     put(common, 24, readReg(0x38), 2);
     put(common, 26, readReg(0x30) < queueVectors.size() ? queueVectors[readReg(0x30)] : 0xffff, 2); put(common, 28, readReg(0x44), 2);
     put(common, 30, readReg(0x30), 2);
@@ -209,5 +210,7 @@ void VirtioPciDevice::write(uint64_t address, uint64_t value, unsigned width) {
     else if (offset < 56) commonWrite(offset, value, width);
     else if (offset >= 0x1000 && offset < 0x1000 + queueCount * 4u && (width == 2 || width == 4) && (command & 4))
         writeReg(0x50, value & 0xffff);
+    else if (offset >= 0x3000 && offset < 0x3040 && width <= 0x3040 - offset)
+        writeReg(0x100 + offset - 0x3000, value, width);
 }
 } // namespace pc

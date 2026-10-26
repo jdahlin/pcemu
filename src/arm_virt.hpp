@@ -16,6 +16,8 @@
 #include "virtio_pci.hpp"
 #include "virtio_net.hpp"
 #include "virtio_rng.hpp"
+#include "virtio_serial.hpp"
+#include "guest_agent_socket.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
 #include "usb_xhci.hpp"
@@ -36,6 +38,8 @@ class ArmVirtMachine {
         std::string extraDisk, extraDiskOverlay;
         bool network = false;
         bool virtioMsix = false;
+        bool virtioSerial = false;
+        std::string guestAgentSocket;
         bool hyperv = false;
         bool hypervSynic = false;
         uint16_t sshPort = 0;
@@ -109,6 +113,9 @@ class ArmVirtMachine {
     std::unique_ptr<VirtioBlock> extraBlock;
     std::unique_ptr<VirtioPciDevice> extraPci, netPci, rngPci;
     std::unique_ptr<VirtioRng> rng;
+    std::unique_ptr<VirtioPciDevice> serialPci;
+    std::unique_ptr<VirtioSerial> serial;
+    std::unique_ptr<GuestAgentSocket> agentSocket;
     std::unique_ptr<VirtioNet> net;
     std::unique_ptr<Network> gateway;
     int variableLock = -1, diskLock = -1, extraDiskLock = -1;
