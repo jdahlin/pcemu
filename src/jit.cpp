@@ -161,7 +161,7 @@ void Jit::setDirectLinks(bool enabled, unsigned hotEntries) {
     }
 }
 void Jit::setLinkTarget(Block &source, unsigned slot, uintptr_t target) {
-    auto &link = *source.link;
+    auto &link = *source.link();
     if (link.target[slot] == target) return;
     const auto base = reinterpret_cast<uintptr_t>(source.fn);
     const auto address = base + link.branchOffsets[slot];
@@ -198,30 +198,30 @@ void Jit::patchIncoming(uint64_t key) {
     auto &list = pending->second;
     std::erase_if(list, [&](const IncomingLink &edge) {
         auto source = blocks.find(edge.source);
-        if (source == blocks.end() || source->second.fn != edge.sourceEntry || !source->second.link)
+        if (source == blocks.end() || source->second.fn != edge.sourceEntry || !source->second.link())
             return true;
         auto &a = source->second;
         if (target == blocks.end()) { setLinkTarget(a, edge.slot, 0); return false; }
         uintptr_t destinationEntry = 0;
         const auto &b = target->second;
-        const auto destination = a.link->ips[edge.slot];
-        if (a.fn && b.fn && b.link && b.link->promoted && b.link->entry && a.link->saveMask == b.link->saveMask &&
-            (uint32_t(a.csBase + a.link->startIP) >> 12) == (uint32_t(a.csBase + destination) >> 12) &&
+        const auto destination = a.link()->ips[edge.slot];
+        if (a.fn && b.fn && b.link() && b.link()->promoted && b.link()->entry && a.link()->saveMask == b.link()->saveMask &&
+            (uint32_t(a.csBase + a.link()->startIP) >> 12) == (uint32_t(a.csBase + destination) >> 12) &&
             a.page == b.page && a.generation == b.generation && a.cr0 == b.cr0 &&
             a.cr3 == b.cr3 && a.csBase == b.csBase && a.a20 == b.a20 && a.vm == b.vm &&
             a.executionEpoch == b.executionEpoch && a.watched == b.watched &&
             a.stack32 == b.stack32 && a.ram == b.ram && a.ramSize == b.ramSize &&
-            a.codeBits == b.codeBits && a.link->generationData == b.link->generationData)
+            a.codeBits == b.codeBits && a.link()->generationData == b.link()->generationData)
             destinationEntry = reinterpret_cast<uintptr_t>(b.fn) +
-                (&a == &b ? b.link->loopEntry :
-                 (b.link->usedRegisters & ~a.link->usedRegisters) == 0 ? b.link->loadedEntry : b.link->entry);
+                (&a == &b ? b.link()->loopEntry :
+                 (b.link()->usedRegisters & ~a.link()->usedRegisters) == 0 ? b.link()->loadedEntry : b.link()->entry);
         setLinkTarget(a, edge.slot, destinationEntry);
         return false;
     });
 }
 void Jit::publishLinks(uint64_t key, Block &block) {
-    for (unsigned slot = 0; slot < block.link->count; ++slot) {
-        auto destination = (key & 0xffffffff00000000ull) | block.link->ips[slot];
+    for (unsigned slot = 0; slot < block.link()->count; ++slot) {
+        auto destination = (key & 0xffffffff00000000ull) | block.link()->ips[slot];
         incomingLinks[destination].push_back({key, slot, block.fn});
         patchIncoming(destination);
     }
@@ -234,11 +234,11 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     if (auto it = incomingLinks.find(key); it != incomingLinks.end())
         for (auto &edge : it->second) {
             auto source = blocks.find(edge.source);
-            if (source != blocks.end() && source->second.fn == edge.sourceEntry && source->second.link)
+            if (source != blocks.end() && source->second.fn == edge.sourceEntry && source->second.link())
                 setLinkTarget(source->second, edge.slot, 0);
         }
     auto &stored = blocks.insert_or_assign(key, std::move(block)).first->second;
-    if (stored.link && stored.link->promoted) publishLinks(key, stored);
+    if (stored.link() && stored.link()->promoted) publishLinks(key, stored);
     patchIncoming(key);
     return &stored;
 }
@@ -294,7 +294,7 @@ uint32_t Jit::run() {
           (cached->usesStack && cached->stack32 != cpu.s[SS].big) ||
           cached->ram != cpu.mem.data() || cached->ramSize != cpu.mem.size() ||
           cached->codeBits != cpu.codeUsed.data() ||
-          (cached->link && cached->link->generationData != cpu.generation.data()))) ||
+          (directLinks && cached->link() && cached->link()->generationData != cpu.generation.data()))) ||
         (checkedPage && cached->page != currentPage)) {
         try {
             profile::event(profile::MetadataRebuild);
@@ -319,7 +319,7 @@ uint32_t Jit::run() {
             return 1;
         }
     }
-    if (directLinks && cached->fn && cached->link && !cached->linkRequested &&
+    if (directLinks && cached->fn && cached->link() && !cached->linkRequested &&
         ++cached->visits >= linkWarmup) {
         cached->linkRequested = true;
         ++directLinkPromotions;
@@ -349,6 +349,9 @@ uint32_t Jit::run() {
     return n;
 }
 Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
+    return directLinks ? runCachedImpl<true>(budget) : runCachedImpl<false>(budget);
+}
+template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noexcept {
     // Only already-native fast-cache hits run here. Keep these context guards
     // synchronized with run(); misses, compilation and replay stay outside.
     CachedBatch result;
@@ -366,9 +369,9 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
             b->watched != bool(cpu.watchWrite) || (b->usesStack && b->stack32 != cpu.s[SS].big) ||
             b->ram != cpu.mem.data() || b->ramSize != cpu.mem.size() ||
             b->codeBits != cpu.codeUsed.data() ||
-            (b->link && b->link->generationData != cpu.generation.data()))
+            (Linking && b->link() && b->link()->generationData != cpu.generation.data()))
             return result;
-        if (directLinks && b->link && !b->linkRequested && ++b->visits >= linkWarmup)
+        if (Linking && b->link() && !b->linkRequested && ++b->visits >= linkWarmup)
             return result; // Promotion/patching is only allowed outside native frames.
         auto oldCR2 = cpu.cr[2];
         try {
@@ -380,16 +383,20 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
             cpu.cr[2] = oldCR2;
             return result;
         }
-        auto packed = b->fn(&cpu, directLinks ? budget - result.count.instructions : 0);
+        auto packed = b->fn(&cpu, Linking ? budget - result.count.instructions : 0);
         auto n = uint32_t(packed);
-        auto dispatches = unsigned(packed >> 32);
-        const bool stoppedZero = dispatches & 0x8000;
-        dispatches &= 0x7fff;
+        unsigned dispatches = 1;
+        bool stoppedZero = false;
+        if constexpr (Linking) {
+            dispatches = unsigned(packed >> 32);
+            stoppedZero = dispatches & 0x8000;
+            dispatches &= 0x7fff;
+        }
         assert(n <= 127 && dispatches <= 64);
         if (!dispatches) dispatches = 1;
         result.count.dispatches += dispatches;
         cacheHits += dispatches;
-        directLinkTransitions += dispatches - 1;
+        if constexpr (Linking) directLinkTransitions += dispatches - 1;
         profile::event(profile::Dispatch, dispatches);
         profile::event(profile::FastHit, dispatches);
         profile::event(profile::NativeCall, dispatches);
@@ -462,7 +469,8 @@ Jit::Block Jit::compile(bool translate) {
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
     if (ir.empty() || (warmup && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
-                      !ir.back().nearReturn && !ir.back().indirectJump))
+                      !ir.back().nearReturn && !ir.back().indirectJump &&
+                      !ir.front().stringMove))
         return block;
     return emitArm64(std::move(block), decoded);
 #endif

@@ -88,8 +88,14 @@ class Jit {
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;
         unsigned visits = 0;
-        std::shared_ptr<std::vector<NativeMemoryMove>> memory;
-        std::unique_ptr<LinkState> link;
+        struct NativeState {
+            std::vector<NativeMemoryMove> memory;
+            std::unique_ptr<LinkState> link;
+        };
+        // Negative entries and register-only unlinked blocks own no native
+        // metadata. Helper operands remain alive until the block is replaced.
+        std::unique_ptr<NativeState> native;
+        LinkState *link() const { return native ? native->link.get() : nullptr; }
     };
     CPU &cpu;
     uint8_t *arena = nullptr;
@@ -108,6 +114,7 @@ class Jit {
         bool stoppedZero = false;
     };
     CachedBatch runCached(unsigned budget) noexcept;
+    template <bool Linking> CachedBatch runCachedImpl(unsigned budget) noexcept;
     Block compile(bool translate = true);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);

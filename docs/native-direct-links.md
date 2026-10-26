@@ -118,3 +118,13 @@ The benefit is workload-dependent. Word startup remains slower with linking;
 the flag stays off by default. This milestone supports continued investigation
 of repeated native chains, but does not establish a general application speedup
 or justify enabling the feature globally.
+
+## Word-specific follow-up
+
+The later [Word document-loading work](measurements/word5m-string-ops-2026-10-26.md)
+shows a modest ~2% CPU improvement over the original baseline with direct links
+**disabled**. It lowers non-REP string operations/direction changes, compacts
+native metadata, and specializes cached dispatch. This is separate from the
+Excel direct-link win and from the earlier Word linking regressions; it is not
+evidence to enable linking by default. Block records now uniquely own optional
+native state containing both memory operands and link metadata.

@@ -274,6 +274,18 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Lea; // LEA computes an offset without accessing the segment or RAM.
                 i.dst = (m >> 3) & 7;
                 i.memory = memoryOperand(m, address32, overrideSegment);
+            } else if (op >= 0xaa && op <= 0xad) {
+                i.kind = Kind::Memory;
+                i.stringMove = true;
+                i.w = (op & 1) ? w : 1;
+                i.dst = i.memory.reg = AX;
+                i.memory.store = op <= 0xab;
+                i.memory.base = i.memory.store ? DI : SI;
+                i.memory.segment = i.memory.store ? ES : overrideSegment < 0 ? DS : overrideSegment;
+                i.memory.address32 = address32;
+            } else if (op == 0xfc || op == 0xfd) {
+                i.kind = Kind::Direction;
+                i.imm = op == 0xfd ? DF : 0;
             } else if (op >= 0xa0 && op <= 0xa3) {
                 i.kind = Kind::Memory;
                 i.w = (op & 1) ? w : 1;

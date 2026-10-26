@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest,
-    LoadFlags
+    LoadFlags, Direction
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -16,6 +16,7 @@ struct Instruction {
     bool immediate;
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
+    bool stringMove = false; // Non-REP LODS/STOS; index changes only after successful access.
     bool indirectJump = false, indirectCall = false, memoryCall = false, memoryPush = false;
     unsigned sourceWidth = 0;
     bool signedSource = false;

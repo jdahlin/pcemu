@@ -340,6 +340,142 @@ static void linkedContextTests() {
         }
 }
 
+static void stringMoveTests() {
+    for (bool paging : {false, true})
+        for (bool wide : {false, true})
+            for (bool address32 : {false, true})
+                for (unsigned width : {1u, 2u, 4u})
+                    for (bool backwards : {false, true})
+                      for (bool store : {false, true}) {
+                        auto c = make({}, paging);
+                        c.s[CS].big = wide;
+                        std::vector<uint8_t> code{0x64}; // FS override
+                        if (wide != address32) code.push_back(0x67);
+                        if (width != 1 && wide != (width == 4)) code.push_back(0x66);
+                        code.push_back(store ? (width == 1 ? 0xaa : 0xab) : (width == 1 ? 0xac : 0xad));
+                        code.push_back(0xf4);
+                        std::copy(code.begin(), code.end(), c.mem.begin());
+                        c.s[FS].base = 0x2000;
+                        c.s[ES].base = 0x3000; // STOS ignores the FS override.
+                        c.r[SI] = address32 ? 0x100 : 0xabcd0100;
+                        c.r[DI] = c.r[SI];
+                        c.r[AX] = 0x87654321;
+                        c.flags = 0x8d7 | (backwards ? DF : 0);
+                        c.write(0x2100, 0x12345678, 4);
+                        compare(c);
+                    }
+    {
+        auto c = make({0xfd, 0xac, 0xfc, 0xad, 0xaa, 0xab, 0xf4}, true);
+        c.r[SI] = 0x11000; c.r[DI] = 0x12000;
+        c.flags = 0x8d7;
+        compare(c); // Both DF changes execute inside the same native block.
+    }
+    {
+        auto c = make({0xab, 0xf4, 0x90, 0x90, 0x90});
+        c.r[DI] = 1; c.r[AX] = 0x909090f4;
+        compare(c); // Self-modifying STOS must commit DI before leaving the block.
+    }
+    {
+        auto c = make({0xab, 0xf4});
+        c.r[DI] = 0xa0000;
+        c.r[AX] = 0x12345678;
+        CPU ref = c;
+        unsigned calls = 0, refCalls = 0;
+        c.videoWrite = [&](uint32_t, uint8_t) { ++calls; };
+        ref.videoWrite = [&](uint32_t, uint8_t) { ++refCalls; };
+        Jit jit(c, true, 0);
+        jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(calls == 4 && refCalls == 4 && c.r[DI] == 0xa0004,
+              "STOS MMIO replay duplicated access or destination-index update");
+    }
+    for (bool backwards : {false, true}) {
+        auto c = make({0xac, 0xf4});
+        c.s[CS].big = false;
+        c.r[SI] = backwards ? 0x12340000 : 0x1234ffff;
+        c.flags = 2 | (backwards ? DF : 0);
+        compare(c); // SI wraps while its high half survives.
+    }
+    for (bool backwards : {false, true}) {
+        auto c = make({0xac, 0x83, 0xe9, 1, 0x75, 0xfa, 0xf4}, true);
+        c.r[CX] = 1000;
+        c.r[SI] = backwards ? 0x11000 : 0x10000;
+        c.flags = 2 | (backwards ? DF : 0);
+        compare(c);
+    }
+    {
+        auto c = make({0xf3, 0xac, 0xf4});
+        c.r[SI] = 0x1000;
+        c.r[CX] = 3;
+        compare(c); // REP remains interpreted and must retain its count semantics.
+    }
+    {
+        auto c = make({0xac, 0xf4});
+        c.r[SI] = 0x1000;
+        CPU ref = c;
+        Jit jit(c, true, 8);
+        jit.setDirectLinks(linksMode, 0);
+        for (unsigned run = 0; run < 40; ++run) {
+            c.ip = ref.ip = 0;
+            c.halted = ref.halted = false;
+            while (!c.halted) {
+                auto part = jit.runBatch();
+                for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+                equal(c, ref);
+            }
+        }
+        check(jit.nativeInstructions > 0, "hot single LODS was rejected as a cheap fragment");
+    }
+    {
+        auto c = make({0xad, 0xf4});
+        c.r[SI] = 0xa0000;
+        CPU ref = c;
+        unsigned calls = 0, refCalls = 0;
+        c.videoRead = [&](uint32_t p) { ++calls; return uint8_t(p); };
+        ref.videoRead = [&](uint32_t p) { ++refCalls; return uint8_t(p); };
+        Jit jit(c, true, 0);
+        jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(calls == 4 && refCalls == 4 && c.r[SI] == 0xa0004,
+              "LODS MMIO replay duplicated access or source-index update");
+    }
+    for (bool store : {false, true}) {
+        auto c = make({0xac, uint8_t(store ? 0xab : 0xad), 0xf4}, true);
+        c.r[SI] = 0x4fff;
+        c.r[DI] = 0x4fff;
+        c.mem[0x4fff] = 0x78;
+        uint32_t absent = 0;
+        std::copy_n(reinterpret_cast<uint8_t *>(&absent), 4, c.mem.begin() + 0x81014);
+        c.flushTLB();
+        CPU ref = c;
+        unsigned faults = 0;
+        auto capture = [&](const Fault &f) {
+            check(f.vector == 14 && f.error == (store ? 2u : 0u), "string access fault type");
+            ++faults;
+            throw std::runtime_error("captured LODS fault");
+        };
+        c.observeFault = ref.observeFault = capture;
+        Jit jit(c, true, 0);
+        jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "LODS native fault missing"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "captured LODS fault", "LODS fault observer"); }
+        try { ref.step(); ref.step(); check(false, "LODS reference fault missing"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "captured LODS fault", "LODS reference observer"); }
+        equal(c, ref);
+        check(faults == 2 && c.r[SI] == 0x5000 && c.r[DI] == 0x4fff &&
+                  c.ip == 1 && c.cr[2] == 0x5000,
+              "string fault lost the successful prefix or changed an index");
+    }
+}
+
 static void delayedPromotionTest() {
     auto c = make({0x83, 0xc0, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4});
     c.r[CX] = 1000;
@@ -408,6 +544,7 @@ int main() {
         for (bool enabled : {false, true}) {
             linksMode = enabled;
             memoryTests();
+            stringMoveTests();
             cycleTests();
         }
         check(observedLinks > 0, "direct links were never exercised");
