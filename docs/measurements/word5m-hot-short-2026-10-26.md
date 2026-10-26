@@ -153,3 +153,8 @@ memory ALU operations and memory bit tests. Prioritize hot unsupported code
 and native-block breakers; do not chase 100% ISA coverage regardless of use.
 Measure coverage/correctness while implementing those cases, and retain the
 complete Word CPU comparison as the acceptance gate at each useful checkpoint.
+
+The following [immediate-store and memory-ALU stage](word5m-memory-alu-2026-10-26.md)
+raises native instruction share to 92.7%. Its corrected build improves matched
+Word CPU by another 8.8% versus this build, retaining the original baseline in
+the comparison and adding a self-PTE RMW ordering regression test.

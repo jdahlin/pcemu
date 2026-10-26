@@ -41,10 +41,9 @@ CPU make(std::initializer_list<uint8_t> code, bool paging = false) {
     }
     return c;
 }
-void compare(CPU c, unsigned batches = 10000) {
+void compare(CPU c, unsigned batches = 10000, Jit::BlockMode mode = Jit::BlockMode::FollowJumps) {
     CPU ref = c, single = c;
-    Jit jit(c, true, 0, 65536, Jit::BlockMode::FollowJumps),
-        one(single, true, 0, 65536, Jit::BlockMode::FollowJumps);
+    Jit jit(c, true, 0, 65536, mode), one(single, true, 0, 65536, mode);
         jit.setDirectLinks(linksMode, 0);
         LinkProbe linkProbe{jit};
     for (unsigned k = 0; k < batches && !c.halted; ++k) {
@@ -550,6 +549,15 @@ static void memoryWriteCoverageTests() {
         c.write(0x1000, 0xffffffff, 4);
         compare(c); // Pending register carry -> memory ADC -> register SBB.
     }
+    for (unsigned operation : {2u, 3u})
+      for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0x83, uint8_t((operation << 3) | 3), 1,
+                       0x83, 0xe9, 1, 0x75, 0xf8, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[CX] = 1000;
+        c.flags = 2 | CF;
+        c.write(0x1000, 0xffffffff, 4);
+        compare(c, 10000, mode); // Carry survives helpers, trace exits and real direct links.
+    }
     {
         auto c = make({0xc7, 0x03, 0x78, 0x56, 0x34, 0x12, 0xf4}, true);
         c.r[BX] = 0x1000;
@@ -570,10 +578,33 @@ static void memoryWriteCoverageTests() {
         c.r[AX] = 42;
         compare(c); // Rewrite the next native instruction to HLT, skipping ADD AX.
     }
+    for (int operation : {-2, -1, 0, 1, 2, 3, 4, 5, 6}) {
+        auto c = operation < 0
+            ? make({0xff, uint8_t(operation == -1 ? 3 : 11), 0xf4}, true)
+            : make({0x81, uint8_t((operation << 3) | 3), 0, 1, 0, 0, 0xf4}, true);
+        // The operand is its own PTE. The write-permission probe sets D in
+        // that same word, but the ALU must use the value read before that probe.
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024);
+        c.flushTLB();
+        c.r[BX] = 0x9024;
+        c.flags = 2 | CF;
+        CPU ref = c;
+        Jit jit(c, true, 0);
+        jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        check(c.mem == ref.mem, "RMW observed its own write-probe dirty-bit update");
+        equal(c, ref);
+        check(c.nativeMemoryCalls && jit.nativeInstructions == 1,
+              "self-PTE RMW did not exercise the native helper");
+    }
     for (bool immediateStore : {false, true})
-      for (bool watched : {false, true}) {
+      for (bool watched : {false, true})
+       for (unsigned operation : {0u, 2u, 3u}) {
+        if (immediateStore && operation) continue;
         auto c = immediateStore ? make({0xc7, 0x03, 1, 2, 3, 4, 0xf4})
-                                : make({0x83, 0x03, 1, 0xf4});
+                                : make({0x83, uint8_t((operation << 3) | 3), 1, 0xf4});
         c.r[BX] = 0xa0000;
         CPU ref = c;
         std::vector<uint64_t> trace, refTrace;
@@ -584,8 +615,12 @@ static void memoryWriteCoverageTests() {
         if (watched) {
             c.watchStart = ref.watchStart = 0xa0000;
             c.watchLength = ref.watchLength = 4;
-            c.watchWrite = [&](uint32_t, uint32_t v, int) { trace.push_back((2ull << 60) | v); };
-            ref.watchWrite = [&](uint32_t, uint32_t v, int) { refTrace.push_back((2ull << 60) | v); };
+            c.watchWrite = [&](uint32_t, uint32_t v, int) {
+                trace.push_back((2ull << 60) | v); trace.push_back((3ull << 60) | c.flags);
+            };
+            ref.watchWrite = [&](uint32_t, uint32_t v, int) {
+                refTrace.push_back((2ull << 60) | v); refTrace.push_back((3ull << 60) | ref.flags);
+            };
         }
         Jit jit(c, true, 0);
         jit.setDirectLinks(linksMode, 0);
@@ -594,16 +629,18 @@ static void memoryWriteCoverageTests() {
             for (unsigned i = 0; i < part.instructions; ++i) ref.step();
             equal(c, ref);
         }
-        check(trace == refTrace && trace.size() == (immediateStore ? 4u : 8u) + unsigned(watched),
+        check(trace == refTrace && trace.size() == (immediateStore ? 4u : 8u) + 2 * unsigned(watched),
               "native write replay changed MMIO/watch order or duplicated a callback");
         check(jit.compiledBlocks && c.nativeMemoryCalls, "write callback test did not exercise native replay");
     }
     for (bool immediateStore : {false, true})
-      for (bool crossPage : {false, true}) {
+      for (bool crossPage : {false, true})
+       for (unsigned operation : {0u, 2u, 3u}) {
+        if (immediateStore && operation) continue;
         auto c = immediateStore ? make({0x83, 0xc0, 1, 0xc7, 0x03, 1, 2, 3, 4, 0xf4}, true)
-                                : make({0x83, 0xc0, 1, 0x83, 0x03, 1, 0xf4}, true);
+                                : make({0x83, 0xc0, 1, 0x83, uint8_t((operation << 3) | 3), 1, 0xf4}, true);
         c.s[CS].selector = 3;
-        c.r[AX] = 0x7fffffff;
+        c.r[AX] = operation ? 0xffffffff : 0x7fffffff;
         c.r[BX] = crossPage ? 0x4fff : 0x5000;
         uint32_t readOnly = 0x5005;
         std::copy_n(reinterpret_cast<uint8_t *>(&readOnly), 4, c.mem.begin() + 0x81014);

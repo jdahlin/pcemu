@@ -44,9 +44,11 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
         }
         if (op->store) {
             if (rmw) {
-                physical = cpu->physical(linear, true);
                 uint32_t original = 0;
                 std::memcpy(&original, cpu->mem.data() + physical, op->width);
+                // The operand can alias its own PTE. Capture it before the
+                // write probe updates D in that same guest word.
+                physical = cpu->physical(linear, true);
                 cpu->nativeValue = original;
                 if (op->delta) value = original + uint32_t(op->delta);
                 else switch (op->alu) {

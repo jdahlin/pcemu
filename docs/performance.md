@@ -1867,3 +1867,16 @@ Eight rotating holdout rounds show 7.4% lower median task CPU than f4abcad and
 New tests exercise promotion under interrupts, code changes, RAM replacement
 and precise faults. Full scope, controls, limits and reproduction commands are
 in [the Word coverage report](measurements/word5m-hot-short-2026-10-26.md).
+
+### Word 97: immediate stores and memory ALU (2026-10-26)
+
+C6/C7 immediate stores and the binary memory ALU family (ADD/OR/ADC/SBB/AND/SUB/
+XOR, including carry memory reads) now use the guarded native RAM path. The RMW
+helper captures its input before write translation, avoiding a dirty-bit update
+changing an operand that aliases its own PTE; regressions include INC/DEC too.
+Eight corrected-build holdout rounds show native share 90.8% -> 92.7%, median
+Word task CPU 8.8% below 63a3151 and 17.5% below the original 57ce863 baseline.
+All 32 restores pass the original document/pixel gate. Correctness tests cover
+carry, precise faults, MMIO/watch ordering, self-modification, PTE aliasing,
+trace/direct-link paths and interrupt deadlines. See
+[the corrected memory-coverage report](measurements/word5m-memory-alu-2026-10-26.md).
