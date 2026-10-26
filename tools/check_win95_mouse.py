@@ -15,6 +15,8 @@ def main():
     parser.add_argument('control', type=Path)
     parser.add_argument('frame', type=Path)
     parser.add_argument('state', type=Path)
+    parser.add_argument('--native-cursor', action='store_true',
+                        help='require native shape upload and no software cursor pixels')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
@@ -39,10 +41,17 @@ def main():
     background = bytes([0, 128, 128])
     points = [(px, py) for py in range(y-3, y+35) for px in range(x-3, x+35)
               if pixels[(py*width+px)*3:(py*width+px)*3+3] != background]
-    assert points, 'guest cursor did not reach absolute target'
-    bounds = [min(p[0] for p in points), min(p[1] for p in points),
-              max(p[0] for p in points), max(p[1] for p in points)]
-    assert abs(bounds[0]-x) <= 2 and abs(bounds[1]-y) <= 2, bounds
+    if args.native_cursor:
+        state = json.loads(args.state.read_text())
+        assert state['hostCursor']['active'] and state['hostCursor']['visible'], state['hostCursor']
+        assert state['hostCursor']['size'] >= 12, state['hostCursor']
+        assert not points, 'software cursor still contaminates framebuffer'
+        bounds = None
+    else:
+        assert points, 'guest cursor did not reach absolute target'
+        bounds = [min(p[0] for p in points), min(p[1] for p in points),
+                  max(p[0] for p in points), max(p[1] for p in points)]
+        assert abs(bounds[0]-x) <= 2 and abs(bounds[1]-y) <= 2, bounds
     (args.output/'absolute-position.ppm').write_bytes(args.frame.read_bytes())
     nx, ny = 15 * 65535 // (width-1), (height-15) * 65535 // (height-1)
     # SDL sends position before the button transition. Exercise the same order.
@@ -69,9 +78,10 @@ def main():
     send('key 011b')
     (args.output/'result.json').write_text(json.dumps({
         'mode': [width, height, state['video']['bpp']], 'absoluteActive': True,
-        'target': [x,y], 'cursorBounds': bounds, 'absoluteClickOpenedStart': True,
+        'target': [x,y], 'cursorBounds': bounds, 'nativeCursor': args.native_cursor,
+        'hostCursor': state.get('hostCursor'), 'absoluteClickOpenedStart': True,
         'absoluteRightClickOpenedMenu': True, 'queueDrained': True, 'hostGuiInput': False}, indent=2)+'\n')
-    print('PASS: absolute guest cursor position and Start click verified headless')
+    print('PASS: absolute input, cursor presentation and left/right clicks verified headless')
 
 if __name__ == '__main__':
     main()

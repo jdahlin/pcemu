@@ -60,6 +60,7 @@ void Machine::restart() {
     debugConsole.reset();
     ps2.reset();
     absoluteMouse.reset();
+    hostCursor = {};
     pci.reset();
     nic.reset();
     nicLine = false;

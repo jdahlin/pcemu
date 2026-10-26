@@ -213,7 +213,7 @@ available with `./run95.sh --disk media/win95-svga.pcd`.
 QEMouse v1.03 is installed in the persistent `media/win95-mouse.pcd` overlay.
 Its immutable parent, `media/win95-before-mouse.pcd`, preserves the previous
 monitor-configured disk. Keep the complete parent chain. `run95.sh` selects the
-mouse disk first, then falls back to the monitor, SVGA and original VGA disks.
+native-cursor disk first (when installed), then the mouse, monitor, SVGA and original VGA disks.
 `--vga` retains the original relative-input installation.
 
 The guest driver negotiates the VMware-compatible absolute-pointer protocol on
@@ -228,10 +228,9 @@ pending data; versions 1–4 remain readable.
 
 SDL maps input through the scaled guest viewport, delivers the first click and
 never enables relative mouse mode while integrated. The host pointer can leave
-the image freely. To show one pointer while preserving Windows text/resize
-cursors, Windows draws its cursor inside the image and the native host cursor
-is shown outside it. This does not upload Windows cursor shapes for native host
-composition. Leaving the image or losing focus releases held buttons; focus loss
+the image freely. The original mouse overlay uses Windows software cursor drawing.
+The native-cursor overlay described below uploads Windows shapes to the host.
+Leaving the image or losing focus releases held buttons; focus loss
 also releases keys. The fallback relative driver retains capture and Cmd+G.
 
 QEMouse is an external GPL-2.0 guest asset, not emulator code. Source and license:
@@ -263,3 +262,66 @@ bootstrapping an unobscured headless desktop:
 ```sh
 python3 tools/check_win95_mouse.py CONTROL FRAME.ppm STATE.json --output build/mouse-check
 ```
+
+## Native host cursor
+
+`run95.sh` now prefers `media/win95-native.pcd`. Its immutable parent is
+`media/win95-before-host-cursor.pcd`, a checkpoint of the seamless mouse disk.
+Windows supplies cursor shapes and visibility, while SDL creates a native OS
+cursor. Movement follows the host compositor without waiting for guest IRQ12,
+Windows drawing, framebuffer uploads or the emulator's frame interval. Arrow,
+text and resize shapes keep their Windows hotspots. Outside the guest image,
+the normal host default cursor is restored. Keyboard/click input still uses the
+negotiated absolute mouse path.
+
+The display DDI adapter is source in `guest/host_cursor.asm`. The staging tool
+adds a relocation-free 16-bit code segment to the pinned VMDisp9x NE driver and
+redirects only display ordinals 102–104 (`SetCursor`, `MoveCursor`, `CheckCursor`).
+The original code, data and relocations remain intact. It suppresses the DIB
+Engine software cursor and sends `CURSORSHAPE` bytes through PCEmu I/O ports:
+
+* 5659h, word C501h: begin a shape upload.
+* 565Ah, byte: 12-byte CURSORSHAPE header, AND mask, then XOR pixels.
+* 5659h, word C502h: atomically publish a complete validated shape.
+* 5659h, word C500h: hide the cursor and cancel an unfinished upload.
+
+Shapes up to 64×64 support monochrome AND/XOR masks and 8/16/24/32-bit colour;
+indexed colour uses the VGA palette sampled when publishing. Unsupported guest
+shapes are hidden. Screen inversion in monochrome cursors follows SDL/host
+support. If a host backend cannot create a cursor, SDL's default arrow is used.
+Snapshot version 6 preserves the published cursor, palette and unfinished upload;
+versions 1–5 remain readable. State JSON includes shape hash, hotspot, visibility
+and upload revision for headless verification.
+
+Prepare another native-cursor installation only from a stopped, immutable,
+QEMouse-enabled parent with the pinned QEMU display driver installed:
+
+```sh
+./tools/build.sh pcemu disk-tool
+# Requires nasm; the archive is the same verified VMDisp9x package used above.
+python3 tools/stage_host_cursor.py PARENT.pcd media/win95-native.pcd
+```
+
+This adapter is specific to PCEmu. The tool checks both the archive checksum and
+installed driver, replaces it only in a new compressed child, and verifies the
+installed bytes. It refuses fragmented directory layouts. No guest binaries or
+VM disks are checked into Git. The driver ABI is documented by the upstream
+[VMDisp9x cursor implementation](https://github.com/JHRobotics/vmdisp9x/blob/main/dibcall.c)
+and [CURSORSHAPE definition](https://github.com/JHRobotics/vmdisp9x/blob/main/cursor.h).
+
+Validation includes actual 16-bit DDI execution in a 512-byte headless guest,
+malformed/partial/oversized upload rejection, native SDL visibility and focus
+handling, and snapshot round trips. The live Windows 95 checker verifies that
+absolute movement leaves no cursor pixels in the framebuffer, a native shape
+was uploaded, and left/right clicks still open the expected menus. A separate
+headless Notepad check verified arrow → text I-beam → arrow uploads, including
+the I-beam hotspot (15,16), followed by a flushed clean shutdown:
+
+```sh
+python3 -m unittest discover -s tests -p test_host_cursor.py
+python3 tools/check_win95_mouse.py CONTROL FRAME.ppm STATE.json \
+  --native-cursor --output build/native-cursor-check
+```
+
+Headless tests cannot measure perceived macOS cursor latency or visually inspect
+the real compositor. Native cursor movement itself is owned by the host OS.

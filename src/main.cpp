@@ -605,6 +605,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
                 hostInput.setAbsolutePointer(m.absoluteMouse.active());
+                frontend->setHostCursor(m.hostCursor);
                 for (const auto &event : frontend->poll()) {
                     if (event.kind == FrontendEvent::Kind::Quit) requestClose();
                     else if (!hostInput.event(event, enableHostInput)) quit = true;

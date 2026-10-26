@@ -195,6 +195,14 @@ class SnapshotCodec {
             if (mouse.count > mouse.words.size() || (mouse.absolute && !mouse.enabled))
                 throw std::runtime_error("Invalid absolute mouse snapshot state");
         }
+        if (version >= 6) {
+            auto &cursor = m.hostCursor;
+            a(cursor.shape, cursor.pending, cursor.palette, cursor.size, cursor.received,
+              cursor.active, cursor.visible, cursor.uploading, cursor.revision);
+            if (cursor.size > HostCursor::capacity || cursor.received > HostCursor::capacity ||
+                (cursor.visible && (!cursor.active || cursor.size < 12 || HostCursor::length(cursor.shape) != cursor.size)))
+                throw std::runtime_error("Invalid host cursor snapshot state");
+        }
         auto &v = m.vga;
         a(v.planes, v.seq, v.gfx, v.crtc, v.attr, v.latch, v.seqIndex, v.gfxIndex, v.crtcIndex,
           v.attrIndex, v.attrData, v.graphics, v.dac, v.dacMask, v.dacRead, v.dacWrite,
@@ -300,7 +308,7 @@ class SnapshotCodec {
             Writer writer;
             writer.data.reserve(m.cpu.mem.size() + 1024 * 1024);
             writer.bytes(magic, sizeof(magic));
-            uint32_t version = 5, ram = m.cpu.mem.size();
+            uint32_t version = 6, ram = m.cpu.mem.size();
             writer(version, ram);
             for (auto &d : disks)
                 d.state(writer);
@@ -367,7 +375,7 @@ class SnapshotCodec {
         reader.bytes(signature, sizeof(signature));
         uint32_t version, ram;
         reader(version, ram);
-        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 5) ||
+        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 6) ||
             ram < 2 * 1024 * 1024 || ram > 64 * 1024 * 1024)
             throw std::runtime_error("Unsupported snapshot format or RAM size");
         DiskInfo disks[2];

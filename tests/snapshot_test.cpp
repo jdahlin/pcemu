@@ -218,6 +218,9 @@ int main() {
             m.ata.in(0x1f0, 2);
         m.absoluteMouse.enabled = m.absoluteMouse.absolute = true;
         m.absoluteMouse.motion(1234, 5678, 0, 1);
+        m.hostCursor.active = m.hostCursor.uploading = true;
+        m.hostCursor.received = 2; m.hostCursor.pending[0] = 17;
+        m.hostCursor.revision = 42;
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
               "first checkpoint switches live disks to compressed deltas");
@@ -234,6 +237,9 @@ int main() {
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
         m.loadSnapshot((root / "point").string());
+        check(m.hostCursor.active && m.hostCursor.uploading && m.hostCursor.received == 2 &&
+              m.hostCursor.pending[0] == 17 && m.hostCursor.revision == 42,
+              "native cursor state and interrupted upload survive restore");
         check(m.absoluteMouse.active() && m.absoluteMouse.count == 4 &&
               m.absoluteMouse.words[1] == 1234 && m.absoluteMouse.words[2] == 5678,
               "absolute mouse negotiation and pending event survive restore");

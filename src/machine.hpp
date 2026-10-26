@@ -1,4 +1,5 @@
 #pragma once
+#include "host_cursor.hpp"
 #include "ata.hpp"
 #include "absolute_mouse.hpp"
 #include "cpu.hpp"
@@ -32,6 +33,7 @@ struct Machine {
     PIT8254 pit;
     I8042Device ps2;
     AbsoluteMouse absoluteMouse;
+    HostCursor hostCursor;
     void absolutePointer(int x, int y, int wheel, uint8_t buttons) {
         if (absoluteMouse.motion(x, y, wheel, buttons))
             ps2.motion(1, 0, buttons); // Wake the guest driver even for a stationary click.

@@ -69,6 +69,12 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"dropped\":" << m.nic.dropped << "}"
       << ",\"absoluteMouse\":{\"active\":" << m.absoluteMouse.active()
       << ",\"queuedWords\":" << m.absoluteMouse.count << "}"
+      << ",\"hostCursor\":{\"active\":" << m.hostCursor.active
+      << ",\"visible\":" << m.hostCursor.visible << ",\"size\":" << m.hostCursor.size
+      << ",\"revision\":" << m.hostCursor.revision
+      << ",\"shapeHash\":" << m.hostCursor.signature()
+      << ",\"hotX\":" << HostCursor::word(m.hostCursor.shape,0)
+      << ",\"hotY\":" << HostCursor::word(m.hostCursor.shape,2) << "}"
       << ",\"mouse\":{\"enabled\":" << m.ps2.state().mouse.enabled
       << ",\"id\":" << unsigned(m.ps2.state().mouse.id)
       << ",\"pendingPackets\":" << m.ps2.state().mouse.packets.size()

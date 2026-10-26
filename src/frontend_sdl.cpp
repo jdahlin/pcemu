@@ -11,11 +11,20 @@ class SDLFrontend final : public Frontend {
     unsigned width = 0, height = 0;
     int autoWidth = 0, autoHeight = 0;
     bool absolutePointer = false, pointerInside = false;
+    SDL_Cursor *nativeCursor = nullptr;
+    bool nativeActive = false, nativeVisible = false;
+    uint64_t cursorRevision = ~uint64_t(0);
+    uint32_t cursorSignature = 0;
+    void cursorVisibility() {
+        SDL_SetCursor(pointerInside && absolutePointer && nativeCursor ? nativeCursor : SDL_GetDefaultCursor());
+        SDL_ShowCursor(pointerInside && absolutePointer ?
+                       (nativeActive && nativeVisible ? SDL_ENABLE : SDL_DISABLE) : SDL_ENABLE);
+    }
     void pointerPosition(std::vector<FrontendEvent> &events, int x, int y) {
         const bool inside = width && height && x >= 0 && y >= 0 &&
                             unsigned(x) < width && unsigned(y) < height;
         pointerInside = inside;
-        SDL_ShowCursor(inside ? SDL_DISABLE : SDL_ENABLE);
+        cursorVisibility();
         if (inside) {
             const int nx = width > 1 ? uint64_t(x) * 65535 / (width - 1) : 0;
             const int ny = height > 1 ? uint64_t(y) * 65535 / (height - 1) : 0;
@@ -35,6 +44,8 @@ class SDLFrontend final : public Frontend {
         SDL_SetWindowSize(window, ww, wh);
     }
     void destroy() {
+        SDL_SetCursor(SDL_GetDefaultCursor());
+        if (nativeCursor) SDL_FreeCursor(nativeCursor);
         if (texture)
             SDL_DestroyTexture(texture);
         if (renderer)
@@ -101,14 +112,58 @@ class SDLFrontend final : public Frontend {
         absolutePointer = enabled;
         pointerInside = false;
         SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDL_SetCursor(SDL_GetDefaultCursor());
         SDL_ShowCursor(SDL_ENABLE);
         SDL_SetWindowTitle(window, enabled ? "PCEmu — seamless mouse" :
                            "PCEmu — click to capture mouse (Cmd+G)");
     }
+    void setHostCursor(const HostCursor &cursor) override {
+        const auto signature = cursor.signature();
+        if (cursorRevision == cursor.revision && nativeActive == cursor.active &&
+            nativeVisible == cursor.visible && cursorSignature == signature) return;
+        cursorSignature = signature;
+        cursorRevision = cursor.revision;
+        nativeActive = cursor.active;
+        nativeVisible = cursor.visible;
+        SDL_Cursor *next = nullptr;
+        if (cursor.active && cursor.visible && cursor.size >= 12 &&
+            HostCursor::length(cursor.shape) == cursor.size) {
+            const auto &b = cursor.shape;
+            const unsigned w = HostCursor::word(b,4), h = HostCursor::word(b,6);
+            const unsigned stride = (w+7)/8, maskSize = stride*h;
+            const auto *andMask = b.data()+12, *xorMask = andMask+maskSize;
+            if (b[11] == 1) {
+                // SDL's monochrome cursor can represent all four AND/XOR cases,
+                // including legacy screen inversion on hosts that support it.
+                std::vector<uint8_t> data(maskSize), mask(maskSize);
+                for (unsigned i = 0; i < maskSize; ++i) {
+                    data[i] = HostCursor::monoData(andMask[i], xorMask[i]);
+                    mask[i] = HostCursor::monoMask(andMask[i]);
+                }
+                next = SDL_CreateCursor(data.data(), mask.data(), stride*8, h,
+                                        HostCursor::word(b,0), HostCursor::word(b,2));
+            } else {
+                std::vector<uint32_t> pixels(w*h);
+                for (unsigned y = 0; y < h; ++y) for (unsigned x = 0; x < w; ++x) {
+                    pixels[y*w+x] = cursor.colorPixel(x,y);
+                }
+                auto *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels.data(), w, h, 32, w*4,
+                                                                   SDL_PIXELFORMAT_ARGB8888);
+                if (surface) {
+                    next = SDL_CreateColorCursor(surface, HostCursor::word(b,0), HostCursor::word(b,2));
+                    SDL_FreeSurface(surface);
+                }
+            }
+        }
+        SDL_SetCursor(next ? next : SDL_GetDefaultCursor());
+        if (nativeCursor) SDL_FreeCursor(nativeCursor);
+        nativeCursor = next;
+        cursorVisibility();
+    }
     bool capturePointer(bool enabled) override {
         if (absolutePointer) {
             SDL_SetRelativeMouseMode(SDL_FALSE);
-            SDL_ShowCursor(pointerInside ? SDL_DISABLE : SDL_ENABLE);
+            cursorVisibility();
             return !enabled;
         }
         bool success = SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE) == 0;
@@ -127,7 +182,7 @@ class SDLFrontend final : public Frontend {
             else if (e.type == SDL_WINDOWEVENT &&
                      (e.window.event == SDL_WINDOWEVENT_LEAVE || e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
                 pointerInside = false;
-                SDL_ShowCursor(SDL_ENABLE);
+                cursorVisibility();
                 if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) events.push_back({K::FocusLost});
                 else if (absolutePointer) events.push_back({K::PointerLeave});
             }

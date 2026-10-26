@@ -16,6 +16,45 @@ static void check(bool condition) {
 }
 int main() {
     {
+        check(HostCursor::monoData(0x33, 0x55) == 0x99 && HostCursor::monoMask(0x33) == 0xcc);
+        // AND/XOR: black, white, transparent and inverted pixels map to SDL.
+        Machine vm("", "", 2 * 1024 * 1024);
+        auto &c = vm.hostCursor;
+        std::array<uint8_t, 28> shape{}; // 8x8 monochrome, hotspot 2,3.
+        shape[0]=2; shape[2]=3; shape[4]=8; shape[6]=8; shape[8]=1;
+        shape[10]=shape[11]=1;
+        auto upload = [&](unsigned bytes) {
+            vm.out(0x5659, 0xc501, 2);
+            for (unsigned i=0; i<bytes; ++i) vm.out(0x565a, shape[i], 1);
+            vm.out(0x5659, 0xc502, 2);
+        };
+        upload(27); check(!c.active); // No partial shape exposed.
+        upload(28); check(c.active && c.visible && c.size==28 && c.shape[0]==2);
+        HostCursor colors;
+        colors.shape[4]=colors.shape[6]=colors.shape[10]=1;
+        for (unsigned bpp : {8u,16u,24u,32u}) {
+            colors.shape[11]=bpp;
+            check(HostCursor::length(colors.shape)==13+bpp/8);
+            colors.shape[13]= bpp==8 ? 7 : bpp==16 ? 0x1f : 0x56;
+            colors.shape[14]= bpp==16 ? 0xf8 : 0x34;
+            colors.shape[15]=0x12;
+            colors.palette[7]=0x123456;
+            check(colors.colorPixel(0,0)==(bpp==16 ? 0xffff00ffu : 0xff123456u));
+            colors.shape[12]=0x80;
+            check(!(colors.colorPixel(0,0)>>24));
+            colors.shape[12]=0;
+        }
+        auto revision = c.revision;
+        shape[4]=65; upload(28); check(c.revision==revision && c.shape[4]==8);
+        shape[4]=8; shape[0]=8; upload(28); check(c.revision==revision);
+        vm.out(0x5659, 0xc500, 1); check(c.visible); // Wrong width ignored.
+        vm.out(0x5659, 0xc500, 2); check(c.active && !c.visible);
+        vm.out(0x5659, 0xc501, 2);
+        for (unsigned i=0; i<HostCursor::capacity+1; ++i) vm.out(0x565a, 0, 1);
+        vm.out(0x5659, 0xc502, 2); check(!c.uploading && !c.visible);
+    }
+
+    {
         Machine vm("", "", 2 * 1024 * 1024);
         auto call = [&](unsigned command, unsigned argument) {
             vm.cpu.r[AX] = AbsoluteMouse::magic;

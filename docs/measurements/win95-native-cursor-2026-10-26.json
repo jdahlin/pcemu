@@ -1,0 +1,75 @@
+{
+  "mode": [
+    1440,
+    900,
+    32
+  ],
+  "absoluteActive": true,
+  "target": [
+    960,
+    300
+  ],
+  "cursorBounds": null,
+  "nativeCursor": true,
+  "hostCursor": {
+    "active": 1,
+    "visible": 1,
+    "size": 268,
+    "revision": 17,
+    "shapeHash": 3469009684,
+    "hotX": 0,
+    "hotY": 0
+  },
+  "absoluteClickOpenedStart": true,
+  "absoluteRightClickOpenedMenu": true,
+  "queueDrained": true,
+  "hostGuiInput": false,
+  "date": "2026-10-26",
+  "headless": true,
+  "cleanShutdownDisksFlushed": true,
+  "softwareCursorPixelsAtTarget": 0,
+  "shapeTransitions": {
+    "arrow": {
+      "active": 1,
+      "visible": 1,
+      "size": 268,
+      "revision": 17,
+      "shapeHash": 3469009684,
+      "hotX": 0,
+      "hotY": 0
+    },
+    "text": {
+      "active": 1,
+      "visible": 1,
+      "size": 268,
+      "revision": 23,
+      "shapeHash": 1826773284,
+      "hotX": 15,
+      "hotY": 16
+    },
+    "restored": {
+      "active": 1,
+      "visible": 1,
+      "size": 268,
+      "revision": 24,
+      "shapeHash": 3469009684,
+      "hotX": 0,
+      "hotY": 0
+    }
+  },
+  "unitSuitesPassed": [
+    "tests",
+    "integration-tests",
+    "snapshot-tests",
+    "pc-component-tests",
+    "frontend-tests",
+    "frontend-input-tests",
+    "i8042-tests",
+    "usb-xhci-tests"
+  ],
+  "pythonChecks": [
+    "test_host_cursor.py (2 RAM-only guest tests)",
+    "test_run95.py"
+  ],
+  "limitation": "Headless validation does not measure perceived native compositor latency."
+}

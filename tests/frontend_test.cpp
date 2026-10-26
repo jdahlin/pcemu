@@ -196,6 +196,18 @@ int main() {
               "window coordinates map through the scaled guest viewport");
         check(!SDL_GetRelativeMouseMode() && SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE,
               "seamless mode never locks the pointer and shows only the guest cursor inside");
+        HostCursor cursor;
+        cursor.active = cursor.visible = true; cursor.size = 28; cursor.revision=1;
+        cursor.shape[4]=8; cursor.shape[6]=8; cursor.shape[8]=1;
+        cursor.shape[10]=cursor.shape[11]=1;
+        frontend->setHostCursor(cursor);
+        check(SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE && !SDL_GetRelativeMouseMode(),
+              "native cursor stays visible and uncaptured over guest image");
+        cursor.visible=false; ++cursor.revision;
+        frontend->setHostCursor(cursor);
+        check(SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE, "guest cursor hiding reaches host");
+        cursor.visible=true; ++cursor.revision;
+        frontend->setHostCursor(cursor);
         absoluteEvent = {};
         absoluteEvent.type = SDL_WINDOWEVENT;
         absoluteEvent.window.windowID = SDL_GetWindowID(window);

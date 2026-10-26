@@ -12,6 +12,18 @@ void Machine::bindIoPorts() {
         [this](uint16_t, int width) -> uint32_t {
             return absoluteMouse.read(width, cpu.r) ? cpu.r[AX] : 0xffffffffu;
         }, [](uint16_t, uint32_t, int) {});
+    ioPorts.map("host-cursor", 0x5659, 2,
+        [](uint16_t, int) -> uint32_t { return 0xc5a1; },
+        [this](uint16_t p, uint32_t v, int w) {
+            auto revision = hostCursor.revision;
+            hostCursor.write(p, v, w);
+            if (revision != hostCursor.revision) {
+                auto expand = [this](unsigned c) { return (vga.dispi[4] & 0x20) ? c : (c << 2) | (c >> 4); };
+                for (unsigned i = 0; i < 256; ++i)
+                    hostCursor.palette[i] = expand(vga.dac[i][0]) << 16 |
+                        expand(vga.dac[i][1]) << 8 | expand(vga.dac[i][2]);
+            }
+        });
     auto ataRead = [this](uint16_t p, int w) {
         auto value = ata.in(p, w);
         if (p == 0x1f7)

@@ -64,6 +64,10 @@ class Run95Test(unittest.TestCase):
             self.assertEqual(run(), 'media/win95-mouse.pcd')
             self.assertEqual(run('--vga'), 'media/win95-working.pcd')
             self.assertEqual(seamless.read_bytes(), b'configured seamless mouse')
+            native = root / 'media/win95-native.pcd'
+            native.write_bytes(b'configured native cursor')
+            self.assertEqual(run(), 'media/win95-native.pcd')
+            self.assertEqual(run('--vga'), 'media/win95-working.pcd')
 
 
 if __name__ == '__main__':
