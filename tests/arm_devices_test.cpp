@@ -190,34 +190,39 @@ int main() {
     check(freshLock.access(0x62280400, lockValue));
     check(freshLock.access(0x62280403, lockValue) && lockValue == 10);
     ArmPl011 uart;
-    check(uart.read(0x18) == 0x90);
-    uart.write(0, 'X'); check(uart.output().empty()); // UART disabled at reset.
-    uart.write(0x30, 0x301); uart.write(0, 'A'); uart.write(0, 0x142);
-    check(uart.output() == "AB");
-    uart.input("xy"); check(uart.read(0x18) == 0x80);
-    check(uart.read(0) == 'x' && uart.read(0) == 'y');
-    check(uart.read(0x18) == 0x90 && uart.read(0) == 0);
-    uart.write(0x24, 0x1234); uart.write(0x28, 0xff); uart.write(0x2c, 0x70);
-    check(uart.read(0x24) == 0x1234 && uart.read(0x28) == 63 && uart.read(0x2c) == 0x70);
-    check(uart.read(0xfe0) == 0x11 && uart.read(0xffc) == 0xb1);
-    check(uart.read(0x40) == 0 && !uart.irq());
-    uart.write(0x38, 0x50);
-    uart.input("z");
-    check(uart.irq() && uart.read(0x40) == 0x50);
-    uart.write(0x44, 0x7ff);
-    check(uart.irq()); // Clearing cannot suppress a nonempty RX level.
-    check(uart.read(0) == 'z' && !uart.irq());
-    uart.write(0x38, 0x20);
-    check(uart.irq() && uart.read(0x40) == 0x20);
-    uart.write(0x30, 0);
-    check(!uart.irq());
-    uart.write(0x30, 0x301);
-    uart.write(0x38, 0);
-    check(!uart.irq());
-    uart.write(0x34, 0x12);
-    check(uart.read(0x34) == 0x12);
-    rejects([&] { uart.input(std::string(4097, 'x')); });
-    rejects([&] { uart.read(0x123); });
-    rejects([&] { uart.write(0x123, 0); });
+    check(uart.read_register(0x18) == 0x90);
+    uart.write_register(0, 'X'); check(uart.transmitted_output().empty()); // UART disabled at reset.
+    uart.write_register(0x30, 0x301); uart.write_register(0, 'A'); uart.write_register(0, 0x142);
+    check(uart.transmitted_output() == "AB");
+    uart.receive_host_input("xy"); check(uart.read_register(0x18) == 0x80);
+    check(uart.read_register(0) == 'x' && uart.read_register(0) == 'y');
+    check(uart.read_register(0x18) == 0x90 && uart.read_register(0) == 0);
+    uart.write_register(0x24, 0x1234); uart.write_register(0x28, 0xff); uart.write_register(0x2c, 0x70);
+    check(uart.read_register(0x24) == 0x1234 && uart.read_register(0x28) == 63 && uart.read_register(0x2c) == 0x70);
+    check(uart.read_register(0xfe0) == 0x11 && uart.read_register(0xffc) == 0xb1);
+    // Check the complete identification map independently of the implementation constants.
+    check(uart.read_register(0xfe4) == 0x10 && uart.read_register(0xfe8) == 0x14);
+    check(uart.read_register(0xfec) == 0 && uart.read_register(0xff0) == 0x0d);
+    check(uart.read_register(0xff4) == 0xf0 && uart.read_register(0xff8) == 0x05);
+
+    check(uart.read_register(0x40) == 0 && !uart.uartintr_asserted());
+    uart.write_register(0x38, 0x50);
+    uart.receive_host_input("z");
+    check(uart.uartintr_asserted() && uart.read_register(0x40) == 0x50);
+    uart.write_register(0x44, 0x7ff);
+    check(uart.uartintr_asserted()); // Clearing cannot suppress a nonempty RX level.
+    check(uart.read_register(0) == 'z' && !uart.uartintr_asserted());
+    uart.write_register(0x38, 0x20);
+    check(uart.uartintr_asserted() && uart.read_register(0x40) == 0x20);
+    uart.write_register(0x30, 0);
+    check(!uart.uartintr_asserted());
+    uart.write_register(0x30, 0x301);
+    uart.write_register(0x38, 0);
+    check(!uart.uartintr_asserted());
+    uart.write_register(0x34, 0x12);
+    check(uart.read_register(0x34) == 0x12);
+    rejects([&] { uart.receive_host_input(std::string(4097, 'x')); });
+    rejects([&] { uart.read_register(0x123); });
+    rejects([&] { uart.write_register(0x123, 0); });
     std::cout << checks << " ARM device checks passed\n";
 }

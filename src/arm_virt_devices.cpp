@@ -86,12 +86,12 @@ void ArmVirtMachine::bindDevices() {
     mmio.map("pl011", 0x09000000, 0x1000,
         [this](MmioAccess &a, uint64_t o) {
             if (o % a.width) throw std::runtime_error("Unaligned PL011 access");
-            a.value = uart.read(o);
-            vm.setSPI(33, uart.irq());
+            a.value = uart.read_register(o);
+            vm.setSPI(33, uart.uartintr_asserted());
         }, [this](MmioAccess &a, uint64_t o) {
             if (o % a.width) throw std::runtime_error("Unaligned PL011 access");
-            uart.write(o, uint32_t(a.value));
-            vm.setSPI(33, uart.irq());
+            uart.write_register(o, uint32_t(a.value));
+            vm.setSPI(33, uart.uartintr_asserted());
         }, 1 | 2 | 4);
 }
 bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height, bool compositeCursor) const {

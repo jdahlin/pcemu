@@ -303,9 +303,9 @@ std::string ArmVirtMachine::cpuState() const {
     };
     dump("elr", elr);
     const std::string marker = "Synchronous Exception at 0x";
-    auto at = uart.output().find(marker);
+    auto at = uart.transmitted_output().find(marker);
     if (at != std::string::npos) {
-        std::istringstream input(uart.output().substr(at + marker.size(), 16));
+        std::istringstream input(uart.transmitted_output().substr(at + marker.size(), 16));
         uint64_t address = 0;
         if (input >> std::hex >> address) dump("reported", address);
     }

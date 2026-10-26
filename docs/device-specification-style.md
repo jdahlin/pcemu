@@ -189,3 +189,10 @@ This convention follows the specification naming and local reference pattern in
 [Ladybird's coding style](https://github.com/LadybirdBrowser/ladybird/blob/master/Documentation/CodingStyle.md)
 and [AbortSignal implementation](https://github.com/LadybirdBrowser/ladybird/blob/master/Libraries/LibWeb/DOM/AbortSignal.cpp),
 while retaining this repository's formatting.
+
+## Migrated devices
+
+| Device | Reference | Documented model boundaries |
+|---|---|---|
+| PL031 RTC | ARM DDI 0224C, r1p3 | Host clock sampling, alarm wraparound, always-enabled control and unsupported test registers. |
+| PL011 UART | ARM DDI 0183G, r1p5 with revision history | Revision-1 identity, immediate transmit transcript, host receive queue, approximate interrupts and stored-only baud/FIFO configuration. |

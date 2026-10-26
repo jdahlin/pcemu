@@ -92,7 +92,7 @@ int main() {
         bus.reset(); check(!bus.address && !bus.display().barProbe);
         NE2000 nic; check(!nic.irq()); nic.reset();
         Network gateway; // Host packet backend also links without an execution engine.
-        ArmPl011 uart; uart.write(0x30, 0x301); uart.write(0, 'Z'); check(uart.output() == "Z");
+        ArmPl011 uart; uart.write_register(0x30, 0x301); uart.write_register(0, 'Z'); check(uart.transmitted_output() == "Z");
         ArmPl031 rtc([] { return int64_t(1000); }); check(rtc.read_register(0) == 1000);
         std::vector<uint8_t> flashBytes(0x40000, 0xff), ram(65536);
         ArmNorFlash flash(flashBytes); check(flash.bytes().front() == 0xff);

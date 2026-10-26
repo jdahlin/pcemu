@@ -3,19 +3,31 @@
 #include <deque>
 #include <string>
 namespace pc {
-// PL011 console with level-triggered receive/transmit interrupts; no DMA.
+// PrimeCell UART (PL011), using ARM DDI 0183G, r1p5, as the reference.
+// https://documentation-service.arm.com/static/5e8e36c2fd977155116a90b5
+// The model retains a revision-1 identity; see implementation overview for gaps.
 class ArmPl011 {
   public:
-    uint32_t read(unsigned offset);
-    void write(unsigned offset, uint32_t value);
-    void input(const std::string &text);
-    const std::string &output() const { return transcript; }
-    uint32_t rawInterrupts() const;
-    bool irq() const { return (rawInterrupts() & interruptMask) != 0; }
+    // Initialize the serial console in its disabled reset state.
+    ArmPl011();
+    // Read/write registers at offsets relative to the platform's UART base.
+    uint32_t read_register(unsigned offset);
+    void write_register(unsigned offset, uint32_t value);
+    // Supply incoming host bytes, or observe the outgoing transcript.
+    void receive_host_input(const std::string &text);
+    const std::string &transmitted_output() const;
+    // Observe unmasked interrupt sources or the combined UARTINTR output.
+    uint32_t raw_interrupt_status() const;
+    bool uartintr_asserted() const;
+
   private:
     std::deque<uint8_t> receive;
     std::string transcript;
-    uint32_t control = 0x300, integerDivisor = 0, fractionalDivisor = 0, lineControl = 0;
-    uint32_t interruptMask = 0, fifoLevels = 0;
+    uint32_t control, integer_divisor = 0, fractional_divisor = 0, line_control = 0;
+    // COMPATIBILITY: UARTIFLS resets to zero here; hardware reset is 0x12 (3.2).
+    uint32_t interrupt_mask = 0, fifo_levels = 0;
+    // Consume a received byte or transmit a byte through UARTDR.
+    uint32_t read_data_register();
+    void write_data_register(uint32_t value);
 };
 } // namespace pc
