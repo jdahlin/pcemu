@@ -58,9 +58,9 @@ void ArmHyperV::service() {
         synic.service_message_queues(); // A false injection keeps the queued message for retry.
         if (heartbeatEnabled) {
             auto now=timeNow();
-            auto packet=heartbeat.packet(now);
-            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVHeartbeat::channelId,packet))
-                heartbeat.sent(now);
+            auto packet=heartbeat.pending_packet(now);
+            if(!packet.empty() && !vmbus.send_channel_packet(ArmHyperVHeartbeat::ChannelId,packet))
+                heartbeat.packet_published(now);
         }
         if (timesyncEnabled) {
             auto now=timeNow();
@@ -90,7 +90,7 @@ std::optional<uint64_t> ArmHyperV::serviceDelay100ns() const {
     const auto now = timeNow();
     auto delay = timers.nextDelay(now, false);
     if (heartbeatEnabled) {
-        auto next=heartbeat.delay(now);
+        auto next=heartbeat.next_delay_100ns(now);
         if(next) delay=std::min(delay.value_or(UINT64_MAX), std::max(*next,uint64_t(10000)));
     }
     if (timesyncEnabled) {
@@ -157,10 +157,10 @@ bool ArmHyperV::offerVmbusChannel(const ArmVmbus::Offer &offer, ArmVmbus::Packet
 }
 void ArmHyperV::enableHeartbeat() {
     if(heartbeatEnabled) return;
-    if(!offerVmbusChannel(ArmHyperVHeartbeat::offer(),
+    if(!offerVmbusChannel(ArmHyperVHeartbeat::channel_offer(),
         [this](std::span<const uint8_t> packet) {
-            heartbeat.receive(packet,timeNow()); return std::vector<uint8_t>{};
-        }, [this] {heartbeat.closed();}, [this] {heartbeat.opened(timeNow());}))
+            heartbeat.receive_response(packet,timeNow()); return std::vector<uint8_t>{};
+        }, [this] {heartbeat.channel_closed();}, [this] {heartbeat.channel_opened(timeNow());}))
         throw std::runtime_error("Heartbeat requires VMBus and an available channel/connection");
     heartbeatEnabled=true;
 }
