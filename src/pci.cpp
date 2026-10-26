@@ -46,7 +46,7 @@ constexpr uint16_t DisplayBusDeviceFunction = 0x10;
 // PCI 3.0, 3.2.2.3.2: configuration mechanism 1.
 // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=50
 uint32_t PCI::read_configuration(uint16_t bdf, unsigned offset, unsigned width) const {
-    return bdf == DisplayBusDeviceFunction ? display_.read(offset, width)
+    return bdf == DisplayBusDeviceFunction ? display_.read_configuration(offset, width)
                                            : AbsentConfigurationValue;
 }
 // Forward a configuration write to the wired display; ignore absent functions.
@@ -54,7 +54,7 @@ uint32_t PCI::read_configuration(uint16_t bdf, unsigned offset, unsigned width) 
 // https://lekensteyn.nl/files/docs/PCI_SPEV_V3_0.pdf#page=50
 void PCI::write_configuration(uint16_t bdf, unsigned offset, uint32_t value, unsigned width) {
     if (bdf == DisplayBusDeviceFunction)
-        display_.write(offset, value, width);
+        display_.write_configuration(offset, value, width);
 }
 // Read CONFIG_ADDRESS or translate a bounded CONFIG_DATA access using its latch.
 // PCI 3.0, 3.2.2.3.2: configuration mechanism 1.

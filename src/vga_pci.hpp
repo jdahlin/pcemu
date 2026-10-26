@@ -7,8 +7,11 @@ namespace pc {
 struct VgaPciDevice {
     std::array<uint8_t, 256> config{};
     bool barProbe = false, romProbe = false;
+    // Install the board’s firmware-initialized PCI identity and fixed windows.
     VgaPciDevice();
-    uint32_t read(unsigned offset, unsigned width) const;
-    void write(unsigned offset, uint32_t value, unsigned width);
+    // Read little-endian header bytes, including active size-probe responses.
+    uint32_t read_configuration(unsigned offset, unsigned width) const;
+    // Handle size probes and Command enable bits; ignore other writes.
+    void write_configuration(unsigned offset, uint32_t value, unsigned width);
 };
 } // namespace pc
