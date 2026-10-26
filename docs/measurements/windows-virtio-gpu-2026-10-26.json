@@ -1,0 +1,81 @@
+{
+  "verified": true,
+  "parent": "/Users/johandahlin/dev/pcemu/build/windows-tools-zvyzazly/system.qcow2",
+  "disk": "/Users/johandahlin/dev/pcemu/build/windows-tools-mao1v8s2/system.qcow2",
+  "binarySHA256": "5927df5c6e8301cf0e2e6ceb935db4070f8f65b7c0e113f861c40f3b35a955bd",
+  "guestReport": "/Users/johandahlin/dev/pcemu/build/windows-tools-mao1v8s2/reports/report-1793034437389041000.log",
+  "gpu": {
+    "active": true,
+    "commands": 1429,
+    "commandErrors": 0,
+    "transfers": 707,
+    "flushes": 708,
+    "scanoutCommands": 3,
+    "lastErrorCommand": 0,
+    "lastErrorResponse": 0,
+    "resourceBytes": 3686400,
+    "messageInterrupts": 793,
+    "width": 1280,
+    "height": 720,
+    "sampleRGB": [
+      [
+        255,
+        0,
+        0
+      ],
+      [
+        0,
+        255,
+        0
+      ],
+      [
+        0,
+        0,
+        255
+      ]
+    ]
+  },
+  "balloon": {
+    "targetPages": 16384,
+    "actualPages": 16384,
+    "inflatedPages": 16384,
+    "inflatePages": 16384,
+    "deflatePages": 0,
+    "discardHintBytes": 0,
+    "discardFailures": 0,
+    "statistics": {
+      "65535": 18446744073709551615
+    }
+  },
+  "finalSerial": {
+    "ready": false,
+    "open": false,
+    "received": 16,
+    "transmitted": 45,
+    "completions": 18,
+    "messageInterrupts": 11
+  },
+  "finalBalloon": {
+    "targetPages": 16384,
+    "actualPages": 0,
+    "inflatedPages": 0,
+    "inflatePages": 16384,
+    "deflatePages": 16384,
+    "discardHintBytes": 0,
+    "discardFailures": 0,
+    "statistics": {}
+  },
+  "scope": "Signed ARM64 device drivers on installed Windows; original test programs, not QEMU guest-agent or SPICE services.",
+  "normalColdBoot": {
+    "display": "Windows lock screen on VirtIO GPU",
+    "width": 1280,
+    "height": 720,
+    "shutdown": "Hyper-V guest service; power-off; host exit 0"
+  },
+  "promotedImage": {
+    "path": "media/windows11-arm64/system-tools-live.qcow2",
+    "backing": "media/windows11-arm64/system.qcow2",
+    "check": "No errors",
+    "compare": "Images are identical"
+  }
+}

@@ -95,3 +95,49 @@ under AddressSanitizer and UndefinedBehaviorSanitizer.
 Protocol references: [OASIS VirtIO console](https://docs.oasis-open.org/virtio/virtio/v1.3/virtio-v1.3.html),
 [upstream Windows vioserial](https://github.com/virtio-win/kvm-guest-drivers-windows/tree/master/vioserial),
 and [QEMU guest-agent port naming](https://github.com/qemu/qemu/blob/master/qga/main.c).
+
+## GPU 2D and installed Windows validation
+
+`--virtio-gpu` exposes PCI 1AF4:1050 in slot 7, INTx SPI 55 or MSI-X.
+The control and cursor queues implement display information, EDID, 2D resource
+creation, bounded scatter/gather backing, rectangular transfers, scanout,
+flush, fences and a 64×64 alpha cursor. Eight standard 32-bit pixel formats are
+supported. Limits are 128 resources, 4096×4096 dimensions, 256 MiB resource
+storage and 16,384 backing entries. Invalid protocol requests receive errors;
+invalid DMA and rings fail safely. There is no 3D acceleration or automatic
+host-window resolution negotiation.
+
+The signed Windows DOD driver reads EDID without negotiating its optional bit;
+the device accepts this read-only query because EDID is offered. Selecting GPU
+omits the separate RAMFB firmware device so VirtioGpuDxe supplies the sole boot
+GOP and Windows can use the GPU for its main display. A final frame is retained
+when Windows disables its scanout during clean shutdown.
+
+```sh
+make test-virtio-gpu
+./tools/build.sh virtio-gpu-sanitized-tests
+./build/virtio-gpu-sanitized-tests
+python3 tools/smoke_windows_guest_tools.py
+```
+
+The installed-image runner makes a private child of an existing Windows disk,
+uses non-formatting WinPE driver injection, and runs original ARM64 serial and
+GDI probes after logon. Its temporary autologon credential is removed at probe
+startup. It checks exact serial bytes, a 64 MiB balloon, and red/green/blue pixels
+from the active GPU scanout, then requests normal Windows shutdown. Successful
+bootstrap media and credential staging are deleted. Reports and the private
+validated overlay remain under ignored `build/windows-tools-*`.
+
+On 2026-10-26 all three probes passed: serial received 16 and transmitted 45
+bytes; balloon inflated and returned 16,384 pages; GPU displayed 1280×720 with
+zero command errors and verified RGB samples. CompactOS was confirmed. A
+subsequent ordinary cold boot reached the lock screen on the GPU and shut down
+through the Hyper-V guest service. [Native evidence](measurements/windows-virtio-gpu-2026-10-26.json).
+
+`run11.sh` enables these devices with the pinned balloon PFN64 compatibility
+option and a zero balloon target. Its active disk is
+`media/windows11-arm64/system-tools-live.qcow2`, safely rebased onto the existing
+immutable `system.qcow2` and checked byte-for-byte against the stopped validated
+chain. The previous live disk remains available for recovery. This supplies
+working device drivers; QEMU guest-agent, SPICE and balloon statistics user
+services have not been installed by these probes.

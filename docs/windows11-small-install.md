@@ -27,7 +27,7 @@ profile then reached the lock screen headless and powered off through the
 guest shutdown service. Its capture is `build/windows11-qcow2/headless.png`.
 
 The active, ignored files are `media/windows11-arm64/system.qcow2`, its writable
-`system-live.qcow2` overlay, and `build/windows11-qcow2/installed-vars.bin`.
+`system-tools-live.qcow2` overlay, and `build/windows11-qcow2/installed-vars.bin`.
 The standalone base has 64 GiB logical capacity and about 16.4 GiB host
 allocation. `qemu-img check` passed, and `qemu-img compare` found every logical
 byte identical to the stopped installation chain. The base uses zstd QCOW2
@@ -37,8 +37,8 @@ clusters; the live overlay is standard writable QCOW2. Start it with
 This deployment retained the existing installer flow, which staged the 7.6 GB
 WIM on the target volume and then deleted it. The deleted WIM's old clusters
 may remain allocated in QCOW2. Because this host has ample space, that did not
-block bringing up the guest. CompactOS was requested during DISM application,
-but an in-guest `compact.exe /CompactOS:query` has not yet been captured;
+block bringing up the guest. The installed guest subsequently confirmed CompactOS with
+`compact.exe /CompactOS:query` during the guest-tools validation;
 hibernation, pagefile and component-store changes below have not been applied.
 The stopped installation chain and failed first transfer remain in ignored
 local media as recovery and diagnostic artifacts.

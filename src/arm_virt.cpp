@@ -115,7 +115,9 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
         vm.flushTranslationContext(targets);
         return true;
     });
-    fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
+    // A second firmware framebuffer becomes a permanent Windows BasicDisplay
+    // adapter. Select one boot display so the signed GPU driver owns the primary.
+    if (!c.virtioGpu) fwCfg.addFile("etc/ramfb", std::vector<uint8_t>(28), true);
     auto tables = load(c.acpiDirectory + "/tables", 64 * 1024);
     validateCpuTables(tables, c.cpus, c.hyperv, c.hypervVmbus, c.virtioMsix);
     fwCfg.addFile("etc/acpi/tables", std::move(tables));
@@ -238,6 +240,14 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 5, 0x05800001, 3, [this](bool level) { vm.setSPI(54, level); }, msi);
             balloon->setTargetPages(c.balloonTargetMB * 256);
         }
+        if (c.virtioGpu) {
+            gpu = std::make_unique<VirtioGpu>(vm.ram(), HvfMachine::ramBase,
+                [this](bool level, unsigned queue) { if (gpuPci) gpuPci->irq(level, queue); });
+            gpuPci = std::make_unique<VirtioPciDevice>(
+                [this](unsigned o, unsigned w) { return gpu->read(o, w); },
+                [this](unsigned o, uint64_t v, unsigned w) { gpu->write(o, v, w); },
+                16, 0x03800001, 2, [this](bool level) { vm.setSPI(55, level); }, msi);
+        }
         bindDevices();
         stage("loading and mapping firmware ROM");
         auto firmware = load(c.firmware, 16 * 1024 * 1024);
@@ -323,6 +333,14 @@ std::string ArmVirtMachine::hypervReport() const {
         }
         report += "}}";
     }
+    if (gpu) report += ",\"virtioGpu\":{\"active\":" + std::string(gpu->active() ? "true" : "false") +
+        ",\"commands\":" + std::to_string(gpu->commands) + ",\"commandErrors\":" + std::to_string(gpu->commandErrors) +
+        ",\"transfers\":" + std::to_string(gpu->transfers) + ",\"flushes\":" + std::to_string(gpu->flushes) +
+        ",\"scanoutCommands\":" + std::to_string(gpu->scanoutCommands) +
+        ",\"lastErrorCommand\":" + std::to_string(gpu->lastErrorCommand) +
+        ",\"lastErrorResponse\":" + std::to_string(gpu->lastErrorResponse) +
+        ",\"resourceBytes\":" + std::to_string(gpu->resourceBytes()) +
+        ",\"messageInterrupts\":" + std::to_string(gpuPci->messageInterrupts) + "}";
     report += ",\"instructionContextBarriers\":[";
     for (unsigned cpu = 0; cpu < vm.cpuCount(); ++cpu) {
         if (cpu) report += ',';

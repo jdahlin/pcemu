@@ -2,6 +2,7 @@
 #include <stdexcept>
 namespace pc {
 void ArmVirtMachine::checkDeviceErrors() const {
+    if (gpu && !gpu->error().empty()) throw std::runtime_error("Virtio GPU requires reset: " + gpu->error());
     if (balloon && !balloon->error().empty()) throw std::runtime_error("Virtio balloon requires reset: " + balloon->error());
     for (auto *device : {block.get(), extraBlock.get()})
         if (device && !device->error().empty())
@@ -32,6 +33,7 @@ void ArmVirtMachine::bindDevices() {
     attach("usb-xhci", 4, usb.get());
     attach("virtio-serial", 5, serialPci.get());
     attach("virtio-balloon", 6, balloonPci.get());
+    attach("virtio-gpu", 7, gpuPci.get());
     // NVMe had precedence over virtio BARs in the original platform decoder.
     attach("nvme", 0, nvme.get());
 
@@ -91,6 +93,19 @@ void ArmVirtMachine::bindDevices() {
             uart.write(o, uint32_t(a.value));
             vm.setSPI(33, uart.irq());
         }, 1 | 2 | 4);
+}
+bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const {
+    if (gpu && gpu->active()) {
+        displayWasGpu = true;
+        return gpu->changedPixels(pixels, width, height);
+    }
+    if (displayWasGpu) {
+        displayWasGpu = false;
+        if (ramfb.pixels(pixels, width, height)) return true;
+        width = height = 0;
+        return false;
+    }
+    return ramfb.changedPixels(pixels, width, height);
 }
 std::string ArmVirtMachine::usbReport() const {
     return usb ? "commands=" + std::to_string(usb->commands) +

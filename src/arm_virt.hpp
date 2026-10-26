@@ -18,6 +18,7 @@
 #include "virtio_rng.hpp"
 #include "virtio_serial.hpp"
 #include "virtio_balloon.hpp"
+#include "virtio_gpu.hpp"
 #include "guest_agent_socket.hpp"
 #include "network.hpp"
 #include "nvme.hpp"
@@ -40,6 +41,7 @@ class ArmVirtMachine {
         bool network = false;
         bool virtioMsix = false;
         bool virtioSerial = false;
+        bool virtioGpu = false;
         bool virtioBalloon = false;
         bool balloonLegacyPfn64 = false;
         uint32_t balloonTargetMB = 0;
@@ -72,10 +74,10 @@ class ArmVirtMachine {
     const char *stopReason() const { return powerAction == ArmPowerAction::Off ? "power-off" :
         powerAction == ArmPowerAction::Reset ? "reset-requested" : "running"; }
     GuestInput &guestInput() { return *usbInput; }
-    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const { return ramfb.changedPixels(pixels, width, height); }
+    bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height) const;
     std::string usbReport() const;
-    std::string framebuffer() const { return ramfb.mode(); }
-    void saveFramebuffer(const std::string &path) const { ramfb.save(path); }
+    std::string framebuffer() const { return gpu && gpu->active() ? gpu->mode() : ramfb.mode(); }
+    void saveFramebuffer(const std::string &path) const { if (gpu) gpu->save(path); else ramfb.save(path); }
     std::string cpuState() const;
     std::string hypervReport() const;
     // Trusted host queries, between run slices with all VPs stopped.
@@ -120,6 +122,9 @@ class ArmVirtMachine {
     std::unique_ptr<VirtioPciDevice> serialPci;
     std::unique_ptr<VirtioSerial> serial;
     std::unique_ptr<VirtioBalloon> balloon;
+    std::unique_ptr<VirtioGpu> gpu;
+    std::unique_ptr<VirtioPciDevice> gpuPci;
+    mutable bool displayWasGpu = false;
     std::unique_ptr<VirtioPciDevice> balloonPci;
     std::chrono::steady_clock::time_point nextBalloonStats;
     std::unique_ptr<GuestAgentSocket> agentSocket;

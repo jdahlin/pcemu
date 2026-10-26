@@ -823,6 +823,7 @@ int main(int argc, char **argv) {
             }
             else if (arg == "--firmware") { uefi.firmware = value(); uefiOptions = true; }
             else if (arg == "--balloon-pfn64") { uefi.balloonLegacyPfn64 = true; uefi.virtioBalloon = true; uefiOptions = true; }
+            else if (arg == "--virtio-gpu") { uefi.virtioGpu = true; uefiOptions = true; }
             else if (arg == "--virtio-balloon") { uefi.virtioBalloon = true; uefiOptions = true; }
             else if (arg == "--balloon-target-mb") {
                 auto text = value(); size_t consumed = 0; auto mib = std::stoul(text, &consumed);
@@ -900,6 +901,7 @@ int main(int argc, char **argv) {
                              "  --machine arm64-test|arm64-uefi --backend auto|hvf --list-machines\n"
                              "  --virtio-msix (requires matching --msi platform assets)\n"
                              "  --virtio-serial [--guest-agent-socket PRIVATE_PATH]\n"
+                             "  --virtio-gpu (2D display and cursor)\n"
                              "  --virtio-balloon [--balloon-target-mb N] [--balloon-pfn64]\n"
                              "  --self-test\n"
                              "  --benchmark-watchdog (standalone headless RAM-only exit benchmark)\n"

@@ -251,3 +251,9 @@ test-virtio-balloon: build/virtio-balloon-tests
 	./build/virtio-balloon-tests
 
 test test-hvf: test-virtio-balloon
+
+.PHONY: test-virtio-gpu
+test-virtio-gpu: build/virtio-gpu-tests
+	./build/virtio-gpu-tests
+
+test test-hvf: test-virtio-gpu

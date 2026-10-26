@@ -1,3 +1,5 @@
+See [guest-tool devices](virtio-guest-tools.md) for current serial, balloon and GPU support and native Windows validation.
+
 # Virtio block storage on ARM64
 
 `arm64-uefi` now has modern virtio-blk over PCI (default) or MMIO. Real EDK II

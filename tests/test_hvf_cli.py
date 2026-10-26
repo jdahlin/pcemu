@@ -36,7 +36,7 @@ class HvfCLI(unittest.TestCase):
             self.assertIn('exit=1 ', result.stdout)  # Canceled
 
     def test_validation(self):
-        cases = [('--virtio-balloon', '--self-test'), ('--balloon-target-mb', '16385'), ('--balloon-target-mb', 'oops'), ('--balloon-pfn64', '--self-test'), ('--virtio-serial', '--self-test'), ('--guest-agent-socket', 'any', '--self-test'), ('--gui', '--self-test'), ('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'), ('--hyperv', 'vmbus', '--self-test'),
+        cases = [('--virtio-gpu', '--self-test'), ('--virtio-balloon', '--self-test'), ('--balloon-target-mb', '16385'), ('--balloon-target-mb', 'oops'), ('--balloon-pfn64', '--self-test'), ('--virtio-serial', '--self-test'), ('--guest-agent-socket', 'any', '--self-test'), ('--gui', '--self-test'), ('--hyperv-probe-ipi',), ('--hyperv', 'bogus'), ('--hyperv', 'basic', '--self-test'), ('--hyperv', 'synic', '--self-test'), ('--hyperv', 'vmbus', '--self-test'),
                  ('--hyperv-stats', 'any', '--self-test'), (), ('--kernel', '/missing/hvf-guest.bin'),
                  ('--timeout-ms', '0'), ('--timeout-ms', '60001'),
                  ('--timeout-ms', '20ms'), ('--kernel',),

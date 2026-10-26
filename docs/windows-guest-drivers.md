@@ -5,9 +5,10 @@ from the [official stable VirtIO 0.1.302 ISO](https://fedorapeople.org/groups/vi
 The working viostor 0.1.285 boot package was retained for the current INTx-only
 controller; the later package has a known interrupt setup incompatibility.
 
-Windows validated all twelve catalogs as Microsoft Windows Hardware
-Compatibility Publisher signatures. All twelve driver families are in the
-Driver Store. Five families were newly added: viogpudo, pvpanic, viofs, viomem
+The earlier driver inventory validated all twelve catalogs as Microsoft Windows Hardware
+Compatibility Publisher signatures. All twelve driver families were in that inventory
+Driver Store. The fresh compact installation contains its required drivers;
+serial, balloon and GPU were subsequently validated on this local image. Five families were newly added: viogpudo, pvpanic, viofs, viomem
 and viosock. Packages without matching hardware are staged, not active.
 
 | Family | Guest package | Host device / guest state at installation |
@@ -16,10 +17,10 @@ and viosock. Packages without matching hardware are staged, not active.
 | Network | NetKVM 0.1.302 | PCI 1AF4:1041; signed, running; DNS and HTTP verified |
 | Entropy | viorng 0.1.302 | PCI 1AF4:1044; signed; device problem code 0 |
 | SCSI | vioscsi 0.1.302 | Staged; separate virtio-scsi controller absent |
-| Serial | vioserial 0.1.302 | Named agent port implemented; signed ARM64 WinPE I/O test, opt-in PCI device |
+| Serial | vioserial 0.1.302 | Named agent port implemented; signed ARM64 installed-Windows binary I/O verified |
 | Input | vioinput 0.1.302 | Staged; current input uses working USB HID |
 | Balloon | Balloon 0.1.302 | Inflate/deflate verified with explicit PFN64 compatibility; see guest-tool device notes |
-| Display | viogpudo 0.1.302 | Staged; currently RAMFB with Microsoft Basic Display |
+| Display | viogpudo 0.1.302 | Signed, running VirtIO GPU 2D; 1280×720 scanout and RGB transfers verified |
 | Shared filesystem | viofs 0.1.302 | Staged; host filesystem device/backend absent |
 | Memory hotplug | viomem 0.1.302 | Staged; host memory-hotplug device absent |
 | Guest sockets | viosock 0.1.302 | Staged; host vsock device/backend absent |
@@ -60,6 +61,7 @@ existing preferred driver), consistent with [Microsoft's return-value documentat
 The native run completed without a reboot requirement. Post-installation checks
 confirmed unchanged working disk/network/RNG devices, loaded NetKVM and viostor,
 DNS and HTTP download/upload, and no new device problem codes. No performance
-improvement is claimed from staging unused packages. The next work is implementing
-and validating the missing host devices, starting with display and transport
-interrupt support, alongside the corresponding Hyper-V device paths.
+improvement is claimed from staging unused packages. Serial, balloon and GPU now have native installed-Windows validation and are
+enabled by `run11.sh`; see [guest-tool devices](virtio-guest-tools.md). Optional
+SCSI, shared filesystem, input, memory hotplug, vsock and panic devices remain
+outside this implementation.
