@@ -101,11 +101,11 @@ bool ArmVirtMachine::display(std::vector<uint32_t> &pixels, unsigned &width, uns
     }
     if (displayWasGpu) {
         displayWasGpu = false;
-        if (ramfb.pixels(pixels, width, height)) return true;
+        if (ramfb.read_pixels(pixels, width, height)) return true;
         width = height = 0;
         return false;
     }
-    return ramfb.changedPixels(pixels, width, height);
+    return ramfb.changed_pixels(pixels, width, height);
 }
 std::string ArmVirtMachine::usbReport() const {
     return usb ? "commands=" + std::to_string(usb->commands) +

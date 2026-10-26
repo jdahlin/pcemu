@@ -82,12 +82,12 @@ int main() {
     auto mode = [&] {
         ArmFwCfg config(ram, 0x40000000);
         config.add_file("etc/ramfb", descriptor, true);
-        return ArmRamFb(config, ram, 0x40000000).mode();
+        return ArmRamFb(config, ram, 0x40000000).mode_description();
     };
     ArmFwCfg absent(ram, 0x40000000);
-    check(ArmRamFb(absent, ram, 0x40000000).mode() == "invalid");
+    check(ArmRamFb(absent, ram, 0x40000000).mode_description() == "invalid");
     absent.add_file("etc/ramfb", std::vector<uint8_t>(4));
-    check(ArmRamFb(absent, ram, 0x40000000).mode() == "invalid");
+    check(ArmRamFb(absent, ram, 0x40000000).mode_description() == "invalid");
     check(mode() == "inactive");
     field(0, 8, 0x40000008); field(8, 4, 0x34325258);
     field(16, 4, 2); field(20, 4, 2); field(24, 4, 12);
@@ -101,20 +101,20 @@ int main() {
     ram[20] = 6; ram[21] = 5; ram[22] = 4;
     std::vector<uint32_t> argb;
     unsigned width = 0, height = 0;
-    check(fb.pixels(argb, width, height));
+    check(fb.read_pixels(argb, width, height));
     check(width == 2 && height == 2 && argb.size() == 4);
     check(argb[0] == 0xff010203 && argb[2] == 0xff040506); // padded rows, XRGB to ARGB
-    check(!ArmRamFb(absent, ram, 0x40000000).pixels(argb, width, height));
-    check(fb.changedPixels(argb, width, height));
-    check(!fb.changedPixels(argb, width, height));
+    check(!ArmRamFb(absent, ram, 0x40000000).read_pixels(argb, width, height));
+    check(fb.changed_pixels(argb, width, height));
+    check(!fb.changed_pixels(argb, width, height));
     check(width == 2 && height == 2 && argb[0] == 0xff010203);
     ram[16] = 99; // stride padding is not displayed
-    check(!fb.changedPixels(argb, width, height));
+    check(!fb.changed_pixels(argb, width, height));
     ram[8] = 7;
-    check(fb.changedPixels(argb, width, height) && argb[0] == 0xff010207);
-    check(!fb.changedPixels(argb, width, height));
+    check(fb.changed_pixels(argb, width, height) && argb[0] == 0xff010207);
+    check(!fb.changed_pixels(argb, width, height));
     ram[8] = 3;
-    check(fb.changedPixels(argb, width, height) && argb[0] == 0xff010203);
+    check(fb.changed_pixels(argb, width, height) && argb[0] == 0xff010203);
     // Exercise real writable fw_cfg DMA for mode changes and disable/re-enable.
     std::vector<uint8_t> changeRam(256);
     ArmFwCfg changeConfig(changeRam, 0x40000000);
@@ -133,20 +133,20 @@ int main() {
         changeConfig.write_register(16, swapped, 8);
         check(changeRam[195] == 0);
     };
-    check(changing.changedPixels(argb, width, height));
-    check(!changing.changedPixels(argb, width, height));
+    check(changing.changed_pixels(argb, width, height));
+    check(!changing.changed_pixels(argb, width, height));
     field(0, 8, 0); updateDescriptor();
-    check(!changing.changedPixels(argb, width, height) && width == 0 && height == 0);
+    check(!changing.changed_pixels(argb, width, height) && width == 0 && height == 0);
     field(0, 8, 0x40000008); updateDescriptor();
-    check(changing.changedPixels(argb, width, height));
+    check(changing.changed_pixels(argb, width, height));
     field(24, 4, 4); updateDescriptor();
-    check(!changing.changedPixels(argb, width, height));
+    check(!changing.changed_pixels(argb, width, height));
     field(24, 4, 12); updateDescriptor();
-    check(changing.changedPixels(argb, width, height));
+    check(changing.changed_pixels(argb, width, height));
     field(16, 4, 1); updateDescriptor();
-    check(changing.changedPixels(argb, width, height) && width == 1);
+    check(changing.changed_pixels(argb, width, height) && width == 1);
     auto output = std::filesystem::temp_directory_path() / ("pcemu-ramfb-" + std::to_string(getpid()) + ".ppm");
-    fb.save(output.string());
+    fb.save_ppm(output.string());
     std::ifstream input(output, std::ios::binary);
     std::string pixels((std::istreambuf_iterator<char>(input)), {});
     input.close(); std::filesystem::remove(output);

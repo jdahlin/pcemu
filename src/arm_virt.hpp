@@ -79,8 +79,8 @@ class ArmVirtMachine {
     bool display(std::vector<uint32_t> &pixels, unsigned &width, unsigned &height, bool compositeCursor = true) const;
     PointerShape pointerShape() const { return gpu ? gpu->pointerShape() : PointerShape{}; }
     std::string usbReport() const;
-    std::string framebuffer() const { return gpu && gpu->active() ? gpu->mode() : ramfb.mode(); }
-    void saveFramebuffer(const std::string &path) const { if (gpu) gpu->save(path); else ramfb.save(path); }
+    std::string framebuffer() const { return gpu && gpu->active() ? gpu->mode() : ramfb.mode_description(); }
+    void saveFramebuffer(const std::string &path) const { if (gpu) gpu->save(path); else ramfb.save_ppm(path); }
     std::string cpuState() const;
     std::string hypervReport() const;
     // Trusted host queries, between run slices with all VPs stopped.

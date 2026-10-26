@@ -203,3 +203,4 @@ while retaining this repository's formatting.
 | System control ports A/B and debug console | Intel 290562-001, sections 4.2.4.1/4.2.7.2; Bochs port_e9_hack convention | A20/reset effects, timer/speaker status, snapshot latches, host byte sink and compatibility differences from reference behavior. |
 | ARM fw_cfg | QEMU Firmware Configuration interface, including v2.9 DMA writes | Selector/directory formats, discovery signatures, endian conversions, synchronous RAM-only transfers and descriptor error reporting. |
 | ARM NOR variable store | Intel StrataFlash 290667-011, April 2002 | Interleaved x16 command sequences, erase/program rules, named IDs, persistent versus visible bytes, dirty remapping and incomplete timing/protection behavior. |
+| ARM RAM framebuffer | QEMU RAMFBCfg wire layout and Linux DRM XRGB8888 | Big-endian descriptor, little-endian pixels, padded rows, host captures/change detection, fixed selector and host size limits. |
