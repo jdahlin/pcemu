@@ -46,6 +46,13 @@ class CleanupSafety(unittest.TestCase):
         child.write_bytes(b'PCEMUCOW'+struct.pack('<IIQI', 1, 4096, 8, len(name))+name+b'\0'*8)
         self.assertEqual(self.selected(obsolete_media=True)[0], set())
 
+    def test_qcow2_ancestors_survive(self):
+        parent = self.file('media/rtts-v5.raw')
+        child = self.file('build/snapshot.qcow2')
+        name = str(parent).encode()
+        child.write_bytes(b'QFI\xfb'+struct.pack('>IQI',3,20,len(name))+name)
+        self.assertEqual(self.selected(obsolete_media=True)[0], set())
+
     def test_missing_parent_stops_cleanup(self):
         child = self.file('build/snapshots/point/disk.raw')
         name = str(self.root/'missing.raw').encode()

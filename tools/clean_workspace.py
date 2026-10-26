@@ -23,18 +23,33 @@ def disk_parents(root):
     parents = set()
     for directory in ('build', 'media'):
         for p in (root/directory).rglob('*'):
-            if not p.is_file() or p.suffix not in ('.raw', '.pcd', '.img'):
+            if not p.is_file() or p.suffix not in ('.raw', '.pcd', '.img', '.qcow2'):
                 continue
             with p.open('rb') as f:
-                if f.read(8) != b'PCEMUCOW':
+                signature = f.read(8)
+                if signature == b'PCEMUCOW':
+                    header = f.read(20)
+                    if len(header) != 20:
+                        raise ValueError(f'Truncated COW header: {p}')
+                    size = struct.unpack_from('<I', header, 16)[0]
+                    if not 0 < size <= 4096:
+                        raise ValueError(f'Invalid COW parent: {p}')
+                elif signature[:4] == b'QFI\xfb':
+                    header = f.read(12)
+                    if len(header) != 12:
+                        raise ValueError(f'Truncated QCOW2 header: {p}')
+                    offset, size = struct.unpack('>QI', header)
+                    if not offset:
+                        continue
+                    if not 0 < size <= 1023 or offset + size > p.stat().st_size:
+                        raise ValueError(f'Invalid QCOW2 parent: {p}')
+                    f.seek(offset)
+                else:
                     continue
-                header = f.read(20)
-                if len(header) != 20:
-                    raise ValueError(f'Truncated COW header: {p}')
-                size = struct.unpack_from('<I', header, 16)[0]
-                if not 0 < size <= 4096:
-                    raise ValueError(f'Invalid COW parent: {p}')
-                parent = Path(f.read(size).decode('utf-8'))
+                name = f.read(size)
+                if len(name) != size:
+                    raise ValueError(f'Truncated disk parent: {p}')
+                parent = Path(name.decode('utf-8'))
                 if not parent.is_absolute():
                     parent = p.parent/parent
                 if not parent.exists():
