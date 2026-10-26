@@ -475,6 +475,99 @@ static void stringMoveTests() {
     }
 }
 
+static void memoryExchangeTests() {
+    for (bool paging : {false, true})
+      for (bool code32 : {false, true})
+       for (bool address32 : {false, true})
+        for (unsigned width : {1u, 2u, 4u})
+         for (unsigned reg : {0u, 3u, 4u, 6u}) {
+            auto c = make({}, paging);
+            c.s[CS].big = code32;
+            c.s[FS].base = 0x2000;
+            c.r[BX] = 0x1000; c.r[SI] = 0x10;
+            c.r[AX] = 0x12345678; c.r[SP] = 0x87654321;
+            std::vector<uint8_t> code{0x64};
+            if (code32 != address32) code.push_back(0x67);
+            if (width != 1 && code32 != (width == 4)) code.push_back(0x66);
+            code.push_back(width == 1 ? 0x86 : 0x87);
+            code.push_back(uint8_t(0x40 | (reg << 3) | (address32 ? 4 : 0)));
+            if (address32) code.push_back(0x73); // BX + SI*2 + 0x20
+            code.push_back(0x20);
+            code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            c.write(address32 ? 0x3040 : 0x3030, 0xfedcba98, width);
+            compare(c); // Includes source/address and high-byte aliases.
+        }
+    for (bool paging : {false, true}) {
+        auto c = make({0x87, 0x03, 0xf4}, paging);
+        c.r[BX] = 0x1000; c.r[AX] = 0x12345678;
+        CPU ref = c;
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        auto part = jit.runBatch();
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+        check(jit.nativeInstructions == 1 && c.halted, "memory XCHG did not execute natively");
+    }
+    {
+        auto c = make({0x87, 0x03, 0xf4}, true);
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024);
+        c.flushTLB(); c.r[BX] = 0x9024; c.r[AX] = 0x81067;
+        compare(c); // Return the value before the write probe sets its own D bit.
+    }
+    {
+        auto c = make({0x87, 0x03, 0x90, 0x83, 0xc1, 1, 0xf4});
+        c.r[BX] = 2; c.r[AX] = 0x909090f4;
+        compare(c); // Replace the next instruction with HLT.
+    }
+    for (bool watched : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0x87, 0x13, 0xf4});
+        c.r[BX] = 0xa0000; c.r[AX] = 0x7fffffff; c.r[DX] = 0x12345678;
+        CPU ref = c;
+        std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) { trace.push_back(p); return uint8_t(p); };
+        ref.videoRead = [&](uint32_t p) { refTrace.push_back(p); return uint8_t(p); };
+        c.videoWrite = [&](uint32_t p, uint8_t v) { trace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        ref.videoWrite = [&](uint32_t p, uint8_t v) { refTrace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        if (watched) {
+            c.watchStart = ref.watchStart = 0xa0000;
+            c.watchLength = ref.watchLength = 4;
+            c.watchWrite = [&](uint32_t, uint32_t, int) { trace.push_back((2ull << 60) | c.flags); };
+            ref.watchWrite = [&](uint32_t, uint32_t, int) { refTrace.push_back((2ull << 60) | ref.flags); };
+        }
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() >= 8, "XCHG MMIO/watch replay order");
+        check(c.nativeMemoryCalls, "XCHG MMIO did not exercise native replay");
+    }
+    for (bool crossPage : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0x87, 0x13, 0xf4}, true);
+        c.s[CS].selector = 3; c.r[AX] = 0x7fffffff; c.r[DX] = 0x12345678;
+        c.r[BX] = crossPage ? 0x4fff : 0x5000;
+        uint32_t readOnly = 0x5005;
+        std::copy_n(reinterpret_cast<uint8_t *>(&readOnly), 4, c.mem.begin() + 0x81014);
+        c.mem[0x4fff] = 0x7f; c.flushTLB();
+        CPU ref = c;
+        unsigned faults = 0;
+        c.observeFault = ref.observeFault = [&](const Fault &f) {
+            check(f.vector == 14 && f.error == 7, "XCHG write fault type");
+            ++faults; throw std::runtime_error("XCHG fault");
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "missing native XCHG fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "XCHG fault", "native XCHG fault"); }
+        try { ref.step(); ref.step(); check(false, "missing reference XCHG fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "XCHG fault", "reference XCHG fault"); }
+        equal(c, ref);
+        check(faults == 2 && c.ip == 3 && c.r[DX] == 0x12345678 && c.mem[0x4fff] == 0x7f,
+              "XCHG write fault committed a register or partial store");
+    }
+}
+
 static void memoryWriteCoverageTests() {
     auto append = [](std::vector<uint8_t> &code, uint32_t value, unsigned width) {
         for (unsigned b = 0; b < width; ++b) code.push_back(uint8_t(value >> (b * 8)));
@@ -817,6 +910,7 @@ int main() {
             memoryTests();
             stringMoveTests();
             memoryWriteCoverageTests();
+            memoryExchangeTests();
             hotShortFragmentTests();
             cycleTests();
         }

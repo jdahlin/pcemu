@@ -6,6 +6,7 @@ struct NativeMemoryMove {
     int base = -1, index = -1, scale = 0, segment = DS, reg = 0, width = 4;
     uint32_t displacement = 0, begin = 0, end = 0;
     bool address32 = false, store = false;
+    bool exchange = false; // XCHG returns the original memory value after a successful store.
     int delta = 0; // Nonzero for guarded memory INC/DEC; return original value for flags.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };

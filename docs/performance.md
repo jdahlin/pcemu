@@ -1880,3 +1880,15 @@ All 32 restores pass the original document/pixel gate. Correctness tests cover
 carry, precise faults, MMIO/watch ordering, self-modification, PTE aliasing,
 trace/direct-link paths and interrupt deadlines. See
 [the corrected memory-coverage report](measurements/word5m-memory-alu-2026-10-26.md).
+
+### Word and Excel: native memory XCHG (2026-10-26)
+
+Byte/word/dword memory XCHG now uses the guarded RAM path, committing its register
+result only after the store succeeds and retaining exact replay on faults/devices.
+Separate profiles reduce interpreted word/dword XCHG attempts from 140,592 to 6,191
+in Word and from 486,894 to 4,094 in Excel. Native shares reach 92.85% and 99.33%.
+All 64 headless restores pass in eight rotating rounds per workload. Candidate
+median CPU is 17.4% below the original Word baseline and 7.4% below the original
+Excel baseline; the incremental Word timing difference is too small relative to
+control variation to establish a reliable gain. See the
+[coverage, correctness and measurement report](measurements/office-memory-xchg-2026-10-26.md).

@@ -254,14 +254,17 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.imm = immediate(i.w);
             } else if (op == 0x86 || op == 0x87) {
                 auto m = byte();
-                if ((m >> 6) != 3) {
-                    pos = begin;
-                    break;
-                }
-                i.kind = Kind::Exchange;
                 i.w = op == 0x86 ? 1 : w;
-                i.dst = m & 7;
-                i.src = (m >> 3) & 7;
+                if ((m >> 6) != 3) {
+                    i.kind = Kind::Memory;
+                    i.memory = memoryOperand(m, address32, overrideSegment);
+                    i.memory.store = i.memory.exchange = true;
+                    i.dst = i.memory.reg = (m >> 3) & 7;
+                } else {
+                    i.kind = Kind::Exchange;
+                    i.dst = m & 7;
+                    i.src = (m >> 3) & 7;
+                }
             } else if (op >= 0x91 && op <= 0x97) {
                 i.kind = Kind::Exchange;
                 i.dst = AX;

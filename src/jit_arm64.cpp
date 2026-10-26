@@ -752,7 +752,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     // stack access or pointer read. Replay retains the original IP.
                     if (i.indirectCall) load(10, 31, 108);
                     store(10, 19, offsetof(CPU, ip));
-                } else if (!i.memory.store) {
+                } else if (!i.memory.store || i.memory.exchange) {
                     if (i.signedSource)
                         emit(0x13000000u | ((i.sourceWidth * 8 - 1) << 10) | (10 << 5) | 10);
                     insert(20 + i.dst, 10, i.w, i.dstShift);
@@ -897,10 +897,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memory.delta || i.memory.alu >= 0) {
+                if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
-                    if (i.memory.delta)
+                    if (i.memory.exchange)
+                        extract(13, 20 + i.dst, i.w, i.dstShift);
+                    else if (i.memory.delta)
                         emit((i.memory.delta > 0 ? 0x11000400u : 0x51000400u) | (10 << 5) | 13);
                     else {
                         if (i.immediate) imm(12, i.imm);
@@ -959,7 +961,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
-            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0) {
+            if (!i.memory.store || i.memory.delta || i.memory.alu >= 0 || i.memory.exchange) {
                 load(10, 19, offsetof(CPU, nativeValue));
             }
             finishMove();
