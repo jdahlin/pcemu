@@ -1225,3 +1225,16 @@ MiB, and no capacity option or other runtime change is retained. Source identity
 drivers and all six pairs are in `jit-cache-capacity.md` and its measurement.
 The emitted finishing bucket remains the next profiling lead; no broad speedup
 or goal completion is claimed.
+
+
+## Final-exit regions separated (26 October)
+
+A finer 128 MiB diagnostic Excel profile passes the task and maps 14,742
+main-thread task samples. Final flags have 711 self samples (4.82%), GPR commit
+187 (1.27%), host return 129 (0.88%), IP commit 69 (0.47%), conditional branch
+50 (0.34%) and return count 40 (0.27%). These are sampled emitted-region shares,
+not exact CPU times or all flags across every operation. No production logging
+or arena change is retained. The exact map/stack round trips and diagnostic
+patches are in `jit-finish-profile-2026-10-26.json`; see
+`emitted-code-profiling.md`. This narrows the hot bucket while confirming that
+flag work alone cannot deliver the twofold useful-work target.

@@ -76,3 +76,33 @@ Twelve analyzer tests pass, including six new attribution tests for boundaries,
 address reuse, skipped operations, invalid ranges, PID identity, exclusive
 accounting and helper attribution. No new guest disk or Office fixture is made;
 the task harness removes successful private compressed children.
+
+
+## Finer block-finishing attribution
+
+A subsequent diagnostic splits the final block exit into ordered emitted regions.
+The existing analyzer consumes the finer markers unchanged; all map addresses
+are unique, PID identity matches, and the task's expected pixels pass. This is
+one run with 14,742 main-thread task samples on the same shared host, not another
+normal-arena timing comparison.
+
+| Final block-exit region | Self samples | Share of main-thread task samples |
+| --- | ---: | ---: |
+| Flags | 711 | 4.82% |
+| Cached GPR commit | 187 | 1.27% |
+| Host register restore/return | 129 | 0.88% |
+| IP commit | 69 | 0.47% |
+| Conditional branch | 50 | 0.34% |
+| Guest instruction return count | 40 | 0.27% |
+
+These finer finishing buckets sum to 8.05% in this run, versus 9.10% in the
+previous three-run coarse collection. Sampling, shared-host variation, diagnostic
+layout and boundary effects remain. Flag work inside memory/replay or other
+operation regions stays in those regions; 4.82% is not the total cost of every
+flag operation in the emulator. Still, it is the largest final-exit component.
+Eliminating it alone cannot explain a route to twofold whole-task improvement.
+
+[Exact finer diagnostic patches, build/task identity, attribution and compressed
+map/stack evidence](measurements/jit-finish-profile-2026-10-26.json).
+Production code and its 16 MiB arena are unchanged by this profiling. Raw maps
+are removed after verified compression.

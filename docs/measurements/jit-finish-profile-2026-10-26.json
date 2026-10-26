@@ -1,0 +1,318 @@
+{
+  "scope": "One finer emitted-region headless Excel host profile. Diagnostic 128 MiB arena and logging only; sampled wall-stack shares, not exact CPU duration or production speedup.",
+  "analysis": {
+    "mainThreadTaskSamples": 14742,
+    "mappedSamples": 3960,
+    "unmappedSamples": 10782,
+    "regions": [
+      {
+        "region": "finish/flags",
+        "scope": "generated self",
+        "samples": 711,
+        "percentOfMain": 4.822954822954823
+      },
+      {
+        "region": "Memory/read",
+        "scope": "generated self",
+        "samples": 710,
+        "percentOfMain": 4.81617148283815
+      },
+      {
+        "region": "prologue",
+        "scope": "generated self",
+        "samples": 585,
+        "percentOfMain": 3.9682539682539684
+      },
+      {
+        "region": "Memory/stack",
+        "scope": "generated self",
+        "samples": 421,
+        "percentOfMain": 2.8557861891195224
+      },
+      {
+        "region": "Memory/write",
+        "scope": "generated self",
+        "samples": 296,
+        "percentOfMain": 2.007868674535341
+      },
+      {
+        "region": "Alu",
+        "scope": "generated self",
+        "samples": 187,
+        "percentOfMain": 1.2684846018179352
+      },
+      {
+        "region": "finish/register-commit",
+        "scope": "generated self",
+        "samples": 187,
+        "percentOfMain": 1.2684846018179352
+      },
+      {
+        "region": "Memory/CALL",
+        "scope": "generated self",
+        "samples": 169,
+        "percentOfMain": 1.146384479717813
+      },
+      {
+        "region": "finish/host-return",
+        "scope": "generated self",
+        "samples": 129,
+        "percentOfMain": 0.8750508750508751
+      },
+      {
+        "region": "Memory/RET",
+        "scope": "generated self",
+        "samples": 102,
+        "percentOfMain": 0.6919006919006919
+      },
+      {
+        "region": "Memory/CALL",
+        "scope": "helper descendants",
+        "samples": 81,
+        "percentOfMain": 0.5494505494505495
+      },
+      {
+        "region": "finish/ip-commit",
+        "scope": "generated self",
+        "samples": 69,
+        "percentOfMain": 0.46805046805046807
+      },
+      {
+        "region": "Move",
+        "scope": "generated self",
+        "samples": 51,
+        "percentOfMain": 0.34595034595034596
+      },
+      {
+        "region": "finish/branch",
+        "scope": "generated self",
+        "samples": 50,
+        "percentOfMain": 0.3391670058336725
+      },
+      {
+        "region": "Test",
+        "scope": "generated self",
+        "samples": 43,
+        "percentOfMain": 0.2916836250169583
+      },
+      {
+        "region": "Memory/read",
+        "scope": "helper descendants",
+        "samples": 41,
+        "percentOfMain": 0.27811694478361143
+      },
+      {
+        "region": "finish/return-count",
+        "scope": "generated self",
+        "samples": 40,
+        "percentOfMain": 0.271333604666938
+      },
+      {
+        "region": "DoubleShift",
+        "scope": "generated self",
+        "samples": 19,
+        "percentOfMain": 0.12888346221679556
+      },
+      {
+        "region": "Memory/PUSH source and stack",
+        "scope": "helper descendants",
+        "samples": 15,
+        "percentOfMain": 0.10175010175010175
+      },
+      {
+        "region": "Memory/write",
+        "scope": "helper descendants",
+        "samples": 11,
+        "percentOfMain": 0.07461674128340795
+      },
+      {
+        "region": "Memory/PUSH source and stack",
+        "scope": "generated self",
+        "samples": 11,
+        "percentOfMain": 0.07461674128340795
+      },
+      {
+        "region": "LoadFlags",
+        "scope": "generated self",
+        "samples": 10,
+        "percentOfMain": 0.0678334011667345
+      },
+      {
+        "region": "Lea",
+        "scope": "generated self",
+        "samples": 8,
+        "percentOfMain": 0.0542667209333876
+      },
+      {
+        "region": "Shift",
+        "scope": "generated self",
+        "samples": 5,
+        "percentOfMain": 0.03391670058336725
+      },
+      {
+        "region": "Memory/stack",
+        "scope": "helper descendants",
+        "samples": 2,
+        "percentOfMain": 0.0135666802333469
+      },
+      {
+        "region": "CounterBranch",
+        "scope": "generated self",
+        "samples": 2,
+        "percentOfMain": 0.0135666802333469
+      },
+      {
+        "region": "Memory/RET",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.00678334011667345
+      },
+      {
+        "region": "IndirectJump",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.00678334011667345
+      },
+      {
+        "region": "MultiplyByte",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.00678334011667345
+      },
+      {
+        "region": "BitTest",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.00678334011667345
+      },
+      {
+        "region": "Exchange",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.00678334011667345
+      }
+    ],
+    "sample": "build/excel-jit-finish-profile/run-0/sample.txt",
+    "codeMap": "build/jit-finish-profile/excel-map.jsonl",
+    "sampleSha256": "3727580f847069ac393ac710f84abe775054ddbe766876ddb3da4247e4cef94f",
+    "codeMapSha256": "f1ae21b3a6404bb3f587aff77e3255bdff7e476e838816c15b98ba23d4a32e29",
+    "blocks": 23782,
+    "scope": "Wall-stack samples, not exact CPU time. Helper samples inherit their emitted caller region. Unmapped samples remain explicit."
+  },
+  "taskResult": {
+    "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+    "snapshot": "/Volumes/data/pcemu/snapshots/excel-dependent-recalc-recovered",
+    "jit": true,
+    "profiled": true,
+    "followJumps": true,
+    "traces": false,
+    "emulatorSha256": "b8d83a8808b2a131fdcddc3008aafc72eefea7eaf75a9bcbee2cfeec7fdb3a41",
+    "taskSha256": "7c55d8acf4ada11814ac488b48014a01437e7ba970372d4476a80a947a159d47",
+    "restoreTimeoutSeconds": 90.0,
+    "guestProfiled": false,
+    "frontend": "headless",
+    "hostInputSuppressed": false,
+    "emulator": "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/pcemu",
+    "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+    "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+    "samples": [
+      {
+        "restoreReadyMs": 38792.755458,
+        "taskResponseMs": 17753.307916999995,
+        "processCpuTime": {
+          "status": "available",
+          "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+          "userMs": 13595.702084,
+          "systemMs": 1906.111,
+          "totalMs": 15501.813084
+        },
+        "instructions": 1402807393,
+        "nativeInstructions": 1382928601,
+        "compiledBlocks": 21356,
+        "executionWallMs": 14828.006423
+      }
+    ],
+    "medianRestoreReadyMs": 38792.755458,
+    "medianTaskResponseMs": 17753.307916999995,
+    "medianProcessCpuMs": 15501.813084
+  },
+  "binarySha256": "b8d83a8808b2a131fdcddc3008aafc72eefea7eaf75a9bcbee2cfeec7fdb3a41",
+  "buildCommand": [
+    "clang++",
+    "-I/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source",
+    "-I/opt/homebrew/opt/zstd/include",
+    "-I/opt/homebrew/include",
+    "-I/opt/homebrew/include/SDL2",
+    "-D_THREAD_SAFE",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/machine.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_at_io.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_firmware.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_bios.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_bios_video.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/i8042.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_input.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/cmos_rtc.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_bios_disk.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/ata.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pic.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/i8259_pair.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/vga.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/jit_arm64.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/snapshot.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/mouse.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/vga_pci.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/host_keyboard.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/ne2000.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/pc_display.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/session_diagnostics.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/cpu_benchmarks.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/main.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/network.cpp",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/source/frontend_sdl.cpp",
+    "-L/opt/homebrew/lib",
+    "-lSDL2",
+    "-L/opt/homebrew/opt/zstd/lib",
+    "-lzstd",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/jit-finish-profile/pcemu"
+  ],
+  "sourcePatches": {
+    "main.cpp": "--- reference/main.cpp\n+++ diagnostic/main.cpp\n@@ -248,7 +248,7 @@\n         }\n         if (snapshotPath.empty())\n             m.boot(fromFloppy);\n-        Jit jit(c, enableJit, 8, 16 * 1024 * 1024,\n+        Jit jit(c, enableJit, 8, 128 * 1024 * 1024,\n                 traceJit ? Jit::BlockMode::Trace\n                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);\n         std::ofstream trace;\n",
+    "jit_arm64.cpp": "--- reference/jit_arm64.cpp\n+++ diagnostic/jit_arm64.cpp\n@@ -3,6 +3,9 @@\n #include \"jit_flags.hpp\"\n #include \"jit_runtime.hpp\"\n #include <algorithm>\n+#include <fstream>\n+#include <cstdlib>\n+#include <unistd.h>\n #include <bit>\n #include <cstddef>\n #include <cstring>\n@@ -165,7 +168,10 @@\n             emit(0x2a000000u | (14 << 16) | (13 << 5) | 13);\n         }\n     };\n+    bool mappingFinish = false;\n+    std::vector<std::pair<size_t, const char *>> finishRegions;\n     auto finishFlags = [&](int last, int condition, uint32_t target) {\n+        if (mappingFinish) finishRegions.emplace_back(code.size()*4, \"finish/flags\");\n         if (last < 0 && condition < 0)\n             return;\n         // Materialize supported ALU flags without a host helper. Match the\n@@ -242,6 +248,7 @@\n                 return;\n             // Evaluate all sixteen Jcc predicates from materialized flags.\n             // Only caller-save temporaries are used, just like nativeFinish.\n+            if (mappingFinish) finishRegions.emplace_back(code.size()*4, \"finish/branch\");\n             conditionValue(condition, last < 0);\n             auto skip = code.size();\n             emit((condition & 1 ? 0x35000000u : 0x34000000u) | 13);\n@@ -250,6 +257,7 @@\n             code[skip] |= uint32_t(code.size() - skip) << 5;\n             return;\n         }\n+        if (mappingFinish) finishRegions.emplace_back(code.size()*4, \"finish/helper\");\n         emit(0xaa1303e0u);\n         imm(1, last >= 0 ? ir[last].op : -1);\n         if (last >= 0) {\n@@ -280,7 +288,9 @@\n     };\n     std::vector<size_t> exits;\n     int last = -1;\n+    std::vector<size_t> regionOffsets;\n     for (size_t n = 0; n < ir.size(); n++) {\n+        regionOffsets.push_back(code.size()*4);\n         auto i = ir[n];\n         if (i.kind == Kind::Nop)\n             continue;\n@@ -952,7 +962,9 @@\n         dirtyRegisters |= 1u << i.dst;\n         insert(dst, 10, i.w, i.dstShift);\n     }\n+    finishRegions.emplace_back(code.size()*4, \"finish/register-commit\");\n     flushRegisters(dirtyRegisters);\n+    finishRegions.emplace_back(code.size()*4, \"finish/ip-commit\");\n     bool branch = ir.back().kind == Kind::Branch;\n     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&\n         ir.back().kind != Kind::CounterBranch) {\n@@ -961,10 +973,14 @@\n                                           : pos);\n         store(9, 19, offsetof(CPU, ip));\n     }\n+    mappingFinish = true;\n     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);\n+    mappingFinish = false;\n+    finishRegions.emplace_back(code.size()*4, \"finish/return-count\");\n     imm(0, ir.size());\n     for (auto at : exits)\n         code[at] |= uint32_t(code.size() - at) & 0x03ffffffu;\n+    finishRegions.emplace_back(code.size()*4, \"finish/host-return\");\n     for (int k = 0; k < 5; k++)\n         if (savePair(k))\n             emit(0xa9400000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |\n@@ -984,6 +1000,24 @@\n     std::memcpy(arena + used, code.data(), bytes);\n     pthread_jit_write_protect_np(1);\n     sys_icache_invalidate(arena + used, bytes);\n+    static std::ofstream mapFile(std::getenv(\"PCEMU_JIT_MAP\") ? std::getenv(\"PCEMU_JIT_MAP\") : \"/dev/null\");\n+    if (!mapFile) throw std::runtime_error(\"Cannot write JIT map\");\n+    mapFile << \"{\\\"pid\\\":\" << getpid() << \",\\\"start\\\":\" << reinterpret_cast<uintptr_t>(arena+used)\n+            << \",\\\"end\\\":\" << reinterpret_cast<uintptr_t>(arena+used+bytes)\n+            << \",\\\"recycles\\\":\" << cacheRecycles << \",\\\"ip\\\":\" << cpu.ip\n+            << \",\\\"cs\\\":\" << cpu.s[CS].selector << \",\\\"regions\\\":[{\\\"offset\\\":0,\\\"kind\\\":\\\"prologue\\\"}\";\n+    const char *names[]={\"Move\",\"Alu\",\"Test\",\"Nop\",\"Branch\",\"Memory\",\"Lea\",\"CounterBranch\",\"Exchange\",\"Multiply\",\"Shift\",\"IndirectJump\",\"MultiplyByte\",\"DoubleShift\",\"BitTest\",\"LoadFlags\"};\n+    for (size_t n=0;n<ir.size();++n) {\n+        const auto &i=ir[n];\n+        mapFile << \",{\\\"offset\\\":\" << regionOffsets[n] << \",\\\"kind\\\":\\\"\" << names[int(i.kind)]\n+                << \"\\\",\\\"width\\\":\" << i.w << \",\\\"store\\\":\" << i.memory.store\n+                << \",\\\"stackDelta\\\":\" << i.stackDelta << \",\\\"call\\\":\" << i.nearCall\n+                << \",\\\"return\\\":\" << i.nearReturn << \",\\\"memoryCall\\\":\" << i.memoryCall\n+                << \",\\\"memoryPush\\\":\" << i.memoryPush << \",\\\"op\\\":\" << i.op << \"}\";\n+    }\n+    for (auto [offset, name] : finishRegions)\n+        mapFile << \",{\\\"offset\\\":\" << offset << \",\\\"kind\\\":\\\"\" << name << \"\\\"}\";\n+    mapFile << \"]}\\n\";\n     block.fn = reinterpret_cast<Function>(arena + used);\n     used = (used + bytes + 15) & ~size_t(15);\n     compiledBlocks++;\n"
+  },
+  "artifacts": {
+    "map": {
+      "file": "jit-finish-profile-2026-10-26.map.zst",
+      "rawBytes": 20021072,
+      "rawSha256": "f1ae21b3a6404bb3f587aff77e3255bdff7e476e838816c15b98ba23d4a32e29"
+    },
+    "sample": {
+      "file": "jit-finish-profile-2026-10-26.sample.zst",
+      "rawBytes": 594990,
+      "rawSha256": "3727580f847069ac393ac710f84abe775054ddbe766876ddb3da4247e4cef94f"
+    }
+  },
+  "limits": [
+    "One diagnostic run, shared desktop host.",
+    "128 MiB diagnostic arena changes cache behavior; zero reuse verified.",
+    "Markers divide emitted regions, not precise individual ARM latencies; sampling can land at region boundaries.",
+    "Flags within memory/replay or other guest operation regions are not counted in final-block flags bucket.",
+    "No production runtime change from region-map logging."
+  ],
+  "normalQuitTrailer": "Executed 7959085195 guest instructions in 20.9053s; native=1386672300, blocks=23782, recycles=0, stopped=budget/quit",
+  "nativeCodeBytes": 24025128
+}
