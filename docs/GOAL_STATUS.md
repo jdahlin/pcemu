@@ -1332,3 +1332,14 @@ commands, mutation fixture and all measurements are in
 `context-cache-evaluation.md` and its measurement record. The next design must
 preserve the standalone path/footprint or use local invariants instead of
 persistent block stamps. The broader goal remains active.
+
+
+## Full local-context snapshot does not improve tasks (26 October)
+
+A follow-up prototype avoids new persistent metadata and keeps all per-entry
+checks, using local invariant values inside native batches. It passes 3,500
+batch/timer and 759 mutation checks, but three-pair median CPU ratios are 0.970
+for Excel and 0.992 for Word. Production is unchanged; no further RAM/full-OS
+gate is run for this non-retained variant. All six pairs, source, commands and
+test results are in `local-context-evaluation.md` and its measurement. A narrower
+key-only hoist is being evaluated separately.
