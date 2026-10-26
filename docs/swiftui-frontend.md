@@ -132,3 +132,8 @@ For the installed Windows image, prepare its matching platform and run
 `system-tools-live.qcow2` image with a private compressed child; it never opens
 the live Windows writable overlay. Successful tests remove checkpoint RAM/disk
 files and private children, retaining only small diagnostics and screenshots.
+
+The x86 runner keeps the machine, JIT tables and optional trace history on the
+heap so embedded startup fits Dispatch's small worker stacks. The library
+regression test runs cold boot, restore, lifecycle controls and trace capture
+on a 512 KiB pthread, with a headless display sink for the embedded UI path.

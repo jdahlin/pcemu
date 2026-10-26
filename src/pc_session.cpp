@@ -226,7 +226,10 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         const auto stepBudget = limit;
         if (!snapshotPath.empty() && (!hd.empty() || !fd.empty() || fromFloppy))
             throw std::runtime_error("Snapshot restore supplies its own disk images");
-        Machine m(hd, fd, ramMB * 1024 * 1024);
+        // Embedded callers can use 512 KiB Dispatch/pthread stacks. The
+        // machine contains inline VGA RAM/TLBs and must live on the heap.
+        auto machine = std::make_unique<Machine>(hd, fd, ramMB * 1024 * 1024);
+        auto &m = *machine;
         if (!snapshotPath.empty()) {
             m.loadSnapshot(snapshotPath);
             executeVga = m.vgaOnReset;
@@ -264,9 +267,10 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         }
         if (snapshotPath.empty())
             m.boot(fromFloppy);
-        Jit jit(c, enableJit, 8, 16 * 1024 * 1024,
+        auto engine = std::make_unique<Jit>(c, enableJit, 8, 16 * 1024 * 1024,
                 traceJit ? Jit::BlockMode::Trace
                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
+        auto &jit = *engine;
         jit.setDirectLinks(directLinks, linkWarmup);
         if (!jitDebugMapPath.empty()) jit.setDebugMap(jitDebugMapPath);
         std::ofstream trace;
@@ -298,7 +302,9 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
             uint16_t cs;
             uint64_t count;
         };
-        std::array<TraceSample, 32768> history{};
+        // Allocate diagnostic history only when requested; never reserve the
+        // multi-megabyte ring in the session worker's stack frame.
+        std::vector<TraceSample> history(traceTailPath.empty() ? 0 : 32768);
         uint64_t historyCount = 0;
         std::ofstream faultTrace;
         uint64_t executionWallNs = 0;
