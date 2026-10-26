@@ -218,3 +218,13 @@ On the existing 6.8 GiB Windows 11 overlay, a local offline open/close took
 opening only, not total Windows boot time. No disk conversion or guest-byte
 change was involved. Regression coverage checks clean cached reopen, corrupted
 and stale cache fallback, appended writes, metadata changes and cancellation.
+
+## Standard compressed QCOW2 migration
+
+The read-only QCOW2 reader now accepts standard deflate and zstd compressed
+clusters, including unaligned packed cluster offsets, sector padding, and a
+one-cluster decompression cache. It rejects truncated streams, invalid feature
+flags, unsupported algorithms and malformed descriptors. QEMU-generated v2/v3
+images are checked with `qemu-img check` and read through PCEmu in
+`python3 tests/test_qcow2_interop.py`. No custom disk layout is needed for
+compressed immutable bases.

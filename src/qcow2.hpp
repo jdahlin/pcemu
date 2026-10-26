@@ -6,13 +6,49 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <vector>
+#include <zstd.h>
+#include <zlib.h>
 
 namespace pc {
 // Read-only standard L1/L2 mapping. Refcounts are never modified.
 class Qcow2 {
     std::ifstream file;
     uint64_t fileSize, virtualSize = 0, cluster = 0, l1At = 0, l1Size = 0;
-    unsigned version = 0;
+    unsigned version = 0, clusterBits = 0, compression = 0;
+    uint64_t cachedEntry = 0;
+    std::vector<uint8_t> cachedCluster;
+    void compressed(uint64_t entry) {
+        if (cachedEntry == entry && !cachedCluster.empty()) return;
+        if (entry & copied) fail("Invalid compressed cluster flags");
+        const unsigned shift = 62 - (clusterBits - 8);
+        const uint64_t at = entry & ((1ull << shift) - 1);
+        const uint64_t sectors = ((entry >> shift) & ((1ull << (clusterBits-8))-1)) + 1;
+        const uint64_t bytes = sectors * 512 - (at & 511);
+        bounds(at, bytes);
+        std::vector<uint8_t> packed(bytes), output(cluster);
+        load(at, packed);
+        if (compression == 1) {
+            ZSTD_DCtx *context = ZSTD_createDCtx();
+            if (!context) fail("Cannot allocate zstd context");
+            ZSTD_inBuffer input{packed.data(), packed.size(), 0};
+            ZSTD_outBuffer out{output.data(), output.size(), 0};
+            size_t result = ZSTD_decompressStream(context, &out, &input);
+            ZSTD_freeDCtx(context);
+            if (ZSTD_isError(result) || result || out.pos != cluster)
+                fail("Invalid zstd compressed cluster");
+        } else {
+            z_stream stream{};
+            stream.next_in = packed.data(); stream.avail_in = packed.size();
+            stream.next_out = output.data(); stream.avail_out = output.size();
+            if (inflateInit2(&stream, -12) != Z_OK) fail("Cannot initialize deflate");
+            int result = inflate(&stream, Z_FINISH);
+            auto size = stream.total_out;
+            inflateEnd(&stream);
+            if (result != Z_STREAM_END || size != cluster) fail("Invalid deflate compressed cluster");
+        }
+        cachedCluster = std::move(output); cachedEntry = entry;
+    }
     static constexpr uint64_t offsetMask = 0x00fffffffffffe00ull;
     static constexpr uint64_t copied = 1ull << 63;
     [[noreturn]] static void fail(const char *why) {
@@ -51,15 +87,21 @@ class Qcow2 {
         if (integer(8, 8) || integer(16, 4)) fail("Backing files are not supported");
         auto bits = integer(20, 4);
         if (bits < 9 || bits > 21) fail("Unsupported cluster size");
+        clusterBits = bits;
         cluster = 1ull << bits;
         virtualSize = integer(24, 8);
         if (!virtualSize || virtualSize % 512 || virtualSize > (1ull << 56)) fail("Invalid virtual size");
         if (integer(32, 4)) fail("Encryption is not supported");
         if (version == 3) {
-            if (integer(72, 8)) fail("Unsupported incompatible features or dirty image");
+            auto features = integer(72, 8);
+            if (features & ~8ull) fail("Unsupported incompatible features or dirty image");
             auto length = integer(100, 4);
             if (length < 104 || length > cluster || length % 8) fail("Invalid header length");
             bounds(0, length);
+            if (features & 8) {
+                if (length < 112 || integer(104,1) != 1) fail("Unsupported compression type");
+                compression = 1;
+            } else if (length >= 112 && integer(104,1)) fail("Compression feature flag missing");
             if (integer(96, 4) > 6) fail("Invalid refcount order");
         }
         l1Size = integer(36, 4);
@@ -76,10 +118,14 @@ class Qcow2 {
             auto index = at / cluster;
             auto l2 = alignedOffset(integer(l1At + index / (cluster / 8) * 8, 8), copied);
             uint64_t entry = l2 ? integer(l2 + index % (cluster / 8) * 8, 8) : 0;
-            if (entry & (1ull << 62)) fail("Compressed clusters are not supported");
+            size_t within = at % cluster, count = std::min<uint64_t>(out.size(), cluster - within);
+            if (entry & (1ull << 62)) {
+                compressed(entry);
+                std::copy_n(cachedCluster.data()+within, count, out.data());
+                at += count; out = out.subspan(count); continue;
+            }
             auto offset = alignedOffset(entry, copied | (version == 3 ? 1 : 0));
             if (!offset && (entry & copied)) fail("Invalid allocated cluster");
-            size_t within = at % cluster, count = std::min<uint64_t>(out.size(), cluster - within);
             if (offset && !(entry & 1)) load(offset + within, out.first(count));
             else std::fill_n(out.begin(), count, 0);
             at += count;
