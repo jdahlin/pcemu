@@ -75,3 +75,37 @@ and is not a performance comparison. This closes the fresh-installer gate for
 this native CALL candidate; it does not establish the twofold performance target.
 
 [Reset/application results, manifest, compressed logs and screenshots](measurements/fresh-win95-memory-call-2026-10-25.json).
+
+
+## Uninterrupted run with native FF /6 PUSH (26 October)
+
+The frozen executable containing the native register/memory PUSH lowering
+(`d9068f7` source change, executable identity in the evidence) now completes a
+fresh OSR2 installation from clean recovered DOS in one guest process. All 56
+installer files stage and verify successfully in an 81,999,324-byte compressed
+child on the external volume. No Office fixture or full-size raw disk is made.
+
+The agent drives the Setup wizard using the already supplied OEM fields and
+enables network-adapter detection. The scripted observer acknowledges the
+specific copy-complete Finish screen and sees the first firmware reset. Known
+network logon, printer and explicit final Setup-restart screens are handled;
+Explorer appears after reset 2. Calculator computes 2+2, its clipboard result is
+saved with a fresh marker in Notepad, and a guest-requested restart returns to
+Explorer after reset 3. Both screenshots have been inspected.
+
+The original guest receives `quit`. This run retains its launcher, so the actual
+process exit status **0**, PID absence and normal quit trailer are all verified.
+An independent read-only FAT reopen then matches all 38 expected saved bytes.
+The owned compressed child and its index are removed after success. The DOS,
+Win95 and Office parents remain intact. The measurement records the child's
+final compressed size and hashes all evidence artifacts.
+
+There is no guest-process interruption or manual recovery after boot. Wizard
+input is agent-driven; this is not a newly implemented generic unattended
+installer script. The human user need not supply further input during the run.
+Installation elapsed time includes observation/input delays and is not a
+performance comparison. This closes the fresh-installer gate for the native
+PUSH candidate, while broader useful-work performance remains open.
+
+[Manifest, exact executable identity, reset/application/exit evidence, compressed
+logs and screenshots](measurements/fresh-win95-memory-push-2026-10-26.json).

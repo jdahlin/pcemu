@@ -13,10 +13,11 @@ must not be read as the latest result.
 - **rtts/win95 and installed OSR2:** both cold boot, run Calculator 2+2, copy the
   result through the clipboard into Notepad, save a fresh file, restart through
   firmware and pass exact stopped-guest 38-byte file readback.
-- **Fresh OSR2 Setup:** the memory-indirect CALL reference completes clean-DOS
+- **Fresh OSR2 Setup:** the native PUSH candidate completes clean-DOS
   installation, all first-boot configuration and application/restart/persistence
-  in one guest process. A fresh run of the newer PUSH candidate is underway;
-  installation completion for that newer executable is not yet claimed.
+  in one guest process. Three resets, actual process exit status 0 and exact
+  38-byte readback pass. Its private compressed installation child is removed.
+  See [fresh installation](fresh-win95-validation.md#uninterrupted-run-with-native-ff-6-push-26-october).
 - **Office 97:** existing compressed checkpoints are reused. Loaded Excel's
   4096-row dependent calculation and Word's warm launch reach the expected
   rendered results with the PUSH candidate. Earlier persistence checks cover
@@ -62,9 +63,10 @@ is rejected: the disabled-path controls do not establish acceptable overhead,
 and other workloads started during those controls. Production JIT policy remains
 unchanged. Both favorable and unfavorable measurements are retained.
 
-The remaining completion work includes fresh Setup on the latest lowering,
-continued useful-work performance improvement with reproducible comparisons,
-and verification of any broader supported behavior claimed for the final build.
+The remaining completion work includes continued useful-work performance
+improvement with reproducible comparisons, and verification of any broader
+supported behavior claimed for the final build. Latest-lowering fresh Setup is
+now verified; historical pending statements below predate that result.
 
 ## Windows 95 investigation history
 
@@ -1182,3 +1184,16 @@ Temporary compressed smoke disks and orphan indexes are removed. Fresh Setup
 is not repeated for this lowering and remains a completion gate. The twofold
 useful-work target remains unproven. See `native-memory-push.md` and its complete
 measurement record.
+
+
+## Fresh OSR2 Setup passes with native PUSH (26 October)
+
+The exact frozen native PUSH executable installs OSR2 from clean DOS with 56
+verified source files and network-adapter detection enabled. The original guest
+PID survives copy/restart, first-boot configuration, Calculator/clipboard/Notepad
+and a further guest restart: resets 0→1→2→3. It then exits normally with actual
+status 0. Independent read-only FAT inspection verifies all 38 saved bytes.
+The private compressed child and orphan index are removed. Evidence and
+screenshots are in `fresh-win95-validation.md` and
+`measurements/fresh-win95-memory-push-2026-10-26.json`. This closes the latest
+lowering's installer gate; no broader performance completion is claimed.

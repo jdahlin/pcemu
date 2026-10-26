@@ -61,5 +61,7 @@ profiles and OS verification](measurements/native-memory-push-2026-10-26.json).
 Only IR, decoder and native emitter differ from the frozen memory-CALL reference;
 OS results identify this executable by hash rather than attributing concurrent
 frontend changes to it.
-Fresh OSR2 Setup has not yet been repeated with this lowering, and the twofold
-useful-work target remains unachieved.
+Fresh OSR2 Setup now also passes from clean DOS through all three resets,
+application verification, normal exit status 0 and exact 38-byte readback in
+one process. See [fresh installation evidence](fresh-win95-validation.md#uninterrupted-run-with-native-ff-6-push-26-october).
+The twofold useful-work target remains unachieved.
