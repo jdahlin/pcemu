@@ -57,6 +57,25 @@ class JitDebugMapTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Invalid JIT code'):
                 self.mapping(directory, [reset, bad])
 
+    def test_separate_stub_slab_can_publish_before_later_body(self):
+        with tempfile.TemporaryDirectory() as directory:
+            reset = dict(event='reset', timeNs=0, generation=1)
+            body = load(1_000_000, 1, 16)
+            stub = load(2_000_000, 1, 16)
+            stub.update(start=8192, end=8200)
+            later = load(3_000_000, 1, 32)
+            later.update(start=4104, end=4112)
+            patch = dict(event='patch', timeNs=4_000_000, generation=1,
+                         start=8196, end=8200, arm64='00000014')
+            mapping = self.mapping(directory, [reset, body, stub, later, patch], version=2)
+            self.assertEqual(mapping.lookup(4108, 6_000_000)[0]['ip'], 32)
+            self.assertEqual(mapping.lookup(8196, 6_000_000)[0]['ip'], 16)
+            self.assertIsNone(mapping.lookup(4108, 2_000_000))
+            overlap = load(5_000_000, 1)
+            overlap.update(start=8192, end=8200)
+            with self.assertRaisesRegex(ValueError, 'Overlapping'):
+                self.mapping(directory, [reset, body, stub, later, overlap], version=2)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <unistd.h>
 #if defined(__APPLE__) && defined(__aarch64__)
 #include <sys/mman.h>
@@ -27,7 +28,8 @@ void Jit::setDebugMap(const std::string &path) {
     debugState->stream.open(path);
     if (!debugState->stream) throw std::runtime_error("Cannot create JIT debug map: " + path);
     debugState->stream << "{\"event\":\"header\",\"version\":2,\"pid\":" << getpid()
-             << ",\"clock\":\"unix-ns\",\"arenaBytes\":" << capacity << "}\n";
+             << ",\"clock\":\"unix-ns\",\"arenaBytes\":" << capacity
+             << ",\"stubArenaBytes\":" << stubCapacity << "}\n";
     debugReset();
 }
 void Jit::debugReset() {
@@ -114,9 +116,12 @@ Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes, BlockMode mode)
     : cpu(c), capacity(arenaBytes), warmup(heat), blockMode(mode) {
     if (capacity < 65536)
         throw std::invalid_argument("JIT arena must be at least 64 KiB");
+    stubCapacity = std::min(capacity, size_t(1024*1024));
+    if (capacity > std::numeric_limits<size_t>::max() - stubCapacity)
+        throw std::invalid_argument("JIT arena allocation size overflow");
 #if defined(__APPLE__) && defined(__aarch64__)
     if (en) {
-        arena = static_cast<uint8_t *>(mmap(nullptr, capacity, PROT_READ | PROT_WRITE | PROT_EXEC,
+        arena = static_cast<uint8_t *>(mmap(nullptr, capacity + stubCapacity, PROT_READ | PROT_WRITE | PROT_EXEC,
                                             MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0));
         if (arena == MAP_FAILED) {
             arena = nullptr;
@@ -132,7 +137,7 @@ Jit::~Jit() {
     try { flushDebugMap(); } catch (const std::exception &e) { std::cerr << e.what() << '\n'; }
 #if defined(__APPLE__) && defined(__aarch64__)
     if (arena)
-        munmap(arena, capacity);
+        munmap(arena, capacity + stubCapacity);
 #endif
 }
 void Jit::clear() {
@@ -141,10 +146,14 @@ void Jit::clear() {
     directLinkTransitions = directLinkPromotions = directLinkBlocks = 0;
     blocks.clear();
     fast = {};
-    used = 0;
+    used = stubUsed = 0;
     nativeInstructions = compiledBlocks = cacheHits = cacheRecycles = 0;
 }
 void Jit::setDirectLinks(bool enabled, unsigned hotEntries) {
+    // Stub/body edges use ARM64 B immediates in both directions. Keep the
+    // entire allocation aligned and within the conservative signed range.
+    if (enabled && ((capacity & 15) || capacity + stubCapacity >= (size_t(1) << 27)))
+        throw std::invalid_argument("Direct links require an aligned arena smaller than 128 MiB");
     if (directLinks != enabled || linkWarmup != hotEntries) {
         clear();
         directLinks = enabled;
@@ -169,6 +178,9 @@ void Jit::setLinkTarget(Block &source, unsigned slot, uintptr_t target) {
     sys_icache_invalidate(reinterpret_cast<void *>(address), 4);
 #endif
     link.target[slot] = target;
+    debugPatch(address, instruction);
+}
+void Jit::debugPatch(uintptr_t address, uint32_t instruction) {
     if (debugState) {
         DebugRecord record{};
         record.time = debugTimeNs();
@@ -193,7 +205,7 @@ void Jit::patchIncoming(uint64_t key) {
         uintptr_t destinationEntry = 0;
         const auto &b = target->second;
         const auto destination = a.link->ips[edge.slot];
-        if (a.fn && b.fn && b.link && b.link->entry && a.link->saveMask == b.link->saveMask &&
+        if (a.fn && b.fn && b.link && b.link->promoted && b.link->entry && a.link->saveMask == b.link->saveMask &&
             (uint32_t(a.csBase + a.link->startIP) >> 12) == (uint32_t(a.csBase + destination) >> 12) &&
             a.page == b.page && a.generation == b.generation && a.cr0 == b.cr0 &&
             a.cr3 == b.cr3 && a.csBase == b.csBase && a.a20 == b.a20 && a.vm == b.vm &&
@@ -207,6 +219,14 @@ void Jit::patchIncoming(uint64_t key) {
         return false;
     });
 }
+void Jit::publishLinks(uint64_t key, Block &block) {
+    for (unsigned slot = 0; slot < block.link->count; ++slot) {
+        auto destination = (key & 0xffffffff00000000ull) | block.link->ips[slot];
+        incomingLinks[destination].push_back({key, slot, block.link});
+        patchIncoming(destination);
+    }
+    patchIncoming(key);
+}
 Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     if (!directLinks) return &blocks.insert_or_assign(key, std::move(block)).first->second;
     // No native frame is live here. Remove incoming references before releasing
@@ -219,12 +239,7 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
                     setLinkTarget(source->second, edge.slot, 0);
             }
     auto &stored = blocks.insert_or_assign(key, std::move(block)).first->second;
-    if (stored.link)
-        for (unsigned slot = 0; slot < stored.link->count; ++slot) {
-            auto destination = (key & 0xffffffff00000000ull) | stored.link->ips[slot];
-            incomingLinks[destination].push_back({key, slot, stored.link});
-            patchIncoming(destination);
-        }
+    if (stored.link && stored.link->promoted) publishLinks(key, stored);
     patchIncoming(key);
     return &stored;
 }
@@ -294,19 +309,22 @@ uint32_t Jit::run() {
     // A TLB flush need not discard decoded code when fetch permissions were
     // rechecked and the same physical instruction page is still mapped.
     cached->tlbEpoch = cpu.tlbEpoch;
-    const bool promote = directLinks && cached->fn && !cached->linkRequested &&
-                         ++cached->visits >= linkWarmup;
-    if ((!cached->attempted && ++cached->visits >= warmup) || promote) {
+    if (!cached->attempted && ++cached->visits >= warmup) {
         try {
             profile::event(profile::Translate);
-            if (promote) ++directLinkPromotions;
-            auto translated = compile(true, promote || (directLinks && !linkWarmup));
+            auto translated = compile();
             // Compilation can recycle the arena and clear both lookup tables.
             cached = installBlock(key, std::move(translated));
         } catch (const Fault &) {
             cpu.step();
             return 1;
         }
+    }
+    if (directLinks && cached->fn && cached->link && !cached->linkRequested &&
+        ++cached->visits >= linkWarmup) {
+        cached->linkRequested = true;
+        ++directLinkPromotions;
+        if (promoteBlock(*cached)) publishLinks(key, *cached);
     }
     entry = {key, cached};
     auto &b = *cached;
@@ -351,6 +369,8 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
             b->codeBits != cpu.codeUsed.data() ||
             (b->link && b->link->generationData != cpu.generation.data()))
             return result;
+        if (directLinks && b->link && !b->linkRequested && ++b->visits >= linkWarmup)
+            return result; // Promotion/patching is only allowed outside native frames.
         auto oldCR2 = cpu.cr[2];
         try {
             if ((cpu.cr[0] & 0x80000000u) && instructionPage(cpu) != b->page)
@@ -412,10 +432,9 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
     }
     return result;
 }
-Jit::Block Jit::compile(bool translate, bool linked) {
+Jit::Block Jit::compile(bool translate) {
     Block block;
     auto linear = cpu.address(CS, cpu.ip), physical = cpu.physical(linear);
-    block.linkRequested = linked;
     block.page = physical >> 12;
     block.generation = cpu.generation.at(block.page);
     block.cr0 = cpu.cr[0];
@@ -450,4 +469,7 @@ Jit::Block Jit::compile(bool translate, bool linked) {
 #endif
     return block;
 }
+#if !defined(__APPLE__) || !defined(__aarch64__)
+bool Jit::promoteBlock(Block &) { return false; }
+#endif
 } // namespace pc

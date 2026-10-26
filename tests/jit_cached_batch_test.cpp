@@ -340,9 +340,38 @@ static void linkedContextTests() {
         }
 }
 
+static void delayedPromotionTest() {
+    auto c = make({0x83, 0xc0, 1, 0x83, 0xe9, 1, 0x75, 0xf8, 0xf4});
+    c.r[CX] = 1000;
+    CPU ref = c;
+    Jit jit(c, true, 0, 65536);
+    jit.setDirectLinks(true, 8);
+    while (!c.halted) {
+        auto part = jit.runBatch();
+        check(part.instructions && part.instructions <= 127, "delayed promotion budget");
+        for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+        equal(c, ref);
+    }
+    check(jit.directLinkPromotions == 1 && jit.directLinkBlocks == 1,
+          "hot native entry did not promote exactly once");
+    check(jit.compiledBlocks == 1, "promotion retranslates an existing guest body");
+    check(jit.directLinkTransitions > 100, "hot native stub is unused");
+}
+
 int main() {
     try {
         CPU probe(1024 * 1024);
+        for (size_t bytes : {size_t(65537), size_t(128 * 1024 * 1024)}) {
+            Jit unsupported(probe, false, 8, bytes);
+            bool rejected = false;
+            try { unsupported.setDirectLinks(true); }
+            catch (const std::invalid_argument &) { rejected = true; }
+            check(rejected, "unsafe direct-link arena accepted");
+        }
+        bool overflowRejected = false;
+        try { Jit overflow(probe, false, 8, ~size_t(0)); }
+        catch (const std::invalid_argument &) { overflowRejected = true; }
+        check(overflowRejected, "overflowing arena allocation accepted");
         Jit available(probe);
         if (!available.enabled()) {
             std::cout << "Skipped: native JIT unavailable\n";
@@ -355,6 +384,7 @@ int main() {
         }
         check(observedLinks > 0, "direct links were never exercised");
         linkedContextTests();
+        delayedPromotionTest();
         debugMapTests();
         std::cout << "Passed " << checks
                   << " cached batch checks; multi-dispatch batches=" << multiDispatchBatches

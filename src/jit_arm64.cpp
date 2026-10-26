@@ -22,15 +22,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // A short decoder fallthrough ends at an interpreted instruction, so it
     // cannot acquire a native successor without invalidation. Spend link code
     // only on actual control-flow exits or a full-length decoded fragment.
-    const bool linkedCode = directLinks && block.linkRequested && !terminal.nearReturn &&
+    const bool linkCandidate = directLinks && !terminal.nearReturn &&
         !terminal.indirectJump && !terminal.indirectCall && terminal.kind != Kind::IndirectJump &&
         (terminal.kind == Kind::Branch || terminal.kind == Kind::CounterBranch ||
          terminal.nearCall || ir.size() == 64);
-    const bool linkNeedsFetchCheck = linkedCode && (block.cr0 & 0x80000000u) &&
+    const bool linkNeedsFetchCheck = linkCandidate && (block.cr0 & 0x80000000u) &&
         std::any_of(ir.begin(), ir.end(), [](const auto &i) {
             return i.kind == Kind::Memory || i.nearCall || i.indirectCall || i.memoryPush;
         });
-    if (linkedCode) {
+    if (linkCandidate) {
         block.link = std::make_shared<LinkState>();
         block.link->startIP = cpu.ip;
         block.link->generationData = cpu.generation.data();
@@ -109,7 +109,6 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
     int epochRegister = -1;
     auto savePair = [&](int pair) {
-        if (linkedCode) return true; // Shared host save layout across eligible successors.
         return pair == 0 || (usedRegisters & (3u << (pair * 2 - 1))) || (pair == 4 && fastMemory) ||
                bitmapRegister == 19 + pair * 2 || bitmapRegister == 20 + pair * 2 ||
                epochRegister == 19 + pair * 2 || epochRegister == 20 + pair * 2;
@@ -124,19 +123,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     break;
                 }
             }
-    emit(linkedCode ? 0xa9b87bfdu : 0xa9b97bfdu); // stp x29,x30,[sp,#-128/-112]!
+    emit(0xa9b97bfdu); // stp x29,x30,[sp,#-128/-112]!
     emit(0x910003fdu); // mov x29,sp: keep a valid host frame chain for diagnostics.
     for (int k = 0; k < 5; k++)
         if (savePair(k))
             emit(0xa9000000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |
                  (19 + k * 2));
     emit(0xaa0003f3u); // mov x19,x0
-    if (linkedCode) {
+    if (linkCandidate) {
         // Separate chain control from the ordinary emitter's operand, carry
         // and indirect-call spills at offsets 96..108. Linked entries reuse
         // this frame; matching save masks make every target epilogue valid.
-        store(1, 31, 112);
-        store(31, 31, 116);
         block.link->entry = code.size()*4;
         for (int pair = 0; pair < 5; ++pair)
             if (savePair(pair)) block.link->saveMask |= 1u << pair;
@@ -144,7 +141,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     for (int reg = 0; reg < 8; reg++)
         if (usedRegisters & (1u << reg))
             load(20 + reg, 19, offsetof(CPU, r) + reg * 4);
-    if (linkedCode) {
+    if (linkCandidate) {
         block.link->loadedEntry = code.size()*4;
         block.link->usedRegisters = usedRegisters;
     }
@@ -177,8 +174,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         pointer(16, address);
         emit(0xd63f0200u);
         if (linkNeedsFetchCheck && address == reinterpret_cast<uintptr_t>(&nativeMemory)) {
-            imm(9, 1);
-            store(9, 31, 120);
+            block.link->helperFlagSites.push_back(code.size()*4);
+            emit(0xd503201fu); // Promotion stores the helper status without clobbering registers.
         }
     };
     auto bits = [&](int dst, int src, unsigned first, unsigned count) {
@@ -321,8 +318,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     };
     std::vector<size_t> exits;
     int last = -1;
-    if (linkedCode) block.link->loopEntry = code.size()*4;
-    if (linkNeedsFetchCheck) store(31, 31, 120);
+    if (linkCandidate) block.link->loopEntry = code.size()*4;
+    if (linkNeedsFetchCheck) {
+        block.link->resetFlagOffset = code.size()*4;
+        emit(0xd503201fu); // Remains a NOP until a linked frame exists.
+    }
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
@@ -1014,9 +1014,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     mark("Instruction count", ir.back().start);
     imm(0, ir.size());
-    std::vector<size_t> normalExit, packedExit;
-    size_t earlyExit = code.size();
-    if (linkedCode) {
+    if (linkCandidate) {
         const auto &tail = ir.back();
         if (tail.kind == Kind::Branch || tail.kind == Kind::CounterBranch) {
             block.link->ips[0] = tail.imm;
@@ -1033,6 +1031,85 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             block.link->ips[0] = pos;
             block.link->count = 1;
         }
+        block.link->fetchCheck = linkNeedsFetchCheck;
+        block.link->fullExitOffset = code.size()*4;
+        emit(0xd503201fu); // A hot promotion redirects this to a small link stub.
+        block.link->earlyExitOffset = code.size()*4;
+    }
+    for (auto at : exits)
+        code[at] |= uint32_t(code.size() - at) & 0x03ffffffu;
+    mark("Host epilogue", ir.back().start);
+    for (int k = 0; k < 5; k++)
+        if (savePair(k))
+            emit(0xa9400000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |
+                 (19 + k * 2));
+    emit(0xa8c77bfdu);
+    emit(0xd65f03c0u); // ldp x29,x30,[sp],#128/#112; ret
+    size_t bytes = code.size() * 4;
+    if (bytes > capacity)
+        return block; // Never copy an oversized block beyond the executable arena.
+    if (used + bytes > capacity) {
+        debugReset();
+        incomingLinks.clear();
+        blocks.clear();
+        cacheRecycles++;
+        fast = {};
+        used = stubUsed = 0;
+    }
+    pthread_jit_write_protect_np(0);
+    std::memcpy(arena + used, code.data(), bytes);
+    pthread_jit_write_protect_np(1);
+    sys_icache_invalidate(arena + used, bytes);
+    block.fn = reinterpret_cast<Function>(arena + used);
+    used = (used + bytes + 15) & ~size_t(15);
+    compiledBlocks++;
+    if (block.link) block.link->codeBytes = bytes;
+    debugBlock(block, code, debugRegions);
+    return block;
+}
+bool Jit::promoteBlock(Block &block) {
+    auto &link = *block.link;
+    std::vector<uint32_t> code;
+    std::vector<DebugRegion> regions;
+    auto emit = [&](uint32_t word) { code.push_back(word); };
+    auto mark = [&](const char *kind, uint32_t ip) {
+        if (debugState) regions.push_back({code.size()*4, kind, ip});
+    };
+    auto imm = [&](int reg, uint32_t value) {
+        emit(0x52800000u | ((value & 65535) << 5) | reg);
+        if (value >> 16) emit(0x72a00000u | ((value >> 16) << 5) | reg);
+    };
+    auto load = [&](int reg, int base, unsigned off) {
+        emit(0xb9400000u | ((off/4) << 10) | (base << 5) | reg);
+    };
+    auto store = [&](int reg, int base, unsigned off) {
+        emit(0xb9000000u | ((off/4) << 10) | (base << 5) | reg);
+    };
+    auto pointer = [&](int reg, uintptr_t value) {
+        emit(0xd2800000u | ((value & 65535) << 5) | reg);
+        for (unsigned part = 1; part < 4; ++part)
+            emit(0xf2800000u | (part << 21) | (((value >> (part*16)) & 65535) << 5) | reg);
+    };
+    auto cpuAddress = [&](int reg, unsigned offset) {
+        unsigned high = offset >> 12, low = offset & 4095;
+        if (high) emit(0x91400000u | (high << 10) | (19 << 5) | reg);
+        if (low || !high) emit(0x91000000u | (low << 10) | ((high ? reg : 19) << 5) | reg);
+    };
+    auto bits = [&](int dst, int src, unsigned first, unsigned count) {
+        emit(0x53000000u | (first << 16) | ((first+count-1) << 10) | (src << 5) | dst);
+    };
+    mark("Linked root entry", link.startIP);
+    emit(0xa9b87bfdu); // Shared 128-byte frame; 96..108 remain operand/carry spills.
+    emit(0x910003fdu);
+    for (int k = 0; k < 5; ++k)
+        emit(0xa9000000u | (((16+k*16)/8) << 15) | ((20+k*2) << 10) | (31 << 5) | (19+k*2));
+    emit(0xaa0003f3u);
+    store(1, 31, 112);
+    store(31, 31, 116);
+    const auto enterBody = code.size(); emit(0x14000000u);
+    const auto fullExit = code.size();
+    std::vector<size_t> normalExit, packedExit;
+    size_t earlyExit = 0;
         auto conditionalExit = [&](std::vector<size_t> &list, uint32_t instruction) {
             list.push_back(code.size()); emit(instruction);
         };
@@ -1044,7 +1121,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             emit(0x1140414au); // add w10,w10,#16,lsl #12: one logical dispatch
             store(10, 31, 116);
         };
-        mark("Direct-link checks", tail.start);
+        mark("Direct-link checks", block.link->startIP);
         aggregate();
         emit(0x6b00013fu); // cmp w9,w0
         conditionalExit(packedExit, 0x54000009u); // b.ls: budget exhausted
@@ -1058,7 +1135,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             // code generation, and inline stores reject marked code bytes.
             // Only a slow memory helper can evict/change the fetch TLB slot.
             size_t noHelper = 0;
-            if (linkNeedsFetchCheck) {
+            if (block.link->fetchCheck) {
                 load(9, 31, 120);
                 noHelper = code.size(); emit(0x34000009u);
                 const uint32_t page = uint32_t(block.csBase + block.link->startIP) >> 12;
@@ -1120,39 +1197,51 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         bits(0, 10, 0, 16);
         bits(1, 10, 16, 16);
         emit(0xaa018000u); // orr x0,x0,x1,lsl #32
-    }
-    for (auto at : exits)
-        code[at] |= uint32_t(earlyExit - at) & 0x03ffffffu;
-    for (auto at : normalExit)
-        code[at] |= uint32_t(code.size()-at) << 5;
-    mark("Host epilogue", ir.back().start);
-    for (int k = 0; k < 5; k++)
-        if (savePair(k))
-            emit(0xa9400000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |
-                 (19 + k * 2));
-    emit(linkedCode ? 0xa8c87bfdu : 0xa8c77bfdu);
-    emit(0xd65f03c0u); // ldp x29,x30,[sp],#128/#112; ret
-    size_t bytes = code.size() * 4;
-    if (bytes > capacity)
-        return block; // Never copy an oversized block beyond the executable arena.
-    if (used + bytes > capacity) {
-        debugReset();
-        incomingLinks.clear();
-        blocks.clear();
-        cacheRecycles++;
-        fast = {};
-        used = 0;
+    
+    for (auto at : normalExit) code[at] |= uint32_t(code.size()-at) << 5;
+    mark("Linked host epilogue", link.startIP);
+    for (int k = 0; k < 5; ++k)
+        emit(0xa9400000u | (((16+k*16)/8) << 15) | ((20+k*2) << 10) | (31 << 5) | (19+k*2));
+    emit(0xa8c87bfdu); emit(0xd65f03c0u);
+    const auto bytes = code.size()*4;
+    if (bytes > stubCapacity-stubUsed) return false; // Never recycle while holding a block reference.
+    auto start = reinterpret_cast<uintptr_t>(arena+capacity+stubUsed);
+    auto base = reinterpret_cast<uintptr_t>(block.fn);
+    auto branch = [](uintptr_t from, uintptr_t to) {
+        return 0x14000000u | (uint32_t((int64_t(to)-int64_t(from))/4) & 0x03ffffffu);
+    };
+    code[enterBody] = branch(start+enterBody*4, base+link.entry);
+    std::vector<std::pair<uintptr_t, uint32_t>> patches{
+        {base, branch(base, start)},
+        {base+link.fullExitOffset, branch(base+link.fullExitOffset, start+fullExit*4)},
+        {base+link.earlyExitOffset, branch(base+link.earlyExitOffset, start+earlyExit*4)}};
+    if (link.fetchCheck) {
+        patches.push_back({base+link.resetFlagOffset,
+                          0xb9000000u | ((120/4) << 10) | (31 << 5) | 31});
+        for (auto at : link.helperFlagSites) {
+            patches.push_back({base+at, 0xb9000000u | ((120/4) << 10) | (31 << 5)}); // str w0,[sp,#120]
+        }
     }
     pthread_jit_write_protect_np(0);
-    std::memcpy(arena + used, code.data(), bytes);
+    std::memcpy(reinterpret_cast<void *>(start), code.data(), bytes);
+    for (auto [address, instruction] : patches) *reinterpret_cast<uint32_t *>(address) = instruction;
     pthread_jit_write_protect_np(1);
-    sys_icache_invalidate(arena + used, bytes);
-    block.fn = reinterpret_cast<Function>(arena + used);
-    used = (used + bytes + 15) & ~size_t(15);
-    compiledBlocks++;
-    if (linkedCode) ++directLinkBlocks;
-    debugBlock(block, code, debugRegions);
-    return block;
+    sys_icache_invalidate(reinterpret_cast<void *>(start), bytes);
+    sys_icache_invalidate(reinterpret_cast<void *>(base), link.codeBytes);
+    if (debugState) {
+        auto stub = block;
+        stub.fn = reinterpret_cast<Function>(start);
+        debugBlock(stub, code, regions);
+        for (auto [address, instruction] : patches) debugPatch(address, instruction);
+    }
+    const auto delta = uint32_t(start-base);
+    for (unsigned slot = 0; slot < link.count; ++slot) link.branchOffsets[slot] += delta;
+    link.fallbackOffset += delta;
+    link.saveMask = 31;
+    link.promoted = true;
+    stubUsed = (stubUsed+bytes+15) & ~size_t(15);
+    ++directLinkBlocks;
+    return true;
 }
 } // namespace pc
 #endif

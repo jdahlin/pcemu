@@ -1,0 +1,6445 @@
+{
+  "scope": "Five sequential rounds, rotating order, independent headless restores; no profiling. See word5m-m1-2026-10-26.md for fixture and readiness. Candidate is out-of-line stub prototype before arena validation guard addition.",
+  "summary": {
+    "baseline": {
+      "cpuMs": [
+        2180.932875,
+        2140.967042,
+        2424.744209,
+        2114.488083,
+        2092.675458
+      ],
+      "medianCpuMs": 2140.967042
+    },
+    "off": {
+      "cpuMs": [
+        2165.561542,
+        2193.341917,
+        2421.011792,
+        2143.749666,
+        2149.362208
+      ],
+      "medianCpuMs": 2165.561542
+    },
+    "hot256": {
+      "cpuMs": [
+        2301.334458,
+        2272.859167,
+        2266.210166,
+        2178.001207,
+        2213.163332
+      ],
+      "medianCpuMs": 2266.210166
+    },
+    "hot1024": {
+      "cpuMs": [
+        2209.303501,
+        2207.981375,
+        2202.942333,
+        2197.634957,
+        2168.917583
+      ],
+      "medianCpuMs": 2202.942333
+    }
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.7560838200152,
+            "taskResponseMs": 2239.4484588876367,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2002.559167,
+              "systemMs": 178.373708,
+              "totalMs": 2180.932875
+            },
+            "instructions": 100170222,
+            "nativeInstructions": 86001219,
+            "compiledBlocks": 57731,
+            "nativeMemoryCalls": 1721163,
+            "executionWallMs": 2013.106761,
+            "shutdownWaitMs": 39.75045820698142,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.7560838200152,
+        "medianTaskResponseMs": 2239.4484588876367,
+        "medianProcessCpuMs": 2180.932875
+      }
+    },
+    {
+      "round": 0,
+      "mode": "off",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.42800029739738,
+            "taskResponseMs": 2226.202624849975,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1986.036958,
+              "systemMs": 179.524584,
+              "totalMs": 2165.561542
+            },
+            "instructions": 100243342,
+            "nativeInstructions": 86091985,
+            "compiledBlocks": 57776,
+            "nativeMemoryCalls": 1720250,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1999.071507,
+            "shutdownWaitMs": 46.19824979454279,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.42800029739738,
+        "medianTaskResponseMs": 2226.202624849975,
+        "medianProcessCpuMs": 2165.561542
+      }
+    },
+    {
+      "round": 0,
+      "mode": "hot256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 192.7371248602867,
+            "taskResponseMs": 2383.918666280806,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2101.26625,
+              "systemMs": 200.068208,
+              "totalMs": 2301.334458
+            },
+            "instructions": 100521318,
+            "nativeInstructions": 86344966,
+            "compiledBlocks": 57538,
+            "nativeMemoryCalls": 1727302,
+            "directLinkTransitions": 5309476,
+            "directLinkPromotions": 6118,
+            "directLinkBlocks": 6118,
+            "executionWallMs": 2112.771734,
+            "shutdownWaitMs": 45.15445791184902,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 192.7371248602867,
+        "medianTaskResponseMs": 2383.918666280806,
+        "medianProcessCpuMs": 2301.334458
+      }
+    },
+    {
+      "round": 0,
+      "mode": "hot1024",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 193.89887480065227,
+            "taskResponseMs": 2267.1415000222623,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2026.870209,
+              "systemMs": 182.433292,
+              "totalMs": 2209.303501
+            },
+            "instructions": 100244493,
+            "nativeInstructions": 86116563,
+            "compiledBlocks": 57240,
+            "nativeMemoryCalls": 1716994,
+            "directLinkTransitions": 4064824,
+            "directLinkPromotions": 1942,
+            "directLinkBlocks": 1942,
+            "executionWallMs": 2042.352228,
+            "shutdownWaitMs": 46.94666713476181,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 193.89887480065227,
+        "medianTaskResponseMs": 2267.1415000222623,
+        "medianProcessCpuMs": 2209.303501
+      }
+    },
+    {
+      "round": 1,
+      "mode": "off",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.30179211869836,
+            "taskResponseMs": 2250.265209004283,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2009.201125,
+              "systemMs": 184.140792,
+              "totalMs": 2193.341917
+            },
+            "instructions": 99831726,
+            "nativeInstructions": 85723549,
+            "compiledBlocks": 57699,
+            "nativeMemoryCalls": 1715958,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 2022.522296,
+            "shutdownWaitMs": 46.85845924541354,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.30179211869836,
+        "medianTaskResponseMs": 2250.265209004283,
+        "medianProcessCpuMs": 2193.341917
+      }
+    },
+    {
+      "round": 1,
+      "mode": "hot256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 193.36858298629522,
+            "taskResponseMs": 2346.390875056386,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2083.457,
+              "systemMs": 189.402167,
+              "totalMs": 2272.859167
+            },
+            "instructions": 100509456,
+            "nativeInstructions": 86352585,
+            "compiledBlocks": 57265,
+            "nativeMemoryCalls": 1724269,
+            "directLinkTransitions": 5326631,
+            "directLinkPromotions": 6120,
+            "directLinkBlocks": 6120,
+            "executionWallMs": 2097.934501,
+            "shutdownWaitMs": 21.304666996002197,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 193.36858298629522,
+        "medianTaskResponseMs": 2346.390875056386,
+        "medianProcessCpuMs": 2272.859167
+      }
+    },
+    {
+      "round": 1,
+      "mode": "hot1024",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 194.75620798766613,
+            "taskResponseMs": 2266.2928751669824,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2024.304542,
+              "systemMs": 183.676833,
+              "totalMs": 2207.981375
+            },
+            "instructions": 100185459,
+            "nativeInstructions": 86089475,
+            "compiledBlocks": 57195,
+            "nativeMemoryCalls": 1716834,
+            "directLinkTransitions": 4064824,
+            "directLinkPromotions": 1942,
+            "directLinkBlocks": 1942,
+            "executionWallMs": 2040.272409,
+            "shutdownWaitMs": 45.254167169332504,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 194.75620798766613,
+        "medianTaskResponseMs": 2266.2928751669824,
+        "medianProcessCpuMs": 2207.981375
+      }
+    },
+    {
+      "round": 1,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 198.49858293309808,
+            "taskResponseMs": 2201.4658749103546,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1962.01425,
+              "systemMs": 178.952792,
+              "totalMs": 2140.967042
+            },
+            "instructions": 100217169,
+            "nativeInstructions": 86105904,
+            "compiledBlocks": 57676,
+            "nativeMemoryCalls": 1718196,
+            "executionWallMs": 1975.250665,
+            "shutdownWaitMs": 22.798208985477686,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 198.49858293309808,
+        "medianTaskResponseMs": 2201.4658749103546,
+        "medianProcessCpuMs": 2140.967042
+      }
+    },
+    {
+      "round": 2,
+      "mode": "hot256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.86604099720716,
+            "taskResponseMs": 2327.7007923461497,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2078.278125,
+              "systemMs": 187.932041,
+              "totalMs": 2266.210166
+            },
+            "instructions": 99504702,
+            "nativeInstructions": 85388541,
+            "compiledBlocks": 57143,
+            "nativeMemoryCalls": 1714364,
+            "directLinkTransitions": 5221110,
+            "directLinkPromotions": 6057,
+            "directLinkBlocks": 6057,
+            "executionWallMs": 2090.175859,
+            "shutdownWaitMs": 22.452457807958126,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.86604099720716,
+        "medianTaskResponseMs": 2327.7007923461497,
+        "medianProcessCpuMs": 2266.210166
+      }
+    },
+    {
+      "round": 2,
+      "mode": "hot1024",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 184.81458397582173,
+            "taskResponseMs": 2260.71025012061,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2022.242833,
+              "systemMs": 180.6995,
+              "totalMs": 2202.942333
+            },
+            "instructions": 100650183,
+            "nativeInstructions": 86480390,
+            "compiledBlocks": 57458,
+            "nativeMemoryCalls": 1728724,
+            "directLinkTransitions": 4096967,
+            "directLinkPromotions": 1943,
+            "directLinkBlocks": 1943,
+            "executionWallMs": 2035.967619,
+            "shutdownWaitMs": 46.85679217800498,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 184.81458397582173,
+        "medianTaskResponseMs": 2260.71025012061,
+        "medianProcessCpuMs": 2202.942333
+      }
+    },
+    {
+      "round": 2,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.6594167277217,
+            "taskResponseMs": 2539.2137076705694,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2207.76725,
+              "systemMs": 216.976959,
+              "totalMs": 2424.744209
+            },
+            "instructions": 100346078,
+            "nativeInstructions": 86175562,
+            "compiledBlocks": 57833,
+            "nativeMemoryCalls": 1723663,
+            "executionWallMs": 2257.911814,
+            "shutdownWaitMs": 46.950291376560926,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.6594167277217,
+        "medianTaskResponseMs": 2539.2137076705694,
+        "medianProcessCpuMs": 2424.744209
+      }
+    },
+    {
+      "round": 2,
+      "mode": "off",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 207.02920807525516,
+            "taskResponseMs": 2512.4567500315607,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2202.602959,
+              "systemMs": 218.408833,
+              "totalMs": 2421.011792
+            },
+            "instructions": 100278201,
+            "nativeInstructions": 86155619,
+            "compiledBlocks": 57566,
+            "nativeMemoryCalls": 1717807,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 2232.550634,
+            "shutdownWaitMs": 46.88954213634133,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 207.02920807525516,
+        "medianTaskResponseMs": 2512.4567500315607,
+        "medianProcessCpuMs": 2421.011792
+      }
+    },
+    {
+      "round": 3,
+      "mode": "hot1024",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 196.16800034418702,
+            "taskResponseMs": 2254.997500218451,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2018.048291,
+              "systemMs": 179.586666,
+              "totalMs": 2197.634957
+            },
+            "instructions": 99657918,
+            "nativeInstructions": 85533886,
+            "compiledBlocks": 57265,
+            "nativeMemoryCalls": 1714199,
+            "directLinkTransitions": 4054150,
+            "directLinkPromotions": 1938,
+            "directLinkBlocks": 1938,
+            "executionWallMs": 2033.558844,
+            "shutdownWaitMs": 22.590958047658205,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 196.16800034418702,
+        "medianTaskResponseMs": 2254.997500218451,
+        "medianProcessCpuMs": 2197.634957
+      }
+    },
+    {
+      "round": 3,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 197.8947501629591,
+            "taskResponseMs": 2175.7168332114816,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1945.362,
+              "systemMs": 169.126083,
+              "totalMs": 2114.488083
+            },
+            "instructions": 100424661,
+            "nativeInstructions": 86248144,
+            "compiledBlocks": 57849,
+            "nativeMemoryCalls": 1724967,
+            "executionWallMs": 1961.530939,
+            "shutdownWaitMs": 20.965042058378458,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 197.8947501629591,
+        "medianTaskResponseMs": 2175.7168332114816,
+        "medianProcessCpuMs": 2114.488083
+      }
+    },
+    {
+      "round": 3,
+      "mode": "off",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 199.32904187589884,
+            "taskResponseMs": 2210.8874591067433,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1967.865375,
+              "systemMs": 175.884291,
+              "totalMs": 2143.749666
+            },
+            "instructions": 100170222,
+            "nativeInstructions": 86001219,
+            "compiledBlocks": 57731,
+            "nativeMemoryCalls": 1721163,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1981.342402,
+            "shutdownWaitMs": 46.801500022411346,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 199.32904187589884,
+        "medianTaskResponseMs": 2210.8874591067433,
+        "medianProcessCpuMs": 2143.749666
+      }
+    },
+    {
+      "round": 3,
+      "mode": "hot256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 193.76695901155472,
+            "taskResponseMs": 2236.36870784685,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2000.899541,
+              "systemMs": 177.101666,
+              "totalMs": 2178.001207
+            },
+            "instructions": 100452988,
+            "nativeInstructions": 86284214,
+            "compiledBlocks": 57456,
+            "nativeMemoryCalls": 1726207,
+            "directLinkTransitions": 5306710,
+            "directLinkPromotions": 6100,
+            "directLinkBlocks": 6100,
+            "executionWallMs": 2016.547697,
+            "shutdownWaitMs": 38.152458146214485,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 193.76695901155472,
+        "medianTaskResponseMs": 2236.36870784685,
+        "medianProcessCpuMs": 2178.001207
+      }
+    },
+    {
+      "round": 4,
+      "mode": "baseline",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "96108846b758cb65e6a42e3c49b35bd0588ef02c0e691ca0b81547050710b7c3",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-baseline/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.52600022405386,
+            "taskResponseMs": 2147.7109589613974,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1923.198083,
+              "systemMs": 169.477375,
+              "totalMs": 2092.675458
+            },
+            "instructions": 100497223,
+            "nativeInstructions": 86314003,
+            "compiledBlocks": 57861,
+            "nativeMemoryCalls": 1726174,
+            "executionWallMs": 1936.869016,
+            "shutdownWaitMs": 46.833999920636415,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.52600022405386,
+        "medianTaskResponseMs": 2147.7109589613974,
+        "medianProcessCpuMs": 2092.675458
+      }
+    },
+    {
+      "round": 4,
+      "mode": "off",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.72066701948643,
+            "taskResponseMs": 2207.302833907306,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1971.269208,
+              "systemMs": 178.093,
+              "totalMs": 2149.362208
+            },
+            "instructions": 99633108,
+            "nativeInstructions": 85500729,
+            "compiledBlocks": 57604,
+            "nativeMemoryCalls": 1713814,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1986.396682,
+            "shutdownWaitMs": 41.16970766335726,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.72066701948643,
+        "medianTaskResponseMs": 2207.302833907306,
+        "medianProcessCpuMs": 2149.362208
+      }
+    },
+    {
+      "round": 4,
+      "mode": "hot256",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 200.36816596984863,
+            "taskResponseMs": 2278.37829105556,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2008.753041,
+              "systemMs": 204.410291,
+              "totalMs": 2213.163332
+            },
+            "instructions": 100659326,
+            "nativeInstructions": 86495055,
+            "compiledBlocks": 57384,
+            "nativeMemoryCalls": 1722939,
+            "directLinkTransitions": 5343817,
+            "directLinkPromotions": 6131,
+            "directLinkBlocks": 6131,
+            "executionWallMs": 2024.730044,
+            "shutdownWaitMs": 46.85170762240887,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 200.36816596984863,
+        "medianTaskResponseMs": 2278.37829105556,
+        "medianProcessCpuMs": 2213.163332
+      }
+    },
+    {
+      "round": 4,
+      "mode": "hot1024",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-launch",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": true,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "a1e0aded824c50f8571f563709aefece139298314e51c0c1f28ce9c35b051b2e",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/direct-links-release/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 189.1537089832127,
+            "taskResponseMs": 2228.187832981348,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1989.106125,
+              "systemMs": 179.811458,
+              "totalMs": 2168.917583
+            },
+            "instructions": 99468408,
+            "nativeInstructions": 85389996,
+            "compiledBlocks": 57055,
+            "nativeMemoryCalls": 1709445,
+            "directLinkTransitions": 4033225,
+            "directLinkPromotions": 1939,
+            "directLinkBlocks": 1939,
+            "executionWallMs": 2003.721448,
+            "shutdownWaitMs": 40.89424991980195,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 189.1537089832127,
+        "medianTaskResponseMs": 2228.187832981348,
+        "medianProcessCpuMs": 2168.917583
+      }
+    }
+  ],
+  "instruments": {
+    "scope": "Instruments Time Profiler CPU samples on the main thread, filtered to host task-command through verified-pixel response UTC timestamps; capture and control work inside this window remain included. Sample shares are not exact function CPU durations.",
+    "samples": 2337,
+    "outsideTaskSamples": 556,
+    "workerSamples": {},
+    "runs": [
+      {
+        "trace": "build/word-large-doc/instruments-linked/run-0/instruments.trace",
+        "windowStartNs": 3695716000,
+        "windowEndNs": 6089321000,
+        "mainThreadSamples": 2337,
+        "categories": {
+          "Generated code and native helpers": 403,
+          "Capture/video/control output": 225,
+          "Interpreter (including MMU and guest faults)": 665,
+          "JIT dispatch/cache/validation": 570,
+          "JIT compilation (including decode exceptions)": 263,
+          "Device polling and interrupt delivery": 144,
+          "Disk and compression": 6,
+          "Main loop/other host work": 61
+        }
+      }
+    ],
+    "categories": [
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 665,
+        "percent": 28.45528455284553
+      },
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 570,
+        "percent": 24.390243902439025
+      },
+      {
+        "name": "Generated code and native helpers",
+        "samples": 403,
+        "percent": 17.24433033804022
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 263,
+        "percent": 11.253744116388532
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 225,
+        "percent": 9.627727856225931
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 144,
+        "percent": 6.161745827984595
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 61,
+        "percent": 2.610183996576808
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 6,
+        "percent": 0.25673940949935814
+      }
+    ],
+    "jitRegions": [
+      {
+        "region": "Memory",
+        "scope": "generated self",
+        "samples": 154,
+        "percentOfMain": 6.589644843816859
+      },
+      {
+        "region": "Prologue",
+        "scope": "generated self",
+        "samples": 67,
+        "percentOfMain": 2.866923406076166
+      },
+      {
+        "region": "Flags and branch",
+        "scope": "generated self",
+        "samples": 54,
+        "percentOfMain": 2.310654685494223
+      },
+      {
+        "region": "Memory",
+        "scope": "helper descendants",
+        "samples": 22,
+        "percentOfMain": 0.9413778348309799
+      },
+      {
+        "region": "GPR commit",
+        "scope": "generated self",
+        "samples": 18,
+        "percentOfMain": 0.7702182284980744
+      },
+      {
+        "region": "Direct-link checks",
+        "scope": "generated self",
+        "samples": 17,
+        "percentOfMain": 0.727428326914848
+      },
+      {
+        "region": "Alu",
+        "scope": "generated self",
+        "samples": 12,
+        "percentOfMain": 0.5134788189987163
+      },
+      {
+        "region": "Linked host epilogue",
+        "scope": "generated self",
+        "samples": 8,
+        "percentOfMain": 0.3423192126658109
+      },
+      {
+        "region": "Host epilogue",
+        "scope": "generated self",
+        "samples": 7,
+        "percentOfMain": 0.2995293110825845
+      },
+      {
+        "region": "Instruction count",
+        "scope": "generated self",
+        "samples": 7,
+        "percentOfMain": 0.2995293110825845
+      },
+      {
+        "region": "Shift",
+        "scope": "generated self",
+        "samples": 5,
+        "percentOfMain": 0.2139495079161318
+      },
+      {
+        "region": "Linked root entry",
+        "scope": "generated self",
+        "samples": 3,
+        "percentOfMain": 0.12836970474967907
+      },
+      {
+        "region": "Test",
+        "scope": "generated self",
+        "samples": 2,
+        "percentOfMain": 0.08557980316645272
+      },
+      {
+        "region": "IP commit",
+        "scope": "generated self",
+        "samples": 2,
+        "percentOfMain": 0.08557980316645272
+      },
+      {
+        "region": "Move",
+        "scope": "generated self",
+        "samples": 2,
+        "percentOfMain": 0.08557980316645272
+      },
+      {
+        "region": "DoubleShift",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.04278990158322636
+      },
+      {
+        "region": "Lea",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.04278990158322636
+      }
+    ],
+    "jitBlocks": [
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357268,
+        "samples": 6
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223844857,
+        "samples": 5
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223844043,
+        "samples": 4
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221356967,
+        "samples": 4
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223844793,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357262,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 812692965,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357017,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220463782,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220463769,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220667631,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 813380784,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220669428,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221394500,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223525338,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357011,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221260800,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221405044,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 807,
+        "ip": 7575,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 5967,
+        "ip": 10924,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221260300,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221239316,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 2146900833,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220468295,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 813380623,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221239258,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223755217,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221314193,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 6167,
+        "ip": 7745,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220642329,
+        "samples": 1
+      }
+    ],
+    "unmappedJitSelfSamples": 17,
+    "timeQuartiles": [
+      {
+        "index": 1,
+        "samples": 586,
+        "categories": {
+          "Generated code and native helpers": 95,
+          "Capture/video/control output": 59,
+          "Interpreter (including MMU and guest faults)": 146,
+          "JIT dispatch/cache/validation": 155,
+          "JIT compilation (including decode exceptions)": 65,
+          "Device polling and interrupt delivery": 44,
+          "Disk and compression": 4,
+          "Main loop/other host work": 18
+        }
+      },
+      {
+        "index": 2,
+        "samples": 573,
+        "categories": {
+          "JIT dispatch/cache/validation": 143,
+          "Generated code and native helpers": 78,
+          "JIT compilation (including decode exceptions)": 76,
+          "Interpreter (including MMU and guest faults)": 171,
+          "Capture/video/control output": 54,
+          "Main loop/other host work": 19,
+          "Device polling and interrupt delivery": 32
+        }
+      },
+      {
+        "index": 3,
+        "samples": 583,
+        "categories": {
+          "Generated code and native helpers": 98,
+          "Capture/video/control output": 56,
+          "JIT compilation (including decode exceptions)": 78,
+          "JIT dispatch/cache/validation": 131,
+          "Interpreter (including MMU and guest faults)": 178,
+          "Device polling and interrupt delivery": 31,
+          "Main loop/other host work": 9,
+          "Disk and compression": 2
+        }
+      },
+      {
+        "index": 4,
+        "samples": 595,
+        "categories": {
+          "Interpreter (including MMU and guest faults)": 170,
+          "JIT dispatch/cache/validation": 141,
+          "Capture/video/control output": 56,
+          "JIT compilation (including decode exceptions)": 44,
+          "Generated code and native helpers": 132,
+          "Device polling and interrupt delivery": 37,
+          "Main loop/other host work": 15
+        }
+      }
+    ],
+    "selfSites": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 327,
+        "percent": 13.99229781771502
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 210,
+        "percent": 8.985879332477536
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 144,
+        "percent": 6.161745827984595
+      },
+      {
+        "name": "pc::Jit::runCached(unsigned int)",
+        "samples": 131,
+        "percent": 5.605477107402653
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 119,
+        "percent": 5.0919982884039365
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 94,
+        "percent": 4.022250748823278
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 83,
+        "percent": 3.551561831407788
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 82,
+        "percent": 3.508771929824561
+      },
+      {
+        "name": "main",
+        "samples": 42,
+        "percent": 1.797175866495507
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 41,
+        "percent": 1.7543859649122806
+      },
+      {
+        "name": "pc::VGA::render(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 39,
+        "percent": 1.668806161745828
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 38,
+        "percent": 1.6260162601626016
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 34,
+        "percent": 1.454856653829696
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 33,
+        "percent": 1.4120667522464698
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 31,
+        "percent": 1.326486949080017
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 29,
+        "percent": 1.2409071459135643
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 27,
+        "percent": 1.1553273427471116
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 26,
+        "percent": 1.1125374411638853
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 24,
+        "percent": 1.0269576379974326
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 24,
+        "percent": 1.0269576379974326
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 22,
+        "percent": 0.9413778348309799
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 16,
+        "percent": 0.6846384253316218
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 16,
+        "percent": 0.6846384253316218
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 15,
+        "percent": 0.6418485237483954
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 15,
+        "percent": 0.6418485237483954
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 14,
+        "percent": 0.599058622165169
+      },
+      {
+        "name": "pc::instructionPage(pc::CPU&)",
+        "samples": 13,
+        "percent": 0.5562687205819427
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 12,
+        "percent": 0.5134788189987163
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 10,
+        "percent": 0.4278990158322636
+      },
+      {
+        "name": "_free",
+        "samples": 10,
+        "percent": 0.4278990158322636
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 8,
+        "percent": 0.3423192126658109
+      },
+      {
+        "name": "std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::clear()",
+        "samples": 6,
+        "percent": 0.25673940949935814
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.25673940949935814
+      },
+      {
+        "name": "pc::Jit::patchIncoming(unsigned long long)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()(int, int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__lseek",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__recvfrom",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "mach_o::Header::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "std::__1::vector<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>>::__swap_out_circular_buffer(std::__1::__split_buffer<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>&>&)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__bzero",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_13::operator()(unsigned long) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_20::operator()(unsigned int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "__sendto",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "__ultoa",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::promoteBlock(pc::Jit::Block&)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "_xzm_xzone_malloc_small_freelist",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_19::operator()() const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x1077cb271",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "DYLD-STUB$$_platform_bzero",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x10837e301",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x10756bed1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107671371",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_segment_group_span_mark_smaller",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a90c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10836f021",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107624f91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10781d581",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078b8bcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107b62421",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795f931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080efdf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857375d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db3c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795ba69",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107959ff1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795f265",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075409a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080f06c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078defe1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080f2361",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795bf61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10797dce5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107b6e769",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795a569",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107924b7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107cddab9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a65e9d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078f7c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bdbffd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078de721",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078987f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078d5bb9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081a7711",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078e157d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c6f6e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107673835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10783bc35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db3e5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__cxa_init_primary_exception",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077acd41",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10755ca79",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107592b6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1084726d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10819dcd1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "Diagnostics::clearError()",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085df541",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107817de1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10817f8a5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085dc851",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107cdde19",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a6e079",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754162d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756e63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076fc105",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851e03d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075fb6d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076ea341",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077fd5d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107632479",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075972e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107612569",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ab8ec5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075231bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085254ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075df139",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107664469",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075e76d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752a2a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520a61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e6b65",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a5ee79",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a0b3b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "$_0::operator()() const::'lambda2'(unsigned long, std::__type_descriptor_t)::__invoke(unsigned long, std::__type_descriptor_t)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10761c091",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107523eb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107962f6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_Block_object_dispose",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107766d7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107591055",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078dea61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079b557d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754ca2d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d16251",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d1a885",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d1a899",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076befa1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107603a91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107556de9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e176f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bc96bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::debugBlock(pc::Jit::Block const&, std::__1::vector<unsigned int, std::__1::allocator<unsigned int>> const&, std::__1::vector<pc::Jit::DebugRegion, std::__1::allocator<pc::Jit::DebugRegion>> const&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10769acc5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c7ee1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10751db59",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076cfba9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::I8259PairDevice::write(unsigned int, bool, unsigned char)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079ecdd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107fe2a75",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a38dc5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075402fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757ef21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081845d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080a2591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108209dfd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107558709",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833f3c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107708769",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762efc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762ac29",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752b931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10755b2c9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c8781",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c7401",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107940cc1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081ab475",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107579069",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107524115",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077d100d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "operator delete(void*)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107524031",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107681489",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b481d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "fflush",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld4::RuntimeState::inPermanentRange(unsigned long, unsigned long, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a7511",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107521c5d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520941",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107744461",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078b573d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10766f2c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077110d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bc36f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::basic_streambuf<char, std::__1::char_traits<char>>::xsputn(char const*, long)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107620cf9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c38931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_10::operator()(std::__1::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c8b021",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d52141",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076f9d61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754c8d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752f781",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10761c9ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107610a01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520e11",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_vsnprintf",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a83f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e44c35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107572c7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107994969",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076313f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b5795",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b7ec5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bbb261",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081e5bf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10820f86d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079ac611",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10753b4a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108211661",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851f249",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076182e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853d009",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10821356d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075b95bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085534ad",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108548aa9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108030eb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10774be35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10826468d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10776fd39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075bc181",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075224b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "clock_gettime",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078bac91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107946391",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079efdc1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107710189",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759d481",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ec982d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085770d5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb289",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852608d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cae25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079a77b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cae7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pthread_once",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb6a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c93b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cbc91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077a71f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7d95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cdf61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb69d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079a7591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7c4d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083c7a35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107626949",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ecb9c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852832d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107996b91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c8215",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e5239",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081b440d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107997319",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d5cb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107991251",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e88281",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1084cd55d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107555141",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075bc23d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107555125",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078f0f35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108523845",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ac63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076e20d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757f611",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756163d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520ee1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079cf485",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e5d15",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079fc485",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bec001",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078a106d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b8bf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075f27a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078228c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851d6f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ccfe25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a0efcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10753da5d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075cb521",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759f5c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10764b82d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f5ddf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f5d6fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f8f181",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077655bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10802b161",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108541411",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e9c081",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e55d21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()(int, bool) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10809c161",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10811dca9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10813bae5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f42711",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757bfd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__commpage_gettimeofday_internal",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10832a315",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078ddea1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e061f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>> std::__1::num_put<char, std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>>::__do_put_integral[abi:ne200100]<unsigned long>(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>, std::__1::ios_base&, char, unsigned long, char const*) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107efbe7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107601ed1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075c2cf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10758c211",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10765816d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a3467d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107da83d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10751d07d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting_trap",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107718f95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107587fd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a3dcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ef811",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078101a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_reclaim_mark_used_locked",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10796c9ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078fd401",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d7cd5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b08e1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107589a19",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107541f81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107747df1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852f775",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851c0a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107576c95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::patchIncoming(unsigned long long)::$_0::operator()(pc::Jit::IncomingLink const&) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076960ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a5dc59",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754fefd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085303f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107891fd1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10769053d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107676d01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107763055",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075db63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10765f5bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ba649",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076bd0fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077367d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852febd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108520591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077380c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853a409",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078d0915",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d40a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075cd471",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_11, void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107554b21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762a1b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108535459",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754023d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757c30d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__xvprintf",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107847989",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c3ccb9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079982fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_free_outlined",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10798e68d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756e7b5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107566915",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10763b995",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e35fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d2a81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107dd9fb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a0cb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10779d6bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075dde1d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759fa31",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757cf85",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107587dc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a8b0d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853d3d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ea1aa9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757d179",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077ae929",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107699801",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852717d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757d369",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075858b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10792a5d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10787a1f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a8595",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e3721d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e4dcc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10788f259",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077fda81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107578a39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c5469",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d29271",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10788537d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075e0951",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762ad65",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075518ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108527871",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107540e0d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c6c12d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b3e91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ed2835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754113d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c3941",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108530b85",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107697b6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754df61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f60851",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107aae8f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10778ad21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107649a95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10777ab01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107fdf535",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10778ce35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078162c9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107848139",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078243b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107835079",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078382a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a4f151",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833aa25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10836c5ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857a9b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108388a39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10837e4a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108381a45",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10835acbd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857eab5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e72ced",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_platform_memset_pattern16",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10838c04d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10760a621",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833f625",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108355ebd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083621bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108357971",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833b2b5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083519e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108381451",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076a7edd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079878c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10843dad1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e014d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a6099",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e04001",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e5074d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078e8a69",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107853c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075978d5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 327,
+        "percent": 13.99229781771502
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 210,
+        "percent": 8.985879332477536
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 144,
+        "percent": 6.161745827984595
+      },
+      {
+        "name": "pc::Jit::runCached(unsigned int)",
+        "samples": 131,
+        "percent": 5.605477107402653
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 119,
+        "percent": 5.0919982884039365
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 94,
+        "percent": 4.022250748823278
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 83,
+        "percent": 3.551561831407788
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 82,
+        "percent": 3.508771929824561
+      },
+      {
+        "name": "main",
+        "samples": 42,
+        "percent": 1.797175866495507
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 41,
+        "percent": 1.7543859649122806
+      },
+      {
+        "name": "pc::VGA::render(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 39,
+        "percent": 1.668806161745828
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 38,
+        "percent": 1.6260162601626016
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 34,
+        "percent": 1.454856653829696
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 33,
+        "percent": 1.4120667522464698
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 31,
+        "percent": 1.326486949080017
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 29,
+        "percent": 1.2409071459135643
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 27,
+        "percent": 1.1553273427471116
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 26,
+        "percent": 1.1125374411638853
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 24,
+        "percent": 1.0269576379974326
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 24,
+        "percent": 1.0269576379974326
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 22,
+        "percent": 0.9413778348309799
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 16,
+        "percent": 0.6846384253316218
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 16,
+        "percent": 0.6846384253316218
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 15,
+        "percent": 0.6418485237483954
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 15,
+        "percent": 0.6418485237483954
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 14,
+        "percent": 0.599058622165169
+      },
+      {
+        "name": "pc::instructionPage(pc::CPU&)",
+        "samples": 13,
+        "percent": 0.5562687205819427
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 12,
+        "percent": 0.5134788189987163
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 10,
+        "percent": 0.4278990158322636
+      },
+      {
+        "name": "_free",
+        "samples": 10,
+        "percent": 0.4278990158322636
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 9,
+        "percent": 0.3851091142490372
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 8,
+        "percent": 0.3423192126658109
+      },
+      {
+        "name": "std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::clear()",
+        "samples": 6,
+        "percent": 0.25673940949935814
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 6,
+        "percent": 0.25673940949935814
+      },
+      {
+        "name": "pc::Jit::patchIncoming(unsigned long long)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_17::operator()(int, int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.2139495079161318
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__lseek",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__recvfrom",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "mach_o::Header::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "std::__1::vector<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>>::__swap_out_circular_buffer(std::__1::__split_buffer<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>&>&)",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "__bzero",
+        "samples": 4,
+        "percent": 0.17115960633290545
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_13::operator()(unsigned long) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_20::operator()(unsigned int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "pc::Jit::compile(bool)",
+        "samples": 3,
+        "percent": 0.12836970474967907
+      },
+      {
+        "name": "__sendto",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "__ultoa",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::pop(int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::step(bool)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::promoteBlock(pc::Jit::Block&)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "_xzm_xzone_malloc_small_freelist",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::push(unsigned int, int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::CPU::store(pc::CPU::Operand, unsigned int, int)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_19::operator()() const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::getInfo(unw_proc_info_t*)",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x1077cb271",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "DYLD-STUB$$_platform_bzero",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x10837e301",
+        "samples": 2,
+        "percent": 0.08557980316645272
+      },
+      {
+        "name": "0x10756bed1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107671371",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_segment_group_span_mark_smaller",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a90c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10836f021",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107624f91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10781d581",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078b8bcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107b62421",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795f931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080efdf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857375d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db3c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795ba69",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107959ff1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795f265",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075409a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080f06c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078defe1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080f2361",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795bf61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10797dce5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107b6e769",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10795a569",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107924b7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107cddab9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a65e9d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078f7c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bdbffd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078de721",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078987f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078d5bb9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081a7711",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078e157d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c6f6e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107673835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10783bc35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db3e5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__cxa_init_primary_exception",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077acd41",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10755ca79",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107592b6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1084726d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10819dcd1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "Diagnostics::clearError()",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085df541",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107817de1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10817f8a5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078db835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085dc851",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107cdde19",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a6e079",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754162d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756e63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076fc105",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851e03d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075fb6d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076ea341",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077fd5d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107632479",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075972e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107612569",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ab8ec5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075231bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085254ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075df139",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107664469",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075e76d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752a2a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520a61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e6b65",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a5ee79",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a0b3b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "$_0::operator()() const::'lambda2'(unsigned long, std::__type_descriptor_t)::__invoke(unsigned long, std::__type_descriptor_t)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10761c091",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107523eb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107962f6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_Block_object_dispose",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107766d7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107591055",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078dea61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079b557d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754ca2d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d16251",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d1a885",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d1a899",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076befa1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107603a91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107556de9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e176f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bc96bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::debugBlock(pc::Jit::Block const&, std::__1::vector<unsigned int, std::__1::allocator<unsigned int>> const&, std::__1::vector<pc::Jit::DebugRegion, std::__1::allocator<pc::Jit::DebugRegion>> const&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10769acc5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c7ee1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10751db59",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076cfba9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::I8259PairDevice::write(unsigned int, bool, unsigned char)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079ecdd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107fe2a75",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a38dc5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075402fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757ef21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081845d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1080a2591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108209dfd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107558709",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833f3c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107708769",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762efc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762ac29",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752b931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10755b2c9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c8781",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c7401",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107940cc1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081ab475",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107579069",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107524115",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077d100d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "operator delete(void*)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107524031",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107681489",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b481d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "fflush",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld4::RuntimeState::inPermanentRange(unsigned long, unsigned long, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a7511",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107521c5d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520941",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107744461",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078b573d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10766f2c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077110d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bc36f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::basic_streambuf<char, std::__1::char_traits<char>>::xsputn(char const*, long)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107620cf9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c38931",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_10::operator()(std::__1::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c8b021",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d52141",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076f9d61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754c8d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10752f781",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10761c9ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107610a01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520e11",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_vsnprintf",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a83f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e44c35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107572c7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107994969",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076313f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b5795",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b7ec5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bbb261",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081e5bf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10820f86d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079ac611",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10753b4a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108211661",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851f249",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076182e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853d009",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10821356d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075b95bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085534ad",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108548aa9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108030eb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10774be35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10826468d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10776fd39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075bc181",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075224b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "clock_gettime",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078bac91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107946391",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079efdc1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107710189",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759d481",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ec982d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085770d5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb289",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852608d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cae25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079a77b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cae7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pthread_once",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb6a9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c93b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cbc91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077a71f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7d95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cdf61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077cb69d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::stepImpl()::$_2::operator()(unsigned int, bool, unsigned int&) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079a7591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7c4d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083c7a35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107626949",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "unw_set_reg",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ecb9c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852832d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107996b91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c8215",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e5239",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1081b440d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107997319",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d5cb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077c7c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107991251",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e88281",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1084cd55d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107555141",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075bc23d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::CPU::interrupt(unsigned char, bool)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107555125",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078f0f35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108523845",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ac63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076e20d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757f611",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756163d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107520ee1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079cf485",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e5d15",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079fc485",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107bec001",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078a106d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077b8bf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075f27a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078228c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851d6f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ccfe25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a0efcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10753da5d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075cb521",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759f5c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10764b82d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f5ddf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f5d6fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f8f181",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077655bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10802b161",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108541411",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e9c081",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e55d21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()(int, bool) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10809c161",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "dyld3::MachOFile::forEachLoadCommand(Diagnostics&, void (load_command const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10811dca9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10813bae5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f42711",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Machine::bios(unsigned char)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757bfd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__commpage_gettimeofday_internal",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10832a315",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078ddea1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e061f5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>> std::__1::num_put<char, std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>>::__do_put_integral[abi:ne200100]<unsigned long>(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char>>, std::__1::ios_base&, char, unsigned long, char const*) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107efbe7d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107601ed1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075c2cf1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10758c211",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10765816d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a3467d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107da83d9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10751d07d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting_trap",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107718f95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107587fd9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a3dcd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ef811",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078101a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_reclaim_mark_used_locked",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10796c9ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078fd401",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d7cd5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b08e1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107589a19",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107541f81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107747df1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852f775",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10851c0a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107576c95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "pc::Jit::patchIncoming(unsigned long long)::$_0::operator()(pc::Jit::IncomingLink const&) const",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076960ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a5dc59",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754fefd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1085303f9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107891fd1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10769053d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107676d01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107763055",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075db63d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10765f5bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075ba649",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076bd0fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077367d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852febd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108520591",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077380c5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853a409",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078d0915",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d40a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075cd471",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_11, void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107554b21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762a1b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108535459",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754023d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757c30d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__xvprintf",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107847989",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c3ccb9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079982fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_xzm_free_outlined",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10798e68d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10756e7b5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107566915",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10763b995",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e35fd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075d2a81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107dd9fb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a0cb5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10779d6bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075dde1d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10759fa31",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757cf85",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107587dc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a8b0d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10853d3d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ea1aa9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757d179",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077ae929",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107699801",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10852717d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10757d369",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075858b1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10792a5d1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10787a1f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a8595",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e3721d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e4dcc9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10788f259",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077fda81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107578a39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c5469",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107d29271",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10788537d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075e0951",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10762ad65",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075518ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108527871",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107540e0d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107c6c12d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076b3e91",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107ed2835",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754113d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076c3941",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108530b85",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107697b6d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10754df61",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107f60851",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107aae8f1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10778ad21",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107649a95",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10777ab01",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107fdf535",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10778ce35",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078162c9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107848139",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078243b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107835079",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078382a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107a4f151",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833aa25",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10836c5ed",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857a9b9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108388a39",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10837e4a1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108381a45",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10835acbd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10857eab5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e72ced",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "_platform_memset_pattern16",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10838c04d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10760a621",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833f625",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108355ebd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083621bd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108357971",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10833b2b5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1083519e9",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x108381451",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1076a7edd",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1079878c1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x10843dad1",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1077e014d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075a6099",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e04001",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107e5074d",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1078e8a69",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x107853c81",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      },
+      {
+        "name": "0x1075978d5",
+        "samples": 1,
+        "percent": 0.04278990158322636
+      }
+    ]
+  }
+}

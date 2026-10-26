@@ -2,7 +2,7 @@
 
 `--jit-direct-links` enables an experimental native edge within the existing
 bounded batch. It remains off by default. `--jit-link-warmup N` selects native
-entries before promotion (CLI default 256; zero requests immediate emission).
+entries before promotion (CLI default 256; zero requests immediate promotion).
 Both complete process CPU time and exact guest results are acceptance gates.
 
 The first implementation patches an ARM64 B instruction to a compatible native
@@ -31,17 +31,28 @@ guards against the initial frame-slot collision found by the Word smoke task.
 The existing soft 64 / maximum 127 instruction budget and logical dispatch
 calendar remain the interrupt/control boundaries.
 
-## First implementation result
+## Promotion without retranslation
 
-The [preliminary evidence](measurements/direct-links-inline-2026-10-26.json)
-does **not** support a Word speedup. Immediate emission uses roughly 1.6 million
-direct transitions in a verified launch but adds code and CPU cost. Promoting
-only hotter blocks reduces adoption and duplicates translated bodies. The
-retained prototype is therefore experimental while promotion is being changed
-to avoid full-body retranslation. No application speedup is claimed.
+Promotion retains the original guest body. Cold candidates reserve one exit
+hook and, for paged memory, helper flag hooks. A hot entry receives small root,
+completed-exit and partial-exit stubs; branch patches connect these to the body.
+The stubs occupy a separate bounded slab (up to 1 MiB) adjacent to the 16 MiB
+body arena, so promotion cannot cause earlier guest-body cache recycling.
+Saturation skips further promotion until the next clear/recycle. All patches
+happen outside native execution. The shared frame is 128 bytes, with link
+counters at offsets 112/116 and helper flag at 120; ordinary operand and carry
+spills remain at 96..108. A delayed-promotion test requires exactly one guest
+compilation, so it detects accidental full-body retranslation.
 
-Core, bounded-batch and cached-batch suites pass. The latter includes 142,958
-checks, with independent interpreter comparison, real links, self-modifying
+The [initial inline evidence](measurements/direct-links-inline-2026-10-26.json)
+and [large-document benchmark](measurements/word5m-m1-2026-10-26.md) do **not**
+support an application speedup. The latter exercises about 100 million guest
+instructions and 5.3 million linked transitions, but linked CPU time remains
+higher in the preliminary comparison. The prototype remains opt-in. No
+application performance acceptance gate has passed.
+
+Core, bounded-batch and cached-batch suites pass. The latter includes
+checks with independent interpreter comparison, real links, self-modifying
 code, code-PTE remapping, precise faults, MMIO exactly-once replay and buffer/
 context changes. Timer tests exercise interrupt deadlines with links enabled.
 All profiling and application probes are headless and use the existing local
@@ -50,3 +61,8 @@ Word checkpoint with disposable compressed children.
 JIT debug sidecars now use version 2 and include timestamped four-byte `patch`
 events. The analyzer accepts both versions 1 and 2; patches preserve block/region
 identity while retaining the actual emitted branch bytes for disassembly.
+
+Body and stub publications can interleave in address order. The debug-map loader
+maintains a sorted interval index and checks both neighbors on insertion.
+Direct links reject misaligned arenas and allocations spanning 128 MiB or more;
+constructor allocation arithmetic also rejects overflow.

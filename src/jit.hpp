@@ -41,7 +41,7 @@ class Jit {
         return active;
     }
     size_t residentCodeBytes() const {
-        return used; // Arena occupancy, including block alignment; resets on recycle/clear.
+        return used + stubUsed; // Arena occupancy, including block alignment; resets on recycle/clear.
     }
 
   private:
@@ -73,7 +73,10 @@ class Jit {
         const uint32_t *generationData = nullptr;
         unsigned count = 0;
         std::array<uint32_t, 2> branchOffsets{};
-        uint32_t fallbackOffset = 0;
+        uint32_t fallbackOffset = 0, fullExitOffset = 0, earlyExitOffset = 0;
+        uint32_t resetFlagOffset = 0, codeBytes = 0;
+        bool promoted = false, fetchCheck = false;
+        std::vector<uint32_t> helperFlagSites;
     };
     struct Block {
         Function fn = nullptr;
@@ -105,7 +108,7 @@ class Jit {
         bool stoppedZero = false;
     };
     CachedBatch runCached(unsigned budget) noexcept;
-    Block compile(bool translate = true, bool linked = false);
+    Block compile(bool translate = true);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
     std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.
@@ -116,5 +119,9 @@ class Jit {
     Block *installBlock(uint64_t key, Block block);
     void patchIncoming(uint64_t key);
     void setLinkTarget(Block &source, unsigned slot, uintptr_t target);
+    void publishLinks(uint64_t key, Block &block);
+    bool promoteBlock(Block &block);
+    size_t stubCapacity = 0, stubUsed = 0;
+    void debugPatch(uintptr_t address, uint32_t instruction);
 };
 } // namespace pc

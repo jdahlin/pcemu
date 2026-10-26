@@ -36,10 +36,13 @@ class TimedCodeMap:
                             offsets[-1] >= size):
                         raise ValueError('Invalid JIT code or region range')
                     event['offsets'] = offsets
-                    if self.epochs[-1]['blocks'] and self.epochs[-1]['blocks'][-1]['end'] > event['start']:
+                    epoch = self.epochs[-1]
+                    index = bisect_right(epoch['addresses'], event['start'])
+                    if ((index and epoch['blocks'][index-1]['end'] > event['start']) or
+                            (index < len(epoch['blocks']) and event['end'] > epoch['blocks'][index]['start'])):
                         raise ValueError('Overlapping JIT blocks within an arena generation')
-                    self.epochs[-1]['blocks'].append(event)
-                    self.epochs[-1]['addresses'].append(event['start'])
+                    epoch['blocks'].insert(index, event)
+                    epoch['addresses'].insert(index, event['start'])
                 elif event['event'] == 'patch':
                     if self.version < 2 or not self.epochs or event['generation'] != self.epochs[-1]['generation']:
                         raise ValueError('JIT patch has no matching arena generation')
