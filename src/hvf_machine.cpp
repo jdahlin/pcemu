@@ -58,6 +58,7 @@ struct HvfMachine::Impl {
     bool stopping = false, armed = false;
     uint64_t generation = 0;
     hv_return_t cancelResult = HV_SUCCESS;
+    bool wakeRequested = false;
     std::chrono::steady_clock::time_point deadline;
     SleepTicks sleepTicks;
     std::function<void(bool)> counterRebase;
@@ -408,6 +409,11 @@ HvfMachine::VirtualCounterSample HvfMachine::virtualCounterSample() const {
     check(hv_vcpu_get_vtimer_offset(impl->vcpu, &offset), "sample virtual timer offset");
     return {mach_absolute_time()-offset, impl->clockPeriod, impl->sleepApplied};
 }
+void HvfMachine::requestExit() noexcept {
+    std::lock_guard lock(impl->mutex);
+    impl->wakeRequested = true;
+    impl->cancelLocked();
+}
 HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     impl->requireOwner();
     if (budget.count() <= 0 || budget > std::chrono::seconds(60))
@@ -421,6 +427,10 @@ HvfMachine::Exit HvfMachine::run(std::chrono::milliseconds budget) {
     impl->selected = 0;
     {
         std::lock_guard lock(impl->mutex);
+        if (impl->wakeRequested) {
+            impl->wakeRequested = false;
+            return {ExitReason::Canceled, 0, 0, 0, 0};
+        }
         impl->active.clear();
         if (impl->primaryOnline) impl->active.push_back(impl->vcpu);
         for (auto &cpu : impl->secondary) if (cpu->online) impl->active.push_back(cpu->id);

@@ -1,4 +1,5 @@
 #include "network.hpp"
+#include "socket_wakeup.hpp"
 #include "ne2000.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
@@ -74,7 +75,9 @@ struct Flow {
 };
 } // namespace
 struct Network::State {
-    std::vector<std::unique_ptr<Flow>> flows;
+    std::vector<std::shared_ptr<Flow>> flows;
+    std::unique_ptr<SocketWakeup> wakeup;
+    uint64_t nextService = UINT64_MAX;
     std::array<uint8_t, 6> guestMAC{};
     uint64_t epoch = UINT64_MAX, resets = UINT64_MAX, nextPoll = 0;
     uint32_t dns = 0x01010101, serial = 0x50430000;
@@ -82,7 +85,7 @@ struct Network::State {
     Network::Receiver receive;
     int listener = -1;
     uint16_t forwardedPort = 22, incomingPort = 40000;
-    ~State() { if (listener >= 0) close(listener); }
+    ~State() { wakeup.reset(); if (listener >= 0) close(listener); }
     uint16_t forwardTCP(uint16_t hostPort, uint16_t guestPort) {
         if (listener >= 0 || !guestPort) throw std::runtime_error("Invalid or duplicate TCP forward");
         int fd = socketFor(SOCK_STREAM);
@@ -284,7 +287,7 @@ struct Network::State {
     Flow *open(uint32_t src, uint32_t dst, uint16_t sp, uint16_t dp, bool isTCP) {
         if (flows.size() >= 128)
             return nullptr;
-        auto f = std::make_unique<Flow>();
+        auto f = std::make_shared<Flow>();
         f->source = src;
         f->destination = dst;
         f->sourcePort = sp;
@@ -460,9 +463,28 @@ struct Network::State {
             tcp(*f, 0x10);
         }
     }
-    void service() {
+    void schedule() {
+        std::vector<SocketWakeup::Watch> watches;
+        nextService = UINT64_MAX;
+        if (listener >= 0 && flows.size() < 128 &&
+            std::any_of(guestMAC.begin(), guestMAC.end(), [](uint8_t b) { return b != 0; }))
+            watches.push_back({listener, POLLIN, {}});
+        for (const auto &f : flows) {
+            nextService = std::min(nextService, f->last + (f->tcp ? 120001u : 30001u));
+            if (f->tcp && f->pendingFlags)
+                nextService = std::min(nextService, f->sentAt + 501);
+            short events = 0;
+            if (!f->tcp || (f->established && !f->pendingFlags && !f->hostFin && f->window))
+                events |= POLLIN;
+            if (f->connecting || (f->established && !f->toHost.empty()))
+                events |= POLLOUT;
+            if (f->fd >= 0 && events) watches.push_back({f->fd, events, f});
+        }
+        wakeup->arm(std::move(watches));
+    }
+    void service(bool immediate = false) {
         uint64_t now = nowMS();
-        if (now < nextPoll)
+        if (!immediate && now < nextPoll)
             return;
         nextPoll = now + 2;
         if (listener >= 0 && flows.size() < 128 &&
@@ -474,7 +496,7 @@ struct Network::State {
 #ifdef SO_NOSIGPIPE
                 int one = 1; setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
 #endif
-                auto f = std::make_unique<Flow>();
+                auto f = std::make_shared<Flow>();
                 f->fd = fd; f->source = guestIP; f->destination = gatewayIP;
                 f->sourcePort = forwardedPort;
                 do { if (++incomingPort < 40000) incomingPort = 40000; }
@@ -582,7 +604,9 @@ struct Network::State {
 Network::Network(const std::string &capture) : state(std::make_unique<State>(capture)) {}
 Network::~Network() = default;
 uint16_t Network::forwardTCP(uint16_t hostPort, uint16_t guestPort) {
-    return state->forwardTCP(hostPort, guestPort);
+    auto port = state->forwardTCP(hostPort, guestPort);
+    if (state->wakeup) state->schedule();
+    return port;
 }
 void Network::pump(NE2000 &nic, uint64_t epoch, uint64_t resets) {
     pump(nic.outgoing, [&](const uint8_t *data, size_t length) { nic.receive(data, length); }, epoch, resets);
@@ -590,13 +614,32 @@ void Network::pump(NE2000 &nic, uint64_t epoch, uint64_t resets) {
 void Network::pump(std::deque<std::vector<uint8_t>> &outgoing, Receiver receive,
                    uint64_t epoch, uint64_t resets) {
     auto &s = *state;
+    bool changed = !outgoing.empty();
     s.receive = std::move(receive);
     if (s.epoch != epoch || s.resets != resets) {
         s.flows.clear(); s.epoch = epoch; s.resets = resets;
+        changed = true;
     }
     while (!outgoing.empty()) {
         Bytes p = std::move(outgoing.front()); outgoing.pop_front(); s.packet(p);
     }
-    s.service();
+    if (s.wakeup) {
+        bool ready = s.wakeup->consume();
+        if (changed || ready || nowMS() >= s.nextService) {
+            s.service(true);
+            s.schedule();
+        }
+    } else s.service();
+}
+void Network::enableWakeups(std::function<void()> wake) {
+    if (state->wakeup) throw std::runtime_error("Network wakeups already enabled");
+    state->wakeup = std::make_unique<SocketWakeup>(std::move(wake));
+    state->schedule();
+}
+std::optional<std::chrono::milliseconds> Network::serviceDelay() const {
+    if (!state->wakeup) return std::chrono::milliseconds(2);
+    if (state->nextService == UINT64_MAX) return {};
+    auto now = nowMS();
+    return std::chrono::milliseconds(state->nextService > now ? state->nextService - now : 0);
 }
 } // namespace pc

@@ -6,6 +6,7 @@
 #include <chrono>
 #include <fstream>
 #include <memory>
+#include <optional>
 namespace pc {
 struct NE2000;
 // Original unprivileged IPv4 socket gateway. No host network extensions or
@@ -23,5 +24,9 @@ class Network {
               uint64_t epoch = 0, uint64_t resets = 0);
     // Bind only loopback. Port zero requests an ephemeral host port.
     uint16_t forwardTCP(uint16_t hostPort, uint16_t guestPort = 22);
+    // Callback may run on a socket-wait thread; it must only request an exit.
+    // pump(), packet delivery and device DMA remain on the owning VM thread.
+    void enableWakeups(std::function<void()> wake);
+    std::optional<std::chrono::milliseconds> serviceDelay() const;
 };
 } // namespace pc

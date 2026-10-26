@@ -60,6 +60,9 @@ class HvfMachine {
     uint64_t cpuPC(unsigned cpu) const;
     void setPC(uint64_t value);
     Exit run(std::chrono::milliseconds budget = std::chrono::milliseconds(1000));
+    // Thread-safe and latched: a readiness notification just before run()
+    // must not be lost between device service and arming the guest CPUs.
+    void requestExit() noexcept;
     // All requested online vCPUs execute DSB SY; ISB while the normal guest
     // context is preserved. Throws on incomplete execution; never acknowledges
     // a barrier based solely on stopping a host thread.

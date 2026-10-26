@@ -197,6 +197,7 @@ ArmVirtMachine::ArmVirtMachine(const Config &c)
                 [this](unsigned o, uint64_t v, unsigned w) { net->write(o, v, w); },
                 1, 0x02000001, 2, [this](bool level) { vm.setSPI(50, level); });
             gateway = std::make_unique<Network>(c.networkCapture);
+            gateway->enableWakeups([this] { vm.requestExit(); });
             if (c.sshPort) gateway->forwardTCP(c.sshPort, 22);
         } else if (c.sshPort || !c.networkCapture.empty()) throw std::runtime_error("SSH forwarding/capture requires --network user");
         usb = std::make_unique<UsbXhci>(vm.ram(), HvfMachine::ramBase,
@@ -321,7 +322,8 @@ void ArmVirtMachine::run(std::chrono::milliseconds slice) {
     if (gateway) {
         gateway->pump(net->outgoing, [this](const uint8_t *data, size_t size) { net->receive(data, size); }, 0, net->resetCount);
         if (!net->error().empty()) throw std::runtime_error("Virtio network requires reset: " + net->error());
-        slice = std::min(slice, std::chrono::milliseconds(2));
+        if (auto delay = gateway->serviceDelay())
+            slice = std::min(slice, std::max(std::chrono::milliseconds(1), *delay));
     }
     auto exit = vm.run(slice);
     if (exit.reason == HvfMachine::ExitReason::Canceled) return;

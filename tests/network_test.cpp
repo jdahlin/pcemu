@@ -1,5 +1,9 @@
 #include "machine.hpp"
 #include "network.hpp"
+#include "socket_wakeup.hpp"
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <algorithm>
 #include <arpa/inet.h>
 #include <chrono>
@@ -111,7 +115,55 @@ static Bytes tcp(uint16_t dp, uint32_t seq, uint32_t ack, uint8_t flags, const B
                                  6 + p.size()));
     return ipv4(6, gateway, p);
 }
-int main() {
+static void testSocketWakeup() {
+    int pair[2];
+    check(socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == 0, "wakeup test sockets");
+    std::mutex mutex;
+    std::condition_variable ready;
+    unsigned notifications = 0;
+    std::atomic<unsigned> retired{0};
+    auto lifetime = std::shared_ptr<void>(new int(pair[0]), [&](void *p) {
+        close(*static_cast<int *>(p)); delete static_cast<int *>(p); ++retired;
+    });
+    {
+        SocketWakeup watcher([&] {
+            { std::lock_guard lock(mutex); ++notifications; }
+            ready.notify_one();
+        });
+        watcher.arm({{pair[0], POLLIN, lifetime}});
+        {
+            std::unique_lock lock(mutex);
+            check(!ready.wait_for(lock, std::chrono::milliseconds(30), [&] { return notifications; }),
+                  "idle socket has no periodic wakeups");
+        }
+        check(write(pair[1], "a", 1) == 1, "make socket readable");
+        {
+            std::unique_lock lock(mutex);
+            check(ready.wait_for(lock, std::chrono::seconds(1), [&] { return notifications == 1; }),
+                  "readiness wakes owner without polling");
+            check(!ready.wait_for(lock, std::chrono::milliseconds(30), [&] { return notifications > 1; }),
+                  "level-ready socket notification is one-shot");
+        }
+        check(watcher.consume() && !watcher.consume(), "readiness consumption");
+        char byte;
+        check(read(pair[0], &byte, 1) == 1, "drain first byte");
+        watcher.arm({{pair[0], POLLIN, lifetime}});
+        check(write(pair[1], "b", 1) == 1, "make rearmed socket readable");
+        {
+            std::unique_lock lock(mutex);
+            check(ready.wait_for(lock, std::chrono::seconds(1), [&] { return notifications == 2; }),
+                  "rearmed socket wakes owner");
+        }
+        lifetime.reset();
+        check(retired == 0, "poll snapshot keeps descriptor alive");
+        watcher.arm({});
+    }
+    check(retired == 1, "descriptor released after watcher shutdown");
+    close(pair[1]);
+}
+int main(int argc, char **argv) {
+    bool wakeups = argc == 2 && std::string(argv[1]) == "--wakeups";
+    testSocketWakeup();
     auto path =
         std::filesystem::temp_directory_path() / ("pcemu-network-" + std::to_string(getpid()));
     try {
@@ -204,7 +256,19 @@ int main() {
                   m.nic.outgoing == std::deque<Bytes>({Bytes(60, 0x55)}),
               "NIC checkpoint roundtrip including wire queue");
         configure(n);
+        std::atomic<bool> networkReady{false};
         Network net;
+        auto awaitNetwork = [&] {
+            if (!wakeups) return;
+            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+            while (!networkReady && std::chrono::steady_clock::now() < deadline)
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            check(networkReady, "host readiness reaches network owner");
+        };
+        if (wakeups) {
+            net.enableWakeups([&] { networkReady = true; });
+            check(!net.serviceDelay(), "idle network has no periodic service deadline");
+        } else check(net.serviceDelay() == std::chrono::milliseconds(2), "legacy network polling retained");
         uint8_t page = n.current;
         auto pump = [&](Bytes p) {
             n.outgoing.push_back(std::move(p));
@@ -326,7 +390,9 @@ int main() {
         char received[4];
         check(recv(client, received, 4, 0) == 4 && std::string(received, 4) == "ping",
               "guest payload forwarded to host socket");
+        networkReady = false;
         check(send(client, "pong", 4, 0) == 4, "host response sent");
+        awaitNetwork();
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
         net.pump(n, 1, 0);
         reply = take(n, page);
@@ -352,8 +418,10 @@ int main() {
         socklen_t rlen = sizeof(remote);
         check(recvfrom(datagram, received, 4, 0, reinterpret_cast<sockaddr *>(&remote), &rlen) == 4,
               "guest UDP forwarded");
+        networkReady = false;
         check(sendto(datagram, "pong", 4, 0, reinterpret_cast<sockaddr *>(&remote), rlen) == 4,
               "host UDP reply sent");
+        awaitNetwork();
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
         net.pump(n, 1, 0);
         reply = take(n, page);
@@ -367,6 +435,7 @@ int main() {
         // Exercise the device-independent endpoint and a real host-initiated
         // connection (the same path used by SSH forwarding to virtio-net).
         Network forwarded;
+        if (wakeups) forwarded.enableWakeups([] {});
         uint16_t forwardPort = forwarded.forwardTCP(0, 22);
         std::deque<Bytes> outgoing;
         std::deque<Bytes> incoming;

@@ -666,6 +666,31 @@ void selfTest() {
         require(std::max(after[0], after[1]) - std::min(after[0], after[1]) < frequency,
                 "SMP virtual counters diverged after host sleep");
     }
+    {
+        HvfMachine vm;
+        code(vm, std::array<uint32_t, 1>{0x14000000}); // uncooperative guest
+        vm.requestExit();
+        auto before = std::chrono::steady_clock::now();
+        auto exit = vm.run(std::chrono::milliseconds(2000));
+        require(exit.reason == HvfMachine::ExitReason::Canceled &&
+                std::chrono::steady_clock::now() - before < std::chrono::milliseconds(500),
+                "Readiness just before run was lost");
+        std::thread notification([&] {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            vm.requestExit();
+        });
+        before = std::chrono::steady_clock::now();
+        exit = vm.run(std::chrono::milliseconds(2000));
+        notification.join();
+        require(exit.reason == HvfMachine::ExitReason::Canceled &&
+                std::chrono::steady_clock::now() - before < std::chrono::milliseconds(500),
+                "Readiness did not interrupt active guest CPUs");
+        code(vm, std::array<uint32_t, 1>{0xd4000002});
+        // A notification during run may leave a harmless latched cancellation.
+        do { exit = vm.run(std::chrono::milliseconds(100)); }
+        while (exit.reason == HvfMachine::ExitReason::Canceled);
+        require(exit.exceptionClass() == 0x16, "Guest did not resume after readiness wakeup");
+    }
     std::cout << "{\"test\":\"self-test\",\"passed\":true,\"checks\":" << checks << "}\n";
 }
 }
