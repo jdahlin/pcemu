@@ -109,3 +109,33 @@ PUSH candidate, while broader useful-work performance remains open.
 
 [Manifest, exact executable identity, reset/application/exit evidence, compressed
 logs and screenshots](measurements/fresh-win95-memory-push-2026-10-26.json).
+
+
+## Uninterrupted run with bounded native batching (26 October)
+
+The exact frozen executable measured for [native batching](native-batching.md)
+passes a new clean-DOS OSR2 installation. All 56 installer files stage and verify
+in an 81,999,324-byte external compressed child. A known-screen OCR/keyboard
+driver completes the Setup wizard, using previously authorized OEM fields from
+an ignored local transcript and enabling network-adapter detection. Unknown
+screens would retain the original guest; no intervention or recovery is needed
+in this run. The driver source is preserved without credential values.
+
+The original process observes copy-complete Finish and reset 0→1, first-boot
+network/clock/printer/final-Setup configuration and reset 1→2, then Explorer.
+Calculator 2+2 transfers through the clipboard to Notepad, a unique file saves,
+and a guest-requested restart returns to Explorer after reset 2→3. Screenshots
+of the saved text and final desktop have been inspected.
+
+The same guest then receives `quit`; actual exit status 0, PID absence and the
+normal quit trailer are independently checked. A separate read-only FAT reopen
+matches all 38 expected saved bytes. The 154,444,294-byte compressed child and
+its index are removed after verification. Existing DOS, Win95 and Office parents
+are preserved; no raw large disk or Office reinstall is made.
+
+This validates fresh Setup under the new bounded polling granularity. It is a
+functional result, not an installation speed comparison or universal performance
+claim. The original process is never interrupted, replaced or manually recovered.
+
+[Manifest, exact executable/PID identity, known-screen driver, reset/application/
+exit results, compressed logs and screenshots](measurements/fresh-win95-native-batch-2026-10-26.json).

@@ -1632,7 +1632,7 @@
     "Soft native budget capped at 64; at most 127 completed instructions before poll. Not cycle-accurate interrupt scheduling.",
     "Timer test observed worst IRQ0 latency 61 batched versus 2 unbatched guest instructions at the chosen reload and phases; functional counts/state match.",
     "Three pairs per workload on shared desktop; not a universal speedup guarantee.",
-    "Fresh OSR2 Setup gate in progress and not yet claimed here.",
     "Frozen executable excludes concurrent frontend/network/ARM changes; current CMake pcemu also compiles."
-  ]
+  ],
+  "freshSetupFollowup": "fresh-win95-native-batch-2026-10-26.json: same executable, original process, three resets, applications, normal exit 0 and exact readback; temporary child removed."
 }

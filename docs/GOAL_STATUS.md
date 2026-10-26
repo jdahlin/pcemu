@@ -7,17 +7,17 @@ must not be read as the latest result.
 ## Current verified state
 
 - **MS-DOS 6.22:** the recovered external QCOW2/PCD parent boots through its
-  version and ready marker using the native PUSH candidate.
+  version and ready marker using the native batching candidate.
 - **Windows 3.11:** its completed installation boots headless, saves in Notepad,
-  returns to DOS and passes exact 25-byte file readback with the same candidate.
+  returns to DOS and passes exact 25-byte file readback with the same batching candidate.
 - **rtts/win95 and installed OSR2:** both cold boot, run Calculator 2+2, copy the
   result through the clipboard into Notepad, save a fresh file, restart through
   firmware and pass exact stopped-guest 38-byte file readback.
-- **Fresh OSR2 Setup:** the native PUSH candidate completes clean-DOS
+- **Fresh OSR2 Setup:** the native batching candidate completes clean-DOS
   installation, all first-boot configuration and application/restart/persistence
   in one guest process. Three resets, actual process exit status 0 and exact
   38-byte readback pass. Its private compressed installation child is removed.
-  See [fresh installation](fresh-win95-validation.md#uninterrupted-run-with-native-ff-6-push-26-october).
+  See [fresh installation](fresh-win95-validation.md#uninterrupted-run-with-bounded-native-batching-26-october).
 - **Office 97:** existing compressed checkpoints are reused. Loaded Excel's
   4096-row dependent calculation and Word's warm launch reach the expected
   rendered results with the PUSH candidate. Earlier persistence checks cover
@@ -64,6 +64,13 @@ but do not consistently help Word launch. The subsequent [adaptive prototype](ad
 is rejected: the disabled-path controls do not establish acceptable overhead,
 and other workloads started during those controls. Production JIT policy remains
 unchanged. Both favorable and unfavorable measurements are retained.
+
+[Bounded native batching](native-batching.md) now improves all six measured
+Office pairs: median process-CPU ratio 1.314 for loaded Excel and 1.085 for Word
+launch against the preceding guard candidate. Device polls fall about 88.9% in
+a separate counter run. The bounded IRQ timing-granularity change is tested and
+documented; fresh Setup passes with that exact frozen executable. These gains
+are not multiplied with older experiments into a cumulative claim.
 
 The remaining completion work includes continued useful-work performance
 improvement with reproducible comparisons, and verification of any broader
@@ -1273,3 +1280,15 @@ PIT/PIC/EOI/IRET test matches checksums/counts and observes worst IRQ lateness
 58–61 instructions batched versus 2 unbatched: the timing granularity change is
 explicit. Fresh OSR2 Setup is underway and not yet counted complete. See
 `native-batching.md` and `measurements/native-batching-2026-10-26.json`.
+
+
+## Native batching fresh installation gate completed (26 October)
+
+A known-screen driver runs the full OSR2 wizard without intervention after
+launch, enabling network detection and using already authorized private OEM
+fields. The same frozen batched executable completes all three resets, Explorer,
+Calculator/clipboard/Notepad, a guest restart, normal exit 0 and exact stopped-
+guest 38-byte readback. Its private 154,444,294-byte compressed disk and index are
+removed. All source/PID/reset/exit identities, driver, compressed logs and
+inspected screenshots are in `fresh-win95-native-batch-2026-10-26.json` and
+`fresh-win95-validation.md`. The broader performance target remains active.

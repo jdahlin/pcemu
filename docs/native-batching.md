@@ -66,9 +66,13 @@ also passes Win3.11 Notepad/save/DOS readback and both rtts/installed OSR2
 Calculator/clipboard/Notepad/restart/exact-file gates. Successful private disks
 and orphan indexes are removed. No new Office fixture is made.
 
-Fresh OSR2 Setup is running as an additional gate and is not yet claimed here.
-Its source is staged on a small external compressed DOS child. The broader goal
-remains active.
+Fresh OSR2 Setup also passes with the same executable: 56 source files verify
+on a compressed DOS child; one process completes all Setup/configuration stages,
+three resets, application checks, normal exit status 0 and independent exact
+38-byte readback. The 154,444,294-byte child and its index are removed. A
+known-screen driver runs the wizard without intervention after launch; credentials
+stay in the ignored local control transcript. See [fresh-install evidence](fresh-win95-validation.md#uninterrupted-run-with-bounded-native-batching-26-october).
+The broader twofold useful-work goal remains active.
 
 [Exact frozen patches, build/binary identity, all pairs, diagnostic counters,
 CLI states, timer results and OS verification](measurements/native-batching-2026-10-26.json).
