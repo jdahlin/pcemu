@@ -1397,3 +1397,12 @@ native calls bypass ordinary dispatcher entry. Its recursive C++ resolver still
 loses all three Office pairs per task (CPU ratios Excel 0.912, Word 0.972).
 The default is unchanged; the next controller needs less resolver/frame work.
 See [bridge evidence](native-chain-bridge.md).
+
+### Iterative controller: repeatable Excel gain, mixed controls
+
+Replacing recursive bridge calls with one guarded controller loop passes the
+same cross-block/memory/timer/core/context checks. All six Excel pairs favor it:
+median CPU ratio 1.0583, about 5.5% less CPU time. Word response is neutral but
+CPU ratio 0.9892; large 8 MiB RAM controls lose a few percent. It stays private.
+Next: move controller entry outside generated blocks to remove exit overhead
+and code growth. See [iterative-controller evidence](native-chain-loop.md).
