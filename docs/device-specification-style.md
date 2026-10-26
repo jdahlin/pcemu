@@ -200,3 +200,4 @@ while retaining this repository's formatting.
 | 8259A and cascaded PC/AT pair | Intel 231468-003, December 1988 | IRR/IMR/ISR, priority rotation, ICW/OCW commands, fixed cascade wiring, polling and snapshot mirrors; unsupported electrical/processor modes are explicit. |
 | 8254 PIT | Intel 231164-005, September 1993 | Named count modes and control fields, count/status latches, instruction-derived ticks, gate handling, coalesced periods and documented CLK/reload timing gaps. |
 | PC/AT CMOS/RTC | IBM 6280070, September 1985, and Motorola MC146818A | Calendar BCD fields, divider/status encodings, BIOS equipment/memory bytes, VM-only host-time offset and unsupported writable/interrupt state. |
+| System control ports A/B and debug console | Intel 290562-001, sections 4.2.4.1/4.2.7.2; Bochs port_e9_hack convention | A20/reset effects, timer/speaker status, snapshot latches, host byte sink and compatibility differences from reference behavior. |

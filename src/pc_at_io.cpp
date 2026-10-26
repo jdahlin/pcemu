@@ -7,7 +7,7 @@ void Machine::bindIoPorts() {
     ioPorts.clear();
     systemPortB.restore(ports[0x61]);
     debugConsole.restore(ports[0xe9]);
-    debugConsole.bind([](uint8_t value) { std::cout << char(value) << std::flush; });
+    debugConsole.bind_output_sink([](uint8_t value) { std::cout << char(value) << std::flush; });
     ioPorts.map("absolute-mouse", AbsoluteMouse::port, 1,
         [this](uint16_t, int width) -> uint32_t {
             return absoluteMouse.read(width, cpu.r) ? cpu.r[AX] : 0xffffffffu;
@@ -106,12 +106,12 @@ void Machine::bindIoPorts() {
     ioPorts.map("speaker", 0x61, 1,
         counted([this](uint16_t p, int) -> uint32_t {
             (void)p;
-            return systemPortB.read(pit.counters[1].output_high(cpu.instructions / 4),
+            return systemPortB.read_register(pit.counters[1].output_high(cpu.instructions / 4),
                                     pit.counters[2].output_high(cpu.instructions / 4));
         }), [this, speakerWrite](uint16_t p, uint32_t v, int w) {
             // The gate was updated before splitting a wide write, then again
             // for its low byte. Preserve this until timing is refactored.
-            pit.counters[2].set_gate(systemPortB.write(v), cpu.instructions / 4);
+            pit.counters[2].set_gate(systemPortB.write_register(v), cpu.instructions / 4);
             speakerWrite(p, v, w);
         });
     ioPorts.map("cmos", 0x70, 2,
@@ -121,18 +121,18 @@ void Machine::bindIoPorts() {
             if (p == 0x70) rtc.select_register(v);
         }));
     ioPorts.map("system-control", 0x92, 1,
-        counted([this](uint16_t, int) -> uint32_t { return port92.read(cpu.a20); }),
+        counted([this](uint16_t, int) -> uint32_t { return port92.read_register(cpu.a20); }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            auto effects = port92.write(v);
+            auto effects = port92.write_register(v);
             cpu.a20 = effects.a20;
             resetRequested |= effects.reset;
         }));
     ioPorts.map("debug-console", 0xe9, 1,
-        counted([this](uint16_t, int) -> uint32_t { return debugConsole.read(); }),
+        counted([this](uint16_t, int) -> uint32_t { return debugConsole.read_data_register(); }),
         bytes([this](uint16_t p, uint32_t v, int) {
             ports[p] = v;
-            debugConsole.write(v);
+            debugConsole.write_data_register(v);
         }));
 }
 

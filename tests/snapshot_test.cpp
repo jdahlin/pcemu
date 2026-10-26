@@ -169,7 +169,7 @@ int main() {
         m.keys = {0x1e61};
         m.ports[0x1234] = 0x55;
         m.out(0x61, 3, 1);
-        m.debugConsole.bind([](uint8_t) {});
+        m.debugConsole.bind_output_sink([](uint8_t) {});
         m.out(0xe9, 'A', 1);
         m.rtc.state.index = 8;
         m.ioReads = 412;
@@ -216,7 +216,7 @@ int main() {
         check(first.size() == second.size() &&
                   std::equal(first.begin(), first.end() - 16, second.begin()),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
-        check(m.systemPortB.read(false, false) == 3 && m.debugConsole.read() == 'A',
+        check(m.systemPortB.read_register(false, false) == 3 && m.debugConsole.read_data_register() == 'A',
               "system/debug device latches restore from the existing port-state encoding");
         check(m.cpu.input(0x60, 1) == 0x1c && !m.ps2.state().keyboardFull,
               "restored PS2 controller delivers and consumes its latched byte");
