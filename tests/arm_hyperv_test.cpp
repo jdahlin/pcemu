@@ -638,6 +638,30 @@ int main() {
         fastRead(0xa0010, smccc, 1);
         check(r[0] == one && r[smccc ? 6 : 15] == 1);
     }
+    // Classify repeated guest writes without dropping their rearm semantics.
+    ArmHyperVTimers observed(2);
+    check(observed.write(0xb0000, 0, 0x1108, 0) == 0);
+    check(observed.write(0xb0001, 0, 100, 0) == 0);
+    observed.service(1);
+    check(observed.nextDelay(1) == 99);
+    check(observed.write(0xb0001, 0, 100, 1) == 0);
+    check(observed.write(0xb0000, 0, 0x1109, 2) == 0);
+    check(observed.write(0xb0001, 0, 0, 3) == 0);
+    check(observed.write(0xb0000, 0, 0x110b, 4) == 0);
+    check(observed.write(0xb0001, 0, 5, 4) == 0);
+    check(observed.write(0xb0001, 0, 5, 6) == 0);
+    observed.service(10);
+    check(observed.nextDelay(10) == 1); // Same periodic count still restarts the period.
+    observed.service(11); // No delivery backend: retry the same expiration.
+    const auto &activity = observed.activity();
+    check(activity.configWrites == 3 && activity.countWrites == 5);
+    check(activity.repeatedConfigWrites == 1 && activity.repeatedCountWrites == 2);
+    check(activity.zeroCountWrites == 1 && activity.autoEnableWrites == 1);
+    check(activity.periodicRearms == 2 && activity.unchangedArmedDeadline == 2);
+    check(activity.configFlags[8] == 1 && activity.configFlags[9] == 1 && activity.configFlags[11] == 1);
+    check(observed.serviceCalls() == 3 && observed.serviceTimerVisits() == 24);
+    check(observed.deadlineQueries() == 2 && observed.deadlineTimerVisits() == 16);
+    check(observed.deliveryRetries() == 1);
     ArmHyperVTimers timerModel(2);
     check(!timerModel.nextDeadline());
     for (unsigned vp = 0; vp < 2; ++vp) for (uint32_t reg = 0xb0000; reg <= 0xb0007; ++reg)
@@ -716,6 +740,7 @@ int main() {
     check(timerIrqs == 2 && !timerHv.timersActive());
     check(get(timerRam, 512 + 16) == 1 && get(timerRam, 512 + 24) == 120 && get(timerRam, 512 + 32) == 125);
     check(timerHv.report().find("\"syntheticTimerDeliveries\":2") != std::string::npos);
+    check(timerHv.report().find("\"timerActivity\":{\"configWrites\":") != std::string::npos);
     ArmHyperVTimers allTimers(2);
     unsigned firedMask = 0;
     allTimers.setDelivery([&](unsigned vp, unsigned timer, uint64_t, uint64_t expiration, uint64_t now) {

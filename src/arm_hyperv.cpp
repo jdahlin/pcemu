@@ -687,7 +687,27 @@ std::string ArmHyperV::report() const {
       << ",\"smcccCalls\":" << smcccCalls << ",\"legacyCalls\":" << legacyCalls
       << ",\"disabledCalls\":" << disabledCalls << ",\"failures\":" << failures
       << ",\"lastControl\":" << lastControl << ",\"lastResult\":" << lastResult
-      << ",\"lastRegister\":" << lastRegister << ",\"omittedCounters\":" << omittedCounters << ",\"calls\":[";
+      << ",\"lastRegister\":" << lastRegister << ",\"omittedCounters\":" << omittedCounters;
+    const auto &activity = timers.activity();
+    s << ",\"timerActivity\":{\"configWrites\":" << activity.configWrites
+      << ",\"countWrites\":" << activity.countWrites
+      << ",\"repeatedConfigWrites\":" << activity.repeatedConfigWrites
+      << ",\"repeatedCountWrites\":" << activity.repeatedCountWrites
+      << ",\"zeroCountWrites\":" << activity.zeroCountWrites
+      << ",\"autoEnableWrites\":" << activity.autoEnableWrites
+      << ",\"periodicRearms\":" << activity.periodicRearms
+      << ",\"unchangedArmedDeadline\":" << activity.unchangedArmedDeadline
+      << ",\"serviceCalls\":" << timers.serviceCalls()
+      << ",\"serviceTimerVisits\":" << timers.serviceTimerVisits()
+      << ",\"deadlineQueries\":" << timers.deadlineQueries()
+      << ",\"deadlineTimerVisits\":" << timers.deadlineTimerVisits()
+      << ",\"deliveryRetries\":" << timers.deliveryRetries()
+      << ",\"configFlags\":[";
+    for (unsigned i = 0; i < activity.configFlags.size(); ++i) {
+        if (i) s << ',';
+        s << activity.configFlags[i];
+    }
+    s << "]},\"calls\":[";
     bool comma = false;
     for (auto [code, n] : calls) { if (comma) s << ','; comma = true; s << "{\"code\":" << code << ",\"count\":" << n
           << ",\"failures\":" << (callFailures.contains(code) ? callFailures.at(code) : 0) << '}'; }

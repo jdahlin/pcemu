@@ -19,6 +19,19 @@ class ArmHyperVTimers {
     std::optional<uint64_t> nextDeadline(bool includeLazy = true) const;
     std::optional<uint64_t> nextDelay(uint64_t now, bool includeLazy = true) const;
     uint64_t delivered() const { return deliveries; }
+    struct Activity {
+        uint64_t configWrites = 0, countWrites = 0;
+        uint64_t repeatedConfigWrites = 0, repeatedCountWrites = 0;
+        uint64_t zeroCountWrites = 0, autoEnableWrites = 0;
+        uint64_t periodicRearms = 0, unchangedArmedDeadline = 0;
+        std::array<uint64_t, 16> configFlags{};
+    };
+    const Activity &activity() const { return writes; }
+    uint64_t serviceCalls() const { return services; }
+    uint64_t serviceTimerVisits() const { return visits; }
+    uint64_t deadlineQueries() const { return queries; }
+    uint64_t deadlineTimerVisits() const { return deadlineVisits; }
+    uint64_t deliveryRetries() const { return retries; }
   private:
     using Time = __uint128_t;
     struct Timer { uint64_t config = 0, count = 0; Time deadline = 0; bool armed = false; };
@@ -31,6 +44,9 @@ class ArmHyperVTimers {
     unsigned cpus;
     Deliver delivery;
     uint64_t deliveries = 0;
+    Activity writes;
+    uint64_t services = 0, visits = 0, retries = 0;
+    mutable uint64_t queries = 0, deadlineVisits = 0;
     static void arm(Timer &timer, Time now);
 };
 }
