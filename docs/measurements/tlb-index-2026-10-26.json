@@ -1,0 +1,1449 @@
+{
+  "decision": "Reject low-bit-only TLB indexing; keep XOR-folded hash. Timing noise prevents small-gain claims.",
+  "ordinary": {
+    "scope": "Diskless dependent RAM loads; three alternating O3 pairs, unchanged TLB size, low-bit index versus XOR-folded index. CPU/JIT harness excludes devices.",
+    "binaries": {
+      "baseline": "4e7d5c78be99839d487e3f715a6f9a19691c4611d21518c6e2e240d9e05ba516",
+      "candidate": "bd4a8c3df4e6615eecd37f97a1b9468e0ed1e7de4d6b1cfed193d54353d545ae"
+    },
+    "loadBefore": [
+      3.08642578125,
+      3.3232421875,
+      3.0712890625
+    ],
+    "backends": {
+      "jit": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.128670333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.128843666,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.150228209,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.427360625,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.182930209,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.182544958,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.219707584,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.628148125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.147989125,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.127552959,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.147010042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.277997167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.175676333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.180578459,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.21546175,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.067574375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10119157,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.126164917,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.125884334,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.142922458,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.559934375,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.180155,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.196685583,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.216496833,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.694688459,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10119157,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.1267615,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.126908792,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.143648875,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.287204292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.175104041,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.176006417,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.223614791,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.670423333,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.12741675,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.133527,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.15993875,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.938463834,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.199538792,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.207473417,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.254621042,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 1.59525775,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10127014,
+                "checksum": 20000000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "jit",
+            "dispatch": "batch",
+            "loops": 20000000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.127686791,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.127707167,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.14587,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.303188542,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.174219,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 0,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.181953209,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 3,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.210683958,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 121,
+                "checksum": 20000000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.633902292,
+                "guestInstructions": 80000001,
+                "nativeInstructions": 79999972,
+                "nativeCalls": 19999993,
+                "slowMemoryCalls": 10119157,
+                "checksum": 20000000
+              }
+            ]
+          }
+        }
+      ],
+      "interpreter": [
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013946375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013416875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.014135166,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.0191535,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.016878583,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016555917,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.017227542,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.023869916,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013583833,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013953709,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013351125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.016448458,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.016914,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016485167,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.016422042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.024572583,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013271292,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.01324975,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013128708,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.02135075,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.016876958,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016562875,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.01693625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.028017375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013818916,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013950541,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.014339917,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.025367042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.018463417,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016933042,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.0169945,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.029658125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        },
+        {
+          "baseline": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013972125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.014199084,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.0138235,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.021174708,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.017580458,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.01692075,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.017196416,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.029775917,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          },
+          "candidate": {
+            "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+            "backend": "interpreter",
+            "dispatch": "batch",
+            "loops": 200000,
+            "seed": 12648430,
+            "samples": [
+              {
+                "bytes": 4096,
+                "paged": false,
+                "hostSeconds": 0.013880375,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": false,
+                "hostSeconds": 0.013813417,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": false,
+                "hostSeconds": 0.013689625,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": false,
+                "hostSeconds": 0.022131708,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 4096,
+                "paged": true,
+                "hostSeconds": 0.0168315,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 32768,
+                "paged": true,
+                "hostSeconds": 0.016734125,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 524288,
+                "paged": true,
+                "hostSeconds": 0.01672275,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              },
+              {
+                "bytes": 8388608,
+                "paged": true,
+                "hostSeconds": 0.027221209,
+                "guestInstructions": 800001,
+                "nativeInstructions": 0,
+                "nativeCalls": 0,
+                "slowMemoryCalls": 0,
+                "checksum": 200000
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "loadAfter": [
+      3.8095703125,
+      3.470703125,
+      3.1279296875
+    ]
+  },
+  "alias": {
+    "scope": "Same dependent ring with data base moved from 2 MiB to 4 MiB, aliasing code page zero under low-bit-only indexing. Three alternating pairs.",
+    "pairs": [
+      {
+        "baseline": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.018394417,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 0,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.027265625,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 468760,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.023776542,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31366,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.168542167,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1008416,
+              "checksum": 2000000
+            }
+          ]
+        },
+        "candidate": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.042120125,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1999993,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.026705417,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 460937,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.022753875,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31370,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.065707333,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1012178,
+              "checksum": 2000000
+            }
+          ]
+        }
+      },
+      {
+        "candidate": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.04141275,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1999993,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.025541542,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 460937,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.0206715,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31370,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.057107917,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1012178,
+              "checksum": 2000000
+            }
+          ]
+        },
+        "baseline": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.017656833,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 0,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.027930958,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 468760,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.023403875,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31366,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.19264675,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1008416,
+              "checksum": 2000000
+            }
+          ]
+        }
+      },
+      {
+        "baseline": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.0194205,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 0,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.027775584,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 468760,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.023458375,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31366,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.215807958,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1008416,
+              "checksum": 2000000
+            }
+          ]
+        },
+        "candidate": {
+          "scope": "CPU/JIT-only dependent RAM loads; cold JIT; no devices or disk",
+          "backend": "jit",
+          "dispatch": "batch",
+          "loops": 2000000,
+          "seed": 12648430,
+          "samples": [
+            {
+              "bytes": 4096,
+              "paged": true,
+              "hostSeconds": 0.043426333,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1999993,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 32768,
+              "paged": true,
+              "hostSeconds": 0.028313667,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 460937,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 524288,
+              "paged": true,
+              "hostSeconds": 0.0229385,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 31370,
+              "checksum": 2000000
+            },
+            {
+              "bytes": 8388608,
+              "paged": true,
+              "hostSeconds": 0.187982834,
+              "guestInstructions": 8000001,
+              "nativeInstructions": 7999972,
+              "nativeCalls": 1999993,
+              "slowMemoryCalls": 1012178,
+              "checksum": 2000000
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "aliasExactChecks": [
+    {
+      "baselineSlowCalls": 0,
+      "candidateSlowCalls": 1999993
+    },
+    {
+      "baselineSlowCalls": 0,
+      "candidateSlowCalls": 1999993
+    },
+    {
+      "baselineSlowCalls": 0,
+      "candidateSlowCalls": 1999993
+    }
+  ],
+  "prototypePatch": "--- a/src/cpu.cpp\n+++ b/src/cpu.cpp\n@@ -77,7 +77,7 @@\n     if (cr[0] & 0x80000000u) {\n         if (tlbCR3 != cr[3]) return physicalSlow(a, wr);\n         const uint32_t page = a >> 12;\n-        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];\n+        const auto &entry = tlb[page & (tlb.size() - 1)];\n         if (entry.epoch != tlbEpoch || entry.tag != page || (wr && !entry.dirty))\n             return physicalSlow(a, wr);\n         if ((!(entry.permissions & 4) || (wr && !(entry.permissions & 2))) &&\n@@ -102,7 +102,7 @@\n             throw Fault{14, uint32_t((present ? 1 : 0) | (wr ? 2 : 0) | (user() ? 4 : 0)), true};\n         };\n         uint32_t page = a >> 12;\n-        auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];\n+        auto &entry = tlb[page & (tlb.size() - 1)];\n         if (entry.epoch != tlbEpoch || entry.tag != page) {\n             auto raw = [&](uint32_t p) {\n                 if (uint64_t(p) + 4 > mem.size())\n@@ -1075,7 +1075,7 @@\n                     bool ready = true;\n                     if (cr[0] & 0x80000000u) {\n                         uint32_t page = dst >> 12;\n-                        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];\n+                        const auto &entry = tlb[page & (tlb.size() - 1)];\n                         ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&\n                                 entry.tag == page && entry.dirty &&\n                                 (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);\n@@ -1119,7 +1119,7 @@\n                         physicalStart = linear;\n                         if (cr[0] & 0x80000000u) {\n                             uint32_t page = linear >> 12;\n-                            const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];\n+                            const auto &entry = tlb[page & (tlb.size() - 1)];\n                             unsigned permissions = write ? 6 : 4;\n                             if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||\n                                 (write && !entry.dirty) ||\n--- a/src/jit.cpp\n+++ b/src/jit.cpp\n@@ -15,7 +15,7 @@\n     if (!(cpu.cr[0] & 1) || (cpu.flags & 0x20000) || !cs.unusable) {\n         const uint32_t linear = cs.base + cpu.ip;\n         const uint32_t page = linear >> 12;\n-        const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size() - 1)];\n+        const auto &entry = cpu.tlb[page & (cpu.tlb.size() - 1)];\n         if (cpu.tlbCR3 == cpu.cr[3] && entry.epoch == cpu.tlbEpoch && entry.tag == page &&\n             ((entry.permissions & 4) || cpu.cpl() != 3 || cpu.systemAccess)) {\n             uint32_t physical = entry.base | (linear & 4095);\n--- a/src/jit_arm64.cpp\n+++ b/src/jit_arm64.cpp\n@@ -735,8 +735,7 @@\n                 }\n                 if (block.cr0 & 0x80000000u) {\n                     emit(0x530c7d2au); // lsr w10,w9,#12 (page tag)\n-                    emit(0x4a4a294bu); // eor w11,w10,w10,lsr #10\n-                    emit(0x1200256bu); // and w11,w11,#1023\n+                    emit(0x1200254bu); // and w11,w10,#1023\n                     emit(0x0b0b096bu); // add w11,w11,w11,lsl #2\n                     static_assert(sizeof(CPU::TLBEntry) == 20);\n                     static_assert(offsetof(CPU::TLBEntry, permissions) == 16);\n",
+  "buildCommand": [
+    "clang++",
+    "-std=c++20",
+    "-O3",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-I/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/cpu.cpp",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/jit.cpp",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/jit_decode.cpp",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/jit_flags.cpp",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/jit_runtime.cpp",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/source/jit_arm64.cpp",
+    "tools/memory_chase_bench.cpp",
+    "-o",
+    "/Users/johandahlin/dev/pcemu/build/tlb-direct-index/candidate-bench"
+  ],
+  "aliasBenchmarkPatch": "--- a/tools/memory_chase_bench.cpp\n+++ b/tools/memory_chase_bench.cpp\n@@ -50,7 +50,7 @@\n             if ((paged && paging == \"flat\") || (!paged && paging == \"paged\"))\n                 continue;\n             for (unsigned bytes : {4096u, 32768u, 524288u, 8388608u}) {\n-                constexpr unsigned base = 0x200000, stride = 64;\n+                constexpr unsigned base = 0x400000, stride = 64;\n                 CPU cpu(16 * 1024 * 1024);\n                 cpu.cr[0] = 0x11;\n                 cpu.s[CS].big = true;\n",
+  "aliasBinaryHashes": {
+    "baseline": "d8c8e9de9773bb532f3840f899f46a307038ec021d21be0632cc94a7e05be24c",
+    "candidate": "ecabc9eece6ebbd40dd377396a49136587265283b8a7a4741c4f68f659a8bc72"
+  }
+}
