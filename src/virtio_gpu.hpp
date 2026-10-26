@@ -54,9 +54,9 @@ class VirtioGpu : public VirtioDevice {
     std::optional<uint32_t> handle(unsigned queue, const Chain &chain) override;
     std::vector<uint8_t> control(std::span<const uint8_t> request, size_t responseCapacity);
     void cursor(std::span<const uint8_t> request);
-    uint64_t configRead(unsigned offset, unsigned width) const override;
-    void configWrite(unsigned offset, uint64_t value, unsigned width) override;
-    void deviceReset() override;
+    uint64_t read_device_configuration(unsigned offset, unsigned width) const override;
+    void write_device_configuration(unsigned offset, uint64_t value, unsigned width) override;
+    void reset_device() override;
     void readBacking(const Resource &resource, uint64_t offset, std::span<uint8_t> output) const;
     static uint64_t get(std::span<const uint8_t> bytes, size_t offset, unsigned width = 4);
     static void put(std::vector<uint8_t> &bytes, size_t offset, uint64_t value, unsigned width = 4);

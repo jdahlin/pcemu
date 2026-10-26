@@ -33,8 +33,8 @@ class VirtioSerial : public VirtioDevice {
     bool deviceReady = false;
     std::deque<std::vector<uint8_t>> controls;
     std::optional<uint32_t> handle(unsigned queue, const Chain &chain) override;
-    uint64_t configRead(unsigned offset, unsigned width) const override;
-    void deviceReset() override;
+    uint64_t read_device_configuration(unsigned offset, unsigned width) const override;
+    void reset_device() override;
     void notified(unsigned) override {
         poll();
     }

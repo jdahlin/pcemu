@@ -19,7 +19,7 @@ void VirtioGpu::rememberFrame() {
     if (active())
         pixels(lastFrame, lastWidth, lastHeight);
 }
-void VirtioGpu::deviceReset() {
+void VirtioGpu::reset_device() {
     rememberFrame();
     resources.clear();
     allocated = 0;
@@ -46,7 +46,7 @@ bool VirtioGpu::contains(const Resource &r, Rect box) {
     return box.width && box.height && box.x <= r.width && box.y <= r.height &&
            box.width <= r.width - box.x && box.height <= r.height - box.y;
 }
-uint64_t VirtioGpu::configRead(unsigned offset, unsigned width) const {
+uint64_t VirtioGpu::read_device_configuration(unsigned offset, unsigned width) const {
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i) {
         unsigned at = offset + i;
@@ -57,7 +57,7 @@ uint64_t VirtioGpu::configRead(unsigned offset, unsigned width) const {
     }
     return value;
 }
-void VirtioGpu::configWrite(unsigned offset, uint64_t value, unsigned width) {
+void VirtioGpu::write_device_configuration(unsigned offset, uint64_t value, unsigned width) {
     for (unsigned i = 0; i < width; ++i)
         if (offset + i >= 4 && offset + i < 8)
             events &= ~(uint32_t(uint8_t(value >> (i * 8))) << ((offset + i - 4) * 8));

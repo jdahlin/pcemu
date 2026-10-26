@@ -19,23 +19,23 @@ void VirtioBalloon::setTargetPages(uint32_t pages) {
         throw std::runtime_error("Balloon target exceeds guest RAM");
     if (target != pages) {
         target = pages;
-        configurationChanged();
+        configuration_changed();
     }
 }
 void VirtioBalloon::requestStats() {
     if (!negotiated(1) || !running())
         return;
     wantStats = true;
-    process(2);
+    process_queue(2);
 }
-void VirtioBalloon::deviceReset() {
+void VirtioBalloon::reset_device() {
     actual = inflatedCount = 0;
     std::fill(inflated.begin(), inflated.end(), false);
     std::fill(discarded.begin(), discarded.end(), false);
     wantStats = false;
     stats.clear();
 }
-uint64_t VirtioBalloon::configRead(unsigned offset, unsigned width) const {
+uint64_t VirtioBalloon::read_device_configuration(unsigned offset, unsigned width) const {
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i) {
         unsigned at = offset + i;
@@ -46,7 +46,7 @@ uint64_t VirtioBalloon::configRead(unsigned offset, unsigned width) const {
     }
     return value;
 }
-void VirtioBalloon::configWrite(unsigned offset, uint64_t value, unsigned width) {
+void VirtioBalloon::write_device_configuration(unsigned offset, uint64_t value, unsigned width) {
     uint32_t next = actual;
     for (unsigned i = 0; i < width; ++i) {
         unsigned at = offset + i;
@@ -56,7 +56,7 @@ void VirtioBalloon::configWrite(unsigned offset, uint64_t value, unsigned width)
         }
     }
     if (next > maximumPages) {
-        broken("Balloon actual exceeds guest RAM");
+        require_device_reset("Balloon actual exceeds guest RAM");
         return;
     }
     actual = next;

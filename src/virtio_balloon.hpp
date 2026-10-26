@@ -33,8 +33,8 @@ class VirtioBalloon : public VirtioDevice {
     bool wantStats = false, legacyPfn64;
     std::map<uint16_t, uint64_t> stats;
     std::optional<uint32_t> handle(unsigned queue, const Chain &chain) override;
-    uint64_t configRead(unsigned offset, unsigned width) const override;
-    void configWrite(unsigned offset, uint64_t value, unsigned width) override;
-    void deviceReset() override;
+    uint64_t read_device_configuration(unsigned offset, unsigned width) const override;
+    void write_device_configuration(unsigned offset, uint64_t value, unsigned width) override;
+    void reset_device() override;
 };
 } // namespace pc

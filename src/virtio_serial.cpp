@@ -17,14 +17,14 @@ VirtioSerial::VirtioSerial(std::span<uint8_t> ram, uint64_t base, Interrupt irq,
         ports.push_back(Port{std::move(name), false, false, false, {}, {}});
     }
 }
-uint64_t VirtioSerial::configRead(unsigned offset, unsigned width) const {
+uint64_t VirtioSerial::read_device_configuration(unsigned offset, unsigned width) const {
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i)
         if (offset + i == 4)
             value |= uint64_t(ports.size()) << (i * 8);
     return value; // size and emergency output are not advertised.
 }
-void VirtioSerial::deviceReset() {
+void VirtioSerial::reset_device() {
     deviceReady = false;
     controls.clear();
     for (auto &port : ports) {
@@ -79,15 +79,15 @@ std::vector<uint8_t> VirtioSerial::takeOutput(size_t maximum, unsigned id) {
     return bytes;
 }
 void VirtioSerial::poll() {
-    process(3);
+    process_queue(3);
     if (!controls.empty())
-        process(2);
+        process_queue(2);
     for (unsigned id = 0; id < ports.size(); ++id) {
         auto &port = ports[id];
         unsigned rx = id ? 2 + id * 2 : 0;
-        process(rx + 1);
+        process_queue(rx + 1);
         if (port.ready && port.guestOpen && port.hostOpen && !port.incoming.empty())
-            process(rx);
+            process_queue(rx);
     }
 }
 std::optional<uint32_t> VirtioSerial::handle(unsigned queue, const Chain &chain) {

@@ -1,233 +1,319 @@
+// Virtio devices exchange buffers through virtqueues in guest RAM. This shared
+// core implements the modern MMIO register layout and split-ring format used by
+// the console, balloon and GPU models. The driver negotiates features, supplies
+// descriptor/available/used addresses, marks queues ready and sets DRIVER_OK.
+// A notification consumes available chains: readable buffers carry requests,
+// writable buffers receive responses, and used entries publish completion lengths.
+// An interrupt callback carries used-buffer or configuration-change causes to the
+// machine/PCI adapter; acknowledging causes lowers it once none remain pending.
+//
+// IMPLEMENTATION NOTE: All calls run with virtual CPUs stopped, so queue reads,
+// backing device work and completion publication are serialized host operations.
+// DMA is restricted to the bound RAM span, queues to 256 entries, chains to 16 MiB
+// and configuration to the first 64 bytes. These are host bounds, not Virtio limits.
+// Only direct split descriptors are accepted; packed/indirect rings, EVENT_IDX
+// and per-queue reset are not implemented. The core always offers VERSION_1;
+// derived devices must not advertise queue formats/features the core cannot serve.
+// Invalid queue input records a host-readable reason and sets DEVICE_NEEDS_RESET;
+// invalid register access throws. A handler may defer a chain without consuming it.
+// FIXME: Status writes currently replace flags rather than enforcing every legal
+// initialization transition. Keep this compatibility behavior during documentation.
+// Virtio 1.2, 2.1/2.2, 2.7 Split Virtqueues, 3.1 initialization and 4.2 MMIO.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-110001
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-350007
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
+
 #include "virtio_device.hpp"
+#include "virtio_registers.hpp"
 #include <algorithm>
 #include <bitset>
 #include <stdexcept>
 
 namespace pc {
+namespace {
+// IMPLEMENTATION NOTE: Limit registered queues (independent of per-queue entries).
+constexpr unsigned MaximumQueueCount = 256;
+// IMPLEMENTATION NOTE: Maximum total readable+writable bytes per request.
+constexpr uint64_t MaximumChainBytes = 16 * 1024 * 1024;
+// IMPLEMENTATION NOTE: Forward only the first 64 device-specific configuration bytes.
+constexpr unsigned DeviceConfigurationEnd = 0x140;
+// Feature words and guest physical addresses are transferred in 32-bit halves.
+constexpr unsigned FeatureWordBits = 32, FeatureWordCount = 2, BitsPerByte = 8;
+constexpr uint64_t LowAddressMask = 0xffffffffull, HighAddressMask = 0xffffffff00000000ull;
+// Either device- or driver-reported failure stops further queue configuration.
+constexpr uint32_t FailureStatus = virtio::DeviceNeedsReset | virtio::Failed;
+} // namespace
+// Bind RAM, type/features and interrupt callback; reject an invalid host queue count.
+// Virtio 1.2; RAM bounds and serialized execution are host policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
 VirtioDevice::VirtioDevice(std::span<uint8_t> r, uint64_t base, uint32_t deviceId, unsigned count,
                            uint64_t bits, Interrupt irq)
-    : ram(r), ramBase(base), features(bits | (1ull << 32)), id(deviceId), queues(count),
+    : ram(r), ramBase(base), features(bits | virtio::Version1Feature), id(deviceId), queues(count),
       interrupt(std::move(irq)) {
-    if (!count || count > 256)
+    if (!count || count > MaximumQueueCount)
         throw std::runtime_error("Invalid virtio queue count");
 }
+// Resolve a guest physical span, rejecting overflow and accesses outside bound RAM.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-350007
 std::span<uint8_t> VirtioDevice::memory(uint64_t address, uint64_t length) const {
     if (address < ramBase || length > ram.size() || address - ramBase > ram.size() - length)
         throw std::runtime_error("Virtio DMA outside guest RAM");
     return ram.subspan(address - ramBase, length);
 }
-uint64_t VirtioDevice::get(uint64_t address, unsigned width) const {
+// Read a little-endian split-ring field from validated guest RAM.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-350007
+uint64_t VirtioDevice::read_guest_value(uint64_t address, unsigned width) const {
     auto bytes = memory(address, width);
     uint64_t value = 0;
     for (unsigned i = 0; i < width; ++i)
-        value |= uint64_t(bytes[i]) << (i * 8);
+        value |= uint64_t(bytes[i]) << (i * BitsPerByte);
     return value;
 }
-void VirtioDevice::put(uint64_t address, uint64_t value, unsigned width) {
+// Publish a little-endian split-ring field to validated guest RAM.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-350007
+void VirtioDevice::write_guest_value(uint64_t address, uint64_t value, unsigned width) {
     auto bytes = memory(address, width);
     for (unsigned i = 0; i < width; ++i)
-        bytes[i] = uint8_t(value >> (i * 8));
+        bytes[i] = uint8_t(value >> (i * BitsPerByte));
 }
+// Clear transport/queue/error state, reset the derived device and lower its interrupt.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-110001
 void VirtioDevice::reset() {
     ++resetCount;
     featureSelect = driverSelect = queueSelect = status = interruptStatus = generation = 0;
     driverFeatures = 0;
     std::fill(queues.begin(), queues.end(), Queue{});
     failure.clear();
-    deviceReset();
+    reset_device();
     interrupt(false, 0);
 }
-void VirtioDevice::broken(const std::string &reason) {
+// Record a processing failure, set DEVICE_NEEDS_RESET and notify configuration change.
+// Virtio 1.2; RAM bounds and serialized execution are host policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-110001
+void VirtioDevice::require_device_reset(const std::string &reason) {
     failure = reason;
-    status |= 64;
-    configurationChanged();
+    status |= virtio::DeviceNeedsReset;
+    configuration_changed();
 }
-void VirtioDevice::configurationChanged() {
+// Advance ConfigGeneration and assert the configuration-change interrupt cause.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
+void VirtioDevice::configuration_changed() {
     ++generation;
-    interruptStatus |= 2;
+    interruptStatus |= virtio::ConfigurationChangeInterrupt;
     interrupt(true, lastInterruptQueue);
 }
+// Read MMIO transport state or a bounded device-specific configuration field.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
 uint64_t VirtioDevice::read(unsigned offset, unsigned width) const {
     if ((width != 1 && width != 2 && width != 4 && width != 8) || offset % width)
         throw std::runtime_error("Invalid virtio register access");
-    if (offset >= 0x100 && offset < 0x140 && width <= 0x140 - offset)
-        return configRead(offset - 0x100, width);
+    if (offset >= virtio::Register::DeviceConfigurationRegisters &&
+        offset < DeviceConfigurationEnd && width <= DeviceConfigurationEnd - offset)
+        return read_device_configuration(offset - virtio::Register::DeviceConfigurationRegisters,
+                                         width);
     if (width != 4)
         throw std::runtime_error("Virtio controls require 32-bit access");
     const auto *q = queueSelect < queues.size() ? &queues[queueSelect] : nullptr;
     switch (offset) {
-    case 0:
-        return 0x74726976;
-    case 4:
-        return 2;
-    case 8:
+    case virtio::Register::MagicValueRegister:
+        return virtio::MmioMagicValue;
+    case virtio::Register::VersionRegister:
+        return virtio::ModernMmioVersion;
+    case virtio::Register::DeviceIdRegister:
         return id;
-    case 12:
-        return 0x5043454d;
-    case 0x10:
-        return featureSelect < 2 ? uint32_t(features >> (32 * featureSelect)) : 0;
-    case 0x14:
+    case virtio::Register::VendorIdRegister:
+        return virtio::PcemuVendorId;
+    case virtio::Register::DeviceFeaturesRegister:
+        return featureSelect < FeatureWordCount
+                   ? uint32_t(features >> (FeatureWordBits * featureSelect))
+                   : 0;
+    case virtio::Register::DeviceFeaturesSelectorRegister:
         return featureSelect;
-    case 0x20:
-        return driverSelect < 2 ? uint32_t(driverFeatures >> (32 * driverSelect)) : 0;
-    case 0x24:
+    case virtio::Register::DriverFeaturesRegister:
+        return driverSelect < FeatureWordCount
+                   ? uint32_t(driverFeatures >> (FeatureWordBits * driverSelect))
+                   : 0;
+    case virtio::Register::DriverFeaturesSelectorRegister:
         return driverSelect;
-    case 0x30:
+    case virtio::Register::QueueSelectorRegister:
         return queueSelect;
-    case 0x34:
-        return q ? 256 : 0;
-    case 0x38:
+    case virtio::Register::QueueMaximumSizeRegister:
+        return q ? MaximumQueueEntries : 0;
+    case virtio::Register::QueueSizeRegister:
         return q ? q->size : 0;
-    case 0x44:
+    case virtio::Register::QueueReadyRegister:
         return q && q->ready;
-    case 0x60:
+    case virtio::Register::InterruptStatusRegister:
         return interruptStatus;
-    case 0x70:
+    case virtio::Register::StatusRegister:
         return status;
-    case 0x80:
+    case virtio::Register::QueueDescriptorLowRegister:
         return q ? uint32_t(q->descriptors) : 0;
-    case 0x84:
+    case virtio::Register::QueueDescriptorHighRegister:
         return q ? q->descriptors >> 32 : 0;
-    case 0x90:
+    case virtio::Register::QueueDriverLowRegister:
         return q ? uint32_t(q->available) : 0;
-    case 0x94:
+    case virtio::Register::QueueDriverHighRegister:
         return q ? q->available >> 32 : 0;
-    case 0xa0:
+    case virtio::Register::QueueDeviceLowRegister:
         return q ? uint32_t(q->used) : 0;
-    case 0xa4:
+    case virtio::Register::QueueDeviceHighRegister:
         return q ? q->used >> 32 : 0;
-    case 0xfc:
+    case virtio::Register::ConfigurationGenerationRegister:
         return generation;
     default:
         return 0;
     }
 }
-void VirtioDevice::validate(const Queue &q) const {
-    if (!q.size || q.size > 256 || (q.size & (q.size - 1)) || q.descriptors % 16 ||
-        q.available % 2 || q.used % 4)
+// Validate split-queue size, alignment and complete RAM extents before use.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-350007
+void VirtioDevice::validate_queue(const Queue &q) const {
+    if (!q.size || q.size > MaximumQueueEntries || (q.size & (q.size - 1)) ||
+        q.descriptors % virtio::DescriptorBytes || q.available % virtio::AvailableEntryBytes ||
+        q.used % sizeof(uint32_t))
         throw std::runtime_error("Invalid virtio split queue geometry");
-    memory(q.descriptors, uint64_t(q.size) * 16);
-    memory(q.available, 6 + uint64_t(q.size) * 2);
-    memory(q.used, 6 + uint64_t(q.size) * 8);
+    memory(q.descriptors, uint64_t(q.size) * virtio::DescriptorBytes);
+    memory(q.available,
+           virtio::RingFixedBytesWithEvent + uint64_t(q.size) * virtio::AvailableEntryBytes);
+    memory(q.used, virtio::RingFixedBytesWithEvent + uint64_t(q.size) * virtio::UsedEntryBytes);
 }
+// Apply MMIO initialization, queue setup/notification and interrupt acknowledgement.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
 void VirtioDevice::write(unsigned offset, uint64_t raw, unsigned width) {
     if ((width != 1 && width != 2 && width != 4 && width != 8) || offset % width)
         throw std::runtime_error("Invalid virtio register access");
-    if (offset >= 0x100 && offset < 0x140 && width <= 0x140 - offset) {
-        configWrite(offset - 0x100, raw, width);
+    if (offset >= virtio::Register::DeviceConfigurationRegisters &&
+        offset < DeviceConfigurationEnd && width <= DeviceConfigurationEnd - offset) {
+        write_device_configuration(offset - virtio::Register::DeviceConfigurationRegisters, raw,
+                                   width);
         return;
     }
     if (width != 4)
         throw std::runtime_error("Virtio controls require 32-bit access");
     uint32_t value = uint32_t(raw);
-    if (offset == 0x70 && !value) {
+    if (offset == virtio::Register::StatusRegister && !value) {
         reset();
         return;
     }
-    if (offset == 0x64) {
+    if (offset == virtio::Register::InterruptAcknowledgeRegister) {
         interruptStatus &= ~value;
         interrupt(interruptStatus != 0, lastInterruptQueue);
         return;
     }
-    if (status & 192)
+    if (status & FailureStatus)
         return;
     auto *q = queueSelect < queues.size() ? &queues[queueSelect] : nullptr;
-    auto address = [&](uint64_t &target, bool high) {
+    // Replace one address half only before QueueReady; active queue mutation needs reset.
+    // Virtio 1.2, 4.2.2 QueueDesc/QueueDriver/QueueDevice.
+    // https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-1670002
+    auto write_queue_address = [&](uint64_t &target, bool high) {
         if (q->ready) {
-            broken("Changing an active virtqueue");
+            require_device_reset("Changing an active virtqueue");
             return;
         }
-        target = high ? (target & 0xffffffffull) | (uint64_t(value) << 32)
-                      : (target & 0xffffffff00000000ull) | value;
+        target = high ? (target & LowAddressMask) | (uint64_t(value) << FeatureWordBits)
+                      : (target & HighAddressMask) | value;
     };
     switch (offset) {
-    case 0x14:
+    case virtio::Register::DeviceFeaturesSelectorRegister:
         featureSelect = value;
         break;
-    case 0x24:
+    case virtio::Register::DriverFeaturesSelectorRegister:
         driverSelect = value;
         break;
-    case 0x20:
-        if (status & 8) {
-            broken("Changing negotiated virtio features");
+    case virtio::Register::DriverFeaturesRegister:
+        if (status & virtio::FeaturesOk) {
+            require_device_reset("Changing negotiated virtio features");
             break;
         }
-        if (driverSelect < 2) {
-            auto shift = driverSelect * 32;
+        if (driverSelect < FeatureWordCount) {
+            auto shift = driverSelect * FeatureWordBits;
             driverFeatures =
-                (driverFeatures & ~(0xffffffffull << shift)) | (uint64_t(value) << shift);
+                (driverFeatures & ~(LowAddressMask << shift)) | (uint64_t(value) << shift);
         }
         break;
-    case 0x30:
+    case virtio::Register::QueueSelectorRegister:
         queueSelect = value;
         break;
-    case 0x38:
+    case virtio::Register::QueueSizeRegister:
         if (!q)
             break;
         if (q->ready)
-            broken("Changing active virtqueue size");
+            require_device_reset("Changing active virtqueue size");
         else
             q->size = value;
         break;
-    case 0x44:
+    case virtio::Register::QueueReadyRegister:
         if (!q)
             break;
         if (value > 1) {
-            broken("Invalid QueueReady");
+            require_device_reset("Invalid QueueReady");
             break;
         }
         if (value) {
             try {
-                validate(*q);
+                validate_queue(*q);
                 q->ready = true;
             } catch (const std::runtime_error &e) {
-                broken(e.what());
+                require_device_reset(e.what());
             }
         } else if (q->ready)
-            broken("Virtqueue reset was not negotiated");
+            require_device_reset("Virtqueue reset was not negotiated");
         break;
-    case 0x50:
+    case virtio::Register::QueueNotifyRegister:
         if (value < queues.size() && running())
             notified(value);
         break;
-    case 0x70:
-        status = value & 255;
-        if ((status & 8) && ((driverFeatures & ~features) || !(driverFeatures & (1ull << 32))))
-            status &= ~8u;
-        if ((status & 4) && !(status & 8))
-            broken("DRIVER_OK without modern features");
+    case virtio::Register::StatusRegister:
+        status = value & UINT8_MAX;
+        if ((status & virtio::FeaturesOk) &&
+            ((driverFeatures & ~features) || !(driverFeatures & virtio::Version1Feature)))
+            status &= ~uint32_t(virtio::FeaturesOk);
+        if ((status & virtio::DriverOk) && !(status & virtio::FeaturesOk))
+            require_device_reset("DRIVER_OK without modern features");
         break;
-    case 0x80:
+    case virtio::Register::QueueDescriptorLowRegister:
         if (q)
-            address(q->descriptors, false);
+            write_queue_address(q->descriptors, false);
         break;
-    case 0x84:
+    case virtio::Register::QueueDescriptorHighRegister:
         if (q)
-            address(q->descriptors, true);
+            write_queue_address(q->descriptors, true);
         break;
-    case 0x90:
+    case virtio::Register::QueueDriverLowRegister:
         if (q)
-            address(q->available, false);
+            write_queue_address(q->available, false);
         break;
-    case 0x94:
+    case virtio::Register::QueueDriverHighRegister:
         if (q)
-            address(q->available, true);
+            write_queue_address(q->available, true);
         break;
-    case 0xa0:
+    case virtio::Register::QueueDeviceLowRegister:
         if (q)
-            address(q->used, false);
+            write_queue_address(q->used, false);
         break;
-    case 0xa4:
+    case virtio::Register::QueueDeviceHighRegister:
         if (q)
-            address(q->used, true);
+            write_queue_address(q->used, true);
         break;
     default:
         break;
     }
 }
-VirtioDevice::Chain VirtioDevice::chain(const Queue &q, uint16_t index) const {
+// Walk a bounded direct descriptor chain; reject cycles and readable-after-writable order.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-430005
+VirtioDevice::Chain VirtioDevice::descriptor_chain(const Queue &q, uint16_t index) const {
     Chain result;
-    std::bitset<256> visited;
+    std::bitset<MaximumQueueEntries> visited;
     bool writing = false;
     for (;;) {
         if (index >= q.size || visited[index])
@@ -235,25 +321,29 @@ VirtioDevice::Chain VirtioDevice::chain(const Queue &q, uint16_t index) const {
                                      std::to_string(index) + " size=" + std::to_string(q.size) +
                                      " descriptors=" + std::to_string(q.descriptors));
         visited.set(index);
-        auto descriptor = q.descriptors + uint64_t(index) * 16;
-        auto flags = get(descriptor + 12, 2);
-        if (flags & ~3u)
+        auto descriptor = q.descriptors + uint64_t(index) * virtio::DescriptorBytes;
+        auto flags = read_guest_value(descriptor + virtio::DescriptorField::Flags, 2);
+        if (flags & ~uint32_t(virtio::DescriptorNext | virtio::DescriptorWrite))
             throw std::runtime_error("Unsupported virtio descriptor flags");
-        bool writable = (flags & 2) != 0;
+        bool writable = (flags & virtio::DescriptorWrite) != 0;
         if (writing && !writable)
             throw std::runtime_error("Readable buffer follows writable virtio buffer");
         writing |= writable;
-        auto bytes = memory(get(descriptor, 8), get(descriptor + 8, 4));
+        auto bytes = memory(read_guest_value(descriptor, 8),
+                            read_guest_value(descriptor + virtio::DescriptorField::Length, 4));
         result.segments.push_back({bytes, writable});
         (writable ? result.writable : result.readable) += bytes.size();
-        if (result.readable + result.writable > 16 * 1024 * 1024)
+        if (result.readable + result.writable > MaximumChainBytes)
             throw std::runtime_error("Virtio descriptor chain exceeds processing bound");
-        if (!(flags & 1))
+        if (!(flags & virtio::DescriptorNext))
             break;
-        index = uint16_t(get(descriptor + 14, 2));
+        index = uint16_t(read_guest_value(descriptor + virtio::DescriptorField::Next, 2));
     }
     return result;
 }
+// Gather device-readable segments, rejecting a request beyond the caller bound.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-430005
 std::vector<uint8_t> VirtioDevice::Chain::input(size_t maximum) const {
     if (readable > maximum)
         throw std::runtime_error("Virtio request exceeds device bound");
@@ -264,6 +354,9 @@ std::vector<uint8_t> VirtioDevice::Chain::input(size_t maximum) const {
             result.insert(result.end(), s.bytes.begin(), s.bytes.end());
     return result;
 }
+// Scatter response bytes into writable chain segments; reject insufficient capacity.
+// Virtio 1.2; RAM bounds and serialized execution are host policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-430005
 void VirtioDevice::Chain::output(std::span<const uint8_t> bytes) const {
     if (bytes.size() > writable)
         throw std::runtime_error("Virtio response buffer too small");
@@ -276,41 +369,50 @@ void VirtioDevice::Chain::output(std::span<const uint8_t> bytes) const {
                 break;
         }
 }
-void VirtioDevice::process(unsigned queue) {
+// Consume available chains until exhausted/deferred, publish used entries and notify the driver.
+// Virtio 1.2; host RAM bounds and serialized execution are implementation policy.
+// https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html#x1-540008
+void VirtioDevice::process_queue(unsigned queue) {
     if (!running() || queue >= queues.size() || !queues[queue].ready)
         return;
     auto &q = queues[queue];
     try {
-        validate(q);
-        auto next = uint16_t(get(q.available + 2, 2));
+        validate_queue(q);
+        auto next = uint16_t(read_guest_value(q.available + virtio::RingIndexOffset, 2));
         if (uint16_t(next - q.nextAvailable) > q.size)
             throw std::runtime_error("Virtio available ring overrun");
         bool completed = false;
         while (q.nextAvailable != next) {
-            auto head = uint16_t(get(q.available + 4 + uint64_t(q.nextAvailable % q.size) * 2, 2));
-            auto buffers = chain(q, head);
+            auto head = uint16_t(read_guest_value(q.available + virtio::RingEntriesOffset +
+                                                      uint64_t(q.nextAvailable % q.size) *
+                                                          virtio::AvailableEntryBytes,
+                                                  2));
+            auto buffers = descriptor_chain(q, head);
             auto length = handle(queue, buffers);
             if (!length)
                 break;
             if (*length > buffers.writable)
                 throw std::runtime_error("Invalid virtio used length");
-            auto entry = q.used + 4 + uint64_t(q.nextUsed % q.size) * 8;
-            put(entry, head, 4);
-            put(entry + 4, *length, 4);
+            auto entry = q.used + virtio::RingEntriesOffset +
+                         uint64_t(q.nextUsed % q.size) * virtio::UsedEntryBytes;
+            write_guest_value(entry, head, 4);
+            write_guest_value(entry + virtio::UsedLengthOffset, *length, 4);
             ++q.nextAvailable;
             ++q.nextUsed;
             ++completions;
-            put(q.used + 2, q.nextUsed, 2);
+            write_guest_value(q.used + virtio::RingIndexOffset, q.nextUsed, 2);
             completed = true;
         }
-        if (completed && !(get(q.available, 2) & 1)) {
+        if (completed && !(read_guest_value(q.available + virtio::RingFlagsOffset, 2) &
+                           virtio::AvailableNoInterrupt)) {
             lastInterruptQueue = queue;
-            interruptStatus |= 1;
+            interruptStatus |= virtio::UsedBufferInterrupt;
             interrupt(true, queue);
         }
     } catch (const std::runtime_error &e) {
-        broken("queue=" + std::to_string(queue) + " avail=" + std::to_string(q.nextAvailable) +
-               " used=" + std::to_string(q.nextUsed) + " " + e.what());
+        require_device_reset("queue=" + std::to_string(queue) +
+                             " avail=" + std::to_string(q.nextAvailable) +
+                             " used=" + std::to_string(q.nextUsed) + " " + e.what());
     }
 }
 } // namespace pc
