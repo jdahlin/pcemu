@@ -7,13 +7,14 @@ must not be read as the latest result.
 ## Current verified state
 
 - **MS-DOS 6.22:** the recovered external QCOW2/PCD parent boots through its
-  version and ready marker using the native batching candidate.
+  version and ready marker using the current integrated executable; all three
+  reset paths also reach a second DOS boot.
 - **Windows 3.11:** its completed installation boots headless, saves in Notepad,
-  returns to DOS and passes exact 25-byte file readback with the same batching candidate.
+  returns to DOS and passes exact 25-byte file readback with that same executable.
 - **rtts/win95 and installed OSR2:** both cold boot, run Calculator 2+2, copy the
   result through the clipboard into Notepad, save a fresh file, restart through
   firmware and pass exact stopped-guest 38-byte file readback.
-- **Fresh OSR2 Setup:** the native batching candidate completes clean-DOS
+- **Fresh OSR2 Setup:** the current integrated executable completes clean-DOS
   installation, all first-boot configuration and application/restart/persistence
   in one guest process. Three resets, actual process exit status 0 and exact
   38-byte readback pass. Its private compressed installation child is removed.
@@ -34,6 +35,10 @@ The emulator uses an original x86 core, AArch64 JIT, software TLB, ATA PIO,
 emulator's CPU or device implementation. Instruction and device coverage remain
 incomplete. Native instruction coverage alone does not establish good application
 performance.
+
+The current integrated acceptance run repeats all DOS/Windows functional gates
+with one frozen executable, including fresh Setup. Exact binary/source identity,
+provenance limits and disk cleanup are in the [acceptance report](integrated-acceptance.md).
 
 ## Performance evidence and open work
 

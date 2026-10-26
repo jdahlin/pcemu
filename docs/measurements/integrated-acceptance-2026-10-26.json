@@ -1,0 +1,1404 @@
+{
+  "scope": "Headless functional cold boots, applications, exact saved-file readback, guest resets and fresh Setup on one frozen current integrated executable; not performance measurements.",
+  "identity": {
+    "head": "4bd10c35b4aff09697818671a53e7131355ac073",
+    "dirtyFiles": [
+      " M Makefile",
+      " M docs/arm64-uefi.md",
+      " M docs/windows-arm64-roadmap.md",
+      " M src/frontend_sdl.cpp"
+    ],
+    "binarySha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+    "sourceHashes": {
+      "src/disk.cpp": "7d608244ab93c795443cf682477157d6847e826f891474c4b548bcc28838b7ff",
+      "src/pit.cpp": "14f777acd60d2d71f88107eecf8a95077287e4c484c2a0a1e4be79d492d29055",
+      "src/cmos_rtc.hpp": "e6a24f8490dca09ddf0cddf200e48e3bc265c34619a70c72f6f6ccd2a3e1292f",
+      "src/pic.cpp": "e471f008e3b1f58f4abb67af848a14d356907c52f580dc581f13f6969cbb8aa6",
+      "src/virtio_net.hpp": "63e7bdd14fd7f26247ffd2fb5a4c6739db0674d5ec4337b024e10222b43d1fb3",
+      "src/arm_hyperv_timesync.hpp": "07a817694a828986a33b2cab6a5a31713530b3ac87c2c4c1118add298e488e2e",
+      "src/vga_pci.cpp": "e670d1f7110b94601b54fea70739f98b01f8f15f7a9eb090e6d24e249daefca7",
+      "src/pc_bios.cpp": "63c016ee10e05698f95776d4eac2d6d09cbae802695e0c8a83a0914a31871c19",
+      "src/network.cpp": "032f101d5e656c62978db025d13046f4d0634bab8fd15be43112cca7123d20fb",
+      "src/arm_gpadl.cpp": "1668d15e18260fc27e11d520537f0bdeeaf259348fb1c9a725c86b9b0ce3fb2c",
+      "src/pci_ecam.cpp": "a32c5a8667685725d53b4d4044bc79cf9a97b7a4e03530993983ae790a24f01a",
+      "src/arm_hyperv_reference_clock.cpp": "3c3e7eeddbc02c575533502f0911556358daf79ceb71a95bc0ce9ed1bb7117ec",
+      "src/machine.hpp": "ce317514f26b7d4d1027bb0d9f5752814658a0e366ad2dc9bff6abd600461e90",
+      "src/arm_psci.hpp": "af96d2ab37362deaeb60142a15dfd7f010fcae05b41d34369a78063d6bf43b4c",
+      "src/cpu.hpp": "f6f49355029d17c9fc10efd962e2137aae444cc6adf0092785cbfb94e1a066af",
+      "src/arm_hyperv_heartbeat.hpp": "61b02f97334f78d85fa301b970429f6335eaa1b9c108aeb9b7004c152c1adcaa",
+      "src/arm_vmbus_ring.cpp": "aa5db73ffd31bbd8003be886fb53f31e151e3bcae6b862e9b3c144e3461899fc",
+      "src/jit_flags.hpp": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a",
+      "src/pc_bios_disk.hpp": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd",
+      "src/arm_hyperv_kvp_codec.cpp": "56cddd065b68ab327b3c23ed03427474298ef268cbf2bd4a4e6c94dc51d14d74",
+      "src/hvf_machine.cpp": "c053c6165b7aa73409ca9cc6289794df8f460bfdf3aaac8b62d9b17d9e14646d",
+      "src/pci32.hpp": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387",
+      "src/host_cursor.hpp": "b239858a70150ecc82a19fc7b0c2395c19616e290ec5cedf84f8605cdcbc6563",
+      "src/vga.hpp": "a3c873722b8df6a2bfb190b85ffa299982968a257168fac0f12c274019aed2da",
+      "src/absolute_mouse.hpp": "66cff8347c31dfa444d4504ec0649d8d82fd1cde29497da996a08c6eb12741bf",
+      "src/arm_pl031.cpp": "b86ce528810cb66b488071ef5984d42a3e72a2df6566ebda5f6e5e6215fe4904",
+      "src/host_key.hpp": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832",
+      "src/arm_vmbus.cpp": "de6e84c5487dc4812fe1a9755e282532518f95f0089f5d172c6b39aa9241a40e",
+      "src/virtio_pci.cpp": "a3a75c46fc3d381ed481f6c662c061b738760dbf8f62ba717ca4e5300bfaef91",
+      "src/ne2000.hpp": "b33d63f60116a814f6a6d0fc0ec6821f64410783bb1ea2de282e2bffe5db22b4",
+      "src/arm_hyperv_timers.hpp": "d1f5acdaba92f413a6b5e80613fa9b09fe0ab402fd804254aedb61267dadf756",
+      "src/session_diagnostics.hpp": "aad7049d133369c38f45a928b158f7c4c21959849254cfdf37bad74b2e4ab08c",
+      "src/arm_ramfb.cpp": "f0bbde7660fd28847021c6dfa80a26742d8f6753b80ba4a25a685b923319cdd6",
+      "src/arm_os_lock.hpp": "c8bce906fe70e769acbbf3f0d0e8056b9302fb1c1040d9f6c383e5ead93399e4",
+      "src/arm_pl011.hpp": "5f87cd4f4e3e480f6cf81814a554c66b0579d6d05ce58f83b0319bceedaefdc2",
+      "src/pc_firmware.cpp": "b5cf8f1d38d943a1a0810f8baaeb12df5b8a27fd2a9721b204222b641c3e6b4e",
+      "src/jit_memory.hpp": "37f9bf9bc73815f904d129e7122e3219d3f861134cdaeb864fa71b3c39b7f94c",
+      "src/virtio_rng.hpp": "2a44356da0e6d22db9953f64c9c003cdd985cd99638a0ee9a4f6f8c7dfde1151",
+      "src/vhdx.hpp": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f",
+      "src/arm_mmio.cpp": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6",
+      "src/arm_fw_cfg.hpp": "aef2a1a1c6929b6ddd6eb83aef61ec9da1ea10b3ab719fa6556a96e221c17e41",
+      "src/nvme.hpp": "f90d3d133fe861c13bc74b8d9d7f9327da80d0ec95655eb272dad47a32d25f53",
+      "src/ata.cpp": "6d45899efc77bb62e9a8f157fb04327e480356a3ff97ce5609472fa425e0c9a0",
+      "src/arm_virt.hpp": "221fea7a0047e4af5ca119522c745603c59fea6cc93b16406731675c844f9904",
+      "src/usb_xhci.cpp": "196780f3865edcf54bdfe31598c501d94df2416c1b5f5646908236d348dba9c5",
+      "src/qcow2.hpp": "e451669bdf9ca257c9770fc4bb2eff493f604ab3f55f7c54dcfd595e3d788f34",
+      "src/arm_nor_flash.cpp": "c4d4cc11e22ba17c50e2813240b6cc529019575c597bbc78d020f9b8aacf1405",
+      "src/arm_hyperv_shutdown.hpp": "5ca737696aa793b3315edac0f114d5ba184c5451f859edb8b24556b983eabb55",
+      "src/virtio_blk.cpp": "c9195a9ccd54ac788741b554b3c946b522309ca694f0bfc83c7d277516eb3341",
+      "src/jit_decode.cpp": "9b5f606f8bbe99739c987fea89961007a108ccb5e1169ed4ef3745a926e97cc8",
+      "src/cpu_benchmarks.hpp": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6",
+      "src/frontend_sdl.cpp": "a4fb577e51133042e57bf88664436d5ff3da58fc5e4f438b365bceb033db9aed",
+      "src/jit_ir.hpp": "c957ade52e89fe621874e1e343ec89defa30c65080a37a8e98897d6796ffb697",
+      "src/jit_runtime.cpp": "cceef457b944361e6cdcb7f89af87d062f09a526e98606edb2da8b0a415396a1",
+      "src/jit.cpp": "ed7bcc1498bb36fa500cb9104fc3f7d2d29154b18df69d0937a58a34230629c3",
+      "src/mouse.cpp": "23fd8ef530cb9a7068f40895885c7d22d58af730138a452a3e6fb8ed4d644ec6",
+      "src/pc_at_io.cpp": "9dcfd1fccf308d45fc22cdafee0fdf3fafd8eff1d86f589433d0a844f3e5143a",
+      "src/arm_hyperv.cpp": "74bc029dbdfd2d242ebd9293b1a0677ce4cdd5bd2836be887c1a4d179d1688ad",
+      "src/arm_hyperv_kvp.hpp": "557f9f1f042d58789ee194f8692398e95b5c2722db1ae78c7245aa6a938337f9",
+      "src/i8042.hpp": "e75f4c22648b50be0a77f5e90b834be46d99c2de1812d65d18110626dabb1170",
+      "src/pci.hpp": "c423049249975e812469de1311ecd06d2d667f29fc32a3b1583efcd9e26cc285",
+      "src/pc_display.hpp": "6022ec15639b40ad4452a926e4234e9f2e12487448009c2cf64dace01c49fcee",
+      "src/arm_gic_ns.cpp": "3802072bc90f1e404ea0954ef6965127c28d34fde8e1712337f9dfe3caebba93",
+      "src/host_keyboard.cpp": "e2e111bbad41028d981e1b99294aa16a3ee677f5684be0144cf0cd83094ef4f1",
+      "src/pc_input.hpp": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16",
+      "src/mmio_space.hpp": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84",
+      "src/arm_synic.hpp": "17dcf8726775f626c49345b5d3ae2a15da4e2cdca63faaacbb7e9b499f85fb49",
+      "src/ps2_guest_input.hpp": "e691fe5abee6f7e52d011ea1de05535bc371ae6fcc72dbe8d59753d07c0dd93a",
+      "src/i8259_pair.hpp": "0f9e199cc8c7cf1c099052d90412ecdc89b7bc3e21c2fd0c9d7adfef397d88af",
+      "src/arm_virt.cpp": "57379d00cfd944b85e95e2ac410f7facbf95c28a5b63d70fb1f5d9856681b435",
+      "src/usb_xhci.hpp": "022d3d81bb6b753e97c4844fcaf5d27980456461db0873d22c94d184ca35636b",
+      "src/arm_nor_flash.hpp": "47723989cded666594dbd25c092d29e2123a0605b0d187c6018cb4dc57cff2a3",
+      "src/ata.hpp": "3fabcf0ef206776e825b4178eb1137a0b5904b5076cf972e3b8f284b03b30c6b",
+      "src/jit_arm64.cpp": "daaa19c65ef6b585ec7444973b1b261164a4a4a31882d5d676cc05c5c4adf3c4",
+      "src/arm_hyperv_shutdown.cpp": "703b71a769afd469bc39d960486bc7191dc15f59abfe93be3d00608e5ef16d18",
+      "src/virtio_blk.hpp": "cf0e21bcbcba5e2406cdf8657d5a5ad70d6b908bf0c69785de093706bc5c393e",
+      "src/cpu_benchmarks.cpp": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6",
+      "src/debug_console.hpp": "69f79db93cbea68675d6c40ea362037a159b26d59d0cc5ffaafce3c1d489e29a",
+      "src/mouse.hpp": "43a536b32c2e06bb2dd79e237ceb548dcb38b1bed0a73c6353fd3337ac1ab9d9",
+      "src/jit_runtime.hpp": "c9155f697f12a4c9959dd2b27172974a29e0b9887e0884de0f05ee0396d3e5fb",
+      "src/snapshot.cpp": "331c6647d32fc6f1fe4a99bf551676671da28740cea0c68bfae1ae6242a2cd03",
+      "src/jit.hpp": "784484d3ec407e3b4ad5a22ad516d5a202bd7c2a5377a2b7df203920d2ed7ddc",
+      "src/arm_hyperv_kvp.cpp": "fd3ac5f1534991dbf930d3d46377016c1176f168c774cd621822f3c4831f7958",
+      "src/i8042.cpp": "5569e2ba1382a2d06c8232147a39f2622f6ead8091f0e118e5f306c48152aba8",
+      "src/pci.cpp": "877ad73c80492f9a677dab17cf33c52c507393e97dabd55f379cf536beb0635b",
+      "src/arm_hyperv.hpp": "39b14ac3bc49e61e9999f99f163da2a7094cac72bb53cf48211cd4e02d194a13",
+      "src/win95_shutdown.hpp": "518699b23c508ea90d13f827e5e23d99b26d353445fc2d47ec2de68a136e805c",
+      "src/pc_display.cpp": "7e977cf1d00858f4b0865f952fa8e17870c5003447bf0ca8c8bdb968042b6e9e",
+      "src/host_keyboard.hpp": "4a108f6fc4d3b94e6e3ff41296649777eef9b0b98f8e210939276bd21a35c280",
+      "src/host_key_state.hpp": "5399d55d17be4c2d206f8895bca663f77034eed61c2b042753e103733a6b1b82",
+      "src/arm_gic_ns.hpp": "b3470233968cc467b7169491ad4b4e83bbd363164f4d058d9f2b9a8b5421c47c",
+      "src/mmio_space.cpp": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794",
+      "src/int15.hpp": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580",
+      "src/pc_input.cpp": "f6b8a87edd59909376c56af34e3d26c68a596255e8906d670b2a20882d8ea3ee",
+      "src/usb_guest_input.hpp": "14b4fea264b012b18a2b74c17538e52cf6f3379212c239b7a35c9a3d39813c01",
+      "src/profile.hpp": "2ea873ee4c893d9be356f216ab2efd5ec62acb02d6d5ef3173c65a771c4c7deb",
+      "src/port92.hpp": "fa6d5d53d15b581351bcfb0891c24090e4fc5e1fc09a2e4f1174da0b32e02d7d",
+      "src/arm_synic.cpp": "f66e8f54b68123d0c89feca0063d74bf90402bc9457fdd78972998242fc214ea",
+      "src/i8259_pair.cpp": "891d2cfdcbe0f2ce9a57f9432ecb4751fa951dac2d285789d97ae26c46684fff",
+      "src/io_port_space.hpp": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8",
+      "src/pc_bios_video.cpp": "5977ff3125b86a0dfc0696532bc70dbd4b21db5d3b85a62d844532f9f1317446",
+      "src/disk.hpp": "226dc17367431ec0b7f3b467e0e820748ac1531f6216862e4ccce766f652682f",
+      "src/pic.hpp": "95450a842d8efc435b5659767e3cfd7a83d70c459cb25a4c292009407472c61e",
+      "src/cmos_rtc.cpp": "905c8777f0a10a96f5222f101ad30d7e7532d6967817f4e6d0726c95a1479389",
+      "src/pit.hpp": "5b4fb804a1a7495673fc7a3ead6f7c236828af1b84a0d64d86eb61dff1e48841",
+      "src/arm_hyperv_timesync.cpp": "201c66d08f39be85db5351e4c4cedea28ba48a69ce176e4349667bc38d3e3537",
+      "src/vga_pci.hpp": "e478892b7ef35b6d9f5a368482646608847b7065af31dcd7722efe75b85e31b7",
+      "src/virtio_net.cpp": "fbb6147de4aa04541f1e42511860648db56634d4a7ea7beaa5963dd2837b1865",
+      "src/pci_ecam.hpp": "8b12051941a57b23e911db175c248af529c29d36eae93a166be758a846dbe27f",
+      "src/arm_gpadl.hpp": "99ef4d0fa20e42f03f00002624b33422de505ccc14e69c022cbe44270bbe3d4d",
+      "src/machine_profile.hpp": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd",
+      "src/network.hpp": "5bc55170d08fad3dc4f6e7d5f1bc5d34821d71402f530d8d5315d3149223357f",
+      "src/hvf_gic_bootstrap.hpp": "a7d3cc582f3c09a0dcb1b221640b5d6820b406a5fe9612b5462ec0a5be913df7",
+      "src/arm_psci.cpp": "b4458141529e6be8d19236bff2973ff134471271322a82ad83876c15146bb02d",
+      "src/arm_hyperv_reference_clock.hpp": "7c15ba4131ef8c3cd86f79f9e63fdb868dcb1bd2a876eb37074054d43440e932",
+      "src/machine.cpp": "74ce58d3b30f1bdfc303d26bbe9f9c4232b4c1f14f10fc26ee3e380f3b42a7be",
+      "src/cpu.cpp": "7d611a82be43fd544cbaa753a5bb080786ce70794746638dde6f9e8c99a5bb44",
+      "src/arm_hyperv_heartbeat.cpp": "30e03b41a8e680fc1596a78b5cbeb738d475da84a341f4c632d192e7fae05b85",
+      "src/jit_flags.cpp": "5f0d9c03a41f7756664854102b9cdb8d755db76448fca978d1e892607d34838f",
+      "src/pc_bios_disk.cpp": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521",
+      "src/arm_hyperv_kvp_codec.hpp": "e4fc77682e44a16f417a12ec60b7a413a444a67e5383f0cdd751b8774af850bb",
+      "src/arm_vmbus_ring.hpp": "2c0e798aa9141c5762f1ffa82cbc180007667f1c63b0b9947dc61e509459e865",
+      "src/hvf_machine.hpp": "2b2a88be6d5c3bd889c477d2f04d06f7657bea8aa948fd81de9ccaae775ac108",
+      "src/system_port_b.hpp": "8c5d8f0c4d758c7605824412c16a1c8720f8c3ab7bc4d84f3379d1b47b8a5c58",
+      "src/arm_pl031.hpp": "45e19414eb6cd605dcbfdc2262239ab125360a1f448981e5009dbf80e5a605b6",
+      "src/frontend.hpp": "ffffe1a8a6471c9855b4d7bb5d9651676b9f1c0426d872e9bf173bba7e851507",
+      "src/hvf_secondary.hpp": "c3524f8a45b18a91c01e39362f46affb3ca6d33f476d2e6edfd2ef79683d991b",
+      "src/vga.cpp": "9f1b678809349ba100e3fff7ec6e0dd321f923d3d7a59c2c07384b3e62344578",
+      "src/arm_vmbus.hpp": "3838bc4dc7424d00a40eca9a2a8f0cfc8747ee736e62c7461d931802bfb91119",
+      "src/main.cpp": "597e7b3e24673e62da6d0ff7f321521ace824f54d263a6e9abfa41f4873e6ba0",
+      "src/ne2000.cpp": "71a8f1b3f7b73ccad3a8334f283cad2d019409adb0fccb2a2a0f2968acaab4f5",
+      "src/virtio_pci.hpp": "9827b1adb8049d1df00fe8d497cdc98bc5856b374138e169e7d39622399cc4f4",
+      "src/arm_ramfb.hpp": "04a0a1d5cbe0c19944b08ca1490c68ed00fc4a1526cee3f3bd0b42455f3fd7f5",
+      "src/arm_pl011.cpp": "0c7a52450bed4cf491884f4af89673d95e8ed929e3c0317682acd0b70924e0b6",
+      "src/arm_os_lock.cpp": "4f30890dd332f22b15234f10ad6fa979e18548733e599628398deb48ef4728fe",
+      "src/session_diagnostics.cpp": "fb9c5cefbd4f5361cc8cc2944b9982160a30aaa2e141960dfb94219219eb992e",
+      "src/arm_hyperv_timers.cpp": "08175a7b88cb20dd8c86503aeabfb4771de4ff8dbe2aa8a0588c3b231370ff8f",
+      "src/frontend_input.hpp": "908dbf33d8c3505c4f89faac0f46848e0f5a85b9fa5a95f8b4941fe767d09cae",
+      "src/arm_virt_devices.cpp": "6d3e89f9bdfb8f1a22121abac3b03393299e97c05bf762d625bea4af00a21c45",
+      "src/virtio_rng.cpp": "ff585564d1358d8d1b8a45aec6a605668310dd50554886c128f76ca7aae8d49f",
+      "src/nvme.cpp": "c0e415e74320c29efeaec947d1ed1f83d2184303c449b03b27c58fc9d371e83d",
+      "src/arm_mmio.hpp": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87",
+      "src/arm_fw_cfg.cpp": "5d06f8ee905566d4a21e81532df0d256ba38ba8981054fa5354f92aa3940fd53",
+      "src/socket_wakeup.hpp": "009ed00b5daafa915d8b76e7d02f0fc39159a25f578da6e1d89f462acc4f154e"
+    },
+    "scope": "Current CMake Debug build frozen before headless acceptance; dirty source files recorded, not committed by this audit."
+  },
+  "dos": {
+    "scope": "Cold MS-DOS 6.22 boot through VGA ROM and VER command; OCR and real mode state verified.",
+    "state": {
+      "ip": 73,
+      "flags": 582,
+      "cr0": 16,
+      "cr3": 0,
+      "cr2": 0,
+      "gdtBase": 0,
+      "gdtLimit": 0,
+      "idtBase": 0,
+      "idtLimit": 1023,
+      "trBase": 0,
+      "trSelector": 0,
+      "ldtBase": 0,
+      "registers": [
+        1792,
+        1414,
+        278,
+        892,
+        2670,
+        0,
+        35,
+        507
+      ],
+      "segments": [
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 592,
+          "base": 9472,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 278,
+          "base": 4448,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 112,
+          "base": 1792,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        },
+        {
+          "selector": 0,
+          "base": 0,
+          "limit": 65535,
+          "big": 0,
+          "unusable": 0
+        }
+      ],
+      "instructions": 200000003,
+      "resets": 0,
+      "resetRequested": 0,
+      "nativeInstructions": 121946001,
+      "executionWallNs": 3946337279,
+      "nativeMemoryCalls": 3353164,
+      "executionEpoch": 0,
+      "machineProfile": "pc-legacy",
+      "machinePlatform": "pc-legacy-v1",
+      "executionBackend": "jit",
+      "jitFollowJumps": 1,
+      "jitTraces": 0,
+      "ramBytes": 16777216,
+      "disk": "/Users/johandahlin/dev/pcemu/build/integrated-audit/dos.pcd",
+      "compiledBlocks": 1455,
+      "cacheRecycles": 0,
+      "halted": 0,
+      "waitingKey": 0,
+      "hostInput": 1,
+      "network": {
+        "isr": 128,
+        "imr": 0,
+        "command": 33,
+        "current": 0,
+        "boundary": 0,
+        "transmitted": 0,
+        "received": 0,
+        "dropped": 0
+      },
+      "absoluteMouse": {
+        "active": 0,
+        "queuedWords": 0
+      },
+      "hostCursor": {
+        "active": 0,
+        "visible": 0,
+        "size": 0,
+        "revision": 0,
+        "shapeHash": 2166136261,
+        "hotX": 0,
+        "hotY": 0
+      },
+      "mouse": {
+        "enabled": 0,
+        "id": 0,
+        "pendingPackets": 0,
+        "auxOutput": 0
+      },
+      "video": {
+        "graphics": 0,
+        "width": 640,
+        "height": 200,
+        "memoryMode": 3,
+        "shiftMode": 16,
+        "dispiEnabled": 0,
+        "bpp": 8,
+        "crtc": [
+          95,
+          79,
+          80,
+          130,
+          85,
+          129,
+          191,
+          31,
+          0,
+          79,
+          13,
+          14,
+          0,
+          0,
+          6,
+          68,
+          156,
+          142,
+          143,
+          40,
+          31,
+          150,
+          185,
+          163,
+          255,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "pic": [
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 252,
+          "base": 8,
+          "autoEOI": 0
+        },
+        {
+          "irr": 0,
+          "isr": 0,
+          "mask": 255,
+          "base": 112,
+          "autoEOI": 0
+        }
+      ],
+      "pit0": {
+        "reload": 65536,
+        "loadedAt": 0,
+        "mode": 3,
+        "nullCount": 0,
+        "writeHigh": 0,
+        "value": 7936
+      },
+      "keyboard": {
+        "full": 0,
+        "data": 156,
+        "pendingScans": 0,
+        "pendingReplies": 0,
+        "commandByte": 69
+      }
+    },
+    "ocr": "PURMU BOS\nIBM PC compatible firmware\n\nTe memory: 16384 KB\nUGA display initialized\nHard disk; detected\nFloppy drive: none\nBooting from hard disk...\nStarting MS-DOS...\nMS-DOS Version 6.22\n\nPCEMU MS-DOS ready\nCr \\ver\nMS-DOS Version 6.22\n\nCN)\n",
+    "exitStatus": 0,
+    "privateDiskBytes": 82,
+    "privateDiskRemoved": true
+  },
+  "dosResets": {
+    "scope": "Production DOS reset smoke stages COM programs through CowFile into private compressed overlays, supporting the recovered compressed DOS parent without a raw copy.",
+    "command": [
+      "python3",
+      "tools/smoke_reset.py"
+    ],
+    "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+    "sourceDisk": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+    "log": "ninja: no work to do.\nninja: no work to do.\nPASS: WARM.COM reset and rebooted MS-DOS through VGA ROM\nPASS: KBC.COM reset and rebooted MS-DOS through VGA ROM\nPASS: FAST.COM reset and rebooted MS-DOS through VGA ROM\nEvidence retained in /Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby\n",
+    "states": {
+      "fast.bin.json": {
+        "ip": 73,
+        "flags": 582,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          1792,
+          1414,
+          278,
+          892,
+          2668,
+          0,
+          35,
+          507
+        ],
+        "segments": [
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 592,
+            "base": 9472,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 112,
+            "base": 1792,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 200000002,
+        "resets": 1,
+        "resetRequested": 0,
+        "nativeInstructions": 121098224,
+        "executionWallNs": 5263685380,
+        "nativeMemoryCalls": 3171248,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "jit",
+        "jitFollowJumps": 1,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/fast.pcd",
+        "compiledBlocks": 2845,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "absoluteMouse": {
+          "active": 0,
+          "queuedWords": 0
+        },
+        "hostCursor": {
+          "active": 0,
+          "visible": 0,
+          "size": 0,
+          "revision": 0,
+          "shapeHash": 2166136261,
+          "hotX": 0,
+          "hotY": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 3,
+          "shiftMode": 16,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            31,
+            0,
+            79,
+            13,
+            14,
+            0,
+            0,
+            4,
+            180,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            255,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 2620602,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 6260
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "kbc.bin.json": {
+        "ip": 34374,
+        "flags": 642,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          1781,
+          1414,
+          278,
+          892,
+          2688,
+          0,
+          35,
+          507
+        ],
+        "segments": [
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 25,
+            "base": 400,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 112,
+            "base": 1792,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 200000000,
+        "resets": 1,
+        "resetRequested": 0,
+        "nativeInstructions": 121098198,
+        "executionWallNs": 5217487146,
+        "nativeMemoryCalls": 3171264,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "jit",
+        "jitFollowJumps": 1,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/kbc.pcd",
+        "compiledBlocks": 2841,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "absoluteMouse": {
+          "active": 0,
+          "queuedWords": 0
+        },
+        "hostCursor": {
+          "active": 0,
+          "visible": 0,
+          "size": 0,
+          "revision": 0,
+          "shapeHash": 2166136261,
+          "hotX": 0,
+          "hotY": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 3,
+          "shiftMode": 16,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            31,
+            0,
+            79,
+            13,
+            14,
+            0,
+            0,
+            4,
+            180,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            255,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 2612491,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 55574
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      },
+      "warm.bin.json": {
+        "ip": 17021,
+        "flags": 658,
+        "cr0": 16,
+        "cr3": 0,
+        "cr2": 0,
+        "gdtBase": 0,
+        "gdtLimit": 0,
+        "idtBase": 0,
+        "idtLimit": 1023,
+        "trBase": 0,
+        "trSelector": 0,
+        "ldtBase": 0,
+        "registers": [
+          256,
+          249,
+          127,
+          0,
+          2684,
+          2684,
+          269,
+          507
+        ],
+        "segments": [
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 25,
+            "base": 400,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 278,
+            "base": 4448,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          },
+          {
+            "selector": 0,
+            "base": 0,
+            "limit": 65535,
+            "big": 0,
+            "unusable": 0
+          }
+        ],
+        "instructions": 200000004,
+        "resets": 1,
+        "resetRequested": 0,
+        "nativeInstructions": 121098242,
+        "executionWallNs": 5314367199,
+        "nativeMemoryCalls": 3171248,
+        "executionEpoch": 0,
+        "machineProfile": "pc-legacy",
+        "machinePlatform": "pc-legacy-v1",
+        "executionBackend": "jit",
+        "jitFollowJumps": 1,
+        "jitTraces": 0,
+        "ramBytes": 16777216,
+        "disk": "/Users/johandahlin/dev/pcemu/build/reset-smoke-keagqvby/warm.pcd",
+        "compiledBlocks": 2845,
+        "cacheRecycles": 0,
+        "halted": 0,
+        "waitingKey": 0,
+        "hostInput": 1,
+        "network": {
+          "isr": 128,
+          "imr": 0,
+          "command": 33,
+          "current": 0,
+          "boundary": 0,
+          "transmitted": 0,
+          "received": 0,
+          "dropped": 0
+        },
+        "absoluteMouse": {
+          "active": 0,
+          "queuedWords": 0
+        },
+        "hostCursor": {
+          "active": 0,
+          "visible": 0,
+          "size": 0,
+          "revision": 0,
+          "shapeHash": 2166136261,
+          "hotX": 0,
+          "hotY": 0
+        },
+        "mouse": {
+          "enabled": 0,
+          "id": 0,
+          "pendingPackets": 0,
+          "auxOutput": 0
+        },
+        "video": {
+          "graphics": 0,
+          "width": 640,
+          "height": 200,
+          "memoryMode": 3,
+          "shiftMode": 16,
+          "dispiEnabled": 0,
+          "bpp": 8,
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            31,
+            0,
+            79,
+            13,
+            14,
+            0,
+            0,
+            4,
+            180,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            255,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "pic": [
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 252,
+            "base": 8,
+            "autoEOI": 0
+          },
+          {
+            "irr": 0,
+            "isr": 0,
+            "mask": 255,
+            "base": 112,
+            "autoEOI": 0
+          }
+        ],
+        "pit0": {
+          "reload": 65536,
+          "loadedAt": 2620614,
+          "mode": 3,
+          "nullCount": 0,
+          "writeHigh": 0,
+          "value": 6282
+        },
+        "keyboard": {
+          "full": 0,
+          "data": 0,
+          "pendingScans": 0,
+          "pendingReplies": 0,
+          "commandByte": 69
+        }
+      }
+    },
+    "privateDisksRemoved": true
+  },
+  "win311": {
+    "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+    "sourceDisk": "/Volumes/data/pcemu/recovered/win311.qcow2",
+    "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+    "gitCommit": "4bd10c35b4aff09697818671a53e7131355ac073",
+    "privateDiskFormat": "PCEMUCOW",
+    "privateDiskBytes": 4768,
+    "privateDiskAllocatedBytes": 8192,
+    "verifiedFile": "C:\\PCEMU.TXT",
+    "verifiedBytes": 25,
+    "verifiedSha256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82",
+    "privateDiskRemoved": true
+  },
+  "osr2": {
+    "pid": 84268,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/integrated-audit/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-mcn_ykst/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-mcn_ykst/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-mcn_ykst/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-mcn_ykst/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/win95.qcow2",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "4bd10c35b4aff09697818671a53e7131355ac073",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 633088540,
+      "afterInstructions": 1470724845,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\PD6FF4B4.TXT",
+        "fatName": "PD6FF4B4TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications D6FF4B4A.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "bf69ea9fd6f243ac33cd30eaf07eab28a1a717a362b3ed66d0c473b3204174c5"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "rtts": {
+    "pid": 84537,
+    "command": [
+      "/Users/johandahlin/dev/pcemu/build/integrated-audit/pcemu",
+      "--headless",
+      "--machine",
+      "win95",
+      "--disk",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-wlsv5ryg/disk.pcd",
+      "--ram-mb",
+      "64",
+      "--execute-vgabios",
+      "--steps",
+      "0",
+      "--control-file",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-wlsv5ryg/control.txt",
+      "--frame",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-wlsv5ryg/frame.ppm",
+      "--state-json",
+      "/Users/johandahlin/dev/pcemu/build/win95-smoke-wlsv5ryg/state.json"
+    ],
+    "sourceDisk": "/Volumes/data/pcemu/recovered/rtts-win95.pcd",
+    "scope": "cold boot, applications and guest restart",
+    "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+    "profiled": false,
+    "guestProfiled": false,
+    "gitCommit": "4bd10c35b4aff09697818671a53e7131355ac073",
+    "verification": {
+      "scope": "applications, restart, desktop and exact file persistence",
+      "beforeInstructions": 419986083,
+      "afterInstructions": 1540514623,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "applications": {
+        "file": "C:\\P9F16C95.TXT",
+        "fatName": "P9F16C95TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications 9F16C955.",
+        "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+        "verifiedBytes": 38,
+        "verifiedSha256": "893211071a61a79b609a43d6251feaa29ee24a2dab6ea8f31903f846de337018"
+      }
+    },
+    "applicationOcrScratchRemoved": true,
+    "privateDiskRemoved": true
+  },
+  "artifacts": {
+    "integrated-acceptance-2026-10-26.dos.png": {
+      "bytes": 8827,
+      "sha256": "2b42053232b967f01c773c626f3a8d873e8d330d2c28210ac08487d42678d975"
+    },
+    "integrated-acceptance-2026-10-26.osr2-notepad.png": {
+      "bytes": 16747,
+      "sha256": "9c8bb7c4b654eb0084ebdd420e4e9781f9b93d22c391eb0b341f33630d9d68dc"
+    },
+    "integrated-acceptance-2026-10-26.osr2-restart.png": {
+      "bytes": 12288,
+      "sha256": "ab1b10ef42259959306b32856f58fa549316cbc2ddbb71f9602bd1412c27efbd"
+    },
+    "integrated-acceptance-2026-10-26.rtts-notepad.png": {
+      "bytes": 16790,
+      "sha256": "187b4d5c9e1abedcb7cc3bb418481c182ec5c8221a8151887b92e3ab31c6991d"
+    },
+    "integrated-acceptance-2026-10-26.rtts-restart.png": {
+      "bytes": 12289,
+      "sha256": "9ce8a54a908e76ab7cea26c9f89a464eac1bcf3acba1b9b49bcff430cb68b711"
+    },
+    "integrated-acceptance-2026-10-26.dos.log.zst": {
+      "rawBytes": 779,
+      "rawSha256": "7258e230a93ce7e010efe9efe601919646a78e4ea04d33ec6fc5e438f88c56c7"
+    },
+    "integrated-acceptance-2026-10-26.win311.log.zst": {
+      "rawBytes": 9415,
+      "rawSha256": "0935b7a54690008c33d8cf21d8fd37c9c089f1054430add5eadf1ffdef3ab051"
+    },
+    "integrated-acceptance-2026-10-26.osr2.log.zst": {
+      "rawBytes": 29354,
+      "rawSha256": "a5af33790200fba947503554a4693455fd4bbf4fef47d8bfff522cd4190c8492"
+    },
+    "integrated-acceptance-2026-10-26.rtts.log.zst": {
+      "rawBytes": 26243,
+      "rawSha256": "5461d855bcaa6c55ee9a7d6bed9d25e10789e7f19908e4f7e62c066f7d7d5ca0"
+    },
+    "integrated-acceptance-2026-10-26.setup-finish.png": {
+      "bytes": 47596,
+      "sha256": "8f76e72889c3bbe31658c4b4a59b594c2986ae92fd2e59e13841703dabf9a6b4"
+    },
+    "integrated-acceptance-2026-10-26.setup-desktop.png": {
+      "bytes": 13039,
+      "sha256": "85d89f398ea0f588879da8894796db36e1bafb1387675d4b07431b3f2e034ee0"
+    },
+    "integrated-acceptance-2026-10-26.setup-notepad.png": {
+      "bytes": 12933,
+      "sha256": "0ba9e4929e02dcf36cde49bbe7802ccbc16c3629e0c1c716334e6e65c5e6c099"
+    },
+    "integrated-acceptance-2026-10-26.setup-driver.log.zst": {
+      "rawBytes": 1213,
+      "rawSha256": "cdbf3b927e6266d419224ff7d80670b65889d99d2c88d6337a68bff770aa6c5d"
+    }
+  },
+  "wrappers": {
+    "smoke_win311.py": "#!/usr/bin/env python3\n\"\"\"Boot a private compressed Windows 3.11 overlay and verify a Notepad save.\nRequires the completed installation in media/win311.raw. No external emulator.\n\"\"\"\nimport argparse\nimport hashlib\nimport json\nimport re\nimport shutil\nimport subprocess\nimport tempfile\nimport time\nfrom pathlib import Path\nfrom prepare_media import FAT\nfrom cow_file import CowFile\n\nroot = Path('/Users/johandahlin/dev/pcemu')\np = argparse.ArgumentParser(description=__doc__)\np.add_argument('--disk', type=Path, default=root / 'media/win311.raw')\np.add_argument('--verbose', action='store_true')\np.add_argument('--keep-artifacts', action='store_true', help='retain the successful compressed private disk and RAM dump')\njump_mode = p.add_mutually_exclusive_group()\njump_mode.add_argument('--jit-follow-jumps', action='store_true')\njump_mode.add_argument('--jit-traces', action='store_true')\na = p.parse_args()\nif not shutil.which('tesseract'):\n    p.error('This optional integration check requires tesseract (brew install tesseract)')\nsource = a.disk.resolve()\nif not source.is_file():\n    p.error('Missing local source disk: ' + str(source))\nwork = Path(tempfile.mkdtemp(prefix='win311-smoke-', dir=root / 'build'))\ndisk, control, frame = (work / n for n in ['disk.pcd', 'control.txt', 'frame.ppm'])\nram = work / 'ram.bin'\nsubprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)\nemulator_hash = hashlib.sha256((root / 'build/integrated-audit/pcemu').read_bytes()).hexdigest()\nsource_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()\nlog = (work / 'emulator.log').open('w')\nproc = subprocess.Popen([\n    str(root / 'build/integrated-audit/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',\n    '--type', 'cd windows\\nwin /s\\n', '--control-file', str(control),\n    '--capture-every', '100000000', '--frame', str(frame),\n] + (['--jit-traces'] if a.jit_traces else ['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)\n\ndef send(*commands, settle=0.35):\n    subprocess.run([\n        'python3', str(root / 'tools/guest_control.py'), str(control), str(frame),\n        *commands, '--settle', str(settle),\n    ], check=True, stdout=subprocess.DEVNULL)\n\ndef type_text(text):\n    # Real keyboards deliver a stream, rather than flooding the Win16 message\n    # queue while a just-created edit control is still receiving focus.\n    time.sleep(0.25)\n    with control.open('a') as f:\n        for char in text:\n            f.write('text ' + char + '\\n')\n            f.flush()\n            time.sleep(0.03)\n    send(settle=0.3)\n\ndef normalize(text):\n    return re.sub('[^a-z0-9]', '', text.lower())\n\ndef exit_dialog_present():\n    # The OCR layout pass omits this bordered modal in the fixed VGA fixture.\n    header = frame.read_bytes().split(b'\\n', 3)\n    width, height = map(int, header[1].split())\n    if (width, height) != (640, 480):\n        return False\n    x0, y0, x1, y1 = 210, 220, 456, 247\n    body = b''.join(header[3][(y*width+x0)*3:(y*width+x1)*3] for y in range(y0, y1))\n    crop = work / 'exit-dialog-body.ppm'\n    crop.write_bytes(f'P6\\n{x1-x0} {y1-y0}\\n255\\n'.encode() + body)\n    line = subprocess.run(['tesseract', str(crop), 'stdout', '--psm', '7'],\n                          check=True, capture_output=True, text=True).stdout\n    return normalize('This will end your Windows session') in normalize(line)\n\ndef wait_title(title, timeout=30):\n    deadline = time.monotonic() + timeout\n    while time.monotonic() < deadline:\n        send(settle=0)\n        result = subprocess.run(['tesseract', str(frame), 'stdout', '--psm', '11'],\n                                check=True, capture_output=True, text=True).stdout\n        if any(normalize(title) in normalize(line) for line in result.splitlines()):\n            return\n        if title == 'This will end your Windows session' and exit_dialog_present():\n            return\n        time.sleep(0.1)\n    raise RuntimeError(f'Guest did not reach expected title: {title}')\n\ndef wait_dos(timeout=30):\n    deadline = time.monotonic() + timeout\n    while time.monotonic() < deadline:\n        send(settle=0)\n        if frame.read_bytes().split(b'\\n', 3)[1] == b'640 400':\n            return\n        if exit_dialog_present():\n            send('key 1c0d', settle=0.2)\n        time.sleep(0.1)\n    raise RuntimeError('Windows did not exit to text mode')\n\ndef alt(scan):\n    send('scan 38', f'scan {scan:02x}', f'scan {scan|128:02x}', 'scan b8')\n\ntry:\n    deadline = time.monotonic() + 30\n    while time.monotonic() < deadline:\n        if proc.poll() is not None:\n            raise RuntimeError('Emulator exited during boot')\n        try:\n            if json.loads(Path(str(ram) + '.json').read_text())['instructions'] >= 100000000:\n                break\n        except (FileNotFoundError, json.JSONDecodeError):\n            pass\n        time.sleep(0.05)\n    else:\n        raise RuntimeError('No desktop capture within 30 seconds')\n    alt(0x21)  # Program Manager: File, Run.\n    send('text r')\n    wait_title('Run')\n    send('text notepad.exe', 'key 1c0d', settle=0.8)\n    wait_title('Notepad')\n    type_text('PCEMU integration passed.')\n    alt(0x21)\n    send('text s')\n    wait_title('File Name')\n    type_text('C:\\\\PCEMU.TXT')\n    send('key 1c0d', settle=0.6)\n    wait_title('Notepad PCEMU.TXT')\n    alt(0x3e)  # Close Notepad, then Windows, accepting Exit Windows.\n    wait_title('Accessories')\n    alt(0x3e)\n    wait_title('This will end your Windows session')\n    send('key 3920', settle=0.8)\n    wait_dos()\n    send('text smartdrv /c', 'key 1c0d', settle=1)\n    with control.open('a') as f:\n        f.write('quit\\n')\n    proc.wait(timeout=10)\n    if proc.returncode:\n        raise RuntimeError(f'Emulator exited with status {proc.returncode}')\n    # The guest has exited and flushed its own child. Inspect through the\n    # compressed disk reader rather than expanding it into a raw staging file.\n    with CowFile(disk) as handle:\n        fat = FAT(handle)\n        entry = next(e for e in fat.entries() if e[1] == 'PCEMU   TXT')\n        actual = fat.read_file(entry[2], entry[3])\n    if actual != b'PCEMU integration passed.':\n        raise RuntimeError(f'Guest file mismatch: {actual!r}')\n    if hashlib.sha256((root / 'build/integrated-audit/pcemu').read_bytes()).hexdigest() != emulator_hash:\n        raise RuntimeError('Emulator binary changed during verification')\n    result = {\n        'scope': 'Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents',\n        'sourceDisk': str(source),\n        'emulatorSha256': emulator_hash,\n        'gitCommit': source_commit,\n        'privateDiskFormat': 'PCEMUCOW',\n        'privateDiskBytes': disk.stat().st_size,\n        'privateDiskAllocatedBytes': disk.stat().st_blocks * 512,\n        'verifiedFile': 'C:\\\\PCEMU.TXT',\n        'verifiedBytes': len(actual),\n        'verifiedSha256': hashlib.sha256(actual).hexdigest(),\n        'privateDiskRemoved': not a.keep_artifacts,\n    }\n    if not a.keep_artifacts:\n        disk.unlink()\n    (work / 'result.json').write_text(json.dumps(result, indent=2) + '\\n')\n    print(f'PASS: Notepad saved exact contents through Windows and DOS. Evidence: {work}')\nfinally:\n    if proc.poll() is None:\n        with control.open('a') as f:\n            f.write('quit\\n')\n        try:\n            proc.wait(timeout=5)\n        except subprocess.TimeoutExpired:\n            proc.terminate()\n            proc.wait(timeout=5)\n    log.close()\n    print(f'Diagnostics retained in {work}; private disk '+('retained' if disk.exists() else 'removed after successful verification'))\n",
+    "smoke_win95.py": "#!/usr/bin/env python3\n\"\"\"Cold-boot Win95 from a private compressed overlay and verify Explorer pixels.\n\nRequires local installation media/images and Tesseract. Optional guest restart\nchecks reset delivery and a second desktop. A failed run retains its owned guest\nand disk for diagnosis; successful runs remove only their private disk.\n\"\"\"\nimport argparse\nimport hashlib\nimport json\nimport shutil\nimport subprocess\nimport tempfile\nimport time\nfrom pathlib import Path\nfrom cow_file import CowFile\nfrom prepare_media import FAT\n\nroot = Path('/Users/johandahlin/dev/pcemu')\nparser = argparse.ArgumentParser(description=__doc__)\nparser.add_argument('--disk', type=Path, default=root / 'media/rtts-win95.img')\nparser.add_argument('--timeout', type=float, default=240,\n                    help='seconds per desktop/reset wait')\nparser.add_argument('--applications', action='store_true',\n                    help='verify Calculator/Notepad and exact saved contents after a guest restart')\nparser.add_argument('--guest-profile', action='store_true', help='profile Calculator arithmetic and Notepad editing after application load; diagnostic counts, not timings')\nparser.add_argument('--sample', action='store_true',\n                    help='collect macOS host stacks through desktop verification; timings include profiling/OCR overhead')\nparser.add_argument('--restart', action='store_true', help='also verify a guest-requested restart')\njump_mode = parser.add_mutually_exclusive_group()\njump_mode.add_argument('--jit-follow-jumps', action='store_true')\njump_mode.add_argument('--jit-traces', action='store_true')\nargs = parser.parse_args()\nif args.guest_profile and not args.applications:\n    parser.error('--guest-profile requires --applications')\nif args.applications:\n    args.restart = True\nif args.timeout <= 0:\n    parser.error('timeout must be positive')\nif args.sample and not shutil.which('sample'):\n    parser.error('macOS sample tool is unavailable')\nsource = args.disk.resolve()\nif not source.is_file():\n    parser.error('Missing local source disk: ' + str(source))\nif not shutil.which('tesseract'):\n    parser.error('This optional integration check requires tesseract (brew install tesseract)')\nrunner = root / 'build/integrated-audit/pcemu'\nwork = Path(tempfile.mkdtemp(prefix='win95-smoke-', dir=root / 'build'))\ndisk, control, frame, state = (work / name for name in\n                              ['disk.pcd', 'control.txt', 'frame.ppm', 'state'])\nsubprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)\ncontrol.write_text('profile-wait 3000\\n' if args.sample else '')\nemulator_hash = hashlib.sha256(runner.read_bytes()).hexdigest()\nsampler = None\nsampler_log = None\nprofile_dir = work / 'host-profile'\nif args.sample:\n    (profile_dir / 'run-1').mkdir(parents=True)\n    sampler_log = (profile_dir / 'sampler.log').open('w')\ncommand = [str(runner), '--headless', '--machine', 'win95',\n           '--disk', str(disk), '--ram-mb', '64', '--execute-vgabios', '--steps', '0',\n           '--control-file', str(control), '--frame', str(frame), '--state-json', str(state)+'.json']\nif args.jit_traces:\n    command.append('--jit-traces')\nelif args.jit_follow_jumps:\n    command.append('--jit-follow-jumps')\nwith (work / 'guest.log').open('w') as log:\n    guest = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)\n    metadata = {'pid': guest.pid, 'command': command, 'sourceDisk': str(source),\n                'scope': ('cold boot, applications and guest restart' if args.applications else\n                          'cold boot and guest restart' if args.restart else 'cold boot only'),\n                'emulatorSha256': emulator_hash,\n                'profiled': args.sample, 'guestProfiled': args.guest_profile,\n                'gitCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root,\n                                                      text=True).strip()}\n    (work / 'run.json').write_text(json.dumps(metadata, indent=2)+'\\n')\n    print(f'Win95 guest PID {guest.pid}; evidence: {work}', flush=True)\n    try:\n        if args.sample:\n            # -mayDie ends collection when this owned guest exits, retaining\n            # symbols even if shutdown precedes the requested duration.\n            duration = int(args.timeout * (2 if args.restart else 1) + 60)\n            sampler = subprocess.Popen(['sample', str(guest.pid), str(duration), '1', '-mayDie',\n                                        '-file', str(profile_dir / 'run-1/sample.txt')],\n                                       stdout=sampler_log, stderr=subprocess.STDOUT)\n            deadline = time.monotonic() + 10\n            while 'Sampling process' not in (profile_dir / 'sampler.log').read_text():\n                if sampler.poll() is not None or time.monotonic() > deadline:\n                    raise RuntimeError('Host sampler did not attach; see host-profile/sampler.log')\n                time.sleep(.005)\n            # Symbol discovery may consume the initial pause. A second named\n            # barrier is queued only after the sampler confirms attachment.\n            with control.open('a') as output:\n                output.write('profile-wait 3000\\n')\n        checker = ['python3', str(root / 'tools/check_win95_restart.py'), str(control),\n                   str(frame), str(state), str(disk), '--pid', str(guest.pid),\n                   '--output', str(work / 'verification'), '--timeout', str(args.timeout),\n                   '--restart-only' if args.restart else '--desktop-only']\n        if args.applications:\n            checker.append('--applications')\n        if args.guest_profile:\n            checker += ['--application-profile-dir', str(work / 'application-profiles')]\n        subprocess.run(checker, cwd=root, check=True)\n        if sampler and sampler.poll() is not None:\n            raise RuntimeError('Host sampler ended before desktop verification completed')\n        with control.open('a') as output:\n            output.write('quit\\n')\n        guest.wait(timeout=10)\n        if guest.returncode:\n            raise RuntimeError(f'Guest exited with status {guest.returncode}')\n        if hashlib.sha256(runner.read_bytes()).hexdigest() != emulator_hash:\n            raise RuntimeError('Emulator binary changed during verification')\n        if args.guest_profile:\n            metadata['applicationProfiles'] = {}\n            for application in ('calculator', 'notepad'):\n                path = work / 'application-profiles' / (application + '.json')\n                counts = json.loads(path.read_text())\n                if counts['stopInstructions'] <= counts['startInstructions']:\n                    raise RuntimeError('Empty application profile: ' + application)\n                if sum(row['attempts'] for row in counts['opcodes'] if row['opcode'] < 256) != counts['interpretedAttempts']:\n                    raise RuntimeError('Application opcode accounting mismatch: ' + application)\n                metadata['applicationProfiles'][application] = {'path': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),\n                    'scope': 'After application load; includes input settling and guest idle/message loops; counts are not host costs or timing benchmarks'}\n        metadata['verification'] = json.loads((work / 'verification/result.json').read_text())\n        if args.applications:\n            app = metadata['verification']['applications']\n            with CowFile(disk) as handle:\n                fat = FAT(handle)\n                entry = next(e for e in fat.entries() if e[1] == app['fatName'])\n                actual = fat.read_file(entry[2], entry[3])\n            if actual != app['expectedContents'].encode('ascii'):\n                raise RuntimeError(f'Calculator/Notepad file mismatch after restart: {actual!r}')\n            app['scope'] = 'Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart'\n            app['verifiedBytes'] = len(actual)\n            app['verifiedSha256'] = hashlib.sha256(actual).hexdigest()\n            metadata['verification']['scope'] = 'applications, restart, desktop and exact file persistence'\n        if sampler:\n            sampler.wait(timeout=30)\n            sampler_log.close()\n            sample_file = profile_dir / 'run-1/sample.txt'\n            graph = sample_file.read_text().split('Call graph:', 1)[-1].split('Total number in stack', 1)[0]\n            if 'Thread_' not in graph or 'waitForProfiler(' not in graph:\n                raise RuntimeError('Host stacks did not cover the initial attachment barrier')\n            subprocess.run(['python3', str(root / 'tools/analyze_samples.py'), str(profile_dir),\n                            '--output', str(work / 'host-profile.json')], cwd=root, check=True)\n            metadata['hostProfile'] = {\n                'summary': str(work / 'host-profile.json'),\n                'sample': str(sample_file),\n                'sampleSha256': hashlib.sha256(sample_file.read_bytes()).hexdigest(),\n                'scope': 'Host attachment after initial dispatch batch through guest exit after desktop verification; includes OCR/dialog handling and control captures; not an isolated boot-time benchmark',\n                'attachmentBarrierMs': 6000,\n            }\n    except Exception:\n        log.flush()\n        status = f'owned guest PID {guest.pid} left alive' if guest.poll() is None else \\\n                 f'guest exited with status {guest.returncode}'\n        print(f'FAIL: {status}; disk and diagnostics retained in {work}', flush=True)\n        raise\n    finally:\n        if sampler and sampler.poll() is None:\n            sampler.terminate()\n            sampler.wait(timeout=5)\n        if sampler_log and not sampler_log.closed:\n            sampler_log.close()\n# Enlarged application OCR is scratch; retain screenshots and original frame.\nif args.applications:\n    (work / 'verification/ocr-interior-5.ppm').unlink(missing_ok=True)\n    metadata['applicationOcrScratchRemoved'] = True\n# This path was created by this invocation, never supplied by the caller.\ndisk.unlink()\nmetadata['privateDiskRemoved'] = True\n(work / 'result.json').write_text(json.dumps(metadata, indent=2)+'\\n')\nprint(f'PASS: Win95 verified; private compressed disk removed; evidence: {work}', flush=True)\n",
+    "smoke_reset.py": "#!/usr/bin/env python3\n\"\"\"Run DOS programs that request reset, then verify a second DOS boot.\n\nUses private media copies and the emulator's own CPU/devices/VGA ROM path.\n\"\"\"\nimport argparse\nimport json\nimport subprocess\nimport tempfile\nfrom pathlib import Path\nfrom fat_stage import Writer\nfrom cow_file import CowFile\n\nroot = Path('/Users/johandahlin/dev/pcemu')\nparser = argparse.ArgumentParser(description=__doc__)\nparser.add_argument('--keep-artifacts', action='store_true', help='retain successful private disks and RAM dumps')\na = parser.parse_args()\nwork = Path(tempfile.mkdtemp(prefix='reset-smoke-', dir=root / 'build'))\nprograms = {\n    'WARM.COM': bytes.fromhex('ea 00 00 ff ff'),\n    'KBC.COM': bytes.fromhex('b0 fe e6 64 f4'),\n    'FAST.COM': bytes.fromhex('b0 03 e6 92 f4'),\n}\nfor name, code in programs.items():\n    disk = work / (name.split('.')[0].lower() + '.raw')\n    subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(root / 'media/dos.raw')], check=True)\n    fat = Writer(CowFile(disk))\n    fat.root_entry(fat.entry(name, 32, fat.allocate(code), len(code)))\n    fat.commit()\n    fat.f.close()\n    ram = disk.with_suffix('.bin')\n    command = [str(root / 'build/integrated-audit/pcemu'), '--headless', '--execute-vgabios',\n               '--disk', str(disk), '--steps', '200000000',\n               '--type', name.split('.')[0].lower() + '\\n',\n               '--frame', str(disk.with_suffix('.ppm'))] + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json'])\n    with disk.with_suffix('.log').open('w') as log:\n        result = subprocess.run(command, cwd=root, stdout=subprocess.PIPE, stderr=log,\n                                text=True, timeout=40, check=True)\n    disk.with_suffix('.txt').write_text(result.stdout)\n    state = json.loads(Path(str(ram) + '.json').read_text())\n    if state['resets'] != 1 or state['cr0'] & 1 or 'PCEMU MS-DOS ready' not in result.stdout:\n        raise RuntimeError(f'{name}: second DOS boot not verified; see {work}')\n    if not a.keep_artifacts:\n        disk.unlink()\n    print(f'PASS: {name} reset and rebooted MS-DOS through VGA ROM', flush=True)\nprint(f'Evidence retained in {work}')\n"
+  },
+  "freshSetup": {
+    "scope": "Fresh integrated-build OSR2 Setup and applications/restart/read-only exact file verification in original process. Functional gate, not timing score.",
+    "run": {
+      "pid": 84754,
+      "command": [
+        "/Users/johandahlin/dev/pcemu/build/integrated-audit/pcemu",
+        "--headless",
+        "--machine",
+        "win95",
+        "--ram-mb",
+        "64",
+        "--execute-vgabios",
+        "--no-network",
+        "--steps",
+        "0",
+        "--disk",
+        "/Volumes/data/pcemu/validation/win95-setup-integrated-audit-20261026.pcd",
+        "--type",
+        "cd win95\nsetup /is\n",
+        "--control-file",
+        "/Users/johandahlin/dev/pcemu/build/integrated-audit/setup/control.txt",
+        "--frame",
+        "/Users/johandahlin/dev/pcemu/build/integrated-audit/setup/frame.ppm",
+        "--state-json",
+        "/Users/johandahlin/dev/pcemu/build/integrated-audit/setup/state.json"
+      ],
+      "emulatorSha256": "f6465cf9dd4d744ce11734732ad01e4c8f2adfca8c2639156eaf29d73a532eb2",
+      "startedUnix": 1792991945.3268049
+    },
+    "staging": {
+      "scope": "Windows 95 installer source staged on clean DOS; not installation success",
+      "disk": "/Volumes/data/pcemu/validation/win95-setup-integrated-audit-20261026.pcd",
+      "parent": "/Volumes/data/pcemu/recovered/msdos622/dos.pcd",
+      "source": "/Users/johandahlin/dev/pcemu/media/win95-install/win95",
+      "compressedBytes": 81999324,
+      "files": {
+        "FORMAT.COM": {
+          "bytes": 49543,
+          "sha256": "723fef3871f9f8f71cdd1ee83c9582396703e5878029be27f69164ba17d54f9d"
+        },
+        "MINI.CAB": {
+          "bytes": 441905,
+          "sha256": "4325b841b6cfe2589eff41becdb7ac8ed7966dca16bf243097e79fe2cefafb99"
+        },
+        "MSINFO.INF": {
+          "bytes": 6551,
+          "sha256": "e435cb8988e6b193945334977a63f2e3a8064d7857e2abb3887fa4c6279a77bb"
+        },
+        "OEMSETUP.BIN": {
+          "bytes": 3270,
+          "sha256": "4583be690659c5180cccd57c0dc527ee7ac3570b39db2a0d441fdd935e875482"
+        },
+        "OEMSETUP.EXE": {
+          "bytes": 78672,
+          "sha256": "89eee8739e2d050cd26588024b51453a4399dbcedacc6260a57be6ed51d460c4"
+        },
+        "PRECOPY1.CAB": {
+          "bytes": 480768,
+          "sha256": "ec8a17fcf9e7bc016da3b7b90dd32058b8936d04985fb2128662a80fc0932850"
+        },
+        "PRECOPY2.CAB": {
+          "bytes": 1237083,
+          "sha256": "bac1a80d253c87c8d9d3da14156280919caa319acf2d621e94acbe70c190e433"
+        },
+        "SETUP25I.EXE": {
+          "bytes": 1950007,
+          "sha256": "463d7126bc1cc26a5e2d4e6147b47df611ab383ea484c30d8525943f9fa2239e"
+        },
+        "SETUP32.EXE": {
+          "bytes": 6729752,
+          "sha256": "ba734894c7f3dc439419537af83d2ae90e7ec874d7a112507c4418a9d46f75d3"
+        },
+        "SUHELPER.BIN": {
+          "bytes": 1472,
+          "sha256": "4f10d714bd0b57323a296d5cdee063c00590ab0122e7b9f107925b3818f3f549"
+        },
+        "SWINST4.EXE": {
+          "bytes": 1009600,
+          "sha256": "6031b3f31ed9150826d6e63c1103e098ca8fdda54d45751ed2c13f80c8f25f36"
+        },
+        "CS3KIT.EXE": {
+          "bytes": 5783436,
+          "sha256": "41a42ad9c0f7308d12f248d949d9bb4302249aac195473a31fa4381f188a20a7"
+        },
+        "DELTEMP.COM": {
+          "bytes": 496,
+          "sha256": "d3f83a6d8bc0ff8de83f8b6c79ddf5b3b3a9a4ff59c2b98732a1795d4c021dae"
+        },
+        "DOSSETUP.BIN": {
+          "bytes": 72358,
+          "sha256": "d2d1cbd0b5ac55b1eafacff8638ee60a6324a04b800a20da7eb3f592a76d11a4"
+        },
+        "EXTRACT.EXE": {
+          "bytes": 46656,
+          "sha256": "31f98c4ee68fa3193544c635ad9e698aa1402c367590d6b28746b624b8b2e05f"
+        },
+        "LAYOUT.INF": {
+          "bytes": 54600,
+          "sha256": "dde271c8ac4dfb848e6eaea7353b46f78da6d3ed29a9844ef98c47e65c3530b8"
+        },
+        "LAYOUT1.INF": {
+          "bytes": 5739,
+          "sha256": "ec04c873b7a5cab952efdd9aed1b19d5070005a53cafd76326087d6ac5d408c5"
+        },
+        "README.TXT": {
+          "bytes": 3728,
+          "sha256": "43b018a2ace818fb9fabb2bb41311de1d9670edfffda8295f538e8eba73258e2"
+        },
+        "SAVE32.COM": {
+          "bytes": 920,
+          "sha256": "db9ef59b6389216a69e19db459b0147f423f3a4371a7b501aab3319607a6c0f4"
+        },
+        "SCANDISK.EXE": {
+          "bytes": 142353,
+          "sha256": "4d2ad0ddf11e3844f886774b1748039d3e363446020dd261c435322b19111eb3"
+        },
+        "SCANDISK.PIF": {
+          "bytes": 995,
+          "sha256": "e1511c5509fa654fef06da6f94f15622a901c83f06e812cd1385a683db3bcf6b"
+        },
+        "SCANPROG.EXE": {
+          "bytes": 4438,
+          "sha256": "8d74a5b88694829be6ea9ccca6dd13a276d308b5425eae6807393b4d91a39141"
+        },
+        "SETUP.EXE": {
+          "bytes": 5184,
+          "sha256": "116357c466abea55f29ce1e3705d17243daf0b2a780becc8295aa872a7b29c59"
+        },
+        "SETUP.TXT": {
+          "bytes": 33963,
+          "sha256": "80a68f118ea029d910a5edea15f9d66c3d51c0bed90fd1c9bd95633dbd8e1f75"
+        },
+        "SMARTDRV.EXE": {
+          "bytes": 44867,
+          "sha256": "929c4564933121678e97b2202f649516c01ea394669053abae18f54132eb9068"
+        },
+        "WB16OFF.EXE": {
+          "bytes": 537,
+          "sha256": "ae703bc45dae6035c36a696cfbda415e4fa3777ed42b80066e5bd8c0570f55bc"
+        },
+        "WIN95_02.CAB": {
+          "bytes": 464896,
+          "sha256": "f5bc434d150c0d2bc15b2a0f1f9f85623a665ebb86733b4558131599f0826e93"
+        },
+        "WIN95_03.CAB": {
+          "bytes": 1716224,
+          "sha256": "f453fa7e4dd331b2c663f248f54ad1ad1b2478f34cf75646054c9d0b9c26a255"
+        },
+        "WIN95_04.CAB": {
+          "bytes": 1716224,
+          "sha256": "ef1f5149331efe197ddc30fcc950704ee9cb29d3fc66b0af5c77e5d835363281"
+        },
+        "WIN95_05.CAB": {
+          "bytes": 1716224,
+          "sha256": "275fc50645011137090ed469bdca0971005a89f5a1bec1b0547740cee9e4ebf9"
+        },
+        "WIN95_06.CAB": {
+          "bytes": 1716224,
+          "sha256": "01aa27f21593ccb7e722b557832d7f9f1e3cf34d55876250e68d0cfaef637a6e"
+        },
+        "WIN95_07.CAB": {
+          "bytes": 1716224,
+          "sha256": "30c0e3c637a9615b9ba8d8e8763e21e33b7bf576dbae19d336a1e53927cf866c"
+        },
+        "WIN95_08.CAB": {
+          "bytes": 1716224,
+          "sha256": "0ad819846ca9a8b9247ffd1dd186d2f5bee3ca27087ffb49e92a3d0d63f2fb9c"
+        },
+        "WIN95_09.CAB": {
+          "bytes": 1716224,
+          "sha256": "5b96dc950432776b4f26d56852c32123912421233d7dc5fa2f007a25732aec32"
+        },
+        "WIN95_10.CAB": {
+          "bytes": 1716224,
+          "sha256": "d8c299b618f3326ee6a104bab971f9434a8c7f4b1a87140558a2893e484e3e7b"
+        },
+        "WIN95_11.CAB": {
+          "bytes": 1716224,
+          "sha256": "f9e74ad0b7d024859232fd20b34178f0945c05252bf01e8d8d0d4317cdadad04"
+        },
+        "WIN95_12.CAB": {
+          "bytes": 1716224,
+          "sha256": "94885f269eb96748f574e572cf1bd0dab55253280d1911d4adb3bf33a50b8273"
+        },
+        "WIN95_13.CAB": {
+          "bytes": 1716224,
+          "sha256": "e9a430559f39b5d0601ea450eb636862a638bcb91d1e94c7718ecc4315b85e4f"
+        },
+        "WIN95_14.CAB": {
+          "bytes": 1716224,
+          "sha256": "a88c24d3acdd764d67b018cf4152ad2e5a47fafb943d5683967518a936a4fa1d"
+        },
+        "WIN95_15.CAB": {
+          "bytes": 1716224,
+          "sha256": "b496d105870c89971269641a12e527afd9d795bc1da43d515d61ed63f446df5c"
+        },
+        "WIN95_16.CAB": {
+          "bytes": 1716224,
+          "sha256": "d7821bfbec60a84303c53c5b2d2bdceb8b977a067c1ef3d708e3cf5e11bfa095"
+        },
+        "WIN95_17.CAB": {
+          "bytes": 1716224,
+          "sha256": "5bd906530b35c5b4518b7273a42f338d8668f8401812c9ebb785a028964feb3a"
+        },
+        "WIN95_18.CAB": {
+          "bytes": 1716224,
+          "sha256": "f5d0e449c7ce2e0329fa04d0671eb4b8fd6d531c6abdbb86f8aa99b135360672"
+        },
+        "WIN95_19.CAB": {
+          "bytes": 1716224,
+          "sha256": "79529f29fd8dfccf684a81ac8e00f03de99b16ce428f6cf3382f28ae6b7edf80"
+        },
+        "WIN95_20.CAB": {
+          "bytes": 1716224,
+          "sha256": "5c3a60febc28ce5fb0505cbb12b71a97898f2120b3dabc8d12aa65901fec1ed4"
+        },
+        "WIN95_21.CAB": {
+          "bytes": 1716224,
+          "sha256": "732a14e71ad119467aaafc408589d2d584cbafef2215835dcaed0e7759cdb836"
+        },
+        "WIN95_22.CAB": {
+          "bytes": 1716224,
+          "sha256": "1444bb0e8c51ed0952ccd195ea2db4f4597ac806616d0566c1ada3db8db53b22"
+        },
+        "WIN95_23.CAB": {
+          "bytes": 1716224,
+          "sha256": "af8de2e0f5a5b7572d60314cc1b39bc3625e7d0ef4cccd730775fd5b778df7e8"
+        },
+        "WIN95_24.CAB": {
+          "bytes": 1716224,
+          "sha256": "fea9b0d012e4b7803ebfe8a899cec077c8616b8bf138c4582ef935018a03ef63"
+        },
+        "WIN95_25.CAB": {
+          "bytes": 1716224,
+          "sha256": "1a557915ded9a4353b403d60e02cb8de75da902a1852bfaac069eb0bad00c5a1"
+        },
+        "WIN95_26.CAB": {
+          "bytes": 1716224,
+          "sha256": "ef5ba4402110b75e93e7cd41ea956d291020d18712fb446e7391802df8fede7f"
+        },
+        "WIN95_27.CAB": {
+          "bytes": 1716224,
+          "sha256": "8aca77b97c77e0347ad4ba6ac2046187f9523c532b4fd231927e559c82e5a624"
+        },
+        "WIN95_28.CAB": {
+          "bytes": 1426482,
+          "sha256": "b3731fad97917bd1e6a9df593c8c9587beeafadef666f8fcacf27d6dccd44b56"
+        },
+        "WINSETUP.BIN": {
+          "bytes": 159824,
+          "sha256": "bd32f5cb04553fac253a8fafba3cff1672815cae97c8d136c0b18eb1c0fa66a4"
+        },
+        "WOWKIT.EXE": {
+          "bytes": 19687469,
+          "sha256": "3ed6ef6ab0b1c5c457ca241de4b2f237179481d8ba2f83a1ce0f70c7dd470974"
+        },
+        "XMSMMGR.EXE": {
+          "bytes": 14144,
+          "sha256": "0615bf1d7e98968a31b94b7247aa07437399b646145cba5fabd5bdd0b888adfd"
+        }
+      }
+    },
+    "setupReboot": {
+      "scope": "Setup copy phase through first firmware reboot; not installation completion",
+      "pid": 84754,
+      "beforeResets": 0,
+      "afterResets": 1,
+      "instructions": 17302947516,
+      "finishAcknowledged": true
+    },
+    "applications": {
+      "scope": "applications and guest restart; offline file readback pending",
+      "beforeInstructions": 19582124139,
+      "afterInstructions": 20663637551,
+      "beforeResets": 2,
+      "afterResets": 3,
+      "applications": {
+        "file": "C:\\P9188869.TXT",
+        "fatName": "P9188869TXT",
+        "expectedContents": " 4\r\nPCEMU Win95 applications 9188869D.",
+        "scope": "Calculator 2+2 copied through clipboard into a newly saved Notepad file; offline readback pending"
+      }
+    },
+    "exit": {
+      "returncode": 0,
+      "finishedUnix": 1792992207.62766
+    },
+    "pidAbsentBeforeReadback": true,
+    "normalQuitTrailer": true,
+    "verifiedBytes": 38,
+    "verifiedSha256": "b3368a9f3d33685f5b6202237bd335c33a1657ab20c839756916e46305ff8fdc",
+    "privateDiskBytesBeforeRemoval": 154532550,
+    "privateDiskRemoved": true
+  },
+  "setupDriverSource": "from pathlib import Path\nimport subprocess,re,json,time,hashlib\nfrom cow_file import CowFile\nfrom prepare_media import FAT\nroot=Path.cwd();work=root/'build/integrated-audit/setup';run=json.loads((work/'run.json').read_text());pid=run['pid'];disk=Path('/Volumes/data/pcemu/validation/win95-setup-integrated-audit-20261026.pcd');control=work/'control.txt';frame=work/'frame.ppm'\ndef alive():\n p=subprocess.run(['ps','-p',str(pid),'-o','command='],capture_output=True,text=True)\n if p.returncode:return False\n assert run['command'][0]in p.stdout and str(disk)in p.stdout,'PID identity changed'\n return True\ndef send(*cmds):\n assert alive()\n subprocess.run(['python3','tools/guest_control.py',str(control),str(frame),*cmds,'--settle','.5'],stdout=subprocess.DEVNULL,check=True)\ndef wait(stage,*tokens):\n end=time.monotonic()+600\n while time.monotonic()<end:\n  send();text=subprocess.check_output(['tesseract',str(frame),'stdout','--psm','11'],stderr=subprocess.DEVNULL,text=True);norm=re.sub('[^a-z0-9]','',text.lower())\n  if all(t in norm for t in tokens):print('Verified wizard stage:',stage,flush=True);return\n  time.sleep(2)\n raise RuntimeError('Unknown or stalled wizard at '+stage+'; original guest retained')\nwait('welcome','welcometowindows95setup','continue');send('key 1c0d')\nwait('license','doyouaccept','licenseagreement');send('scan 38','scan 15','scan 95','scan b8')\nwait('wizard','windows95setupwizard','tobegin');send('key 1c0d')\nwait('directory','choosedirectory');send('key 1c0d')\nwait('options','setupoptions');send('key 1c0d')\nwait('authorized OEM fields','certificateofauthenticity')\n# The key was explicitly supplied by the user earlier. Keep values private.\nparts=[s for s in (root/'build/win95-setup-memory-call/control.txt').read_text().splitlines()if s.startswith('text ')and s[5:].isdigit()][:3];assert len(parts)==3\nfor cmd in parts:send(cmd)\nsend('key 1c0d')\nwait('user information','userinformation');send('text PCEMU','key 0f09','text Validation','key 1c0d')\nwait('network detection','analyzingyourcomputer','networkadapter');send('key 5000','key 3920','key 1c0d')\nwait('components','windowscomponents');send('key 1c0d')\nwait('network identity','computername');send('text PCEMU','key 1c0d')\nwait('start copying','startcopyingfiles');send('key 1c0d')\nsubprocess.run(['python3','tools/check_setup_reboot.py',str(control),str(frame),str(work/'state'),'--pid',str(pid),'--before-resets','0','--timeout','1800','--output',str(work/'setup-reboot')],check=True)\nsubprocess.run(['python3','tools/check_win95_restart.py',str(control),str(frame),str(work/'state'),str(disk),'--pid',str(pid),'--timeout','1200','--output',str(work/'applications'),'--applications'],check=True)\nassert alive()\nwith control.open('a')as f:f.write('quit\\n')\nend=time.monotonic()+60\nwhile alive():\n if time.monotonic()>end:raise RuntimeError('Quit timeout; disk retained')\n time.sleep(.25)\nend=time.monotonic()+10\nwhile not(work/'exit.json').exists():\n if time.monotonic()>end:raise RuntimeError('Exit status missing; disk retained')\n time.sleep(.1)\nassert json.loads((work/'exit.json').read_text())['returncode']==0\nassert'stopped=budget/quit'in(work/'guest.log').read_text()\napp=json.loads((work/'applications/result.json').read_text())['applications']\nclass ReadOnlyCow(CowFile):\n def __init__(self,path):\n  self.process=subprocess.Popen([str(root/'build/disk-tool'),'serve-readonly',str(path)],stdin=subprocess.PIPE,stdout=subprocess.PIPE);self.position=0;self.closed=False\nwith ReadOnlyCow(disk)as h:\n fat=FAT(h);e=next(e for e in fat.entries()if e[1]==app['fatName']);actual=fat.read_file(e[2],e[3])\nassert actual==app['expectedContents'].encode('ascii')\nr={'scope':'Fresh integrated-build OSR2 Setup and applications/restart/read-only exact file verification in original process. Functional gate, not timing score.','run':run,'staging':json.loads((work/'staging-manifest.json').read_text()),'setupReboot':json.loads((work/'setup-reboot/result.json').read_text()),'applications':json.loads((work/'applications/result.json').read_text()),'exit':json.loads((work/'exit.json').read_text()),'pidAbsentBeforeReadback':True,'normalQuitTrailer':True,'verifiedBytes':len(actual),'verifiedSha256':hashlib.sha256(actual).hexdigest(),'privateDiskBytesBeforeRemoval':disk.stat().st_size,'privateDiskRemoved':False}\nassert disk.name=='win95-setup-integrated-audit-20261026.pcd'and r['staging']['disk']==str(disk)\ndisk.unlink();Path(str(disk)+'.idx').unlink(missing_ok=True);r['privateDiskRemoved']=True\n(work/'completed-result.json').write_text(json.dumps(r,indent=2)+'\\n');print('PASS: fresh integrated Setup, applications, original PID, exit 0, exact readback; disk removed',flush=True)\n",
+  "setupSupervisorSource": "from pathlib import Path\nimport subprocess,json,time,hashlib,shutil\nroot=Path.cwd();work=root/'build/integrated-audit/setup';disk=Path('/Volumes/data/pcemu/validation/win95-setup-integrated-audit-20261026.pcd');binary=root/'build/integrated-audit/pcemu'\nshutil.copy2(Path(str(disk)+'.json'),work/'staging-manifest.json')\ncontrol=work/'control.txt';control.write_text('')\ncmd=[str(binary),'--headless','--machine','win95','--ram-mb','64','--execute-vgabios','--no-network','--steps','0','--disk',str(disk),'--type','cd win95\\nsetup /is\\n','--control-file',str(control),'--frame',str(work/'frame.ppm'),'--state-json',str(work/'state.json')]\nwith (work/'guest.log').open('w') as log:\n guest=subprocess.Popen(cmd,stdout=log,stderr=log)\n (work/'run.json').write_text(json.dumps({'pid':guest.pid,'command':cmd,'emulatorSha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'startedUnix':time.time()},indent=2)+'\\n')\n print('Setup PID',guest.pid,flush=True)\n code=guest.wait();(work/'exit.json').write_text(json.dumps({'returncode':code,'finishedUnix':time.time()})+'\\n');print('Setup exit',code,flush=True)\n",
+  "limits": [
+    "Functional checks, not benchmark comparisons; default CMake Debug -O1 executable.",
+    "Existing unrelated uncommitted Makefile/docs/frontend changes were present at freeze; exact executable and source hashes are recorded, not a pristine-commit build claim.",
+    "Office document persistence, networking and full hardware/instruction coverage are not revalidated by this acceptance run.",
+    "Historical functional evidence is supplemented, not converted into a claim of another 2x useful-work speedup."
+  ]
+}
