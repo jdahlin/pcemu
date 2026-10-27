@@ -93,5 +93,11 @@ resolved. Literal BIOS clock tests pass with the main CPU/component suites.
 The 180-second interpreter run still advances through the 3D scene at roughly
 2.9 billion instructions when sampled; that watchdog is insufficient to establish
 completion. The opt-in completion check now defaults to a bounded 600 seconds
-per engine and remains outside `make test`. A frozen-runner JIT validation of the
-new scanout is in progress; it must finish before claiming a complete run.
+per engine and remains outside `make test`. The frozen-runner JIT validation of the
+new scanout now completes successfully: 4,760,683,102 instructions, 1,588 frame
+observations and 1,386 distinct frame hashes, followed by the demo's closing text
+and clean DOS return. [Pinned input hashes and result](measurements/second-reality-2026-10-27.json).
+The temporary overlay and copied runner/ROM were removed after success. This
+establishes full no-sound execution completion; it does not establish reference
+pixel fidelity, sound, or realtime performance. A full interpreter run with the
+new scanout is in progress.
