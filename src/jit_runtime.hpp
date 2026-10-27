@@ -6,6 +6,7 @@ namespace pc::jit_detail {
 void nativeFinish(CPU *cpu, int op, uint32_t a, uint32_t b, int width, int condition,
                   uint32_t target);
 uint32_t nativeSegment(CPU *cpu, unsigned segment, uint32_t selector, unsigned completed) noexcept;
+uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept;
 uint32_t nativeString(CPU *cpu, const NativeString *operation) noexcept;
 uint32_t nativePopMemory(CPU *cpu, const NativeMemoryMove *destination, uint32_t stackOffset,
                          uint32_t destinationOffset) noexcept;

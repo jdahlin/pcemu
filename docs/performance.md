@@ -2143,3 +2143,16 @@ before the fix and passes 72,128 checks afterward, including all AH bytes and
 clear/set reserved-bit inputs. Reference core (354,964) and flag liveness
 (102,230,994) also pass. This correctness fix has no new performance claim;
 existing original-baseline measurements remain attributed to their builds.
+
+### Word and Excel: guarded RETF/IRET coverage (2026-10-27)
+
+RETF, RETF immediate and IRET now use full warm-frame preflight, including mixed
+stack widths, outer returns and V86 entry; unsafe cases replay before mutation.
+Boundary-only entries retain fast metadata and exact polling without growing
+ordinary block headers. Validation passes 89,428 new checks plus I/O/core/batch/
+liveness suites. Interpreted return attempts fall 89.6%/96.0% in Word/Excel.
+All 48 release restores pass. Word CPU is 28.59% below original and 0.65% below
+prior, winning all eight pairs; Excel is 13.23% below original but 0.64% worse
+than prior with mixed pairs. A separate Excel trace puts return helper
+descendants at 0.16% of samples and dispatch/cache validation at 46.4%.
+See [semantics, measurements and limits](measurements/office-far-return-2026-10-27.md).

@@ -333,11 +333,11 @@ uint32_t Jit::run() {
     // SS/STI need accounted shadows; POPF must return to the poll.
     // Deferred I/O can cache metadata: its ordinary fn is null, which already
     // stops cached tails. Other poll boundaries stay unpublished.
-    entry = {key, (cached->changesShadow || (cached->pollBoundary && !cached->deferredPort())) ? nullptr : cached};
+    entry = {key, (cached->changesShadow || (cached->pollBoundary && !cached->boundaryEntry())) ? nullptr : cached};
     auto &b = *cached;
     auto function=b.fn;
     if(!function)
-        if(const auto deferred=b.deferredPort())function=deferred->fn;
+        if(const auto deferred=b.boundaryEntry())function=deferred->fn;
     if (!function) {
         profile::event(profile::InterpretedDispatch);
         if (b.attempted)
@@ -360,7 +360,7 @@ uint32_t Jit::run() {
     nativeInstructions += n;
     if(portExit) {
         // Copy metadata before callbacks can invalidate or clear JIT state.
-        const auto operation=b.deferredPort()->operation;
+        const auto operation=b.boundaryEntry()->operation;
         ++nativeInstructions;
         cpu.stepPortIO(operation.dx?uint16_t(cpu.r[DX]):operation.port,
                        operation.width,operation.output,operation.end);
@@ -497,7 +497,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     if (warmup && !hotShort && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
-                      !ir.front().stringMove && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
+                      !ir.front().stringMove && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {
         block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
             return i.kind == Kind::Memory;
         }) ? 2 : 1;

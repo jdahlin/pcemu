@@ -77,6 +77,76 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
+    const unsigned w=operation->width;
+    if(w!=2 && w!=4)return 0;
+    const bool vm=cpu->flags&0x20000,protectedMode=cpu->cr[0]&1;
+    if(operation->iret && vm && ((cpu->flags>>12)&3)!=3)return 0;
+    uint32_t sp=cpu->r[SP],off=0,sel=0,f=cpu->flags;
+    std::array<Segment,6> segments;
+    std::copy(cpu->s,cpu->s+6,segments.begin());
+    auto advance=[&](uint32_t amount,bool wide){
+        if(wide)sp+=amount;
+        else sp=(sp&0xffff0000u)|((sp+amount)&65535);
+    };
+    auto pop=[&](uint32_t &value){
+        const auto offset=cpu->s[SS].big?sp:sp&65535;
+        uint32_t physical;
+        if(!warmDataAddress(*cpu,cpu->address(SS,offset),w,false,physical))return false;
+        value=0;std::memcpy(&value,cpu->mem.data()+physical,w);
+        advance(w,cpu->s[SS].big);
+        return true;
+    };
+    auto segment=[&](unsigned index,uint32_t selector,uint32_t flags){
+        const auto selected=uint16_t(selector);
+        if(!protectedMode || (flags&0x20000)) {
+            auto &d=segments[index];d.selector=selected;d.base=uint32_t(selected)<<4;
+            d.limit=65535;d.big=false;d.unusable=false;return true;
+        }
+        if(!(selected&~3))return false;
+        const auto base=(selected&4)?cpu->ldtBase:cpu->gdtBase;
+        const auto limit=(selected&4)?cpu->ldtLimit:cpu->gdtLimit;
+        const auto offset=uint32_t(selected&~7);
+        uint32_t low,high;
+        if(offset+7>limit || !warmSystemWord(*cpu,base+offset,low) ||
+           !warmSystemWord(*cpu,base+offset+4,high))return false;
+        segments[index]=decodeSegmentDescriptor(index,selected,low,high);
+        return true;
+    };
+    try {
+        if(!pop(off)||!pop(sel)||(operation->iret&&!pop(f)))return 0;
+        const auto old=cpu->cpl();
+        if(operation->iret && protectedMode && !vm && old==0 && w==4 && (f&0x20000)) {
+            uint32_t newSP,newSS,newES,newDS,newFS,newGS;
+            if(!pop(newSP)||!pop(newSS)||!pop(newES)||!pop(newDS)||!pop(newFS)||!pop(newGS))return 0;
+            f=(f&0x00037fd7)|2;
+            if(!segment(CS,sel,f)||!segment(SS,newSS,f)||!segment(ES,newES,f)||
+               !segment(DS,newDS,f)||!segment(FS,newFS,f)||!segment(GS,newGS,f))return 0;
+            sp=newSP;off&=65535;
+        } else {
+            if(protectedMode && !vm && (sel&3)>old) {
+                if(!operation->iret)advance(operation->extra,cpu->s[SS].big);
+                uint32_t newSP,newSS;
+                if(!pop(newSP)||!pop(newSS)||!segment(SS,newSS,cpu->flags))return 0;
+                sp=w==4?newSP:(sp&0xffff0000u)|(newSP&65535);
+                if(!operation->iret)advance(operation->extra,segments[SS].big);
+            } else if(!operation->iret)advance(operation->extra,cpu->s[SS].big);
+            if(!segment(CS,sel,cpu->flags))return 0;
+            if(operation->iret) {
+                uint32_t change=w==4?0x00017fd7u:0x7fd7u;
+                if(protectedMode && old!=0)change&=~0x3000u;
+                if(protectedMode && old>((cpu->flags>>12)&3))change&=~uint32_t(IF);
+                f=(cpu->flags&~change)|(f&change)|2;
+            }
+        }
+        // Every stack and descriptor read was an existing warm ordinary RAM
+        // hit. No fault, page walk or device callback can occur after this point.
+        std::copy(segments.begin(),segments.end(),cpu->s);
+        cpu->r[SP]=sp;cpu->flags=f;cpu->ip=off;
+        return 1;
+    } catch(const Fault &) {return 0;}
+}
+
 namespace {
 struct StringSpan {uint32_t physical=0,elements=0;};
 struct StringSpans {std::array<StringSpan,8> spans;unsigned size=0;};

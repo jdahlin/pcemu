@@ -91,20 +91,21 @@ class Jit {
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;
         unsigned visits = 0;
-        struct DeferredPort {
+        struct BoundaryEntry {
             Function fn=nullptr;
             NativePortIO operation;
+            NativeFarReturn farReturn;
         };
         struct NativeState {
             std::vector<NativeMemoryMove> memory;
             std::vector<NativeString> strings;
             std::unique_ptr<LinkState> link;
-            std::unique_ptr<DeferredPort> port;
+            std::unique_ptr<BoundaryEntry> boundary;
         };
         // Negative entries and register-only unlinked blocks own no native
         // metadata. Helper operands remain alive until the block is replaced.
         std::unique_ptr<NativeState> native;
-        DeferredPort *deferredPort() const { return native ? native->port.get() : nullptr; }
+        BoundaryEntry *boundaryEntry() const { return native ? native->boundary.get() : nullptr; }
         LinkState *link() const { return native ? native->link.get() : nullptr; }
     };
     CPU &cpu;
