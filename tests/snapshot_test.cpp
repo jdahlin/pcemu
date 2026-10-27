@@ -242,8 +242,12 @@ int main() {
               "legacy snapshot fields restore frame/permission/dirty state");
         m.saveSnapshot((root / "roundtrip").string());
         auto second = unpack(root / "roundtrip/state.bin");
+        // The tail is RTC(8), DAC direction(1), PE-entry state(1), checksum(8).
+        // Exclude only the advancing RTC and derived checksum, retaining both
+        // Boolean latches in the exact round-trip comparison.
         check(first.size() == second.size() &&
-                  std::equal(first.begin(), first.end() - 17, second.begin()),
+                  std::equal(first.begin(), first.end() - 18, second.begin()) &&
+                  std::equal(first.end()-10,first.end()-8,second.end()-10),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
         check(m.systemPortB.read_register(false, false) == 3 && m.debugConsole.read_data_register() == 'A',
               "system/debug device latches restore from the existing port-state encoding");
