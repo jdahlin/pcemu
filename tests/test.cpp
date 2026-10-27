@@ -2403,6 +2403,29 @@ int main() {
         machine.cpu.r[AX] = 0x1002;
         machine.service(0x10);
         check(machine.vga.attr[1] == 14 && machine.vga.attr[15] == 0, "BIOS bulk palette service");
+        // Intel 80386 PRM 10.3: setting PE enters CPL0 even when the old
+        // real-mode CS happens to end in 1/2/3. X-VESA uses this unreal-mode
+        // sequence to address linear video RAM without reloading CS.
+        for(bool native : {false,true})for(bool lmsw : {false,true})for(unsigned low=0;low<4;++low) {
+            CPU transition(2*1024*1024);auto &c=transition;
+            c.segment(CS,0x1000+low);c.gdtBase=0x5000;c.gdtLimit=15;
+            c.write(0x5008,0x0000ffff,4);c.write(0x500c,0x00cf9200,4);
+            std::vector<uint8_t> bytes={0x0f,0x20,0xc0,0x66,0x83,0xc8,1,0x0f,uint8_t(lmsw?1:0x22),uint8_t(lmsw?0xf0:0xc0),
+                0xb8,8,0,0x8e,0xd8,0x0f,0x20,0xc0,0x66,0x83,0xe0,0xfe,0x0f,0x22,0xc0,0xf4};
+            std::copy(bytes.begin(),bytes.end(),c.mem.begin()+c.s[CS].base);
+            Jit engine(c,native,0,65536);
+            while(c.instructions<3){if(native)engine.run();else c.step();}
+            check(c.protectedEntry&&c.cpl()==0&&c.s[CS].selector==0x1000+low,
+                  "MOV CR0/LMSW PE entry starts at CPL0 without changing visible CS");
+            while(!c.halted){if(native)engine.run();else c.step();}
+            check(!(c.cr[0]&1)&&!c.protectedEntry&&c.s[DS].limit==0xffffffff&&c.s[DS].selector==8,
+                  "unreal-mode sequence preserves flat data cache after privileged PE clear");
+            check(c.s[CS].base==(0x1000+low)*16&&c.s[CS].selector==0x1000+low,
+                  "unreal-mode entry preserves real-mode CS selector and base");
+            c.halted=false;c.cr[0]=0x11;c.protectedEntry=true;
+            c.write(0x500c,0x00009a00,4);c.segment(CS,8);
+            check(!c.protectedEntry&&c.cpl()==0,"protected CS load ends the PE-entry window");
+        }
         std::cout << "Passed " << checks << " checks\n";
     } catch (const std::exception &e) {
         std::cerr << "FAIL: " << e.what() << " (after " << checks << " checks)\n";

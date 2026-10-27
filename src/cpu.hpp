@@ -46,6 +46,9 @@ struct CPU {
     uint32_t trBase = 0, trLimit = 0;
     bool tr32 = false;
     bool halted = false, a20 = true;
+    // CR0.PE entry starts at CPL0 while CS still contains a real-mode value.
+    // Its low bits become privilege bits only after a protected CS reload.
+    bool protectedEntry = false;
     bool nativeFallback = false;
     uint32_t nativeValue = 0;
     uint64_t nativeMemoryCalls = 0; // Diagnostic: slow RAM guards entered by native code.
@@ -88,7 +91,7 @@ struct CPU {
     uint32_t alu(int op, uint32_t a, uint32_t b, int width);
     void interrupt(uint8_t n, bool software = false);
     unsigned cpl() const {
-        return (flags & 0x20000) ? 3 : (cr[0] & 1) ? (s[CS].selector & 3) : 0;
+        return (flags & 0x20000) ? 3 : (cr[0] & 1) ? (protectedEntry ? 0 : s[CS].selector & 3) : 0;
     }
     void farTransfer(uint16_t selector, uint32_t offset, bool call, int width);
     void farReturn(int width, uint16_t extra, bool iret);

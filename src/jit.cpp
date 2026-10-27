@@ -272,7 +272,9 @@ uint32_t Jit::run() {
     profile::event(profile::Dispatch);
     if (cpu.halted)
         return 0;
-    if (!active ||
+    // Interpret the short PE-entry window until CS is reloaded or PE clears.
+    // Existing native block identities assume selector.RPL is the current CPL.
+    if (!active || cpu.protectedEntry ||
         (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough) ||
         (cpu.flags & TF)) {
         profile::event(profile::InterpretedDispatch);

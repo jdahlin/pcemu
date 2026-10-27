@@ -288,3 +288,11 @@ and the Line Compare exception; the RAM-only probe also passes under QEMU.
 Reference-ROM attribution: embedded strings identify the local QEMU firmware as
 SeaVGABIOS. Four-way comparisons use its PCI `vgabios-stdvga.bin` variant so
 QEMU/SeaBIOS discovers it; the local legacy image lacks a PCI data structure.
+
+X-VESA's linear-framebuffer probe exposed a CPU protected-mode entry bug. Intel
+80386 PRM 10.3 requires CPL0 immediately after setting CR0.PE, while the visible
+real-mode CS value is unchanged. PCEmu tracks that short window until a protected
+CS load or PE clear; the JIT interprets those few transitional instructions.
+Native/interpreter tests cover all four old-CS low-bit values and MOV CR0/LMSW.
+Snapshot version 8 preserves the entry state; encoded version 6/7 compatibility
+fixtures and a transitional-state restore are checked.

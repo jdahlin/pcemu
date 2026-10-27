@@ -195,20 +195,21 @@ int main() {
         for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
         check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
               "TLB snapshot retains its legacy 18-byte record");
-        {
+        for(unsigned legacyVersion : {6u,7u}) {
             auto legacy = first;
-            legacy.erase(legacy.end() - 9); // v7 DAC direction precedes checksum.
-            legacy[8] = 6;
+            legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
+            if(legacyVersion==6)legacy.erase(legacy.end()-9); // Remove v7 DAC direction.
+            legacy[8] = legacyVersion;
             // v6 did not preserve the Attribute source bit: locate the index
             // after the deliberately unique sequencer-index FFh marker.
             const uint8_t marker[] = {0,0x39,0,0,0xff,0,0,0x3f};
             auto position = std::search(legacy.begin(), legacy.end(), std::begin(marker), std::end(marker));
             check(position != legacy.end(), "locate VGA index fields in legacy fixture");
-            position[7] &= 31;
+            if(legacyVersion==6)position[7]&=31;
             uint64_t sum = 14695981039346656037ull;
             for (auto it=legacy.begin(); it!=legacy.end()-8; ++it) sum=(sum^*it)*1099511628211ull;
             for (unsigned n=0;n<8;++n) legacy[legacy.size()-8+n]=sum>>(n*8);
-            auto directory = root / "legacy-v6";
+            auto directory = root / ("legacy-v"+std::to_string(legacyVersion));
             fs::copy(root / "point", directory, fs::copy_options::recursive);
             std::vector<uint8_t> packed(ZSTD_compressBound(legacy.size()));
             auto size=ZSTD_compress(packed.data(),packed.size(),legacy.data(),legacy.size(),1);
@@ -216,8 +217,8 @@ int main() {
             {std::ofstream out(directory / "state.bin",std::ios::binary);out.write(reinterpret_cast<char*>(packed.data()),size);}
             Machine compatibility("","",2*1024*1024);
             compatibility.loadSnapshot(directory.string());
-            check(compatibility.vga.attrIndex==0x3f && !compatibility.vga.dacReadMode,
-                  "version-6 snapshot restores display-enable compatibility and default DAC direction");
+            check(compatibility.vga.attrIndex==0x3f && compatibility.vga.dacReadMode==(legacyVersion>=7) && !compatibility.cpu.protectedEntry,
+                  "old snapshot preserves DAC compatibility and defaults PE-entry state");
         }
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
@@ -309,6 +310,20 @@ int main() {
         jit.run();
         check(code.cpu.r[AX] == 2 && code.cpu.executionEpoch == 1,
               "an existing JIT discards stale code and embedded pointers after restore");
+        {
+            auto entry=std::make_unique<Machine>("","",2*1024*1024);
+            auto &c=entry->cpu;c.segment(CS,0x1013);c.cr[0]=0x11;c.protectedEntry=true;
+            const uint8_t readCr0[]={0x0f,0x20,0xc0};
+            std::copy(std::begin(readCr0),std::end(readCr0),c.mem.begin()+c.s[CS].base);
+            entry->saveSnapshot((root/"pe-entry").string());
+            c.protectedEntry=false;entry->loadSnapshot((root/"pe-entry").string());
+            check(entry->cpu.protectedEntry&&entry->cpu.cpl()==0&&entry->cpu.s[CS].selector==0x1013,
+                  "snapshot v8 preserves CPL0 entry with unchanged real-mode CS");
+            Jit transition(entry->cpu,true,0);
+            auto before=entry->cpu.instructions;transition.run();
+            check(entry->cpu.instructions==before+1&&entry->cpu.r[AX]==0x11&&transition.nativeInstructions==0,
+                  "restored PE-entry state takes privilege-correct interpreter boundary");
+        }
         fs::remove_all(root);
         std::cout << "Passed " << checks << " snapshot/COW checks\n";
     } catch (const std::exception &error) {

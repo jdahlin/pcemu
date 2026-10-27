@@ -236,6 +236,7 @@ void CPU::segment(int seg, uint16_t sel) {
         d.base = uint32_t(sel) << 4;
         d.limit = 0xffff;
         d.big = false;
+        if(seg==CS)protectedEntry=false;
         return;
     }
     if (!(sel & ~3)) {
@@ -255,6 +256,7 @@ void CPU::segment(int seg, uint16_t sel) {
         throw Fault{13, uint32_t(sel & ~3u), true};
     uint32_t lo = systemRead(base + off, 4), hi = systemRead(base + off + 4, 4);
     d = decodeSegmentDescriptor(seg, sel, lo, hi);
+    if(seg==CS)protectedEntry=false;
 }
 Segment decodeSegmentDescriptor(int seg, uint16_t sel, uint32_t lo, uint32_t hi) {
     // Type checks precede presence checks. Windows uses invalid nonpresent
@@ -506,7 +508,7 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
             uint16_t target = lo >> 16;
             uint32_t targetOff = (lo & 65535) | (gw == 4 ? (hi & 0xffff0000) : 0);
             auto targetHi = systemRead(((target & 4) ? ldtBase : gdtBase) + (target & ~7u) + 4, 4);
-            unsigned oldLevel = s[CS].selector & 3, newLevel = (targetHi >> 13) & 3;
+            unsigned oldLevel = cpl(), newLevel = (targetHi >> 13) & 3;
             if (newLevel < oldLevel) {
                 if (!trSelector)
                     throw std::runtime_error("call gate requires TSS");
@@ -708,6 +710,7 @@ template<class Execute> static void restartableInstruction(CPU &c,Execute execut
     std::memcpy(savedRegs, c.r, sizeof c.r);
     std::memcpy(savedSegments, c.s, sizeof c.s);
     auto savedIP = c.ip, savedFlags = c.flags;
+    auto savedEntry = c.protectedEntry;
     try {
         execute();
     } catch (const Fault &fault) {
@@ -718,6 +721,7 @@ template<class Execute> static void restartableInstruction(CPU &c,Execute execut
             std::memcpy(c.r, savedRegs, sizeof c.r);
         std::memcpy(c.s, savedSegments, sizeof c.s);
         c.ip = savedIP;
+        c.protectedEntry = savedEntry;
         c.flags = fault.partialRepeat ? fault.repeatFlags : savedFlags;
         deliverInstructionFault(c,fault);
     }
@@ -1661,8 +1665,11 @@ void CPU::stepImpl() {
                 }
             } else if (g == 4)
                 store(dst, cr[0], 2);
-            else if (g == 6)
-                cr[0] = (cr[0] & ~15u) | (load(dst, 2) & 15) | (cr[0] & 1);
+            else if (g == 6) {
+                auto value=(cr[0]&~15u)|(load(dst,2)&15)|(cr[0]&1);
+                if(!(cr[0]&1)&&(value&1))protectedEntry=true;
+                cr[0]=value;
+            }
             else if (g == 7)
                 flushTLB();
             else
@@ -1711,6 +1718,13 @@ void CPU::stepImpl() {
                 r[m & 7] = cr[(m >> 3) & 7];
             else {
                 auto index = (m >> 3) & 7;
+                if(index==0) {
+                    // Intel 80386 PRM 10.3: CPL starts at zero on PE entry;
+                    // CS retains its real-mode cache until explicitly reloaded.
+                    // https://www.cs.yale.edu/flint/cs422/readings/i386/s10_03.htm
+                    if(!(cr[0]&1)&&(r[m&7]&1))protectedEntry=true;
+                    if(!(r[m&7]&1))protectedEntry=false;
+                }
                 cr[index] = r[m & 7];
                 if (index == 0 || index == 3)
                     flushTLB();

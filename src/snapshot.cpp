@@ -262,6 +262,8 @@ class SnapshotCodec {
             v.attrIndex |= 0x20;
             v.dacReadMode = false;
         }
+        if(version>=8)a(c.protectedEntry);
+        else if constexpr(A::loading)c.protectedEntry=false;
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
@@ -316,7 +318,7 @@ class SnapshotCodec {
             Writer writer;
             writer.data.reserve(m.cpu.mem.size() + 1024 * 1024);
             writer.bytes(magic, sizeof(magic));
-            uint32_t version = 7, ram = m.cpu.mem.size();
+            uint32_t version = 8, ram = m.cpu.mem.size();
             writer(version, ram);
             for (auto &d : disks)
                 d.state(writer);
@@ -383,7 +385,7 @@ class SnapshotCodec {
         reader.bytes(signature, sizeof(signature));
         uint32_t version, ram;
         reader(version, ram);
-        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 7) ||
+        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 8) ||
             ram < 2 * 1024 * 1024 || ram > 64 * 1024 * 1024)
             throw std::runtime_error("Unsupported snapshot format or RAM size");
         DiskInfo disks[2];
