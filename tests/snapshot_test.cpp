@@ -184,6 +184,8 @@ int main() {
         m.hostCursor.active = m.hostCursor.uploading = true;
         m.hostCursor.received = 2; m.hostCursor.pending[0] = 17;
         m.hostCursor.revision = 42;
+        m.cpu.fp[3] = 0x400921fb54442d18ull;
+        m.cpu.fpControl = 0x77f; m.cpu.fpStatus = 0x1800; m.cpu.fpTag = 0xff3f;
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
               "first checkpoint switches live disks to QCOW2 deltas");
@@ -197,6 +199,7 @@ int main() {
               "TLB snapshot retains its legacy 18-byte record");
         for(unsigned legacyVersion : {6u,7u}) {
             auto legacy = first;
+            legacy.erase(legacy.end() - 8 - 84, legacy.end() - 8); // Remove v9 x87 state.
             legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
             if(legacyVersion==6)legacy.erase(legacy.end()-9); // Remove v7 DAC direction.
             legacy[8] = legacyVersion;
@@ -224,7 +227,11 @@ int main() {
         m.cpu.mem[0x5000] = 0;
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
+        m.cpu.fp[3] = 0; m.cpu.fpControl = m.cpu.fpStatus = m.cpu.fpTag = 0;
         m.loadSnapshot((root / "point").string());
+        check(m.cpu.fp[3] == 0x400921fb54442d18ull && m.cpu.fpControl == 0x77f &&
+              m.cpu.fpStatus == 0x1800 && m.cpu.fpTag == 0xff3f,
+              "snapshot v9 restores x87 registers, TOP, tags and control word");
         check(m.vga.attrIndex == 0x3f && m.vga.dacReadMode,
               "VGA Attribute source bit and DAC read direction survive snapshot restore");
         check(m.hostCursor.active && m.hostCursor.uploading && m.hostCursor.received == 2 &&

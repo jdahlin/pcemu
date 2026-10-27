@@ -4,6 +4,8 @@
 #include "pc_bios_disk.hpp"
 #include "ps2_test_support.hpp"
 #include <cstring>
+#include <bit>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -1983,6 +1985,47 @@ int main() {
             check(task.trSelector == 32 && !(task.read(0x101c, 4) & 0x200),
                   "far JMP task switch releases old TSS");
         }
+        {
+            CPU fp;
+            auto instruction = [&](std::initializer_list<uint8_t> bytes) { program(fp, bytes); fp.step(); };
+            instruction({0xdb, 0xe3}); // FNINIT
+            check(fp.fpControl == 0x37f && fp.fpStatus == 0 && fp.fpTag == 0xffff, "x87 reset state");
+            instruction({0xd9, 0xe8}); instruction({0xd9, 0xe8}); instruction({0xde, 0xc1});
+            instruction({0xd9, 0x1e, 0x00, 0x02});
+            check(std::bit_cast<float>(fp.read(0x200, 4)) == 2 && fp.fpTag == 0xffff,
+                  "x87 FLD1/FADDP/FSTP performs arithmetic and balances stack");
+            for (unsigned rounding = 0; rounding < 4; ++rounding) {
+                fp.write(0x210, 0x37f | (rounding << 10), 2);
+                instruction({0xd9, 0x2e, 0x10, 0x02});
+                for (float x : {2.5f, -2.5f, 3.5f, -3.5f}) {
+                    fp.write(0x200, std::bit_cast<uint32_t>(x), 4);
+                    instruction({0xd9, 0x06, 0x00, 0x02});
+                    instruction({0xdb, 0x1e, 0x04, 0x02});
+                    int expected = rounding == 1 ? int(std::floor(x)) : rounding == 2 ? int(std::ceil(x)) :
+                                   rounding == 3 ? int(x) : x == 2.5f ? 2 : x == -2.5f ? -2 : x == 3.5f ? 4 : -4;
+                    check(int32_t(fp.read(0x204, 4)) == expected, "x87 FISTP honors all rounding modes and ties to even");
+                }
+            }
+            instruction({0xdb, 0xe3});
+            instruction({0xd9, 0xe8}); instruction({0xd9, 0xee}); instruction({0xd8, 0xd9});
+            instruction({0xdf, 0xe0});
+            check((fp.r[AX] & 0x4500) == 0x100, "x87 compare records less-than in C0");
+            instruction({0xd9, 0xe8}); instruction({0xdb, 0x3e, 0x20, 0x02});
+            check(fp.read(0x228, 2) == 0x3fff && fp.read(0x224, 4) == 0x80000000,
+                  "x87 80-bit memory stores explicit exponent and integer bit");
+            instruction({0xdb, 0x2e, 0x20, 0x02});
+            instruction({0xdd, 0x36, 0x00, 0x03});
+            check(fp.fpTag == 0xffff && fp.fpStatus == 0, "x87 FNSAVE resets after saving context");
+            instruction({0xdd, 0x26, 0x00, 0x03});
+            instruction({0xd9, 0x1e, 0x00, 0x02});
+            check(std::bit_cast<float>(fp.read(0x200, 4)) == 1, "x87 FRSTOR restores stack values and TOP");
+            instruction({0xdb, 0xe3});
+            fp.write(0x200, std::bit_cast<uint32_t>(3.f), 4);
+            fp.write(0x204, std::bit_cast<uint32_t>(12.f), 4);
+            instruction({0xd9, 0x06, 0x00, 0x02}); instruction({0xd9, 0x06, 0x04, 0x02});
+            instruction({0xde, 0xf9}); instruction({0xd9, 0x1e, 0x08, 0x02});
+            check(std::bit_cast<float>(fp.read(0x208, 4)) == .25f, "x87 FDIVP register operand order");
+        }
         CPU nofpu;
         nofpu.r[SP] = 0x1000;
         nofpu.write(0, 0xe3db, 2);
@@ -1990,7 +2033,7 @@ int main() {
         nofpu.write(0x20, 0x5a5a, 2);
         nofpu.step();
         nofpu.step();
-        check(nofpu.read(0x20, 2) == 0x5a5a, "absent 387 leaves presence-probe sentinel unchanged");
+        check(nofpu.read(0x20, 2) == 0, "387 INIT and status store report a present coprocessor");
         nofpu.ip = 0;
         nofpu.cr[0] |= 4;
         unsigned faultVector = 0;
@@ -2162,7 +2205,7 @@ int main() {
             check(fixed.resets == resetSource + 1 && !fixed.resetRequested &&
                       fixed.cpu.s[CS].selector == 0 && fixed.cpu.s[SS].selector == 0 &&
                       fixed.cpu.ip == 0x7c00 && fixed.cpu.r[SP] == 0x7c00 &&
-                      fixed.cpu.r[DX] == 0x80 && fixed.cpu.r[AX] == 0 && fixed.cpu.cr[0] == 0x10 &&
+                      fixed.cpu.r[DX] == 0x80 && fixed.cpu.r[AX] == 0 && fixed.cpu.cr[0] == 0x12 &&
                       fixed.cpu.cr[3] == 0 && fixed.cpu.gdtBase == 0 && fixed.cpu.ldtBase == 0 &&
                       fixed.cpu.instructions >= before && fixed.cpu.read(0x100000, 4) == 0x12345678,
                   "firmware restart preserves RAM and disk while resetting CPU and boot stack");
@@ -2367,8 +2410,8 @@ int main() {
             check(nextByte() == 0xb0, "reenabled keyboard delivers retained break byte");
         }
         Machine machine("", "");
-        check(!(machine.cpu.cr[0] & 4) && !(machine.cpu.read(0x410, 2) & 2),
-              "BIOS advertises no coprocessor without enabling an unhandled #NM trap");
+        check(!(machine.cpu.cr[0] & 4) && (machine.cpu.read(0x410, 2) & 2),
+              "BIOS advertises coprocessor with hardware execution enabled");
         machine.out(0x70, 0x14, 1);
         check((machine.in(0x71, 1) & 1) == 0, "CMOS equipment reports no absent floppy drive");
         machine.cpu.r[DX] = 0x81;

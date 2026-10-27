@@ -21,6 +21,7 @@ include(CTest)
 
 set(CORE
   src/cpu.cpp
+  src/cpu_x87.cpp
   src/machine.cpp
   src/pc_at_io.cpp
   src/pc_firmware.cpp
@@ -247,6 +248,7 @@ pcemu_program(jit-batch-tests ZSTD
 pcemu_program(jit-cached-batch-tests
   SOURCES
     src/cpu.cpp
+  src/cpu_x87.cpp
     src/jit.cpp
     src/jit_decode.cpp
     src/jit_flags.cpp
@@ -263,6 +265,7 @@ pcemu_program(guest-profile-tests PROFILE
     src/jit_runtime.cpp
     src/jit_arm64.cpp
     src/cpu.cpp
+  src/cpu_x87.cpp
     tests/guest_profile_test.cpp
 )
 
@@ -445,6 +448,7 @@ pcemu_program(memory-bench ZSTD
 pcemu_program(memory-chase-bench
   SOURCES
     src/cpu.cpp
+  src/cpu_x87.cpp
     src/jit.cpp
     src/jit_decode.cpp
     src/jit_flags.cpp

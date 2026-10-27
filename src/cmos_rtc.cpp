@@ -149,7 +149,7 @@ uint32_t CmosRtc::read_data_register() const {
         // FIXME: Supply the extended type byte (0x19) when advertising type 15.
         return config.disk ? DriveCExtendedType : 0;
     case Register::EquipmentByte:
-        return ColorDisplay80Columns | (config.floppy ? DiskettePresent : 0);
+        return ColorDisplay80Columns | 2 | (config.floppy ? DiskettePresent : 0);
     // BIOS memory sizes use low-byte/high-byte words, in KiB.
     // https://minuszerodegrees.net/manuals/IBM_5170_Technical_Reference_6280070_SEP85.pdf#page=80
     // https://minuszerodegrees.net/manuals/IBM_5170_Technical_Reference_6280070_SEP85.pdf#page=81

@@ -294,6 +294,7 @@ uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
     const unsigned w=operation->width;
     if(w!=2 && w!=4)return 0;
     const bool vm=cpu->flags&0x20000,protectedMode=cpu->cr[0]&1;
+    if(operation->iret && protectedMode && !vm && (cpu->flags & 0x4000))return 0;
     if(operation->iret && vm && ((cpu->flags>>12)&3)!=3)return 0;
     uint32_t sp=cpu->r[SP],off=0,sel=0,f=cpu->flags;
     std::array<Segment,6> segments;

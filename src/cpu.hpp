@@ -45,6 +45,12 @@ struct CPU {
     uint16_t gdtLimit = 0, idtLimit = 0x3ff, ldtLimit = 0, ldtSelector = 0, trSelector = 0;
     uint32_t trBase = 0, trLimit = 0;
     bool tr32 = false;
+    // Binary64 arithmetic backend; guest 80-bit memory/register images convert
+    // explicitly. Extended precision and complete exception timing are pending.
+    uint64_t fp[8]{};
+    uint16_t fpControl = 0x37f, fpStatus = 0, fpTag = 0xffff;
+    uint32_t fpIP = 0, fpData = 0;
+    uint16_t fpCS = 0, fpDS = 0, fpOpcode = 0;
     bool halted = false, a20 = true;
     // CR0.PE entry starts at CPL0 while CS still contains a real-mode value.
     // Its low bits become privilege bits only after a protected CS reload.
@@ -120,6 +126,7 @@ struct CPU {
   private:
     uint32_t physicalSlow(uint32_t linear, bool write);
     void stepImpl();
+    void stepX87(uint8_t opcode, bool address32, int overrideSeg, bool operand32);
     void ioPermission(uint16_t port, int width);
     void portIO(uint16_t port, int width, bool output);
     bool descriptorVisible(uint16_t selector, uint32_t high) const;

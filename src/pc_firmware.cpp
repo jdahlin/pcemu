@@ -68,7 +68,7 @@ void Machine::initializeFirmware() {
     cpu.write(0xf040a, uint8_t(-sum), 1);
     for (unsigned k = 0; k < sizeof(pci32Firmware); ++k)
         cpu.write(0xf0410 + k, pci32Firmware[k], 1);
-    cpu.write(0x410, 0x0024 | (floppy ? 1 : 0), 2);
+    cpu.write(0x410, 0x0026 | (floppy ? 1 : 0), 2);
     cpu.write(0x413, 640, 2);
     cpu.write(0x417, 0, 2);
     cpu.write(0x41a, 0x1e, 2);
@@ -82,7 +82,7 @@ void Machine::initializeFirmware() {
     cpu.write(0x484, 24, 1);
     cpu.write(0x485, 16, 2);
     cpu.write(0x475, disk ? 1 : 0, 1);
-    // Configuration table returned by INT 15h/C0h: AT, no coprocessor.
+    // Configuration table returned by INT 15h/C0h: AT with a math coprocessor.
     cpu.write(0xf0300, 8, 2);
     cpu.write(0xf0302, 0xfc, 1);
     cpu.write(0xf0303, 1, 1);
@@ -90,10 +90,8 @@ void Machine::initializeFirmware() {
     cpu.write(0xf0305, 0x24, 1);
     for (unsigned i = 0; i < 80 * 25; i++)
         cpu.write(0xb8000 + i * 2, 0x0720, 2);
-    // No 80387 is advertised in the equipment word. Leave EM clear as on a
-    // real 386 reset: DOS presence probes must observe unanswered ESC cycles,
-    // rather than #NM without an installed software-emulation handler.
-    cpu.cr[0] = 0x10;
+    // 386/387: MP is set, EM/TS clear until protected-mode task switching.
+    cpu.cr[0] = 0x12;
     pic[0].mask = 0xfc;
     pic[1].base = 0x70;
     ports[0x21] = 0xfc;

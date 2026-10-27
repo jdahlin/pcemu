@@ -64,3 +64,16 @@ save/load, backlink, busy-bit and CR0.TS checks. The original CWSDPMI bootstrap
 advances past its task transfer; the next observed screen is Quake's SIGFPE
 "Coprocessor not available" at EIP 0005425b. This supersedes the initial
 protected-mode stop above, but still does not establish gameplay.
+
+The x87 implementation now executes stack loads/stores, real/integer arithmetic,
+comparisons, rounding-controlled integer conversions, common transcendental
+operations and 14/28-byte environments with 80-byte register images. Snapshots
+use schema 9 and include the floating-point registers and environment; older
+snapshots default to FINIT state. BIOS/CMOS advertise the coprocessor. Nested-task
+IRET declines the JIT fast return helper and uses the task-switch implementation.
+
+Arithmetic currently uses binary64 internally: extended precision, full exception
+mask/timing semantics, stack-fault handling and some rare instructions remain
+incomplete. This is a compatibility implementation, not full 80387 conformance.
+Focused tests cover rounding modes/ties, arithmetic operand order, compare flags,
+80-bit stores and FSAVE/FRSTOR; snapshot tests cover live floating-point state.

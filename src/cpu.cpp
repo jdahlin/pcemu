@@ -1439,13 +1439,7 @@ void CPU::stepImpl() {
     case 0xdd:
     case 0xde:
     case 0xdf: {
-        // This machine has no 80387 attached. With EM/TS clear the ESC bus
-        // cycle completes without an FPU response or register/memory write.
-        // Hardware-presence probes test an unchanged status-word sentinel.
-        if (cr[0] & 12)
-            throw Fault{7, 0, false};
-        auto m = fetch(1);
-        decode(m, a32, over);
+        stepX87(op, a32, over, o32);
         break;
     }
     case 0xe0:
