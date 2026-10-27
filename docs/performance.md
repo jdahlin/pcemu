@@ -2012,3 +2012,13 @@ Interpreted attempts fall 93% in Word and 99% in Excel. All 48 matched release
 restores pass. CPU time is 25.27% below the original Word baseline and 10.74%
 below Excel's. Incremental medians are 0.87% and 0.38% lower, with host noise
 limiting the small differences. See [semantics, measurements and limits](measurements/office-flag-stack-2026-10-27.md).
+
+### Word and Excel: segment PUSH/POP coverage (2026-10-27)
+
+Segment stack operations now lower with guarded stack access, dynamic selector
+values and shared descriptor loading. POP SS advances SP using the old SS.B and
+retains an accounted interrupt shadow. Validation passes 73,616 new checks plus
+the reference, segment, flag-stack and batch suites. Interpreted segment-stack
+attempts fall 83.8% in Word and 88.7% in Excel; all 48 matched release restores
+pass. Word CPU is 26.04% below the original baseline and Excel 11.18%; incremental
+medians are 1.66% and 0.66% lower. See [semantics, measurements and limits](measurements/office-segment-stack-2026-10-27.md).

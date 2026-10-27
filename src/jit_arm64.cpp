@@ -911,6 +911,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto finishMove = [&]() {
                 if (i.segmentLoad) {
                     segmentLoad(i,unsigned(n),beforeLoad);
+                    if (i.stackDelta) {
+                        // POP SS changes SS.B, but its pop used the OLD stack
+                        // width. Commit that increment only after loading the
+                        // descriptor succeeds; declines replay the entire pop.
+                        emit(0x11000000u | (i.w << 10) | ((20+SP) << 5) | 11);
+                        insert(20+SP,11,block.stack32 ? 4 : 2,0);
+                        dirtyRegisters |= 1u << SP;
+                    }
                     return;
                 }
                 if (i.stackMany) {

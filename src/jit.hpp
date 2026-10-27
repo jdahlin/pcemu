@@ -86,7 +86,7 @@ class Jit {
         uint8_t shortKind = 0; // Supported but rejected: 1 register-only, 2 memory.
         bool vm = false, watched = false, usesStack = false, stack32 = false;
         bool pollBoundary = false; // Completed control instructions must return to the device poll.
-        bool changesShadow = false; // MOV SS needs an accounted instruction boundary.
+        bool changesShadow = false; // Segment loads into SS need an accounted instruction boundary.
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;

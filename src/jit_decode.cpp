@@ -96,7 +96,23 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             i.kind = Kind::Unsupported;
             i.dst = 0;
             i.src = 0;
-            if (op == 0xc2 || op == 0xc3) {
+            auto segmentStack = [&](int segment, bool store) {
+                i.kind = Kind::Memory;
+                i.segmentRegister = segment;
+                i.segmentLoad = !store;
+                i.memory.store = store;
+                i.memory.base = SP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                i.stackDelta = store ? -w : w;
+                i.memory.displacement = store ? uint32_t(-w) : 0;
+                block.usesStack = true;
+                if (!store && segment == SS) block.changesShadow = true;
+            };
+            if (op == 0x06 || op == 0x0e || op == 0x16 || op == 0x1e ||
+                op == 0x07 || op == 0x17 || op == 0x1f) {
+                segmentStack(op >> 3, !(op & 1));
+            } else if (op == 0xc2 || op == 0xc3) {
                 i.kind = Kind::Memory;
                 i.nearReturn = true;
                 i.stackDelta = w + (op == 0xc2 ? immediate(2) : 0);
@@ -496,7 +512,9 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xba || extended == 0xa3 || extended == 0xab ||
+                if (extended == 0xa0 || extended == 0xa1 || extended == 0xa8 || extended == 0xa9) {
+                    segmentStack(extended < 0xa8 ? FS : GS, !(extended & 1));
+                } else if (extended == 0xba || extended == 0xa3 || extended == 0xab ||
                     extended == 0xb3 || extended == 0xbb) {
                     auto m = byte();
                     i.kind = (m >> 6) == 3 ? Kind::BitTest : Kind::Memory;
