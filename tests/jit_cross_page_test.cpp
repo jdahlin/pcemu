@@ -108,13 +108,24 @@ int main(){try{
         auto ref=std::make_unique<CPU>(c);ref->step();Jit jit(c,true,0,65536);jit.run();equal(c,*ref);
         check(c.r[AX]==UINT32_MAX && jit.nativeInstructions==0,"tail beyond RAM returns reference FF bytes");
     }
-    // The first page can also be callback-backed while the tail is RAM.
+    // The full A0000..BFFFF video window ends at C0000, where ROM/RAM fetches resume.
     {
-        auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.s[CS].big=true;c.ip=0xaffff;
-        c.mem[0xaffff]=0xb8;c.write(0xb0000,0x12345678,4);auto ref=std::make_unique<CPU>(c);unsigned reads[2]={};
+        auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.s[CS].big=true;c.ip=0xbffff;
+        c.mem[0xbffff]=0xb8;c.write(0xc0000,0x12345678,4);auto ref=std::make_unique<CPU>(c);unsigned reads[2]={};
         for(unsigned n=0;n<2;++n)(n?ref.get():&c)->videoRead=[&,n](uint32_t){++reads[n];return uint8_t(0xb8);};
         ref->step();Jit jit(c,true,0,65536);jit.run();equal(c,*ref);
         check(c.r[AX]==0x12345678 && reads[0]==1 && reads[1]==1 && jit.nativeInstructions==0,"callback-backed head uses exact reference fetches");
+    }
+    // Crossing AFFFF/B0000 or B7FFF/B8000 remains entirely device-backed.
+    for (uint32_t start : {0xaffffu,0xb7fffu}) {
+        auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.s[CS].big=true;c.ip=start;
+        auto ref=std::make_unique<CPU>(c);unsigned reads[2]={};
+        for(unsigned n=0;n<2;++n)(n?ref.get():&c)->videoRead=[&,n](uint32_t a){
+            ++reads[n];return a==start?uint8_t(0xb8):uint8_t(0x12345678u>>((a-start-1)*8));
+        };
+        ref->step();Jit jit(c,true,0,65536);jit.run();equal(c,*ref);
+        check(c.r[AX]==0x12345678 && reads[0]==5 && reads[1]==5 && jit.nativeInstructions==0,
+              "CGA video-window boundaries preserve all fetch callbacks");
     }
     // A 16-bit IP wrap is another two-page instruction, including A20 aliases.
     for(bool a20:{false,true}){
