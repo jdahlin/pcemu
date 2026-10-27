@@ -109,9 +109,14 @@ host-backed; ARM UEFI remains a separate firmware dependency.
 
 [FreeDOS validation](docs/freedos-validation.md) provides a reproducible guest
 fixture and headless CPU, memory-manager, mouse, storage and network driver checks.
+[External x86 test tiers](docs/x86-external-tests.md) separate quick offline
+regressions from the larger hardware and ROM suites, including known failures.
 
 ```sh
-make test
+make test             # offline checks + small hardware-derived CPU sample
+make test-x86-hardware # broader hardware vectors; bounded worker pool
+make test-x86-rom      # standalone CPU ROM + QEMU reference
+make test-freedos-extended # DOSEMU-derived HMA checks
 make test-freedos     # downloadable FreeDOS CPU + driver checks, interpreter/JIT
 make test-freedos-vga # external VGA suites on FreeDOS, with QEMU comparisons
 make bench

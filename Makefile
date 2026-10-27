@@ -12,7 +12,7 @@ all: build/pcemu
 smoke-guest-memory: build/memory-bench
 	python3 tools/smoke_guest_memory.py
 
-test: build/guest-profile-tests build/quake-benchmark-tests build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+test: build/x86-external-runner build/guest-profile-tests build/quake-benchmark-tests build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
 	python3 -m unittest discover -s tests -p test_vga_bios_build.py
 	./build/vga-bios-tests
 	python3 tools/smoke_vga_bios.py
@@ -32,6 +32,8 @@ test: build/guest-profile-tests build/quake-benchmark-tests build/x86-task-x87-t
 	./build/integration-tests
 	./build/tests
 	./build/x86-task-x87-tests
+	python3 -m unittest discover -s tests -p test_x86_moo.py
+	python3 tools/test_x86_hardware.py --quick
 	./build/quake-benchmark-tests
 	python3 -m unittest discover -s tests -p test_quake_benchmark.py
 	python3 -m unittest discover -s tests -p test_quake_profiling.py
@@ -330,3 +332,16 @@ test-freedos: build/pcemu build/guest-bench freedos
 test-freedos-vga: build/pcemu freedos
 	python3 tools/smoke_vga_edges.py --disk "$(FREEDOS_DISK)"
 	python3 tools/smoke_vga_edges.py --disk "$(FREEDOS_DISK)" --no-jit
+
+# Extended x86 suites are opt-in. Build once; child CPU jobs do not invoke Ninja.
+X86_TEST_JOBS ?= 4
+.PHONY: test-x86-hardware test-x86-hardware-full test-x86-rom test-freedos-extended
+test-x86-hardware: build/x86-external-runner
+	python3 tools/test_x86_hardware.py --jobs "$(X86_TEST_JOBS)"
+test-x86-hardware-full: build/x86-external-runner
+	python3 tools/test_x86_hardware.py --jobs "$(X86_TEST_JOBS)" --opcodes all
+test-x86-rom: build/x86-external-runner
+	python3 tools/test_x86_rom.py --jobs "$(X86_TEST_JOBS)" --qemu
+test-freedos-extended: build/pcemu freedos
+	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)" --profile hma
+	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)" --profile hma --no-jit

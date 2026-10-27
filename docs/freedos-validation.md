@@ -8,6 +8,7 @@ private OS disk is required.
 make freedos                # fetch/verify/build the cached fixture
 make smoke-freedos          # boot and driver profiles, JIT
 make test-freedos           # profiles + CPU checks, interpreter and JIT
+make test-freedos-extended  # DOSEMU-derived HMA checks, interpreter and JIT
 make test-freedos-vga       # external VGA edge suites, interpreter/JIT + QEMU
 ```
 
@@ -112,3 +113,6 @@ These tests cover the implemented PC/AT, VGA, ATA, PS/2 and NE2000 paths. They d
 not imply support for every FreeDOS driver, ATAPI/CD-ROM, USB, sound, every x86
 instruction or exact hardware timing. Results are recorded in
 [the validation measurement](measurements/freedos-2026-10-27.json).
+
+The [external x86 test tiers](x86-external-tests.md) add a small offline hardware
+sample to `make test` and keep broader CPU suites behind separate targets.

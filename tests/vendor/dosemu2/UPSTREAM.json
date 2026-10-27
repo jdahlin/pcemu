@@ -1,0 +1,13 @@
+{
+  "upstream": "https://github.com/dosemu2/dosemu2",
+  "revision": "7e7f3da9596ce8035274843f61dc6c71e9733d3a",
+  "file": "test/func_memory_hma.py",
+  "sourceSHA256": "6eab4ba82b32d824afaa8b531824974b875237af4c82592b8b5ac48bbd3065f7",
+  "license": "GPL-2.0",
+  "port": "tests/freedos/dosemu_hma.asm",
+  "cases": [
+    "memory_hma_freespace",
+    "memory_hma_alloc"
+  ],
+  "adaptation": "C int86x calls translated to equivalent NASM INT2F instructions. Availability checks unchanged. FreeDOS kernel 2043 allocates exactly 35 bytes instead of the original DOSEMU/MS-DOS 48-byte expectation; verify BX=35 and query offset/free-space deltas of 35, per kernel/inthndlr.c in the pinned fixture source."
+}

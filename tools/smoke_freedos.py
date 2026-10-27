@@ -14,6 +14,7 @@ from freedos_fixture import DEFAULT, prepare, read_path, startup, put_root
 
 ROOT=Path(__file__).resolve().parents[1]
 PROFILES={
+ 'hma':([],b'DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n',b''),
  'minimal':([],b'',b''),
  'xms':(['XMS','MOUSE'],b'DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n',b'C:\\DRIVERS\\CTMOUSE.EXE /P\r\n'),
  'ems':(['XMS','EMS','MOUSE'],b'DEVICE=C:\\FREEDOS\\BIN\\JEMMEX.EXE I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF\r\nDOS=HIGH,UMB\r\n',b'C:\\DRIVERS\\CTMOUSE.EXE /P\r\n'),
@@ -45,7 +46,7 @@ def run_profile(args,parent,profile):
     disk=work/'disk.qcow2';control=work/'control.txt';success=False
     flags,config,drivers=PROFILES[profile]
     program=work/'CHECK.COM'
-    subprocess.run(['nasm','-f','bin',str(ROOT/'tests/freedos/drivers.asm'),*[f'-DEXPECT_{f}=1' for f in flags],'-o',str(program)],check=True)
+    subprocess.run(['nasm','-f','bin',str(ROOT/('tests/freedos/dosemu_hma.asm' if profile=='hma' else 'tests/freedos/drivers.asm')),*[f'-DEXPECT_{f}=1' for f in flags],'-o',str(program)],check=True)
     subprocess.run([str(ROOT/'build/disk-tool'),'overlay',str(disk),str(parent)],check=True)
     with CowFile(disk) as handle:
         fat=Writer(handle)
@@ -93,6 +94,7 @@ def run_profile(args,parent,profile):
             if 'XMS' in flags:expected+=['XMS-MOVE-8192']
             if 'EMS' in flags:expected+=['EMS-4-PAGES-65536']
             if 'MOUSE' in flags:expected+=['PS2-MOUSE-IRQ-MOTION']
+            if profile=='hma':expected=['HMA-AVAILABLE','HMA-ALLOC-35-FREEDOS']
             expected+=['PROBE-COMPLETE']
             if text.splitlines()!=['PASS '+item for item in expected]:raise RuntimeError('Unexpected probe results: '+text)
             if profile=='network':
@@ -127,7 +129,7 @@ def main():
     parser.add_argument('--timeout',type=float,default=90)
     args=parser.parse_args()
     parent=args.disk.resolve() if args.disk else prepare()
-    for profile in PROFILES if args.profile=='all' else [args.profile]:run_profile(args,parent,profile)
+    for profile in ['minimal','xms','ems','network'] if args.profile=='all' else [args.profile]:run_profile(args,parent,profile)
 
 
 if __name__=='__main__':main()

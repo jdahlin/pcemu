@@ -967,3 +967,7 @@ endif()
 pcemu_program(state-archive-tests SOURCES tests/state_archive_test.cpp)
 
 include(cmake/VgaBios.cmake)
+
+pcemu_program(x86-external-runner ZSTD
+  SOURCES ${CORE} tools/x86_external_runner.cpp
+)
