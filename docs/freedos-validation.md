@@ -116,3 +116,8 @@ instruction or exact hardware timing. Results are recorded in
 
 The [external x86 test tiers](x86-external-tests.md) add a small offline hardware
 sample to `make test` and keep broader CPU suites behind separate targets.
+
+The [latest conformance record](measurements/x86-conformance-2026-10-27.json)
+rechecks all baseline profiles, CPU checksums, HMA and both VGA matrices after
+segment-limit enforcement. HIMEMX's real-mode DS/ES reloads retain their flat
+cached limits; the fixture and upstream driver binaries are unchanged.

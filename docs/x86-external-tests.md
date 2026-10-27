@@ -19,6 +19,16 @@ The broader suites have separate targets:
 | `make test-freedos` | Existing FreeDOS CPU and driver acceptance matrix. |
 | `make test-freedos-vga` | Existing VGATEST/Abrash/DOSLIB/X-VESA matrix on FreeDOS. |
 
+The [2026-10-27 conformance record](measurements/x86-conformance-2026-10-27.json)
+records passing `make test`, all 35 extended native suites, the selected hardware
+suite, FreeDOS CPU/driver/HMA validation, both VGA matrices and the small IDIV
+reference ROM. The complete hardware run executes 1,742,580 vectors in both
+backends (3,485,160 executions), with 50 failing executions across byte IDIV,
+faulting AAM flags and captured immediate port input. The full test386 ROM also
+remains nonzero at POST 20. These are outstanding investigations; the project
+does not claim that all suites pass. The selected 28-shard target's original
+1,854 failures are resolved.
+
 CPU-heavy shards run in a bounded pool, default four workers. Each worker owns a
 separate native subprocess; compilation finishes before workers start, so they
 never launch competing Ninja builds. Suites are not all dependencies of
