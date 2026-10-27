@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from prepare_media import FAT
 from cow_file import CowFile
+from fat_stage import Writer
 
 root = Path(__file__).resolve().parent.parent
 p = argparse.ArgumentParser(description=__doc__)
@@ -34,12 +35,21 @@ work = Path(tempfile.mkdtemp(prefix='win311-smoke-', dir=root / 'build'))
 disk, control, frame = (work / n for n in ['disk.qcow2', 'control.txt', 'frame.ppm'])
 ram = work / 'ram.bin'
 subprocess.run([str(root / 'build/disk-tool'), 'overlay', str(disk), str(source)], check=True)
+# Start Windows from the private boot script. Sending typeahead during CONFIG/
+# AUTOEXEC is unreliable: DOS utilities may legitimately flush the BIOS ring.
+with CowFile(disk) as handle:
+    fat=FAT(handle)
+    entry=next(e for e in fat.entries() if e[1]=='AUTOEXECBAT')
+    script=fat.read_file(entry[2],entry[3])
+    handle.seek(0)
+    Writer(handle).replace_existing('AUTOEXECBAT',script+b'\r\nCD C:\\WINDOWS\r\nWIN /S\r\n')
+    handle.flush()
 emulator_hash = hashlib.sha256((root / 'build/pcemu').read_bytes()).hexdigest()
 source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 log = (work / 'emulator.log').open('w')
 proc = subprocess.Popen([
     str(root / 'build/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',
-    '--type', 'cd windows\nwin /s\n', '--control-file', str(control),
+    '--control-file', str(control),
     '--capture-every', '100000000', '--frame', str(frame),
 ] + (['--execute-vgabios', '--vgabios', str(a.vgabios.resolve())] if a.vgabios else []) + (['--jit-traces'] if a.jit_traces else ['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
 
@@ -94,7 +104,7 @@ def wait_dos(timeout=30):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         send(settle=0)
-        if frame.read_bytes().split(b'\n', 3)[1] == b'640 400':
+        if frame.read_bytes().split(b'\n', 3)[1] in (b'640 400', b'720 400'):
             return
         if exit_dialog_present():
             send('key 1c0d', settle=0.2)
@@ -105,18 +115,7 @@ def alt(scan):
     send('scan 38', f'scan {scan:02x}', f'scan {scan|128:02x}', 'scan b8')
 
 try:
-    deadline = time.monotonic() + 30
-    while time.monotonic() < deadline:
-        if proc.poll() is not None:
-            raise RuntimeError('Emulator exited during boot')
-        try:
-            if json.loads(Path(str(ram) + '.json').read_text())['instructions'] >= 100000000:
-                break
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
-        time.sleep(0.05)
-    else:
-        raise RuntimeError('No desktop capture within 30 seconds')
+    wait_title('Accessories', timeout=60)  # Stable desktop icon text in sparse OCR.
     alt(0x21)  # Program Manager: File, Run.
     send('text r')
     wait_title('Run')
