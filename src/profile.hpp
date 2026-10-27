@@ -3,6 +3,9 @@
 #ifdef PCEMU_PROFILE
 #include <array>
 #include <fstream>
+#include <exception>
+#include <limits>
+#include <time.h>
 #include <iomanip>
 #include <map>
 #include <stdexcept>
@@ -47,8 +50,97 @@ struct Data {
     uint64_t attempts = 0;
     uint32_t random = 0x731be5;
     unsigned untilSample = 1;
+    struct CpuTiming {
+        uint64_t attempts = 0, samples = 0, rawNs = 0;
+        uint64_t faults = 0, exceptions = 0;
+    };
+    std::array<CpuTiming, 512> cpuTiming{};
+    CpuTiming unknownTiming{};
+    uint32_t cpuRandom = 0x9e3779b9;
+    unsigned untilCpuSample = 1;
+    uint64_t clockPairMeanNs = 0, clockFailures = 0, nestedScopes = 0;
+    bool cpuClockAvailable = false;
 };
 inline Data data;
+inline uint64_t profileGeneration = 0;
+inline uint64_t threadCpuNs() noexcept {
+#if defined(__APPLE__) || defined(__linux__)
+    timespec value{};
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &value) == 0)
+        return uint64_t(value.tv_sec) * 1000000000 + uint64_t(value.tv_nsec);
+#endif
+    return std::numeric_limits<uint64_t>::max();
+}
+// Replaceable only for deterministic accounting tests; normal diagnostics use
+// the executing thread's user+system CPU clock, never elapsed wall time.
+inline uint64_t (*instructionClockNs)() noexcept = threadCpuNs;
+struct InstructionScope;
+inline thread_local InstructionScope *currentScope = nullptr;
+struct InstructionScope {
+    InstructionScope *parent = nullptr;
+    uint64_t generation = 0, begin = 0;
+    int op = -1, uncaught = 0;
+    bool registered = false, sampled = false, fault = false, nested = false;
+    InstructionScope(const InstructionScope &) = delete;
+    InstructionScope &operator=(const InstructionScope &) = delete;
+    InstructionScope() noexcept {
+        if (!active) return;
+        registered = true;
+        generation = profileGeneration;
+        parent = currentScope;
+        currentScope = this;
+        nested = parent && parent->generation == generation;
+        if (nested) return; // Parent timing is inclusive; do not count it twice.
+        if (--data.untilCpuSample) return;
+        // Independent jitter avoids periodic guest-loop and IP-sampler bias.
+        data.cpuRandom = data.cpuRandom * 1664525u + 1013904223u;
+        data.untilCpuSample = 64 + (data.cpuRandom >> 25);
+        uncaught = std::uncaught_exceptions();
+        begin = instructionClockNs();
+        sampled = begin != std::numeric_limits<uint64_t>::max();
+        if (!sampled) ++data.clockFailures;
+    }
+    ~InstructionScope() noexcept {
+        const auto end = sampled ? instructionClockNs() : 0;
+        if (!registered) return;
+        currentScope = parent;
+        if (!active || generation != profileGeneration) return;
+        if (nested) { ++data.nestedScopes; return; }
+        auto &timing = op >= 0 ? data.cpuTiming[unsigned(op)] : data.unknownTiming;
+        ++timing.attempts;
+        if (!sampled) return;
+        if (end == std::numeric_limits<uint64_t>::max() || end < begin) {
+            ++data.clockFailures;
+            return;
+        }
+        data.cpuClockAvailable = true;
+        const auto elapsed = end - begin;
+        ++timing.samples;
+        timing.rawNs += elapsed;
+        timing.faults += fault;
+        timing.exceptions += std::uncaught_exceptions() > uncaught;
+    }
+};
+inline void instructionFault() noexcept {
+    if (currentScope) currentScope->fault = true;
+}
+inline uint64_t adjustedCpuNs(const Data::CpuTiming &timing) noexcept {
+    const auto overhead = timing.samples * data.clockPairMeanNs;
+    // Subtract after aggregation, not per sample: clipping quantized short
+    // samples individually would bias fast opcodes upwards.
+    return timing.rawNs > overhead ? timing.rawNs - overhead : 0;
+}
+inline void calibrateCpuClock() noexcept {
+    uint64_t total = 0, pairs = 0;
+    for (unsigned n = 0; n < 64; ++n) {
+        auto begin = instructionClockNs(), end = instructionClockNs();
+        if (begin == std::numeric_limits<uint64_t>::max() || end == std::numeric_limits<uint64_t>::max() || end < begin) continue;
+        total += end - begin;
+        ++pairs;
+    }
+    data.cpuClockAvailable = pairs != 0;
+    data.clockPairMeanNs = pairs ? total / pairs : 0;
+}
 inline void event(Event e, uint64_t n = 1) {
     if (active)
         data.events[e] += n;
@@ -57,6 +149,7 @@ inline void opcode(unsigned op, uint16_t cs, uint32_t base, uint32_t cr3, uint32
     if (!active)
         return;
     currentOpcode = op;
+    if (currentScope) currentScope->op = int(op);
     ++data.opcodes[op];
     ++data.attempts;
     if (--data.untilSample == 0) {
@@ -70,6 +163,7 @@ inline void extended(unsigned op) {
     if (!active)
         return;
     currentOpcode = 256 + op;
+    if (currentScope) currentScope->op = int(currentOpcode);
     ++data.opcodes[currentOpcode];
 }
 inline void operand(uint8_t modrm) {
@@ -81,6 +175,8 @@ inline void operand(uint8_t modrm) {
 inline void start(uint64_t instructions) {
     data = {};
     data.startInstructions = instructions;
+    ++profileGeneration;
+    calibrateCpuClock();
     active = true;
 }
 inline void stop(const std::string &path, uint64_t instructions) {
@@ -111,7 +207,15 @@ inline void stop(const std::string &path, uint64_t instructions) {
         << ",\"events\":{";
     for (unsigned e = 0; e < Count; ++e)
         out << (e ? "," : "") << std::quoted(names[e]) << ':' << data.events[e];
-    out << "},\"opcodes\":[";
+    out << "},\"cpuTiming\":{\"version\":1,\"clock\":\"thread-cpu-ns\",\"available\":"
+        << (data.cpuClockAvailable ? "true" : "false")
+        << ",\"sampleIntervalMinimum\":64,\"sampleIntervalMaximum\":191,\"clockPairMeanNs\":"
+        << data.clockPairMeanNs << ",\"clockFailures\":" << data.clockFailures
+        << ",\"nestedScopesExcluded\":" << data.nestedScopes
+        << ",\"unknownAttempts\":" << data.unknownTiming.attempts
+        << ",\"unknownSamples\":" << data.unknownTiming.samples
+        << ",\"unknownRawNs\":" << data.unknownTiming.rawNs
+        << ",\"unknownAdjustedNs\":" << adjustedCpuNs(data.unknownTiming) << "},\"opcodes\":[";
     bool first = true;
     for (unsigned op = 0; op < 512; ++op) {
         if (!data.opcodes[op])
@@ -122,7 +226,11 @@ inline void stop(const std::string &path, uint64_t instructions) {
         first = false;
         for (unsigned g = 0; g < 8; ++g)
             out << (g ? "," : "") << data.groups[op][g];
-        out << "]}";
+        const auto &timing = data.cpuTiming[op];
+        out << "],\"cpuLeafAttempts\":" << timing.attempts
+            << ",\"cpuSamples\":" << timing.samples << ",\"cpuRawNs\":" << timing.rawNs
+            << ",\"cpuAdjustedNs\":" << adjustedCpuNs(timing)
+            << ",\"cpuFaultSamples\":" << timing.faults << ",\"cpuExceptionSamples\":" << timing.exceptions << '}';
     }
     out << "],\"sampledIPs\":[";
     first = true;

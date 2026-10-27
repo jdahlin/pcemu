@@ -254,6 +254,12 @@ pcemu_program(jit-cached-batch-tests
     tests/jit_cached_batch_test.cpp
 )
 
+pcemu_program(guest-profile-tests PROFILE
+  SOURCES
+    src/cpu.cpp
+    tests/guest_profile_test.cpp
+)
+
 pcemu_program(jit-memory-push-tests ZSTD
   SOURCES
     ${CORE}

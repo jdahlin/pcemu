@@ -1966,3 +1966,14 @@ and 99.429%. All 48 restores pass. Word is 1.07% below the previous division
 build, winning all eight paired rounds; Excel's incremental difference is neutral.
 The full candidate is 22.9% below the original Word CPU baseline and 9.1% below
 Excel's in the fresh matched run. See [results, guard semantics and host limits](measurements/office-memory-shift-2026-10-27.md).
+
+### Word and Excel: sampled interpreter CPU cost (2026-10-27)
+
+Profiling builds now sample thread CPU cost by final decoded opcode, including
+faults, with calibrated clock overhead and independent jitter. Fifteen timing
+contract checks, six analyzer tests and six real workload restores pass. Release
+binaries are byte-identical, so the previous original-baseline results remain the
+performance reference. PUSHA/POPA account for an estimated 3.6% of Word and 8.4%
+of Excel interpreter CPU; every sampled ARPL faults. Five arena resets in the
+mapped Word task also warrant a cache-retention experiment. See the
+[method, evidence and limits](measurements/office-interpreter-cost-2026-10-27.md).

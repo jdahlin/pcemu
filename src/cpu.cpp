@@ -677,6 +677,9 @@ std::string CPU::location() const {
     return b;
 }
 void CPU::step() {
+#ifdef PCEMU_PROFILE
+    profile::InstructionScope profileScope;
+#endif
     // Faults restart the instruction. Demand-loaded NE segments depend on this.
     uint32_t savedRegs[8];
     Segment savedSegments[6];
@@ -686,6 +689,9 @@ void CPU::step() {
     try {
         stepImpl();
     } catch (const Fault &fault) {
+#ifdef PCEMU_PROFILE
+        profile::instructionFault();
+#endif
         if (!fault.partialRepeat)
             std::memcpy(r, savedRegs, sizeof r);
         std::memcpy(s, savedSegments, sizeof s);
