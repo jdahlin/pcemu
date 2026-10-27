@@ -370,9 +370,38 @@ static void real_segment_bounds() {
         check(lea.r[AX]==0x12345678,"LEA does not validate a memory access");
     }
 }
+// Sequential fetches past FFFFh fault instead of wrapping. Interrupt
+// entry must latch its vector before an overlapping stack frame overwrites it.
+static void fetch_and_interrupt_boundaries() {
+    struct Stop {};
+    for(bool native:{false,true}) {
+        for(const auto &bytes:std::vector<std::vector<uint8_t>>{{0xb8,0,0},{0xf6,0xe0},{0x66,0xb8,0,0,0,0}}) {
+            CPU c;c.ip=0xffff;c.mem[0xffff]=bytes[0];
+            std::copy(bytes.begin()+1,bytes.end(),c.mem.begin());
+            unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+            Jit jit(c,native,0,65536);
+            try {if(native)jit.run();else c.step();}catch(const Stop &){}
+            check(vector==13 && c.ip==0xffff,"instruction fetch cannot wrap within instruction");
+        }
+        CPU overlong;overlong.ip=0x100;
+        std::fill(overlong.mem.begin()+0x100,overlong.mem.begin()+0x10e,0x66);
+        overlong.mem[0x10e]=0xb8;
+        unsigned vector=255;overlong.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+        Jit longjit(overlong,native,0,65536);
+        try {if(native)longjit.run();else overlong.step();}catch(const Stop &){}
+        check(vector==13 && overlong.ip==0x100,"15-byte limit includes immediates");
+        CPU alias;alias.ip=0x100;alias.r[SP]=8;alias.s[CS].selector=0x6b9b;
+        alias.mem[0x100]=0xf6;alias.mem[0x101]=0xf3;alias.r[BX]=0;
+        alias.write(0,0x71cf0d60,4);
+        Jit aj(alias,native,0,65536);if(native)aj.run();else alias.step();
+        check(alias.s[CS].selector==0x71cf && alias.ip==0xd60 && alias.r[SP]==2,
+              "divide handler pointer is latched before aliased interrupt stack writes");
+        check(alias.read(2,2)==0x100,"aliased interrupt frame contains faulting IP");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

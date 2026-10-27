@@ -116,3 +116,6 @@ in the interpreter and native memory paths. The selected 28-shard run now has
 remaining selected cases involve instruction fetch wrapping and an interrupt
 vector aliased by the exception stack. Focused segment regressions include
 pre-access device isolation, #SS versus #GP, the last valid word, and LEA.
+
+Architectural rules and per-fix validation are tracked in
+[the real-mode specification notes](x86-real-mode.md).

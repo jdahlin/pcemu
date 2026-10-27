@@ -142,6 +142,10 @@ struct CPU {
         uint32_t ax = 0, cx = 0, si = 0, di = 0;
     } repeatResume;
 
+    // Transient decoder state; reset at each interpreted instruction boundary.
+    unsigned instructionFetchBytes = 0;
+    bool instructionFetchWrapped = false;
+
   private:
     uint32_t physicalSlow(uint32_t linear, bool write);
     void stepImpl();

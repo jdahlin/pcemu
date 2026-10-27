@@ -466,5 +466,359 @@
     "ROM reference stalls at POST 20 in QEMU and both PCEmu backends; result is inconclusive.",
     "HMA port tests FreeDOS exact 35-byte allocation rather than the original MS-DOS paragraph-rounding expectation.",
     "Four bounded workers by default; quick sample runs serially; guests run headless."
+  ],
+  "followups": [
+    {
+      "description": "Real-mode full-span bounds, sequential fetch boundaries and latched interrupt vectors",
+      "hardware": {
+        "suite": "SingleStepTests/80386",
+        "revision": "459d49fbe6280e9ed46fee887b58dacd9cb880ab",
+        "backend": "both",
+        "jobs": 4,
+        "results": [
+          {
+            "opcode": "00",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "0c76246df81af980baff906c0bbe385541935db59de0fbca13001e834a97f0b1",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2319"
+            ]
+          },
+          {
+            "opcode": "01",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "79ccbf4df357a49f180c5a07996d0fc55f7efa872bc727b499f0bb4f76b6facb",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2307"
+            ]
+          },
+          {
+            "opcode": "09",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "fda1271b42cc5f0299284f6f9d3abf15d8881338d43d293bf45c428763438c39",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2305"
+            ]
+          },
+          {
+            "opcode": "11",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "6939a8d58107735b3576f6eb7d3008c9450f41afcd6cf744c270a2cbcf592161",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2311"
+            ]
+          },
+          {
+            "opcode": "19",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "ee63eb53a815cfc977e4c599f20add5bd47f5d5525af196626ba89aef212dec5",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2307"
+            ]
+          },
+          {
+            "opcode": "21",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "f0ce652f51a27beaf89782075c279d2261b1199a96f29eaf6efdd9ab407d4e94",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2306"
+            ]
+          },
+          {
+            "opcode": "29",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "c6c7da9b31a7237cfdb001b331faca723f6ce4ccf76632a91a32aa28236f97ed",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2306"
+            ]
+          },
+          {
+            "opcode": "31",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "028b7e3b6acfdbcd5940015d28a99434f9ce2e072d052451ef679ef3347c69c8",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2303"
+            ]
+          },
+          {
+            "opcode": "39",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "631089170c052687df2f5dc45d7d9787a83b027b61e01d05db280b9a93cb32a7",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2307"
+            ]
+          },
+          {
+            "opcode": "40",
+            "sourceVectors": 500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 500,
+            "fileSHA256": "acd24b9688ede3b76b0871d1e7d287e47027c8b31e7d4be884219921ebe8d4cf",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=500 executions=1000 failures=0 nativeInstructions=500"
+            ]
+          },
+          {
+            "opcode": "48",
+            "sourceVectors": 500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 500,
+            "fileSHA256": "c9eea9bbbc01eeb1b0e7d5e04826e090abb3f48dca2a14c50e05eb2d69de67ac",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=500 executions=1000 failures=0 nativeInstructions=500"
+            ]
+          },
+          {
+            "opcode": "50",
+            "sourceVectors": 1000,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 1000,
+            "fileSHA256": "3930bb010de960bce75b1ea119ccd6d7b648ea631f0119c81d057c187a8592be",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=1000 executions=2000 failures=0 nativeInstructions=917"
+            ]
+          },
+          {
+            "opcode": "58",
+            "sourceVectors": 1000,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 1000,
+            "fileSHA256": "6f10c5a0f1f5b33babe7e972f91b7e03e804589682815657f3cfe844578731ca",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=1000 executions=2000 failures=0 nativeInstructions=909"
+            ]
+          },
+          {
+            "opcode": "90",
+            "sourceVectors": 100,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 100,
+            "fileSHA256": "e4cc5953acbcaf9eaceacb6675b13ab6b903b2a25aca66ff4935c2f9a7bb2e78",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=100 executions=200 failures=0 nativeInstructions=100"
+            ]
+          },
+          {
+            "opcode": "98",
+            "sourceVectors": 500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 500,
+            "fileSHA256": "8ea1c40d3d6e0434235a3a73cf3ad32679d0c8265858f3f2d8fdd94f5856c0db",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=500 executions=1000 failures=0 nativeInstructions=500"
+            ]
+          },
+          {
+            "opcode": "99",
+            "sourceVectors": 500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 500,
+            "fileSHA256": "036c7a99a282ac9501796c5a57c17b9c90621fde24a7319565756ef93858f876",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=500 executions=1000 failures=0 nativeInstructions=500"
+            ]
+          },
+          {
+            "opcode": "A4",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "ec3872368f5bd71bb206e806fd4dbb203e965f0b250c195c9e6688806f720e91",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2018"
+            ]
+          },
+          {
+            "opcode": "AA",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "a61dfb990347185e154566f67d1a12bf0208a4e1ea1886cb16015f3e7852336f",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2211"
+            ]
+          },
+          {
+            "opcode": "C0.4",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "3a301694308daecd1c2274261e1a142e7cf5770f26f39fa84e7eb7c4a87fd8c2",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2296"
+            ]
+          },
+          {
+            "opcode": "D1.7",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "d06a145ec5608f74cbb7a89abe51e9db31423771a02990de74883834a201aa17",
+            "returncode": 1,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=2 nativeInstructions=2250"
+            ]
+          },
+          {
+            "opcode": "F6.4",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "4529c7deb853dfcd308a392db556d9989bf53fc59155bd56af60e40c8b47e9c8",
+            "returncode": 1,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=2 nativeInstructions=2295"
+            ]
+          },
+          {
+            "opcode": "F6.6",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "514e62bdcd9e262e74be09598f8f7bfe1d34231ff0750b91357672f7b688b729",
+            "returncode": 1,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=2 nativeInstructions=2267"
+            ]
+          },
+          {
+            "opcode": "F7.7",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "f194fb66a0d27179eda62abba7e1ef36ef816a0723a85a8f0ac2220f1e15b9ec",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2246"
+            ]
+          },
+          {
+            "opcode": "0F94",
+            "sourceVectors": 500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 500,
+            "fileSHA256": "da119d24b51d992064c301cfc604ea13d3f35f891fdca52bfb2af6db479aa8dc",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=500 executions=1000 failures=0 nativeInstructions=441"
+            ]
+          },
+          {
+            "opcode": "0FAF",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "e3591b37efe128b1a104372d272174c827010e14ad56b6b9b02acc11b0fe02cb",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2271"
+            ]
+          },
+          {
+            "opcode": "6601",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 0,
+            "vectors": 2500,
+            "fileSHA256": "25152ba347c7a0ad272bb48f99035a2c0fcad9ebc71586e60824cdaee47e2848",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2500 executions=5000 failures=0 nativeInstructions=2302"
+            ]
+          },
+          {
+            "opcode": "6701",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 31,
+            "vectors": 2469,
+            "fileSHA256": "6e2b68b99a5831a02d5e38c12595245714ea80930615800d149f0a7096fa8e09",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2469 executions=4938 failures=0 nativeInstructions=1916"
+            ]
+          },
+          {
+            "opcode": "676601",
+            "sourceVectors": 2500,
+            "revoked": 0,
+            "undefinedSib": 31,
+            "vectors": 2469,
+            "fileSHA256": "9f9f3347826eb4f9f1f5fb709074540d7647193c146b83dd74700919b200b272",
+            "returncode": 0,
+            "summary": [
+              "RESULT vectors=2469 executions=4938 failures=0 nativeInstructions=1915"
+            ]
+          }
+        ],
+        "runnerSHA256": "19f6f7e07b1e7016cc32e23bff567ccd6d4219744d003fe34d5f64bb63651bd1",
+        "status": "failed",
+        "scope": "architectural registers, defined flags, exception identity and listed RAM bytes; no cycle or unlisted-write oracle"
+      },
+      "focusedChecks": 275,
+      "specificationNotes": "docs/x86-real-mode.md"
+    }
   ]
 }

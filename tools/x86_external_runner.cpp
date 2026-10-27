@@ -50,6 +50,9 @@ static std::string execute(const std::array<uint32_t,20> &initial,const std::arr
     if(native&&!jit.enabled())throw std::runtime_error("Native JIT unavailable; select interpreter explicitly");
     if(native)jit.run();else c.step();
     nativeCount+=jit.nativeInstructions;
+    // A sequential next-IP beyond CS.limit faults while fetching the injected
+    // terminator, after the tested instruction has committed (386 PRM 14.7).
+    if(!c.halted && c.ip>c.s[CS].limit)c.step();
     if(!c.halted)c.ip=(c.ip+1)&65535;
     auto actual=save(c);std::ostringstream errors;
     if(observed!=(exception==0xffffffffu?-1:int(exception)))errors<<"exception="<<observed<<" expected="<<int32_t(exception)<<' ';

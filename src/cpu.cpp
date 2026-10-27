@@ -285,8 +285,14 @@ Segment decodeSegmentDescriptor(int seg, uint16_t sel, uint32_t lo, uint32_t hi)
     return d;
 }
 uint32_t CPU::fetch(int w) {
+    // Intel 80386 PRM 14.7: instruction bytes cannot wrap past FFFFh,
+    // and sequential execution past the limit faults on the next fetch.
+    if (instructionFetchWrapped || instructionFetchBytes + unsigned(w) > 15)
+        throw Fault{13, 0, true};
     auto v = read(address(CS, ip, w), w);
-    ip = (ip + w) & (s[CS].big ? 0xffffffff : 0xffff);
+    instructionFetchBytes += w;
+    instructionFetchWrapped = uint64_t(ip) + w > 0xffffffffull;
+    ip += w;
     return v;
 }
 void CPU::push(uint32_t v, int w) {
@@ -748,11 +754,15 @@ void CPU::interrupt(uint8_t n, bool software) {
     if (!(cr[0] & 1)) {
         if (bios && bios(n))
             return;
+        // Latch the IVT pointer before the frame: SS:SP may alias the IVT.
+        // Hardware vector F6.6#1403 establishes the aliased ordering; table
+        // format: Intel 80386 PRM 14.3,
+        // https://pdos.csail.mit.edu/6.828/2018/readings/i386/s14_03.htm
+        uint32_t vec = read(idtBase + n * 4, 4);
         push(flags, 2);
         push(s[CS].selector, 2);
         push(ip, 2);
         flags &= ~(IF | TF);
-        uint32_t vec = read(n * 4, 4);
         segment(CS, vec >> 16);
         ip = vec & 65535;
         halted = false;
@@ -916,6 +926,8 @@ void CPU::stepPortIO(uint16_t port,int width,bool out,uint32_t end) {
 void CPU::stepImpl() {
     if (halted)
         return;
+    instructionFetchBytes = 0;
+    instructionFetchWrapped = false;
     uint32_t start = ip;
     bool o32 = s[CS].big, a32 = s[CS].big;
     int over = -1, rep = 0;
@@ -924,7 +936,7 @@ void CPU::stepImpl() {
     int prefixes = 0;
     for (;;) {
         if (++prefixes > 15)
-            throw std::runtime_error("instruction exceeds 15 bytes");
+            throw Fault{13, 0, true};
         op = fetch(1);
         if (op == 0x66)
             o32 = !s[CS].big;
@@ -964,6 +976,8 @@ void CPU::stepImpl() {
         // Invalid register destinations and read-only operations raise #UD
         // before operand access. Intel SDM Vol. 2, LOCK prefix exceptions.
         auto operandIP = ip;
+        auto operandBytes = instructionFetchBytes;
+        auto operandWrapped = instructionFetchWrapped;
         bool allowed = false;
         unsigned operation = op;
         if (op == 0x0f) operation = 0x100 | fetch(1);
@@ -981,6 +995,8 @@ void CPU::stepImpl() {
             if (operation == 0x1ba) allowed &= group >= 5;
         }
         ip = operandIP;
+        instructionFetchBytes = operandBytes;
+        instructionFetchWrapped = operandWrapped;
         if (!allowed) throw Fault{6, 0, false};
     }
     if (op < 0x40 && (op & 7) <= 5) {

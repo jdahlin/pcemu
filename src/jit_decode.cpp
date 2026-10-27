@@ -11,7 +11,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     NativePortIO portIO;
     NativeCodeTail fetchTail;
     uint32_t pos = cpu.ip;
-    auto ipmask = cpu.s[CS].big ? 0xffffffffu : 65535u;
+    bool coldTailSafe=false;
     unsigned fetchedBytes = 0;
     bool fetchWrapped = false;
     auto byte = [&]() {
@@ -42,12 +42,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             if(p>=cpu.mem.size() || (p>=0xa0000 && p<0xc0000) ||
                (p>=0xe0000000 && p<0xe1000000))throw 0;
             if(fetchTail.present && fetchTail.page!=(p>>12))throw 0;
-            if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true};
+            if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true,coldTailSafe};
         }
         cpu.markCode(p);
         auto b = cpu.mem.at(p);
-        fetchWrapped = pos == ipmask;
-        pos = (pos + 1) & ipmask;
+        fetchWrapped = pos == UINT32_MAX;
+        ++pos;
         return b;
     };
     auto immediate = [&](int n) {
