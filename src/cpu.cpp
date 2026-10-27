@@ -681,43 +681,60 @@ std::string CPU::location() const {
     snprintf(b, sizeof b, "%04x:%08x", s[CS].selector, ip);
     return b;
 }
-void CPU::step() {
-#ifdef PCEMU_PROFILE
-    profile::InstructionScope profileScope;
-#endif
+template<class Execute> static void restartableInstruction(CPU &c,Execute execute) {
     // Faults restart the instruction. Demand-loaded NE segments depend on this.
     uint32_t savedRegs[8];
     Segment savedSegments[6];
-    std::memcpy(savedRegs, r, sizeof r);
-    std::memcpy(savedSegments, s, sizeof s);
-    auto savedIP = ip, savedFlags = flags;
+    std::memcpy(savedRegs, c.r, sizeof c.r);
+    std::memcpy(savedSegments, c.s, sizeof c.s);
+    auto savedIP = c.ip, savedFlags = c.flags;
     try {
-        stepImpl();
+        execute();
     } catch (const Fault &fault) {
 #ifdef PCEMU_PROFILE
         profile::instructionFault();
 #endif
         if (!fault.partialRepeat)
-            std::memcpy(r, savedRegs, sizeof r);
-        std::memcpy(s, savedSegments, sizeof s);
-        ip = savedIP;
-        flags = fault.partialRepeat ? fault.repeatFlags : savedFlags;
-        interruptBlockedThrough = 0;
-        if (observeFault)
-            observeFault(fault);
+            std::memcpy(c.r, savedRegs, sizeof c.r);
+        std::memcpy(c.s, savedSegments, sizeof c.s);
+        c.ip = savedIP;
+        c.flags = fault.partialRepeat ? fault.repeatFlags : savedFlags;
+        c.interruptBlockedThrough = 0;
+        if (c.observeFault)
+            c.observeFault(fault);
         try {
             int frameWidth =
-                (cr[0] & 1) && (systemRead(idtBase + fault.vector * 8 + 4, 4) & 0x800) ? 4 : 2;
-            interrupt(fault.vector);
-            if (fault.hasError && (cr[0] & 1))
-                push(fault.error, frameWidth);
+                (c.cr[0] & 1) && (c.systemRead(c.idtBase + fault.vector * 8 + 4, 4) & 0x800) ? 4 : 2;
+            c.interrupt(fault.vector);
+            if (fault.hasError && (c.cr[0] & 1))
+                c.push(fault.error, frameWidth);
         } catch (...) {
             throw std::runtime_error(
                 "fault delivery failed: vector=" + std::to_string(fault.vector) +
-                " error=" + std::to_string(fault.error) + " at " + location());
+                " error=" + std::to_string(fault.error) + " at " + c.location());
         }
     }
 }
+void CPU::step() {
+#ifdef PCEMU_PROFILE
+    profile::InstructionScope profileScope;
+#endif
+    restartableInstruction(*this,[&]{stepImpl();});
+}
+void CPU::portIO(uint16_t port,int width,bool out) {
+    ioPermission(port,width);
+    if(out) {
+        if(output)output(port,get(AX,width),width);
+    } else set(AX,input?input(port,width):mask(width),width);
+}
+void CPU::stepPortIO(uint16_t port,int width,bool out,uint32_t end) {
+    restartableInstruction(*this,[&]{
+        ++instructions;
+        ip=end;
+        portIO(port,width,out);
+    });
+}
+
 void CPU::stepImpl() {
     if (halted)
         return;
@@ -1378,12 +1395,7 @@ void CPU::stepImpl() {
     case 0xef: {
         auto port = op < 0xe8 ? fetch(1) : get(DX, 2);
         int bw = op & 1 ? w : 1;
-        ioPermission(port, bw);
-        if (op & 2) {
-            if (output)
-                output(port, get(AX, bw), bw);
-        } else
-            set(AX, input ? input(port, bw) : mask(bw), bw);
+        portIO(port,bw,bool(op&2));
         break;
     }
     case 0xe8: {

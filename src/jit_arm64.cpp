@@ -35,8 +35,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Memory)
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
-    if (linkCandidate || memoryMoves || stringMoves)
+    if (linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::PortIO)
         block.native = std::make_unique<Block::NativeState>();
+    if(terminal.kind==Kind::PortIO) {
+        block.native->port=std::make_unique<Block::DeferredPort>();
+        block.native->port->operation=decoded.portIO;
+    }
     if (linkCandidate) {
         block.native->link = std::make_unique<LinkState>();
         block.link()->startIP = cpu.ip;
@@ -93,7 +97,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::PortIO)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -699,10 +703,19 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
+        if(i.kind==Kind::PortIO) {
+            // Device callbacks execute in the C++ dispatcher after this frame
+            // returns. Commit the exact prefix and retain the I/O restart IP.
+            flushRegisters(dirtyRegisters);
+            finishFlags(last,-1,0);
+            dirtyRegisters=0;last=-1;
+            imm(9,i.start);store(9,19,offsetof(CPU,ip));
+            continue;
+        }
         if(i.kind==Kind::String) {
             // The terminal helper consumes canonical CPU GPRs/flags and commits
             // its dynamic IP and repeat continuation. No stale cached GPR may
@@ -1609,7 +1622,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
-        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::String) {
+        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);
@@ -1618,7 +1631,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     mark("Flags and branch", ir.back().start);
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     mark("Instruction count", ir.back().start);
-    imm(0, ir.size());
+    imm(0, terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) : uint32_t(ir.size()));
     if (linkCandidate) {
         const auto &tail = ir.back();
         if (tail.kind == Kind::Branch || tail.kind == Kind::CounterBranch) {
@@ -1670,6 +1683,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     compiledBlocks++;
     if (block.link()) block.link()->codeBytes = bytes;
     debugBlock(block, code, debugRegions);
+    if(terminal.kind==Kind::PortIO) {
+        block.native->port->fn=block.fn;
+        block.fn=nullptr;
+    }
     return block;
 }
 bool Jit::promoteBlock(Block &block) {

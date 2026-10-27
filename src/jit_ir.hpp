@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -42,5 +42,6 @@ struct Instruction {
 struct DecodedBlock {
     std::vector<Instruction> instructions;
     uint32_t end = 0;
+    NativePortIO portIO;
 };
 } // namespace pc::jit_detail

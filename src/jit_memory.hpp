@@ -12,6 +12,15 @@ struct NativeMemoryMove {
     int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };
+// Deferred scalar I/O is executed after returning from the generated frame.
+// Callbacks and permission faults must never unwind across generated ARM64.
+struct NativePortIO {
+    unsigned width=0;
+    uint16_t port=0;
+    bool dx=false,output=false;
+    uint32_t start=0,end=0;
+};
+inline constexpr uint32_t nativePortIOExit=0x80000000u;
 // A decoded, terminal string batch. Host helpers may execute only after a
 // side-effect-free preflight validates every required RAM span.
 struct NativeString {

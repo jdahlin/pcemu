@@ -39,6 +39,8 @@ def category(node):
         return 'Disk and compression'
     if 'pc::Machine::poll()' in chain:
         return 'Device polling and interrupt delivery'
+    if 'pc::CPU::stepPortIO(' in chain:
+        return 'Compiled port I/O and devices'
     if 'pc::CPU::step()' in chain:
         return 'Interpreter (including MMU and guest faults)'
     if 'pc::Jit::run' in chain:

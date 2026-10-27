@@ -331,10 +331,14 @@ uint32_t Jit::run() {
         if (promoteBlock(*cached)) publishLinks(key, *cached);
     }
     // SS/STI need accounted shadows; POPF must return to the poll.
-    // Keep those blocks out of cached tails without taxing ordinary hot hits.
-    entry = {key, (cached->changesShadow || cached->pollBoundary) ? nullptr : cached};
+    // Deferred I/O can cache metadata: its ordinary fn is null, which already
+    // stops cached tails. Other poll boundaries stay unpublished.
+    entry = {key, (cached->changesShadow || (cached->pollBoundary && !cached->deferredPort())) ? nullptr : cached};
     auto &b = *cached;
-    if (!b.fn) {
+    auto function=b.fn;
+    if(!function)
+        if(const auto deferred=b.deferredPort())function=deferred->fn;
+    if (!function) {
         profile::event(profile::InterpretedDispatch);
         if (b.attempted)
             profile::event(profile::NegativeHit);
@@ -349,9 +353,19 @@ uint32_t Jit::run() {
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
     stopBatch = b.pollBoundary;
-    auto n = uint32_t(b.fn(&cpu, 0));
+    auto n = uint32_t(function(&cpu, 0));
+    const bool portExit=n&nativePortIOExit;
+    n &= ~nativePortIOExit;
     cpu.instructions += n;
     nativeInstructions += n;
+    if(portExit) {
+        // Copy metadata before callbacks can invalidate or clear JIT state.
+        const auto operation=b.deferredPort()->operation;
+        ++nativeInstructions;
+        cpu.stepPortIO(operation.dx?uint16_t(cpu.r[DX]):operation.port,
+                       operation.width,operation.output,operation.end);
+        return n+1;
+    }
     if (cpu.nativeFallback) {
         profile::event(profile::NativeReplay);
         cpu.nativeFallback = false;
@@ -483,7 +497,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     if (warmup && !hotShort && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
-                      !ir.front().stringMove && ir.back().kind != Kind::String) {
+                      !ir.front().stringMove && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
         block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
             return i.kind == Kind::Memory;
         }) ? 2 : 1;

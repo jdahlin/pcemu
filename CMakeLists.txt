@@ -260,6 +260,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-port-io-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_port_io_test.cpp
+)
+
 pcemu_program(jit-setcc-tests ZSTD
   SOURCES
     ${CORE}

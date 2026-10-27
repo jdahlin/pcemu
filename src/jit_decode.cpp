@@ -7,6 +7,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     using IR = jit_detail::Instruction;
     auto linear = cpu.address(CS, cpu.ip);
     std::vector<IR> ir;
+    NativePortIO portIO;
     uint32_t pos = cpu.ip;
     auto ipmask = cpu.s[CS].big ? 0xffffffffu : 65535u;
     auto byte = [&]() {
@@ -420,6 +421,11 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.index = AX;
                 i.memory.segment = overrideSegment < 0 ? DS : overrideSegment;
                 i.memory.address32 = address32;
+            } else if ((op>=0xe4 && op<=0xe7) || (op>=0xec && op<=0xef)) {
+                i.kind=Kind::PortIO;
+                i.w=(op&1)?w:1;
+                portIO={unsigned(i.w),op<0xe8?uint16_t(byte()):uint16_t(0),op>=0xe8,bool(op&2),begin,pos};
+                block.pollBoundary=true;
             } else if (op == 0xfa || op == 0xfb) {
                 i.kind = Kind::InterruptControl;
                 i.op = op == 0xfb;
@@ -691,7 +697,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;
@@ -703,6 +709,6 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             break;
         }
     }
-    return {std::move(ir), pos};
+    return {std::move(ir), pos, portIO};
 }
 } // namespace pc

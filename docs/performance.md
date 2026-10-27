@@ -2120,3 +2120,17 @@ suites. Interpreted SETcc attempts fall 96.5% in Word and 97.3% in Excel. All
 and 1.05%/0.35% below prior. Paired gains are modest with host-noise limits,
 especially Word's paired median within A/A variation. See
 [semantics, measurements and limits](measurements/office-setcc-2026-10-27.md).
+
+### Word and Excel: compiled scalar port I/O (2026-10-27)
+
+All eight scalar IN/OUT opcodes now use decoded deferred exits and the shared
+C++ permission/device backend after generated-frame return. Full instruction
+clocks, fault rollback, V86/TSS delivery and polling remain precise. I/O state
+lives in optional native metadata, preserving the ordinary hot block header.
+Validation passes 33,241 new checks, the core/batch/liveness suites and 11
+analyzer tests. Interpreted I/O attempts fall 94.7%/99.6% in Word/Excel. All 48
+final and 96 retained preliminary restores pass. Final CPU remains
+27.99%/12.88% below original; small -0.12%/-0.62% incremental differences are
+within control variation. A separate final Excel Instruments trace puts
+dispatch/cache validation at 45.7% and interpreted execution at 2.7% of samples.
+See [semantics, measurements and limits](measurements/office-port-io-2026-10-27.md).

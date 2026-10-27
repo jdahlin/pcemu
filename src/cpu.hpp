@@ -91,6 +91,8 @@ struct CPU {
     void farTransfer(uint16_t selector, uint32_t offset, bool call, int width);
     void farReturn(int width, uint16_t extra, bool iret);
     void step();
+    // Decoded scalar I/O, invoked only after leaving generated host frames.
+    void stepPortIO(uint16_t port, int width, bool output, uint32_t end);
     std::string location() const;
 
     struct TLBEntry {
@@ -113,6 +115,7 @@ struct CPU {
     uint32_t physicalSlow(uint32_t linear, bool write);
     void stepImpl();
     void ioPermission(uint16_t port, int width);
+    void portIO(uint16_t port, int width, bool output);
     bool descriptorVisible(uint16_t selector, uint32_t high) const;
     struct Operand {
         bool reg;

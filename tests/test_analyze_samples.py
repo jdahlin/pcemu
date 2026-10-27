@@ -9,6 +9,16 @@ from analyze_samples import category, parse, source_site
 
 
 class HostSampleAccounting(unittest.TestCase):
+    def test_deferred_port_io_is_separate_from_dispatch_and_interpreter(self):
+        for function in ('pc::CPU::ioPermission(', 'pc::Machine::out(', 'pc::CPU::interrupt('):
+            self.assertEqual(category({'ancestors': ['pc::Jit::run()',
+                                                    'pc::CPU::stepPortIO(unsigned short, int, bool, unsigned int)'],
+                                       'symbol': function}),
+                             'Compiled port I/O and devices')
+            self.assertEqual(category({'ancestors': ['pc::Jit::run()', 'pc::CPU::step()'],
+                                       'symbol': function}),
+                             'Interpreter (including MMU and guest faults)')
+
     def test_specialized_dispatch_keeps_execution_categories(self):
         for caller in ('unsigned int pc::Jit::runImpl<false>()',
                        'pc::Jit::CachedBatch pc::Jit::runCachedImpl<true>(unsigned int)'):
