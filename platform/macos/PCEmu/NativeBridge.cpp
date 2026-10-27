@@ -37,6 +37,8 @@ pc::PointerShape pointer;
 bool cursorDirty = false;
 std::atomic<bool> captured{false}, absolute{false};
 class NativeFrontend final : public pc::Frontend {
+    std::unique_ptr<pc::HostAudio> audio;
+    bool audioUnavailable=false;
 public:
     std::vector<pc::FrontendEvent> poll() override {
         std::lock_guard lock(mutex);
@@ -67,6 +69,18 @@ public:
     void reportError(std::string_view message) override {
         std::lock_guard lock(mutex); error = message;
     }
+    bool queueAudio(std::span<const int16_t> samples) override {
+        if(audioUnavailable)return false;
+        if(samples.empty())return bool(audio);
+        try {
+            if(!audio)audio=pc::open_host_audio();
+            audio->queue_samples(samples);return true;
+        } catch(const std::exception &failure) {
+            audioUnavailable=true;audio.reset();
+            std::cerr<<"Native PC audio unavailable: "<<failure.what()<<'\n';return false;
+        }
+    }
+    void clearAudio() override {if(audio)audio->clear_samples();}
     void setAbsolutePointer(bool enabled) override { absolute = enabled; }
     bool capturePointer(bool enabled) override { captured = enabled; return enabled; }
 };

@@ -206,6 +206,7 @@ pcemu_program(pcemu-profile PROFILE SDL ZSTD
     src/main.cpp
     src/network.cpp
     src/frontend_sdl.cpp
+    src/host_audio_sdl.cpp
 )
 
 pcemu_program(disk-tool ZSTD
@@ -221,6 +222,7 @@ pcemu_program(pcemu SDL ZSTD
     src/main.cpp
     src/network.cpp
     src/frontend_sdl.cpp
+    src/host_audio_sdl.cpp
 )
 
 pcemu_program(tests ZSTD
@@ -538,8 +540,11 @@ pcemu_program(jit-read-tests ZSTD
 pcemu_program(frontend-tests SDL
   SOURCES
     src/frontend_sdl.cpp
+    src/host_audio_sdl.cpp
     tests/frontend_test.cpp
 )
+
+pcemu_program(pc-audio-tests SOURCES tests/pc_audio_test.cpp)
 
 pcemu_program(io-port-space-tests
   SOURCES

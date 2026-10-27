@@ -24,6 +24,7 @@ struct PcSessionOptions {
     std::string bootText;
     unsigned memoryMiB = 16;
     bool network = true;
+    bool audio = true;
     bool initializeVga = true;
     bool headless = false;
     bool startPaused = false;

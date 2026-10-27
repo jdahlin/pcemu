@@ -51,8 +51,10 @@ build is not a prerequisite to testing the released executable.
   tests. [DMA scope and ISA audio work](isa-audio.md) documents remaining limits.
   SB Pro DSP PCM playback and sample-clock/block-IRQ behavior are now implemented.
   The complete Sound Blaster mono JIT run passes with non-silent PCM and clean
-  return. GUS, host PCM output/pacing and independent waveform/visual comparison
-  remain unfinished. Full stereo/interpreter sound validation is still pending.
+  return. Full SB Pro stereo JIT validation also passes. Live SDL/native PCM
+  output, shared-clock pacing and headless WAV capture are implemented with
+  deterministic transport tests. GUS and independent waveform/visual comparison
+  remain unfinished; full interpreter sound validation is still running.
 - `make test-second-reality` now runs an opt-in no-sound completion check in
   both engines. `--part 1` through `--part 5` select released start points for
   localization. It waits for observed setup/confirmation text before sending

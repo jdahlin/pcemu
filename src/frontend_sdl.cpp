@@ -1,10 +1,14 @@
 #include "frontend.hpp"
+#include "host_audio.hpp"
+#include <iostream>
 #include <SDL.h>
 #include <algorithm>
 #include <stdexcept>
 namespace pc {
 namespace {
 class SDLFrontend final : public Frontend {
+    std::unique_ptr<HostAudio> audio;
+    bool audioUnavailable=false;
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
     SDL_Texture *texture = nullptr;
@@ -44,6 +48,7 @@ class SDLFrontend final : public Frontend {
         SDL_SetWindowSize(window, ww, wh);
     }
     void destroy() {
+        audio.reset();
         SDL_SetCursor(SDL_GetDefaultCursor());
         if (nativeCursor) SDL_FreeCursor(nativeCursor);
         if (texture)
@@ -108,6 +113,18 @@ class SDLFrontend final : public Frontend {
     ~SDLFrontend() override {
         destroy();
     }
+    bool queueAudio(std::span<const int16_t> samples) override {
+        if(audioUnavailable)return false;
+        if(samples.empty())return bool(audio);
+        try {
+            if(!audio)audio=open_host_audio();
+            audio->queue_samples(samples);return true;
+        } catch(const std::exception &error) {
+            audioUnavailable=true;audio.reset();
+            std::cerr<<"Audio output unavailable: "<<error.what()<<'\n';return false;
+        }
+    }
+    void clearAudio() override {if(audio)audio->clear_samples();}
     void setAbsolutePointer(bool enabled) override {
         absolutePointer = enabled;
         pointerInside = false;

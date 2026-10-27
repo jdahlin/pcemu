@@ -1,4 +1,4 @@
-// Host-only SDL playback service. Hardware behavior belongs to intel_hda.cpp;
+// Host-only SDL playback service. Hardware behavior belongs to device models;
 // this backend accepts its fixed stereo signed-16-bit 48 kHz PCM samples.
 #include "host_audio.hpp"
 #include <SDL.h>
@@ -34,6 +34,7 @@ class SdlHostAudio final : public HostAudio {
     }
     // Bound latency to 100 ms; a host stall drops old queued output instead of
     // allowing guest RAM usage or host audio delay to grow without limit.
+    void clear_samples() override { SDL_ClearQueuedAudio(device); }
     void queue_samples(std::span<const int16_t> samples) override {
         constexpr unsigned MaximumQueuedBytes = 48000 * 2 * sizeof(int16_t) / 10;
         if (samples.size_bytes() > MaximumQueuedBytes)

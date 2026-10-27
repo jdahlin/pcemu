@@ -29,6 +29,13 @@ class Frontend {
     virtual void setAbsolutePointer(bool) {}
     virtual void setHostCursor(const HostCursor &) {}
     virtual void setPointerShape(const PointerShape &) {}
+    // Borrow interleaved stereo16/48 kHz PCM; return true only when a live sink
+    // accepts it (an empty span queries an already-open sink), so the session
+    // can pace through silence against guest time. Headless/default
+    // frontends remain silent and do not introduce SDL into the session library.
+    virtual bool queueAudio(std::span<const int16_t>) { return false; }
+    // Drop stale queued audio when pausing or restoring another guest timeline.
+    virtual void clearAudio() {}
     virtual bool capturePointer(bool enabled) = 0;
 };
 // Each frontend executable supplies one factory. The machine and execution

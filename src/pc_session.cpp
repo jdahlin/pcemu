@@ -10,6 +10,7 @@
 #include "frontend.hpp"
 #include "win95_shutdown.hpp"
 #include "pc_display.hpp"
+#include "pc_audio.hpp"
 #include "session_diagnostics.hpp"
 #include "cpu_benchmarks.hpp"
 #include <algorithm>
@@ -52,13 +53,13 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
     std::string machineId = "pc-legacy", backendId = "auto";
     bool directLinks = false;
     unsigned linkWarmup = 256, jitWarmup = 8;
-    bool initiallyPaused = false;
+    bool initiallyPaused = false, enableAudio = true;
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = true, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
     std::string tracePath, dumpPath, framePath, untilText, traceTailPath;
     std::string snapshotPath, jitDebugMapPath;
-    std::string stateJsonPath, guestProfilePath;
+    std::string stateJsonPath, guestProfilePath, audioWavePath;
     uint64_t captureEvery = 0;
     uint64_t breakAt = 0x100000000ull, afterBreak = 0;
     try {
@@ -118,6 +119,10 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                 fd = value();
             else if (arg == "--boot-floppy")
                 fromFloppy = true;
+            else if (arg == "--audio-wav")
+                audioWavePath=value();
+            else if (arg == "--no-audio")
+                enableAudio=false;
             else if (arg == "--paused")
                 initiallyPaused = true;
             else if (arg == "--headless")
@@ -183,6 +188,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                              "  --ram-mb N (override profile default; snapshot RAM is restored)\n"
                              "  --load-snapshot DIRECTORY (private writable disk clone)\n"
                              "  --no-network (disconnect host socket gateway)\n"
+                             "  --no-audio (mute live output) --audio-wav FILE (offline PCM capture)\n"
                              "  --no-host-input (automated GUI runs; control input remains active)\n"
                              "  --state-json FILE (capture metadata without a RAM dump)\n"
                              "  --vgabios FILE (override embedded ROM) | --no-execute-vgabios\n"
@@ -384,6 +390,11 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
 #ifdef PCEMU_PROFILE
         if (!guestProfilePath.empty()) profile::start(c.instructions);
 #endif
+        std::unique_ptr<PcWaveCapture> wave;
+        if(!audioWavePath.empty())wave=std::make_unique<PcWaveCapture>(audioWavePath);
+        PcAudioPacer audioPacer;
+        uint64_t audioEpoch=c.executionEpoch,audioResets=m.resets;
+        bool audioWasPaused=false;
         auto started = std::chrono::steady_clock::now();
         try {
             while (!quit && (headless ? (!limit || c.instructions < limit) : true)) {
@@ -661,6 +672,24 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                               [&](uint8_t scan) { m.ps2.enqueue_scan_code(scan); },
                               [&](uint16_t key) { m.key(key); });
                 if (paused) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                // Consume presentation samples without changing guest DMA/IRQ
+                // progress. Offline capture never opens a host audio device.
+                if(c.executionEpoch!=audioEpoch || m.resets!=audioResets || paused!=audioWasPaused) {
+                    if(frontend)frontend->clearAudio();
+                    audioPacer.reset();audioEpoch=c.executionEpoch;audioResets=m.resets;audioWasPaused=paused;
+                }
+                auto &pcm=m.soundBlaster.output;
+                bool liveAudio=false;
+                if(!pcm.empty()) {
+                    if(wave)wave->append(pcm);
+                }
+                if(frontend && enableAudio && !paused)liveAudio=frontend->queueAudio(pcm);
+                pcm.clear();
+                if(!paused && liveAudio) {
+                    auto hostNow=std::chrono::steady_clock::now().time_since_epoch();
+                    auto delay=audioPacer.delay_ns(m.pitTicks(),std::chrono::duration_cast<std::chrono::nanoseconds>(hostNow).count());
+                    if(delay)std::this_thread::sleep_for(std::chrono::nanoseconds(delay));
+                } else audioPacer.reset();
                 if (headless) {
                     if (!untilText.empty() && m.text().find(untilText) != std::string::npos)
                         break;
@@ -736,6 +765,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                                    : "budget/quit")
                   << '\n';
         jit.flushDebugMap();
+        if(wave)wave->finish();
         return 0;
     } catch (const std::exception &e) {
         if (sessionControl) sessionControl->reportError(e.what());
@@ -755,6 +785,7 @@ int pc::runPcSession(const PcSessionOptions &options, FrontendFactory factory, S
     if (options.startPaused) arguments.push_back("--paused");
     if (options.headless) arguments.insert(arguments.end(), {"--headless", "--steps", std::to_string(options.instructionLimit)});
     if (!options.network) arguments.push_back("--no-network");
+    if (!options.audio) arguments.push_back("--no-audio");
     std::vector<char *> argv;
     for (auto &arg : arguments) argv.push_back(arg.data());
     argv.push_back(nullptr);

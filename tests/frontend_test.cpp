@@ -45,9 +45,14 @@ int main() {
         check(command == "rrundll32.exe user.exe,ExitWindows", "normal guest shutdown command");
         check(keys.back() == 0x1c0d, "Run command submitted once");
         SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
+        SDL_setenv("SDL_AUDIODRIVER", "dummy", 1);
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "1");
         auto frontend = createFrontend(640, 400, DisplayShape::ClassicVga);
+        const int16_t audio[]={-32768,32767,0,0};
+        check(frontend->queueAudio(audio),"dummy frontend accepts fixed stereo PCM without a real audio device");
+        frontend->clearAudio();
+        check(frontend->queueAudio({}),"live audio remains paced through silence after queue clear");
         check(!SDL_GetHintBoolean(SDL_HINT_MOUSE_RELATIVE_SCALING, SDL_TRUE),
               "relative mouse counts stay independent of logical display scaling");
         // SDL2 compatibility runtimes need not assign window ID one.

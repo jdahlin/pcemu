@@ -51,7 +51,14 @@ static int checkSessions() {
         unsigned frames=0;
         struct Sink final : pc::Frontend {
             unsigned &frames;
-            explicit Sink(unsigned &count) : frames(count) {}
+            unsigned *audioSamples=nullptr;
+            explicit Sink(unsigned &count,unsigned *samples=nullptr) : frames(count),audioSamples(samples) {}
+            bool queueAudio(std::span<const int16_t> samples) override {
+                if(!audioSamples)return false;
+                if(samples.empty())return *audioSamples!=0;
+                if(samples.size()%2)throw std::runtime_error("Invalid session PCM");
+                *audioSamples+=samples.size();return true;
+            }
             std::vector<pc::FrontendEvent> poll() override { return {}; }
             void present(std::span<const uint32_t> pixels,unsigned w,unsigned h,pc::DisplayShape) override {
                 if (pixels.size()!=size_t(w)*h) throw std::runtime_error("Invalid startup framebuffer");
@@ -71,6 +78,28 @@ static int checkSessions() {
                 throw std::runtime_error("Embedded restore failed on a small worker stack");
         }
         if (!frames) throw std::runtime_error("Embedded startup did not present a frame");
+        // A RAM-only DSP silence block exercises the actual session-to-frontend
+        // PCM bridge without a video window, SDL audio device, or sound hardware.
+        std::string audioBoot(512,'\0');
+        const uint8_t audioCode[]={0xfa,0xba,0x2c,0x02,0xb0,0x40,0xee,0xb0,156,0xee,
+            0xb0,0x80,0xee,0xb0,9,0xee,0x30,0xc0,0xee,0xb9,0x10,0x27,0xe2,0xfe,0xf4};
+        std::copy(std::begin(audioCode),std::end(audioCode),audioBoot.begin());
+        audioBoot[510]='\x55';audioBoot[511]='\xaa';
+        std::ofstream(work/"audio.raw",std::ios::binary).write(audioBoot.data(),audioBoot.size());
+        unsigned audioSamples=0;
+        struct AudioControl final:pc::SessionControl {
+            unsigned &samples;unsigned polls=0;
+            explicit AudioControl(unsigned &s):samples(s){}
+            std::vector<std::string> takeCommands() override {
+                if(samples)return {"quit"};
+                if(++polls>20)throw std::runtime_error("Session failed to deliver PCM");
+                return {};
+            }
+        } audioControl(audioSamples);
+        options={};options.disk=(work/"audio.raw").string();options.network=false;options.memoryMiB=2;
+        auto audioFactory=[&](unsigned,unsigned,pc::DisplayShape){return std::make_unique<Sink>(frames,&audioSamples);};
+        if(pc::runPcSession(options,audioFactory,&audioControl)!=0 || !audioSamples)
+            throw std::runtime_error("Frontend PCM delivery failed");
         // Tracing allocates its large history ring on demand, also off-stack.
         std::vector<std::string> arguments{"pcemu","--headless","--no-network","--vgabios","",
             "--disk",(work/"boot.raw").string(),"--ram-mb","2","--steps","128",

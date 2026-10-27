@@ -5,6 +5,8 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import json
+import wave
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
@@ -17,9 +19,20 @@ def main():
         for backend in ['interpreter','jit']:
             result=subprocess.run([str(ROOT/'build/pcemu'),'--headless','--backend',backend,'--no-network',
                 '--floppy',str(disk),'--boot-floppy','--steps','2000000','--until-text','PCEMU-SB-PASS',
-                '--state-json',str(Path(folder)/'state.json')],capture_output=True,text=True,timeout=30)
+                '--state-json',str(Path(folder)/'state.json'),'--no-audio',
+                '--audio-wav',str(Path(folder)/'pcm.wav')],capture_output=True,text=True,timeout=30)
             if result.returncode or 'PCEMU-SB-PASS' not in result.stdout or 'PCEMU-SB-FAIL' in result.stdout:
                 raise RuntimeError(backend+' guest failed:\n'+result.stdout+result.stderr)
+            state=json.loads((Path(folder)/'state.json').read_text())['soundBlaster']
+            with wave.open(str(Path(folder)/'pcm.wav'),'rb') as capture:
+                if (capture.getnchannels(),capture.getsampwidth(),capture.getframerate())!=(2,2,48000):
+                    raise RuntimeError('Unexpected PCM capture format')
+                if capture.getnframes()!=state['pcmFrames'] or state['nonSilentFrames']==0:
+                    raise RuntimeError('PCM capture lost frames or remained silent')
+                pcm=capture.readframes(capture.getnframes())
+            digest=14695981039346656037
+            for value in pcm:digest=((digest^value)*1099511628211)&0xffffffffffffffff
+            if digest!=state['pcmHash']:raise RuntimeError('Captured PCM differs from device output')
             print('PASS Sound Blaster guest',backend,flush=True)
         if args.qemu:
             qemu=shutil.which('qemu-system-i386')

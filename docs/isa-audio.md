@@ -4,8 +4,9 @@ Second Reality supports Sound Blaster, Sound Blaster Pro, Gravis UltraSound and
 no sound. The no-sound run retains its music sequencing but produces no PCM.
 A real audio path needs a peripheral sample clock, RAM DMA, interrupt handling,
 and host output. The primary byte DMA controller and Sound Blaster Pro DSP PCM model are now
-implemented. GUS and live host audio output remain absent; the DSP generates a
-bounded stereo PCM queue and diagnostic hash/counters without opening a host
+implemented. SDL/native frontends consume the bounded stereo PCM queue and pace
+against the shared guest clock. GUS remains absent. Headless runs stay silent and
+unpaced; explicit WAV capture records the generated PCM without opening a host
 audio device.
 
 ## Primary Intel 8237A DMA controller
@@ -86,8 +87,9 @@ The model resamples held DAC values to stereo signed-16-bit 48 kHz. The queue is
 bounded to one second; consumer backpressure can discard queued presentation
 samples but cannot change guest DMA or IRQ progress. Paused/inactive periods do
 not append PCM, so the queue is not yet a complete continuously timed recording.
-No SDL or native host sink consumes this queue yet. Playback should not be called
-end-to-end audible until that output/pacing work is validated.
+SDL and native PC frontends now consume this queue through the existing stereo
+48 kHz host service. The sink opens lazily on the first samples. A sink failure
+leaves guest DMA/IRQs running. Headless runs do not open it.
 
 Snapshot version 11 adds DSP/parser/mixer/response/sample-phase/block/IRQ state
 and cumulative audio counters. Older snapshots get a reset DSP. The PCM queue
@@ -115,10 +117,39 @@ clean return and changing graphics. A 90-second ending-only SB trial generated
 is not a completion pass. The full frozen-runner JIT SB mono validation now passes: clean DOS return,
 19,856,872 DMA bytes, 309 completed DSP blocks and 46,486,195 non-silent host-format
 PCM frames. Input hashes and counters are in the [demo measurement record](measurements/second-reality-2026-10-27.json).
-A full SB Pro stereo JIT run is in progress. Host sink/pacing and reference waveform
-comparison remain unverified.
+The full SB Pro stereo JIT run also passes: 39,765,351 DMA bytes and 615 DSP
+blocks, with clean DOS return. Host transport/pacing tests are described below;
+reference waveform comparison remains unverified.
 The committed completion gate is:
 
 ```sh
 make test-second-reality-sb
 ```
+
+
+## Live output, pacing and offline capture
+
+Normal SDL/native PC sessions now deliver borrowed stereo16/48 kHz PCM to a
+lazy host output device. The queue is bounded to 100 ms by the host service.
+Successful live output paces execution against the deterministic PIT/VGA/DSP
+clock, allowing 10 ms of lead and bounded 20 ms waits. This also paces programmed
+silence/pause gaps after the sink opens. It never changes the clock source or
+feeds host playback state into DMA/IRQ behavior. UI pause and snapshot/reset
+transitions clear stale queued audio and rebase pacing. A slow host can underrun;
+realtime performance is not guaranteed by these functional tests.
+
+`--no-audio` mutes live presentation without disabling the emulated card.
+`--audio-wav FILE` records generated PCM in a portable little-endian stereo16,
+48 kHz RIFF/WAVE file. It works headless and finalizes sizes on normal return or
+exception unwinding. RIFF's 32-bit length limit is checked before append.
+Inactive/paused intervals currently do not emit PCM, so WAV output concatenates
+active stream segments; it is not yet a continuous timestamped reference capture.
+Full-demo recording is opt-in to avoid retaining large files during normal tests.
+
+`make test` now includes deterministic pacing tests and literal WAVE header/sample
+byte checks. SDL frontend tests use dummy video/audio drivers, and the embeddable
+session test delivers a real guest DSP silence block to a fake frontend without
+opening host devices. The RAM-only DSP probe additionally records a tiny WAV in
+both engines, independently parses it with Python `wave`, and requires its frame
+count and PCM hash to exactly match device output. That guest also passes QEMU
+SB16; this verifies protocol behavior, not equality of QEMU audio waveforms.
