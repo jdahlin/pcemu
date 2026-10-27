@@ -52,7 +52,7 @@ struct Guest {
         check(c.s[DS].selector == 0x1234, "DS preserved");
         check(c.get(SI,2) == 0x4567 && c.get(DI,2) == di, "SI/DI preserved");
         check((c.flags & (DF | CF)) == (DF | CF), "FLAGS/DF restored");
-        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 15 && (ax >> 8) != 0x1a && (ax >> 8) != 0x12 && (ax >> 8) != 0x1b && (ax >> 8) != 0x4f)
+        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 13 && (ax >> 8) != 15 && (ax >> 8) != 0x1a && (ax >> 8) != 0x12 && (ax >> 8) != 0x1b && (ax >> 8) != 0x4f)
             check(c.get(AX, 2) == ax, "AX preserved for call " + std::to_string(ax) + " got " + std::to_string(c.get(AX, 2)));
         if ((ax >> 8) != 15 && (ax >> 8) != 0x1a && ax != 0x1007 && ax != 0x1008 && ax != 0x1019 && ax != 0x101a && (ax >> 8) != 0x12) check(c.get(BX, 2) == bx, "BX preserved");
         if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12)
@@ -193,7 +193,7 @@ void boundaries(Guest &g) {
     check(std::equal(before.begin(), before.end(), c.mem.begin() + 0xb8000),
           "empty rectangles and invalid pages do not write video memory");
     check(c.read(0x462, 1) == 7 && g.word(0x45e) == 0x184f, "invalid page does not alter BDA");
-    g.call(0x0013); g.call(0x0f00);
+    g.call(0x0008); g.call(0x0f00);
     check(c.get(AX, 2) == 0x5003, "unsupported graphics mode does not change geometry");
     g.call(0x1130, 0x0800);
     check(c.get(CX, 2) == 0 && c.get(DX, 2) == 0, "unsupported font query leaves registers alone");
@@ -280,6 +280,95 @@ void extended_text_contract(Guest &g) {
     g.call(3);
 }
 
+
+void graphics_contract(Guest &g) {
+    auto &c=g.m->cpu; auto &v=g.m->vga;
+    for(unsigned mode : {0x0du,0x0eu,0x0fu,0x10u,0x11u,0x12u,0x13u}) {
+        g.call(mode);
+        unsigned width=(mode==0x0d || mode==0x13)?320:640;
+        unsigned height=mode<=0x0e || mode==0x13?200:mode<=0x10?350:480;
+        check(v.graphics && v.width==width && v.height==height,"VGA mode geometry from programmed registers");
+        unsigned pages=mode==0x0d?8:mode==0x0e?4:mode<=0x10?2:1;
+        unsigned mask=mode==0x0f || mode==0x11?1:mode==0x13?255:15;
+        for(unsigned page=0;page<pages;++page)for(unsigned n=0;n<19;++n) {
+            unsigned x=n==0?0:n==1?width-1:(n*37)%width;
+            unsigned y=n==0?0:n==1?height-1:(n*29)%height;
+            unsigned color=(n+page+3)&mask;
+            g.call(0x0c00|color,page<<8,x,y);
+            g.call(0x0d00,page<<8,x,y);
+            check(c.get(AX,1)==color,"BIOS pixel write/read at page/coordinate");
+            if(mode==0x13)check(v.planes[x&3][(y*width+x)/4]==color,"chain-4 plane address");
+            else {
+                unsigned a=page*g.word(0x44c)+y*(width/8)+x/8;
+                for(unsigned p=0;p<4;++p)if(mask==15 || p==0)
+                    check(bool(v.planes[p][a]&(128>>(x&7)))==bool(color&(1<<p)),"planar bus address and color bit");
+                g.call(0x0c80|color,page<<8,x,y);
+                g.call(0x0d00,page<<8,x,y);
+                check(c.get(AX,1)==0,"planar XOR preserves neighbors and toggles pixel");
+            }
+        }
+        g.call(0x0c01,0,width,0);g.call(0x0d00,0,width,0);
+        check(c.get(AX,1)==0,"out-of-bounds pixel rejected");
+        g.call(0x0c00|mask,0,3,4);
+        g.call(0x0080|mode);
+        g.call(0x0d00,0,3,4);
+        check(c.get(AX,1)==mask,"graphics no-clear mode set");
+    }
+    g.call(3);
+}
+
+
+void graphics_text_and_scroll(Guest &g) {
+    auto &c=g.m->cpu; auto &v=g.m->vga;
+    for(unsigned mode : {0x12u,0x13u}) {
+        g.call(mode);g.call(0x0200,0,0,0x0203);g.call(0x0941,0x000e,1);
+        g.call(0x0800);
+        check(c.get(AX,1)=='A',"graphics glyph readback matches active font");
+        g.call(0x1130,0x0100);
+        unsigned font=c.s[ES].base+c.get(BP,2), ch=g.word(0x485);
+        for(unsigned y=0;y<ch;++y)for(unsigned x=0;x<8;++x) {
+            g.call(0x0d00,0,24+x,2*ch+y);
+            unsigned expected=c.read(font+'A'*ch+y,1)&(128>>x)?14:0;
+            check(c.get(AX,1)==expected,"graphics glyph foreground/background pixels");
+        }
+        g.call(0x0e42,0x000a);check(g.word(0x450)==0x0204,"graphics teletype advances cursor");
+        for(unsigned down : {0u,1u})for(unsigned lines : {0u,1u,50u}) {
+            g.call(mode);
+            unsigned width=mode==0x13?320:640,height=mode==0x13?200:480;
+            unsigned font_height=mode==0x13?8:16;
+            for(unsigned p=0;p<4;++p)for(unsigned a=0;a<65536;++a)
+                v.planes[p][a]=(a*37+p*53+17)&255;
+            auto before=v.planes;
+            auto seq=v.seq;auto gfx=v.gfx;
+            g.call((down?0x0700:0x0600)|lines,0x0500,0x0203,0x0406);
+            if(mode==0x13) {
+                for(unsigned y=0;y<height;++y)for(unsigned x=0;x<width;++x) {
+                    unsigned at=y*width+x;uint8_t expected=before[at&3][at>>2];
+                    if(y>=2*font_height && y<5*font_height && x>=24 && x<56) {
+                        int source=down?int(y)-int(lines*font_height):int(y)+int(lines*font_height);
+                        if(lines && source>=int(2*font_height) && source<int(5*font_height)) {
+                            unsigned from=source*width+x;expected=before[from&3][from>>2];
+                        }else expected=5;
+                    }
+                    check(v.planes[at&3][at>>2]==expected,"packed graphics scroll pixel oracle");
+                }
+            }else {
+                for(unsigned p=0;p<4;++p)for(unsigned a=0;a<65536;++a) {
+                    unsigned y=a/(width/8),x=a%(width/8);uint8_t expected=before[p][a];
+                    if(y>=2*font_height && y<5*font_height && x>=3 && x<=6) {
+                        int source=down?int(y)-int(lines*font_height):int(y)+int(lines*font_height);
+                        expected=lines && source>=int(2*font_height) && source<int(5*font_height)
+                            ?before[p][source*(width/8)+x]:(5&(1<<p)?255:0);
+                    }
+                    check(v.planes[p][a]==expected,"planar graphics scroll byte/plane oracle");
+                }
+            }
+            check(v.seq==seq && v.gfx==gfx,"graphics scroll preserves register programming");
+        }
+    }
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -324,7 +413,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

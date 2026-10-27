@@ -42,6 +42,29 @@ start:
     jne fail
     cmp word [es:2*160+7*2],0x1e51
     jne fail
+    mov bp,5
+    mov ax,0x12
+    int 0x10
+    mov ax,0x0c0b
+    xor bx,bx
+    mov cx,639
+    mov dx,479
+    int 0x10
+    mov ax,0x0d00
+    int 0x10
+    cmp al,11
+    jne fail
+    mov bp,6
+    mov ax,0x13
+    int 0x10
+    mov ax,0x0cfe
+    mov cx,319
+    mov dx,199
+    int 0x10
+    mov ax,0x0d00
+    int 0x10
+    cmp al,0xfe
+    jne fail
     mov ax,3
     int 0x10
     mov si,pass_text

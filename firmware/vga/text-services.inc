@@ -120,6 +120,11 @@ write_string:
 ; IBM BIOS Interface mode/page table, PDF 26; defensive bounds are board policy.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=26
 validate_text_page:
+    cmp byte [MODE],4
+    jb .text
+    cmp byte [MODE],7
+    jne validate_graphics_page
+.text:
     push ax
     push dx
     cmp bh,8

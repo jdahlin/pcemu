@@ -212,19 +212,8 @@ functionality_information:
 ; IBM BIOS Interface static functionality table, PDF 57..58.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=57
 static_functionality:
-    db 0x8f,0,0,0,0,0,0,7,8,2,0xfe,0x0c,0,0,0,0
+    db 0x8f,0xe0,0x0f,0,0,0,0,7,8,2,0xfe,0x0c,0,0,0,0
 video_save_table:
     dw video_parameters
     dw 0xc000
     times 6 dd 0
-; VGA 64-byte parameter record, in the standard columns/rows/height/page-size,
-; sequencer/misc/CRTC/attribute/graphics layout. The full mode table replaces
-; this initial record when the graphics mode set is added.
-video_parameters:
-    db 80,24,16
-    dw 4096
-    db 0,3,0,2,0x67
-    db 0x5f,0x4f,0x50,0x82,0x55,0x81,0xbf,0x1f,0,0x4f,0x0d,0x0e,0,0,0,0
-    db 0x9c,0x8e,0x8f,0x28,0x1f,0x96,0xb9,0xa3,0xff
-    db 0,1,2,3,4,5,20,7,56,57,58,59,60,61,62,63,0x0c,0,0x0f,8
-    db 0,0,0,0,0,0x10,0x0e,0,0xff

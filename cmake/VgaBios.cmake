@@ -9,7 +9,7 @@ if(PCEMU_VGA_NASM AND Python3_Interpreter_FOUND)
   add_custom_command(OUTPUT "${VGA_ROM}"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/build_vga_bios.py"
       --output "${VGA_ROM}"
-    DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py ${VGA_FONT_SOURCES} ${VGA_SERVICE_SOURCES}
+    DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py tools/vga_modes.py ${VGA_FONT_SOURCES} ${VGA_SERVICE_SOURCES}
     VERBATIM)
   add_custom_target(vga-bios DEPENDS "${VGA_ROM}")
   pcemu_program(vga-bios-tests ZSTD SOURCES ${CORE} tests/vga_bios_test.cpp)

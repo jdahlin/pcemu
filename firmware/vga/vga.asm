@@ -154,6 +154,10 @@ video_interrupt:
     je write_character
     cmp ah,0x0a
     je write_character
+    cmp ah,0x0c
+    je write_dot
+    cmp ah,0x0d
+    je read_dot
     cmp ah,0x0e
     je teletype
     cmp ah,0x0f
@@ -203,7 +207,7 @@ set_mode:
     cmp al,3
     jbe .accepted
     cmp al,7
-    jne return_interrupt
+    jne set_graphics_mode
 .accepted:
     mov dx,DISPI_INDEX
     mov ax,4 ; DISPI Enable index: disable extended framebuffer before VGA setup.
@@ -457,6 +461,11 @@ cursor_address:
 ; H Cursor Location High/Low, printed 2-68..2-69.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=94
 update_cursor:
+    cmp byte [MODE],7
+    je .text
+    cmp byte [MODE],4
+    jae .done
+.text:
     cmp bh,[ACTIVE_PAGE]
     jne .done
     call cursor_address
@@ -515,7 +524,17 @@ select_page:
     xor ah,ah
     mul word [PAGE_BYTES]
     mov [DISPLAY_START],ax
+    cmp byte [MODE],7
+    je .text_start
+    cmp byte [MODE],4
+    jb .text_start
+    cmp byte [MODE],0x13
+    jne .start
+    shr ax,2
+    jmp .start
+.text_start:
     shr ax,1
+.start:
     mov cx,ax
     mov dx,[CRTC_BASE]
     mov al,0x0c
@@ -531,6 +550,11 @@ select_page:
 ; B 08H, PDF page 32.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=32
 read_character:
+    cmp byte [MODE],7
+    je .text
+    cmp byte [MODE],4
+    jae read_graphics_character
+.text:
     call validate_text_page
     jc return_interrupt
     call cursor_address
@@ -544,6 +568,11 @@ read_character:
 ; B 09H/0AH, PDF pages 32..33; clamp is defensive implementation policy.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=32
 write_character:
+    cmp byte [MODE],7
+    je .text
+    cmp byte [MODE],4
+    jae write_graphics_character
+.text:
     call validate_text_page
     jc return_interrupt
     call cursor_address
@@ -582,6 +611,11 @@ write_character:
 ; rows using BH. B 06H/07H, PDF page 31. No guest cursor moves.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=31
 scroll_window:
+    cmp byte [MODE],7
+    je .text
+    cmp byte [MODE],4
+    jae scroll_graphics_window
+.text:
     cmp ch,[ROWS_MINUS_ONE]
     ja return_interrupt
     cmp cl,[COLUMNS]
@@ -698,6 +732,11 @@ scroll_window:
 ; B 0EH, PDF page 34. Bell is silent (speaker synthesis is outside this ROM).
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=34
 teletype:
+    cmp byte [MODE],7
+    je .text
+    cmp byte [MODE],4
+    jae graphics_teletype
+.text:
     mov bh,[ACTIVE_PAGE]
     call cursor_address
     call text_memory_segment
@@ -773,6 +812,8 @@ read_mode:
     mov [in_bx+1],al
     jmp return_interrupt
 
+%include "pcemu-vga-modes.inc"
+%include "graphics-services.inc"
 %include "text-services.inc"
 %include "font-services.inc"
 %include "palette-services.inc"

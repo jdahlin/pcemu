@@ -185,3 +185,15 @@ new tests exercise 40-column/monochrome addressing, 80x50 font resizing/page
 bounds, user font block 5, cursor emulation, counted strings on an inactive
 page, palette blocks, color paging, masks, grayscale, palette-loading policy and
 functionality buffers. Interrupt wrappers preserve full 32-bit registers.
+
+## Standard VGA graphics expansion
+
+Modes 0Dh..13h now program the VGA hardware for 320x200, 640x200,
+640x350 and 640x480 planar/chain-4 operation. Pixel read/write supports planar
+XOR, per-plane colors, page addressing and no-clear mode sets. Graphics font
+output/readback, teletype and character-aligned scrolling execute in the ROM;
+planar scrolling uses the hardware latches/write mode 1 and preserves register
+programming. The graphics tests compare literal plane offsets and use independent
+byte/pixel oracles for overlapping scrolling in both directions. The boot-sector
+probe also checks modes 12h and 13h under PCEmu interpreter/JIT and QEMU TCG.
+CGA-compatible modes and VBE remain separate next steps at this commit.
