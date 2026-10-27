@@ -253,3 +253,9 @@ The primary and secondary video save-pointer tables, DCC table and separate
 legacy INT 1Dh parameter sets are present. DCC reads/writes preserve primary and
 alternate display ordering. Functionality reports use mode-specific color/page
 counts and scan-line codes rather than assuming text mode.
+
+VGATEST CGA test cards exposed an ARM64 inline-memory guard that covered only
+A0000..AFFFF. The guard now also rejects B0000..BFFFF, preserving video-device
+callbacks for native loads, stores and read-modify-write operations. Regression
+checks cover both aperture halves and boundary-crossing accesses. The same
+unmodified VGATEST cards now agree with QEMU in interpreter and JIT runs.

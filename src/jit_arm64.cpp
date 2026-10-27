@@ -1503,7 +1503,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
                 emit(0x53107d2au); // lsr w10,w9,#16
                 compareImmediate(10, 10);
-                guard(0x54000000u); // b.eq slow (VGA aperture)
+                guard(0x54000000u); // b.eq slow (A0000..AFFFF VGA aperture)
+                compareImmediate(10, 11);
+                guard(0x54000000u); // b.eq slow (B0000..BFFFF text/CGA aperture)
                 if (i.memory.store) {
                     if (accessWidth > 1 && !i.stackMany) {
                         emit(0x1200152au); // and w10,w9,#63

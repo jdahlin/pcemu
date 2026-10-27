@@ -118,6 +118,38 @@ int main() {
                                 check(actual.mem == reference.mem,
                                       "comparison never writes guest RAM");
                             }
+        // Every VGA aperture page must reject inline RAM access, including
+        // real-mode-style CGA addresses that are not covered by A0000 tests.
+        for (uint32_t address : {0xa0000u, 0xaffffu, 0xb0000u, 0xb8000u, 0xbffffu})
+        for (unsigned width : {1u, 2u, 4u})
+        for (unsigned operation : {0u, 1u, 2u}) {
+            CPU ref(2*1024*1024), native(2*1024*1024);
+            std::vector<uint8_t> bytes;
+            if (width == 2) bytes.push_back(0x66);
+            if (operation == 2) {
+                bytes.push_back(width == 1 ? 0xfe : 0xff); bytes.push_back(5); // INC [disp32]
+            } else bytes.push_back((operation == 1 ? 0xa2 : 0xa0) + (width != 1));
+            for (unsigned n=0;n<4;++n) bytes.push_back(address>>(n*8));
+            bytes.insert(bytes.end(),{0xeb,0});
+            std::vector<uint32_t> expected, actual;
+            for (auto c : {&ref, &native}) {
+                std::copy(bytes.begin(),bytes.end(),c->mem.begin());
+                c->s[CS].big=true; c->r[AX]=0x12345678; c->flags=0x203;
+                c->videoRead=[&,c](uint32_t a) {
+                    (c==&ref ? expected : actual).push_back(a); return uint8_t(a^0xa5);
+                };
+                c->videoWrite=[&,c](uint32_t a,uint8_t v) {
+                    (c==&ref ? expected : actual).push_back(a);
+                    (c==&ref ? expected : actual).push_back(v);
+                };
+            }
+            ref.step();ref.step();
+            Jit guarded(native,true,0);
+            while(native.instructions<2) guarded.run();
+            check(!expected.empty() && expected==actual,"full VGA aperture callback address/value/order");
+            check(ref.mem==native.mem && std::equal(std::begin(ref.r),std::end(ref.r),std::begin(native.r)) && ref.flags==native.flags && ref.ip==native.ip,
+                  "CGA aperture access must not use RAM shadow in native code");
+        }
         // Faults, MMIO, and valid crossing accesses must replay once with the
         // comparison's original IP and the flags of the preceding arithmetic.
         for (unsigned kind = 0; kind < 15; ++kind)
