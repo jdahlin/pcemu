@@ -11,9 +11,18 @@ struct VirtualMachine: Codable, Identifiable, Equatable {
     var registrationKey: String?
     var launcher: String?
     var bootText: String?
+    var snapshots: [VMSnapshot]?
     var processors: Int?
     var isARM: Bool { launcher != nil }
     var cpuCount: Int { isARM ? processors ?? 2 : 1 }
+}
+
+struct VMSnapshot: Codable, Identifiable, Equatable {
+    var id: String { path }
+    var path: String
+    var date: Date
+    var memory: Int
+    var processors: Int
 }
 
 enum DefaultMachines {

@@ -7,6 +7,8 @@ import SwiftUI
     @Published var active: UUID?
     @Published var paused = false
     @Published var suspending = false
+    @Published var takingSnapshot = false
+    @Published var switchingTo: String?
     @Published var wantsReboot = false
     @Published var error: String?
     @Published var image: NSImage?
@@ -15,17 +17,21 @@ import SwiftUI
     let root: URL
     let directory: URL
     private var pendingSnapshot: URL?
+    private var queuedStart: (VirtualMachine, Bool)?
+    private var suspendAfterSnapshot = false
+    private var snapshotHardware: (Int, Int)?
+    private var runningConfiguration: VirtualMachine?
     private var timer: Timer?
     private var pixels = [UInt32](repeating: 0, count: 2048 * 2048)
     var termination: (() -> Void)?
 
-    init() {
-        root = URL(fileURLWithPath: Bundle.main.object(forInfoDictionaryKey: "PCEmuCheckout") as? String
+    init(root: URL? = nil, directory: URL? = nil) {
+        self.root = root ?? URL(fileURLWithPath: Bundle.main.object(forInfoDictionaryKey: "PCEmuCheckout") as? String
                    ?? FileManager.default.currentDirectoryPath)
-        directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        self.directory = directory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("PCEmu", isDirectory: true)
         do {
-            machines = try DefaultMachines.register(root: root, directory: directory)
+            machines = try DefaultMachines.register(root: self.root, directory: self.directory)
             selection = machines.first?.id
         } catch { self.error = "Cannot read the VM library: \(error.localizedDescription)" }
     }
@@ -45,7 +51,8 @@ import SwiftUI
         pcemu_native_command(text)
     }
     func start(_ vm: VirtualMachine, cold: Bool = false) {
-        guard active == nil else { return }
+        guard !suspending && !takingSnapshot else { return }
+        if active == vm.id { selection = vm.id; return }
         do {
             if !cold && vm.restoreOnOpen && !vm.snapshot.isEmpty {
                 guard FileManager.default.fileExists(atPath: vm.snapshot + "/state.bin") else {
@@ -56,7 +63,22 @@ import SwiftUI
                     throw NSError(domain: "PCEmu", code: 2, userInfo: [NSLocalizedDescriptionKey: "Choose a boot disk in VM settings before cold booting."])
                 }
             }
+            if active != nil {
+                queuedStart = (vm, cold); switchingTo = vm.name
+                suspend()
+                if !suspending { queuedStart = nil; switchingTo = nil }
+                return
+            }
+            if let index = machines.firstIndex(where: { $0.id == vm.id }) {
+                machines[index].snapshot = vm.snapshot; machines[index].restoreOnOpen = vm.restoreOnOpen; save()
+            }
             pcemu_native_prepare()
+            error = nil
+            var configuration = vm
+            if !cold && vm.restoreOnOpen, let checkpoint = vm.snapshots?.first(where: { $0.path == vm.snapshot }) {
+                configuration.memory = checkpoint.memory; configuration.processors = checkpoint.processors
+            }
+            runningConfiguration = configuration
             active = vm.id; selection = vm.id; paused = false; image = nil
             let snapshot = (!cold && vm.restoreOnOpen) ? vm.snapshot : ""
             let checkout = root
@@ -98,22 +120,59 @@ import SwiftUI
         if pcemu_native_error(&message, Int32(message.count)) != 0 { error = String(cString: message) }
         timer?.invalidate(); timer = nil
         if let snapshot = pendingSnapshot {
-            if status == 0 && FileManager.default.fileExists(atPath: snapshot.appendingPathComponent("state.bin").path),
-               let index = machines.firstIndex(where: { $0.id == active }) {
-                machines[index].snapshot = snapshot.path; save()
-            } else { error = "Suspend did not complete. The previous snapshot is still selected." }
+            if status == 0 && FileManager.default.fileExists(atPath: snapshot.appendingPathComponent("state.bin").path) {
+                recordSnapshot(snapshot)
+            } else { error = "Snapshot did not complete. The previous snapshot is still selected." }
         } else if status != 0 && error == nil { error = "The VM exited with an error (\(status)). See the launching terminal for emulator diagnostics." }
-        active = nil; paused = false; suspending = false; pendingSnapshot = nil
+        let next = error == nil ? queuedStart : nil
+        active = nil; paused = false; suspending = false; takingSnapshot = false; pendingSnapshot = nil
+        runningConfiguration = nil; queuedStart = nil; switchingTo = nil
+        suspendAfterSnapshot = false
+        if termination == nil, let (vm, cold) = next {
+            if let index = machines.firstIndex(where: { $0.id == vm.id }) {
+                machines[index].snapshot = vm.snapshot; machines[index].restoreOnOpen = vm.restoreOnOpen; save()
+            }
+            start(vm, cold: cold)
+        }
         if error == nil { termination?() }
         else if termination != nil { NSApp.reply(toApplicationShouldTerminate: false) }
         termination = nil
     }
     func togglePause() {
-        guard active != nil && !suspending else { return }
+        guard active != nil && !suspending && !takingSnapshot else { return }
         paused.toggle(); command(paused ? "pause" : "resume")
     }
+    private func recordSnapshot(_ path: URL) {
+        guard let index = machines.firstIndex(where: { $0.id == active }) else { return }
+        let hardware = snapshotHardware ?? (machines[index].memory, machines[index].cpuCount)
+        var snapshots = machines[index].snapshots ?? []
+        if !snapshots.contains(where: { $0.path == path.path }) {
+            snapshots.insert(VMSnapshot(path: path.path, date: Date(), memory: hardware.0, processors: hardware.1), at: 0)
+        }
+        machines[index].snapshots = snapshots
+        machines[index].snapshot = path.path
+        save()
+    }
+    func restore(_ vm: VirtualMachine, snapshot: String) {
+        guard !suspending, !takingSnapshot,
+              let index = machines.firstIndex(where: { $0.id == vm.id }) else { return }
+        guard FileManager.default.fileExists(atPath: snapshot + "/state.bin") else {
+            error = "This snapshot is missing. Reveal it in Finder to check its location."; return
+        }
+        var target = machines[index]
+        target.snapshot = snapshot; target.restoreOnOpen = true
+        if active == vm.id {
+            queuedStart = (target, false); switchingTo = vm.name; suspend()
+            if !suspending { queuedStart = nil; switchingTo = nil }
+        } else { start(target) }
+    }
     func suspend() {
-        guard let id = active, !suspending else { return }
+        if takingSnapshot { suspendAfterSnapshot = true; return }
+        saveSnapshot(suspend: true)
+    }
+    func takeSnapshot() { saveSnapshot(suspend: false) }
+    private func saveSnapshot(suspend: Bool) {
+        guard let id = active, !suspending, !takingSnapshot else { return }
         let path = directory.appendingPathComponent("Snapshots/\(id)/\(UUID().uuidString)")
         do { try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true) }
         catch {
@@ -121,16 +180,25 @@ import SwiftUI
             if termination != nil { NSApp.reply(toApplicationShouldTerminate: false); termination = nil }
             return
         }
-        releaseInput(); suspending = true; pendingSnapshot = path
-        command("suspend \(path.path)")
+        releaseInput(); suspending = suspend; takingSnapshot = !suspend; pendingSnapshot = path
+        let configuration = runningConfiguration ?? machines.first { $0.id == id }
+        snapshotHardware = configuration.map { ($0.memory, $0.cpuCount) }
+        command("\(suspend ? "suspend" : "save-snapshot") \(path.path)")
     }
     func releaseInput() { pcemu_native_event(0, 0, 0, 0, 0, 0) }
     func refreshFrame() {
         var message = [CChar](repeating: 0, count: 4096)
         if pcemu_native_error(&message, Int32(message.count)) != 0 {
             error = String(cString: message)
-            suspending = false; pendingSnapshot = nil
+            suspending = false; takingSnapshot = false; pendingSnapshot = nil
+            queuedStart = nil; switchingTo = nil; suspendAfterSnapshot = false
             if termination != nil { NSApp.reply(toApplicationShouldTerminate: false); termination = nil }
+        }
+        // Both engines publish complete checkpoints with an atomic directory rename.
+        if takingSnapshot, let path = pendingSnapshot,
+           FileManager.default.fileExists(atPath: path.appendingPathComponent("state.bin").path) {
+            recordSnapshot(path); pendingSnapshot = nil; takingSnapshot = false
+            if suspendAfterSnapshot { suspendAfterSnapshot = false; suspend() }
         }
         var cursorPixels = [UInt32](repeating: 0, count: 64 * 64)
         var cw: Int32 = 0, ch: Int32 = 0, hx: Int32 = 0, hy: Int32 = 0, visible: Int32 = 0

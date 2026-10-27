@@ -284,6 +284,9 @@ test-native: app-native
 	python3 -m unittest discover -s tests -p test_session_control.py
 	xcrun swiftc platform/macos/PCEmu/Defaults.swift tests/default_machines_test.swift -o build/default-machines-tests
 	./build/default-machines-tests
+	xcrun clang++ -std=c++20 -Iplatform/macos/PCEmu -c tests/native_library_bridge_stub.cpp -o build/native-library-bridge-stub.o
+	xcrun swiftc -swift-version 5 -parse-as-library -import-objc-header platform/macos/PCEmu/NativeBridge.h platform/macos/PCEmu/Defaults.swift platform/macos/PCEmu/Library.swift tests/native_library_ux_test.swift build/native-library-bridge-stub.o -lc++ -o build/native-library-ux-tests
+	./build/native-library-ux-tests
 	./build/frontend-input-tests
 	./build/frontend-tests
 	./build/snapshot-tests

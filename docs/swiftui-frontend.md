@@ -137,3 +137,29 @@ The x86 runner keeps the machine, JIT tables and optional trace history on the
 heap so embedded startup fits Dispatch's small worker stacks. The library
 regression test runs cold boot, restore, lifecycle controls and trace capture
 on a 512 KiB pthread, with a headless display sink for the embedded UI path.
+
+## Snapshots, switching and settings
+
+Use **Take Snapshot** (Command–Option–S) to capture a checkpoint without stopping
+the VM; a paused VM stays paused. **Snapshots** in the toolbar or context menu
+lists checkpoints created by the app with their date and saved hardware. Imported
+checkpoints remain available too. Restore saves the current VM first, including
+when returning to an earlier checkpoint of the same VM. Checkpoints are retained
+on disk and can be revealed in Finder from the snapshot list.
+
+Select another VM and press **Save Current VM and Open**, or double-click its
+sidebar entry. The current VM suspends automatically, then the selected VM opens.
+A failed save cancels the switch and keeps the previous checkpoint selected.
+Only one VM executes at a time; switching speed includes checkpoint disk I/O.
+
+Settings are available while a VM runs. Memory accepts a typed MB value as well
+as a stepper; ARM guests also expose the vCPU count. Hardware or boot-disk changes
+use **Save for Cold Boot**, which disables automatic restore so those changes
+actually take effect on the next start. Existing checkpoints retain their saved
+hardware and remain restorable. The running VM keeps its current hardware.
+
+`make test-native` also runs the Swift library lifecycle against a headless
+session stand-in, checking snapshot history persistence, paused snapshots,
+automatic switching, failed-save cancellation, restore, saved hardware metadata,
+and suspension requested while a checkpoint is already being written. Real engine
+snapshot and input checks run separately in the same target.
