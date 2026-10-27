@@ -186,6 +186,11 @@ int main() {
         m.hostCursor.revision = 42;
         m.cpu.fp[3] = 0x400921fb54442d18ull;
         m.cpu.fpControl = 0x77f; m.cpu.fpStatus = 0x1800; m.cpu.fpTag = 0xff3f;
+        m.dma.write_register(0x0c,0);
+        m.dma.write_register(2,0x34);m.dma.write_register(2,0x12);
+        m.dma.write_register(0x0b,0x59);m.dma.state.channels[1].page=0x56;
+        m.dma.set_request(1,true);
+        m.dma.read_register(2); // Preserve a half-read register across restore.
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
               "first checkpoint switches live disks to QCOW2 deltas");
@@ -197,9 +202,10 @@ int main() {
         for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
         check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
               "TLB snapshot retains its legacy 18-byte record");
-        for(unsigned legacyVersion : {6u,7u,8u}) {
+        for(unsigned legacyVersion : {6u,7u,8u,9u}) {
             auto legacy = first;
-            legacy.erase(legacy.end() - 8 - 84, legacy.end() - 8); // Remove v9 x87 state.
+            legacy.erase(legacy.end() - 8 - 46, legacy.end() - 8); // Remove v10 primary DMA state.
+            if(legacyVersion<9)legacy.erase(legacy.end() - 8 - 84, legacy.end() - 8); // Remove v9 x87 state.
             if(legacyVersion<8)legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
             if(legacyVersion==6)legacy.erase(legacy.end()-9); // Remove v7 DAC direction.
             legacy[8] = legacyVersion;
@@ -220,9 +226,11 @@ int main() {
             {std::ofstream out(directory / "state.bin",std::ios::binary);out.write(reinterpret_cast<char*>(packed.data()),size);}
             Machine compatibility("","",2*1024*1024);
             compatibility.loadSnapshot(directory.string());
+            check(compatibility.dma.state.mask==15 && compatibility.dma.state.channels[1].address==0,
+                  "legacy snapshot initializes absent DMA controller to reset state");
             check(compatibility.vga.attrIndex==0x3f && compatibility.vga.dacReadMode==(legacyVersion>=7) && !compatibility.cpu.protectedEntry,
                   "old snapshot preserves DAC compatibility and defaults PE-entry state");
-            check(compatibility.cpu.fpControl == 0x37f && compatibility.cpu.fpTag == 0xffff && compatibility.cpu.fpStatus == 0,
+            check(compatibility.cpu.fpControl == (legacyVersion>=9?0x77f:0x37f) && compatibility.cpu.fpTag == (legacyVersion>=9?0xff3f:0xffff) && compatibility.cpu.fpStatus == (legacyVersion>=9?0x1800:0),
                   "pre-v9 snapshots default the absent floating-point state to FINIT");
         }
         m.cpu.r[AX] = 0;
@@ -230,9 +238,13 @@ int main() {
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
         m.cpu.fp[3] = 0; m.cpu.fpControl = m.cpu.fpStatus = m.cpu.fpTag = 0;
+        m.dma={};
         m.vga.scanout.ready=true;
         m.vga.scanout.completed.assign(3,0xff112233);
         m.loadSnapshot((root / "point").string());
+        check(m.dma.state.channels[1].address==0x1234 && m.dma.state.channels[1].mode==0x58 &&
+              m.dma.state.channels[1].page==0x56 && m.dma.state.hardwareRequest==2 && m.dma.state.highByte,
+              "snapshot v10 restores DMA count/address/mode/page and request state");
         check(!m.vga.scanout.ready && m.vga.scanout.completed.empty(),
               "snapshot load discards presentation history from the previous timeline");
         check(m.cpu.fp[3] == 0x400921fb54442d18ull && m.cpu.fpControl == 0x77f &&

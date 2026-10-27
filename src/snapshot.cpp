@@ -279,6 +279,12 @@ class SnapshotCodec {
             c.fpControl = 0x37f; c.fpStatus = 0; c.fpTag = 0xffff;
             c.fpIP = c.fpData = 0; c.fpCS = c.fpDS = c.fpOpcode = 0;
         }
+        if(version>=10) {
+            auto &dma=m.dma.state;
+            for(auto &channel:dma.channels)
+                a(channel.baseAddress,channel.baseCount,channel.address,channel.count,channel.mode,channel.page);
+            a(dma.command,dma.mask,dma.softwareRequest,dma.hardwareRequest,dma.terminalCount,dma.highByte);
+        } else if constexpr(A::loading) m.dma={};
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
@@ -286,6 +292,12 @@ class SnapshotCodec {
         }
     }
     static void validate(const Machine &m) {
+        const auto &dma=m.dma.state;
+        if((dma.mask|dma.softwareRequest|dma.hardwareRequest|dma.terminalCount)&~15)
+            throw std::runtime_error("Invalid snapshot DMA state");
+        for(const auto &channel:dma.channels)
+            if(channel.mode&3)throw std::runtime_error("Invalid snapshot DMA mode");
+
         if (m.cpu.mem.size() < 2 * 1024 * 1024 || m.cpu.mem.size() > 64 * 1024 * 1024 ||
             m.cpu.systemAccess || !m.cpu.tlbEpoch || m.ata.position > 512 ||
             m.ata.remaining > 256 || !m.ata.heads || m.ata.heads > 255 || !m.ata.spt ||
@@ -333,7 +345,7 @@ class SnapshotCodec {
             Writer writer;
             writer.data.reserve(m.cpu.mem.size() + 1024 * 1024);
             writer.bytes(magic, sizeof(magic));
-            uint32_t version = 9, ram = m.cpu.mem.size();
+            uint32_t version = 10, ram = m.cpu.mem.size();
             writer(version, ram);
             for (auto &d : disks)
                 d.state(writer);
@@ -400,7 +412,7 @@ class SnapshotCodec {
         reader.bytes(signature, sizeof(signature));
         uint32_t version, ram;
         reader(version, ram);
-        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 9) ||
+        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 10) ||
             ram < 2 * 1024 * 1024 || ram > 64 * 1024 * 1024)
             throw std::runtime_error("Unsupported snapshot format or RAM size");
         DiskInfo disks[2];

@@ -236,3 +236,9 @@ while retaining this repository's formatting.
 | USB xHCI and fixed HID devices | Intel 625472 rev 1.2b chapters 5–7 for the advertised 1.00 subset; HID 1.11; Linux USB chapter-9 wire values | Named PCI/MMIO/TRB/context/event fields, capability signatures, HID item/report layouts, input queue/scaling, bounded RAM/ring work and explicit controller/control-request compatibility gaps. |
 | ARM Hyper-V platform interface | Microsoft TLFS ARM64 discovery/registers/hypercall interface and v6.0b status appendix; OpenVMM ABI reference | Named signatures, feature privileges, call/register IDs and wire fields; repeated/fast transfers, self/VTL0 limits, native interrupt/flush boundaries, IC scheduling, crash snapshots and explicit Windows compatibility/host policies. |
 | ICH9-compatible HDA playback | Intel High Definition Audio 1.0a, chapters 3/7; PCI Local Bus 3.0 | One stereo16/48 kHz output, codec graph/verbs, CORB/RIRB, bounded RAM DMA, position/completion/INTx, elapsed host time and explicit link/FIFO/capture gaps. |
+
+The primary 8237A byte DMA model (`src/i8237.*`) follows this convention using
+Intel 231466 (September 1993). Its explicit scope is register programming and
+peripheral-requested RAM-read acknowledgments; bus arbitration/electrical timing,
+write/verify/memory-to-memory transfers and the secondary word controller remain
+unsupported. See [ISA audio and DMA](isa-audio.md).

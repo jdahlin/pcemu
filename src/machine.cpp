@@ -66,6 +66,7 @@ void Machine::restart() {
     ata.reset(disk.get());
     pic.reset();
     pit.reset(pitTicks());
+    dma = {};
     vga.reset();
     std::fill(std::begin(ports), std::end(ports), 0);
     ataLine = false;

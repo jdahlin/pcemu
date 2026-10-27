@@ -55,6 +55,19 @@ void Machine::bindIoPorts() {
             } else write(p, v, w);
         };
     };
+    ioPorts.map("dma-primary", 0x00, 0x10,
+        [this](uint16_t p, int) -> uint32_t { return dma.read_register(p); },
+        bytes([this](uint16_t p, uint32_t v, int) { dma.write_register(p,v); }));
+    // PC/AT external page latches: channels 0,1,2,3 use 87h,83h,81h,82h.
+    // Other page ports retain their existing board latch behavior.
+    // IBM PC/AT Technical Reference, System Board I/O Address Map.
+    ioPorts.map("dma-pages", 0x80, 0x10,
+        [this](uint16_t p, int) -> uint32_t { return ports[p]; },
+        bytes([this](uint16_t p, uint32_t v, int) {
+            ports[p]=v;
+            int channel=p==0x87?0:p==0x83?1:p==0x81?2:p==0x82?3:-1;
+            if(channel>=0)dma.state.channels[channel].page=v;
+        }));
     for (uint16_t base : {0x20, 0xa0})
         ioPorts.map(base == 0x20 ? "pic-master" : "pic-slave", base, 2,
             [this](uint16_t p, int) -> uint32_t {

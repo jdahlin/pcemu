@@ -14,6 +14,7 @@
 #include "port92.hpp"
 #include "debug_console.hpp"
 #include "pit.hpp"
+#include "i8237.hpp"
 #include "vga.hpp"
 #include <deque>
 #include <fstream>
@@ -31,6 +32,7 @@ struct Machine {
     Port92Device port92;
     DebugConsoleDevice debugConsole;
     PIT8254 pit;
+    I8237Device dma;
     // Runtime clock wiring, not snapshot state. Ordinary machines retain the
     // deterministic instruction-derived PIT clock. Benchmark owners may inject
     // a monotonic 1,193,182-Hz clock; reset the PIT at that clock's origin before

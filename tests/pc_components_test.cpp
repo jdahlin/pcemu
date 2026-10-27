@@ -16,6 +16,18 @@ static void check(bool condition) {
 }
 int main() {
     {
+        Machine m("","",2*1024*1024);
+        m.out(0x0c,0,1);m.out(2,0xff,1);m.out(2,0xff,1);
+        m.out(0x0c,0,1);m.out(3,0,1);m.out(3,0,1);
+        m.out(0x83,0x12,1);m.out(0x0b,0x59,1);m.out(0x0a,1,1);
+        m.dma.set_request(1,true);
+        auto transfer=m.dma.acknowledge_memory_read(1);
+        check(transfer && transfer->address==0x12ffff && transfer->terminalCount);
+        check(m.in(0x83,1)==0x12 && m.in(8,1)==0x22 && m.in(8,1)==0x20);
+        m.out(0x0c,0,1);check(m.in(2,1)==0xff && m.in(2,1)==0xff);
+    }
+
+    {
         Machine m("", "", 2*1024*1024);
         auto &c=m.cpu;
         m.ticks=7;

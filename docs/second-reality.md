@@ -46,9 +46,11 @@ build is not a prerequisite to testing the released executable.
   doubled scanlines are retained. Blanking and wrapped retrace are implemented.
   See [scanout scope and tests](vga-bios.md#beam-timed-legacy-graphics-presentation)
   for remaining fetch/latch/address-counter limitations and reference needs.
-- ISA Sound Blaster/GUS and 8237 DMA remain absent. First validate the complete
-  no-sound sequence (including music sequencing), then implement and validate a
-  real sound path and its sample-clock/IRQ synchronization.
+- Both engines now complete the no-sound sequence and return to DOS. The
+  primary 8237A byte DMA controller is implemented with controller/bus/snapshot
+  tests. [DMA scope and ISA audio work](isa-audio.md) documents remaining limits.
+  Sound Blaster/GUS playback, sample-clock/IRQ synchronization and host PCM output
+  remain to be implemented and validated.
 - `make test-second-reality` now runs an opt-in no-sound completion check in
   both engines. `--part 1` through `--part 5` select released start points for
   localization. It waits for observed setup/confirmation text before sending
@@ -99,5 +101,4 @@ observations and 1,386 distinct frame hashes, followed by the demo's closing tex
 and clean DOS return. [Pinned input hashes and result](measurements/second-reality-2026-10-27.json).
 The temporary overlay and copied runner/ROM were removed after success. This
 establishes full no-sound execution completion; it does not establish reference
-pixel fidelity, sound, or realtime performance. A full interpreter run with the
-new scanout is in progress.
+pixel fidelity, sound, or realtime performance. The full interpreter run also completes successfully: 4,748,857,405 instructions, 3,173 frame observations and 2,621 distinct frame hashes. Both frozen-runner results are recorded in the measurement file.

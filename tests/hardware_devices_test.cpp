@@ -2,6 +2,7 @@
 #include "disk.hpp"
 #include "i8259_pair.hpp"
 #include "pit.hpp"
+#include "i8237.hpp"
 #include "vga.hpp"
 #include "pci.hpp"
 #include "ne2000.hpp"
@@ -79,6 +80,48 @@ int main() {
         pit.write_register(0, 0x12, 3002);
         check(pit.counters[0].loadedAt == 3002 && pit.counters[0].reload == 0x1234 &&
               !pit.counters[0].nullCount);
+        I8237Device dma;
+        auto pair=[&](unsigned port,uint16_t value){
+            dma.write_register(0x0c,0);dma.write_register(port,value);dma.write_register(port,value>>8);
+        };
+        pair(2,0xffff);pair(3,1);
+        dma.state.channels[1].page=0x12;
+        dma.write_register(0x0b,0x49);dma.set_request(1,true);
+        check(!dma.acknowledge_memory_read(1)); // Masked after reset.
+        dma.write_register(0x0a,1);
+        auto byte=dma.acknowledge_memory_read(1);
+        check(byte && byte->address==0x12ffff && !byte->terminalCount);
+        byte=dma.acknowledge_memory_read(1);
+        check(byte && byte->address==0x120000 && byte->terminalCount && dma.state.mask==15);
+        check(dma.state.channels[1].count==0xffff && !dma.acknowledge_memory_read(1));
+        check(dma.read_register(8)==0x22 && dma.read_register(8)==0x20);
+        pair(2,0x3456);pair(3,0);dma.write_register(0x0b,0x59);dma.write_register(0x0a,1);
+        for(unsigned i=0;i<3;++i) {
+            byte=dma.acknowledge_memory_read(1);
+            check(byte && byte->address==0x123456 && byte->terminalCount && !(dma.state.mask&2));
+        }
+        check(dma.state.channels[1].address==0x3456 && dma.state.channels[1].count==0);
+        pair(2,0);pair(3,1);dma.write_register(0x0b,0x69);
+        byte=dma.acknowledge_memory_read(1);check(byte && byte->address==0x120000);
+        byte=dma.acknowledge_memory_read(1);check(byte && byte->address==0x12ffff && byte->terminalCount);
+        dma.write_register(0x0a,1);dma.write_register(0x0b,0x45); // Wrong transfer direction.
+        check(!dma.acknowledge_memory_read(1));
+        dma.write_register(0x0b,0xc9);check(!dma.acknowledge_memory_read(1)); // Cascade.
+        dma.write_register(0x0b,0x49);dma.write_register(8,4);
+        check(!dma.acknowledge_memory_read(1)); // Controller disabled.
+        dma.write_register(8,0);dma.set_request(1,false);dma.write_register(9,5);
+        check(!dma.acknowledge_memory_read(1)); // Software request needs block mode.
+        dma.write_register(0x0b,0x89);check(bool(dma.acknowledge_memory_read(1)));
+        pair(2,0);
+        dma.write_register(0x0c,0);dma.write_register(0,0x12);dma.write_register(2,0x34);
+        check(dma.state.channels[0].address==0x12 && dma.state.channels[1].address==0x3400);
+        dma.write_register(0x0c,0);check(dma.read_register(0)==0x12 && dma.read_register(2)==0x34);
+        auto savedAddress=dma.state.channels[1].address;
+        dma.set_request(1,true);
+        dma.write_register(0x0d,0);
+        check(dma.state.mask==15 && !dma.state.command && !dma.state.terminalCount &&
+              !dma.state.softwareRequest && !dma.state.highByte && dma.state.channels[1].address==savedAddress);
+        check(dma.read_register(8)==0x20 && !dma.acknowledge_memory_read(1));
         SystemPortBDevice portB;
         check(portB.write_register(0xcf) && portB.read_register(false, false) == 0xcf);
         check(portB.read_register(true, true) == 0xff);
