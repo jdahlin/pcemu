@@ -581,6 +581,11 @@ void text_scanout_contract(Guest &g) {
     check(pixels[0]==0xffffff55 && pixels[1]==0xffffff55 && pixels[2]==0xff0000aa,"40-column text scales full logical frame");
     g.call(3);g.call(0x1112);g.call(0x0941,0x1e,1);frame();
     check(m.rows==50 && pixels[2]==0xffffff55 && pixels[640+1]==0xffffff55,"80x50 uses actual 8-line glyph scanout");
+    // X-VESA switches to 80x50 directly, leaving the BIOS geometry stale.
+    c.mem[0x484]=24;c.mem[0x485]=16;
+    frame();
+    check(m.rows==50 && pixels[2]==0xffffff55,
+          "native text scanout derives geometry from CRTC, not stale BIOS data");
     g.call(7);font(0,14,0x80);g.call(0x0941,0x07,1);frame();
     check(pixels[0]==0xffaaaaaa && c.read(0xb0000,1)=='A',"monochrome text aperture renders");
     g.call(3);g.call(0x1003,0);g.call(0x0900,0xf0,1);frame();

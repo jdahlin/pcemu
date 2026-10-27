@@ -37,6 +37,17 @@ void PcDisplay::refresh(Machine &m, bool executeVga) {
         m.rows = 25;
     auto pos = c.mem[0x450 + m.activePage * 2] | (c.mem[0x451 + m.activePage * 2] << 8);
     m.cursor = (pos >> 8) * m.columns + (pos & 255);
+    if (!m.vga.graphics && !(m.vga.seq[4] & VGA::OddEvenDisable)) {
+        // Direct VGA applications can change text geometry without updating
+        // the BIOS data area. CRTC vertical display/overflow and maximum scan
+        // line define the visible character grid (IBM 42G2193, PDF 87..95).
+        const auto &r = m.vga.crtc;
+        unsigned lines = 1 + (r[0x12] | ((r[7] & 2) << 7) | ((r[7] & 0x40) << 3));
+        unsigned height = (r[9] & 31) + 1;
+        unsigned hardwareColumns = unsigned(r[1]) + 1;
+        if (hardwareColumns == 40 || hardwareColumns == 80) m.columns = hardwareColumns;
+        m.rows = std::clamp(lines / height, 1u, 256u);
+    }
 }
 void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) const {
     if (verbose) {
@@ -99,7 +110,7 @@ uint32_t PcDisplay::text_pixel(const Machine &m, unsigned x, unsigned y,
     if (!width || !height || !m.columns || !m.rows || (v.seq[1] & 0x20) || !(v.attrIndex & 0x20))
         return 0xff000000;
     const bool native = !(v.seq[4] & VGA::OddEvenDisable);
-    unsigned glyphHeight = native ? std::clamp(unsigned(c.mem[0x485] | (c.mem[0x486] << 8)), 1u, 32u) : 16;
+    unsigned glyphHeight = native ? unsigned(v.crtc[9] & 31) + 1 : 16;
     unsigned dotX = uint64_t(x) * m.columns * 8 / width;
     unsigned dotY = uint64_t(y) * m.rows * glyphHeight / height;
     unsigned col = dotX / 8, row = dotY / glyphHeight, scanline = dotY % glyphHeight;

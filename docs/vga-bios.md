@@ -259,3 +259,7 @@ A0000..AFFFF. The guard now also rejects B0000..BFFFF, preserving video-device
 callbacks for native loads, stores and read-modify-write operations. Regression
 checks cover both aperture halves and boundary-crossing accesses. The same
 unmodified VGATEST cards now agree with QEMU in interpreter and JIT runs.
+
+X-VESA directly selects 80x50 text without updating BIOS data. Native text
+scanout now derives character height and the visible grid from CRTC registers;
+a regression check deliberately leaves stale BIOS geometry in place.
