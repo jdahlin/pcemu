@@ -273,3 +273,9 @@ An independent full-frame oracle covers unaligned splits, overflow bits 8/9,
 zero/custom strides, wrapping starts and independent upper/lower panning. QEMU
 text captures are not a complete oracle here: its renderer rounds splits to
 character rows and omits text pel/preset-row panning. IBM 42G2193 is the contract.
+
+Planar and 256-color graphics now apply the ten-bit Line Compare, display
+start/stride, byte and horizontal pel panning, lower-screen pan reset, and
+Attribute Color Plane Enable. Zero stride repeats a display row instead of
+substituting a default pitch. Independent plane-byte oracles cover wrapped
+starts, overflow boundaries, zero/custom stride and both pixel formats.

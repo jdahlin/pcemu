@@ -200,6 +200,10 @@ void VGA::set_bios_mode(unsigned mode, bool clear) {
     crtc[CrtcRegister::MaximumScanLineRegister] = mode == BiosMode::Graphics320x200Color256 ? 1 : 0;
     crtc[CrtcRegister::OffsetRegister] =
         width / (mode == BiosMode::Graphics320x200Color256 ? 8 : 16);
+    crtc[CrtcRegister::LineCompareRegister]=0xff;
+    crtc[CrtcRegister::OverflowRegister]|=0x10;
+    crtc[CrtcRegister::MaximumScanLineRegister]|=0x40;
+    attr[0x12]=AllPlanes;attr[0x13]=0;
     // Firmware palette maps color 6 to brown (DAC 14h) and bright colors to
     // DAC 38h..3fh. These are palette indexes, not packed RGB literals.
     const uint8_t DefaultAttributePalette[16] = {0,  1,  2,  3,  4,  5,  20, 7,
@@ -491,6 +495,29 @@ void VGA::write_register(uint16_t p, uint8_t v) {
         p == Register::ColorCrtcDataRegister || p == Register::MonochromeCrtcDataRegister)
         update_display_geometry();
 }
+// Resolve CRTC display start/stride, ten-bit Line Compare and horizontal pan.
+// The address resets after the matching scan line; Pixel Panning Mode can
+// independently reset the lower screen's horizontal shift. Host graphics rows
+// omit repeated scan lines, so compare the corresponding physical line count.
+// IBM 42G2193 Preset Row Scan / Offset / Line Compare / Horizontal Pel Panning.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=87
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=101
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=118
+unsigned VGA::graphics_scanline_address(unsigned y,unsigned &panning) const {
+    unsigned repeat=(unsigned(crtc[CrtcRegister::MaximumScanLineRegister]&31)+1)*
+                    ((crtc[CrtcRegister::MaximumScanLineRegister]&DoubleScanning)?2:1);
+    unsigned compare=crtc[CrtcRegister::LineCompareRegister]|
+                     ((crtc[CrtcRegister::OverflowRegister]&0x10)<<4)|
+                     ((crtc[CrtcRegister::MaximumScanLineRegister]&0x40)<<3);
+    bool lower=y*repeat>compare;
+    unsigned row=lower?(y*repeat-compare-1)/repeat:y;
+    unsigned start=lower?0:(unsigned(crtc[CrtcRegister::StartAddressHighRegister])<<8)|crtc[CrtcRegister::StartAddressLowRegister];
+    unsigned bytePan=lower?0:(crtc[CrtcRegister::PresetRowScanRegister]>>5)&3;
+    panning=attr[0x13]&7;
+    if(gfx[GraphicsRegister::GraphicsModeRegister]&Color256Mode)panning>>=1;
+    if(lower&&(attr[AttributeModeControl]&0x20))panning=0;
+    return (start+row*unsigned(crtc[CrtcRegister::OffsetRegister])*2+bytePan)&PlaneAddressMask;
+}
 // Decode a graphics pixel through packed formats or legacy plane/palette logic to opaque AARRGGBB.
 // IMPLEMENTATION NOTE: Host rendering interprets only the implemented address/format subset;
 // out-of-bounds pixels return black. IBM Video Memory Organization / DAC.
@@ -541,18 +568,18 @@ uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
         uint8_t packed = twoBit ? planes[at & 1][at >> 1] : planes[0][at];
         color = twoBit ? ((packed >> ((3 - (x & 3)) * 2)) & 3) : ((packed >> (7 - (x & 7))) & 1);
         color = attribute_palette_index(color);
-    } else if (gfx[GraphicsRegister::GraphicsModeRegister] & Color256Mode) {
-        unsigned stride =
-            crtc[CrtcRegister::OffsetRegister] ? crtc[CrtcRegister::OffsetRegister] * 2 : width / 4;
-        color = planes[x & 3][(start + y * stride + x / 4) & PlaneAddressMask];
     } else {
-        unsigned stride =
-            crtc[CrtcRegister::OffsetRegister] ? crtc[CrtcRegister::OffsetRegister] * 2 : width / 8;
-        unsigned a = (start + y * stride + x / 8) & PlaneAddressMask;
-        for (unsigned p = 0; p < PlaneCount; p++)
-            if (planes[p][a] & (128 >> (x & 7)))
-                color |= 1 << p;
-        color = attribute_palette_index(color);
+        unsigned pan;
+        unsigned address=graphics_scanline_address(y,pan);
+        x+=pan;
+        if(gfx[GraphicsRegister::GraphicsModeRegister]&Color256Mode) {
+            color=planes[x&3][(address+x/4)&PlaneAddressMask];
+        } else {
+            unsigned a=(address+x/8)&PlaneAddressMask;
+            for(unsigned p=0;p<PlaneCount;++p)
+                if(planes[p][a]&(128>>(x&7)))color|=1<<p;
+            color=attribute_palette_index(color&attr[0x12]);
+        }
     }
     color &= dacMask;
     auto expand = [](uint8_t v) { return uint32_t((v << 2) | (v >> 4)); };
@@ -593,12 +620,7 @@ void VGA::render_graphics(std::span<uint32_t> pixels, unsigned frameWidth,
         colors[i] = OpaqueBlack | (expand(dac[index][0]) << 16) | (expand(dac[index][1]) << 8) |
                     expand(dac[index][2]);
     }
-    const unsigned start = (crtc[CrtcRegister::StartAddressHighRegister] << 8) |
-                           crtc[CrtcRegister::StartAddressLowRegister];
     const bool indexed = gfx[GraphicsRegister::GraphicsModeRegister] & Color256Mode;
-    const unsigned stride = crtc[CrtcRegister::OffsetRegister]
-                                ? crtc[CrtcRegister::OffsetRegister] * 2
-                                : width / (indexed ? 4 : 8);
     for (unsigned y = 0; y < frameHeight; ++y) {
         auto row = pixels.subspan(size_t(y) * frameWidth, frameWidth);
         std::fill(row.begin(), row.end(), OpaqueBlack);
@@ -611,19 +633,16 @@ void VGA::render_graphics(std::span<uint32_t> pixels, unsigned frameWidth,
                           dispi[DisplayInterfaceRegister::HorizontalOffsetRegister];
             for (unsigned x = 0; x < end && at + x < vram.size(); ++x)
                 row[x] = colors[vram[at + x]];
-        } else if (indexed) {
-            for (unsigned x = 0; x < end; ++x)
-                row[x] = colors[planes[x & 3][(start + y * stride + x / 4) & PlaneAddressMask]];
         } else {
-            for (unsigned x = 0; x < end; x += 8) {
-                unsigned at = (start + y * stride + x / 8) & PlaneAddressMask;
-                const uint8_t p0 = planes[0][at], p1 = planes[1][at], p2 = planes[2][at],
-                              p3 = planes[3][at];
-                for (unsigned bit = 0; bit < 8 && x + bit < end; ++bit) {
-                    unsigned shift = 7 - bit;
-                    unsigned color = ((p0 >> shift) & 1) | (((p1 >> shift) & 1) << 1) |
-                                     (((p2 >> shift) & 1) << 2) | (((p3 >> shift) & 1) << 3);
-                    row[x + bit] = colors[attribute_palette_index(color)];
+            unsigned pan;unsigned base=graphics_scanline_address(y,pan);
+            for(unsigned x=0;x<end;++x) {
+                unsigned source=x+pan;
+                if(indexed) row[x]=colors[planes[source&3][(base+source/4)&PlaneAddressMask]];
+                else {
+                    unsigned at=(base+source/8)&PlaneAddressMask,shift=7-(source&7);
+                    unsigned color=((planes[0][at]>>shift)&1)|(((planes[1][at]>>shift)&1)<<1)|
+                                   (((planes[2][at]>>shift)&1)<<2)|(((planes[3][at]>>shift)&1)<<3);
+                    row[x]=colors[attribute_palette_index(color&attr[0x12])];
                 }
             }
         }

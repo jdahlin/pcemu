@@ -641,6 +641,42 @@ void text_addressing_edges(Guest &g) {
     g.call(3);
 }
 
+// Literal plane-address oracle for split/panning in planar and 256-color modes.
+void graphics_addressing_edges(Guest &g) {
+    auto &v=g.m->vga;
+    for(unsigned mode : {0x12u,0x13u}) {
+        g.call(mode);
+        for(unsigned p=0;p<4;++p)for(unsigned a=0;a<65536;++a)v.planes[p][a]=uint8_t(a*7+p*37);
+        for(unsigned n=0;n<256;++n){if(n<16)v.attr[n]=n;v.dac[n][0]=n&63;v.dac[n][1]=(n*3)&63;v.dac[n][2]=(n*5)&63;}
+        struct Case { unsigned split,start,stride,pan,reset,planeMask; };
+        for(auto c : {Case{1023,0,40,0,0,15},Case{199,0,40,3,0,15},Case{200,7,47,7,1,15},
+                     Case{255,0x7fff,40,6,0,7},Case{256,0xfff0,47,2,1,11},Case{511,7,0,7,0,15},
+                     Case{512,0x7fff,0,0,0,3},Case{0,7,40,7,1,15},Case{1,7,40,7,1,15},
+                     Case{201,0xfff0,40,7,1,15}}) {
+            v.crtc[0x18]=c.split;v.crtc[7]=(v.crtc[7]&~0x10)|((c.split>>4)&0x10);
+            v.crtc[9]=(v.crtc[9]&~0x40)|((c.split>>3)&0x40);
+            v.crtc[0x0c]=c.start>>8;v.crtc[0x0d]=c.start;v.crtc[0x13]=c.stride;
+            v.attr[0x13]=c.pan;v.attr[0x10]=(mode==0x13?0x41:1)|(c.reset?0x20:0);v.attr[0x12]=c.planeMask;
+            unsigned w=mode==0x13?320:640,h=mode==0x13?200:480,repeat=mode==0x13?2:1;
+            std::vector<uint32_t> frame(w*h);v.render_graphics(frame,w,h);
+            for(unsigned y=0;y<h;++y)for(unsigned x=0;x<w;++x) {
+                bool below=y*repeat>c.split;
+                unsigned row=below?(y*repeat-c.split-1)/repeat:y;
+                unsigned px=x+((below&&c.reset)?0:(mode==0x13?c.pan/2:c.pan));
+                unsigned at=((below?0:c.start)+row*c.stride*2+px/(mode==0x13?4:8))&65535;
+                unsigned color=0;
+                if(mode==0x13)color=uint8_t(at*7+(px%4)*37);
+                else for(unsigned p=0;p<4;++p)if((c.planeMask&(1<<p))&&(uint8_t(at*7+p*37)&(128>>(px%8))))color|=1<<p;
+                auto expand=[](unsigned n){return (n<<2)|(n>>4);};
+                unsigned expected=0xff000000|(expand(color&63)<<16)|(expand((color*3)&63)<<8)|expand((color*5)&63);
+                check(frame[y*w+x]==expected,"graphics address generator matches independent plane oracle");
+                if((x%31)==0&&(y%17)==0)check(v.pixel_color(x,y)==expected,"single-pixel and batch scanout agree with oracle");
+            }
+        }
+    }
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -685,7 +721,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

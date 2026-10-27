@@ -96,12 +96,14 @@ struct VGA {
     enum CrtcRegister : unsigned {
         HorizontalDisplayEndRegister = 1,
         OverflowRegister = 7,
+        PresetRowScanRegister = 8,
         MaximumScanLineRegister = 9,
         StartAddressHighRegister = 0x0c,
         StartAddressLowRegister = 0x0d,
         VerticalDisplayEndRegister = 0x12,
         OffsetRegister = 0x13,
         ModeControlRegister = 0x17,
+        LineCompareRegister = 0x18,
     };
     static constexpr uint8_t VerticalDisplayEndBit8 = 2, VerticalDisplayEndBit9 = 0x40,
                              MaximumScanLineMask = 31, DoubleScanning = 0x80;
@@ -210,6 +212,8 @@ struct VGA {
     bool cga_addressing() const;
     // Translate a 4-bit color through Attribute palette/page selection.
     uint8_t attribute_palette_index(uint8_t color) const;
+    // Resolve logical graphics row to plane offset and horizontal pixel pan.
+    unsigned graphics_scanline_address(unsigned y, unsigned &panning) const;
     // Read a selected Bochs register, capabilities or computed virtual height.
     uint16_t read_display_interface_register() const;
     // Validate/store a Bochs register and apply enable, geometry or memory effects.
