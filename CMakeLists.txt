@@ -265,6 +265,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-cross-page-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_cross_page_test.cpp
+)
+
 pcemu_program(jit-far-transfer-tests ZSTD
   SOURCES
     ${CORE}

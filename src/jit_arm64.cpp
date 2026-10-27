@@ -35,14 +35,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Memory)
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
-    if (linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
+    if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
         block.native = std::make_unique<Block::NativeState>();
-    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
         block.native->boundary=std::make_unique<Block::BoundaryEntry>();
+        block.native->boundary->fetchTail=decoded.fetchTail;
         if(terminal.kind==Kind::PortIO)block.native->boundary->operation=decoded.portIO;
         else if(terminal.kind==Kind::FarReturn)
             std::construct_at(&block.native->boundary->farReturn,NativeFarReturn{unsigned(terminal.w),uint16_t(terminal.imm),terminal.op==0xcf});
-        else {
+        else if(terminal.kind==Kind::FarTransfer) {
             block.native->boundary->farTransfer=std::make_unique<NativeFarTransfer>();
             auto &op=*block.native->boundary->farTransfer;
             op.memory=terminal.memory;op.width=terminal.w;op.offset=terminal.imm;
@@ -1711,7 +1712,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     compiledBlocks++;
     if (block.link()) block.link()->codeBytes = bytes;
     debugBlock(block, code, debugRegions);
-    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
         block.native->boundary->fn=block.fn;
         block.fn=nullptr;
     }

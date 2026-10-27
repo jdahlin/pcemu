@@ -8,14 +8,38 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     auto linear = cpu.address(CS, cpu.ip);
     std::vector<IR> ir;
     NativePortIO portIO;
+    NativeCodeTail fetchTail;
     uint32_t pos = cpu.ip;
     auto ipmask = cpu.s[CS].big ? 0xffffffffu : 65535u;
     auto byte = [&]() {
-        if ((cpu.address(CS, pos) >> 12) != (linear >> 12))
-            throw 0;
-        auto p = cpu.physical(cpu.address(CS, pos));
-        if ((p >> 12) != block.page)
-            throw 0;
+        const auto address=cpu.address(CS,pos);
+        const bool tail=(address>>12)!=(linear>>12);
+        // Only the first instruction may span pages. It exits through a cold
+        // boundary entry; ordinary blocks retain their single-page hot guards.
+        if(tail && (!ir.empty() || (fetchTail.present &&
+                    (cpu.address(CS,fetchTail.ip)>>12)!=(address>>12))))throw 0;
+        const auto head=block.page<<12;
+        if(tail && ((head>=0xa0000 && head<0xb0000) ||
+                    (head>=0xe0000000 && head<0xe1000000)))throw 0;
+        uint32_t p;
+        if(tail && (cpu.cr[0]&0x80000000u)) {
+            uint32_t page;
+            if(!warmInstructionPage(cpu,pos,page)) {
+                // Retry after reference execution warms the fetch; do not
+                // permanently negative-cache a transient translation miss.
+                block.attempted=false;throw 0;
+            }
+            p=(page<<12)|(address&4095);
+        } else p=cpu.physical(address);
+        if(!tail && (p>>12)!=block.page)throw 0;
+        if(tail) {
+            // Fetch callbacks and unmapped RAM bytes belong to CPU::fetch,
+            // not a speculative direct load from the code buffer.
+            if(p>=cpu.mem.size() || (p>=0xa0000 && p<0xb0000) ||
+               (p>=0xe0000000 && p<0xe1000000))throw 0;
+            if(fetchTail.present && fetchTail.page!=(p>>12))throw 0;
+            if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true};
+        }
         cpu.markCode(p);
         auto b = cpu.mem.at(p);
         pos = (pos + 1) & ipmask;
@@ -705,6 +729,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.predictedTaken = i.imm < i.end;
             i.start = begin;
             ir.push_back(i);
+            if(fetchTail.present){block.pollBoundary=true;break;}
             if (i.kind == Kind::Branch && i.dst < 0 && blockMode != BlockMode::Basic) {
                 // The next byte fetch enforces the original linear/physical page
                 // guard. Failed speculative decoding leaves this jump terminal;
@@ -728,6 +753,6 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             break;
         }
     }
-    return {std::move(ir), pos, portIO};
+    return {std::move(ir), pos, portIO, fetchTail};
 }
 } // namespace pc

@@ -93,6 +93,7 @@ class Jit {
         unsigned visits = 0;
         struct BoundaryEntry {
             Function fn=nullptr;
+            NativeCodeTail fetchTail;
             union {
                 NativePortIO operation{};
                 NativeFarReturn farReturn;
@@ -130,6 +131,8 @@ class Jit {
     };
     CachedBatch runCached(unsigned budget) noexcept;
     template <bool Linking> CachedBatch runCachedImpl(unsigned budget) noexcept;
+    static bool warmInstructionPage(CPU&,uint32_t ip,uint32_t &page);
+    static uint32_t instructionPage(CPU&,uint32_t ip);
     Block compile(bool translate = true, bool hotShort = false);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);

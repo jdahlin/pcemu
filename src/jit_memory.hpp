@@ -12,6 +12,10 @@ struct NativeMemoryMove {
     int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };
+struct NativeCodeTail {
+    uint32_t ip=0,page=0,generation=0;
+    bool present=false;
+};
 struct NativeFarTransfer {
     NativeMemoryMove memory;
     unsigned width=2;

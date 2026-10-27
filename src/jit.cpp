@@ -97,20 +97,24 @@ void Jit::flushDebugMap() {
 // The dispatcher asks for this on every cached paged block entry. Reuse a
 // current permitted read translation without the address()/physical() call
 // pair; misses and segment faults retain the reference CPU's slow path.
-static inline uint32_t instructionPage(CPU &cpu) {
+bool Jit::warmInstructionPage(CPU &cpu,uint32_t ip,uint32_t &result) {
     const auto &cs = cpu.s[CS];
     if (!(cpu.cr[0] & 1) || (cpu.flags & 0x20000) || !cs.unusable) {
-        const uint32_t linear = cs.base + cpu.ip;
+        const uint32_t linear = cs.base + ip;
         const uint32_t page = linear >> 12;
         const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size() - 1)];
         if (cpu.tlbCR3 == cpu.cr[3] && entry.epoch == cpu.tlbEpoch && entry.tag == page &&
             ((entry.permissions & 4) || cpu.cpl() != 3 || cpu.systemAccess)) {
             uint32_t physical = entry.base | (linear & 4095);
             if (!cpu.a20) physical &= ~(1u << 20);
-            return physical >> 12;
+            result=physical>>12;return true;
         }
     }
-    return cpu.physical(cpu.address(CS, cpu.ip)) >> 12;
+    return false;
+}
+uint32_t Jit::instructionPage(CPU &cpu,uint32_t ip) {
+    uint32_t page;
+    return warmInstructionPage(cpu,ip,page)?page:cpu.physical(cpu.address(CS,ip))>>12;
 }
 Jit::Jit(CPU &c, bool en, unsigned heat, size_t arenaBytes, BlockMode mode)
     : cpu(c), capacity(arenaBytes), warmup(heat), blockMode(mode) {
@@ -271,18 +275,20 @@ uint32_t Jit::run() {
         } else
             profile::event(profile::LookupMiss);
     }
+    const auto boundary=cached && cached->pollBoundary?cached->boundaryEntry():nullptr;
+    const bool crossPage=boundary && boundary->fetchTail.present;
     uint32_t currentPage = 0;
     bool checkedPage = false;
-    if ((cpu.cr[0] & 0x80000000u) && cached && (cached->fn || cached->tlbEpoch != cpu.tlbEpoch)) {
+    if ((cpu.cr[0] & 0x80000000u) && cached && (cached->fn || crossPage || cached->tlbEpoch != cpu.tlbEpoch)) {
         try {
-            currentPage = instructionPage(cpu);
+            currentPage = instructionPage(cpu,cpu.ip);
             checkedPage = true;
         } catch (const Fault &) {
             cpu.step(); // Deliver #PF with the interpreter's restartable frame.
             return 1;
         }
     }
-    if (!cached || cached->executionEpoch != cpu.executionEpoch ||
+    bool rebuild = !cached || cached->executionEpoch != cpu.executionEpoch ||
         cached->page >= cpu.generation.size() ||
         cached->generation != cpu.generation[cached->page] || cached->cr0 != cpu.cr[0] ||
         cached->cr3 != cpu.cr[3] || cached->csBase != cpu.s[CS].base || cached->a20 != cpu.a20 ||
@@ -291,13 +297,31 @@ uint32_t Jit::run() {
         // code. Negative and warming entries execute CPU::step(), which reads
         // the current buffers, watch callback and stack mode itself. Keep code
         // identity checks above immediate so changed code can be translated.
-        (cached->fn &&
+        ((cached->fn || crossPage) &&
          (cached->watched != bool(cpu.watchWrite) ||
           (cached->usesStack && cached->stack32 != cpu.s[SS].big) ||
           cached->ram != cpu.mem.data() || cached->ramSize != cpu.mem.size() ||
           cached->codeBits != cpu.codeUsed.data() ||
           (directLinks && cached->link() && cached->link()->generationData != cpu.generation.data()))) ||
-        (checkedPage && cached->page != currentPage)) {
+        (checkedPage && cached->page != currentPage);
+    if(!rebuild && crossPage) {
+        const auto &tail=boundary->fetchTail;
+        rebuild=tail.page>=cpu.generation.size() || tail.generation!=cpu.generation[tail.page];
+        if(!rebuild) {
+            uint32_t page;
+            if(cpu.cr[0]&0x80000000u) {
+                // Do not page-walk a later fetch ahead of an earlier operand
+                // segment fault. A cold/denied tail replays in reference order.
+                if(!warmInstructionPage(cpu,tail.ip,page)) {
+                    interpretation.set(profile::InterpretationReason::Replay);
+                    profile::event(profile::NativeReplay);
+                    cpu.step();return 1;
+                }
+            } else page=cpu.physical(cpu.address(CS,tail.ip))>>12;
+            rebuild=page!=tail.page;
+        }
+    }
+    if(rebuild) {
         try {
             profile::event(profile::MetadataRebuild);
             auto metadata = compile(false);
@@ -405,7 +429,7 @@ template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noe
             return result; // Promotion/patching is only allowed outside native frames.
         auto oldCR2 = cpu.cr[2];
         try {
-            if ((cpu.cr[0] & 0x80000000u) && instructionPage(cpu) != b->page)
+            if ((cpu.cr[0] & 0x80000000u) && instructionPage(cpu,cpu.ip) != b->page)
                 return result;
             if (b->generation != cpu.generation[b->page])
                 return result;
@@ -499,7 +523,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     const bool doubleShiftPair = ir.size() == 2 &&
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
     if (ir.empty()) return block;
-    if (warmup && !hotShort && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
+    if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
                       !ir.front().stringMove && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {

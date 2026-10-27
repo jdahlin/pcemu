@@ -2184,3 +2184,18 @@ Both existing headless tasks pass. Word fallbacks are 84.84% warming; Excel has
 two-page instruction decoding the next concrete coverage target, ahead of
 normal ARPL support (all sampled ARPL attempts fault). No new release speedup is
 claimed. Profile/analyzer/core/batch tests pass; see [evidence and limits](measurements/office-interpretation-reasons-2026-10-27.md).
+
+### Word and Excel: guarded two-page instruction decoding (2026-10-27)
+
+The hot CMP at 30707ffe now executes natively across the code-page boundary.
+Cold boundary entries validate both code pages and prevent cached/direct-link
+bypasses without enlarging ordinary block headers. Cold decoding and entry
+misses replay in reference order; device-backed fetches and bytes beyond RAM
+retain exact reference behavior. All 4,760 new checks plus core/batch/liveness/
+return/profile suites pass. Declined CMP attempts fall to zero in both Office
+tasks. All 168 scored restores pass and remain available: 144 preliminary and
+24 for the exact final binary. Final CPU is 28.02%/13.29% below original for
+Word/Excel, but Word regresses 0.82% versus prior and Excel's 0.08% difference
+is inconclusive. Separate final Instruments traces put Word dispatch and
+compilation at 22.3%/18.8%; Excel dispatch remains 46.3%. No incremental
+speedup is claimed. See [semantics, measurements and limits](measurements/office-cross-page-2026-10-27.md).

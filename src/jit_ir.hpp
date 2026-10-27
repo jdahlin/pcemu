@@ -43,5 +43,6 @@ struct DecodedBlock {
     std::vector<Instruction> instructions;
     uint32_t end = 0;
     NativePortIO portIO;
+    NativeCodeTail fetchTail;
 };
 } // namespace pc::jit_detail
