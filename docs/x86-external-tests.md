@@ -12,6 +12,7 @@ The broader suites have separate targets:
 |---|---|
 | `make test-x86-hardware` | All cases in 28 selected opcode/size shards: about 54,500 hardware vectors, both execution backends. Downloads only those pinned shards. |
 | `make test-x86-hardware-full` | All 941 available opcode/size shards. About 576 MiB of compressed input on first use; explicitly unsupported adapter cases are reported. |
+| `make test-x86-reference` | Small Intel-defined IDIV overflow/minimum-quotient ROM, both backends and QEMU. |
 | `make test-x86-rom` | Standalone test386.asm BIOS replacement, interpreter/JIT and independent QEMU 486 TCG reference. |
 | `make test-freedos-extended` | DOSEMU2-derived DOS HMA availability/allocation checks on the pinned FreeDOS fixture, interpreter/JIT. |
 | `make test-freedos` | Existing FreeDOS CPU and driver acceptance matrix. |
@@ -122,3 +123,11 @@ pre-access device isolation, #SS versus #GP, the last valid word, and LEA.
 
 Architectural rules and per-fix validation are tracked in
 [the real-mode specification notes](x86-real-mode.md).
+
+`make test-x86-reference` provides an independent check for the remaining IDIV
+reference discrepancy. It requires #DE for AX=648Ch/DL=B7h and AX=9C71h/DL=47h,
+then accepts the valid -128 quotient. Both PCEmu backends and QEMU 486 TCG reach
+POST FF with the same transcript. The pinned 386EX vectors instead report an
+AL of 80h for the two overflowing divisions. These discrepancies remain failed
+in the full hardware target; the CPU has not been changed to violate Intel's
+quotient range simply to match them.

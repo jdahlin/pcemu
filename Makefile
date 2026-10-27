@@ -348,3 +348,7 @@ test-x86-rom: build/x86-external-runner
 test-freedos-extended: build/pcemu freedos
 	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)" --profile hma
 	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)" --profile hma --no-jit
+
+.PHONY: test-x86-reference
+test-x86-reference: build/x86-external-runner
+	python3 tools/test_x86_rom.py --reference-cases --qemu --jobs "$(X86_TEST_JOBS)"

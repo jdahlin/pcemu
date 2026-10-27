@@ -60,10 +60,19 @@ def qemu(rom,work):
 
 
 def run(args):
-    work=Path(tempfile.mkdtemp(prefix='x86-test386-',dir=ROOT/'build'));rom=prepare(work)
+    work=Path(tempfile.mkdtemp(prefix='x86-test386-',dir=ROOT/'build'))
+    if args.reference_cases:
+        source=work/'x86_idiv_reference.asm';shutil.copyfile(ROOT/'tests/x86_idiv_reference.asm',source)
+        rom=work/'reference.bin'
+        subprocess.run(['nasm','-f','bin',str(source),'-o',str(rom)],check=True)
+    else:rom=prepare(work)
     frozen=work/'runner';shutil.copyfile(ROOT/'build/x86-external-runner',frozen);frozen.chmod(0o755)
     report={'suite':'barotto/test386.asm','jobs':args.jobs,'revision':REVISION,'archiveSHA256':SHA256,'configuration':'OUT_PORT=E9; remaining upstream defaults',
             'romSHA256':hashlib.sha256(rom.read_bytes()).hexdigest(),'runnerSHA256':hashlib.sha256(frozen.read_bytes()).hexdigest(),'results':[]}
+    if args.reference_cases:
+        report.update(suite='Intel IDIV architectural reference cases',revision=None,archiveSHA256=None,
+                      configuration='repository reference ROM; two overflow cases and valid -128 quotient',
+                      sourceSHA256=hashlib.sha256(source.read_bytes()).hexdigest())
     def native(backend):
         p=subprocess.run([str(frozen),'rom',str(rom),backend,str(work/(backend+'.txt'))],capture_output=True,text=True,timeout=130)
         (work/(backend+'.log')).write_text(p.stdout+p.stderr)
@@ -89,7 +98,7 @@ def run(args):
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--jobs',type=int,default=2);p.add_argument('--qemu',action='store_true')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--jobs',type=int,default=2);p.add_argument('--qemu',action='store_true');p.add_argument('--reference-cases',action='store_true',help='run the small repository IDIV discrepancy reproducer')
     args=p.parse_args()
     if not 1<=args.jobs<=32:p.error('jobs must be 1..32')
     run(args)

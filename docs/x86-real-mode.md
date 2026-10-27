@@ -125,3 +125,16 @@ The stack/MMIO regression fixtures explicitly set their flat cached segment
 limits, including wide return destinations. This preserves their intended
 memory/device tests with architectural bounds enabled. All 43,600 stack-JIT
 checks pass with those fixture limits.
+
+The remaining byte-IDIV discrepancies have an independent ROM reproducer in
+`tests/x86_idiv_reference.asm`, run by `make test-x86-reference`. Intel
+[3.2.4](https://pdos.csail.mit.edu/6.828/2018/readings/i386/s03_02.htm) and the
+[IDIV entry](https://pdos.csail.mit.edu/6.828/2018/readings/i386/IDIV.htm) require
+#DE when the quotient does not fit AL. Hardware `F6.7#469` supplies AX=648Ch and
+a divisor B7h (-73): its quotient is -352, outside -128..127. The capture instead
+returns AX=0C80h without #DE. `F6.7#516` has the same contradiction for -25487/71.
+The ROM checks both overflows and the valid -128 result; interpreter, JIT and
+QEMU 486 TCG agree and pass. This is evidence of a reference/model discrepancy,
+not a reason to replace the architectural overflow check with saturation. The
+hardware failures remain visible. Faulting AAM base-zero status-flag differences
+also remain under investigation; no additional masks were added to hide them.
