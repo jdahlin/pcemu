@@ -240,8 +240,15 @@ void CPU::segment(int seg, uint16_t sel) {
         d.selector = sel;
         d.unusable = false;
         d.base = uint32_t(sel) << 4;
-        d.limit = 0xffff;
-        d.big = false;
+        // Real-mode data/stack reloads change the base, retaining the cached
+        // limit/size used by HIMEMX's unreal-mode #GP recovery. V86 entry and
+        // CS reloads establish the ordinary real-mode execution attributes.
+        // Intel 80386 PRM 14.5 requires installing real-mode limits BEFORE PE=0:
+        // https://pdos.csail.mit.edu/6.828/2018/readings/i386/s14_05.htm
+        if ((flags & 0x20000) || seg == CS) {
+            d.limit = 0xffff;
+            d.big = false;
+        }
         if(seg==CS)protectedEntry=false;
         return;
     }
@@ -1666,7 +1673,7 @@ void CPU::stepImpl() {
         push(get(BP, w), w);
         auto frame = get(SP, s[SS].big ? 4 : 2);
         for (unsigned i = 1; i < level; i++) {
-            const int stackWidth = s[SS].big ? 4 : 2;
+            const int stackWidth = w==4 && ((cr[0]&1) || s[SS].big) ? 4 : 2;
             set(BP, get(BP, stackWidth) - w, stackWidth);
             push(read(address(SS, get(BP, stackWidth), w), w), w);
         }

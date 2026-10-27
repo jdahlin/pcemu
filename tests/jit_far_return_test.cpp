@@ -38,8 +38,9 @@ int main(){try{
         try{ref->step();ref->step();}catch(const Stop&){}Jit jit(c,true,0,65536);try{jit.run();}catch(const Stop&){}
         equal(c,*ref);check(faults[0]==faults[1],"far-return matching fault");
         const bool denied=iret&&mode==4;
+        const bool invalidTarget=(mode==0||mode>=3)&&w==4&&!vmTarget;
         const bool safeFrame=std::all_of(reads.begin(),reads.end(),[&](unsigned a){return (a&4095)+w<=4096;});
-        if(!translation||translation==2)check(jit.nativeInstructions==((denied||!safeFrame)?1u:2u),"safe warm complete far-return frame stays native");
+        if(!translation||translation==2)check(jit.nativeInstructions==((denied||invalidTarget||!safeFrame)?1u:2u),"safe warm complete far-return frame stays native");
         if(denied)check(c.ip==start,"V86 denied IRET restarts at original prefix");
         if(vmTarget)check(c.r[SP]==0x12345678&&(c.flags&0x20000)&&c.s[CS].base==uint16_t(target)*16,"native IRET enters V86 with full ESP");
     }

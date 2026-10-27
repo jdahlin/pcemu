@@ -513,9 +513,26 @@ static void multi_access_rules() {
         }
     }
 }
+// HIMEMX deliberately reloads selectors after setting flat cached limits in
+// protected mode. Real mode changes their base, not their cached data limit.
+static void unreal_segment_reload() {
+    for(bool native:{false,true}) {
+        CPU c;c.ip=0x100;c.s[DS].limit=c.s[ES].limit=UINT32_MAX;
+        c.r[SI]=0x10000;c.r[DI]=0x20000;c.r[CX]=1;c.write(0x10000,0x12345678,4);
+        const uint8_t code[]={0x8e,0xd8,0x8e,0xc0,0x67,0x66,0xf3,0xa5,0xf4};
+        std::copy(std::begin(code),std::end(code),c.mem.begin()+0x100);
+        Jit jit(c,native,0,65536);while(c.instructions<3){if(native)jit.run();else c.step();}
+        check(c.s[DS].limit==UINT32_MAX && c.s[ES].limit==UINT32_MAX && c.read(0x20000,4)==0x12345678,
+              "unreal DS/ES reloads preserve flat limits for extended memory moves");
+    }
+    CPU c;c.s[SS].limit=UINT32_MAX;c.s[SS].big=true;c.segment(SS,0x1234);
+    check(c.s[SS].base==0x12340 && c.s[SS].big && c.s[SS].limit==UINT32_MAX,"real-mode SS reload retains cached stack size");
+    c.cr[0]|=1;c.flags|=0x20000;c.segment(SS,0x1234);
+    check(c.s[SS].limit==65535 && !c.s[SS].big,"V86 segment loads install ordinary 64K attributes");
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules(); selector_and_repeat_rules(); multi_access_rules();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules(); selector_and_repeat_rules(); multi_access_rules(); unreal_segment_reload();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

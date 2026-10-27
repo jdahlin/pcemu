@@ -19,7 +19,7 @@ static std::vector<uint8_t> code(bool code32,unsigned w,unsigned size,unsigned l
 }
 static void initialize(CPU&c,bool code32,unsigned w,bool stack32,unsigned mode=0){
     c.cr[0]=mode?0x11:0x10;c.s[CS].big=code32;c.s[CS].selector=mode==2?3:0;c.flags=0xa93|(mode==3?0x20000:0);
-    c.s[SS].base=0x20000;c.s[SS].big=stack32;c.s[FS].base=0x50000;c.r[AX]=0xff;
+    c.s[SS].base=0x20000;c.s[SS].big=stack32;c.s[SS].limit=stack32?UINT32_MAX:65535;c.s[FS].base=0x50000;c.r[AX]=0xff;
     c.r[BP]=w==2?0xabcd4000:0x4000;c.r[SP]=stack32?0x18000:0xface8000;
     for(unsigned n=0;n<0x10000;++n)c.mem[0x20000+n]=uint8_t(n*73+(n>>8));
 }

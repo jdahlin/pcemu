@@ -99,7 +99,7 @@ int main() {
     // A guarded pointer read must not touch MMIO before replay, including when
     // the stack also routes to a device. Interpreter callbacks occur once.
     for(bool devicePointer:{false,true})for(bool deviceStack:{false,true}) {
-        CPU c(1024*1024); c.s[CS].big=c.s[SS].big=true;c.s[CS].limit=UINT32_MAX;
+        CPU c(1024*1024); c.s[CS].big=c.s[SS].big=true;c.s[CS].limit=c.s[SS].limit=c.s[DS].limit=UINT32_MAX;
         c.r[SP]=deviceStack?0xa0004:0x9000;
         unsigned address=devicePointer?0xa0100:0x4000;
         const uint8_t code[]={0xff,0x35,uint8_t(address),uint8_t(address>>8),uint8_t(address>>16),0,0xf4};

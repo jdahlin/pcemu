@@ -1226,7 +1226,25 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     bits(9,20+CX,0,5);
                     nonzero=code.size();emit(0x35000009u); // cbnz w9,normal memory path
                 }
-                replay(i.start,unsigned(n),dirtyRegisters);
+                const auto segmentOffset=offsetof(CPU,s)+i.memory.segment*sizeof(Segment);
+                if ((block.cr0&1) && !block.vm) {
+                    emit(0x39400000u | ((segmentOffset+offsetof(Segment,unusable))<<10) | (19<<5) | 9);
+                    const auto valid=code.size();emit(0x34000009u);
+                    replay(i.start,unsigned(n),dirtyRegisters);
+                    code[valid] |= uint32_t(code.size()-valid)<<5;
+                } else {
+                    // Zero counts validate the entire span without reading it.
+                    imm(9,i.memory.displacement);
+                    if(i.memory.base>=0)emit(0x0b000000u | ((20+i.memory.base)<<16) | (9<<5) | 9);
+                    if(i.memory.index>=0)emit(0x0b000000u | ((20+i.memory.index)<<16) | (i.memory.scale<<10) | (9<<5) | 9);
+                    if(!i.memory.address32)extract(9,9,2,0);
+                    emit(0x91000000u | ((i.memory.width-1)<<10) | (9<<5) | 9); // add x9,span-1
+                    load(10,19,segmentOffset+offsetof(Segment,limit));
+                    emit(0xeb0a013fu); // cmp x9,x10, without 32-bit wrap
+                    const auto valid=code.size();emit(0x54000009u); // b.ls
+                    replay(i.start,unsigned(n),dirtyRegisters);
+                    code[valid] |= uint32_t(code.size()-valid)<<5;
+                }
                 zeroDoubleEnd=code.size();emit(0x14000000u);
                 if (nonzero!=size_t(-1))code[nonzero] |= uint32_t(code.size()-nonzero) << 5;
             }

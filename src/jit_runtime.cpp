@@ -186,9 +186,10 @@ uint32_t nativeEnter(CPU *cpu,unsigned width,unsigned size,unsigned level) noexc
         if(!push(bp&operandMask))return 0;
         const auto frame=sp&stackMask;
         for(unsigned n=1;n<level;++n){
-            bp=(bp&~stackMask)|((bp-width)&stackMask);
+            const auto frameMask=(!(cpu->cr[0]&1) && !stack32)?65535u:operandMask;
+            bp=(bp&~frameMask)|((bp-width)&frameMask);
             uint32_t physical,value=0;
-            if(!warmDataAddress(*cpu,cpu->address(SS,bp&stackMask,width),width,false,physical))return 0;
+            if(!warmDataAddress(*cpu,cpu->address(SS,bp&((!(cpu->cr[0]&1) && !stack32)?65535u:operandMask),width),width,false,physical))return 0;
             std::memcpy(&value,cpu->mem.data()+physical,width);
             // Reference reads observe earlier pushes, even through partial
             // overlaps or different virtual addresses aliasing the same RAM.
@@ -279,8 +280,9 @@ uint32_t nativeFarTransfer(CPU *cpu,const NativeFarTransfer *operation) noexcept
             if(m.base>=0)offset+=cpu->r[m.base];
             if(m.index>=0)offset+=cpu->r[m.index]<<m.scale;
             if(!m.address32)offset&=65535;
-            const auto linear=cpu->address(m.segment,offset);
-            if(!read(linear,w,false,off)||!read(linear+w,2,false,sel))return 0;
+            const auto linear=cpu->address(m.segment,offset,w);
+            const auto tail=cpu->address(m.segment,(offset+w)&(m.address32?UINT32_MAX:65535u),2);
+            if(!read(linear,w,false,off)||!read(tail,2,false,sel))return 0;
         }
         const auto selected=uint16_t(sel);
         if(protectedMode) {

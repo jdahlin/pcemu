@@ -76,8 +76,9 @@ format is now `PCX86V2` with an explicit encoding length. Seven adapter unit
 tests and 307 literal CPU checks pass. Focused segment-pop, DAS, REP, interrupt,
 bit-string, near-return and far-return shards pass.
 
-ENTER frame-chain reads now use the stack address width, not operand width;
-this matters with an arbitrary high EBP and a 16-bit stack. Native POP-to-memory
+ENTER frame-chain reads retain operand-width addressing in protected mode;
+386EX real-mode captures with a 16-bit stack use BP for that chain. Both cases
+are tested, including high virtual protected-mode frame addresses. Native POP-to-memory
 checks both complete spans before committing SP or RAM. REP RAM spans stop at
 the cached segment limit even with 32-bit address overrides.
 
@@ -138,3 +139,26 @@ QEMU 486 TCG agree and pass. This is evidence of a reference/model discrepancy,
 not a reason to replace the architectural overflow check with saturation. The
 hardware failures remain visible. Faulting AAM base-zero status-flag differences
 also remain under investigation; no additional masks were added to hide them.
+
+Real-mode data/stack segment reloads retain their cached limits and size;
+V86 loads install 64K attributes. Resetting a flat DS/ES limit on POP broke
+HIMEMX's #GP handler: it enters protected mode to load flat descriptors, leaves
+protected mode, restores DS/ES and retries its extended REP MOVSD. The limit
+checks made that pre-existing cache bug visible. Preserving those limits fixes
+the actual FreeDOS regression while retaining bounds checks. See Intel
+[14.5, switching back to real-address mode](https://pdos.csail.mit.edu/6.828/2018/readings/i386/s14_05.htm),
+which requires loading real-mode limits before clearing PE. Literal DS/ES/SS
+reload and V86 reset tests cover the distinction.
+
+Native indirect far transfers now validate both pointer components, and
+zero-count double shifts validate the span inline without touching memory.
+The extended JIT fixtures explicitly initialize flat caches where they test
+address arithmetic or MMIO rather than segment bounds; invalid real-mode far
+return targets count as replayed faults. All 35 JIT/CPU CTest suites pass,
+including the original protected-mode high-EBP ENTER cases and native zero-count
+requirements. The literal CPU suite has 327 checks.
+
+`smoke_freedos.py --runner PATH` freezes a selected binary for isolated regression
+comparisons. An archived pre-bounds binary passed XMS, the first bounds commit
+reproduced the hang, and the cached-limit fix restores XMS on the current binary.
+The fixture itself is unchanged; each run uses its own compressed overlay.

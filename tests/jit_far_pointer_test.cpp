@@ -82,7 +82,7 @@ int main(){try{
     // MMIO callbacks must execute only in reference replay, with the complete
     // prefix state and decoded end IP visible on every pointer-byte read.
     for(unsigned seg:{ES,DS,SS,FS,GS}){
-        auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.s[CS].big=true;c.s[FS].base=0x10000;c.r[BX]=0x90000;c.r[SI]=0;c.r[AX]=0xff;
+        auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.s[CS].big=true;c.s[FS].base=0x10000;c.s[FS].limit=UINT32_MAX;c.r[BX]=0x90000;c.r[SI]=0;c.r[AX]=0xff;
         auto code=program(true,4,true,seg,SP);std::copy(code.begin(),code.end(),c.mem.begin());auto ref=std::make_unique<CPU>(c);
         std::vector<std::array<uint64_t,5>> events[2];const uint8_t pointer[]={0x78,0x56,0x34,0x12,0,1};
         for(unsigned n=0;n<2;++n){auto cpu=n?ref.get():&c;cpu->videoRead=[&,n,cpu](uint32_t a){events[n].push_back({a,cpu->ip,cpu->instructions,cpu->flags,cpu->r[SP]});return pointer[a-0xa0013];};}

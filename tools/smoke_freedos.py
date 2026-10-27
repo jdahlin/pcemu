@@ -57,7 +57,7 @@ def run_profile(args,parent,profile):
                 b'C:\\CHECK.COM > C:\\PROBE.LOG\r\nIF ERRORLEVEL 1 GOTO FAILED\r\n'
                 b'ECHO PCEMU VALIDATION DONE\r\nGOTO END\r\n:FAILED\r\nECHO PCEMU VALIDATION FAILED\r\n:END\r\n')
         fat.commit()
-    runner=work/'runner';shutil.copyfile(ROOT/'build/pcemu',runner);runner.chmod(0o755)
+    runner=work/'runner';shutil.copyfile(args.runner.resolve(),runner);runner.chmod(0o755)
     rom=work/'vga.bin';shutil.copyfile(ROOT/'build/firmware/pcemu-vga.bin',rom)
     command=[str(runner),'--headless','--disk',str(disk),'--vgabios',str(rom),'--steps','0',
              '--control-file',str(control),'--until-text','PCEMU VALIDATION','--state-json',str(work/'state.json'),'--frame',str(work/'frame.ppm')]
@@ -126,6 +126,7 @@ def main():
     parser.add_argument('--disk',type=Path,help='existing generated FreeDOS fixture; otherwise prepare it')
     parser.add_argument('--profile',choices=['all',*PROFILES],default='all')
     parser.add_argument('--no-jit',action='store_true')
+    parser.add_argument('--runner',type=Path,default=ROOT/'build/pcemu',help='emulator binary to freeze for an isolated regression comparison')
     parser.add_argument('--timeout',type=float,default=90)
     args=parser.parse_args()
     parent=args.disk.resolve() if args.disk else prepare()

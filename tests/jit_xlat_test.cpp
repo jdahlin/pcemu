@@ -18,7 +18,8 @@ int main(){try{
     for(int segment:{-1,int(ES),int(CS),int(SS),int(FS),int(GS)}){
         auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.cr[0]=mode?0x11:0x10;c.s[CS].big=code32;c.s[SS].big=!code32;
         c.s[CS].selector=mode==2?3:0;c.flags=0x3202|(mode==3?0x20000:0);
-        for(unsigned s=0;s<6;++s)if(s!=CS)c.s[s].base=(s+1)*0x10000;
+        // Synthetic flat caches isolate lookup arithmetic; bounds have separate tests.
+        for(unsigned s=0;s<6;++s){c.s[s].limit=UINT32_MAX;if(s!=CS)c.s[s].base=(s+1)*0x10000;}
         for(unsigned a=0x100;a<0x80000;++a)c.mem[a]=uint8_t((a*37)^(a>>8));
         std::vector<uint8_t> code={0x83,0xc2,1};if(operandOverride)code.push_back(0x66);if(address32!=code32)code.push_back(0x67);
         const unsigned prefix[]={0x26,0x2e,0x36,0x3e,0x64,0x65};if(segment>=0)code.push_back(prefix[segment]);

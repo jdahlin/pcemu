@@ -12,6 +12,9 @@ static void check(bool v, const char *s) {
         throw std::runtime_error(s);
 }
 static void equal(const CPU &a, const CPU &b) {
+    if(a.ip!=b.ip || a.flags!=b.flags || a.instructions!=b.instructions || a.halted!=b.halted)
+        std::cerr << "batch expected ip/flags/count/halt=" << std::hex << b.ip << '/' << b.flags << '/' << b.instructions << '/' << b.halted
+                  << " actual=" << a.ip << '/' << a.flags << '/' << a.instructions << '/' << a.halted << std::dec << '\n';
     check(a.ip == b.ip && a.flags == b.flags && a.instructions == b.instructions &&
               a.halted == b.halted,
           "batch control state");
@@ -124,8 +127,8 @@ int main() {
                                 check(r.instructions == 1 && r.dispatches == 1,
                                       "warming interpreter fragment batched");
                         }
-        // WAIT remains an interpreter boundary; CMC and CLI now lower natively.
-        for (uint8_t barrier : {uint8_t(0x9b), uint8_t(0xf4)}) {
+        // HLT remains a polling boundary; WAIT now lowers with other no-op forms.
+        for (uint8_t barrier : {uint8_t(0xf4)}) {
             CPU c(65536);
             c.cr[0] = 0x11;
             c.s[CS].big = true;
@@ -145,6 +148,7 @@ int main() {
         {
             CPU c(1024 * 1024);
             c.s[CS].big = true;
+            c.s[DS].limit=UINT32_MAX;
             const uint8_t code[] = {0x83, 0xc0, 1, 0x8b, 0x1d, 0, 0, 0x0a, 0, 0xeb, 0};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             unsigned reads = 0;
