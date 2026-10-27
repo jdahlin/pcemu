@@ -303,6 +303,7 @@ real_exit:
     mov sp,0x7c00
     cmp byte [probe_failed],0
     jne fail
+    call debug_trap_contract
     call raster_calibration
     mov ax,3
     int 0x10
@@ -322,6 +323,39 @@ fail:
     out 0xf4,al
     hlt
     jmp $
+; Packed DOS executables use TF/INT 1 to decrypt their next instruction.
+; A trap is delivered after MOV AX and must save its following IP.
+debug_trap_contract:
+    mov bp,8
+    mov word [4],debug_trap_handler
+    mov word [6],0
+    pushf
+    pop ax
+    or ax,0x100
+    push ax
+    popf
+    mov ax,0x1234
+.after_step:
+    cmp ax,0x1234
+    jne fail
+    cmp word [debug_return_ip],.after_step
+    jne fail
+    pushf
+    pop ax
+    test ax,0x100
+    jnz fail
+    ret
+debug_trap_handler:
+    push bp
+    mov bp,sp
+    push ax
+    mov ax,[ss:bp+2]
+    mov [debug_return_ip],ax
+    and word [ss:bp+6],0xfeff
+    pop ax
+    pop bp
+    iret
+debug_return_ip dw 0
 ; Like Second Reality's copper synchronizer, measure successive VGA retraces
 ; using a latched PIT countdown. Mode 13h is about 70 Hz: roughly 17,025 PIT
 ; ticks per frame. Read-count parity would give a near-zero interval and fail.

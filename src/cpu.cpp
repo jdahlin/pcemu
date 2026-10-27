@@ -772,6 +772,7 @@ void CPU::farReturn(int w, uint16_t extra, bool iret) {
     }
 }
 void CPU::interrupt(uint8_t n, bool software) {
+    suppressSingleStep = true;
     if (software && observeSoftwareInterrupt) observeSoftwareInterrupt(n);
     repeatResume.valid = false;
     bool vm = flags & 0x20000;
@@ -895,9 +896,20 @@ template<class Execute> static void restartableInstruction(CPU &c,Execute execut
     std::memcpy(savedRegs, c.r, sizeof c.r);
     std::memcpy(savedSegments, c.s, sizeof c.s);
     auto savedIP = c.ip, savedFlags = c.flags;
+    const auto savedInstructions = c.instructions;
     auto savedEntry = c.protectedEntry;
+    c.suppressSingleStep = false;
     try {
         execute();
+        // TF is sampled before execution: POPF/IRET that set it do not trap
+        // until the next instruction. POPF that clears it still completes its
+        // pending step. INT and MOV/POP SS explicitly suppress this boundary.
+        // Intel 80386 PRM 12.3.1.4 Single-Step Trap / 12.3.3 Debug Exceptions.
+        // https://pdos.csail.mit.edu/6.828/2018/readings/i386/s12_03.htm
+        if ((savedFlags & TF) && !c.suppressSingleStep && c.instructions != savedInstructions) {
+            c.dr[6] |= 1u << 14; // DR6.BS: single-step condition.
+            deliverInstructionFault(c, Fault{1, 0, false});
+        }
     } catch (const Fault &fault) {
 #ifdef PCEMU_PROFILE
         profile::instructionFault();
@@ -926,7 +938,7 @@ void CPU::execute_string(unsigned op,int bw,int aw,unsigned rep,int over,uint32_
             ioPermission(get(DX, 2), bw);
         uint32_t count = rep ? get(CX, aw) : 1, delta = (flags & DF) ? -bw : bw;
         // REP is interruptible and bounded so UI/device scheduling remains live.
-        uint32_t batch = count > 4096 ? 4096 : count;
+        uint32_t batch = (flags & TF) ? std::min(count, 1u) : std::min(count, 4096u);
         bool done = false;
         auto initialFlags = flags;
         if (rep && repeatResume.valid && repeatResume.selector == s[CS].selector &&
@@ -949,7 +961,7 @@ void CPU::execute_string(unsigned op,int bw,int aw,unsigned rep,int over,uint32_
                 // Repeated forward fills can reuse a validated translation until
                 // the next linear page. Never speculate a page walk or a write:
                 // the scalar path retains first-fault and dirty-bit ordering.
-                if (rep && kind == 0xaa && !(flags & DF) && a20 && !watchWrite) {
+                if (rep && kind == 0xaa && !(flags & DF) && a20 && !watchWrite && !(flags & TF)) {
                     uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
                     elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
                     if (!(cr[0]&1) || (flags&0x20000))
@@ -992,7 +1004,7 @@ void CPU::execute_string(unsigned op,int bw,int aw,unsigned rep,int over,uint32_
                 // Reuse translations only within the current linear page.
                 // Never speculate a page walk or dirty-bit update: scalar
                 // execution retains first-fault and partial-repeat ordering.
-                if (rep && kind == 0xa4 && !(flags & DF) && a20 && !watchWrite) {
+                if (rep && kind == 0xa4 && !(flags & DF) && a20 && !watchWrite && !(flags & TF)) {
                     uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
                     elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
                     if (!(cr[0]&1) || (flags&0x20000))
@@ -1154,7 +1166,7 @@ void CPU::stepSegment(const DecodedSegment &op,uint16_t selector,bool readSource
         }
         if(op.popWidth)set(SP,get(SP,op.stack32?4:2)+op.popWidth,op.stack32?4:2);
         segment(op.segment,selector);
-        if(op.segment==SS)interruptBlockedThrough=instructions;
+        if(op.segment==SS){interruptBlockedThrough=instructions;suppressSingleStep=true;}
     });
 }
 void CPU::stepMemoryArithmetic(const DecodedMemoryArithmetic &op) {
@@ -1356,8 +1368,10 @@ void CPU::stepImpl() {
     case 0x17:
     case 0x1f:
         segment(op >> 3, pop(w, 2));
-        if (op == 0x17)
+        if (op == 0x17) {
             interruptBlockedThrough = instructions;
+            suppressSingleStep = true;
+        }
         break;
     case 0x27:
     case 0x2f: {
@@ -1525,8 +1539,10 @@ void CPU::stepImpl() {
             store(rm, s[seg].selector, rm.reg ? w : 2);
         else {
             segment(seg, load(rm, 2));
-            if (seg == SS)
+            if (seg == SS) {
                 interruptBlockedThrough = instructions;
+                suppressSingleStep = true;
+            }
         }
         break;
     }

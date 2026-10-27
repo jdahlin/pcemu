@@ -21,8 +21,58 @@ static void program(CPU &c, std::initializer_list<uint8_t> bytes) {
     c.ip = 0;
     std::copy(bytes.begin(), bytes.end(), c.mem.begin());
 }
+// Literal IVT/debug frames check trap-class return IP and TF sampling. The JIT
+// must leave TF execution on the same instruction-boundary path as interpretation.
+static void single_step_contract() {
+    for (bool native : {false, true}) {
+        CPU c(1024 * 1024);
+        c.ip = 0x100; c.r[SP] = 0x800;
+        c.write(4, 0x200, 4); // INT 1 -> 0000:0200.
+        c.mem[0x200] = 0xcf; // IRET.
+        c.mem[0x100] = 0x9d; // POPF sets TF without trapping itself.
+        c.write(0x800, 0x102, 2);
+        c.step();
+        check(c.ip == 0x101 && (c.flags & TF), "POPF arms stepping for the next instruction");
+        c.mem[0x101] = 0x40; // INC AX.
+        Jit jit(c, native, 0);
+        auto step = [&] { if (native) jit.run(); else c.step(); };
+        step();
+        check(c.ip == 0x200 && c.r[AX] == 1 && !(c.flags & TF) && (c.dr[6] & 0x4000),
+              "single-step trap follows completed instruction in both engines");
+        check(c.read(c.r[SP], 2) == 0x102 && (c.read(c.r[SP] + 4, 2) & TF),
+              "debug frame saves next IP and original TF");
+        c.step(); // IRET restores TF, without recursively trapping.
+        check(c.ip == 0x102 && (c.flags & TF), "IRET restoration does not trap on itself");
+        c.mem[0x102] = 0x9d; c.write(c.r[SP], 2, 2);
+        step();
+        check(c.ip == 0x200 && c.read(c.r[SP],2) == 0x103 && !(c.read(c.r[SP]+4,2)&TF),
+              "POPF clearing TF still takes previously armed trap");
+        c.step();
+        c.flags = 0x102; c.ip = 0x300;
+        c.mem[0x300] = 0x8e; c.mem[0x301] = 0xd0; // MOV SS,AX.
+        c.r[AX] = 0; c.mem[0x302] = 0x90;
+        step();
+        check(c.ip == 0x302 && (c.flags & TF), "MOV SS suppresses its single-step boundary");
+        step();
+        check(c.ip == 0x200 && c.read(c.r[SP],2) == 0x303,
+              "instruction following MOV SS completes before debug trap");
+        c.step(); c.ip = 0x310; c.flags = 0x102;
+        c.mem[0x310] = 0xf3; c.mem[0x311] = 0xaa; // REP STOSB.
+        c.r[AX] = 0x5a; c.r[CX] = 3; c.r[DI] = 0x900;
+        step();
+        check(c.ip == 0x200 && c.r[CX] == 2 && c.r[DI] == 0x901 &&
+              c.mem[0x900] == 0x5a && c.mem[0x901] == 0 && c.read(c.r[SP],2) == 0x310,
+              "REP stepping executes one element and saves repeat IP");
+        c.step(); c.ip = 0x320; c.flags = 0x102;
+        c.mem[0x320] = 0xcc; c.write(12,0x400,4); c.mem[0x400]=0xcf;
+        step();
+        check(c.ip == 0x400 && c.read(c.r[SP],2)==0x321,
+              "INT3 suppresses a second single-step delivery");
+    }
+}
 int main() {
     try {
+        single_step_contract();
         {
             CPU c(2 * 1024 * 1024);
             c.s[CS].big = true;

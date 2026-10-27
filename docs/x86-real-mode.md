@@ -172,3 +172,33 @@ QEMU and hardware-corpus downloads.
 The two contradictory IDIV overflow inputs also run as literal regressions in
 `make test`, protecting the specified #DE behavior from a future change made only
 to match those captures. The current literal suite passes 331 checks.
+
+## Single-step debug traps and packed DOS executables
+
+The instruction completion path samples TF before execution and delivers INT 1
+as a trap after successful completion. The saved IP is the next instruction
+(or the REP prefix while repetitions remain), DR6.BS is set, and interrupt
+entry clears TF. POPF/IRET setting TF arm the following instruction; POPF
+clearing an already-set TF still takes its pending trap. Software interrupts
+and MOV/POP SS suppress their own single-step boundary. Faulting instructions
+retain fault priority and do not also take a completion trap. Under TF, repeated
+string instructions execute one element per trap, bypassing bulk RAM copies.
+The JIT already routes TF execution through the interpreter boundary.
+
+Reference: Intel 80386 PRM, [12.3.1.4 Single-Step Trap and 12.3.3 Debug
+Exceptions](https://pdos.csail.mit.edu/6.828/2018/readings/i386/s12_03.htm).
+This implements TF stepping, not execution/data breakpoints, DR7.GD detection,
+or task-switch debug traps.
+
+The original Second Reality executable exposed this missing behavior: its
+protection/unpacking code executes with TF set and requires INT 1 processing.
+Without traps it reaches encrypted bytes and raises #UD at 26a8:01a7 in the
+minimal FreeDOS fixture. With stepping it reaches the setup menu. Loading
+HIMEMX with DOS=HIGH is needed to retain its required 570,000 bytes of free
+conventional memory with this FreeDOS configuration. Reaching setup does not
+establish demo completion, raster correctness, or sound support.
+
+Literal CPU tests cover both engine entry paths, return IP/flags, IRET, clearing
+TF, SS suppression, REP progress, and INT3 priority. The RAM-only VGA guest probe
+also exercises an INT 1 handler that clears saved TF and verifies the return IP;
+`python3 tools/smoke_vga_bios.py --qemu` runs that exact guest on QEMU as well.

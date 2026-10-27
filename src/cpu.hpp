@@ -177,6 +177,8 @@ struct CPU {
     // Transient decoder state; reset at each interpreted instruction boundary.
     unsigned instructionFetchBytes = 0;
     bool instructionFetchWrapped = false;
+    // Per-instruction suppression for INT and MOV/POP SS debug-trap rules.
+    bool suppressSingleStep = false;
 
   private:
     uint32_t physicalSlow(uint32_t linear, bool write);
