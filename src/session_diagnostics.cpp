@@ -98,6 +98,7 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
       << ",\"disk\":" << std::quoted(m.disk ? m.disk->path : "")
       << ",\"compiledBlocks\":" << jit.compiledBlocks
       << ",\"cacheRecycles\":" << jit.cacheRecycles << ",\"halted\":" << c.halted
+      << ",\"guestPitTicks\":" << m.pitTicks() << ",\"idlePitTicks\":" << m.idlePitTicks
       << ",\"waitingKey\":" << m.waitingKey
       << ",\"hostInput\":" << enableHostInput
       << ",\"network\":{\"isr\":" << unsigned(m.nic.isr)

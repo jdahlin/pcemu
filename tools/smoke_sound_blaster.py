@@ -12,10 +12,11 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--qemu',action='store_true')
+    parser.add_argument('--hlt',action='store_true',help='wait for DMA IRQs with HLT instead of busy polling')
     args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='sb-smoke-',dir=ROOT/'build') as folder:
         disk=Path(folder)/'probe.img'
-        subprocess.run(['nasm','-Wall','-Werror','-w-reloc-abs-word','-w-reloc-abs-dword','-f','bin',str(ROOT/'tests/sound-blaster-boot.asm'),'-o',str(disk)],check=True)
+        subprocess.run(['nasm','-Wall','-Werror','-w-reloc-abs-word','-w-reloc-abs-dword','-f','bin',*(['-DWAIT_WITH_HLT=1'] if args.hlt else []),str(ROOT/'tests/sound-blaster-boot.asm'),'-o',str(disk)],check=True)
         for backend in ['interpreter','jit']:
             result=subprocess.run([str(ROOT/'build/pcemu'),'--headless','--backend',backend,'--no-network',
                 '--floppy',str(disk),'--boot-floppy','--steps','2000000','--until-text','PCEMU-SB-PASS',

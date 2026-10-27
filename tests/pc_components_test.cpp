@@ -16,6 +16,32 @@ static void check(bool condition) {
 }
 int main() {
     {
+        Machine m("","",2*1024*1024);auto &c=m.cpu;
+        c.instructions=0;c.r[SP]=0x8000;c.segment(CS,0);c.ip=0x200;c.flags=IF|2;
+        c.write(8*4,0x1000,4);c.mem[0x1000]=0xcf;
+        m.pic[0].mask=0xfe;
+        m.pit.write_register(3,0x30,0);m.pit.write_register(0,10,0);m.pit.write_register(0,0,0);
+        c.halted=true;
+        check(m.advance_halted_clock(1000)==10 && !c.halted && c.instructions==0);
+        check(m.pitTicks()==10 && c.ip==0x1000 && m.pic[0].isr==1);
+        c.step();check(c.ip==0x200 && c.instructions==1 && m.idlePitTicks==10);
+        check(m.advance_halted_clock(1000)==0); // Running CPU must not gain idle time.
+        m.pic[0].isr=0;m.pic[0].mask=0x7f;
+        c.write(15*4,0x1000,4);c.r[SP]=0x8000;c.flags=IF|2;
+        m.out(0x0c,0,1);m.out(2,0,1);m.out(2,0,1);
+        m.out(0x0c,0,1);m.out(3,7,1);m.out(3,0,1);
+        m.out(0x0b,0x59,1);m.out(0x0a,1,1);
+        for(uint8_t v:{0x40,156,0x48,3,0,0x1c})m.out(0x22c,v,1);
+        auto count=c.instructions,clock=m.pitTicks();c.halted=true;
+        check(m.advance_halted_clock(1193)==478 && !c.halted && c.instructions==count);
+        check(m.pitTicks()==clock+478 && m.soundBlaster.counters.dma_bytes==4 && m.pic[0].isr==0x80);
+        c.flags=2;c.halted=true;count=c.instructions;
+        check(m.advance_halted_clock(1193)==1193 && c.halted && c.instructions==count);
+        uint64_t external=123456;m.pitClock=[&]{return external;};auto idle=m.idlePitTicks;
+        check(m.advance_halted_clock(1193)==0 && m.idlePitTicks==idle && m.pitTicks()==external);
+    }
+
+    {
         Machine m("","",2*1024*1024);uint64_t now=0;m.pitClock=[&]{return now;};
         m.pic[0].mask=0x7f;m.cpu.flags=2;m.cpu.a20=false;
         m.out(0x226,1,1);m.out(0x226,0,1);now=120;

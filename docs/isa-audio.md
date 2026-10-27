@@ -153,3 +153,35 @@ opening host devices. The RAM-only DSP probe additionally records a tiny WAV in
 both engines, independently parses it with Python `wave`, and requires its frame
 count and PCM hash to exactly match device output. That guest also passes QEMU
 SB16; this verifies protocol behavior, not equality of QEMU audio waveforms.
+
+
+## Device time during CPU halt
+
+A halted CPU now advances the shared virtual PIT/VGA/DSP clock without claiming
+retired instructions. The session requests a bounded roughly 1 ms horizon; the
+machine shortens it to an enabled PIT terminal count or DSP block-completion
+interrupt. IRQ delivery still passes through the real device latches/PIC/IF
+rules. IF-clear halts continue device activity without waking the CPU. Externally
+injected clocks are sampled rather than advanced again.
+
+The prior headless shortcut that invented IRQ0 while a control-driven guest was
+halted has been removed. A terminal IF-clear halt still stops an unattended
+headless run; an IF-set HLT can now wait for a real timer or audio interrupt.
+Keyboard-wait completion and explicit control/pause behavior are preserved.
+Once a live sink exists, its pacing governs idle time as well as running CPU
+time; the frontend does not add a second fixed sleep to paced audio.
+
+Snapshot version 12 appends the accumulated idle-clock offset. Older snapshots
+initialize it to zero; compatibility tests cover versions 6–12. Diagnostics expose
+`guestPitTicks` and `idlePitTicks` separately from retired instruction count.
+The running clock still approximates four instructions per PIT tick, so this is
+not instruction-cycle accuracy or an exact CPU-speed model.
+
+Literal machine checks verify exact PIT/DSP wake deadlines, zero instruction
+retirement while halted, continued masked/IF-clear device time, and no double
+advance of injected clocks. `make test` additionally runs the RAM-only playback
+guest with HLT waits in both engines. The same HLT variant passes QEMU SB16:
+
+```sh
+python3 tools/smoke_sound_blaster.py --hlt --qemu
+```

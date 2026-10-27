@@ -90,6 +90,9 @@ stage2:
 .wait:
     cmp byte [irq_count],3
     jae .done
+%ifdef WAIT_WITH_HLT
+    hlt
+%endif
     a32 loop .wait
     jmp fail
 .done:

@@ -41,7 +41,12 @@ struct Machine {
     // a monotonic 1,193,182-Hz clock; reset the PIT at that clock's origin before
     // boot, and do not restore snapshots from another clock domain.
     std::function<uint64_t()> pitClock;
-    uint64_t pitTicks() const { return pitClock ? pitClock() : cpu.instructions / 4; }
+    // Halted virtual time advances without pretending the CPU retired instructions.
+    uint64_t idlePitTicks=0;
+    uint64_t pitTicks() const { return pitClock ? pitClock() : cpu.instructions / 4+idlePitTicks; }
+    // Advance a halted CPU's shared device clock up to a bounded interval, stopping
+    // at the next eligible PIT/DSP interrupt deadline. Injected clocks are sampled.
+    uint64_t advance_halted_clock(uint64_t maximumTicks);
     I8042Device ps2;
     AbsoluteMouse absoluteMouse;
     HostCursor hostCursor;

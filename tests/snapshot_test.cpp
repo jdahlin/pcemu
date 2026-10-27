@@ -194,6 +194,7 @@ int main() {
         m.soundBlaster.state.time_constant=211;m.soundBlaster.state.block_size=4096;
         m.soundBlaster.state.active=true;m.soundBlaster.state.remaining=1234;
         m.soundBlaster.state.phase=12345;m.soundBlaster.counters.dma_bytes=6789;
+        m.idlePitTicks=12345;
         m.saveSnapshot((root / "point").string());
         check(m.disk->isOverlay() && m.floppy->isOverlay(),
               "first checkpoint switches live disks to QCOW2 deltas");
@@ -205,9 +206,10 @@ int main() {
         for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
         check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
               "TLB snapshot retains its legacy 18-byte record");
-        for(unsigned legacyVersion : {6u,7u,8u,9u,10u}) {
+        for(unsigned legacyVersion : {6u,7u,8u,9u,10u,11u}) {
             auto legacy = first;
-            legacy.erase(legacy.end() - 8 - 394, legacy.end() - 8); // Remove v11 DSP state.
+            legacy.erase(legacy.end()-16,legacy.end()-8); // Remove v12 halted clock.
+            if(legacyVersion<11)legacy.erase(legacy.end() - 8 - 394, legacy.end() - 8); // Remove v11 DSP state.
             if(legacyVersion<10)legacy.erase(legacy.end() - 8 - 46, legacy.end() - 8); // Remove v10 primary DMA state.
             if(legacyVersion<9)legacy.erase(legacy.end() - 8 - 84, legacy.end() - 8); // Remove v9 x87 state.
             if(legacyVersion<8)legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
@@ -230,8 +232,9 @@ int main() {
             {std::ofstream out(directory / "state.bin",std::ios::binary);out.write(reinterpret_cast<char*>(packed.data()),size);}
             Machine compatibility("","",2*1024*1024);
             compatibility.loadSnapshot(directory.string());
-            check(!compatibility.soundBlaster.state.active && compatibility.soundBlaster.counters.dma_bytes==0,
-                  "legacy snapshot initializes absent DSP to reset state");
+            check(compatibility.idlePitTicks==0,"legacy snapshot initializes missing idle clock to zero");
+            check(compatibility.soundBlaster.state.active==(legacyVersion>=11) && compatibility.soundBlaster.counters.dma_bytes==(legacyVersion>=11?6789:0),
+                  "legacy snapshot preserves DSP fields or initializes them according to its schema");
             check(compatibility.dma.state.mask==15 && compatibility.dma.state.channels[1].address==(legacyVersion>=10?0x1234:0),
                   "legacy snapshot initializes absent DMA controller to reset state");
             check(compatibility.vga.attrIndex==0x3f && compatibility.vga.dacReadMode==(legacyVersion>=7) && !compatibility.cpu.protectedEntry,
@@ -244,10 +247,11 @@ int main() {
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
         m.cpu.fp[3] = 0; m.cpu.fpControl = m.cpu.fpStatus = m.cpu.fpTag = 0;
-        m.dma={};m.soundBlaster={};
+        m.dma={};m.soundBlaster={};m.idlePitTicks=0;
         m.vga.scanout.ready=true;
         m.vga.scanout.completed.assign(3,0xff112233);
         m.loadSnapshot((root / "point").string());
+        check(m.idlePitTicks==12345,"snapshot v12 restores halted virtual clock offset");
         check(m.soundBlaster.state.time_constant==211 && m.soundBlaster.state.active &&
               m.soundBlaster.state.remaining==1234 && m.soundBlaster.state.phase==12345 &&
               m.soundBlaster.counters.dma_bytes==6789,
@@ -277,12 +281,12 @@ int main() {
               "legacy snapshot fields restore frame/permission/dirty state");
         m.saveSnapshot((root / "roundtrip").string());
         auto second = unpack(root / "roundtrip/state.bin");
-        // Tail: RTC(8), DAC(1), PE(1), x87(84), DMA(46), DSP(394), checksum(8).
+        // Tail: RTC(8), DAC(1), PE(1), x87(84), DMA(46), DSP(394), idle-clock(8), checksum(8).
         // Exclude only the advancing RTC and derived checksum, retaining both
         // Boolean latches and floating-point state in the exact comparison.
         check(first.size() == second.size() &&
-                  std::equal(first.begin(), first.end() - 542, second.begin()) &&
-                  std::equal(first.end()-534,first.end()-8,second.end()-534),
+                  std::equal(first.begin(), first.end() - 550, second.begin()) &&
+                  std::equal(first.end()-542,first.end()-8,second.end()-542),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
         check(m.systemPortB.read_register(false, false) == 3 && m.debugConsole.read_data_register() == 'A',
               "system/debug device latches restore from the existing port-state encoding");

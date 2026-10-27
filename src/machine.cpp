@@ -125,6 +125,39 @@ void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {
 void Machine::pollPs2() {
     applyPs2Irqs(ps2.poll_output_buffer(cpu.instructions, ps2IrqState()));
 }
+// HLT stops instruction retirement, not the platform oscillator. Advance virtual
+// time to a bounded service horizon, shortening it for enabled PIT/DSP deadlines.
+// Hardware IRQ delivery still goes through the device models and the PIC.
+// Intel 80386 PRM HLT: a maskable interrupt resumes execution when IF permits it.
+// https://pdos.csail.mit.edu/6.828/2018/readings/i386/HLT.htm
+// IMPLEMENTATION NOTE: Running time remains instruction-derived. This idle clock
+// is deterministic; the session bounds its polling horizon to about 1 ms.
+uint64_t Machine::advance_halted_clock(uint64_t maximumTicks) {
+    if(!cpu.halted)return 0;
+    poll();
+    if(!cpu.halted || pitClock || !maximumTicks)return 0;
+    uint64_t now=pitTicks(),delta=maximumTicks;
+    if(cpu.flags&IF) {
+        const auto &counter=pit.counters[0];
+        if(!(pic[0].mask&1) && counter.gate && !counter.nullCount) {
+            bool periodic=counter.mode==PIT8254::RateGenerator || counter.mode==PIT8254::SquareWave;
+            if(periodic || counter.lastEdge==0) {
+                uint64_t deadline=counter.loadedAt+(periodic?counter.lastEdge+1:1)*counter.reload;
+                if(deadline>now)delta=std::min(delta,deadline-now);
+            }
+        }
+        const auto &sb=soundBlaster.state;
+        if(!(pic[0].mask&(1<<SoundBlasterDevice::Irq)) && sb.active && !sb.paused) {
+            uint64_t samples=sb.remaining>sb.pending_samples?sb.remaining-sb.pending_samples:0;
+            uint64_t required=samples*SoundBlasterDevice::PitFrequencyHz*(256-unsigned(sb.time_constant));
+            uint64_t ticks=required>sb.phase?(required-sb.phase+999999)/1000000:1;
+            delta=std::min(delta,std::max<uint64_t>(ticks,1));
+        }
+    }
+    idlePitTicks+=delta;
+    poll();
+    return delta;
+}
 // Advance ISA PCM and capture a rising DSP interrupt before CPU/PIC arbitration.
 // DSP acknowledgment and PIC EOI are independent: Creative guide chapter 3.
 // https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=40

@@ -402,6 +402,8 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                     if (network) network->pump(m.nic, c.executionEpoch, m.resets);
                     else m.nic.outgoing.clear();
                 }
+                if(!paused && c.halted && (!headless || control.is_open() || sessionControl || (c.flags&IF)))
+                    m.advance_halted_clock(1193);
                 const auto batchStarted = std::chrono::steady_clock::now();
                 const bool canBatch = breakAt > UINT32_MAX && !trace && traceTailPath.empty();
                 for (unsigned batch = paused ? 20000 : 0; batch < 20000 && !c.halted;) {
@@ -694,11 +696,9 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                     if (!untilText.empty() && m.text().find(untilText) != std::string::npos)
                         break;
                     if (!control.is_open() && !sessionControl && c.halted &&
-                        (m.waitingKey ? typePos >= type.size() : true))
+                        (m.waitingKey ? typePos >= type.size() : !(c.flags&IF)))
                         break;
                     if (c.halted && (control.is_open() || sessionControl) && !paused) {
-                        if (c.flags & IF)
-                            m.timer();
                         std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     }
                     if (++loops > 1000000 && !control.is_open() && !sessionControl)
@@ -714,7 +714,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                 auto now = std::chrono::steady_clock::now();
                 uint64_t frameTicks = std::chrono::duration_cast<std::chrono::milliseconds>(now - started).count();
                 if (frameTicks - lastFrame < 16) {
-                    if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    if (c.halted && !liveAudio) std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     continue;
                 }
                 lastFrame = frameTicks;
@@ -729,7 +729,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                 frontend->present(pixels, displayWidth, displayHeight,
                                   (m.vga.dispi[4] & 1) ? DisplayShape::SquarePixels
                                                        : DisplayShape::ClassicVga);
-                if (c.halted) std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                if (c.halted && !liveAudio) std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         } catch (const std::exception &e) {
             if (sessionControl) sessionControl->reportError(e.what());

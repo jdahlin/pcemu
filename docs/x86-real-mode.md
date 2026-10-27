@@ -217,3 +217,10 @@ Reference: Ralf Brown Interrupt List 61, [INT 1Ah/AH=00h](https://fd.lod.bz/rbil
 and [AH=01h](https://fd.lod.bz/rbil/interrup/bios/1a01.html). Literal component
 checks cover external BDA writes, one-shot midnight consumption, setting time,
 IRQ midnight rollover and continuation from a guest-updated count.
+
+
+HLT no longer freezes the shared PIT/VGA/DSP timebase in a PC session. Device
+interrupt deadlines can resume execution with the post-HLT return address while
+retired instruction count remains unchanged during the wait. The persistent
+idle-clock offset and injected-clock policy are documented in
+[ISA device time](isa-audio.md#device-time-during-cpu-halt).
