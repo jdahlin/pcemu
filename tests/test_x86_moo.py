@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
-from x86_moo import chunks,read_moo,state,write_vectors,REGS
+from x86_moo import chunks,read_moo,state,write_vectors,REGS,io_transactions
 from test_x86_hardware import flag_mask,undefined_sib,shift_contract
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -56,6 +56,31 @@ class Moo(unittest.TestCase):
         self.assertFalse(shift_contract(make([0x66,0x0f,0xa4,0xc0,17]),0x37fc7)[1])
         fault=make([0x0f,0xa4,0xc0,17]);fault['exception']={'number':13}
         self.assertFalse(shift_contract(fault,0x37fc7)[1])
+
+    def test_io_cycle_byte_lanes_and_bounds(self):
+        record=lambda pins,address,io,data,t:struct.pack('<BIBBBBHBBBB',pins,address,0,0,io,0,data,2,t,0,0)
+        payload=struct.pack('<I',3)+record(0,0x100,4,0x3412,1)+record(0,0x100,4,0x3412,2)+record(0,0x103,1,0xab00,1)
+        self.assertEqual(io_transactions(payload),[[0x100,0x12,False],[0x101,0x34,False],[0x103,0xab,True]])
+        with self.assertRaises(ValueError):io_transactions(payload[:-1])
+        with self.assertRaises(ValueError):io_transactions(b'')
+
+    def test_port_oracle_supplies_inputs_and_rejects_wrong_outputs(self):
+        initial={name:0 for name in REGS};initial.update(cr0=0x10,eip=0x100,eflags=2)
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'vectors.bin'
+            for writing in [False,True]:
+                initial['eax']=0x1234 if writing else 0
+                opcode=0xe7 if writing else 0xe5
+                test={'idx':0,'hash':'0'*40,'bytes':[opcode,0x7f,0xf4],
+                      'initial':{'regs':dict(initial),'ram':[[0x100,opcode],[0x101,0x7f],[0x102,0xf4]]},
+                      'final':{'regs':{'eax':0x1234,'eip':0x103},'ram':[]},
+                      'io':[[0x80,0x12,writing],[0x7f,0x34,writing]]}
+                write_vectors(path,[test]);p=subprocess.run([str(ROOT/'build/x86-external-runner'),'vectors',str(path),'both'],capture_output=True,text=True)
+                self.assertEqual(p.returncode,0,p.stdout+p.stderr)
+                if writing:
+                    test['io'][0][1]=0x11;write_vectors(path,[test])
+                    p=subprocess.run([str(ROOT/'build/x86-external-runner'),'vectors',str(path),'both'],capture_output=True,text=True)
+                    self.assertEqual(p.returncode,1);self.assertIn('output mismatch',p.stdout)
 
     def test_prefetched_reentry_uses_supplied_instruction_bytes(self):
         initial={name:0 for name in REGS};initial.update(cr0=0x10,eip=0x100,esp=0x200,eflags=2)

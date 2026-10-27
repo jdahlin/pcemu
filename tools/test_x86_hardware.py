@@ -109,10 +109,7 @@ def run(args):
             name=opcode+'.MOO.gz'
             if name not in manifest['files']:raise ValueError('Unknown opcode file: '+name)
             data=fetch(manifest,name,manifest['files'][name],cache)
-            tests=read_moo(gzip.decompress(data));selected=[];revoked_count=0;undefined_count=0;undefined_shift=0
-            if opcode_row(opcode,rows)['io']=='1':
-                return {'opcode':opcode,'sourceVectors':len(tests),'vectors':0,'returncode':0,
-                        'unsupported':len(tests),'reason':'I/O bus inputs are not modeled by this architectural adapter'}
+            tests=read_moo(gzip.decompress(data),capture_io=opcode_row(opcode,rows)['io']=='1');selected=[];revoked_count=0;undefined_count=0;undefined_shift=0
             for test in tests:
                 if test['hash'] in revoked:revoked_count+=1;continue
                 if opcode_row(opcode,rows)['m']=='1' and undefined_sib(test):undefined_count+=1;continue
@@ -137,7 +134,7 @@ def run(args):
             for result in pool.map(safe_shard,opcodes):report['results'].append(result)
     report['status']='passed' if all(r['returncode']==0 for r in report['results']) else 'failed'
     if report['status']=='passed' and any(r.get('unsupported') for r in report['results']):report['status']='incomplete'
-    report['scope']='architectural registers, defined flags, exception identity and listed RAM bytes; no cycle or unlisted-write oracle'
+    report['scope']='architectural registers, defined flags, exception identity, listed RAM and captured port bytes; no timing, within-operation bus-lane order or unlisted-write oracle'
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     runner.unlink()
     print('Evidence:',work,flush=True)

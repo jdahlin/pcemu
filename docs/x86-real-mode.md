@@ -104,3 +104,19 @@ The previous interpreter temporarily exposed ADD/SUB's carry to the callback,
 then restored it afterward. A literal MMIO test now checks the value and carry
 at the write in both backends; the RMW suite passes 947,820 checks and the literal
 CPU suite passes 323 checks.
+
+I/O validation now decodes the MOO `CYCL` port transfers with strict 15-byte
+record bounds. Input bytes come from the captured bus, never the expected final
+registers. Output bytes, ports, directions and counts are checked. A wide device
+callback may reorder the captured byte lanes within its single operation, since
+the 386EX can perform split bus transfers in a different order. Architectural
+operation ordering remains checked. `PCX86V3` includes the byte traces. Nine
+adapter tests include truncated cycles, byte lanes, supplied input values and
+negative output checks.
+
+The focused I/O run executes 11,999 vectors in both backends. Output and string
+I/O shards pass; six input vectors (12 executions) disagree between externally
+captured bus data and the captured accumulator. For example `E5#422` records
+FFh at both ports 21h/22h but a final AX of 7FFFh. These mismatches remain visible;
+an integrated peripheral or capture issue is a possibility, not an established
+explanation. The adapter does not copy expected accumulator bits to force a pass.

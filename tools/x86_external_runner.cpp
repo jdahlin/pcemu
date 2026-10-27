@@ -18,6 +18,7 @@ static std::string string(std::istream &in) {
     auto n=word(in);if(n>4096)throw std::runtime_error("Vector name too long");
     std::string s(n,'\0');if(!in.read(s.data(),n))throw std::runtime_error("Truncated vector name");return s;
 }
+struct IOByte {uint16_t port;uint8_t value;bool writing;};
 using Memory=std::map<uint32_t,uint8_t>;
 static Memory memory(std::istream &in) {
     auto n=word(in);if(n>1048576)throw std::runtime_error("Oversized sparse memory");
@@ -42,11 +43,28 @@ static std::array<uint32_t,20> save(const CPU &c) {
 // then account for its injected terminator without fetching random branch RAM.
 static std::string execute(const std::array<uint32_t,20> &initial,const std::array<uint32_t,20> &expected,
                            const Memory &before,const Memory &after,uint32_t mask,uint32_t exception,
-                           uint32_t flagAddress,uint32_t codeBytes,bool native,uint64_t &nativeCount) {
+                           uint32_t flagAddress,uint32_t codeBytes,const std::vector<IOByte> &io,bool native,uint64_t &nativeCount) {
     CPU c;load(c,initial);for(auto [a,b]:before)c.mem[a]=b;
     int observed=-1;c.observeFault=[&](const Fault &f){observed=f.vector;};
     c.observeSoftwareInterrupt=[&](uint8_t vector){observed=vector;};
-    c.input=[](uint16_t,int){return 0u;};c.output=[](uint16_t,uint32_t,int){};
+    size_t ioPosition=0;
+    auto transfer=[&](uint16_t port,int width,bool writing,uint32_t value) {
+        if(ioPosition+width>io.size())throw std::runtime_error("Unexpected port access");
+        uint32_t result=0,lanes=0;
+        // Normalize byte lanes within one architectural IN/OUT. The 386EX's
+        // split 16-bit bus order can differ from a wide device callback.
+        for(int n=0;n<width;++n) {
+            auto expected=io[ioPosition+n];
+            const auto lane=uint16_t(expected.port-port);
+            if(lane>=width || lanes&(1u<<lane) || expected.writing!=writing ||
+               (writing&&expected.value!=uint8_t(value>>(8*lane))))
+                throw std::runtime_error("Port address/direction/output mismatch at byte "+std::to_string(ioPosition+n));
+            lanes|=1u<<lane;result|=uint32_t(expected.value)<<(8*lane);
+        }
+        ioPosition+=width;return result;
+    };
+    c.input=[&](uint16_t port,int width){return transfer(port,width,false,0);};
+    c.output=[&](uint16_t port,uint32_t value,int width){transfer(port,width,true,value);};
     Jit jit(c,native,0,1024*1024);
     if(native&&!jit.enabled())throw std::runtime_error("Native JIT unavailable; select interpreter explicitly");
     if(native)jit.run();else c.step();
@@ -65,6 +83,7 @@ static std::string execute(const std::array<uint32_t,20> &initial,const std::arr
     if(!c.halted && c.ip>c.s[CS].limit)c.step();
     if(!c.halted)++c.ip;
     auto actual=save(c);std::ostringstream errors;
+    if(ioPosition!=io.size())errors<<"missing port bytes="<<io.size()-ioPosition<<' ';
     if(observed!=(exception==0xffffffffu?-1:int(exception)))errors<<"exception="<<observed<<" expected="<<int32_t(exception)<<' ';
     for(unsigned i=0;i<20;++i){uint32_t m=i==17?mask:0xffffffffu;
         if((actual[i]^expected[i])&m)errors<<names[i]<<"="<<std::hex<<actual[i]<<" expected="<<expected[i]<<" mask="<<m<<' ';}
@@ -74,15 +93,20 @@ static std::string execute(const std::array<uint32_t,20> &initial,const std::arr
     return errors.str();
 }
 static int vectors(const std::string &path,const std::string &backend) {
-    std::ifstream in(path,std::ios::binary);char magic[8];if(!in.read(magic,8)||std::string(magic,8)!=std::string("PCX86V2\0",8))throw std::runtime_error("Invalid vector header");
+    std::ifstream in(path,std::ios::binary);char magic[8];if(!in.read(magic,8)||std::string(magic,8)!=std::string("PCX86V3\0",8))throw std::runtime_error("Invalid vector header");
     auto count=word(in);if(!count||count>1000000)throw std::runtime_error("Invalid vector count");
     unsigned failed=0;uint64_t nativeCount=0;
     for(unsigned n=0;n<count;++n){auto name=string(in);auto mask=word(in),exception=word(in),flagAddress=word(in),codeBytes=word(in);
         std::array<uint32_t,20> initial{},expected{};for(auto &v:initial)v=word(in);for(auto &v:expected)v=word(in);
         auto before=memory(in),after=memory(in);
+        auto ioCount=word(in);if(ioCount>1048576)throw std::runtime_error("Oversized port trace");
+        std::vector<IOByte> io;
+        for(unsigned i=0;i<ioCount;++i){auto port=word(in);char value,writing;
+            if(port>65535||!in.get(value)||!in.get(writing)||uint8_t(writing)>1)throw std::runtime_error("Invalid port trace");
+            io.push_back({uint16_t(port),uint8_t(value),bool(writing)});}
         for(bool native:{false,true}){if((backend=="interpreter"&&native)||(backend=="jit"&&!native))continue;
             std::string error;
-            try {error=execute(initial,expected,before,after,mask,exception,flagAddress,codeBytes,native,nativeCount);}
+            try {error=execute(initial,expected,before,after,mask,exception,flagAddress,codeBytes,io,native,nativeCount);}
             catch(const std::exception &e){error=std::string("execution error: ")+e.what();}
             catch(const Fault &f){error="unhandled CPU fault "+std::to_string(f.vector);}
             if(!error.empty()){++failed;if(failed<=20)std::cout<<"FAIL "<<(native?"jit ":"interpreter ")<<name<<' '<<error<<'\n';}}

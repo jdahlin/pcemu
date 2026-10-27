@@ -54,9 +54,12 @@ wrong registers, flags, exception identities and RAM expectations are rejected.
 The pinned revocation list is honored. The upstream-documented scaled-no-index
 SIB quirk is excluded by encoding and counted separately, since it is undefined
 386 behavior. Register/memory mismatches and defined exceptions are not excluded
-because PCEmu fails them. Hardware I/O bus inputs are not currently modeled;
-those shards are explicitly unsupported and cannot produce an all-passed report.
-Bus-cycle timing and writes to RAM bytes absent from the input/expected lists
+because PCEmu fails them. Hardware I/O shards now use captured bus bytes to supply inputs and validate
+outputs, ports and access counts. Wide callbacks normalize byte-lane ordering
+within one architectural IN/OUT; 386EX bus timing is outside this oracle.
+Six immediate-input captures disagree between their external bus bytes and final
+accumulator; these remain failing and require reference/platform investigation.
+Bus-cycle timing, within-operation lane order and writes to RAM bytes absent from the input/expected lists
 are outside this adapter's oracle. The available upstream corpus is real-mode;
 protected-mode and V86 suites are not supplied by this revision.
 

@@ -1,8 +1,8 @@
 """Read architectural state from SingleStepTests MOO v1 386 files.
 
 Format: https://github.com/dbalsom/moo (Daniel Balsom, MIT).
-Cycle chunks are deliberately not decoded: this adapter checks architectural
-state, not the 386EX's 16-bit bus timing. Unknown chunks are skipped by length.
+Only port transfers are decoded from cycle chunks when requested; the adapter
+does not check 386EX bus timing. Unknown chunks are skipped by length.
 """
 import struct
 import hashlib
@@ -39,7 +39,29 @@ def state(data):
     return result
 
 
-def read_moo(data):
+def io_transactions(payload):
+    """Normalize 386EX bus transfers to ordered port bytes, without timing.
+
+    MOO CYCL has a count and 15-byte records. I/O reads complete at T2;
+    386 writes carry valid data at T1. Active-low BHE selects the high lane.
+    https://github.com/dbalsom/moo/blob/main/crates/moo/src/types/cycles.rs
+    """
+    if len(payload)<4:raise ValueError('Truncated cycle count')
+    count=struct.unpack_from('<I',payload)[0]
+    if len(payload)!=4+15*count:raise ValueError('Invalid cycle payload')
+    result=[]
+    for at in range(4,len(payload),15):
+        pins,address,segment,memory,io,pins1,data,bus,tstate,qop,qbyte=struct.unpack_from('<BIBBBBHBBBB',payload,at)
+        writing=bool(io&1)
+        if not (writing and tstate==1 or io&4 and tstate==2):continue
+        if address&1:result.append([address&65535,data>>8,writing])
+        else:
+            result.append([address&65535,data&255,writing])
+            if not pins&2:result.append([(address+1)&65535,data>>8,writing])
+    return result
+
+
+def read_moo(data,capture_io=False):
     """Decode tests, retaining hardware identifiers and exception metadata."""
     top=list(chunks(data))
     if not top or top[0][0]!=b'MOO ':raise ValueError('Missing MOO header')
@@ -60,6 +82,7 @@ def read_moo(data):
             elif tag==b'HASH':
                 if len(p)!=20:raise ValueError('Invalid hardware vector hash')
                 test['hash']=bytes(p).hex()
+            elif tag==b'CYCL' and capture_io:test['io']=io_transactions(p)
             elif tag==b'EXCP':
                 if len(p)!=5:raise ValueError('Invalid exception payload')
                 number,address=struct.unpack('<BI',p);test['exception']={'number':number,'flag_address':address}
@@ -71,7 +94,7 @@ def read_moo(data):
 
 def write_vectors(path,tests):
     """Serialize a strict endian-stable input for the native CPU runner."""
-    out=bytearray(b'PCX86V2\0'+struct.pack('<I',len(tests)))
+    out=bytearray(b'PCX86V3\0'+struct.pack('<I',len(tests)))
     for test in tests:
         name=(test.get('opcode','')+'#'+str(test['idx'])+' '+test['hash']+' '+test.get('name','')).encode()
         out+=struct.pack('<I',len(name))+name
@@ -86,4 +109,6 @@ def write_vectors(path,tests):
             for address,value in sorted(ram.items()):
                 if not 0<=address<16*1024*1024 or not 0<=value<256:raise ValueError('Invalid RAM byte')
                 out+=struct.pack('<IB',address,value)
+        transfers=test.get('io',[]);out+=struct.pack('<I',len(transfers))
+        for port,value,writing in transfers:out+=struct.pack('<IBB',port,value,writing)
     path.write_bytes(out)
