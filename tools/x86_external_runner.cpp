@@ -42,18 +42,28 @@ static std::array<uint32_t,20> save(const CPU &c) {
 // then account for its injected terminator without fetching random branch RAM.
 static std::string execute(const std::array<uint32_t,20> &initial,const std::array<uint32_t,20> &expected,
                            const Memory &before,const Memory &after,uint32_t mask,uint32_t exception,
-                           uint32_t flagAddress,bool native,uint64_t &nativeCount) {
+                           uint32_t flagAddress,uint32_t codeBytes,bool native,uint64_t &nativeCount) {
     CPU c;load(c,initial);for(auto [a,b]:before)c.mem[a]=b;
     int observed=-1;c.observeFault=[&](const Fault &f){observed=f.vector;};
+    c.observeSoftwareInterrupt=[&](uint8_t vector){observed=vector;};
     c.input=[](uint16_t,int){return 0u;};c.output=[](uint16_t,uint32_t,int){};
     Jit jit(c,native,0,1024*1024);
     if(native&&!jit.enabled())throw std::runtime_error("Native JIT unavailable; select interpreter explicitly");
     if(native)jit.run();else c.step();
     nativeCount+=jit.nativeInstructions;
+    // A branch back into its original encoding can execute prefetched bytes
+    // before the hardware test rig can inject its terminator (C2#1489).
+    // Execute actual supplied bytes, bounded independently of expected state.
+    unsigned reentries=0;
+    while(!c.halted && observed<0 && c.s[CS].selector==initial[10] &&
+          c.ip>=initial[16] && uint64_t(c.ip)<uint64_t(initial[16])+codeBytes) {
+        if(++reentries>32)throw std::runtime_error("Prefetched control flow did not terminate");
+        c.step();
+    }
     // A sequential next-IP beyond CS.limit faults while fetching the injected
     // terminator, after the tested instruction has committed (386 PRM 14.7).
     if(!c.halted && c.ip>c.s[CS].limit)c.step();
-    if(!c.halted)c.ip=(c.ip+1)&65535;
+    if(!c.halted)++c.ip;
     auto actual=save(c);std::ostringstream errors;
     if(observed!=(exception==0xffffffffu?-1:int(exception)))errors<<"exception="<<observed<<" expected="<<int32_t(exception)<<' ';
     for(unsigned i=0;i<20;++i){uint32_t m=i==17?mask:0xffffffffu;
@@ -64,15 +74,15 @@ static std::string execute(const std::array<uint32_t,20> &initial,const std::arr
     return errors.str();
 }
 static int vectors(const std::string &path,const std::string &backend) {
-    std::ifstream in(path,std::ios::binary);char magic[8];if(!in.read(magic,8)||std::string(magic,8)!=std::string("PCX86V1\0",8))throw std::runtime_error("Invalid vector header");
+    std::ifstream in(path,std::ios::binary);char magic[8];if(!in.read(magic,8)||std::string(magic,8)!=std::string("PCX86V2\0",8))throw std::runtime_error("Invalid vector header");
     auto count=word(in);if(!count||count>1000000)throw std::runtime_error("Invalid vector count");
     unsigned failed=0;uint64_t nativeCount=0;
-    for(unsigned n=0;n<count;++n){auto name=string(in);auto mask=word(in),exception=word(in),flagAddress=word(in);
+    for(unsigned n=0;n<count;++n){auto name=string(in);auto mask=word(in),exception=word(in),flagAddress=word(in),codeBytes=word(in);
         std::array<uint32_t,20> initial{},expected{};for(auto &v:initial)v=word(in);for(auto &v:expected)v=word(in);
         auto before=memory(in),after=memory(in);
         for(bool native:{false,true}){if((backend=="interpreter"&&native)||(backend=="jit"&&!native))continue;
             std::string error;
-            try {error=execute(initial,expected,before,after,mask,exception,flagAddress,native,nativeCount);}
+            try {error=execute(initial,expected,before,after,mask,exception,flagAddress,codeBytes,native,nativeCount);}
             catch(const std::exception &e){error=std::string("execution error: ")+e.what();}
             catch(const Fault &f){error="unhandled CPU fault "+std::to_string(f.vector);}
             if(!error.empty()){++failed;if(failed<=20)std::cout<<"FAIL "<<(native?"jit ":"interpreter ")<<name<<' '<<error<<'\n';}}

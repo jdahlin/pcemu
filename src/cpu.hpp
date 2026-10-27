@@ -71,6 +71,8 @@ struct CPU {
     // Diagnostic observer receives the restarted instruction state before the
     // guest exception handler runs. It must not change architectural state.
     std::function<void(const Fault &)> observeFault;
+    // Diagnostic request notification; a subsequent fault may reject delivery.
+    std::function<void(uint8_t)> observeSoftwareInterrupt;
     std::vector<uint8_t> mem;
     std::vector<uint32_t> generation;
     std::vector<uint64_t> codeUsed;
@@ -96,7 +98,7 @@ struct CPU {
     // Compiled pre-access #UD: registers/flags/IP already hold restart state.
     void stepInvalidOpcode();
     void push(uint32_t v, int width);
-    uint32_t pop(int width);
+    uint32_t pop(int width, int readWidth = 0);
     bool condition(int cc) const;
     uint32_t alu(int op, uint32_t a, uint32_t b, int width);
     void interrupt(uint8_t n, bool software = false);

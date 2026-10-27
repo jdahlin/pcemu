@@ -51,3 +51,26 @@ operand is unchanged. RET validates its destination before committing SP.
 386 PUSHFD clears reserved bits 31:16 in the saved image. The corresponding
 nine-shard hardware run passes, as do 299 literal CPU checks and 2,957,189 byte
 JIT checks. See the manual's BOUND, SHLD, ROL/ROR, RET and PUSHF entries.
+
+Segment POP with a 32-bit operand reads a 16-bit selector and advances SP by
+four; far-return frame slots still validate their full operand width. Far
+transfers and returns reject real-mode offsets above FFFFh. Operand decoding
+now postpones address validation until the final accessed offset is known, so
+bit-string adjustments can bring an initial offset into range and invalid
+segment encodings retain #UD priority. x87 memory operations preflight their
+complete segment span too. DAS retains carry from its low-digit borrow.
+
+Real-mode REP comparison faults retain the last completed comparison flags,
+as observed in hardware `66A7#460`; protected-mode restart flags retain their
+existing Intel SDM behavior. The 1986 manual does not explicitly settle that
+real-mode fault detail, so this is recorded as a measured 386EX compatibility
+rule. A literal two-iteration boundary test distinguishes the behaviors.
+
+The adapter reports requested software interrupts separately from CPU faults,
+models a terminating HLT's unwrapped next IP, and handles the bounded prefetched
+re-entry found in `C2#1489`. It executes supplied instruction bytes until control
+leaves the original encoding; it does not derive CPU state from expected output.
+A separate synthetic RET-to-self test verifies that path. The native input
+format is now `PCX86V2` with an explicit encoding length. Seven adapter unit
+tests and 307 literal CPU checks pass. Focused segment-pop, DAS, REP, interrupt,
+bit-string, near-return and far-return shards pass.

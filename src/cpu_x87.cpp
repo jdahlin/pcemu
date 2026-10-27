@@ -195,7 +195,6 @@ void CPU::execute_x87_decoded(uint8_t op,uint8_t m,Operand operand,bool o32) {
         // before stack changes or split writes. It may set paging A/D bits, but
         // an ordinary missing-page fault cannot leave half a stored m64/m80.
         // This is a restart policy, not the 387 bus transaction sequence.
-        // FIXME: segment-limit checks must eventually cover the entire operand.
         // Vol. 2 FST/FSTP protected-mode exceptions:
         // https://cdrdv2-public.intel.com/835757/325383-sdm-vol-2abcd.pdf#page=547
         unsigned size = 4;
@@ -207,6 +206,7 @@ void CPU::execute_x87_decoded(uint8_t op,uint8_t m,Operand operand,bool o32) {
         bool env = (op == 0xd9 && (g == 4 || g == 6)) || (op == 0xdd && (g == 4 || g == 6));
         if (env) size = (o32 ? 28 : 14) + (op == 0xdd ? 80 : 0);
         bool writing = (op & 1) && (g == 2 || g == 3 || g == 7 || (env && g == 6));
+        checkOperand(operand, size);
         for (unsigned n = 0; n < size; ++n) physical(at + n, writing);
         if (env) {
             // FSAVE adds eight 10-byte values in logical ST(0)..ST(7) order;

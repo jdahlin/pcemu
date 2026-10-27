@@ -57,6 +57,17 @@ class Moo(unittest.TestCase):
         fault=make([0x0f,0xa4,0xc0,17]);fault['exception']={'number':13}
         self.assertFalse(shift_contract(fault,0x37fc7)[1])
 
+    def test_prefetched_reentry_uses_supplied_instruction_bytes(self):
+        initial={name:0 for name in REGS};initial.update(cr0=0x10,eip=0x100,esp=0x200,eflags=2)
+        # RET first returns to itself, then consumes the next return pointer.
+        test={'idx':0,'hash':'0'*40,'bytes':[0xc3,0xf4],
+              'initial':{'regs':initial,'ram':[[0x100,0xc3],[0x200,0],[0x201,1],[0x202,0],[0x203,3],[0x300,0xf4]]},
+              'final':{'regs':{'esp':0x204,'eip':0x301},'ram':[]}}
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'vectors.bin';write_vectors(path,[test])
+            p=subprocess.run([str(ROOT/'build/x86-external-runner'),'vectors',str(path),'both'],capture_output=True,text=True)
+            self.assertEqual(p.returncode,0,p.stdout+p.stderr)
+
     def test_runner_rejects_wrong_register_and_memory_results(self):
         runner=ROOT/'build/x86-external-runner'
         self.assertTrue(runner.exists(),'build x86-external-runner before running the oracle checks')

@@ -347,6 +347,7 @@ static void real_segment_bounds() {
         {{0x67,0x88,0x03},DS,1,0xffffffff,13},
         {{0xa1,0xff,0xff},DS,2,0xffff,13},
         {{0xc5,0x07},DS,4,0xfffd,13},
+        {{0xdd,0x07},DS,8,0xfffc,13},
         {{0x36,0x0f,0xb5,0x07},SS,4,0xfffd,12}};
     for(bool native:{false,true})for(const auto &test:cases) {
         CPU c;c.ip=0x100;c.r[BX]=test.offset;c.r[AX]=0x1234;c.r[SP]=0x8000;
@@ -449,9 +450,30 @@ static void scalar_boundary_rules() {
         check(push.read(0x7ffc,4)==0x246,"386 PUSHFD clears reserved high bits and RF/VM");
     }
 }
+// 386 segment pops read a selector word while advancing by operand size.
+// Real-mode REP comparison faults retain flags of the completed comparison.
+static void selector_and_repeat_rules() {
+    struct Stop {};
+    for(bool native:{false,true}) {
+        CPU pop;pop.ip=0x100;pop.r[SP]=0xfffe;pop.write(0xfffe,0x1234,2);
+        const uint8_t code[]={0x66,0x07,0xf4};std::copy(std::begin(code),std::end(code),pop.mem.begin()+0x100);
+        Jit pj(pop,native,0,65536);if(native)pj.run();else pop.step();
+        check(pop.s[ES].selector==0x1234 && pop.r[SP]==2,"32-bit segment POP reads only a selector word");
+        CPU bit;bit.ip=0x100;bit.r[BX]=0x10000;bit.r[AX]=0xfff0;bit.write(0xfffe,1,2);
+        const uint8_t bt[]={0x67,0x0f,0xa3,0x03,0xf4};std::copy(std::begin(bt),std::end(bt),bit.mem.begin()+0x100);
+        Jit bj(bit,native,0,65536);if(native)bj.run();else bit.step();
+        check(bit.flags&CF,"bit-string bounds use the final adjusted offset");
+        CPU rep;rep.ip=0x100;rep.r[SI]=0x200;rep.r[DI]=0xfffd;rep.r[CX]=2;rep.flags=0x202;
+        rep.write(0xfffd,1,2);rep.mem[0x100]=0xf2;rep.mem[0x101]=0xa7;
+        unsigned vector=255;rep.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+        Jit rj(rep,native,0,65536);try {if(native)rj.run();else rep.step();}catch(const Stop &){}
+        check(vector==13 && rep.r[CX]==1 && rep.r[SI]==0x202 && rep.r[DI]==0xffff && (rep.flags&CF),
+              "real-mode REP fault retains completed iteration and comparison carry");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules(); selector_and_repeat_rules();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

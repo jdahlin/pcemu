@@ -273,6 +273,7 @@ uint32_t nativeFarTransfer(CPU *cpu,const NativeFarTransfer *operation) noexcept
         } else {
             cs.selector=selected;cs.base=uint32_t(selected)<<4;cs.limit=65535;cs.big=false;cs.unusable=false;
         }
+        if(!protectedMode && off>65535)return 0;
         if(operation->call && (!push(cpu->s[CS].selector)||!push(operation->end)))return 0;
         // CPU::segment(CS) rereads this descriptor after the pushes. A stack
         // alias could change it, so such accesses must retain interpreter order.
@@ -310,7 +311,7 @@ uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
     auto pop=[&](uint32_t &value){
         const auto offset=cpu->s[SS].big?sp:sp&65535;
         uint32_t physical;
-        if(!warmDataAddress(*cpu,cpu->address(SS,offset),w,false,physical))return false;
+        if(!warmDataAddress(*cpu,cpu->address(SS,offset,w),w,false,physical))return false;
         value=0;std::memcpy(&value,cpu->mem.data()+physical,w);
         advance(w,cpu->s[SS].big);
         return true;
@@ -333,6 +334,7 @@ uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
     };
     try {
         if(!pop(off)||!pop(sel)||(operation->iret&&!pop(f)))return 0;
+        if((!protectedMode || vm) && off>65535)return 0;
         const auto old=cpu->cpl();
         if(operation->iret && protectedMode && !vm && old==0 && w==4 && (f&0x20000)) {
             uint32_t newSP,newSS,newES,newDS,newFS,newGS;
@@ -374,13 +376,15 @@ bool stringSpans(const CPU &cpu,unsigned segment,uint32_t offset,unsigned elemen
     const uint32_t delta=backwards?uint32_t(-int(width)):width;
     while(elements) {
         if(out.size==out.spans.size())return false;
-        const auto linear=cpu.address(segment,offset);
+        const auto linear=cpu.address(segment,offset,width);
         uint32_t physical;
         if(!warmDataAddress(cpu,linear,width,write,physical))return false;
         const auto pageElements=backwards?(linear&4095)/width+1:(4096-(linear&4095))/width;
         const uint64_t wrapElements=backwards?uint64_t(offset)/width+1:(uint64_t(mask)-offset)/width+1;
         const unsigned n=unsigned(std::min<uint64_t>(elements,std::min<uint64_t>(pageElements,wrapElements)));
         if(!n)return false;
+        const auto lowOffset=backwards?offset-(n-1)*width:offset;
+        cpu.address(segment,lowOffset,n*width);
         const auto low=backwards?physical-(n-1)*width:physical;
         if(uint64_t(low)+n*width>cpu.mem.size())return false;
         if(write) {

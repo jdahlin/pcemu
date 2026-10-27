@@ -300,8 +300,9 @@ void CPU::push(uint32_t v, int w) {
     set(SP, p, s[SS].big ? 4 : 2);
     write(address(SS, p, w), v, w);
 }
-uint32_t CPU::pop(int w) {
-    auto p = get(SP, s[SS].big ? 4 : 2), v = read(address(SS, p, w), w);
+uint32_t CPU::pop(int w, int readWidth) {
+    if (!readWidth) readWidth = w;
+    auto p = get(SP, s[SS].big ? 4 : 2), v = read(address(SS, p, readWidth), readWidth);
     set(SP, p + w, s[SS].big ? 4 : 2);
     return v;
 }
@@ -376,7 +377,7 @@ CPU::Operand CPU::decode(uint8_t m, bool a32, int over) {
         off &= 65535;
     }
     seg = over < 0 ? seg : over;
-    return {false, 0, over == -2 ? off : address(seg, off), over == -2 ? -1 : seg};
+    return {false, 0, over == -2 ? off : s[seg].base + off, over == -2 ? -1 : seg};
 }
 // Validate the entire encoded memory operand before its first access.
 void CPU::checkOperand(Operand o, unsigned width) const {
@@ -690,6 +691,8 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
             return;
         }
     }
+    if ((!(cr[0] & 1) || (flags & 0x20000)) && off > 65535)
+        throw Fault{13, 0, true};
     if (call) {
         push(s[CS].selector, w);
         push(ip, w);
@@ -713,6 +716,7 @@ void CPU::farReturn(int w, uint16_t extra, bool iret) {
     if (iret && vm && ((flags >> 12) & 3) != 3)
         throw Fault{13, 0, true};
     auto off = pop(w), sel = pop(w);
+    if ((!(cr[0] & 1) || vm) && off > 65535) throw Fault{13, 0, true};
     uint32_t f = iret ? pop(w) : flags;
     unsigned old = cpl();
     if (iret && (cr[0] & 1) && !vm && old == 0 && w == 4 && (f & 0x20000)) {
@@ -753,6 +757,7 @@ void CPU::farReturn(int w, uint16_t extra, bool iret) {
     }
 }
 void CPU::interrupt(uint8_t n, bool software) {
+    if (software && observeSoftwareInterrupt) observeSoftwareInterrupt(n);
     repeatResume.valid = false;
     bool vm = flags & 0x20000;
     if (!(cr[0] & 1)) {
@@ -1064,7 +1069,7 @@ void CPU::stepImpl() {
     case 0x07:
     case 0x17:
     case 0x1f:
-        segment(op >> 3, pop(w));
+        segment(op >> 3, pop(w, 2));
         if (op == 0x17)
             interruptBlockedThrough = instructions;
         break;
@@ -1072,6 +1077,7 @@ void CPU::stepImpl() {
     case 0x2f: {
         uint32_t al = get(AX, 1), old = al;
         bool c = flags & CF, a = flags & AF;
+        const bool lowBorrow = op == 0x2f && ((al & 15) > 9 || a) && al < 6;
         if ((al & 15) > 9 || a) {
             al = (op == 0x27 ? al + 6 : al - 6) & 255;
             flags |= AF;
@@ -1081,7 +1087,7 @@ void CPU::stepImpl() {
             al = (op == 0x27 ? al + 0x60 : al - 0x60) & 255;
             flags |= CF;
         } else
-            flags &= ~CF;
+            flags = (flags & ~CF) | (lowBorrow ? CF : 0);
         auto keep = flags & (CF | AF);
         alu(4, al, 255, 1);
         flags = (flags & ~(CF | AF)) | keep;
@@ -1200,12 +1206,12 @@ void CPU::stepImpl() {
     case 0x8c:
     case 0x8e: {
         auto m = fetch(1);
-        auto rm = decode(m, a32, over);
         int seg = (m >> 3) & 7;
         // MOV cannot load CS; reject the encoding before reading its source.
         // Intel SDM Vol. 2, MOV: loading CS requires a far control transfer.
         if (seg >= 6 || (op == 0x8e && seg == CS))
             throw Fault{6, 0, false};
+        auto rm = decode(m, a32, over);
         if (op == 0x8c)
             store(rm, s[seg].selector, rm.reg ? w : 2);
         else {
@@ -1466,9 +1472,10 @@ void CPU::stepImpl() {
         } catch (Fault fault) {
             // REP faults restart at the prefixed instruction, but SI/DI/CX
             // (and LODS' accumulator) retain all completed elements. EFLAGS
-            // are still restored by step(), including repeated CMPS/SCAS.
+            // follow completed 386EX real-mode comparisons; protected-mode
+            // page-fault restarts retain the original flags.
             fault.partialRepeat = bool(rep);
-            fault.repeatFlags = initialFlags;
+            fault.repeatFlags = (cr[0] & 1) ? initialFlags : flags;
             throw fault;
         }
         if (rep && count && !done) {
@@ -1517,6 +1524,7 @@ void CPU::stepImpl() {
     case 0xc6:
     case 0xc7: {
         auto m = fetch(1);
+        if (m & 0x38) throw Fault{6, 0, false};
         auto dst = decode(m, a32, over);
         if (m & 0x38)
             fail();
@@ -1869,6 +1877,7 @@ void CPU::stepImpl() {
             if ((g == 2 || g == 3 || g == 6 || g == 7) && cpl() != 0)
                 throw Fault{13, 0, true};
             if (g < 4) {
+                checkOperand(dst, 6);
                 if (dst.reg)
                     fail();
                 if (g < 2) {
@@ -1957,13 +1966,13 @@ void CPU::stepImpl() {
             push(s[FS].selector, w);
             break;
         case 0xa1:
-            segment(FS, pop(w));
+            segment(FS, pop(w, 2));
             break;
         case 0xa8:
             push(s[GS].selector, w);
             break;
         case 0xa9:
-            segment(GS, pop(w));
+            segment(GS, pop(w, 2));
             break;
         case 0xa3:
         case 0xab:

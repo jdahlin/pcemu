@@ -71,12 +71,12 @@ def read_moo(data):
 
 def write_vectors(path,tests):
     """Serialize a strict endian-stable input for the native CPU runner."""
-    out=bytearray(b'PCX86V1\0'+struct.pack('<I',len(tests)))
+    out=bytearray(b'PCX86V2\0'+struct.pack('<I',len(tests)))
     for test in tests:
         name=(test.get('opcode','')+'#'+str(test['idx'])+' '+test['hash']+' '+test.get('name','')).encode()
         out+=struct.pack('<I',len(name))+name
         ex=test.get('exception',{})
-        out+=struct.pack('<III',test.get('flagMask',0x37fd7),ex.get('number',0xffffffff),ex.get('flag_address',0xffffffff))
+        out+=struct.pack('<IIII',test.get('flagMask',0x37fd7),ex.get('number',0xffffffff),ex.get('flag_address',0xffffffff),len(test['bytes'])-1)
         initial=test['initial']['regs'];expected=dict(initial,**test['final']['regs'])
         if any(name not in initial for name in REGS):raise ValueError('Initial register state incomplete')
         for regs in [initial,expected]:out+=struct.pack('<20I',*[regs[name] for name in REGS])

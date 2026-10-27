@@ -145,6 +145,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Memory;
                 i.segmentRegister = segment;
                 i.segmentLoad = !store;
+                i.sourceWidth = store ? 0 : 2;
                 i.memory.store = store;
                 i.memory.base = SP;
                 i.memory.segment = SS;
