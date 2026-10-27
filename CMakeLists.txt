@@ -260,6 +260,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-flag-stack-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_flag_stack_test.cpp
+)
+
 pcemu_program(jit-segment-tests ZSTD
   SOURCES
     ${CORE}

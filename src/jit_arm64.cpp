@@ -22,7 +22,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // A short decoder fallthrough ends at an interpreted instruction, so it
     // cannot acquire a native successor without invalidation. Spend link code
     // only on actual control-flow exits or a full-length decoded fragment.
-    const bool linkCandidate = directLinks && !block.changesShadow && !terminal.nearReturn &&
+    const bool linkCandidate = directLinks && !block.changesShadow && !block.pollBoundary && !terminal.nearReturn &&
         !terminal.indirectJump && !terminal.indirectCall && terminal.kind != Kind::IndirectJump &&
         (terminal.kind == Kind::Branch || terminal.kind == Kind::CounterBranch ||
          terminal.nearCall || ir.size() == 64);
@@ -92,7 +92,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction)
             continue;
-        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -876,6 +876,20 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     invalidCalls.push_back(code.size()); emit(0x54000008u); // b.hi replay before stack write
                 }
             }
+            if (i.pushFlags || i.popFlags) {
+                // PUSHF observes lazy arithmetic flags; POPF retains reserved
+                // bits and must expose exact prior flags on access faults.
+                finishFlags(last,-1,0);
+                last = -1;
+                if (block.vm) {
+                    load(10,19,offsetof(CPU,flags));
+                    bits(10,10,12,2);
+                    emit(0x71000d5fu); // cmp w10,#3
+                    const auto allowed=code.size();emit(0x54000000u);
+                    replay(i.start,unsigned(n),dirtyRegisters);
+                    code[allowed] |= uint32_t(code.size()-allowed) << 5;
+                }
+            }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
             if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiply || i.memoryShift) {
                 // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
@@ -982,6 +996,31 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                         insert(20 + i.dst, 11, i.w, i.dstShift);
                         dirtyRegisters |= 1u << i.dst;
                     }
+                    return;
+                }
+                if (i.popFlags) {
+                    load(12,19,offsetof(CPU,flags));
+                    const unsigned cpl = block.vm ? 3 : (block.cr0 & 1) ? cpu.s[CS].selector & 3 : 0;
+                    unsigned change=0x7fd7;
+                    if ((block.cr0 & 1) && cpl) change &= ~0x3000u;
+                    imm(13,change);
+                    if ((block.cr0 & 1) && cpl) {
+                        bits(14,12,12,2);
+                        emit(0x7100001fu | (cpl << 10) | (14 << 5));
+                        const auto allowed=code.size();emit(0x54000002u); // b.hs: IOPL >= CPL
+                        imm(15,~uint32_t(IF));
+                        emit(0x0a000000u | (15 << 16) | (13 << 5) | 13);
+                        code[allowed] |= uint32_t(code.size()-allowed) << 5;
+                    }
+                    emit(0x0a000000u | (13 << 16) | (10 << 5) | 10);
+                    emit(0x0a200000u | (13 << 16) | (12 << 5) | 12);
+                    emit(0x2a000000u | (10 << 16) | (12 << 5) | 12);
+                    imm(14,2);
+                    emit(0x2a000000u | (14 << 16) | (12 << 5) | 12);
+                    store(12,19,offsetof(CPU,flags));
+                    emit(0x11000000u | (i.w << 10) | ((20+SP) << 5) | 11);
+                    insert(20+SP,11,block.stack32 ? 4 : 2,0);
+                    dirtyRegisters |= 1u << SP;
                     return;
                 }
                 // Change SP only after a successful access. POP SP/ESP writes
@@ -1212,7 +1251,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                          (11 << 5) | 13);
                 } else if (i.memory.store) {
                     int source = 20 + i.dst;
-                    if (i.segmentRegister >= 0) {
+                    if (i.pushFlags) {
+                        load(10,19,offsetof(CPU,flags));
+                        if (i.w == 4) {
+                            imm(13,0x30000);
+                            emit(0x0a200000u | (13 << 16) | (10 << 5) | 10);
+                        }
+                        source = 10;
+                    } else if (i.segmentRegister >= 0) {
                         selector(10,i.segmentRegister);
                         source = 10;
                     } else if (i.memoryPush) {
@@ -1241,7 +1287,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift || i.stackMany || i.segmentLoad) {
+            if (i.memoryDivide || i.memoryShift || i.stackMany || i.segmentLoad || i.popFlags) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.
@@ -1252,7 +1298,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
             emit(0xaa1303e0u);
             pointer(1, reinterpret_cast<uintptr_t>(metadata));
-            if (i.segmentRegister >= 0)
+            if (i.pushFlags) {
+                load(3,19,offsetof(CPU,flags));
+                if (i.w == 4) {
+                    imm(13,0x30000);
+                    emit(0x0a200000u | (13 << 16) | (3 << 5) | 3);
+                }
+            } else if (i.segmentRegister >= 0)
                 selector(3,i.segmentRegister);
             else if (i.memoryPush)
                 load(3, 31, 108);

@@ -85,6 +85,7 @@ class Jit {
         bool a20 = true, attempted = false, linkRequested = false;
         uint8_t shortKind = 0; // Supported but rejected: 1 register-only, 2 memory.
         bool vm = false, watched = false, usesStack = false, stack32 = false;
+        bool pollBoundary = false; // Completed control instructions must return to the device poll.
         bool changesShadow = false; // MOV SS needs an accounted instruction boundary.
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
@@ -103,6 +104,7 @@ class Jit {
     uint8_t *arena = nullptr;
     size_t used = 0, capacity = 16 * 1024 * 1024;
     bool active = false;
+    bool stopBatch = false; // Set by run(); boundary blocks never enter cached tails.
     unsigned warmup;
     BlockMode blockMode;
     std::unordered_map<uint64_t, Block> blocks;

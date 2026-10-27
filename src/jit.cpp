@@ -243,6 +243,7 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     return &stored;
 }
 uint32_t Jit::run() {
+    stopBatch = false;
     profile::event(profile::Dispatch);
     if (cpu.halted)
         return 0;
@@ -329,9 +330,9 @@ uint32_t Jit::run() {
         ++directLinkPromotions;
         if (promoteBlock(*cached)) publishLinks(key, *cached);
     }
-    // SS needs a fully accounted boundary for its interrupt shadow. Keep
-    // those uncommon blocks out of runCached without taxing every hot hit.
-    entry = {key, cached->changesShadow ? nullptr : cached};
+    // SS needs an accounted shadow boundary; POPF must return to the poll.
+    // Keep both out of cached tails without taxing every ordinary hot hit.
+    entry = {key, (cached->changesShadow || cached->pollBoundary) ? nullptr : cached};
     auto &b = *cached;
     if (!b.fn) {
         profile::event(profile::InterpretedDispatch);
@@ -347,6 +348,7 @@ uint32_t Jit::run() {
     cacheHits++;
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
+    stopBatch = b.pollBoundary;
     auto n = uint32_t(b.fn(&cpu, 0));
     cpu.instructions += n;
     nativeInstructions += n;
@@ -427,7 +429,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
         auto n = run();
         ++result.dispatches;
         result.instructions += n;
-        if (!n || nativeInstructions - before != result.instructions)
+        if (!n || nativeInstructions - before != result.instructions || stopBatch)
             break;
         if (result.instructions < budget) {
             auto tail = runCached(budget - result.instructions);

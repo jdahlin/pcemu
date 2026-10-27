@@ -2001,3 +2001,14 @@ Interpreted segment loads fall 85% in Word and 90% in Excel; segment reads fall
 original baseline and Excel 10.39%; incremental medians are 1.12% and 0.89% lower.
 An initial Excel regression prompted Instruments analysis and removal of a
 per-dispatch guard. See [semantics, all runs and limits](measurements/office-segment-2026-10-27.md).
+
+### Word and Excel: PUSHF/POPF coverage (2026-10-27)
+
+PUSHF/POPF now lower with independent operand/stack widths, guarded access,
+CPL/IOPL filtering and reserved-flag preservation. POPF returns before the next
+instruction for device polling; its boundary blocks stay outside cached tails.
+Validation passes 33,512 new checks plus the reference, segment and batch suites.
+Interpreted attempts fall 93% in Word and 99% in Excel. All 48 matched release
+restores pass. CPU time is 25.27% below the original Word baseline and 10.74%
+below Excel's. Incremental medians are 0.87% and 0.38% lower, with host noise
+limiting the small differences. See [semantics, measurements and limits](measurements/office-flag-stack-2026-10-27.md).

@@ -120,6 +120,18 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = uint32_t(-w);
                 block.usesStack = true;
+            } else if (op == 0x9c || op == 0x9d) {
+                i.kind = Kind::Memory;
+                i.pushFlags = op == 0x9c;
+                i.popFlags = op == 0x9d;
+                i.memory.store = i.pushFlags;
+                i.memory.base = SP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                i.stackDelta = i.pushFlags ? -w : w;
+                i.memory.displacement = i.pushFlags ? uint32_t(-w) : 0;
+                block.usesStack = true;
+                block.pollBoundary |= i.popFlags;
             } else if (op == 0x60 || op == 0x61) {
                 i.kind = Kind::Memory;
                 i.stackMany = true;
@@ -590,7 +602,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if ((i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.popFlags || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;
