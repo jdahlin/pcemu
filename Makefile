@@ -16,6 +16,7 @@ test: build/jit-decoded-boundary-tests build/jit-x87-tests build/x86-external-ru
 	python3 -m unittest discover -s tests -p test_vga_bios_build.py
 	./build/vga-bios-tests
 	python3 tools/smoke_vga_bios.py
+	python3 tools/smoke_sound_blaster.py
 	python3 -m unittest discover -s tests -p test_guest_memory.py
 	python3 -m unittest discover -s tests -p test_freedos_fixture.py
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
@@ -365,3 +366,14 @@ test-second-reality-setup: build/pcemu build/disk-tool
 .PHONY: test-second-reality
 test-second-reality: build/pcemu build/disk-tool
 	python3 tools/smoke_second_reality.py --mode run
+
+.PHONY: test-sound-blaster test-sound-blaster-reference test-second-reality-sb
+test-sound-blaster: build/pcemu build/hardware-device-tests
+	./build/hardware-device-tests
+	python3 tools/smoke_sound_blaster.py
+
+test-sound-blaster-reference: build/pcemu
+	python3 tools/smoke_sound_blaster.py --qemu
+
+test-second-reality-sb: build/pcemu build/disk-tool
+	python3 tools/smoke_second_reality.py --mode run --sound sb

@@ -37,6 +37,7 @@ set(CORE
   src/i8259_pair.cpp
   src/pit.cpp
   src/i8237.cpp
+  src/sound_blaster.cpp
   src/vga.cpp
   src/jit.cpp
   src/jit_decode.cpp
@@ -89,6 +90,7 @@ set(HARDWARE_MODELS
   src/i8259_pair.cpp
   src/pit.cpp
   src/i8237.cpp
+  src/sound_blaster.cpp
   src/vga.cpp
   src/pci.cpp
   src/vga_pci.cpp

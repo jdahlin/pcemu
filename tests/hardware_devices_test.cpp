@@ -3,6 +3,7 @@
 #include "i8259_pair.hpp"
 #include "pit.hpp"
 #include "i8237.hpp"
+#include "sound_blaster.hpp"
 #include "vga.hpp"
 #include "pci.hpp"
 #include "ne2000.hpp"
@@ -22,13 +23,14 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <source_location>
 #include <stdexcept>
 #include <unistd.h>
 using namespace pc;
 static unsigned checks;
-static void check(bool condition) {
+static void check(bool condition, const std::source_location location=std::source_location::current()) {
     ++checks;
-    if (!condition) throw std::runtime_error("Hardware device check " + std::to_string(checks));
+    if (!condition) throw std::runtime_error("Hardware device check " + std::to_string(checks)+" at line "+std::to_string(location.line()));
 }
 int main() {
     auto root = std::filesystem::temp_directory_path() / ("pcemu-devices-" + std::to_string(getpid()));
@@ -122,6 +124,69 @@ int main() {
         check(dma.state.mask==15 && !dma.state.command && !dma.state.terminalCount &&
               !dma.state.softwareRequest && !dma.state.highByte && dma.state.channels[1].address==savedAddress);
         check(dma.read_register(8)==0x20 && !dma.acknowledge_memory_read(1));
+        {
+            I8237Device audioDma;SoundBlasterDevice sb;
+            std::array<uint8_t,16> ram{0,128,255,128,64,192,128,128};
+            auto write=[&](uint8_t v){sb.write_register(12,v,sb.state.last_ticks);};
+            auto dmaPair=[&](unsigned port,uint16_t v){audioDma.write_register(12,0);audioDma.write_register(port,v);audioDma.write_register(port,v>>8);};
+            auto advanceUs=[&](uint64_t us){sb.advance_sample_clock((us*1193182+999999)/1000000,audioDma,ram);};
+            sb.write_register(6,1,0);sb.write_register(6,0,0);
+            check(sb.read_register(14)==0 && sb.read_register(12)==0x80);
+            sb.advance_sample_clock(119,audioDma,ram);check(sb.read_register(14)==0);
+            sb.advance_sample_clock(120,audioDma,ram);check(sb.read_register(14)==0x80 && sb.read_register(10)==0xaa);
+            write(0xe1);check(sb.read_register(10)==3 && sb.read_register(10)==2 && sb.read_register(10)==0xff);
+            write(0xe0);write(0x35);check(sb.read_register(10)==0xca);
+            write(0xe4);write(0x5a);write(0xe8);check(sb.read_register(10)==0x5a);
+            dmaPair(2,0);dmaPair(3,7);audioDma.write_register(11,0x59);audioDma.write_register(10,1);
+            write(0x40);write(156);write(0x48);write(3);write(0);write(0xd1);write(0x1c);
+            // Reset released at tick 0; playback starts at tick 120 (~100 us).
+            advanceUs(510);
+            check(sb.counters.dma_bytes==4 && sb.counters.blocks==1 && sb.state.irq_pending);
+            check(sb.state.remaining==4 && audioDma.state.channels[1].address==4 && sb.counters.non_silent_frames>0);
+            auto blocks=sb.counters.blocks;sb.read_register(14);check(!sb.state.irq_pending && sb.counters.blocks==blocks);
+            advanceUs(910);
+            check(sb.counters.dma_bytes==8 && sb.counters.blocks==2 && audioDma.state.channels[1].address==0);
+            write(0xd0);advanceUs(1910);check(sb.counters.dma_bytes==8);
+            write(0xd4);write(0xda);advanceUs(2310);
+            check(sb.counters.dma_bytes==12 && sb.counters.blocks==3 && !sb.state.active);
+            // Speaker mute does not suppress DMA completion or its interrupt.
+            write(0xd3);write(0x14);write(0);write(0);
+            auto nonSilent=sb.counters.non_silent_frames;advanceUs(2420);
+            check(sb.counters.dma_bytes==13 && sb.counters.blocks==4 && sb.counters.non_silent_frames==nonSilent);
+            // A high-speed auto-init block ignores ordinary stop until DSP reset.
+            write(0x90);write(0xd0);check(!sb.state.paused && sb.read_register(12)==0x80);
+            sb.write_register(6,1,sb.state.last_ticks);sb.advance_sample_clock(sb.state.last_ticks,audioDma,ram);
+            check(!sb.state.active && !sb.state.irq_pending && audioDma.state.hardwareRequest==0);
+            sb.write_register(6,0,sb.state.last_ticks);advanceUs(2540);
+            check(sb.read_register(10)==0xaa && sb.counters.dma_bytes==13);
+        }
+        {
+            std::vector<uint8_t> ram(65536,129);
+            I8237Device d1,d2;SoundBlasterDevice s1,s2;
+            auto prepare=[&](I8237Device &d,SoundBlasterDevice &s){
+                d.write_register(12,0);d.write_register(2,0);d.write_register(2,0);
+                d.write_register(12,0);d.write_register(3,255);d.write_register(3,255);
+                d.write_register(11,0x59);d.write_register(10,1);
+                for(uint8_t v:{0x40,165,0xd1,0x1c})s.write_register(12,v,0);
+            };
+            prepare(d1,s1);prepare(d2,s2);
+            s1.advance_sample_clock(1193182*3/2,d1,ram);
+            s2.advance_sample_clock(1193182/2,d2,ram);s2.advance_sample_clock(1193182*3/2,d2,ram);
+            check(s1.counters.dma_bytes==16483 && s2.counters.dma_bytes==16483 &&
+                  s1.state.phase==s2.state.phase && s1.counters.pcm_hash==s2.counters.pcm_hash);
+            check(s1.output.size()<=96000 && s1.counters.dropped_frames>0);
+            I8237Device d;SoundBlasterDevice s;
+            prepare(d,s);s.state.active=false;
+            check(s.state.mixer[4]==0x88 && s.state.mixer[0x22]==0x88);
+            s.write_register(4,4,0);s.write_register(5,0xee,0);
+            s.write_register(4,0x22,0);s.write_register(5,0xee,0);
+            s.write_register(4,0x0e,0);s.write_register(5,2,0);
+            for(uint8_t v:{0x40,156,0x14,1,0})s.write_register(12,v,0);
+            ram[0]=0;ram[1]=255;s.advance_sample_clock(120,d,ram);
+            check(s.counters.dma_bytes==1 && s.output[0]==-32768 && s.output[1]==0);
+            s.advance_sample_clock(240,d,ram);
+            check(s.counters.dma_bytes==2 && s.output[s.output.size()-2]==-32768 && s.output.back()==32512);
+        }
         SystemPortBDevice portB;
         check(portB.write_register(0xcf) && portB.read_register(false, false) == 0xcf);
         check(portB.read_register(true, true) == 0xff);

@@ -285,6 +285,17 @@ class SnapshotCodec {
                 a(channel.baseAddress,channel.baseCount,channel.address,channel.count,channel.mode,channel.page);
             a(dma.command,dma.mask,dma.softwareRequest,dma.hardwareRequest,dma.terminalCount,dma.highByte);
         } else if constexpr(A::loading) m.dma={};
+        if(version>=11) {
+            auto &sb=m.soundBlaster.state;auto &counts=m.soundBlaster.counters;
+            a(sb.mixer,sb.response,sb.mixer_index,sb.response_head,sb.response_count,
+              sb.command,sb.argument_count,sb.arguments_needed,sb.arguments,sb.time_constant,sb.test_register,
+              sb.block_size,sb.remaining,sb.last_ticks,sb.phase,sb.pending_samples,sb.reset_ready_at,sb.host_phase,
+              sb.left,sb.right,sb.active,sb.paused,sb.auto_initialize,sb.exit_auto,sb.high_speed,
+              sb.silence,sb.speaker,sb.irq_pending,sb.reset_high,sb.reset_pending,sb.right_next,
+              counts.dma_bytes,counts.blocks,counts.pcm_frames,counts.non_silent_frames,counts.dropped_frames,counts.pcm_hash,
+              m.soundBlasterLine);
+            if constexpr(A::loading)m.soundBlaster.output.clear();
+        } else if constexpr(A::loading) {m.soundBlaster={};m.soundBlasterLine=false;}
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
@@ -292,6 +303,13 @@ class SnapshotCodec {
         }
     }
     static void validate(const Machine &m) {
+        const auto &sb=m.soundBlaster.state;
+        if(sb.response_head>=sb.response.size() || sb.response_count>sb.response.size() ||
+           sb.argument_count>2 || sb.arguments_needed>2 ||
+           (sb.arguments_needed && sb.argument_count>=sb.arguments_needed) || !sb.block_size || sb.block_size>65536 ||
+           sb.remaining>65536 || (sb.active&&!sb.remaining) ||
+           sb.phase>=SoundBlasterDevice::PitFrequencyHz*(256-unsigned(sb.time_constant)) || sb.host_phase>=1000000)
+            throw std::runtime_error("Invalid snapshot Sound Blaster state");
         const auto &dma=m.dma.state;
         if((dma.mask|dma.softwareRequest|dma.hardwareRequest|dma.terminalCount)&~15)
             throw std::runtime_error("Invalid snapshot DMA state");
@@ -345,7 +363,7 @@ class SnapshotCodec {
             Writer writer;
             writer.data.reserve(m.cpu.mem.size() + 1024 * 1024);
             writer.bytes(magic, sizeof(magic));
-            uint32_t version = 10, ram = m.cpu.mem.size();
+            uint32_t version = 11, ram = m.cpu.mem.size();
             writer(version, ram);
             for (auto &d : disks)
                 d.state(writer);
@@ -412,7 +430,7 @@ class SnapshotCodec {
         reader.bytes(signature, sizeof(signature));
         uint32_t version, ram;
         reader(version, ram);
-        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 10) ||
+        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 11) ||
             ram < 2 * 1024 * 1024 || ram > 64 * 1024 * 1024)
             throw std::runtime_error("Unsupported snapshot format or RAM size");
         DiskInfo disks[2];

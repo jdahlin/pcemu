@@ -3,8 +3,10 @@
 Second Reality supports Sound Blaster, Sound Blaster Pro, Gravis UltraSound and
 no sound. The no-sound run retains its music sequencing but produces no PCM.
 A real audio path needs a peripheral sample clock, RAM DMA, interrupt handling,
-and host output. The primary byte DMA controller is the first implemented part;
-Sound Blaster/GUS playback and host audio are not implemented yet.
+and host output. The primary byte DMA controller and Sound Blaster Pro DSP PCM model are now
+implemented. GUS and live host audio output remain absent; the DSP generates a
+bounded stereo PCM queue and diagnostic hash/counters without opening a host
+audio device.
 
 ## Primary Intel 8237A DMA controller
 
@@ -48,3 +50,75 @@ master clear. Machine component tests exercise actual 8237/page ports, and
 snapshot tests preserve/restore controller state. These are deterministic tests;
 audio transfer timing and independent guest playback validation remain required
 when the sound peripheral is added.
+
+
+## Sound Blaster Pro DSP PCM
+
+Reference: Creative, *Sound Blaster Series Hardware Programming Guide*, first
+edition, [DSP ports/reset (chapter 2)](https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=24),
+[DMA playback (chapter 3)](https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=40),
+[CT1345 mixer (chapter 4)](https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=65),
+[DSP commands (chapter 6)](https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=86).
+
+The board exposes base 220h, DMA 1, IRQ7 and DSP 3.02. Reset produces AAh after
+100 microseconds. Commands implement identity/version/test register, speaker
+control, time constant, block size, 8-bit single-cycle/auto-initialize/high-speed
+PCM, pause/resume, silence, exit-auto and software interrupt. High-speed mode
+accepts reset rather than ordinary stop commands. Reading 22Eh acknowledges the
+DSP latch; PIC EOI remains independent. Reset leaves the mixer and cumulative
+validation counters intact.
+
+A byte interval is `256 - timeConstant` microseconds. The PIT-frequency clock
+uses integer remainder accumulation, including fractional periods across long
+poll intervals. SB Pro stereo alternates bytes left/right; the time constant is
+per byte, not per stereo frame. DSP block length and the 8237 automatic buffer
+length are independent. DMA reads physical RAM, bypassing CPU paging/A20. Muted
+speaker output still transfers bytes and generates block interrupts.
+
+CT1345 reset sets master/voice/MIDI volume to level four and mono output. Host
+PCM uses an approximate Q15 attenuation curve anchored at the documented -46 dB,
+-11 dB default and 0 dB maximum levels. Analog filters, exact intermediate gain,
+crosstalk, ADC, ADPCM, FM, MIDI and SB16 commands remain unsupported. Direct DAC
+commands latch the output but do not yet produce a continuously timed direct-DAC
+stream. This is an explicitly limited DSP 3.02 implementation.
+
+The model resamples held DAC values to stereo signed-16-bit 48 kHz. The queue is
+bounded to one second; consumer backpressure can discard queued presentation
+samples but cannot change guest DMA or IRQ progress. Paused/inactive periods do
+not append PCM, so the queue is not yet a complete continuously timed recording.
+No SDL or native host sink consumes this queue yet. Playback should not be called
+end-to-end audible until that output/pacing work is validated.
+
+Snapshot version 11 adds DSP/parser/mixer/response/sample-phase/block/IRQ state
+and cumulative audio counters. Older snapshots get a reset DSP. The PCM queue
+is transient and cleared on load. Compatibility tests cover versions 6–11.
+
+`make test` now runs a small RAM-only guest which resets/probes the DSP, programs
+8237 auto-initialize playback, receives three block IRQs, pauses and checks the
+DMA address is inside the circular buffer. The same guest passes QEMU SB16:
+
+```sh
+make test-sound-blaster
+make test-sound-blaster-reference
+```
+
+Literal model tests additionally check exact signed stereo amplitudes, speaker
+mute with continuing transfers, independent DSP/DMA blocks, fractional-clock
+partition invariance, pause/resume, reset, high-speed stopping and bounded output.
+Machine tests check raw physical RAM with A20 disabled and separate DSP/PIC
+acknowledgments. Snapshot round-trip comparison includes every new field.
+
+The opt-in real-demo check accepts `--sound sb` or `--sound sbpro`, boots JEMMEX
+for EMS and verifies nonzero DMA/block/non-silent PCM counters in addition to
+clean return and changing graphics. A 90-second ending-only SB trial generated
+6.7 million DMA bytes and non-silent PCM but timed out without DOS return; that
+is not a completion pass. The full frozen-runner JIT SB mono validation now passes: clean DOS return,
+19,856,872 DMA bytes, 309 completed DSP blocks and 46,486,195 non-silent host-format
+PCM frames. Input hashes and counters are in the [demo measurement record](measurements/second-reality-2026-10-27.json).
+A full SB Pro stereo JIT run is in progress. Host sink/pacing and reference waveform
+comparison remain unverified.
+The committed completion gate is:
+
+```sh
+make test-second-reality-sb
+```

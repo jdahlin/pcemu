@@ -67,6 +67,7 @@ void Machine::restart() {
     pic.reset();
     pit.reset(pitTicks());
     dma = {};
+    soundBlaster = {};soundBlasterLine=false;
     vga.reset();
     std::fill(std::begin(ports), std::end(ports), 0);
     ataLine = false;
@@ -124,6 +125,14 @@ void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {
 void Machine::pollPs2() {
     applyPs2Irqs(ps2.poll_output_buffer(cpu.instructions, ps2IrqState()));
 }
+// Advance ISA PCM and capture a rising DSP interrupt before CPU/PIC arbitration.
+// DSP acknowledgment and PIC EOI are independent: Creative guide chapter 3.
+// https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf#page=40
+void Machine::pollSoundBlaster() {
+    soundBlaster.advance_sample_clock(pitTicks(),dma,cpu.mem);
+    if(soundBlaster.state.irq_pending&&!soundBlasterLine)pic[0].raise_interrupt(SoundBlasterDevice::Irq);
+    soundBlasterLine=soundBlaster.state.irq_pending;
+}
 void Machine::poll() {
     profile::event(profile::DevicePoll);
     if (resetRequested) {
@@ -131,6 +140,7 @@ void Machine::poll() {
         return;
     }
     vga.advance_scanout(pitTicks());
+    pollSoundBlaster();
     if (pit.timer_interrupt_due(pitTicks()))
         pic[0].raise_interrupt(0);
     if (ps2.poll_due(cpu.instructions))

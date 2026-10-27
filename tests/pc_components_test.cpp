@@ -16,6 +16,25 @@ static void check(bool condition) {
 }
 int main() {
     {
+        Machine m("","",2*1024*1024);uint64_t now=0;m.pitClock=[&]{return now;};
+        m.pic[0].mask=0x7f;m.cpu.flags=2;m.cpu.a20=false;
+        m.out(0x226,1,1);m.out(0x226,0,1);now=120;
+        check(m.in(0x22e,1)==0x80 && m.in(0x22a,1)==0xaa);
+        m.out(0x0c,0,1);m.out(2,0x56,1);m.out(2,0x34,1);
+        m.out(0x0c,0,1);m.out(3,1,1);m.out(3,0,1);m.out(0x83,0x12,1);
+        m.out(0x0b,0x49,1);m.out(0x0a,1,1);
+        m.cpu.mem[0x123456]=0;m.cpu.mem[0x123457]=255;
+        for(uint8_t value:{0x40,156,0xd1,0x14,1,0})m.out(0x22c,value,1);
+        now+=240;m.poll();
+        check(m.soundBlaster.counters.dma_bytes==2 && m.soundBlaster.state.left==32512 &&
+              m.soundBlaster.counters.blocks==1 && (m.pic[0].irr&0x80));
+        m.in(0x22e,1);check(!m.soundBlaster.state.irq_pending && (m.pic[0].irr&0x80));
+        check(m.pic.next_interrupt_vector(true)==15 && m.pic[0].isr==0x80);
+        m.out(0x20,0x20,1);check(m.pic[0].isr==0);
+        m.out(0x22c,0xf2,1);check((m.pic[0].irr&0x80) && m.soundBlaster.state.irq_pending);
+    }
+
+    {
         Machine m("","",2*1024*1024);
         m.out(0x0c,0,1);m.out(2,0xff,1);m.out(2,0xff,1);
         m.out(0x0c,0,1);m.out(3,0,1);m.out(3,0,1);

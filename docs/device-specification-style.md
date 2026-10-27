@@ -242,3 +242,8 @@ Intel 231466 (September 1993). Its explicit scope is register programming and
 peripheral-requested RAM-read acknowledgments; bus arbitration/electrical timing,
 write/verify/memory-to-memory transfers and the secondary word controller remain
 unsupported. See [ISA audio and DMA](isa-audio.md).
+
+The SB Pro PCM DSP subset (`src/sound_blaster.*`) follows Creative's first-edition
+Sound Blaster Series Hardware Programming Guide (chapters 2/3/4/6). Its overview
+and local links distinguish implemented DMA/clock/IRQ behavior from omitted
+ADC/ADPCM/FM/MIDI, host-output and analog/FIFO timing. See [ISA audio](isa-audio.md).

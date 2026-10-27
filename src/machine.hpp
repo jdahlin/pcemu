@@ -15,6 +15,7 @@
 #include "debug_console.hpp"
 #include "pit.hpp"
 #include "i8237.hpp"
+#include "sound_blaster.hpp"
 #include "vga.hpp"
 #include <deque>
 #include <fstream>
@@ -33,6 +34,8 @@ struct Machine {
     DebugConsoleDevice debugConsole;
     PIT8254 pit;
     I8237Device dma;
+    SoundBlasterDevice soundBlaster;
+    bool soundBlasterLine=false;
     // Runtime clock wiring, not snapshot state. Ordinary machines retain the
     // deterministic instruction-derived PIT clock. Benchmark owners may inject
     // a monotonic 1,193,182-Hz clock; reset the PIT at that clock's origin before
@@ -88,6 +91,7 @@ struct Machine {
     void timer();
     void poll();
     void pollPs2();
+    void pollSoundBlaster();
     std::string text() const;
 };
 } // namespace pc

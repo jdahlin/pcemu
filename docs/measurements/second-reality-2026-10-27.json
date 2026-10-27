@@ -39,6 +39,36 @@
       "framesSHA256": "36aad357e1442940047df8f713e6e3f217c66ce2527515620ba43da634ed4cf4",
       "evidenceDirectory": "build/second-reality-run-0ycl7g8i",
       "validationScope": "Unmodified full no-sound sequence; clean DOS return plus changing graphics, without pixel/reference or audio validation"
+    },
+    {
+      "scope": "run",
+      "backend": "jit",
+      "status": "passed",
+      "part": null,
+      "sound": "sb",
+      "archiveSHA256": "9dfdb9c312d736003cc363b151b6f366c481b3bd3bb78233cfff72ae677c5c95",
+      "releaseFiles": {
+        "SECOND.EXE": "a0b637b1c6729aeee8874cb7de701f608fe6ec3028fd72652a962a3a2bd25d8f",
+        "REALITY.FC": "cffb5839d0660f646c2474ff46452543997c3fc9469fa64401556c2d271aa63b"
+      },
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "runnerSHA256": "87f958654bc82890703f3e3f953cc73950b442ed7f71a1892ecb2626bf3348d7",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "frameObservations": 1611,
+      "instructions": 4776161039,
+      "audio": {
+        "active": 0,
+        "speaker": 0,
+        "dmaBytes": 19856872,
+        "blocks": 309,
+        "pcmFrames": 47676696,
+        "nonSilentFrames": 46486195,
+        "pcmHash": 7483865733020450637
+      },
+      "distinctFrames": 1408,
+      "framesSHA256": "a062266c055d417ecd521fe6b15bb1dbf6e51105e7c6164948b1ab13bc2275a7",
+      "evidenceDirectory": "build/second-reality-run-e8vv2sv7",
+      "validationScope": "Unmodified full Sound Blaster mono sequence; clean DOS return, changing graphics, DMA/block IRQ/non-silent PCM counters; no host sink or reference waveform comparison"
     }
   ]
 }

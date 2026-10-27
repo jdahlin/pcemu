@@ -49,8 +49,10 @@ build is not a prerequisite to testing the released executable.
 - Both engines now complete the no-sound sequence and return to DOS. The
   primary 8237A byte DMA controller is implemented with controller/bus/snapshot
   tests. [DMA scope and ISA audio work](isa-audio.md) documents remaining limits.
-  Sound Blaster/GUS playback, sample-clock/IRQ synchronization and host PCM output
-  remain to be implemented and validated.
+  SB Pro DSP PCM playback and sample-clock/block-IRQ behavior are now implemented.
+  The complete Sound Blaster mono JIT run passes with non-silent PCM and clean
+  return. GUS, host PCM output/pacing and independent waveform/visual comparison
+  remain unfinished. Full stereo/interpreter sound validation is still pending.
 - `make test-second-reality` now runs an opt-in no-sound completion check in
   both engines. `--part 1` through `--part 5` select released start points for
   localization. It waits for observed setup/confirmation text before sending

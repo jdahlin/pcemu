@@ -137,12 +137,17 @@ void writeMachineState(std::ostream &j, Machine &m, const Jit &jit, const Captur
           << ",\"base\":" << unsigned(m.pic[k].base)
           << ",\"autoEOI\":" << m.pic[k].autoEOI << '}';
     }
+    const auto &audio=m.soundBlaster;
+    j << "],\"soundBlaster\":{\"active\":" << audio.state.active
+      << ",\"speaker\":" << audio.state.speaker << ",\"dmaBytes\":" << audio.counters.dma_bytes
+      << ",\"blocks\":" << audio.counters.blocks << ",\"pcmFrames\":" << audio.counters.pcm_frames
+      << ",\"nonSilentFrames\":" << audio.counters.non_silent_frames << ",\"pcmHash\":" << audio.counters.pcm_hash;
     auto &counter = m.pit.counters[0];
-    j << "],\"pit0\":{\"reload\":" << counter.reload
+    j << "},\"pit0\":{\"reload\":" << counter.reload
       << ",\"loadedAt\":" << counter.loadedAt << ",\"mode\":" << unsigned(counter.mode)
       << ",\"nullCount\":" << counter.nullCount
       << ",\"writeHigh\":" << counter.writeHigh
-      << ",\"value\":" << counter.counter_value(c.instructions / 4) << "},\"keyboard\":{"
+      << ",\"value\":" << counter.counter_value(m.pitTicks()) << "},\"keyboard\":{"
       << "\"full\":" << m.ps2.state().keyboardFull << ",\"data\":" << unsigned(m.ps2.state().keyboardData)
       << ",\"pendingScans\":" << m.ps2.state().scanCodes.size()
       << ",\"pendingReplies\":" << m.ps2.state().keyboardReplies.size()

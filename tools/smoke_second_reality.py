@@ -49,7 +49,7 @@ def release(archive):
     return files
 
 
-def run_demo(command, work, timeout):
+def run_demo(command, work, timeout, sound):
     """Select no sound by observed menu state, collect frames, require DOS return."""
     control = work/'control.txt'
     control.write_text('')
@@ -64,9 +64,13 @@ def run_demo(command, work, timeout):
                 output.write(text+'\n')
         deadline = time.monotonic()+timeout
         try:
-            for expected, keys in [('Soundcard:', 'key 4d00'),
-                                   ('Soundcard: No sound', 'key 1c0d'),
-                                   ('Press any key to continue', 'key 1c0d')]:
+            cards={'none':('No sound',1),'sb':('SoundBlaster (mono)',2),
+                   'sbpro':('SoundBlaster Pro (stereo)',3)}
+            label,presses=cards[sound]
+            steps=[('Soundcard:', '\n'.join(['key 4d00']*presses)),
+                   ('Soundcard: '+label,'key 1c0d')]
+            if sound=='none':steps.append(('Press any key to continue','key 1c0d'))
+            for expected, keys in steps:
                 while True:
                     if time.monotonic() > deadline:
                         raise TimeoutError('Waiting for '+expected)
@@ -131,7 +135,7 @@ def run(args, backend, files):
     work = Path(tempfile.mkdtemp(prefix='second-reality-'+args.mode+'-', dir=ROOT/'build'))
     disk = work/'disk.qcow2'
     parent = args.disk.resolve()
-    record = {'scope': args.mode, 'backend': backend, 'status': 'failed', 'part': args.part,
+    record = {'scope': args.mode, 'backend': backend, 'status': 'failed', 'part': args.part, 'sound': args.sound,
               'archiveSHA256': ARCHIVE_SHA256, 'releaseFiles': FILES,
               'parentSHA256': digest(parent)}
     success = False
@@ -141,8 +145,10 @@ def run(args, backend, files):
             fat = Writer(handle)
             for name, data in files.items():
                 put_root(fat, name, data)
-            startup(fat, b'DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\nFILES=20\r\nBUFFERS=10\r\n',
-                    b'@ECHO OFF\r\nC:\\SECOND.EXE'+(b' '+args.part.encode() if args.part else b'')+b'\r\nIF ERRORLEVEL 1 GOTO FAILED\r\nECHO SECOND REALITY END PASS\r\nGOTO END\r\n:FAILED\r\nECHO SECOND REALITY END FAIL\r\n:END\r\n')
+            config=(b'DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n' if args.sound=='none' else
+                    b'DEVICE=C:\\FREEDOS\\BIN\\JEMMEX.EXE I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF\r\nDOS=HIGH,UMB\r\n')
+            startup(fat,config+b'FILES=20\r\nBUFFERS=10\r\n',
+                    b'@ECHO OFF\r\nSET BLASTER=A220 I7 D1 T4\r\nC:\\SECOND.EXE'+(b' '+args.part.encode() if args.part else b'')+b'\r\nIF ERRORLEVEL 1 GOTO FAILED\r\nECHO SECOND REALITY END PASS\r\nGOTO END\r\n:FAILED\r\nECHO SECOND REALITY END FAIL\r\n:END\r\n')
             fat.commit()
         runner = work/'runner'
         shutil.copyfile(args.runner.resolve(), runner)
@@ -155,7 +161,7 @@ def run(args, backend, files):
                    '--until-text', 'Demo looping:', '--frame', str(work/'setup.ppm'),
                    '--state-json', str(work/'state.json')]
         if args.mode == 'run':
-            samples = run_demo(command, work, args.timeout)
+            samples = run_demo(command, work, args.timeout, args.sound)
             record['frameObservations'] = len(samples)
         else:
             with (work/'run.log').open('w') as log:
@@ -166,6 +172,11 @@ def run(args, backend, files):
                 raise RuntimeError('Setup was not reached; inspect ' + str(work/'run.log'))
         state = json.loads((work/'state.json').read_text())
         record['instructions'] = state['instructions']
+        record['audio']=state.get('soundBlaster',{})
+        if args.mode=='run' and args.sound!='none':
+            audio=record['audio']
+            if audio.get('dmaBytes',0)==0 or audio.get('blocks',0)<3 or audio.get('nonSilentFrames',0)==0:
+                raise RuntimeError('Sound DMA, block interrupts and non-silent PCM were not established')
         if digest(parent) != record['parentSHA256']:
             raise RuntimeError('Read-only FreeDOS parent changed')
         record['status'] = 'passed'
@@ -184,6 +195,7 @@ def run(args, backend, files):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--sound', choices=['none','sb','sbpro'], default='none')
     parser.add_argument('--part', choices=['1', '2', '3', '4', '5'], help='released demo start point; omit for the complete sequence')
     parser.add_argument('--mode', choices=['setup', 'run'], default='setup')
     parser.add_argument('--disk', type=Path, default=DEFAULT, help='existing FreeDOS validation fixture')
