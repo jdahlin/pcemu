@@ -405,3 +405,8 @@ python3 tools/smoke_vga_bios.py --qemu
 The QEMU reference explicitly selects `retrace=precise`; its default polling
 shortcut cannot establish PIT/retrace coherence. This probe establishes frame
 calibration, not complete raster-effect or Second Reality compatibility.
+
+The RAM-only probe also reproduces the shipped Second Reality mode-3 calibration:
+program FFFFh, wait a frame, reissue control word 36h, read the two-byte Counting
+Element, negate and divide by two. A control-word write no longer reloads the
+PIT's readable count. This variant passes the same PCEmu/QEMU execution matrix.

@@ -305,6 +305,7 @@ real_exit:
     jne fail
     call debug_trap_contract
     call raster_calibration
+    call copper_calibration
     mov ax,3
     int 0x10
     mov si,pass_text
@@ -356,6 +357,35 @@ debug_trap_handler:
     pop bp
     iret
 debug_return_ip dw 0
+; The shipped demo reissues mode 3 before reading the counting element.
+; A control word must not reload that element from the initial count.
+copper_calibration:
+    mov bp,9
+    mov al,0x36
+    out 0x43,al
+    mov al,0xff
+    out 0x40,al
+    out 0x40,al
+    call retrace_edge
+    mov al,0x36
+    out 0x43,al
+    mov al,0xff
+    out 0x40,al
+    out 0x40,al
+    call retrace_edge
+    mov al,0x36
+    out 0x43,al
+    in al,0x40
+    mov ah,al
+    in al,0x40
+    xchg al,ah
+    neg ax
+    shr ax,1
+    cmp ax,16000
+    jb fail
+    cmp ax,18000
+    ja fail
+    ret
 ; Like Second Reality's copper synchronizer, measure successive VGA retraces
 ; using a latched PIT countdown. Mode 13h is about 70 Hz: roughly 17,025 PIT
 ; ticks per frame. Read-count parity would give a near-zero interval and fail.

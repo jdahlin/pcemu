@@ -259,6 +259,11 @@ void PIT8254::write_register(unsigned port, uint8_t v, uint64_t now) {
     c.bcd = v & BinaryCodedDecimalBit;
     c.nullCount = true;
     c.writeHigh = c.readHigh = c.countLatched = c.statusLatched = false;
-    c.loadedAt = now;
+    // The Control Word programs control logic, not the Counting Element (CE).
+    // Keep the existing count origin until count data is actually transferred;
+    // resetting it here incorrectly reloads the readable counter on every mode
+    // command. Intel 8254, Counter block diagram / Write Operations, pp. 3, 6.
+    // https://www.ecsdump.net/wp-content/uploads/2020/12/8254.pdf#page=3
+    // https://www.ecsdump.net/wp-content/uploads/2020/12/8254.pdf#page=6
 }
 } // namespace pc

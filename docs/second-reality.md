@@ -37,12 +37,10 @@ build is not a prerequisite to testing the released executable.
   bytes. Literal CPU regressions and an independent QEMU guest check cover the
   trap boundary. See [x86 debug traps](x86-real-mode.md#single-step-debug-traps-and-packed-dos-executables).
 - The checksum-pinned original executable reaches setup in interpreter and JIT.
-- An exploratory no-sound launch passes setup and changes graphics mode, but a
-  sampled frame remains black. That is unresolved; neither completion nor correct
-  visuals have been demonstrated. The sampled VGA state contains populated planes
-  and an all-black DAC palette. Diagnose player/scene progression and IRQ timing
-  before accepting the first scene. Host-time sleeps used during exploration are
-  not an automated progress/completion oracle.
+- A no-sound launch now advances to animated graphics after the copper calibration
+  correction described below. Full completion and correct visuals remain
+  unverified. Host-time sleeps used during exploration are not an automated
+  progress/completion oracle.
 - Captures still render a single stable VGA state. Add beam-timed scanout that
   retains palette/start-address/panning changes, with source-derived copper tests.
   Implement blanking intervals and relevant register latching as required.
@@ -53,3 +51,17 @@ build is not a prerequisite to testing the released executable.
   complete non-looping run for acceptance. Scene/music markers and reference
   captures must distinguish real progress from a running CPU or black frame.
   Realtime performance and audio/visual reference comparison remain unmeasured.
+
+### Copper calibration correction
+
+The released executable reissues control word 36h before reading counter 0.
+Previously that command reset the model's count origin, so the demo measured
+almost zero and installed zero copper intervals. Programming control logic must
+not reload the Counting Element from the initial count. Retaining the count
+origin until actual count data is written fixes the calibration. The exact
+mode-3/retrace/read sequence now passes in the RAM-only guest probe on PCEmu
+(both engines and both ROM sources) and QEMU precise retrace. Literal PIT tests
+check that control-word/first-byte writes preserve the origin and the completed
+count write changes it. The no-sound release now advances to populated, animated
+graphics; an exploratory capture shows the translucent polygon scene. Full-run,
+raster fidelity and sound validation remain separate requirements.

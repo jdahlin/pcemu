@@ -67,6 +67,18 @@ int main() {
         check(pic.next_interrupt_vector(true) == 0x20 && pic.state().timerInService);
         pic.reset(); check(pic[0].mask == 0xff && !pic.state().cascadeLine);
         PIT8254 pit; pit.reset(1234); check(pit.counters[0].loadedAt == 1234);
+        pit.write_register(3, 0x36, 2000);
+        pit.write_register(0, 0xff, 2000);
+        pit.write_register(0, 0xff, 2000);
+        check(pit.counters[0].counter_value(3000) == 63536);
+        pit.write_register(3, 0x36, 3000);
+        check(pit.counters[0].loadedAt == 2000 && pit.counters[0].nullCount);
+        check(pit.read_counter(0, 3000) == 0x30 && pit.read_counter(0, 3000) == 0xf8);
+        pit.write_register(0, 0x34, 3001);
+        check(pit.counters[0].loadedAt == 2000);
+        pit.write_register(0, 0x12, 3002);
+        check(pit.counters[0].loadedAt == 3002 && pit.counters[0].reload == 0x1234 &&
+              !pit.counters[0].nullCount);
         SystemPortBDevice portB;
         check(portB.write_register(0xcf) && portB.read_register(false, false) == 0xcf);
         check(portB.read_register(true, true) == 0xff);
