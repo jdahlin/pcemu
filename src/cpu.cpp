@@ -1850,8 +1850,9 @@ void CPU::stepImpl() {
         auto v = load(dst, bw);
         if (g < 2) {
             auto c = flags & CF;
-            store(dst, alu(g ? 5 : 0, v, 1, bw), bw);
+            auto result = alu(g ? 5 : 0, v, 1, bw);
             flags = (flags & ~CF) | c;
+            store(dst, result, bw);
         } else if (op == 0xff) {
             if (g == 2) {
                 if (v > s[CS].limit)

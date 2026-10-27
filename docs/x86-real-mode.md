@@ -98,3 +98,9 @@ Literal tests verify each partial-state result, ENTER's frame chain, pointer
 wrapping and a fault after the first STOSD iteration. The four PUSHA/POPA shards
 pass all 20,000 executions; 319 literal CPU checks, 255,625 read-JIT checks and
 seven adapter tests pass. Wider hardware validation continues separately.
+
+INC/DEC publish the preserved carry flag before an observable device write.
+The previous interpreter temporarily exposed ADD/SUB's carry to the callback,
+then restored it afterward. A literal MMIO test now checks the value and carry
+at the write in both backends; the RMW suite passes 947,820 checks and the literal
+CPU suite passes 323 checks.

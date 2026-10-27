@@ -426,6 +426,12 @@ static void encoded_operand_rules() {
 static void scalar_boundary_rules() {
     struct Stop {};
     for(bool native:{false,true}) {
+        CPU inc;inc.ip=0x100;inc.s[DS].base=0xa0000;inc.flags=2;
+        inc.mem[0x100]=0xfe;inc.mem[0x101]=7;inc.mem[0x102]=0xf4;
+        bool wrote=false;inc.videoRead=[](uint32_t){return uint8_t(0xff);};
+        inc.videoWrite=[&](uint32_t,uint8_t value){wrote=true;check(value==0 && !(inc.flags&CF),"INC preserves carry at its observable write");};
+        Jit ij(inc,native,0,65536);if(native)ij.run();else inc.step();
+        check(wrote,"INC issues its device write exactly once");
         CPU rotate;rotate.ip=0x100;rotate.r[AX]=0x81;rotate.r[CX]=8;
         const uint8_t ror[]={0xd2,0xc8,0xf4};
         std::copy(std::begin(ror),std::end(ror),rotate.mem.begin()+0x100);
