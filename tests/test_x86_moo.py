@@ -9,7 +9,7 @@ import tempfile
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from x86_moo import chunks,read_moo,state,write_vectors,REGS
-from test_x86_hardware import flag_mask,undefined_sib
+from test_x86_hardware import flag_mask,undefined_sib,shift_contract
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -45,6 +45,17 @@ class Moo(unittest.TestCase):
         self.assertTrue(undefined_sib({'bytes':[0x67,0x01,0x04,0x60]}))
         self.assertFalse(undefined_sib({'bytes':[0x67,0x01,0x04,0x20]}))
         self.assertFalse(undefined_sib({'bytes':[0x01,0x04,0x60]}))
+
+    def test_shift_defined_state_contract(self):
+        make=lambda code,cl=0:{'bytes':code+[0xf4],'initial':{'regs':{'ecx':cl}}}
+        self.assertEqual(shift_contract(make([0xd3,0xe0],0),0x37fc7),(0x37fd7,False))
+        self.assertTrue(shift_contract(make([0xd3,0xe0],1),0x37fc7)[0]&0x800)
+        self.assertFalse(shift_contract(make([0xd3,0xe0],2),0x37fc7)[0]&0x800)
+        self.assertFalse(shift_contract(make([0xd2,0xe0],8),0x37fc7)[0]&1)
+        self.assertTrue(shift_contract(make([0x0f,0xa4,0xc0,17]),0x37fc7)[1])
+        self.assertFalse(shift_contract(make([0x66,0x0f,0xa4,0xc0,17]),0x37fc7)[1])
+        fault=make([0x0f,0xa4,0xc0,17]);fault['exception']={'number':13}
+        self.assertFalse(shift_contract(fault,0x37fc7)[1])
 
     def test_runner_rejects_wrong_register_and_memory_results(self):
         runner=ROOT/'build/x86-external-runner'

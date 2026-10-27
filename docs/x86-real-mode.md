@@ -31,3 +31,14 @@ establish this wrap, and literal tests cover it independently. See the manual's
 [LDS/LSS/LES/LFS/LGS entry](https://pdos.csail.mit.edu/6.828/2018/readings/i386/LDS.htm).
 The focused five-shard validation (BT/BTS/BTR, invalid LEA, LGS) now passes;
 289 literal task/x87/CPU checks and 355,094 native core checks pass as well.
+
+The hardware adapter applies count-dependent flag rules for shifts and rotates:
+OF is compared for count one; count zero must preserve all flags. SHL/SHR CF is
+undefined when the count reaches operand width. Double shifts with a count
+above operand width have an undefined result and are counted separately as
+`undefinedDoubleShift`, selected by encoding and initial count before execution.
+Faulting cases remain in validation. This follows the manual's
+[SHLD](https://pdos.csail.mit.edu/6.828/2018/readings/i386/SHLD.htm) and
+[SAL/SAR/SHL/SHR](https://pdos.csail.mit.edu/6.828/2018/readings/i386/SAL.htm)
+entries. Upstream expected states are unchanged. Six adapter unit tests include
+count-zero, count-one, variable-count and undefined-width boundaries.

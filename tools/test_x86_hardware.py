@@ -45,6 +45,33 @@ def flag_mask(opcode,rows):
     return 0x37fd7 & (0xffff0000|int(row['f_umask'],16)) if row['f_umask'] else 0x37fd7
 
 
+def shift_contract(test, mask):
+    """Mask only architecturally undefined flags; identify undefined double shifts.
+
+    Intel 80386 PRM SAL/SHR/SAR and SHLD/SHRD: OF is defined only for
+    count one, and double-shift results above operand width are undefined.
+    https://pdos.csail.mit.edu/6.828/2018/readings/i386/SHLD.htm
+    """
+    code=test['bytes'];at=0;operand32=False
+    while at<len(code) and code[at] in [0x26,0x2e,0x36,0x3e,0x64,0x65,0x66,0x67,0xf0,0xf2,0xf3]:
+        operand32 |= code[at]==0x66;at+=1
+    op=code[at];at+=1;double=False
+    if op==0x0f:
+        op=code[at];at+=1
+        if op not in [0xa4,0xa5,0xac,0xad]:return mask,False
+        double=True
+    elif op not in [0xc0,0xc1,0xd0,0xd1,0xd2,0xd3]:return mask,False
+    width=32 if operand32 else 16
+    if not double and op in [0xc0,0xd0,0xd2]:width=8
+    count=1 if op in [0xd0,0xd1] else (code[-2] if op in [0xc0,0xc1,0xa4,0xac] else test['initial']['regs']['ecx'])
+    count &= 31
+    if count==0:return 0x37fd7,False
+    if count!=1:mask &= ~0x800
+    group=(code[at]>>3)&7
+    if not double and group in [4,5,6] and count>=width:mask &= ~1
+    return mask,double and count>width and 'exception' not in test
+
+
 def undefined_sib(test):
     """Exclude the upstream-documented 386EX scaled-no-index SIB quirk."""
     code=test['bytes'];at=0;address32=False
@@ -82,21 +109,23 @@ def run(args):
             name=opcode+'.MOO.gz'
             if name not in manifest['files']:raise ValueError('Unknown opcode file: '+name)
             data=fetch(manifest,name,manifest['files'][name],cache)
-            tests=read_moo(gzip.decompress(data));selected=[];revoked_count=0;undefined_count=0
+            tests=read_moo(gzip.decompress(data));selected=[];revoked_count=0;undefined_count=0;undefined_shift=0
             if opcode_row(opcode,rows)['io']=='1':
                 return {'opcode':opcode,'sourceVectors':len(tests),'vectors':0,'returncode':0,
                         'unsupported':len(tests),'reason':'I/O bus inputs are not modeled by this architectural adapter'}
             for test in tests:
                 if test['hash'] in revoked:revoked_count+=1;continue
                 if opcode_row(opcode,rows)['m']=='1' and undefined_sib(test):undefined_count+=1;continue
-                test.update(opcode=opcode,flagMask=flag_mask(opcode,rows));selected.append(test)
+                mask,undefined=shift_contract(test,flag_mask(opcode,rows))
+                if undefined:undefined_shift+=1;continue
+                test.update(opcode=opcode,flagMask=mask);selected.append(test)
             if args.index is not None:selected=[t for t in selected if t['idx']==args.index]
             if args.limit:selected=selected[:args.limit]
             if not selected:raise ValueError('No applicable vectors for '+opcode)
             path=work/(opcode+'.bin');write_vectors(path,selected)
             result=subprocess.run([str(runner),'vectors',str(path),args.backend],capture_output=True,text=True,timeout=180)
             (work/(opcode+'.log')).write_text(result.stdout+result.stderr);path.unlink()
-            record={'opcode':opcode,'sourceVectors':len(tests),'revoked':revoked_count,'undefinedSib':undefined_count,'vectors':len(selected),
+            record={'opcode':opcode,'sourceVectors':len(tests),'revoked':revoked_count,'undefinedSib':undefined_count,'undefinedDoubleShift':undefined_shift,'vectors':len(selected),
                     'fileSHA256':hashlib.sha256(data).hexdigest(),'returncode':result.returncode,'summary':result.stdout.splitlines()[-1:]}
             print(opcode,record['summary'],flush=True);return record
         # Threads coordinate I/O; CPU execution happens in bounded native child processes.
