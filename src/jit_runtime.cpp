@@ -77,6 +77,29 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+uint32_t nativeFarPointer(CPU *cpu,const NativeMemoryMove *op,unsigned segment,unsigned completed) noexcept {
+    if((op->width!=2 && op->width!=4) || op->reg<0 || op->reg>=8 || segment>=6 || segment==CS)return 0;
+    try {
+        uint32_t offset=op->displacement;
+        if(op->base>=0)offset+=cpu->r[op->base];
+        if(op->index>=0)offset+=cpu->r[op->index]<<op->scale;
+        if(!op->address32)offset&=65535;
+        const auto linear=cpu->address(op->segment,offset);
+        uint32_t value=0,selector=0,physical;
+        if(!warmDataAddress(*cpu,linear,op->width,false,physical))return 0;
+        std::memcpy(&value,cpu->mem.data()+physical,op->width);
+        if(!warmDataAddress(*cpu,linear+op->width,2,false,physical))return 0;
+        std::memcpy(&selector,cpu->mem.data()+physical,2);
+        // LSS loads SS and its GPR atomically; unlike MOV/POP SS it creates
+        // no interrupt shadow. Reuse segment validation, preserving that state.
+        const auto shadow=cpu->interruptBlockedThrough;
+        if(!nativeSegment(cpu,segment,selector,completed))return 0;
+        if(segment==SS)cpu->interruptBlockedThrough=shadow;
+        cpu->set(op->reg,value,op->width);
+        return 1;
+    } catch(const Fault &) {return 0;}
+}
+
 uint32_t nativeFarTransfer(CPU *cpu,const NativeFarTransfer *operation) noexcept {
     const unsigned w=operation->width;
     if((w!=2&&w!=4)||(operation->call&&cpu->watchWrite))return 0;

@@ -414,6 +414,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.dst = !(op & 2) ? m & 7 : (m >> 3) & 7;
                     i.src = !(op & 2) ? (m >> 3) & 7 : m & 7;
                 }
+            } else if (op==0xc4 || op==0xc5) {
+                const auto m=byte();
+                if((m>>6)==3){pos=begin;break;}
+                i.kind=Kind::FarPointer;i.immediate=true;i.segmentLoad=true;
+                i.segmentRegister=op==0xc4?ES:DS;
+                i.dst=(m>>3)&7;i.memory=memoryOperand(m,address32,overrideSegment);
+                i.memory.reg=i.dst;
             } else if (op == 0x8c || op == 0x8e) {
                 auto m = byte();
                 i.segmentRegister = (m >> 3) & 7;
@@ -616,7 +623,15 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xa0 || extended == 0xa1 || extended == 0xa8 || extended == 0xa9) {
+                if(extended==0xb2 || extended==0xb4 || extended==0xb5) {
+                    const auto m=byte();
+                    if((m>>6)==3){pos=begin;break;}
+                    i.kind=Kind::FarPointer;i.immediate=true;i.segmentLoad=true;
+                    i.segmentRegister=extended==0xb2?SS:extended==0xb4?FS:GS;
+                    i.dst=(m>>3)&7;i.memory=memoryOperand(m,address32,overrideSegment);
+                    i.memory.reg=i.dst;
+                    if(i.segmentRegister==SS)block.pollBoundary=true;
+                } else if (extended == 0xa0 || extended == 0xa1 || extended == 0xa8 || extended == 0xa9) {
                     segmentStack(extended < 0xa8 ? FS : GS, !(extended & 1));
                 } else if (extended == 0xba || extended == 0xa3 || extended == 0xab ||
                     extended == 0xb3 || extended == 0xbb) {
@@ -720,7 +735,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.src &= 3;
                 }
             }
-            if (i.kind == Kind::Memory) {
+            if (i.kind == Kind::Memory || i.kind==Kind::FarPointer) {
                 i.memory.width = i.stackMany ? 8 * i.w : i.sourceWidth ? i.sourceWidth : i.w;
                 i.memory.begin = begin;
                 i.memory.end = i.nearCall ? i.target : pos;

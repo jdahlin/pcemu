@@ -2199,3 +2199,17 @@ Word/Excel, but Word regresses 0.82% versus prior and Excel's 0.08% difference
 is inconclusive. Separate final Instruments traces put Word dispatch and
 compilation at 22.3%/18.8%; Excel dispatch remains 46.3%. No incremental
 speedup is claimed. See [semantics, measurements and limits](measurements/office-cross-page-2026-10-27.md).
+
+### Word and Excel: guarded far-pointer load coverage (2026-10-27)
+
+LES/LDS and LSS/LFS/LGS now preflight warm pointer fields and segment descriptors
+before committing both destinations. LSS polls without adding a MOV/POP SS
+shadow. Following native accesses, changed stack widths and promoted links
+retain correct register/segment state. Validation passes 95,760 new checks and
+the core/batch/liveness/fetch/transfer/profile suites. Family interpreter
+attempts fall 84.0%/85.8% in Word/Excel; declined attempts reach zero. All 48
+scored restores pass, including a changed-order repeat of the same binary.
+CPU is 24.17%/13.04% below original, while prior-relative medians are 1.57%/0.21%
+higher with evenly split pairs and substantial A/A variation; no speedup is
+claimed. Separate Instruments traces retain Word compilation at 19.2% and Excel
+dispatch/validation at 43.2%. See [semantics, measurements and limits](measurements/office-far-pointer-2026-10-27.md).

@@ -32,7 +32,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         });
     size_t memoryMoves = 0;
     for (const auto &i : ir)
-        if (i.kind == Kind::Memory)
+        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer)
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
     if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
@@ -345,7 +345,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     auto neededFlags = jit_detail::analyzeFlagLiveness(ir);
     if (memoryMoves) block.native->memory.reserve(memoryMoves);
     for (auto i : ir)
-        if (i.kind == Kind::Memory) {
+        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer) {
             if (i.memoryCall || i.memoryPush) block.native->memory.push_back(i.callPointer);
             block.native->memory.push_back(i.memory);
         }
@@ -712,7 +712,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -787,6 +787,20 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             selector(10,i.segmentRegister);
             insert(20+i.dst,10,i.w,0);
             dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
+        if(i.kind==Kind::FarPointer) {
+            flushRegisters(dirtyRegisters);finishFlags(last,-1,0);
+            dirtyRegisters=0;last=-1;
+            imm(9,i.start);store(9,19,offsetof(CPU,ip));
+            emit(0xaa1303e0u);
+            pointer(1,reinterpret_cast<uintptr_t>(&block.native->memory[memoryIndex++]));
+            imm(2,i.segmentRegister);imm(3,unsigned(n)+1);
+            call(reinterpret_cast<uintptr_t>(&jit_detail::nativeFarPointer));
+            const auto success=code.size();emit(0x35000000u);
+            replay(i.start,unsigned(n),0);
+            code[success] |= uint32_t(code.size()-success)<<5;
+            load(20+i.dst,19,offsetof(CPU,r)+i.dst*4);
             continue;
         }
         if (i.kind == Kind::SegmentLoad) {
