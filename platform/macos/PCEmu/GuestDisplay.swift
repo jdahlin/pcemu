@@ -1,13 +1,15 @@
 import AppKit
 import SwiftUI
 import CoreGraphics
+import Metal
+import QuartzCore
 
 struct GuestDisplay: NSViewRepresentable {
     @ObservedObject var library: Library
     func makeNSView(context: Context) -> GuestView { GuestView(library: library) }
     static func dismantleNSView(_ view: GuestView, coordinator: ()) { view.releaseCapture() }
     func updateNSView(_ view: GuestView, context: Context) {
-        view.image = library.image; view.classic = library.classic; view.needsDisplay = true
+        view.framebuffer = library.frame; view.classic = library.classic; view.presentFrame()
         view.updateCapture()
         view.window?.invalidateCursorRects(for: view)
     }
@@ -15,7 +17,12 @@ struct GuestDisplay: NSViewRepresentable {
 
 final class GuestView: NSView {
     let library: Library
-    var image: NSImage?
+    var framebuffer: GuestFrame?
+    private let metalLayer = CAMetalLayer()
+    private var commandQueue: MTLCommandQueue?
+    private var pipeline: MTLRenderPipelineState?
+    private var texture: MTLTexture?
+    private let framesInFlight = DispatchSemaphore(value: 3)
     var classic = false
     private var captured = false
     private var keys = Set<UInt16>()
@@ -26,6 +33,7 @@ final class GuestView: NSView {
     init(library: Library) {
         self.library = library
         super.init(frame: .zero)
+        configureMetal()
         for name in [NSWindow.didResignKeyNotification, NSApplication.didResignActiveNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.releaseCapture() }
@@ -35,14 +43,95 @@ final class GuestView: NSView {
     required init?(coder: NSCoder) { fatalError() }
     deinit { for observer in observers { NotificationCenter.default.removeObserver(observer) } }
     var guestRect: NSRect {
-        guard let image else { return bounds }
-        let aspect = classic ? 4.0 / 3 : image.size.width / image.size.height
+        guard let framebuffer else { return bounds }
+        let aspect = classic ? 4.0 / 3 : Double(framebuffer.width) / Double(framebuffer.height)
         let w = min(bounds.width, bounds.height * aspect), h = min(bounds.height, bounds.width / aspect)
         return NSRect(x: (bounds.width-w)/2, y: (bounds.height-h)/2, width: w, height: h)
     }
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.black.setFill(); bounds.fill()
-        image?.draw(in: guestRect, from: .zero, operation: .copy, fraction: 1, respectFlipped: true, hints: nil)
+    private func configureMetal() {
+        wantsLayer = true
+        layer = metalLayer
+        metalLayer.pixelFormat = .bgra8Unorm
+        metalLayer.isOpaque = true
+        metalLayer.backgroundColor = NSColor.black.cgColor
+        metalLayer.allowsNextDrawableTimeout = true
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            library.error = "Metal is unavailable on this Mac."
+            return
+        }
+        metalLayer.device = device
+        commandQueue = device.makeCommandQueue()
+        do {
+            let shaders = try device.makeLibrary(source: """
+                #include <metal_stdlib>
+                using namespace metal;
+                struct Vertex { float4 position [[position]]; float2 uv; };
+                vertex Vertex screenVertex(uint id [[vertex_id]]) {
+                    float2 uv = float2((id << 1) & 2, id & 2);
+                    return { float4(uv.x * 2 - 1, 1 - uv.y * 2, 0, 1), uv };
+                }
+                fragment float4 screenFragment(Vertex in [[stage_in]], texture2d<float> image [[texture(0)]]) {
+                    constexpr sampler sampleFilter(coord::normalized, address::clamp_to_edge, filter::nearest);
+                    return float4(image.sample(sampleFilter, in.uv).rgb, 1);
+                }
+                """, options: nil)
+            let descriptor = MTLRenderPipelineDescriptor()
+            descriptor.vertexFunction = shaders.makeFunction(name: "screenVertex")
+            descriptor.fragmentFunction = shaders.makeFunction(name: "screenFragment")
+            descriptor.colorAttachments[0].pixelFormat = metalLayer.pixelFormat
+            pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
+        } catch {
+            library.error = "Cannot initialize Metal display: \(error.localizedDescription)"
+        }
+    }
+    override func layout() { super.layout(); presentFrame() }
+    override func viewDidChangeBackingProperties() { super.viewDidChangeBackingProperties(); presentFrame() }
+    func presentFrame() {
+        guard let device = metalLayer.device, let pipeline, let commandQueue,
+              bounds.width > 0, bounds.height > 0,
+              let window, window.occlusionState.contains(.visible) else { return }
+        // Drop presentation work instead of blocking input when the GPU is behind.
+        guard framesInFlight.wait(timeout: .now()) == .success else { return }
+        var submitted = false
+        defer { if !submitted { framesInFlight.signal() } }
+        let scale = window.backingScaleFactor
+        let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        metalLayer.contentsScale = scale
+        if metalLayer.drawableSize != size { metalLayer.drawableSize = size }
+        // A fresh texture keeps CPU uploads independent of frames still executing on the GPU.
+        if let frame = framebuffer {
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm,
+                width: frame.width, height: frame.height, mipmapped: false)
+            descriptor.storageMode = .shared
+            descriptor.usage = .shaderRead
+            guard let next = device.makeTexture(descriptor: descriptor) else { return }
+            frame.pixels.withUnsafeBytes { bytes in
+                next.replace(region: MTLRegionMake2D(0, 0, frame.width, frame.height), mipmapLevel: 0,
+                    withBytes: bytes.baseAddress!, bytesPerRow: frame.width * 4)
+            }
+            texture = next
+        } else { texture = nil }
+        guard let drawable = metalLayer.nextDrawable(), let command = commandQueue.makeCommandBuffer() else { return }
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = drawable.texture
+        pass.colorAttachments[0].loadAction = .clear
+        pass.colorAttachments[0].storeAction = .store
+        pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
+        guard let encoder = command.makeRenderCommandEncoder(descriptor: pass) else { return }
+        if let texture {
+            let rect = guestRect
+            encoder.setViewport(MTLViewport(originX: rect.minX * scale, originY: rect.minY * scale,
+                width: rect.width * scale, height: rect.height * scale, znear: 0, zfar: 1))
+            encoder.setRenderPipelineState(pipeline)
+            encoder.setFragmentTexture(texture, index: 0)
+            encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        }
+        encoder.endEncoding()
+        command.present(drawable)
+        let semaphore = framesInFlight
+        command.addCompletedHandler { _ in semaphore.signal() }
+        submitted = true
+        command.commit()
     }
     override func resetCursorRects() {
         if pcemu_native_absolute() != 0, let cursor = library.guestCursor, acceptsInput {

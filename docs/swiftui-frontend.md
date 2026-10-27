@@ -113,13 +113,20 @@ The x86 CLI is a thin consumer of the same runner. Configuration parsing happens
 session startup. Frontend and command calls occur between execution batches;
 the CPU/JIT dispatch path gains no callbacks, locks, or per-instruction indirection.
 SwiftUI copies the latest framebuffer through a mutex-protected C bridge and
-samples it at 30 Hz; those presentation costs are distinct from library
-extraction. Headless extraction measurements are recorded in
+samples it at 30 Hz. The native view uploads BGRA pixels into a Metal texture
+and presents through `CAMetalLayer`, with nearest-neighbor sampling, Retina
+drawable sizing, and black aspect-ratio bars. Classic VGA retains its 4:3
+display shape. Each upload owns its texture so CPU writes cannot race an
+in-flight GPU frame. The framebuffer no longer creates `CGImage`/`NSImage`
+objects; the native mouse cursor still uses `NSImage`. Metal initialization
+failures appear through the library error UI. These presentation costs are
+distinct from library extraction. Headless extraction measurements are recorded in
 `measurements/swiftui-session-extraction-2026-10-26.json`.
 
 ## Validation
 
-`make test-native` builds the app, runs the headless typed-library test and CLI
+`make test-native` builds the app, checks the production Metal shader offscreen
+for BGRA colors, vertical orientation and opaque output, runs the headless typed-library test and CLI
 pause/reboot/suspend/restore test, and validates default discovery, migration,
 idempotence, and deliberate removal with temporary placeholder files. No
 installed OS, GUI guest run, or large VM fixture is required. Existing frontend

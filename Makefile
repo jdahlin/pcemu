@@ -282,6 +282,8 @@ register-vms:
 	xcrun swiftc platform/macos/PCEmu/Defaults.swift tools/register_vm_defaults.swift -o build/register-vm-defaults
 	./build/register-vm-defaults "$(CURDIR)"
 test-native: app-native
+	xcrun swiftc -parse-as-library tests/native_metal_test.swift -o build/native-metal-tests
+	./build/native-metal-tests
 	./tools/build.sh pcemu session-library-tests frontend-input-tests frontend-tests snapshot-tests
 	./build/session-library-tests
 	python3 -m unittest discover -s tests -p test_session_control.py

@@ -1,6 +1,12 @@
 import AppKit
 import SwiftUI
 
+struct GuestFrame {
+    let pixels: Data
+    let width: Int
+    let height: Int
+}
+
 @MainActor final class Library: ObservableObject {
     @Published var machines: [VirtualMachine] = []
     @Published var selection: UUID?
@@ -11,7 +17,7 @@ import SwiftUI
     @Published var switchingTo: String?
     @Published var wantsReboot = false
     @Published var error: String?
-    @Published var image: NSImage?
+    @Published var frame: GuestFrame?
     @Published var classic = false
     @Published var guestCursor: NSCursor?
     let root: URL
@@ -79,7 +85,7 @@ import SwiftUI
                 configuration.memory = checkpoint.memory; configuration.processors = checkpoint.processors
             }
             runningConfiguration = configuration
-            active = vm.id; selection = vm.id; paused = false; image = nil
+            active = vm.id; selection = vm.id; paused = false; frame = nil
             let snapshot = (!cold && vm.restoreOnOpen) ? vm.snapshot : ""
             let checkout = root
             let run = directory.appendingPathComponent("Runs/\(UUID().uuidString)")
@@ -217,11 +223,6 @@ import SwiftUI
         let count = pixels.withUnsafeMutableBufferPointer { pcemu_native_frame($0.baseAddress!, Int32($0.count), &w, &h, &c) }
         guard count > 0 else { return }
         let data = pixels.withUnsafeBytes { Data($0.prefix(Int(count) * 4)) }
-        guard let provider = CGDataProvider(data: data as CFData),
-              let cg = CGImage(width: Int(w), height: Int(h), bitsPerComponent: 8, bitsPerPixel: 32,
-                bytesPerRow: Int(w) * 4, space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipFirst.rawValue).union(.byteOrder32Little),
-                provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
-        image = NSImage(cgImage: cg, size: NSSize(width: Int(w), height: Int(h))); classic = c != 0
+        frame = GuestFrame(pixels: data, width: Int(w), height: Int(h)); classic = c != 0
     }
 }
