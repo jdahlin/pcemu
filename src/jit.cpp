@@ -330,8 +330,8 @@ uint32_t Jit::run() {
         ++directLinkPromotions;
         if (promoteBlock(*cached)) publishLinks(key, *cached);
     }
-    // SS needs an accounted shadow boundary; POPF must return to the poll.
-    // Keep both out of cached tails without taxing every ordinary hot hit.
+    // SS/STI need accounted shadows; POPF must return to the poll.
+    // Keep those blocks out of cached tails without taxing ordinary hot hits.
     entry = {key, (cached->changesShadow || cached->pollBoundary) ? nullptr : cached};
     auto &b = *cached;
     if (!b.fn) {

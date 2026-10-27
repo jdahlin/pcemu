@@ -377,6 +377,11 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.base = i.memory.store ? DI : SI;
                 i.memory.segment = i.memory.store ? ES : overrideSegment < 0 ? DS : overrideSegment;
                 i.memory.address32 = address32;
+            } else if (op == 0xfa || op == 0xfb) {
+                i.kind = Kind::InterruptControl;
+                i.op = op == 0xfb;
+                i.immediate = true;
+                if (i.op) block.changesShadow = true;
             } else if (op == 0xfc || op == 0xfd) {
                 i.kind = Kind::Direction;
                 i.imm = op == 0xfd ? DF : 0;
@@ -620,7 +625,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.popFlags || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

@@ -2022,3 +2022,15 @@ the reference, segment, flag-stack and batch suites. Interpreted segment-stack
 attempts fall 83.8% in Word and 88.7% in Excel; all 48 matched release restores
 pass. Word CPU is 26.04% below the original baseline and Excel 11.18%; incremental
 medians are 1.66% and 0.66% lower. See [semantics, measurements and limits](measurements/office-segment-stack-2026-10-27.md).
+
+### Word and Excel: CLI/STI coverage (2026-10-27)
+
+CLI/STI now lower directly with runtime CPL/IOPL guards, precise privilege-fault
+replay and full-width accounted STI shadows. CLI can continue into native/linked
+blocks; STI uses the existing shadow boundary without adding a cached hot-hit
+guard. New validation passes 11,158 checks, including actual pending PIC delivery,
+plus the core and batch suites. Interpreted attempts fall 93% in Word and 99% in
+Excel. All 48 matched release restores pass. CPU time is 27.26% below the original
+Word baseline and 12.22% below Excel's; incremental medians are 0.96% and 1.61%
+lower. Word's small difference is mixed; Excel wins all four pairs. See
+[semantics, measurements and limits](measurements/office-interrupt-control-2026-10-27.md).

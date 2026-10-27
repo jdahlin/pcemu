@@ -90,7 +90,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if (i.kind == Kind::DoubleShift && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags)))
             usedRegisters |= 1u << i.dst;
@@ -612,10 +612,34 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
+        if (i.kind == Kind::InterruptControl) {
+            load(12,19,offsetof(CPU,flags));
+            const unsigned cpl = block.vm ? 3 : (block.cr0 & 1) ? cpu.s[CS].selector & 3 : 0;
+            if (cpl) {
+                bits(13,12,12,2);
+                emit(0x7100001fu | (cpl << 10) | (13 << 5));
+                const auto allowed=code.size();emit(0x54000002u); // b.hs: IOPL >= CPL
+                replay(i.start,unsigned(n),dirtyRegisters);
+                code[allowed] |= uint32_t(code.size()-allowed) << 5;
+            }
+            imm(13,IF);
+            emit((i.op ? 0x2a000000u : 0x0a200000u) | (13 << 16) | (12 << 5) | 12);
+            store(12,19,offsetof(CPU,flags));
+            if (i.op) {
+                // STI blocks never run inside an unaccounted cached/linked tail.
+                // Count the prefix and this instruction from the frame's base.
+                static_assert(offsetof(CPU,instructions)%8 == 0);
+                static_assert(offsetof(CPU,interruptBlockedThrough)%8 == 0);
+                emit(0xf9400000u | ((offsetof(CPU,instructions)/8) << 10) | (19 << 5) | 9);
+                emit(0x91000000u | ((n+1) << 10) | (9 << 5) | 9);
+                emit(0xf9000000u | ((offsetof(CPU,interruptBlockedThrough)/8) << 10) | (19 << 5) | 9);
+            }
+            continue;
+        }
         if (i.kind == Kind::SegmentRead) {
             selector(10,i.segmentRegister);
             insert(20+i.dst,10,i.w,0);
