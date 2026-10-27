@@ -115,3 +115,9 @@ the frozen baseline. Amdahl's law bounds an isolated improvement: speedup is
 `1 / ((1 - f) + f / s)`. Even eliminating 50% of time gives only 2x; 5–10x requires
 changing at least 80–90% of today's cost. Keep correctness/coverage gates separate
 from speed scores and report remaining fallbacks rather than rounding to 100%.
+
+## Recorded batched baseline
+
+The [2026-10-27 M1 Pro baseline](measurements/quake-jit-batched-baseline-2026-10-27.md)
+records ten uninstrumented 50-frame timings, five exact-window Instruments
+profiles, counter reconciliation and the first structural optimization hypothesis.

@@ -1,0 +1,347 @@
+{
+  "date": "2026-10-27",
+  "sourceCommit": "0ebca12b4a3f3a0a4baf6161727731408452d6b2",
+  "sourceManifestSha256": "b59d80ddc88e35f0e1a3ca391f675875f78272ce77a9887a841f33ec50af7488",
+  "sourceTreeCleanAtCapture": true,
+  "cpu": "Apple M1 Pro",
+  "host": "macOS-26.3-arm64-arm-64bit",
+  "architecture": "arm64",
+  "compilerVersion": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.3.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "flags": "-O3 -DNDEBUG -g -gdwarf-4 -fno-omit-frame-pointer",
+  "binarySha256": "c67c8968293c1b3adaac18aafa93803ffcad63e76f4c59d4920c40daaa1c5618",
+  "workload": {
+    "demoSha256": "5557d165274f2b311306b01c94f75d16099daa08bb81c9c4c4e081d39d0f18a3",
+    "frames": 50,
+    "resolution": [
+      320,
+      200
+    ],
+    "sound": false,
+    "backend": "jit",
+    "execution": {
+      "dispatch": "runBatch",
+      "budget": 64,
+      "blockMode": "follow-jumps",
+      "jitWarmup": 0,
+      "directLinks": false,
+      "arenaBytes": 16777216,
+      "polling": "shared-pc-execution"
+    },
+    "pitClock": "host-monotonic-1193182Hz",
+    "releaseFlags": "-O3 -DNDEBUG -g -gdwarf-4 -fno-omit-frame-pointer"
+  },
+  "primaryBaseline": {
+    "runs": 10,
+    "medianFps": 35.650243143686566,
+    "medianThreadCpuFps": 36.054586588554876,
+    "minFps": 34.576532561585125,
+    "maxFps": 36.99161612764179,
+    "madFps": 0.6848256028704185,
+    "cvPercent": 2.301554165966699,
+    "valuesFps": [
+      36.55344845232699,
+      35.65083995161468,
+      34.576532561585125,
+      34.67117854270102,
+      34.655644469440126,
+      35.64964633575845,
+      36.99161612764179,
+      35.393843983118835,
+      36.11668904078698,
+      35.89591798239911
+    ],
+    "threadCpuToWallRatios": [
+      0.9961055648969924,
+      0.9924419620368465,
+      0.977054955595088,
+      0.9798445746539817,
+      0.976292361953418,
+      0.9832387840305482,
+      0.9926731016665554,
+      0.9967272501701968,
+      0.9980589685012068,
+      0.9919608097958857
+    ],
+    "firstToLastChangePercent": -1.7988192571910977,
+    "medianWallMsPerFrame": 28.05029958,
+    "medianCpuMsPerFrame": 27.736095409999997,
+    "executionWork": {
+      "guestStepsPerFrame": 1741643.6400000001,
+      "batchCallsPerFrame": 277758.43000000005,
+      "stepsPerBatch": 6.270318855868116,
+      "dispatchesPerBatch": 1.531986105414901,
+      "x87BoundaryBatchFraction": 0.9417176640918115,
+      "compiledBlocksPerFrame": 1376.26,
+      "cacheRecycles": 4.0
+    }
+  },
+  "originalFiveRunCohort": {
+    "runs": 5,
+    "medianFps": 34.67117854270102,
+    "medianThreadCpuFps": 35.49719922022053,
+    "minFps": 34.576532561585125,
+    "maxFps": 36.55344845232699,
+    "madFps": 0.09464598111589595,
+    "cvPercent": 2.457749847847181,
+    "valuesFps": [
+      36.55344845232699,
+      35.65083995161468,
+      34.576532561585125,
+      34.67117854270102,
+      34.655644469440126
+    ],
+    "threadCpuToWallRatios": [
+      0.9961055648969924,
+      0.9924419620368465,
+      0.977054955595088,
+      0.9798445746539817,
+      0.976292361953418
+    ],
+    "firstToLastChangePercent": -5.191860312063246,
+    "medianWallMsPerFrame": 28.8424,
+    "medianCpuMsPerFrame": 28.171236659999998,
+    "executionWork": {
+      "guestStepsPerFrame": 1740048.28,
+      "batchCallsPerFrame": 277710.18,
+      "stepsPerBatch": 6.265698578280421,
+      "dispatchesPerBatch": 1.5307922093457287,
+      "x87BoundaryBatchFraction": 0.941874150958384,
+      "compiledBlocksPerFrame": 1376.66,
+      "cacheRecycles": 4
+    }
+  },
+  "confirmationFiveRunCohort": {
+    "runs": 5,
+    "medianFps": 35.89591798239911,
+    "medianThreadCpuFps": 36.18692900983968,
+    "minFps": 35.393843983118835,
+    "maxFps": 36.99161612764179,
+    "madFps": 0.2462716466406647,
+    "cvPercent": 1.6991486768992883,
+    "valuesFps": [
+      35.64964633575845,
+      36.99161612764179,
+      35.393843983118835,
+      36.11668904078698,
+      35.89591798239911
+    ],
+    "threadCpuToWallRatios": [
+      0.9832387840305482,
+      0.9926731016665554,
+      0.9967272501701968,
+      0.9980589685012068,
+      0.9919608097958857
+    ],
+    "firstToLastChangePercent": 0.6908109110570271,
+    "medianWallMsPerFrame": 27.85832084,
+    "medianCpuMsPerFrame": 27.6342875,
+    "executionWork": {
+      "guestStepsPerFrame": 1741652.98,
+      "batchCallsPerFrame": 277760.3,
+      "stepsPerBatch": 6.270345258123641,
+      "dispatchesPerBatch": 1.5319951051320149,
+      "x87BoundaryBatchFraction": 0.9417130525852687,
+      "compiledBlocksPerFrame": 1374.32,
+      "cacheRecycles": 4
+    }
+  },
+  "hostCpuSampling": {
+    "runs": 5,
+    "samples": 6896,
+    "exclusiveCategories": [
+      {
+        "symbol": "Compiled x87 helpers",
+        "samples": 1586,
+        "percentOfMainThread": 22.998839907192576
+      },
+      {
+        "symbol": "Dispatch/cache/fetch validation",
+        "samples": 1334,
+        "percentOfMainThread": 19.344547563805104
+      },
+      {
+        "symbol": "Generated code",
+        "samples": 1222,
+        "percentOfMainThread": 17.720417633410673
+      },
+      {
+        "symbol": "Compilation and decoding",
+        "samples": 1119,
+        "percentOfMainThread": 16.226798143851507
+      },
+      {
+        "symbol": "Host clock reads (PIT/runner)",
+        "samples": 919,
+        "percentOfMainThread": 13.326566125290023
+      },
+      {
+        "symbol": "Other host work",
+        "samples": 259,
+        "percentOfMainThread": 3.7558004640371228
+      },
+      {
+        "symbol": "Unmapped generated code",
+        "samples": 210,
+        "percentOfMainThread": 3.0452436194895594
+      },
+      {
+        "symbol": "Compiled string helpers",
+        "samples": 197,
+        "percentOfMainThread": 2.8567285382830625
+      },
+      {
+        "symbol": "Device polling and IRQ delivery",
+        "samples": 39,
+        "percentOfMainThread": 0.5655452436194895
+      },
+      {
+        "symbol": "Other compiled runtime helpers",
+        "samples": 8,
+        "percentOfMainThread": 0.11600928074245939
+      },
+      {
+        "symbol": "Interpreter and guest faults",
+        "samples": 2,
+        "percentOfMainThread": 0.029002320185614848
+      },
+      {
+        "symbol": "Compiled segment/interrupt/I-O helpers",
+        "samples": 1,
+        "percentOfMainThread": 0.014501160092807424
+      }
+    ],
+    "generatedRegions": [
+      {
+        "region": "Prologue",
+        "scope": "self",
+        "samples": 556,
+        "percentOfMainThread": 8.062645011600928
+      },
+      {
+        "region": "Memory",
+        "scope": "self",
+        "samples": 406,
+        "percentOfMainThread": 5.887470997679815
+      },
+      {
+        "region": "Host epilogue",
+        "scope": "self",
+        "samples": 78,
+        "percentOfMainThread": 1.131090487238979
+      },
+      {
+        "region": "Flags and branch",
+        "scope": "self",
+        "samples": 72,
+        "percentOfMainThread": 1.0440835266821347
+      },
+      {
+        "region": "Alu",
+        "scope": "self",
+        "samples": 31,
+        "percentOfMainThread": 0.4495359628770302
+      },
+      {
+        "region": "X87",
+        "scope": "self",
+        "samples": 22,
+        "percentOfMainThread": 0.3190255220417633
+      },
+      {
+        "region": "Instruction count",
+        "scope": "self",
+        "samples": 21,
+        "percentOfMainThread": 0.30452436194895594
+      },
+      {
+        "region": "Shift",
+        "scope": "self",
+        "samples": 14,
+        "percentOfMainThread": 0.20301624129930396
+      },
+      {
+        "region": "String",
+        "scope": "helper descendants",
+        "samples": 12,
+        "percentOfMainThread": 0.1740139211136891
+      },
+      {
+        "region": "GPR commit",
+        "scope": "self",
+        "samples": 10,
+        "percentOfMainThread": 0.14501160092807425
+      },
+      {
+        "region": "Memory",
+        "scope": "helper descendants",
+        "samples": 5,
+        "percentOfMainThread": 0.07250580046403712
+      },
+      {
+        "region": "Test",
+        "scope": "self",
+        "samples": 3,
+        "percentOfMainThread": 0.043503480278422275
+      },
+      {
+        "region": "IP commit",
+        "scope": "self",
+        "samples": 3,
+        "percentOfMainThread": 0.043503480278422275
+      },
+      {
+        "region": "Move",
+        "scope": "self",
+        "samples": 2,
+        "percentOfMainThread": 0.029002320185614848
+      },
+      {
+        "region": "String",
+        "scope": "self",
+        "samples": 1,
+        "percentOfMainThread": 0.014501160092807424
+      },
+      {
+        "region": "Rotate",
+        "scope": "self",
+        "samples": 1,
+        "percentOfMainThread": 0.014501160092807424
+      },
+      {
+        "region": "Direction",
+        "scope": "self",
+        "samples": 1,
+        "percentOfMainThread": 0.014501160092807424
+      },
+      {
+        "region": "Divide",
+        "scope": "self",
+        "samples": 1,
+        "percentOfMainThread": 0.014501160092807424
+      }
+    ],
+    "unmappedGeneratedSelfSamples": 210
+  },
+  "speedTarget": {
+    "fivefoldFps": 178.25121571843283,
+    "tenfoldFps": 356.50243143686566,
+    "fivefoldWallMsPerFrame": 5.610059916,
+    "tenfoldWallMsPerFrame": 2.805029958
+  },
+  "evidenceFiles": {
+    "collection": "build/quake-jit-batched-baseline/report.json",
+    "confirmation": "build/quake-jit-batched-baseline/confirmation-report.json",
+    "host": "build/quake-jit-batched-baseline/host-analysis.json",
+    "guest": "build/quake-jit-batched-baseline/guest-counters/guest-profile.json",
+    "manifest": "build/quake-jit-batched-baseline/manifest.json"
+  },
+  "limitations": [
+    "Only the 50-frame opening scene was measured. No full-demo runs were used.",
+    "The first cohort drifted -5.19%; confirmation drift was +0.69%. Both cohorts are retained and all ten timings define the primary median.",
+    "3.05% of host CPU samples have ambiguous generated PCs and are retained as unmapped; fine guest-block rankings are incomplete.",
+    "Host sampling, code-map recording and guest counters are diagnostic runs, excluded from speed scores.",
+    "Compiled x87 helpers are included in native steps; native coverage is not inline-ARM64 coverage.",
+    "PIT uses host-monotonic time in the benchmark; ordinary sessions retain their instruction-derived PIT clock."
+  ],
+  "scratchDisksRemoved": true
+}
