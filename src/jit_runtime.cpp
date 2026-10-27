@@ -60,7 +60,7 @@ uint32_t nativeSegment(CPU *cpu, unsigned seg, uint32_t selector, unsigned compl
 // Data probes differ from descriptor probes: ordinary accesses obey current
 // user/system permissions and writes require an already-dirty translation.
 static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, bool write,
-                            uint32_t &physical) {
+                            uint32_t &physical,bool system=false) {
     if ((linear & 4095) + width > 4096) return false;
     physical = linear;
     if (cpu.cr[0] & 0x80000000u) {
@@ -68,7 +68,7 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
         const auto page = linear >> 12;
         const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size()-1)];
         if (entry.epoch != cpu.tlbEpoch || entry.tag != page || (write && !entry.dirty)) return false;
-        if (cpu.cpl() == 3 && !cpu.systemAccess &&
+        if (!system && cpu.cpl() == 3 && !cpu.systemAccess &&
             (!(entry.permissions & 4) || (write && !(entry.permissions & 2)))) return false;
         physical = entry.base | (linear & 4095);
     }
@@ -77,6 +77,110 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+uint32_t nativeFarTransfer(CPU *cpu,const NativeFarTransfer *operation) noexcept {
+    const unsigned w=operation->width;
+    if((w!=2&&w!=4)||(operation->call&&cpu->watchWrite))return 0;
+    uint32_t off=operation->offset,sel=operation->selector,sp=cpu->r[SP];
+    Segment cs=cpu->s[CS],ss=cpu->s[SS];
+    const bool protectedMode=(cpu->cr[0]&1)&&!(cpu->flags&0x20000);
+    struct Write {uint32_t physical,value;};
+    std::array<Write,35> writes;
+    std::array<uint32_t,31> parameters;
+    unsigned writeCount=0,writeWidth=w;
+    bool inner=false;
+    std::array<uint32_t,2> csPhysical{};
+    unsigned csWords=0;
+    auto read=[&](uint32_t linear,unsigned width,bool system,uint32_t &value,uint32_t *address=nullptr){
+        uint32_t physical;
+        if(!warmDataAddress(*cpu,linear,width,false,physical,system))return false;
+        value=0;std::memcpy(&value,cpu->mem.data()+physical,width);
+        if(address)*address=physical;
+        return true;
+    };
+    auto descriptor=[&](uint16_t selector,uint32_t &lo,uint32_t &hi,std::array<uint32_t,2> &physical){
+        const auto base=(selector&4)?cpu->ldtBase:cpu->gdtBase;
+        const auto limit=(selector&4)?cpu->ldtLimit:cpu->gdtLimit;
+        const auto offset=uint32_t(selector&~7);
+        return offset+7<=limit && read(base+offset,4,true,lo,&physical[0]) &&
+               read(base+offset+4,4,true,hi,&physical[1]);
+    };
+    auto push=[&](uint32_t value){
+        if(writeCount==writes.size() || (protectedMode&&ss.unusable))return false;
+        const auto offset=(sp-writeWidth)&(ss.big?UINT32_MAX:65535u);
+        sp=ss.big?offset:(sp&0xffff0000u)|offset;
+        uint32_t physical;
+        if(!warmDataAddress(*cpu,ss.base+offset,writeWidth,true,physical,inner))return false;
+        writes[writeCount++]={physical,value};return true;
+    };
+    try {
+        if(operation->indirect) {
+            const auto &m=operation->memory;
+            uint32_t offset=m.displacement;
+            if(m.base>=0)offset+=cpu->r[m.base];
+            if(m.index>=0)offset+=cpu->r[m.index]<<m.scale;
+            if(!m.address32)offset&=65535;
+            const auto linear=cpu->address(m.segment,offset);
+            if(!read(linear,w,false,off)||!read(linear+w,2,false,sel))return 0;
+        }
+        const auto selected=uint16_t(sel);
+        if(protectedMode) {
+            uint32_t lo,hi;
+            if(!descriptor(selected,lo,hi,csPhysical))return 0;
+            if(!(hi&0x1000)) {
+                const auto type=(hi>>8)&15;
+                if(!operation->call || (type!=4&&type!=12))return 0;
+                writeWidth=type==12?4:2;
+                const auto target=uint16_t(lo>>16);
+                off=(lo&65535)|(writeWidth==4?(hi&0xffff0000):0);
+                uint32_t targetLo,targetHi;
+                if(!descriptor(target,targetLo,targetHi,csPhysical))return 0;
+                const unsigned oldLevel=cpu->s[CS].selector&3,newLevel=(targetHi>>13)&3;
+                cs=decodeSegmentDescriptor(CS,(target&~3u)|newLevel,targetLo,targetHi);
+                csWords=2;
+                if(newLevel<oldLevel) {
+                    if(!cpu->trSelector)return 0;
+                    const uint32_t oldSP=cpu->get(SP,writeWidth),oldSS=cpu->s[SS].selector;
+                    const auto stackOffset=cpu->tr32?4+newLevel*8:2+newLevel*4;
+                    uint32_t newSP,newSS;
+                    if(!read(cpu->trBase+stackOffset,cpu->tr32?4:2,true,newSP)||
+                       !read(cpu->trBase+stackOffset+(cpu->tr32?4:2),2,true,newSS))return 0;
+                    const unsigned count=hi&31;
+                    for(unsigned n=0;n<count;++n) {
+                        const auto offset=(oldSP+n*writeWidth)&(ss.big?UINT32_MAX:65535u);
+                        if(!read(cpu->address(SS,offset),writeWidth,false,parameters[n]))return 0;
+                    }
+                    uint32_t ssLo,ssHi;std::array<uint32_t,2> ignored;
+                    if(!(newSS&~3u)||!descriptor(newSS,ssLo,ssHi,ignored))return 0;
+                    ss=decodeSegmentDescriptor(SS,newSS,ssLo,ssHi);
+                    sp=cpu->tr32?newSP:(sp&0xffff0000u)|(newSP&65535);
+                    inner=true;
+                    if(!push(oldSS)||!push(oldSP))return 0;
+                    for(unsigned n=count;n>0;--n)if(!push(parameters[n-1]))return 0;
+                }
+            } else {
+                if(!(selected&~3u))return 0;
+                cs=decodeSegmentDescriptor(CS,selected,lo,hi);csWords=2;
+            }
+        } else {
+            cs.selector=selected;cs.base=uint32_t(selected)<<4;cs.limit=65535;cs.big=false;cs.unusable=false;
+        }
+        if(operation->call && (!push(cpu->s[CS].selector)||!push(operation->end)))return 0;
+        // CPU::segment(CS) rereads this descriptor after the pushes. A stack
+        // alias could change it, so such accesses must retain interpreter order.
+        for(unsigned n=0;n<writeCount;++n)for(unsigned d=0;d<csWords;++d)
+            if(uint64_t(writes[n].physical)<uint64_t(csPhysical[d])+4 &&
+               uint64_t(csPhysical[d])<uint64_t(writes[n].physical)+writeWidth)return 0;
+        for(unsigned n=0;n<writeCount;++n) {
+            const auto physical=writes[n].physical;
+            std::memcpy(cpu->mem.data()+physical,&writes[n].value,writeWidth);
+            if(cpu->codeUsed[physical>>6] || cpu->codeUsed[(physical+writeWidth-1)>>6])
+                cpu->written(physical,writeWidth);
+        }
+        cpu->r[SP]=sp;if(inner)cpu->s[SS]=ss;cpu->s[CS]=cs;cpu->ip=off;
+        return 1;
+    } catch(const Fault &) {return 0;}
+}
+
 uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
     const unsigned w=operation->width;
     if(w!=2 && w!=4)return 0;

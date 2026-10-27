@@ -35,12 +35,19 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Memory)
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
-    if (linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
+    if (linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
         block.native = std::make_unique<Block::NativeState>();
-    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarReturn) {
+    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
         block.native->boundary=std::make_unique<Block::BoundaryEntry>();
-        block.native->boundary->operation=decoded.portIO;
-        block.native->boundary->farReturn={unsigned(terminal.w),uint16_t(terminal.imm),terminal.op==0xcf};
+        if(terminal.kind==Kind::PortIO)block.native->boundary->operation=decoded.portIO;
+        else if(terminal.kind==Kind::FarReturn)
+            std::construct_at(&block.native->boundary->farReturn,NativeFarReturn{unsigned(terminal.w),uint16_t(terminal.imm),terminal.op==0xcf});
+        else {
+            block.native->boundary->farTransfer=std::make_unique<NativeFarTransfer>();
+            auto &op=*block.native->boundary->farTransfer;
+            op.memory=terminal.memory;op.width=terminal.w;op.offset=terminal.imm;
+            op.selector=terminal.src;op.end=terminal.end;op.call=terminal.op;op.indirect=!terminal.immediate;
+        }
     }
     if (linkCandidate) {
         block.native->link = std::make_unique<LinkState>();
@@ -98,7 +105,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarReturn || i.kind == Kind::PortIO)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -704,18 +711,23 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
-        if(i.kind==Kind::FarReturn) {
+        if(i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn) {
             flushRegisters(dirtyRegisters);
             finishFlags(last,-1,0);
             dirtyRegisters=0;last=-1;
             imm(9,i.start);store(9,19,offsetof(CPU,ip));
             emit(0xaa1303e0u);
-            pointer(1,reinterpret_cast<uintptr_t>(&block.native->boundary->farReturn));
-            call(reinterpret_cast<uintptr_t>(&jit_detail::nativeFarReturn));
+            if(i.kind==Kind::FarReturn) {
+                pointer(1,reinterpret_cast<uintptr_t>(&block.native->boundary->farReturn));
+                call(reinterpret_cast<uintptr_t>(&jit_detail::nativeFarReturn));
+            } else {
+                pointer(1,reinterpret_cast<uintptr_t>(block.native->boundary->farTransfer.get()));
+                call(reinterpret_cast<uintptr_t>(&jit_detail::nativeFarTransfer));
+            }
             const auto success=code.size();emit(0x35000000u);
             replay(i.start,unsigned(n),0);
             code[success] |= uint32_t(code.size()-success)<<5;
@@ -1638,7 +1650,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
-        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
+        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);
@@ -1699,7 +1711,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     compiledBlocks++;
     if (block.link()) block.link()->codeBytes = bytes;
     debugBlock(block, code, debugRegions);
-    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarReturn) {
+    if(terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
         block.native->boundary->fn=block.fn;
         block.fn=nullptr;
     }

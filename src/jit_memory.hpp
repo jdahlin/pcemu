@@ -12,6 +12,13 @@ struct NativeMemoryMove {
     int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };
+struct NativeFarTransfer {
+    NativeMemoryMove memory;
+    unsigned width=2;
+    uint32_t offset=0,end=0;
+    uint16_t selector=0;
+    bool call=false,indirect=false;
+};
 struct NativeFarReturn {
     unsigned width=2;
     uint16_t extra=0;

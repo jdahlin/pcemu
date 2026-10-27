@@ -2156,3 +2156,20 @@ prior, winning all eight pairs; Excel is 13.23% below original but 0.64% worse
 than prior with mixed pairs. A separate Excel trace puts return helper
 descendants at 0.16% of samples and dispatch/cache validation at 46.4%.
 See [semantics, measurements and limits](measurements/office-far-return-2026-10-27.md).
+
+### Word and Excel: guarded far CALL/JMP coverage (2026-10-27)
+
+Immediate and indirect far CALL/JMP now use warm-RAM preflight, including
+16/32-bit call gates, TSS-selected inner stacks and parameter copying. Unsafe
+cases replay before mutation; descriptor aliases retain exact interpreter
+ordering, and terminal code writes preserve generation updates. Validation
+passes 60,481 new checks and the core/return/I/O/string/batch/liveness suites.
+Interpreted far transfers fall 79.9%/88.4% in Word/Excel. All 48 isolated
+headless restores pass, with the authorized Library process suspended and
+resumed afterward. Word CPU is 26.77% below original but regresses 2.00% versus
+prior in all eight pairs; Excel is 12.14% below original and an inconclusive
+0.82% below prior. Both preceding 48-run comparisons are retained. Separate
+Instruments traces identify Word compilation (20.9%) and dispatch/validation
+(24.1%), while Excel dispatch/validation remains 45.5%. Far-transfer helper
+descendants occupy about 0.1% in each. This extends coverage without claiming
+an incremental speedup. See [measurements and limits](measurements/office-far-transfer-2026-10-27.md).

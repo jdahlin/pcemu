@@ -118,6 +118,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             if (op == 0x06 || op == 0x0e || op == 0x16 || op == 0x1e ||
                 op == 0x07 || op == 0x17 || op == 0x1f) {
                 segmentStack(op >> 3, !(op & 1));
+            } else if (op==0x9a || op==0xea) {
+                i.kind=Kind::FarTransfer;
+                i.op=op==0x9a;
+                i.immediate=true;
+                i.imm=immediate(w);
+                i.src=immediate(2);
+                block.pollBoundary=true;
             } else if (op==0xca || op==0xcb || op==0xcf) {
                 i.kind=Kind::FarReturn;
                 i.op=op;
@@ -228,6 +235,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.memory.address32 = block.stack32;
                         i.memory.displacement = uint32_t(-w);
                         block.usesStack = true;
+                    } else if (op==0xff && (((m>>3)&7)==3 || ((m>>3)&7)==5)) {
+                        if((m>>6)==3){pos=begin;break;}
+                        i.kind=Kind::FarTransfer;
+                        i.op=((m>>3)&7)==3;
+                        i.immediate=false;
+                        i.memory=memoryOperand(m,address32,overrideSegment);
+                        block.pollBoundary=true;
                     } else if (op == 0xff && ((m >> 3) & 7) == 6) {
                         i.kind = Kind::Memory;
                         i.memoryPush = (m >> 6) != 3;
@@ -259,7 +273,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         pos = begin;
                         break;
                     }
-                    if (!i.indirectJump && !i.indirectCall && !i.stackDelta) {
+                    if (i.kind!=Kind::FarTransfer && !i.indirectJump && !i.indirectCall && !i.stackDelta) {
                         i.w = op == 0xfe ? 1 : w;
                         i.op = 8 + ((m >> 3) & 1);
                         if ((m >> 6) != 3) {
@@ -702,7 +716,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

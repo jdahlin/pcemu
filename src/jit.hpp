@@ -93,8 +93,11 @@ class Jit {
         unsigned visits = 0;
         struct BoundaryEntry {
             Function fn=nullptr;
-            NativePortIO operation;
-            NativeFarReturn farReturn;
+            union {
+                NativePortIO operation{};
+                NativeFarReturn farReturn;
+            };
+            std::unique_ptr<NativeFarTransfer> farTransfer;
         };
         struct NativeState {
             std::vector<NativeMemoryMove> memory;
