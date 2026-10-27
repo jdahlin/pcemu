@@ -11,6 +11,18 @@ const uint32_t palette[16] = {0xff000000, 0xff0000aa, 0xff00aa00, 0xff00aaaa,
                                       0xff555555, 0xff5555ff, 0xff55ff55, 0xff55ffff,
                                       0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff};
 }
+// Read visible VGA geometry for captures/frontends, including the ninth text dot.
+// IBM 42G2193 Horizontal Display End / Maximum Scan Line / Vertical Display End.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=87
+std::pair<unsigned,unsigned> PcDisplay::dimensions(const Machine &m) const {
+    const auto &v=m.vga;
+    if(v.graphics) return {v.width,v.height};
+    if(v.seq[4]&VGA::OddEvenDisable) return {640,400};
+    unsigned columns=unsigned(v.crtc[1])+1;
+    unsigned dots=(v.seq[1]&1)?8:9;
+    unsigned lines=1+(v.crtc[0x12]|((v.crtc[7]&2)<<7)|((v.crtc[7]&0x40)<<3));
+    return {std::clamp(columns*dots*((v.seq[1]&8)?2:1),8u,2048u),std::clamp(lines,1u,1024u)};
+}
 void PcDisplay::loadFont(std::span<const uint8_t> bytes) {
     if (bytes.empty())
         return;
@@ -59,8 +71,7 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
     }
     if (framePath.empty())
         return;
-    unsigned width = m.vga.graphics ? m.vga.width : 640,
-             height = m.vga.graphics ? m.vga.height : 400;
+    auto [width,height] = dimensions(m);
     std::ofstream f(framePath, std::ios::binary);
     f << "P6\n" << width << ' ' << height << "\n255\n";
     std::vector<uint8_t> rgb(size_t(width) * height * 3);
@@ -97,8 +108,8 @@ void PcDisplay::render(Machine &m, std::span<uint32_t> pixels, unsigned displayW
             pixels[size_t(y) * displayWidth + x] =
                 text_pixel(m, x, y, displayWidth, displayHeight, true, frameTicks);
 }
-// Host presentation keeps a 640x400 logical text surface, scaling 40/80-column
-// and font-height/row variants into it. Guest firmware still programs real VGA
+// Native presentation follows the physical CRTC text extent, glyph clock and
+// address counters. Target surfaces may scale that extent. Guest firmware programs VGA
 // memory/register state. Native VGA text uses plane-2 font maps and DAC colors;
 // the original host BIOS's simplified preset retains its ROM-font fallback.
 // IBM 42G2193 character map selection and Attribute controls, PDF 76/113/119.
@@ -111,31 +122,63 @@ uint32_t PcDisplay::text_pixel(const Machine &m, unsigned x, unsigned y,
         return 0xff000000;
     const bool native = !(v.seq[4] & VGA::OddEvenDisable);
     unsigned glyphHeight = native ? unsigned(v.crtc[9] & 31) + 1 : 16;
-    unsigned dotX = uint64_t(x) * m.columns * 8 / width;
-    unsigned dotY = uint64_t(y) * m.rows * glyphHeight / height;
-    unsigned col = dotX / 8, row = dotY / glyphHeight, scanline = dotY % glyphHeight;
-    unsigned pageBytes = c.mem[0x44c] | (c.mem[0x44d] << 8);
-    if (!pageBytes) pageBytes = 4096;
-    unsigned base = (c.mem[0x449] & 127) == 7 ? 0xb0000 : 0xb8000;
-    uint64_t offset = base + uint64_t(m.activePage) * pageBytes + (uint64_t(row) * m.columns + col) * 2;
-    if (offset + 1 >= c.mem.size()) return 0xff000000;
-    uint8_t character = c.mem[offset], attributes = c.mem[offset + 1];
+    unsigned glyphWidth = native && !(v.seq[1]&1) ? 9 : 8;
+    auto [physicalWidth,physicalHeight]=dimensions(m);
+    unsigned dotX = native ? uint64_t(x)*physicalWidth/width : uint64_t(x)*m.columns*8/width;
+    unsigned dotY = native ? uint64_t(y)*physicalHeight/height : uint64_t(y)*m.rows*glyphHeight/height;
+    if(native && (v.seq[1]&8))dotX/=2;
+    unsigned row,scanline,col,address;
+    bool lower=false;
+    if(native) {
+        // Line Compare resets display address and row-scan on the following
+        // scan line. Preset Row Scan applies only above the split. AC.PPM
+        // selects whether lower-screen horizontal panning is reset as well.
+        // IBM 42G2193 Preset Row Scan / Line Compare / Attribute Mode Control.
+        // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=87
+        // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=101
+        unsigned compare=v.crtc[0x18]|((v.crtc[7]&0x10)<<4)|((v.crtc[9]&0x40)<<3);
+        lower=dotY>compare;
+        unsigned scan=(lower ? dotY-compare-1 : dotY)/((v.crtc[9]&0x80)?2:1)+(lower?0:(v.crtc[8]&31));
+        row=scan/glyphHeight;scanline=scan%glyphHeight;
+        unsigned pan=v.attr[0x13]&15;
+        pan=glyphWidth==9 ? ((pan<8)?pan+1:0) : pan&7;
+        if(lower && (v.attr[0x10]&0x20))pan=0;
+        dotX+=pan;col=dotX/glyphWidth;
+        unsigned start=lower?0:((v.crtc[0x0c]<<8)|v.crtc[0x0d]);
+        unsigned bytePan=lower?0:((v.crtc[8]>>5)&3);
+        address=(start+row*unsigned(v.crtc[0x13])*2+col+bytePan)&0xffff;
+    } else {
+        col=dotX/8;row=dotY/glyphHeight;scanline=dotY%glyphHeight;
+        unsigned pageBytes=c.mem[0x44c]|(c.mem[0x44d]<<8);
+        if(!pageBytes)pageBytes=4096;
+        address=m.activePage*pageBytes+(row*m.columns+col)*2;
+    }
+    unsigned base=(c.mem[0x449]&127)==7?0xb0000:0xb8000;
+    if(!native && uint64_t(base)+address+1>=c.mem.size())return 0xff000000;
+    uint8_t character=native?v.planes[0][address]:c.mem[base+address];
+    uint8_t attributes=native?v.planes[1][address]:c.mem[base+address+1];
     unsigned firstMap = (v.seq[3] & 3) | ((v.seq[3] >> 2) & 4);
     unsigned secondMap = ((v.seq[3] >> 2) & 3) | ((v.seq[3] >> 3) & 4);
     unsigned map = attributes & 8 ? secondMap : firstMap;
     unsigned mapOffset = ((map & 3) << 14) | ((map & 4) << 11);
     uint8_t bits = native ? v.planes[2][mapOffset + character * 32 + scanline]
                           : font[character * 8 + scanline / 2];
-    bool on = bits & (128 >> (dotX & 7));
+    unsigned glyphDot=dotX%glyphWidth;
+    bool on=glyphDot<8 ? (bits&(128>>glyphDot)) :
+            native && (v.attr[0x10]&4) && character>=0xc0 && character<=0xdf && (bits&1);
+    // Underline is selected by attribute 01h with optional intensity/blink;
+    // other color bits inhibit it. IBM Underline Location, printed 2-69.
+    // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=95
+    if(native && (attributes&0x77)==1 && scanline==(v.crtc[0x14]&31))on=true;
     if (native && animate && (v.attr[0x10] & 8) && (attributes & 0x80) && (ticks / 500) % 2)
         on = false;
     unsigned foreground = attributes & ((native && firstMap != secondMap) ? 7 : 15);
     unsigned background = (attributes >> 4) & ((native && !(v.attr[0x10] & 8)) ? 15 : 7);
     unsigned color = on ? foreground : background;
-    unsigned shape = c.mem[0x460] | (c.mem[0x461] << 8);
+    unsigned shape = native ? ((v.crtc[0x0a]<<8)|v.crtc[0x0b]) : (c.mem[0x460]|(c.mem[0x461]<<8));
     unsigned start = native ? (shape >> 8) & 31 : 14;
     unsigned end = native ? shape & 31 : 15;
-    if (animate && !(shape & 0x2000) && row * m.columns + col == m.cursor &&
+    if (animate && !(shape & 0x2000) && (native ? address == unsigned((v.crtc[0x0e]<<8)|v.crtc[0x0f]) : row*m.columns+col==m.cursor) &&
         scanline >= start && scanline <= end && (ticks / 500) % 2 == 0)
         color = native ? foreground : 7;
     if (!native) return palette[color];

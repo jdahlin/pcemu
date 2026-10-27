@@ -178,7 +178,7 @@ void boundaries(Guest &g) {
     g.call(0x0200, 0x0700, 0, 0x184f);
     c.write(0xb8000 - 2, 0xa55a, 2);
     g.call(0x0958, 0x073e, 0xffff);
-    check(g.cell(7, 24, 79) == 0x3e58 && g.word(0xb8000 - 2) == 0xa55a && g.word(0xc0000) == 0xaa55,
+    check(g.cell(7, 24, 79) == 0x3e58 && g.word(0xb8000 - 2) == 0xffff && g.word(0xc0000) == 0xaa55,
           "maximal repeat stays within text aperture");
     g.call(0x0507);
     g.call(0x0600, 0x4f00, 0x184e, 0xffff);
@@ -595,6 +595,52 @@ void text_scanout_contract(Guest &g) {
     g.call(3);
 }
 
+// Independent scan-line/cell oracle: visible rows can begin part-way through
+// a glyph, the lower screen resets on LC+1, and each half has its own panning.
+void text_addressing_edges(Guest &g) {
+    g.call(3);auto &v=g.m->vga;
+    v.seq[1]|=1;v.attr[0x10]=0;v.crtc[0x0a]=0x20;
+    for(unsigned a=0;a<65536;++a){v.planes[0][a]=(a*13+7)&255;v.planes[1][a]=(a*11+3)&127;}
+    for(unsigned ch=0;ch<256;++ch)for(unsigned y=0;y<32;++y)
+        v.planes[2][ch*32+y]=uint8_t(ch*73+y*19);
+    for(unsigned n=0;n<16;++n){v.attr[n]=n;v.dac[n][0]=(n*3)&63;v.dac[n][1]=(n*5)&63;v.dac[n][2]=(n*7)&63;}
+    PcDisplay display;std::vector<uint32_t> frame(640*400);
+    struct Case { unsigned split,preset,start,stride,pan,reset; };
+    for(auto c : {Case{1023,0,0,40,0,0},Case{199,0,0,40,0,0},Case{200,0,7,40,0,0},
+                 Case{255,7,0,40,3,0},Case{256,15,0x7fff,47,7,0},Case{511,3,0xfff0,40,3,0},
+                 Case{512,0,0x7fff,40,0,0},Case{0,0,7,40,7,0},Case{15,0,0,40,7,1},
+                 Case{16,7,7,47,3,1},Case{199,15,0,0,7,0},Case{200,7,0xfff0,0,7,1}}) {
+        v.crtc[0x18]=c.split;v.crtc[7]=(v.crtc[7]&~0x10)|((c.split>>4)&0x10);
+        v.crtc[9]=(v.crtc[9]&~0x40)|((c.split>>3)&0x40);
+        v.crtc[8]=c.preset;v.crtc[0x0c]=c.start>>8;v.crtc[0x0d]=c.start;
+        v.crtc[0x13]=c.stride;v.attr[0x13]=c.pan;v.attr[0x10]=c.reset?0x20:0;
+        display.refresh(*g.m,true);display.render(*g.m,frame,640,400,500);
+        for(unsigned y=0;y<400;++y)for(unsigned x=0;x<640;++x) {
+            bool below=y>c.split;unsigned line=below?y-c.split-1:y+c.preset;
+            unsigned px=x+((below&&c.reset)?0:c.pan);
+            unsigned cell=((below?0:c.start)+(line/16)*c.stride*2+px/8)&65535;
+            unsigned ch=(cell*13+7)&255,attr=(cell*11+3)&127;
+            unsigned bits=uint8_t(ch*73+(line%16)*19);
+            bool on=bits&(128>>(px%8));
+            // Attribute 01h also requests underline at CRTC14 (default line 31).
+            unsigned color=on?attr&15:(attr>>4)&15;
+            auto expand=[](unsigned n){return (n<<2)|(n>>4);};
+            unsigned expected=0xff000000|(expand((color*3)&63)<<16)|
+                              (expand((color*5)&63)<<8)|expand((color*7)&63);
+            check(frame[y*640+x]==expected,"text scan-line addressing matches independent oracle");
+        }
+    }
+    // Nine-dot line graphics repeat the eighth dot only for C0h..DFh.
+    g.call(3);v.attr[0x10]=4;v.planes[0][0]=0xc4;v.planes[1][0]=7;
+    v.planes[2][0xc4*32]=1;v.planes[2][0x41*32]=1;
+    auto extent=display.dimensions(*g.m);check(extent.first==720&&extent.second==400,"native text exposes ninth-dot geometry");
+    frame.resize(720*400);display.render(*g.m,frame,720,400,500);
+    check(frame[7]==frame[8]&&frame[8]!=0xff000000,"line graphics replicate ninth dot");
+    v.planes[0][0]=0x41;display.render(*g.m,frame,720,400,500);
+    check(frame[7]!=0xff000000&&frame[8]==0xff000000,"ordinary glyph leaves ninth dot blank");
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -639,7 +685,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

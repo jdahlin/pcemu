@@ -3,12 +3,15 @@
 #include <cstdint>
 #include <span>
 #include <string>
+#include <utility>
 namespace pc {
 struct Machine;
 // Toolkit-independent PC presentation. It owns font/rendering policy, not the
 // VGA hardware or the frontend window. Captures intentionally omit the cursor.
 class PcDisplay {
   public:
+    // Physical native VGA text/graphics extent; fallback text stays 640x400.
+    std::pair<unsigned,unsigned> dimensions(const Machine &machine) const;
     void loadFont(std::span<const uint8_t> bytes);
     void refresh(Machine &machine, bool executeVga);
     void save(Machine &machine, const std::string &framePath, bool verbose) const;

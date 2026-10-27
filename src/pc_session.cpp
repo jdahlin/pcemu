@@ -284,8 +284,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         std::ofstream trace;
         if (!tracePath.empty() && !afterBreak)
             trace.open(tracePath);
-        unsigned displayWidth = m.vga.graphics ? m.vga.width : 640;
-        unsigned displayHeight = m.vga.graphics ? m.vga.height : 400;
+        auto [displayWidth,displayHeight]=display.dimensions(m);
         std::vector<uint32_t> pixels(size_t(displayWidth) * displayHeight);
         std::unique_ptr<Frontend> frontend;
         if (!headless && !frontendFactory) throw std::runtime_error("A frontend factory is required");
@@ -683,8 +682,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                     continue;
                 }
                 lastFrame = frameTicks;
-                unsigned newWidth = m.vga.graphics ? m.vga.width : 640;
-                unsigned newHeight = m.vga.graphics ? m.vga.height : 400;
+                auto [newWidth,newHeight]=display.dimensions(m);
                 if (displayHeight != newHeight || displayWidth != newWidth) {
                     displayWidth = newWidth;
                     pixels.resize(size_t(displayWidth) * newHeight);

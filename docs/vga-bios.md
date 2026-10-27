@@ -258,3 +258,18 @@ tables do not imply support for arbitrary guest replacement mode tables.
 Fonts are usable CP437 designs, not pixel-identical IBM ROM fonts. This is a
 useful standalone implementation for the verified guests, not full physical VGA
 conformance or an independently rewritten system BIOS.
+
+## Edge-case validation expansion
+
+Native text now scans actual VGA character/attribute planes and CRTC display
+start/stride, Preset Row Scan, byte/pel panning, and the ten-bit Line Compare.
+The lower screen restarts at address zero on the following scan line; the
+Attribute Pixel Panning Mode controls lower-screen horizontal reset. Nine-dot
+line-graphics replication, CRTC cursor location/shape and underline selection
+are rendered. Physical text captures expose the programmed 8/9-dot geometry.
+The host BIOS preset retains its RAM-shadow compatibility path.
+
+An independent full-frame oracle covers unaligned splits, overflow bits 8/9,
+zero/custom strides, wrapping starts and independent upper/lower panning. QEMU
+text captures are not a complete oracle here: its renderer rounds splits to
+character rows and omits text pel/preset-row panning. IBM 42G2193 is the contract.

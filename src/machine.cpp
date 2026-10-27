@@ -18,13 +18,13 @@ void Machine::bindDevices() {
     rtc.configure({cpu.mem.size(), bool(disk), bool(floppy)});
     bindIoPorts();
     cpu.videoRead = [this](uint32_t a) {
-        // COMPATIBILITY: host-backed text BIOS/rendering shares the RAM shadow;
-        // graphics apertures (including CGA at B8000) go through the VGA device.
-        if (a >= 0xb0000 && a < 0xc0000 && !vga.graphics) return cpu.mem[a];
+        // COMPATIBILITY: the host BIOS preset (odd/even disabled) uses a RAM
+        // text shadow. Native text and graphics use VGA plane/address decoding.
+        if (a >= 0xb0000 && a < 0xc0000 && !vga.graphics && (vga.seq[4] & VGA::OddEvenDisable)) return cpu.mem[a];
         return vga.read_memory(a);
     };
     cpu.videoWrite = [this](uint32_t a, uint8_t value) {
-        if (a >= 0xb0000 && a < 0xc0000 && !vga.graphics) {
+        if (a >= 0xb0000 && a < 0xc0000 && !vga.graphics && (vga.seq[4] & VGA::OddEvenDisable)) {
             cpu.mem[a] = value;
             cpu.written(a, 1);
             return;
