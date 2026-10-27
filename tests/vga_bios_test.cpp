@@ -604,6 +604,7 @@ void text_scanout_contract(Guest &g) {
     g.call(3);font(0,16,0x80);font(5,16,0x40);
     g.call(0x1103,0x24);g.call(0x0200,0,0,0);g.call(0x0941,0x07,1);
     g.call(0x0200,0,0,1);g.call(0x0941,0x0f,1);frame();
+    check(m.text().starts_with("AA"),"headless diagnostic text reads native character planes");
     check(pixels[0]==0xffaaaaaa && pixels[1]==0xff000000 && pixels[8]==0xff000000 &&
           pixels[9]==0xffaaaaaa,"dual font maps select plane-2 glyphs without foreground intensity");
     g.call(0);font(0,16,0x80);g.call(0x0941,0x1e,1);frame();

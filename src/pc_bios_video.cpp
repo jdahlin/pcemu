@@ -57,7 +57,13 @@ std::string Machine::text() const {
     for (unsigned y = 0; y < rows; y++) {
         std::string line;
         for (unsigned x = 0; x < columns; x++) {
-            auto ch = cpu.mem[base + activePage * pageBytes + (y * columns + x) * 2];
+            // Native VGA text lives in the character plane; the RAM shadow is
+            // used only by the synthetic host-BIOS preset. Read without touching
+            // VGA latches, just as the display's diagnostic capture does.
+            const bool native = !(vga.seq[4] & VGA::OddEvenDisable);
+            unsigned page = native ? cpu.mem[0x462] : activePage;
+            unsigned cell = page * (pageBytes / 2) + y * columns + x;
+            auto ch = native ? vga.planes[0][cell & 65535] : cpu.mem[base + cell * 2];
             line += ch >= 32 && ch < 127 ? char(ch) : ' ';
         }
         while (!line.empty() && line.back() == ' ')
