@@ -59414,5 +59414,110 @@
   },
   "finalCodeVerifiedRuns": 80,
   "retainedPrototypeRuns": 112,
-  "interpretation": "Sustained recalculation improvement is established at about 15%. Loading main/holdout results do not establish a consistent improvement. Existing direct links are slower in the measured loading comparisons and remain disabled. Background compilation is deferred."
+  "interpretation": "Sustained recalculation improvement is established at about 15%. Loading main/holdout results do not establish a consistent improvement. Existing direct links are slower in the measured loading comparisons and remain disabled. Background compilation is deferred.",
+  "integration": {
+    "implementationCommit": "b2f86db",
+    "workspaceHead": "be6669c8b4ceb729871a720c113b46e253748819",
+    "scope": "Compatibility smoke on the current primary workspace, with Library resumed; not part of controlled performance comparison",
+    "workspaceDirtyPaths": [
+      "?? tools/smoke_vga_edges.py"
+    ],
+    "emulatorSha256": "19c08582410a272c328034a7c931bfa7b5878b8aa60329bd0ddd017a08449bf3",
+    "contextTests": "PASS 12364 cached context checks\n",
+    "cachedBatchTests": "Passed 20456574 cached batch checks; multi-dispatch batches=8880; linked transitions=103944\n",
+    "word": {
+      "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+      "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+      "jit": true,
+      "profiled": false,
+      "instrumentsProfiled": false,
+      "jitDebugMapped": false,
+      "directLinks": false,
+      "followJumps": true,
+      "traces": false,
+      "emulatorSha256": "19c08582410a272c328034a7c931bfa7b5878b8aa60329bd0ddd017a08449bf3",
+      "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+      "restoreTimeoutSeconds": 10,
+      "shutdownTimeoutSeconds": 30,
+      "guestProfiled": false,
+      "frontend": "headless",
+      "hostInputSuppressed": false,
+      "emulator": "/Users/johandahlin/dev/pcemu/build/office-cached-context/integrated/pcemu",
+      "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+      "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+      "samples": [
+        {
+          "restoreReadyMs": 562.6522917300463,
+          "taskResponseMs": 1697.4927498959005,
+          "processCpuTime": {
+            "status": "available",
+            "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+            "userMs": 1437.598375,
+            "systemMs": 167.486542,
+            "totalMs": 1605.084917
+          },
+          "instructions": 97022964,
+          "nativeInstructions": 93430604,
+          "compiledBlocks": 72296,
+          "nativeMemoryCalls": 1969478,
+          "directLinkTransitions": 0,
+          "directLinkPromotions": 0,
+          "directLinkBlocks": 0,
+          "executionWallMs": 1468.978258,
+          "shutdownWaitMs": 34.46175018325448,
+          "exitStatus": 0
+        }
+      ],
+      "medianRestoreReadyMs": 562.6522917300463,
+      "medianTaskResponseMs": 1697.4927498959005,
+      "medianProcessCpuMs": 1605.084917
+    },
+    "excelLoad": {
+      "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+      "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+      "jit": true,
+      "profiled": false,
+      "instrumentsProfiled": false,
+      "jitDebugMapped": false,
+      "directLinks": false,
+      "followJumps": true,
+      "traces": false,
+      "emulatorSha256": "19c08582410a272c328034a7c931bfa7b5878b8aa60329bd0ddd017a08449bf3",
+      "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+      "restoreTimeoutSeconds": 10,
+      "shutdownTimeoutSeconds": 30,
+      "guestProfiled": false,
+      "frontend": "headless",
+      "hostInputSuppressed": false,
+      "emulator": "/Users/johandahlin/dev/pcemu/build/office-cached-context/integrated/pcemu",
+      "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+      "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+      "samples": [
+        {
+          "restoreReadyMs": 191.66866689920425,
+          "taskResponseMs": 1352.8831247240305,
+          "processCpuTime": {
+            "status": "available",
+            "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+            "userMs": 1146.763542,
+            "systemMs": 140.001875,
+            "totalMs": 1286.765417
+          },
+          "instructions": 48237879,
+          "nativeInstructions": 44914512,
+          "compiledBlocks": 66424,
+          "nativeMemoryCalls": 1647617,
+          "directLinkTransitions": 0,
+          "directLinkPromotions": 0,
+          "directLinkBlocks": 0,
+          "executionWallMs": 1160.439998,
+          "shutdownWaitMs": 18.66833306849003,
+          "exitStatus": 0
+        }
+      ],
+      "medianRestoreReadyMs": 191.66866689920425,
+      "medianTaskResponseMs": 1352.8831247240305,
+      "medianProcessCpuMs": 1286.765417
+    }
+  }
 }

@@ -162,3 +162,14 @@ ignored `build/office-cached-context`. Use `final-measure.py` for the main cohor
 `--instruments --jit-debug-map` are separate diagnostic runs. Existing guest
 images and small private compressed children were reused; successful children
 were removed. No VM images, build products or raw traces are committed.
+
+## Integration check
+
+Implementation commit `b2f86db` applies the isolated change on top of the current
+primary checkout's VGA work. A fresh integrated Release build passes the
+12,364 context checks and 20,456,574 cached-batch checks. Additional independent
+Word and Excel loading restores pass their original pixel gates. Concurrent
+graphics/display development continued in the workspace; these are compatibility
+smoke checks with Library resumed, excluded from the controlled timing table.
+The integrated executable hash, test logs and gate results are retained in the
+JSON report.
