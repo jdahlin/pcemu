@@ -136,6 +136,22 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = uint32_t(-w);
                 block.usesStack = true;
+            } else if (op == 0x8f) {
+                auto m = byte();
+                if (m & 0x38) { pos = begin; break; }
+                i.kind = Kind::Memory;
+                i.stackDelta = w;
+                block.usesStack = true;
+                if ((m >> 6) == 3) {
+                    i.dst = i.memory.reg = m & 7;
+                    i.memory.base = SP;
+                    i.memory.segment = SS;
+                    i.memory.address32 = block.stack32;
+                } else {
+                    i.memoryPop = true;
+                    i.memory = memoryOperand(m,address32,overrideSegment);
+                    i.memory.store = true;
+                }
             } else if (op == 0x9c || op == 0x9d) {
                 i.kind = Kind::Memory;
                 i.pushFlags = op == 0x9c;

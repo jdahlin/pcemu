@@ -2034,3 +2034,14 @@ Excel. All 48 matched release restores pass. CPU time is 27.26% below the origin
 Word baseline and 12.22% below Excel's; incremental medians are 0.96% and 1.61%
 lower. Word's small difference is mixed; Excel wins all four pairs. See
 [semantics, measurements and limits](measurements/office-interrupt-control-2026-10-27.md).
+
+### Word and Excel: POP r/m coverage (2026-10-27)
+
+Register POP r/m reuses guarded POP; memory forms use a paired warm-RAM helper
+with post-pop ESP addressing and pre-access replay for dirty/cold/device/code
+paths. Validation passes 9,678 new checks plus the reference and batch suites,
+including aliased PTE updates and callback-visible SP order. Interpreted attempts
+fall 90% in Word and 93% in Excel. All 48 matched release restores pass. CPU time
+is 26.94% below the original Word baseline and 12.57% below Excel's. Incremental
+medians are within control variation, so no reliable speedup is established.
+See [semantics, measurements and limits](measurements/office-pop-memory-2026-10-27.md).

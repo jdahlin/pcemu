@@ -79,6 +79,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.memoryPop) usedRegisters |= 1u << SP;
         if (i.stackMany) usedRegisters |= 255;
         if (i.leaveFrame) usedRegisters |= 1u << SP;
         if (i.kind == Kind::Divide || i.memoryDivide)
@@ -92,7 +93,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl)
             continue;
-        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -868,6 +869,31 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if (i.kind == Kind::Memory) {
             std::vector<size_t> invalidCalls;
+            if (i.memoryPop) {
+                const auto &op=i.memory;
+                // Reconstruct ESP after the pop, preserving its high half for
+                // a 16-bit stack even when the destination uses 32-bit addressing.
+                mov(9,20+SP);
+                emit(0x11000000u | (i.w << 10) | ((20+SP) << 5) | 10);
+                insert(9,10,block.stack32 ? 4 : 2,0);
+                imm(3,op.displacement);
+                if (op.base >= 0)
+                    emit(0x0b000000u | ((op.base==SP ? 9 : 20+op.base) << 16) | (3 << 5) | 3);
+                if (op.index >= 0)
+                    emit(0x0b000000u | ((20+op.index) << 16) | (op.scale << 10) | (3 << 5) | 3);
+                if (!op.address32) extract(3,3,2,0);
+                extract(2,20+SP,block.stack32 ? 4 : 2,0);
+                emit(0xaa1303e0u);
+                pointer(1,reinterpret_cast<uintptr_t>(&block.native->memory[memoryIndex++]));
+                call(reinterpret_cast<uintptr_t>(&jit_detail::nativePopMemory));
+                const auto success=code.size();emit(0x35000000u); // cbnz w0,success
+                replay(i.start,unsigned(n),dirtyRegisters);
+                code[success] |= uint32_t(code.size()-success) << 5;
+                emit(0x11000000u | (i.w << 10) | ((20+SP) << 5) | 11);
+                insert(20+SP,11,block.stack32 ? 4 : 2,0);
+                dirtyRegisters |= 1u << SP;
+                continue;
+            }
             if (i.nearCall || i.memoryPush) {
                 if (i.memoryCall || i.memoryPush) {
                     // Read the source with the old SP/ESP and guarded RAM-only

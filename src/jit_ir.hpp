@@ -16,6 +16,7 @@ struct Instruction {
     bool immediate;
     int segmentRegister = -1;
     bool segmentLoad = false; // Register/guarded memory selector -> hidden segment state.
+    bool memoryPop = false; // Guard stack read and post-increment destination before access.
     bool memoryShift = false; // RAM-hit shift/rotate RMW; unsafe writes replay before access.
     bool memoryDivide = false; // Native RAM-hit division with guarded interpreter replay.
     bool memoryMultiply = false; // Two/three-operand signed multiply after a successful read.

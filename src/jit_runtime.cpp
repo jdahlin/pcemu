@@ -55,6 +55,47 @@ uint32_t nativeSegment(CPU *cpu, unsigned seg, uint32_t selector, unsigned compl
         return 0; // Fault delivery occurs after the native frame returns.
     }
 }
+// Data probes differ from descriptor probes: ordinary accesses obey current
+// user/system permissions and writes require an already-dirty translation.
+static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, bool write,
+                            uint32_t &physical) {
+    if ((linear & 4095) + width > 4096) return false;
+    physical = linear;
+    if (cpu.cr[0] & 0x80000000u) {
+        if (cpu.tlbCR3 != cpu.cr[3]) return false;
+        const auto page = linear >> 12;
+        const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size()-1)];
+        if (entry.epoch != cpu.tlbEpoch || entry.tag != page || (write && !entry.dirty)) return false;
+        if (cpu.cpl() == 3 && !cpu.systemAccess &&
+            (!(entry.permissions & 4) || (write && !(entry.permissions & 2)))) return false;
+        physical = entry.base | (linear & 4095);
+    }
+    if (!cpu.a20) physical &= ~(1u << 20);
+    const uint64_t end = uint64_t(physical) + width;
+    return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
+           !(physical < 0xe1000000 && end > 0xe0000000);
+}
+uint32_t nativePopMemory(CPU *cpu, const NativeMemoryMove *destination, uint32_t stackOffset,
+                         uint32_t destinationOffset) noexcept {
+    cpu->nativeMemoryCalls++;
+    const unsigned width = destination->width;
+    if ((width != 2 && width != 4) || cpu->watchWrite) return 0;
+    try {
+        uint32_t source, target;
+        if (!warmDataAddress(*cpu,cpu->address(SS,stackOffset),width,false,source) ||
+            !warmDataAddress(*cpu,cpu->address(destination->segment,destinationOffset),width,true,target)) return 0;
+        if (cpu->codeUsed[target >> 6] || cpu->codeUsed[(target+width-1) >> 6]) return 0;
+        // Both probes are side-effect-free. Capture the entire source before
+        // the write, including physically aliased or overlapping operands.
+        uint32_t value = 0;
+        std::memcpy(&value,cpu->mem.data()+source,width);
+        std::memcpy(cpu->mem.data()+target,&value,width);
+        cpu->written(target,width);
+        return 1;
+    } catch (const Fault &) {
+        return 0; // Architectural exceptions are delivered after frame return.
+    }
+}
 // No C++ exception can unwind through generated ARM64 frames. Decline before
 // touching devices or guest data; the dispatcher replays that instruction in
 // the interpreter with committed GPRs, flags and its original instruction IP.
