@@ -393,6 +393,15 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.base = i.memory.store ? DI : SI;
                 i.memory.segment = i.memory.store ? ES : overrideSegment < 0 ? DS : overrideSegment;
                 i.memory.address32 = address32;
+            } else if (op == 0xd7) {
+                i.kind = Kind::Memory;
+                i.xlat = true;
+                i.w = 1;
+                i.dst = i.memory.reg = AX;
+                i.memory.base = BX;
+                i.memory.index = AX;
+                i.memory.segment = overrideSegment < 0 ? DS : overrideSegment;
+                i.memory.address32 = address32;
             } else if (op == 0xfa || op == 0xfb) {
                 i.kind = Kind::InterruptControl;
                 i.op = op == 0xfb;

@@ -2056,3 +2056,13 @@ attempts fall 93% in Word and 99% in Excel; all 48 matched release restores pass
 CPU time is 26.76% below the original Word baseline and 12.34% below Excel's.
 Small incremental medians are higher (0.08%/0.14%), so no performance gain is
 claimed. See [semantics, measurements and limits](measurements/office-double-shift-2026-10-27.md).
+
+### Word and Excel: XLAT coverage (2026-10-27)
+
+XLAT now lowers as a guarded byte lookup using only AL as the index, independent
+operand/address sizes, dynamic segment overrides and pre-access replay for cold
+or unsafe reads. Validation passes 17,697,596 XLAT checks plus the core/batch
+suites. Interpreter attempts fall from 44,552 to 123 in Word and 111,641 to 64 in
+Excel. All 48 matched release restores pass. CPU time is 27.76% below the original
+Word baseline and 13.06% below Excel's; the small incremental differences remain
+within control variation. See [semantics, measurements and limits](measurements/office-xlat-2026-10-27.md).

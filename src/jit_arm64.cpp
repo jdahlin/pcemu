@@ -1164,9 +1164,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             imm(2, i.memory.displacement);
             if (i.memory.base >= 0)
                 emit(0x0b000000u | ((20 + i.memory.base) << 16) | (2 << 5) | 2);
-            if (i.memory.index >= 0)
-                emit(0x0b000000u | ((20 + i.memory.index) << 16) | (i.memory.scale << 10) |
-                     (2 << 5) | 2);
+            if (i.memory.index >= 0) {
+                int index=20+i.memory.index;
+                if (i.xlat) {
+                    extract(13,index,1,0);
+                    index=13;
+                }
+                emit(0x0b000000u | (index << 16) | (i.memory.scale << 10) | (2 << 5) | 2);
+            }
             if (!i.memory.address32)
                 emit(0x53003c00u | (2 << 5) | 2);
             if (i.memory.bit >= 4 && !i.immediate) {
@@ -1384,7 +1389,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags) {
+            if (i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.

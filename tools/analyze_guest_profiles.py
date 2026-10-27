@@ -7,7 +7,7 @@ from pathlib import Path
 
 TIMING_FIELDS = ('cpuLeafAttempts', 'cpuSamples', 'cpuRawNs', 'cpuAdjustedNs',
                  'cpuFaultSamples', 'cpuExceptionSamples')
-NAMES = {0x63:'ARPL',0xcd:'INT imm8',0xab:'STOSW/D',0xe6:'OUT imm8,AL',0x8f:'POP rm',0x8b:'MOV r,rm',0x89:'MOV rm,r',0x83:'ALU rm,imm8',0x74:'JZ',0x75:'JNZ',
+NAMES = {0xd7:'XLAT',0x63:'ARPL',0xcd:'INT imm8',0xab:'STOSW/D',0xe6:'OUT imm8,AL',0x8f:'POP rm',0x8b:'MOV r,rm',0x89:'MOV rm,r',0x83:'ALU rm,imm8',0x74:'JZ',0x75:'JNZ',
          0xff:'INC/DEC/CALL/JMP/PUSH group',0x3b:'CMP r,rm',0x39:'CMP rm,r',0x2b:'SUB r,rm',
          0xe8:'CALL relative',0xc3:'RET near',0xc2:'RET near imm',0xf6:'TEST/unary byte group',
          0xf7:'TEST/unary word/dword group',0xc1:'shift/rotate immediate',0xd0:'byte shift/rotate 1',

@@ -16,6 +16,7 @@ struct Instruction {
     bool immediate;
     int segmentRegister = -1;
     bool segmentLoad = false; // Register/guarded memory selector -> hidden segment state.
+    bool xlat = false; // BX/EBX + zero-extended AL, with guarded pre-access replay.
     bool memoryPop = false; // Guard stack read and post-increment destination before access.
     bool memoryDoubleShift = false; // SHLD/SHRD, including address-only zero counts.
     bool memoryShift = false; // RAM-hit shift/rotate RMW; unsafe writes replay before access.
