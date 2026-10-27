@@ -75,3 +75,14 @@ check that control-word/first-byte writes preserve the origin and the completed
 count write changes it. The no-sound release now advances to populated, animated
 graphics; an exploratory capture shows the translucent polygon scene. Full-run,
 raster fidelity and sound validation remain separate requirements.
+
+### BIOS clock coherence correction
+
+The later stall exposed a second timing defect: INT 1Ah returned a private tick
+mirror even after the demo's timer replacement updated the public BIOS data
+area. BIOS get/set-time and firmware IRQ0 now share 0040:006Ch and the midnight
+flag. The same 40-second JIT completion probe then records 274 distinct frames
+and continues through the plasma and 3D scenes; its final samples are still
+changing at 2.44 billion instructions. That shorter watchdog still expires, so
+it does not establish completion. The earlier 1.14-billion-instruction stall is
+resolved. Literal BIOS clock tests pass with the main CPU/component suites.

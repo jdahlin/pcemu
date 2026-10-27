@@ -202,3 +202,18 @@ Literal CPU tests cover both engine entry paths, return IP/flags, IRET, clearing
 TF, SS suppression, REP progress, and INT3 priority. The RAM-only VGA guest probe
 also exercises an INT 1 handler that clears saved TF and verifies the return IP;
 `python3 tools/smoke_vga_bios.py --qemu` runs that exact guest on QEMU as well.
+
+## BIOS timer data-area coherence
+
+INT 1Ah AH=00h now reads the public dword at 0040:006Ch, returns and clears the
+midnight byte at 0040:0070h, and refreshes the diagnostic host mirror. AH=01h
+sets the public count and clears midnight indication. The firmware IRQ0 handler
+increments that same public count and rolls it over at 001800B0h ticks, setting
+the midnight flag. Guest timer replacements such as Second Reality's copper
+can therefore update the counter without leaving DOS time reads frozen on a
+private host value. The RTC calendar services remain a separate clock source.
+
+Reference: Ralf Brown Interrupt List 61, [INT 1Ah/AH=00h](https://fd.lod.bz/rbil/interrup/bios/1a00.html)
+and [AH=01h](https://fd.lod.bz/rbil/interrup/bios/1a01.html). Literal component
+checks cover external BDA writes, one-shot midnight consumption, setting time,
+IRQ midnight rollover and continuation from a guest-updated count.

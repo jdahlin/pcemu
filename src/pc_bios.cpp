@@ -96,7 +96,14 @@ bool Machine::service(uint8_t n, bool guestStub) {
     };
     switch (n) {
     case 8:
-        ticks++;
+        // Guest IRQ handlers can maintain the public BIOS data-area counter.
+        // Read that counter before incrementing; the host mirror is not its owner.
+        // IBM PC/AT Technical Reference, BIOS TIMER_INT / TIME_OF_DAY listings.
+        ticks = cpu.read(0x46c, 4) + 1;
+        if (ticks >= 0x1800b0) {
+            ticks = 0;
+            cpu.write(0x470, 1, 1); // Midnight-passed flag, consumed by INT 1Ah.
+        }
         cpu.write(0x46c, ticks, 4);
         if (!guestStub)
             out(0x20, 0x20, 1);
@@ -660,9 +667,20 @@ bool Machine::service(uint8_t n, bool guestStub) {
             break;
         }
         if (ah == 0) {
+            // INT 1Ah reads the same BDA count maintained by guest timer hooks.
+            // https://fd.lod.bz/rbil/interrup/bios/1a00.html
+            ticks = c.read(0x46c, 4);
             c.set(CX, ticks >> 16, 2);
             c.set(DX, ticks, 2);
-            c.set(AX, 0, 1);
+            c.set(AX, c.read(0x470, 1), 1);
+            c.write(0x470, 0, 1);
+            c.flags &= ~CF;
+        } else if (ah == 1) {
+            // Set ticks since midnight and clear the rollover indication.
+            // https://fd.lod.bz/rbil/interrup/bios/1a01.html
+            ticks = (c.get(CX, 2) << 16) | c.get(DX, 2);
+            c.write(0x46c, ticks, 4);
+            c.write(0x470, 0, 1);
             c.flags &= ~CF;
         } else if (ah == 2 || ah == 4) {
             std::time_t now = rtcTime();

@@ -16,6 +16,24 @@ static void check(bool condition) {
 }
 int main() {
     {
+        Machine m("", "", 2*1024*1024);
+        auto &c=m.cpu;
+        m.ticks=7;
+        c.write(0x46c,0x123456,4);c.write(0x470,1,1);
+        c.set(AX,0,2);m.service(0x1a);
+        check(c.get(CX,2)==0x12 && c.get(DX,2)==0x3456 && c.get(AX,1)==1);
+        check(c.read(0x470,1)==0 && m.ticks==0x123456);
+        c.set(AX,0,2);m.service(0x1a);check(c.get(AX,1)==0);
+        c.write(0x470,1,1);c.set(AX,0x100,2);c.set(CX,0x17,2);c.set(DX,0xffff,2);
+        m.service(0x1a);
+        check(c.read(0x46c,4)==0x17ffff && c.read(0x470,1)==0);
+        c.write(0x46c,0x1800af,4);m.service(8);
+        check(c.read(0x46c,4)==0 && c.read(0x470,1)==1 && m.ticks==0);
+        c.write(0x46c,100,4);m.service(8);
+        check(c.read(0x46c,4)==101 && m.ticks==101);
+    }
+
+    {
         check(HostCursor::monoData(0x33, 0x55) == 0x99 && HostCursor::monoMask(0x33) == 0xcc);
         // AND/XOR: black, white, transparent and inverted pixels map to SDL.
         Machine vm("", "", 2 * 1024 * 1024);
