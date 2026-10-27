@@ -82,12 +82,15 @@ void Machine::initializeFirmware() {
     cpu.write(0x484, 24, 1);
     cpu.write(0x485, 16, 2);
     cpu.write(0x475, disk ? 1 : 0, 1);
-    // Configuration table returned by INT 15h/C0h: AT with a math coprocessor.
+    // INT 15h/C0h configuration: AT, RTC and cascaded interrupt controllers.
+    // Feature byte 1, RBIL table 00510: bit 6 is the second 8259, bit 5 RTC.
+    // Do not claim an EBDA: no extended BIOS data area is allocated here.
+    // https://fd.lod.bz/rbil/interrup/bios/15c0.html#table-00510
     cpu.write(0xf0300, 8, 2);
     cpu.write(0xf0302, 0xfc, 1);
     cpu.write(0xf0303, 1, 1);
     cpu.write(0xf0304, 0, 1);
-    cpu.write(0xf0305, 0x24, 1);
+    cpu.write(0xf0305, 0x60, 1);
     for (unsigned i = 0; i < 80 * 25; i++)
         cpu.write(0xb8000 + i * 2, 0x0720, 2);
     // 386/387: MP is set, EM/TS clear until protected-mode task switching.

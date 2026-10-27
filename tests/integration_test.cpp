@@ -29,6 +29,12 @@ int main() {
                 disk.write(sector.data(), sector.size());
             }
             Machine machine(diskPath.string(), "", 2 * 1024 * 1024);
+            machine.cpu.r[AX]=0xc000;
+            machine.service(0x15);
+            unsigned config=machine.cpu.s[ES].base+machine.cpu.get(BX,2);
+            check(!(machine.cpu.flags&CF) && machine.cpu.get(AX,1)==0 &&
+                      machine.cpu.read(config+2,1)==0xfc && machine.cpu.read(config+5,1)==0x60,
+                  "AT BIOS configuration advertises RTC and the IRQ8-15 controller without a fictitious EBDA");
             machine.ata.irq = true;
             machine.ataLine = true;
             machine.cpu.input(0x3f6, 1);
