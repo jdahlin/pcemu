@@ -215,8 +215,14 @@ void CPU::set(int reg, uint32_t v, int w) {
     } else
         r[reg] = (r[reg] & ~mask(w)) | (v & mask(w));
 }
-uint32_t CPU::address(int seg, uint32_t off) const {
+uint32_t CPU::address(int seg, uint32_t off, unsigned width) const {
     if ((cr[0] & 1) && !(flags & 0x20000) && s[seg].unusable)
+        throw Fault{uint8_t(seg == SS ? 12 : 13), 0, true};
+    // Intel 80386 PRM 14.7, Table 14-2: real/V86 operands must fit
+    // completely within the cached segment limit. SS selects #SS, others #GP.
+    // https://pdos.csail.mit.edu/6.828/2018/readings/i386/s14_07.htm
+    if ((!(cr[0] & 1) || (flags & 0x20000)) &&
+        uint64_t(off) + width - 1 > s[seg].limit)
         throw Fault{uint8_t(seg == SS ? 12 : 13), 0, true};
     return s[seg].base + off;
 }
@@ -279,17 +285,17 @@ Segment decodeSegmentDescriptor(int seg, uint16_t sel, uint32_t lo, uint32_t hi)
     return d;
 }
 uint32_t CPU::fetch(int w) {
-    auto v = read(address(CS, ip), w);
+    auto v = read(address(CS, ip, w), w);
     ip = (ip + w) & (s[CS].big ? 0xffffffff : 0xffff);
     return v;
 }
 void CPU::push(uint32_t v, int w) {
     uint32_t p = (r[SP] - w) & (s[SS].big ? 0xffffffff : 0xffff);
     set(SP, p, s[SS].big ? 4 : 2);
-    write(address(SS, p), v, w);
+    write(address(SS, p, w), v, w);
 }
 uint32_t CPU::pop(int w) {
-    auto p = get(SP, s[SS].big ? 4 : 2), v = read(address(SS, p), w);
+    auto p = get(SP, s[SS].big ? 4 : 2), v = read(address(SS, p, w), w);
     set(SP, p + w, s[SS].big ? 4 : 2);
     return v;
 }
@@ -363,16 +369,20 @@ CPU::Operand CPU::decode(uint8_t m, bool a32, int over) {
             off += fetch(2);
         off &= 65535;
     }
-    return {false, 0, over == -2 ? off : address(over < 0 ? seg : over, off)};
+    seg = over < 0 ? seg : over;
+    return {false, 0, over == -2 ? off : address(seg, off), over == -2 ? -1 : seg};
 }
 uint32_t CPU::load(Operand o, int w) {
+    if (!o.reg && o.segment >= 0) address(o.segment, o.linear - s[o.segment].base, w);
     return o.reg ? get(o.index, w) : read(o.linear, w);
 }
 void CPU::store(Operand o, uint32_t v, int w) {
     if (o.reg)
         set(o.index, v, w);
-    else
+    else {
+        if (o.segment >= 0) address(o.segment, o.linear - s[o.segment].base, w);
         write(o.linear, v, w);
+    }
 }
 uint32_t CPU::alu(int op, uint32_t a, uint32_t b, int w) {
     uint32_t m = mask(w), sign = 1u << (w * 8 - 1), v = 0;
@@ -1222,7 +1232,7 @@ void CPU::stepImpl() {
     case 0xa3: {
         auto off = fetch(aw);
         int bw = op & 1 ? w : 1;
-        auto addr = address(over < 0 ? DS : over, off);
+        auto addr = address(over < 0 ? DS : over, off, bw);
         if (op & 2)
             write(addr, get(AX, bw), bw);
         else
@@ -1268,11 +1278,11 @@ void CPU::stepImpl() {
                 auto si = get(SI, aw), di = get(DI, aw);
                 unsigned kind = op & 0xfe;
                 auto src = (kind == 0x6e || kind == 0xa4 || kind == 0xa6 || kind == 0xac)
-                               ? address(over < 0 ? DS : over, si)
+                               ? address(over < 0 ? DS : over, si, bw)
                                : 0;
                 auto dst =
                     (kind == 0x6c || kind == 0xa4 || kind == 0xa6 || kind == 0xaa || kind == 0xae)
-                        ? address(ES, di)
+                        ? address(ES, di, bw)
                         : 0;
                 // Repeated forward fills can reuse a validated translation until
                 // the next linear page. Never speculate a page walk or a write:

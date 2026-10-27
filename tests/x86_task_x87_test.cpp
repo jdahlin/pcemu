@@ -334,9 +334,45 @@ static void divide_faults() {
               "divide fault preserves dividend and restart IP");
     }
 }
+// Real-mode full-width bounds precede reads/writes, including native memory
+// accesses. Intel 80386 PRM 14.7, Table 14-2; LEA only computes an offset.
+static void real_segment_bounds() {
+    struct Stop {};
+    struct Case { std::vector<uint8_t> code; unsigned segment,width,offset,vector; };
+    const std::vector<Case> cases={
+        {{0x67,0x01,0x03},DS,2,0x10000,13},
+        {{0x01,0x07},DS,2,0xffff,13},
+        {{0x66,0x01,0x07},DS,4,0xfffd,13},
+        {{0x36,0x01,0x07},SS,2,0xffff,12},
+        {{0x67,0x88,0x03},DS,1,0xffffffff,13},
+        {{0xa1,0xff,0xff},DS,2,0xffff,13}};
+    for(bool native:{false,true})for(const auto &test:cases) {
+        CPU c;c.ip=0x100;c.r[BX]=test.offset;c.r[AX]=0x1234;c.r[SP]=0x8000;
+        c.s[test.segment].base=0xa0000;
+        std::copy(test.code.begin(),test.code.end(),c.mem.begin()+0x100);
+        c.videoRead=[](uint32_t)->uint8_t{throw std::runtime_error("faulting segment read device");};
+        c.videoWrite=[](uint32_t,uint8_t){throw std::runtime_error("faulting segment wrote device");};
+        unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+        Jit jit(c,native,0,65536);
+        try {if(native)jit.run();else c.step();}catch(const Stop &){}
+        check(vector==test.vector && c.ip==0x100 && c.r[AX]==0x1234 && c.r[SP]==0x8000,
+              "segment bounds fault before memory side effects and preserve restart state");
+    }
+    for(bool native:{false,true}) {
+        CPU c;c.ip=0x100;c.r[BX]=0xfffe;c.r[AX]=2;c.mem[0xfffe]=3;
+        const uint8_t code[]={0x01,0x07,0xf4};std::copy(std::begin(code),std::end(code),c.mem.begin()+0x100);
+        Jit jit(c,native,0,65536);if(native)jit.run();else c.step();
+        check(c.read(0xfffe,2)==5,"last valid segment word executes");
+        CPU lea;lea.ip=0x100;lea.r[BX]=0x12345678;
+        const uint8_t address[]={0x67,0x66,0x8d,0x03,0xf4};
+        std::copy(std::begin(address),std::end(address),lea.mem.begin()+0x100);
+        Jit lj(lea,native,0,65536);if(native)lj.run();else lea.step();
+        check(lea.r[AX]==0x12345678,"LEA does not validate a memory access");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

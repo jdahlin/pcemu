@@ -1430,6 +1430,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                          (19 << 5) | 9); // ldrb w9,[x19,#unusable]
                     guard(0x35000009u);  // cbnz w9,slow
                 }
+                if (!(block.cr0 & 1) || block.vm) {
+                    // Validate the full segment span before any inline RAM access.
+                    load(9, 19, segmentOffset + offsetof(Segment, limit));
+                    if (accessWidth > 1) {
+                        compareImmediate(9, accessWidth - 1);
+                        guard(0x54000003u); // b.lo slow
+                        emit(0x51000000u | ((accessWidth - 1) << 10) | (9 << 5) | 9);
+                    }
+                    emit(0x6b09005fu); // cmp w2,w9
+                    guard(0x54000008u); // b.hi slow
+                }
                 load(9, 19, segmentOffset + offsetof(Segment, base));
                 emit(0x0b020129u); // add w9,w9,w2 (linear address, wraps at 32 bits)
                 if (accessWidth > 1) {

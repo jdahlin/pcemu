@@ -134,6 +134,8 @@ int main() {
             std::vector<uint32_t> expected, actual;
             for (auto c : {&ref, &native}) {
                 std::copy(bytes.begin(),bytes.end(),c->mem.begin());
+                // This flat synthetic fixture uses an unreal-mode cached data limit.
+                c->s[DS].limit=0xffffffff;
                 c->s[CS].big=true; c->r[AX]=0x12345678; c->flags=0x203;
                 c->videoRead=[&,c](uint32_t a) {
                     (c==&ref ? expected : actual).push_back(a); return uint8_t(a^0xa5);

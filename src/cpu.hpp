@@ -90,7 +90,7 @@ struct CPU {
     void write(uint32_t linear, uint32_t value, int width);
     uint32_t get(int reg, int width) const;
     void set(int reg, uint32_t value, int width);
-    uint32_t address(int seg, uint32_t offset) const;
+    uint32_t address(int seg, uint32_t offset, unsigned width = 1) const;
     void segment(int seg, uint16_t selector);
     uint32_t fetch(int width);
     // Compiled pre-access #UD: registers/flags/IP already hold restart state.
@@ -149,6 +149,7 @@ struct CPU {
         bool reg;
         uint8_t index;
         uint32_t linear;
+        int segment = -1;
     };
     Operand decode(uint8_t modrm, bool address32, int overrideSeg);
     uint32_t load(Operand o, int w);

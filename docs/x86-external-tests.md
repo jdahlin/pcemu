@@ -109,3 +109,10 @@ mismatches, notably real-mode segment/access boundaries and instruction fetches
 crossing FFFFh. They remain visible in the extended logs and are not silently
 filtered into the passing smoke sample. Recorded scopes, counts, failures and
 reference status are in [the validation record](measurements/x86-external-2026-10-27.json).
+
+The first follow-up enforces complete real/V86 memory operand and stack bounds
+in the interpreter and native memory paths. The selected 28-shard run now has
+10 failing executions (previously 1,854); all address-size shards pass. The
+remaining selected cases involve instruction fetch wrapping and an interrupt
+vector aliased by the exception stack. Focused segment regressions include
+pre-access device isolation, #SS versus #GP, the last valid word, and LEA.

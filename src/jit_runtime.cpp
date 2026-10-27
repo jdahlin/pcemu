@@ -513,7 +513,7 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
             cpu->nativeFallback = true;
             return 0;
         }
-        auto linear = cpu->address(op->segment, offset);
+        auto linear = cpu->address(op->segment, offset, op->width);
         if ((linear & 4095) + op->width > 4096) {
             cpu->nativeFallback = true;
             return 0;
