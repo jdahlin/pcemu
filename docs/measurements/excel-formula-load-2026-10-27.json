@@ -1,0 +1,3602 @@
+{
+  "fixture": {
+    "rows": 64,
+    "sheets": [
+      "Summary",
+      "Model",
+      "Inputs"
+    ],
+    "formulaRecords": 650,
+    "bytes": 42496,
+    "sha256": "bcc2c8d927db77d04f2b144400b4bfe982ad05718cd940f7b4ebecedbcdb4d7c",
+    "expectedSummary": [
+      348232,
+      348232,
+      894,
+      34,
+      66.65876780676432,
+      18060,
+      136,
+      64,
+      384557,
+      64
+    ],
+    "changedSummary": [
+      679552,
+      679552,
+      1788,
+      42,
+      92.90299174573802,
+      36120,
+      272,
+      64,
+      769114,
+      64
+    ]
+  },
+  "runs": {
+    "original": [
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 182.44745768606663,
+            "taskResponseMs": 1519.4477909244597,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1327.17075,
+              "systemMs": 147.634417,
+              "totalMs": 1474.805167
+            },
+            "instructions": 48185207,
+            "nativeInstructions": 38458133,
+            "compiledBlocks": 58115,
+            "nativeMemoryCalls": 1333964,
+            "executionWallMs": 1332.434199,
+            "shutdownWaitMs": 39.04537484049797,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 182.44745768606663,
+        "medianTaskResponseMs": 1519.4477909244597,
+        "medianProcessCpuMs": 1474.805167
+      },
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 177.9928752221167,
+            "taskResponseMs": 1726.1113338172436,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1503.412,
+              "systemMs": 171.091042,
+              "totalMs": 1674.503042
+            },
+            "instructions": 50067798,
+            "nativeInstructions": 39912533,
+            "compiledBlocks": 59697,
+            "nativeMemoryCalls": 1400359,
+            "executionWallMs": 1507.774237,
+            "shutdownWaitMs": 39.139917120337486,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 177.9928752221167,
+        "medianTaskResponseMs": 1726.1113338172436,
+        "medianProcessCpuMs": 1674.503042
+      },
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 177.55758296698332,
+            "taskResponseMs": 1845.3371250070632,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1571.464375,
+              "systemMs": 182.641833,
+              "totalMs": 1754.106208
+            },
+            "instructions": 51932929,
+            "nativeInstructions": 41707793,
+            "compiledBlocks": 62844,
+            "nativeMemoryCalls": 1390655,
+            "executionWallMs": 1599.214656,
+            "shutdownWaitMs": 37.720917258411646,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 177.55758296698332,
+        "medianTaskResponseMs": 1845.3371250070632,
+        "medianProcessCpuMs": 1754.106208
+      }
+    ],
+    "current": [
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "fd54e56b4b6c8cfa8c09ae192b4dce99c27f71feff0c0d08f25eb20c1fb3130f",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-enter/final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 175.84070842713118,
+            "taskResponseMs": 1244.0934996120632,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1071.687958,
+              "systemMs": 130.97675,
+              "totalMs": 1202.664708
+            },
+            "instructions": 49560233,
+            "nativeInstructions": 46160728,
+            "compiledBlocks": 66434,
+            "nativeMemoryCalls": 1759281,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1080.568087,
+            "shutdownWaitMs": 37.855708971619606,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 175.84070842713118,
+        "medianTaskResponseMs": 1244.0934996120632,
+        "medianProcessCpuMs": 1202.664708
+      },
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "fd54e56b4b6c8cfa8c09ae192b4dce99c27f71feff0c0d08f25eb20c1fb3130f",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-enter/final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 180.59474974870682,
+            "taskResponseMs": 1346.8673340976238,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1156.084042,
+              "systemMs": 143.830666,
+              "totalMs": 1299.914708
+            },
+            "instructions": 47327765,
+            "nativeInstructions": 44009593,
+            "compiledBlocks": 66282,
+            "nativeMemoryCalls": 1587004,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1174.81676,
+            "shutdownWaitMs": 35.58020805940032,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 180.59474974870682,
+        "medianTaskResponseMs": 1346.8673340976238,
+        "medianProcessCpuMs": 1299.914708
+      },
+      {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "fd54e56b4b6c8cfa8c09ae192b4dce99c27f71feff0c0d08f25eb20c1fb3130f",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-enter/final/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 181.59175012260675,
+            "taskResponseMs": 1319.7220829315484,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1140.154083,
+              "systemMs": 139.152333,
+              "totalMs": 1279.306416
+            },
+            "instructions": 47327765,
+            "nativeInstructions": 44009593,
+            "compiledBlocks": 66282,
+            "nativeMemoryCalls": 1587004,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1158.556261,
+            "shutdownWaitMs": 38.07454230263829,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 181.59175012260675,
+        "medianTaskResponseMs": 1319.7220829315484,
+        "medianProcessCpuMs": 1279.306416
+      }
+    ]
+  },
+  "medians": {
+    "original": {
+      "elapsedMs": 1726.1113338172436,
+      "cpuMs": 1674.503042
+    },
+    "current": {
+      "elapsedMs": 1319.7220829315484,
+      "cpuMs": 1279.306416
+    }
+  },
+  "elapsedReductionPercent": 23.543629134684927,
+  "cpuReductionPercent": 23.600830580037858,
+  "instruments": {
+    "scope": "Instruments Time Profiler CPU samples on the main thread, filtered to host task-command through verified-pixel response UTC timestamps; capture and control work inside this window remain included. Sample shares are not exact function CPU durations.",
+    "samples": 1129,
+    "outsideTaskSamples": 500,
+    "workerSamples": {},
+    "runs": [
+      {
+        "trace": "build/excel-formula-load/instruments/run-0/instruments.trace",
+        "windowStartNs": 3686642000,
+        "windowEndNs": 4871672000,
+        "mainThreadSamples": 1129,
+        "categories": {
+          "Interpreter (including MMU and guest faults)": 188,
+          "JIT dispatch/cache/validation": 267,
+          "Capture/video/control output": 104,
+          "Generated code and native helpers": 255,
+          "JIT compilation (including decode exceptions)": 239,
+          "Device polling and interrupt delivery": 43,
+          "Disk and compression": 4,
+          "Main loop/other host work": 26,
+          "Compiled port I/O and devices": 3
+        }
+      }
+    ],
+    "categories": [
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 267,
+        "percent": 23.649247121346324
+      },
+      {
+        "name": "Generated code and native helpers",
+        "samples": 255,
+        "percent": 22.58635961027458
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 239,
+        "percent": 21.16917626217892
+      },
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 188,
+        "percent": 16.651904340124002
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 104,
+        "percent": 9.21169176262179
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 43,
+        "percent": 3.808680248007086
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 26,
+        "percent": 2.3029229406554474
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "Compiled port I/O and devices",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      }
+    ],
+    "jitRegions": [],
+    "jitBlocks": [],
+    "unmappedJitSelfSamples": 0,
+    "timeQuartiles": [
+      {
+        "index": 1,
+        "samples": 285,
+        "categories": {
+          "Interpreter (including MMU and guest faults)": 49,
+          "JIT dispatch/cache/validation": 74,
+          "Capture/video/control output": 28,
+          "Generated code and native helpers": 55,
+          "JIT compilation (including decode exceptions)": 62,
+          "Device polling and interrupt delivery": 11,
+          "Disk and compression": 1,
+          "Main loop/other host work": 5
+        }
+      },
+      {
+        "index": 2,
+        "samples": 285,
+        "categories": {
+          "Generated code and native helpers": 55,
+          "JIT compilation (including decode exceptions)": 75,
+          "Interpreter (including MMU and guest faults)": 43,
+          "JIT dispatch/cache/validation": 66,
+          "Capture/video/control output": 22,
+          "Main loop/other host work": 6,
+          "Device polling and interrupt delivery": 15,
+          "Disk and compression": 2,
+          "Compiled port I/O and devices": 1
+        }
+      },
+      {
+        "index": 3,
+        "samples": 278,
+        "categories": {
+          "JIT dispatch/cache/validation": 66,
+          "Generated code and native helpers": 86,
+          "Capture/video/control output": 27,
+          "Interpreter (including MMU and guest faults)": 47,
+          "JIT compilation (including decode exceptions)": 38,
+          "Device polling and interrupt delivery": 4,
+          "Main loop/other host work": 9,
+          "Disk and compression": 1
+        }
+      },
+      {
+        "index": 4,
+        "samples": 281,
+        "categories": {
+          "Device polling and interrupt delivery": 13,
+          "Interpreter (including MMU and guest faults)": 49,
+          "Generated code and native helpers": 59,
+          "JIT dispatch/cache/validation": 61,
+          "JIT compilation (including decode exceptions)": 64,
+          "Capture/video/control output": 27,
+          "Main loop/other host work": 6,
+          "Compiled port I/O and devices": 2
+        }
+      }
+    ],
+    "selfSites": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 130,
+        "percent": 11.514614703277237
+      },
+      {
+        "name": "pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)",
+        "samples": 81,
+        "percent": 7.174490699734278
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 80,
+        "percent": 7.085916740478299
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 59,
+        "percent": 5.225863596102746
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 43,
+        "percent": 3.808680248007086
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 37,
+        "percent": 3.2772364924712134
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 34,
+        "percent": 3.011514614703277
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 27,
+        "percent": 2.391496899911426
+      },
+      {
+        "name": "pc::VGA::render_graphics(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 23,
+        "percent": 2.0372010628875112
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 22,
+        "percent": 1.9486271036315324
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 22,
+        "percent": 1.9486271036315324
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 20,
+        "percent": 1.7714791851195748
+      },
+      {
+        "name": "pc::Jit::instructionPage(pc::CPU&, unsigned int)",
+        "samples": 20,
+        "percent": 1.7714791851195748
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 17,
+        "percent": 1.5057573073516386
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 17,
+        "percent": 1.5057573073516386
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 16,
+        "percent": 1.41718334809566
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 16,
+        "percent": 1.41718334809566
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 15,
+        "percent": 1.328609388839681
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 15,
+        "percent": 1.328609388839681
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 13,
+        "percent": 1.1514614703277237
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_18::operator()(int, int, unsigned int) const",
+        "samples": 13,
+        "percent": 1.1514614703277237
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::runPcSessionCommandLine(int, char**, std::__1::function<std::__1::unique_ptr<pc::Frontend, std::__1::default_delete<pc::Frontend>> (unsigned int, unsigned int, pc::DisplayShape)>, pc::SessionControl*)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 9,
+        "percent": 0.7971656333038086
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 8,
+        "percent": 0.70859167404783
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 7,
+        "percent": 0.6200177147918512
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_19::operator()(unsigned int) const",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::jit_detail::(anonymous namespace)::stringSpans(pc::CPU const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, bool, bool, pc::jit_detail::(anonymous namespace)::StringSpans&)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::jit_detail::nativeString(pc::CPU*, pc::NativeString const*)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::Jit::compile(bool, bool)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::decodeSegmentDescriptor(int, unsigned short, unsigned int, unsigned int)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__recvfrom",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_8::operator()(int, int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_free",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::jit_detail::warmDataAddress(pc::CPU const&, unsigned int, unsigned int, bool, unsigned int&, bool)",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "mach_o::Header::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_swrite",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__bzero",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarTransfer(pc::CPU*, pc::NativeFarTransfer const*)::$_1::operator()(unsigned short, unsigned int&, unsigned int&, std::__1::array<unsigned int, 2ul>&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e517fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_31::operator()(int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059cbd81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a138fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ccb681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1060509e9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105abb0a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e80ead",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b0ebcd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a42bb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f662d1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061f47e1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061ae681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b31949",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c3c531",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f9488d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ff576d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdd2a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fc5355",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fabf81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a5b061",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1dda5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b2ea55",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ce0c89",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c1b11",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c45b3d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10615805d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc94d1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DyldSharedCache::mappingName(unsigned int, unsigned long long)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106042fd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_27::operator()(pc::jit_detail::Instruction const&, bool, bool) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10659fe05",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1065ea419",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106662cdd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066dd941",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10599a3c5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1067fc6dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066e5ff1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a2245",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10692168d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105be2ef5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105de96fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a3cab9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ba2b41",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a5b2ad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc8929",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1beb1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "_platform_strcmp_noMTE",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b1fe81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c3871",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f22c51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10602c2c1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)::$_1::operator()(unsigned int&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106001e49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061615a1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f08921",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::VGA::write_memory(unsigned int, unsigned char)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c23919",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059ab379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105da18f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106483f39",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_12::operator()(int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a68379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066d8a25",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a39549",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105db43fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c08dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b45ead",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c64111",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059e7fed",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1bf81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::default_delete<pc::Jit::Block::NativeState>::operator()[abi:nqe210106](pc::Jit::Block::NativeState*) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a3f609",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__sendto",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1b645",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a002f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105efa441",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b09441",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b777f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdcaad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d02435",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c44191",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105acef51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10616720d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062bab21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7c289",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061882fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::stepPortIO(unsigned short, int, bool, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b08cd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1dbb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee6061",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cea6d5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ceaa89",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fb2f0d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1060c74a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d9ca05",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e9dfed",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f15eb5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b7fc29",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dd2415",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e420c9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106342af5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062c3229",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10651c095",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ced819",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc2979",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1acfd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f90df1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a4595d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f29481",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106604169",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dc6ba1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee5a11",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f65e41",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aa7c3d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059fff21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a28101",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeSegment(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cea375",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b6a31d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc7abd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a07c51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1065ba0fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063ab5d9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062cb80d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105eff881",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fd8681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066a2cb5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c49409",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e05ffd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d32589",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b96181",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cd4599",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c00171",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a58d59",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d435c5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c7a999",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b93941",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063af571",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee5d95",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105eb16b1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdbbb1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066a83f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e2df35",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062cb5b9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aacdb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__lseek",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106721355",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bb14e1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059d32f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ac0dad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b64b81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a60d59",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b07f49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a10491",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105de3ec1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bebd7d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cdb48d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b0275d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061e0ce9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10627363d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061708b1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106317b81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e36dc5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ac84dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7be21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062c3101",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cacd09",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059e79f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a10b6d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10651a3ad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106055d01",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1f451",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aca9b9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ebb889",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Network::pump(pc::NE2000&, unsigned long long, unsigned long long)::$_0, void (unsigned char const*, unsigned long)>::destroy()",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066169cd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066e805d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066cb5dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d137d5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e0c5a1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::__num_put_base::__format_int(char*, char const*, bool, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106822fad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a14e21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarPointer(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063a90bd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106221e49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cde8f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059d6f95",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a770d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a78a5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a69849",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b84a25",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ace73d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_29::operator()() const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105acc501",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee1a91",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ddbda1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d78e61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e53601",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ccee61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ff3d71",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7c581",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ad0e9d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106407471",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a34f69",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105beb6cd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f61b71",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105adfbe9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d9c379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b45271",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pthread_once",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106697bd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063531fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarTransfer(pc::CPU*, pc::NativeFarTransfer const*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062a5f61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10629a669",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10676a131",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106728965",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106439cf5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bf9dc1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dfb621",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10685bc09",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106721fc1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105becb2d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a2c075",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1064a3669",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 130,
+        "percent": 11.514614703277237
+      },
+      {
+        "name": "pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)",
+        "samples": 81,
+        "percent": 7.174490699734278
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 80,
+        "percent": 7.085916740478299
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 59,
+        "percent": 5.225863596102746
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 43,
+        "percent": 3.808680248007086
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 37,
+        "percent": 3.2772364924712134
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 34,
+        "percent": 3.011514614703277
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 27,
+        "percent": 2.391496899911426
+      },
+      {
+        "name": "pc::VGA::render_graphics(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 23,
+        "percent": 2.0372010628875112
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 22,
+        "percent": 1.9486271036315324
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 22,
+        "percent": 1.9486271036315324
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 20,
+        "percent": 1.7714791851195748
+      },
+      {
+        "name": "pc::Jit::instructionPage(pc::CPU&, unsigned int)",
+        "samples": 20,
+        "percent": 1.7714791851195748
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 17,
+        "percent": 1.5057573073516386
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 17,
+        "percent": 1.5057573073516386
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 16,
+        "percent": 1.41718334809566
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 16,
+        "percent": 1.41718334809566
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 15,
+        "percent": 1.328609388839681
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 15,
+        "percent": 1.328609388839681
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 13,
+        "percent": 1.1514614703277237
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_18::operator()(int, int, unsigned int) const",
+        "samples": 13,
+        "percent": 1.1514614703277237
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::runPcSessionCommandLine(int, char**, std::__1::function<std::__1::unique_ptr<pc::Frontend, std::__1::default_delete<pc::Frontend>> (unsigned int, unsigned int, pc::DisplayShape)>, pc::SessionControl*)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 10,
+        "percent": 0.8857395925597874
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 9,
+        "percent": 0.7971656333038086
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 8,
+        "percent": 0.70859167404783
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 7,
+        "percent": 0.6200177147918512
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_19::operator()(unsigned int) const",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.4428697962798937
+      },
+      {
+        "name": "pc::jit_detail::(anonymous namespace)::stringSpans(pc::CPU const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, bool, bool, pc::jit_detail::(anonymous namespace)::StringSpans&)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::jit_detail::nativeString(pc::CPU*, pc::NativeString const*)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::Jit::compile(bool, bool)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 4,
+        "percent": 0.354295837023915
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::decodeSegmentDescriptor(int, unsigned short, unsigned int, unsigned int)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__recvfrom",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_8::operator()(int, int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 3,
+        "percent": 0.2657218777679362
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_free",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::jit_detail::warmDataAddress(pc::CPU const&, unsigned int, unsigned int, bool, unsigned int&, bool)",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "mach_o::Header::forEachLoadCommand(void (load_command const*, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "_swrite",
+        "samples": 2,
+        "percent": 0.1771479185119575
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__bzero",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarTransfer(pc::CPU*, pc::NativeFarTransfer const*)::$_1::operator()(unsigned short, unsigned int&, unsigned int&, std::__1::array<unsigned int, 2ul>&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e517fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_31::operator()(int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059cbd81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a138fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ccb681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1060509e9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105abb0a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e80ead",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b0ebcd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a42bb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f662d1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061f47e1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061ae681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b31949",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c3c531",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f9488d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ff576d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdd2a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fc5355",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fabf81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a5b061",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1dda5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b2ea55",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ce0c89",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c1b11",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c45b3d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10615805d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc94d1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DyldSharedCache::mappingName(unsigned int, unsigned long long)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106042fd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_27::operator()(pc::jit_detail::Instruction const&, bool, bool) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10659fe05",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1065ea419",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106662cdd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066dd941",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10599a3c5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1067fc6dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066e5ff1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a2245",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10692168d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105be2ef5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105de96fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a3cab9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ba2b41",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a5b2ad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc8929",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1beb1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "_platform_strcmp_noMTE",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b1fe81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c3871",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f22c51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__read_nocancel",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10602c2c1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)::$_1::operator()(unsigned int&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106001e49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "mach_vm_reclaim_try_cancel",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061615a1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_2::operator()(unsigned char, bool, int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f08921",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::VGA::write_memory(unsigned int, unsigned char)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c23919",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059ab379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105da18f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106483f39",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_12::operator()(int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a68379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066d8a25",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a39549",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105db43fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059c08dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b45ead",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c64111",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059e7fed",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1bf81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::default_delete<pc::Jit::Block::NativeState>::operator()[abi:nqe210106](pc::Jit::Block::NativeState*) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::condition(int) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a3f609",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__sendto",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1b645",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a002f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105efa441",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b09441",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b777f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdcaad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d02435",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c44191",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105acef51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10616720d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062bab21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7c289",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061882fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::stepPortIO(unsigned short, int, bool, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b08cd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1dbb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee6061",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cea6d5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ceaa89",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fb2f0d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1060c74a9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d9ca05",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e9dfed",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f15eb5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b7fc29",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dd2415",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e420c9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106342af5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062c3229",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10651c095",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ced819",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc2979",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d1acfd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f90df1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a4595d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f29481",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106604169",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dc6ba1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee5a11",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f65e41",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aa7c3d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059fff21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a28101",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeSegment(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cea375",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b6a31d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cc7abd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a07c51",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1065ba0fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063ab5d9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062cb80d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105eff881",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fd8681",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066a2cb5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c49409",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e05ffd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d32589",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b96181",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cd4599",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c00171",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a58d59",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d435c5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105c7a999",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b93941",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063af571",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee5d95",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105eb16b1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105fdbbb1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066a83f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e2df35",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062cb5b9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aacdb9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__lseek",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106721355",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bb14e1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059d32f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ac0dad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b64b81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a60d59",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b07f49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a10491",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105de3ec1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bebd7d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cdb48d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b0275d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061e0ce9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10627363d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1061708b1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106317b81",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e36dc5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ac84dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7be21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062c3101",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cacd09",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059e79f5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a10b6d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10651a3ad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106055d01",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a1f451",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105aca9b9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ebb889",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::CPU::segment(int, unsigned short)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Network::pump(pc::NE2000&, unsigned long long, unsigned long long)::$_0, void (unsigned char const*, unsigned long)>::destroy()",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066169cd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066e805d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1066cb5dd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d137d5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e0c5a1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "std::__1::__num_put_base::__format_int(char*, char const*, bool, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106822fad",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a14e21",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarPointer(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063a90bd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106221e49",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "__libunwind_Registers_arm64_jumpto",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::biosDiskTransfer(pc::Disk&, pc::CPU&, bool, unsigned long long, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105cde8f9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059d6f95",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a770d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1059a78a5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a69849",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "invocation function for block in dyld4::APIs::findImageMappedAt(void const*, dyld3::MachOLoaded const**, bool*, char const**, void const**, unsigned long long*, unsigned char*, dyld4::Loader const**)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b84a25",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ace73d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_29::operator()() const",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105acc501",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ee1a91",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ddbda1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d78e61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105e53601",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ccee61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ff3d71",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a7c581",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105ad0e9d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106407471",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a34f69",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105beb6cd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105f61b71",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105adfbe9",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105d9c379",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105b45271",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pthread_once",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106697bd1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1063531fd",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::jit_detail::nativeFarTransfer(pc::CPU*, pc::NativeFarTransfer const*)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1062a5f61",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10629a669",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10676a131",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106728965",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106439cf5",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105bf9dc1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105dfb621",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x10685bc09",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x106721fc1",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105becb2d",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x105a2c075",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "0x1064a3669",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      },
+      {
+        "name": "pc::Machine::out(unsigned short, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08857395925597875
+      }
+    ]
+  },
+  "pauseResume": [
+    {
+      "event": "pause",
+      "time": 1793092311.689717
+    },
+    {
+      "event": "resume",
+      "time": 1793092322.6839108
+    }
+  ],
+  "negativeControl": "No commands: timed out waiting for result pixels; owned guest quit after scale-two validation",
+  "changedScaleValidation": {
+    "observed": [
+      679552,
+      679552,
+      1788,
+      42,
+      92.9,
+      36120,
+      272,
+      64,
+      769114,
+      64
+    ],
+    "method": "Excel 97 input Inputs!B3 changed to 2; Summary visually verified"
+  }
+}
