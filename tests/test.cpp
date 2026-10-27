@@ -2182,8 +2182,9 @@ int main() {
             c.ip = 0x100;
             c.r[SP] = 0x800;
             c.flags = 2 | CF | OF | (available ? ZF : 0);
-            if (available)
-                chained.keys.push_back(0x1c0d);
+            if (available) {
+                c.write(0x41e,0x1c0d,2);c.write(0x41c,0x20,2);
+            }
             // PUSHF; MOV AX,available; OR AX,AX; MOV AH,1;
             // CALL FAR saved BIOS INT16; HLT. Working ZF differs from saved ZF.
             const uint8_t code[] = {
@@ -2372,6 +2373,7 @@ int main() {
         machine.cpu.cr[0] &= ~1u;
         ps2State(machine).scanCodes.clear();
         machine.keys.clear();
+        machine.cpu.write(0x41a,machine.cpu.read(0x41c,2),2);
         machine.key('r');
         check(machine.keys.empty() && ps2State(machine).scanCodes == std::deque<uint8_t>({0x13, 0x93}),
               "host keyboard follows IRQ1 across temporary real-mode transitions");
@@ -2382,14 +2384,29 @@ int main() {
         check(machine.keys == std::deque<uint16_t>({0x1e61}) && ps2State(machine).scanCodes.empty(),
               "BIOS insert-key service enqueues a BIOS key rather than physical input");
         machine.keys.clear();
+        machine.cpu.write(0x41a,machine.cpu.read(0x41c,2),2);
         machine.cpu.write(0x417, 2, 1);
         ps2State(machine).keyboardData = 0x0d;
         machine.cpu.r[AX] = 0x0d;
         machine.service(9, true);
         check(machine.keys == std::deque<uint16_t>({0x0d2b}),
               "firmware translates shifted punctuation from physical keyboard input");
+        check(machine.cpu.read(0x41a,2)!=machine.cpu.read(0x41c,2),
+              "IRQ1 publishes pending keys in the BIOS Data Area");
+        machine.cpu.r[AX]=0;machine.service(0x16);
+        check(machine.cpu.get(AX,2)==0x0d2b && machine.cpu.read(0x41a,2)==machine.cpu.read(0x41c,2),
+              "INT16 consumes the same ring visible to direct DOS polling");
+        for(unsigned i=0;i<15;++i){machine.cpu.r[AX]=0x0500;machine.cpu.r[CX]=0x2000+i;machine.service(0x16);check(machine.cpu.get(AX,1)==0,"keyboard ring accepts capacity");}
+        machine.cpu.r[AX]=0x0500;machine.service(0x16);
+        check(machine.cpu.get(AX,1)==1,"INT16 insert reports a full ring without overwriting");
+        for(unsigned i=0;i<15;++i){machine.cpu.r[AX]=0;machine.service(0x16);check(machine.cpu.get(AX,2)==0x2000+i,"keyboard ring wraps in FIFO order");}
+        machine.cpu.r[AX]=0x0500;machine.cpu.r[CX]=0x1e61;machine.service(0x16);
+        machine.cpu.write(0x41a,machine.cpu.read(0x41c,2),2);
+        machine.cpu.r[AX]=0x0100;machine.service(0x16);
+        check(machine.cpu.flags&ZF,"direct DOS buffer flush is honored by INT16");
         machine.cpu.write(0x417, 0, 1);
         machine.keys.clear();
+        machine.cpu.write(0x41a,machine.cpu.read(0x41c,2),2);
         machine.cpu.flags &= ~IF;
         machine.cpu.r[AX] = 0;
         machine.service(0x16);

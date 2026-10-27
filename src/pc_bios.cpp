@@ -70,6 +70,30 @@ bool Machine::service(uint8_t n, bool guestStub) {
     if (verbose && n != 0x10 && n != 0x16 && n != 0x1a && n != 8 && n != 0x28)
         std::fprintf(stderr, "BIOS %02x AX=%04x BX=%04x CX=%04x DX=%04x ES=%04x\n", n, c.get(AX, 2),
                      c.get(BX, 2), c.get(CX, 2), c.get(DX, 2), c.s[ES].selector);
+    // IBM AT BIOS Data Area: 40:1A/1C are ring head/tail, 40:80/82
+    // bound the buffer. DOS software also polls/flushes this buffer directly.
+    // Keep the old snapshot queue as a diagnostic mirror, never as the source.
+    auto keyboardBounds = [&]() {
+        unsigned start=c.read(0x480,2), end=c.read(0x482,2);
+        if(start<0x1e || end<=start+2 || end>0x100 || ((start|end)&1)) {
+            start=0x1e;end=0x3e;
+        }
+        return std::pair{start,end};
+    };
+    auto keyboardMirror = [&]() {
+        auto [start,end]=keyboardBounds();keys.clear();
+        unsigned head=c.read(0x41a,2),tail=c.read(0x41c,2);
+        if(head<start || head>=end || tail<start || tail>=end || ((head|tail)&1))return;
+        for(unsigned p=head;p!=tail;p=(p+2==end?start:p+2))keys.push_back(c.read(0x400+p,2));
+    };
+    auto keyboardInsert = [&](uint16_t value) {
+        auto [start,end]=keyboardBounds();
+        unsigned head=c.read(0x41a,2),tail=c.read(0x41c,2);
+        if(head<start || head>=end || tail<start || tail>=end || ((head|tail)&1))return false;
+        unsigned next=tail+2==end?start:tail+2;
+        if(next==head)return false;
+        c.write(0x400+tail,value,2);c.write(0x41c,next,2);keyboardMirror();return true;
+    };
     switch (n) {
     case 8:
         ticks++;
@@ -135,7 +159,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 }
                 if ((shifts & 4) && ch >= 'a' && ch <= 'z')
                     ch -= 96;
-                keys.push_back((code << 8) | ch);
+                keyboardInsert((code << 8) | ch);
             }
         }
         if (!guestStub)
@@ -544,6 +568,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
         }
         break;
     case 0x16:
+        keyboardMirror();
         if (ah == 0 || ah == 0x10) {
             if (keys.empty()) {
                 waitingKey = true;
@@ -554,7 +579,10 @@ bool Machine::service(uint8_t n, bool guestStub) {
                 c.ip = (c.ip - 2) & 65535;
             } else {
                 c.set(AX, keys.front(), 2);
-                keys.pop_front();
+                auto [start,end]=keyboardBounds();
+                unsigned head=c.read(0x41a,2);
+                c.write(0x41a,head+2==end?start:head+2,2);
+                keyboardMirror();
                 waitingKey = false;
             }
         } else if (ah == 1 || ah == 0x11) {
@@ -567,8 +595,7 @@ bool Machine::service(uint8_t n, bool guestStub) {
         } else if (ah == 2)
             c.set(AX, c.read(0x417, 1), 1);
         else if (ah == 5) {
-            keys.push_back(c.get(CX, 2));
-            c.set(AX, 0, 1);
+            c.set(AX, keyboardInsert(c.get(CX, 2)) ? 0 : 1, 1);
         } else if (ah == 0x12)
             c.set(AX, 0, 2);
         break;
