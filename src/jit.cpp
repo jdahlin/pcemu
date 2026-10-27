@@ -5,6 +5,7 @@
 #include <utility>
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
@@ -44,8 +45,9 @@ void Jit::debugBlock(const Block &block, const std::vector<uint32_t> &code,
                      const std::vector<DebugRegion> &regions, uintptr_t address) {
     if (!debugState || !debugState->stream.is_open()) return;
     debugState->records.push_back({debugTimeNs(), debugState->generation,
-        address ? address : reinterpret_cast<uintptr_t>(block.fn), cpu.s[CS].selector, block.csBase, cpu.ip,
-        block.cr3, block.page, block.generation, code, regions});
+        address ? address : reinterpret_cast<uintptr_t>(block.fn), block.csSelector, block.csBase, block.guestIP,
+        block.cr3, block.page, block.generation, code,
+        regions.empty()?std::vector<DebugRegion>{{0,"Restored block",block.guestIP}}:regions});
 }
 void Jit::flushDebugMap() {
     if (!debugState || !debugState->stream.is_open()) return;
@@ -159,6 +161,7 @@ void Jit::clear() {
     blocks.clear();
     fast = {};
     used = stubUsed = 0;
+    cacheRestoredBlocks = cacheRestoredBytes = 0;cacheValidatedBlocks=cacheImageEvictions=0;imageBytes=0;
     nativeHelperInstructions = 0;
     nativeInstructions = compiledBlocks = cacheHits = cacheRecycles = 0;
     cachedContexts.clear();
@@ -258,7 +261,13 @@ void Jit::publishLinks(uint64_t key, Block &block) {
     patchIncoming(key);
 }
 Jit::Block *Jit::installBlock(uint64_t key, Block block) {
-    if (!directLinks) return &blocks.insert_or_assign(key, std::move(block)).first->second;
+    if (!directLinks) {
+        if(auto old=blocks.find(key);old!=blocks.end())imageBytes-=old->second.image.size()*4;
+        imageBytes+=block.image.size()*4;
+        auto &stored=blocks.insert_or_assign(key,std::move(block)).first->second;
+        trimImages(key);
+        return &stored;
+    }
     // No native frame is live here. Remove incoming references before releasing
     // helper metadata embedded in the old code, then publish compatible edges.
     if (auto it = incomingLinks.find(key); it != incomingLinks.end())
@@ -271,6 +280,20 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     if (stored.link() && stored.link()->promoted) publishLinks(key, stored);
     patchIncoming(key);
     return &stored;
+}
+void Jit::trimImages(uint64_t protectedKey) {
+    const size_t budget=capacity>SIZE_MAX/2?capacity:capacity*2;
+    if(imageBytes<=budget)return;
+    std::vector<std::pair<uint64_t,uint64_t>> cold;
+    cold.reserve(blocks.size());
+    for(const auto &[key,b]:blocks)if(key!=protectedKey && !b.image.empty())cold.emplace_back(b.cacheHeat,key);
+    std::sort(cold.begin(),cold.end());
+    fast={}; // Eviction frees descriptor owners and invalidates cached pointers.
+    for(const auto &[heat,key]:cold) {
+        if(imageBytes<=budget-budget/4)break;
+        auto it=blocks.find(key);imageBytes-=it->second.image.size()*4;blocks.erase(it);++cacheImageEvictions;
+    }
+    for(auto &[key,b]:blocks)b.cacheHeat>>=1; // Age survivors so old phases can leave.
 }
 void Jit::finishDecodedExit() {
     const auto kind=cpu.nativeDecodedExit;
@@ -326,7 +349,7 @@ uint32_t Jit::run() {
     // Deferred boundary entries also contain generated code and embed the
     // same stack/buffer assumptions as ordinary blocks. Their public fn is
     // deliberately null to prevent cached-tail dispatch, not to skip guards.
-    const bool native = cached && (cached->fn || (boundary && boundary->fn));
+    const bool native = cached && (cached->fn || !cached->image.empty() || (boundary && boundary->fn));
     uint32_t currentPage = 0;
     bool checkedPage = false;
     if ((cpu.cr[0] & 0x80000000u) && cached && (native || crossPage || cached->tlbEpoch != cpu.tlbEpoch)) {
@@ -336,6 +359,31 @@ uint32_t Jit::run() {
         } catch (const Fault &) {
             cpu.step(); // Deliver #PF with the interpreter's restartable frame.
             return 1;
+        }
+    }
+    // A marked-byte write invalidates its physical page, not necessarily this
+    // body. Revalidate the exact bytes observed by the decoder before throwing
+    // away a still-identical translation. This pure RAM comparison cannot page
+    // walk, deliver faults or invoke devices; fetch/context guards still apply.
+    // Linked stubs embed generation guards, so retain their old rebuild rules.
+    if(!directLinks && native && !crossPage && !cached->codeSnapshot.empty() &&
+       cached->page<cpu.generation.size() && cached->generation!=cpu.generation[cached->page] &&
+       cached->ram==cpu.mem.data() && cached->ramSize==cpu.mem.size() &&
+       (!checkedPage || cached->page==currentPage)) {
+        const uint64_t base=uint64_t(cached->page)<<12;
+        const auto &snapshot=cached->codeSnapshot;
+        bool identical=true;
+        for(size_t at=0;at<snapshot.size();) {
+            unsigned offset=snapshot[at]|unsigned(snapshot[at+1])<<8;
+            unsigned length=snapshot[at+2]|unsigned(snapshot[at+3])<<8;at+=4;
+            if(base+offset+length>cpu.mem.size() ||
+               std::memcmp(cpu.mem.data()+base+offset,snapshot.data()+at,length)) {identical=false;break;}
+            at+=length;
+        }
+        if(identical){
+            cached->generation=cpu.generation[cached->page];
+            if(cached->native)cached->native->validatedGeneration=cached->generation;
+            ++cacheValidatedBlocks;
         }
     }
     bool rebuild = !cached || cached->executionEpoch != cpu.executionEpoch ||
@@ -407,6 +455,8 @@ uint32_t Jit::run() {
             return 1;
         }
     }
+    if(!cached->image.empty() && !cached->fn &&
+       (!cached->boundaryEntry() || !cached->boundaryEntry()->fn))restoreBlock(*cached);
     if (directLinks && cached->fn && cached->link() && !cached->linkRequested &&
         ++cached->visits >= linkWarmup) {
         cached->linkRequested = true;
@@ -435,6 +485,7 @@ uint32_t Jit::run() {
         return 1;
     }
     cacheHits++;
+    ++b.cacheHeat;
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
     cpu.nativeDecodedExit = 0;
@@ -546,6 +597,7 @@ template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noe
             cpu.cr[2] = oldCR2;
             return result;
         }
+        ++b->cacheHeat;
         auto packed = b->fn(&cpu, Linking ? budget - result.count.instructions : 0);
         auto n = uint32_t(packed);
         unsigned dispatches = 1;
@@ -607,6 +659,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
 }
 Jit::Block Jit::compile(bool translate, bool hotShort) {
     Block block;
+    block.guestIP=cpu.ip;block.csSelector=cpu.s[CS].selector;
     auto linear = cpu.address(CS, cpu.ip), physical = cpu.physical(linear);
     block.page = physical >> 12;
     block.generation = cpu.generation.at(block.page);
@@ -656,5 +709,6 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
 }
 #if !defined(__APPLE__) || !defined(__aarch64__)
 bool Jit::promoteBlock(Block &) { return false; }
+void Jit::restoreBlock(Block &) {}
 #endif
 } // namespace pc

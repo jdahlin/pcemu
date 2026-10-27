@@ -15,6 +15,31 @@ namespace pc {
 using jit_detail::Kind;
 using jit_detail::nativeFinish;
 using jit_detail::nativeMemory;
+// No generated frame is live here. Code images and heap-backed descriptors
+// remain together in the bounded non-executable cache. Only entry addresses
+// expire; the next validated lookup restores its body without recompilation.
+// Linked bodies contain cross-body branches and must retain full-reset rules.
+void Jit::recycleArena(size_t) {
+    debugReset();incomingLinks.clear();fast={};++cacheRecycles;
+    if(directLinks){blocks.clear();imageBytes=0;}
+    else for(auto &[key,b]:blocks) {
+        b.fn=nullptr;
+        if(b.boundaryEntry())b.boundaryEntry()->fn=nullptr;
+    }
+    used=stubUsed=0;
+}
+void Jit::restoreBlock(Block &block) {
+    const size_t bytes=block.image.size()*4,span=(bytes+15)&~size_t(15);
+    if(used+span>capacity)recycleArena(span);
+    pthread_jit_write_protect_np(0);
+    std::memcpy(arena+used,block.image.data(),bytes);
+    pthread_jit_write_protect_np(1);
+    sys_icache_invalidate(arena+used,bytes);
+    auto fn=reinterpret_cast<Function>(arena+used);
+    if(block.boundaryEntry())block.boundaryEntry()->fn=fn;else block.fn=fn;
+    used+=span;++cacheRestoredBlocks;cacheRestoredBytes+=bytes;
+    debugBlock(block,block.image,block.debugRegions,reinterpret_cast<uintptr_t>(fn));
+}
 Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) {
     static_assert(std::is_standard_layout_v<CPU>,
                   "Native emitter requires fixed CPU field offsets");
@@ -69,6 +94,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
     if (decoded.fetchTail.present || linkCandidate || segmentMoves || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::SoftwareInterrupt || terminal.kind==Kind::String || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::InvalidOpcode)
         block.native = std::make_unique<Block::NativeState>();
+    if(block.native)block.native->validatedGeneration=block.generation;
     if(decoded.fetchTail.present || terminal.kind==Kind::SoftwareInterrupt || terminal.kind==Kind::String || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
         block.native->boundary=std::make_unique<Block::BoundaryEntry>();
         block.native->boundary->fetchTail=decoded.fetchTail;
@@ -1389,7 +1415,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     pointer(1, reinterpret_cast<uintptr_t>(&block.native->memory[memoryIndex++]));
                     imm(3, 0);
                     imm(4, block.page);
-                    imm(5, block.generation);
+                    pointer(5,reinterpret_cast<uintptr_t>(&block.native->validatedGeneration));
+                    load(5,5,0);
                     call(reinterpret_cast<uintptr_t>(&nativeMemory));
                     invalidCalls.push_back(code.size()); emit(0x34000000u); // cbz w0,replay
                     load(9, 19, offsetof(CPU, nativeValue));
@@ -1962,7 +1989,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             else
                 mov(3, 20 + i.dst);
             imm(4, block.page);
-            imm(5, block.generation);
+            pointer(5,reinterpret_cast<uintptr_t>(&block.native->validatedGeneration));
+            load(5,5,0);
             call(reinterpret_cast<uintptr_t>(&nativeMemory));
             auto fallback = code.size();
             emit(0x34000000u); // cbz w0, fallback; guest registers are still cached.
@@ -2164,16 +2192,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     emit(nativeFP?0xa8cd7bfdu:0xa8c77bfdu);
     emit(0xd65f03c0u); // ldp x29,x30,[sp],#208/#112; ret
     size_t bytes = code.size() * 4;
-    if (bytes > capacity)
+    if (((bytes+15)&~size_t(15)) > capacity)
         return block; // Never copy an oversized block beyond the executable arena.
-    if (used + bytes > capacity) {
-        debugReset();
-        incomingLinks.clear();
-        blocks.clear();
-        cacheRecycles++;
-        fast = {};
-        used = stubUsed = 0;
-    }
+    if (used + ((bytes+15)&~size_t(15)) > capacity)recycleArena((bytes+15)&~size_t(15));
+    block.codeBytes=bytes;
+    if(!directLinks)block.image=code;
+    if(debugState)block.debugRegions=debugRegions;
     pthread_jit_write_protect_np(0);
     std::memcpy(arena + used, code.data(), bytes);
     pthread_jit_write_protect_np(1);

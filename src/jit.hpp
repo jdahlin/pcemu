@@ -42,6 +42,9 @@ class Jit {
     void setDebugMap(const std::string &path);
     void flushDebugMap();
     uint64_t nativeHelperInstructions = 0; // Decoded x87 helper operations, separately visible.
+    size_t cachedCodeBytes() const {return imageBytes;}
+    uint64_t cacheRestoredBlocks = 0, cacheRestoredBytes = 0;
+    uint64_t cacheValidatedBlocks = 0, cacheImageEvictions = 0;
     uint64_t nativeInstructions = 0, compiledBlocks = 0, cacheHits = 0, cacheRecycles = 0;
     bool enabled() const {
         return active;
@@ -98,6 +101,12 @@ class Jit {
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;
         unsigned visits = 0;
+        uint64_t cacheHeat = 0;
+        uint32_t codeBytes = 0, guestIP = 0;
+        uint16_t csSelector = 0;
+        std::vector<uint8_t> codeSnapshot; // Runs of offset16, length16, original bytes within the physical page.
+        std::vector<uint32_t> image; // Bounded non-executable cache, never patched/linkable.
+        std::vector<DebugRegion> debugRegions; // Populated only when mapping native PCs.
         struct BoundaryEntry {
             Function fn=nullptr;
             NativeCodeTail fetchTail;
@@ -112,6 +121,7 @@ class Jit {
             std::unique_ptr<NativeFarTransfer> farTransfer;
         };
         struct NativeState {
+            uint32_t validatedGeneration=0;
             std::vector<NativeMemoryMove> memory;
             std::vector<CPU::DecodedSegment> segments;
             std::vector<CPU::DecodedMemoryArithmetic> arithmetic;
@@ -170,6 +180,10 @@ class Jit {
     void finishDecodedExit();
     Block compile(bool translate = true, bool hotShort = false);
     jit_detail::DecodedBlock decode(Block &block);
+    size_t imageBytes = 0;
+    void trimImages(uint64_t protectedKey);
+    void recycleArena(size_t required);
+    void restoreBlock(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);
     std::unique_ptr<DebugState> debugState; // Keep diagnostic storage out of hot dispatch fields.
     bool directLinks = false;

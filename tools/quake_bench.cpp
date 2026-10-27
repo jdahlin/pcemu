@@ -20,8 +20,8 @@ static int64_t unixNs() {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 struct JitCounters {
-    uint64_t native=0,x87=0,blocks=0,recycles=0;
-    static JitCounters read(const Jit &jit) {return {jit.nativeInstructions,jit.nativeHelperInstructions,jit.compiledBlocks,jit.cacheRecycles};}
+    uint64_t native=0,x87=0,blocks=0,recycles=0,restoredBlocks=0,restoredBytes=0,validatedBlocks=0,imageEvictions=0;
+    static JitCounters read(const Jit &jit) {return {jit.nativeInstructions,jit.nativeHelperInstructions,jit.compiledBlocks,jit.cacheRecycles,jit.cacheRestoredBlocks,jit.cacheRestoredBytes,jit.cacheValidatedBlocks,jit.cacheImageEvictions};}
 };
 // Boundary-only CPU time; no per-instruction clock reads in the baseline binary.
 static uint64_t threadCpuNs() {
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
         Clock::time_point beginWall, endWall;
         int64_t beginUnix=0,endUnix=0;
         JitCounters beginJit,endJit;
-        uint64_t windowBatches=0,windowDispatches=0,endCodeBytes=0;
+        uint64_t windowBatches=0,windowDispatches=0,endCodeBytes=0,endImageBytes=0;
 
         const bool measureWindow = !windowOutput.empty();
         while (true) {
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
                     beginUnix=unixNs();beginCpu = threadCpuNs(); beginWall = Clock::now();
                 } else if (event == QuakeProfileWindow::Event::End) {
                     endWall = Clock::now(); endCpu = threadCpuNs();endUnix=unixNs();
-                    endInstructions = cpu.instructions;endJit=JitCounters::read(jit);endCodeBytes=jit.residentCodeBytes();
+                    endInstructions = cpu.instructions;endJit=JitCounters::read(jit);endCodeBytes=jit.residentCodeBytes();endImageBytes=jit.cachedCodeBytes();
 #ifdef PCEMU_PROFILE
                     if (!guestProfile.empty()) profile::stop(guestProfile, cpu.instructions);
                     if (!coverageOutput.empty()) profile::stop(coverageOutput, cpu.instructions);
@@ -212,7 +212,12 @@ int main(int argc, char **argv) {
                 << ",\"decodedX87HelperSteps\":" << endJit.x87-beginJit.x87
                 << ",\"compiledBlocks\":" << endJit.blocks-beginJit.blocks
                 << ",\"cacheRecycles\":" << endJit.recycles-beginJit.recycles
+                << ",\"restoredBlocks\":" << endJit.restoredBlocks-beginJit.restoredBlocks
+                << ",\"restoredCodeBytes\":" << endJit.restoredBytes-beginJit.restoredBytes
+                << ",\"validatedBlocks\":" << endJit.validatedBlocks-beginJit.validatedBlocks
+                << ",\"imageEvictions\":" << endJit.imageEvictions-beginJit.imageEvictions
                 << ",\"residentCodeBytesAtEnd\":" << endCodeBytes
+                << ",\"cachedCodeBytesAtEnd\":" << endImageBytes
                 << ",\"batchCalls\":" << windowBatches << ",\"dispatches\":" << windowDispatches << "}}\n";
             if (!out) throw std::runtime_error("Cannot write frame-window result");
         }

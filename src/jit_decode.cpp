@@ -17,6 +17,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     NativeMemoryMove immediateSource;
     unsigned fetchedBytes = 0;
     bool fetchWrapped = false;
+    size_t snapshotHeader=0;unsigned snapshotStart=0,snapshotLength=0;
     auto byte = [&]() {
         if (fetchWrapped || ++fetchedBytes > 15) throw 0;
         const auto address=cpu.address(CS,pos);
@@ -53,6 +54,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
         }
         cpu.markCode(p);
         auto b = cpu.mem.at(p);
+        if((p>>12)==block.page) {
+            const unsigned offset=p&4095;
+            if(!snapshotLength || offset!=snapshotStart+snapshotLength) {
+                snapshotHeader=block.codeSnapshot.size();snapshotStart=offset;snapshotLength=0;
+                block.codeSnapshot.insert(block.codeSnapshot.end(),{uint8_t(offset),uint8_t(offset>>8),0,0});
+            }
+            block.codeSnapshot.push_back(b);++snapshotLength;
+            block.codeSnapshot[snapshotHeader+2]=uint8_t(snapshotLength);
+            block.codeSnapshot[snapshotHeader+3]=uint8_t(snapshotLength>>8);
+        }
         fetchWrapped = pos == UINT32_MAX;
         ++pos;
         return b;

@@ -271,6 +271,18 @@ pcemu_program(jit-batch-tests ZSTD
     tests/jit_batch_test.cpp
 )
 
+pcemu_program(jit-cache-tests
+  SOURCES
+    src/cpu.cpp
+    src/cpu_x87.cpp
+    src/jit.cpp
+    src/jit_decode.cpp
+    src/jit_flags.cpp
+    src/jit_runtime.cpp
+    src/jit_arm64.cpp
+    tests/jit_cache_test.cpp
+)
+
 pcemu_program(jit-cached-batch-tests
   SOURCES
     src/cpu.cpp
