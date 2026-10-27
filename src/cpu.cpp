@@ -1509,7 +1509,7 @@ void CPU::stepImpl() {
     case 0xd4: {
         auto b = fetch(1);
         if (!b)
-            throw std::runtime_error("divide by zero");
+            throw Fault{0, 0, false};
         auto a = get(AX, 1);
         set(4, a / b, 1);
         set(AX, a % b, 1);
@@ -1633,12 +1633,12 @@ void CPU::stepImpl() {
             flags = (flags & ~(CF | OF)) | (c ? CF | OF : 0);
         } else {
             if (!v)
-                throw std::runtime_error("divide by zero at " + location());
+                throw Fault{0, 0, false};
             uint64_t dividend = bw == 1 ? get(AX, 2) : (uint64_t(get(DX, bw)) << (bw * 8)) | a;
             if (g == 6) {
                 auto q = dividend / v;
                 if (q > mask(bw))
-                    throw std::runtime_error("divide overflow at " + location());
+                    throw Fault{0, 0, false};
                 auto rem = dividend % v;
                 set(AX, q, bw);
                 set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
@@ -1648,10 +1648,10 @@ void CPU::stepImpl() {
                                         : int64_t(dividend),
                         den = signedValue(v, bw);
                 if (num == INT64_MIN && den == -1)
-                    throw std::runtime_error("divide overflow");
+                    throw Fault{0, 0, false};
                 int64_t q = num / den, rem = num % den;
                 if (q != signedValue(q, bw))
-                    throw std::runtime_error("divide overflow at " + location());
+                    throw Fault{0, 0, false};
                 set(AX, q, bw);
                 set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
             }

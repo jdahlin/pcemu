@@ -316,9 +316,27 @@ static void lock_prefix_forms() {
         check(c.read(0x200,2)==7,"valid LOCK memory ADD executes normally");
     }
 }
+// DIV/IDIV overflow and zero divisors, plus AAM base zero, are restartable
+// #DE faults rather than host errors. Hardware vectors exercise these paths.
+static void divide_faults() {
+    struct Stop {};
+    struct Case { std::vector<uint8_t> code;uint32_t ax,dx,bx; };
+    const std::vector<Case> cases={{{0xf6,0xf3},0x1234,0,0},{{0xf6,0xf3},0x100,0,1},
+        {{0xf7,0xf3},0,1,1},{{0xf7,0xfb},0x8000,0xffff,0xffff},
+        {{0x66,0xf7,0xfb},0x80000000,0xffffffff,0xffffffff},{{0xd4,0},0x1234,0,0}};
+    for(bool native:{false,true})for(const auto &test:cases) {
+        CPU c;c.ip=0x100;c.r[AX]=test.ax;c.r[DX]=test.dx;c.r[BX]=test.bx;
+        std::copy(test.code.begin(),test.code.end(),c.mem.begin()+0x100);
+        unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+        Jit jit(c,native,0,65536);
+        try {if(native)jit.run();else c.step();}catch(const Stop &){}
+        check(vector==0&&c.ip==0x100&&c.r[AX]==test.ax&&c.r[DX]==test.dx,
+              "divide fault preserves dividend and restart IP");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";
