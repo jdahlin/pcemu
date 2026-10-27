@@ -14,6 +14,7 @@ struct Instruction {
     uint32_t imm, end;
     uint32_t start = 0; // Guest start, including prefixes and followed jumps.
     bool immediate;
+    bool memoryShift = false; // RAM-hit shift/rotate RMW; unsafe writes replay before access.
     bool memoryDivide = false; // Native RAM-hit division with guarded interpreter replay.
     bool memoryMultiply = false; // Two/three-operand signed multiply after a successful read.
     bool memoryResult = false; // Read-only memory ALU with a register destination.

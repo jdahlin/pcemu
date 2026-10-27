@@ -1954,3 +1954,15 @@ restores pass. The complete candidate remains 20.1% below the original Word CPU
 baseline and 9.0% below Excel's. Incremental medians are higher in this run, but
 large A/A variation and a separate active VM make attribution inconclusive.
 See [the full results and noise limits](measurements/office-divide-2026-10-27.md).
+
+### Word and Excel: memory shifts and rotates (2026-10-27)
+
+Guarded RAM SHL/SAL/SHR/SAR/ROL/ROR/RCL/RCR now share the register count/result/
+flag generator. Zero counts still validate writes; cold, watched, device and
+code-write paths replay before access. Cached validation passes 20,421,602 checks.
+Word's interpreted C1 memory operands fall from 118,272 to 119 and D3 operands
+from 13,014 to 56; Excel C1 falls from 13,178 to 40. Native shares reach 94.44%
+and 99.429%. All 48 restores pass. Word is 1.07% below the previous division
+build, winning all eight paired rounds; Excel's incremental difference is neutral.
+The full candidate is 22.9% below the original Word CPU baseline and 9.1% below
+Excel's in the fresh matched run. See [results, guard semantics and host limits](measurements/office-memory-shift-2026-10-27.md).

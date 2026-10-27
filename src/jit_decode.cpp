@@ -212,22 +212,25 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 }
             } else if (op == 0xc0 || op == 0xc1 || (op >= 0xd0 && op <= 0xd3)) {
                 auto m = byte();
-                if ((m >> 6) != 3) {
-                    pos = begin;
-                    break;
-                }
                 i.kind = ((m >> 3) & 7) < 4 ? Kind::Rotate : Kind::Shift;
                 i.w = (op & 1) ? w : 1;
                 i.dst = m & 7;
                 i.op = (m >> 3) & 7;
                 i.immediate = op < 0xd2;
                 i.src = CX;
+                if ((m >> 6) != 3) {
+                    i.kind = Kind::Memory;
+                    i.memoryShift = true;
+                    i.memory = memoryOperand(m, address32, overrideSegment);
+                    i.memory.store = true;
+                    i.dst = CX; // Only a variable count uses a guest source register.
+                }
                 i.imm = i.immediate ? (op < 0xd0 ? byte() : 1) & 31 : 0;
-                if (i.kind == Kind::Rotate && i.immediate) {
+                if (i.op < 4 && i.immediate) {
                     if (i.op < 2) i.imm %= i.w * 8;
                     else if (i.w < 4) i.imm %= i.w * 8 + 1;
                 }
-                if (i.immediate && !i.imm)
+                if (i.immediate && !i.imm && !i.memoryShift)
                     i.kind = Kind::Nop; // A masked zero count preserves all flags/GPRs.
             } else if (op == 0x69 || op == 0x6b) {
                 auto m = byte();

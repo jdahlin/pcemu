@@ -475,6 +475,165 @@ static void stringMoveTests() {
     }
 }
 
+static void memoryShiftTests() {
+    for (unsigned operation = 0; operation < 8; ++operation)
+     for (bool immediate : {false, true})
+      for (unsigned count = 0; count < 32; ++count) {
+        CPU c(16384); c.cr[0] = 0x11; c.s[CS].big = true; c.flags = 2;
+        c.mem[0] = immediate ? 0xc0 : 0xd2;
+        c.mem[1] = uint8_t((operation << 3) | 3);
+        if (immediate) c.mem[2] = uint8_t(count);
+        c.mem[immediate ? 3 : 2] = 0xf4;
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        for (unsigned value = 0; value < 256; ++value)
+         for (uint32_t flags : {2u, 3u, 0xcd6u, 0xcd7u}) {
+            std::fill_n(c.r, 8, 0x12345678); c.r[BX] = 0x1000;
+            c.r[CX] = (c.r[CX] & ~31u) | count;
+            c.mem[0x1000] = uint8_t(value);
+            c.flags = flags; c.ip = 0; c.instructions = 0; c.halted = false;
+            CPU ref = c; const auto before = jit.nativeInstructions;
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+            check(c.halted && jit.nativeInstructions == before + 1 && !c.nativeMemoryCalls,
+                  "exhaustive byte memory shift did not execute native RAM path");
+        }
+    }
+    for (unsigned width : {2u, 4u})
+     for (unsigned operation = 0; operation < 8; ++operation)
+      for (bool immediate : {false, true})
+       for (unsigned count : {0u, 1u, 8u, 15u, 16u, 17u, 31u})
+        for (uint32_t value : {0u, 1u, 0x7fffu, 0x8000u, 0xffffu, 0x7fffffffu, 0x80000000u, 0xffffffffu}) {
+            auto c = make({}, true);
+            unsigned p = 0;
+            if (width == 2) c.mem[p++] = 0x66;
+            c.mem[p++] = immediate ? 0xc1 : 0xd3;
+            c.mem[p++] = uint8_t((operation << 3) | 3);
+            if (immediate) c.mem[p++] = uint8_t(count);
+            c.mem[p] = 0xf4;
+            c.r[BX] = 0x1000; c.r[CX] = count; c.flags = value & 1 ? 0xcd7 : 2;
+            c.write(0x1000, value, width);
+            compare(c);
+        }
+    for (bool paging : {false, true})
+     for (bool code32 : {false, true})
+      for (bool address32 : {false, true})
+       for (unsigned width : {1u, 2u, 4u})
+        for (unsigned operation = 0; operation < 8; ++operation)
+         for (unsigned form : {0u, 1u, 2u})
+          for (unsigned count : {0u, 1u, 8u, 9u, 16u, 17u, 31u, 32u, 255u})
+           for (bool warm : {false, true}) {
+            if (form == 0 && count != 1) continue;
+            auto c = make({}, paging); c.s[CS].big = code32; c.s[FS].base = 0x2000;
+            c.r[BX] = address32 ? 0x1000 : 0x12341000;
+            c.r[SI] = address32 ? 0x10 : 0xabcd0010;
+            c.r[CX] = 0x12345600 | count; c.r[AX] = warm ? 0xffffffff : 0x7fffffff;
+            std::vector<uint8_t> code{0x83, 0xc0, 1, 0x64};
+            if (code32 != address32) code.push_back(0x67);
+            if (width != 1 && code32 != (width == 4)) code.push_back(0x66);
+            code.push_back(form == 0 ? (width == 1 ? 0xd0 : 0xd1) : form == 1 ? (width == 1 ? 0xc0 : 0xc1) : (width == 1 ? 0xd2 : 0xd3));
+            code.push_back(uint8_t(0x40 | (operation << 3) | (address32 ? 4 : 0)));
+            if (address32) code.push_back(0x73);
+            code.push_back(0x20);
+            if (form == 1) code.push_back(uint8_t(count));
+            code.push_back(0x9f); code.push_back(0xf4);
+            std::copy(code.begin(), code.end(), c.mem.begin());
+            const unsigned address = address32 ? 0x3040 : 0x3030;
+            if (warm) c.write(address, 0x81ab7f00, width);
+            else for (unsigned b = 0; b < width; ++b) c.mem[address + b] = uint8_t(0x81ab7f00 >> (b * 8));
+            compare(c);
+        }
+    for (unsigned width : {1u, 2u, 4u})
+     for (unsigned operation = 0; operation < 8; ++operation)
+      for (bool warm : {false, true}) {
+        auto c = make({}, true);
+        unsigned p = 0;
+        if (width == 2) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xd0 : 0xd1;
+        c.mem[p++] = uint8_t((operation << 3) | 3); c.mem[p] = 0xf4;
+        c.r[BX] = 0x1000; c.mem[0x1000] = 0x81;
+        if (warm) c.write(0x1000, 0x81, width);
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(jit.compiledBlocks && (warm ? jit.nativeInstructions == 1 : jit.nativeInstructions == 0) && !c.nativeMemoryCalls,
+              "memory shift cold/warm replay accounting");
+    }
+    for (unsigned operation = 0; operation < 8; ++operation)
+     for (unsigned count : {0u, 1u, 4u, 31u})
+      for (bool warm : {false, true}) {
+        auto c = make({0xc1, uint8_t((operation << 3) | 3), uint8_t(count), 0xf4}, true);
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024); c.flushTLB();
+        c.r[BX] = 0x9024;
+        if (warm) c.write(0x9024, 0x81067, 4);
+        compare(c);
+    }
+    for (unsigned operation : {1u, 4u}) {
+        auto c = make({0xd0, uint8_t((operation << 3) | 3), uint8_t(operation == 1 ? 0xe9 : 0x7a), 0x90, 0xf4});
+        c.r[BX] = 2; compare(c); // Rotate/shift rewrites the next opcode to HLT.
+    }
+    for (unsigned operation = 0; operation < 8; ++operation)
+     for (unsigned width : {1u, 4u})
+      for (unsigned count : {0u, 1u, 8u, 9u, 31u, 32u})
+       for (bool watched : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, uint8_t(width == 1 ? 0xc0 : 0xc1), uint8_t((operation << 3) | 3), uint8_t(count), 0xf4});
+        c.r[BX] = 0xa0000; c.r[AX] = 0xffffffff;
+        CPU ref = c; std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t p) { trace.push_back(p); trace.push_back(c.flags); return uint8_t(p + 0x80); };
+        ref.videoRead = [&](uint32_t p) { refTrace.push_back(p); refTrace.push_back(ref.flags); return uint8_t(p + 0x80); };
+        c.videoWrite = [&](uint32_t p, uint8_t v) { trace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        ref.videoWrite = [&](uint32_t p, uint8_t v) { refTrace.push_back((1ull << 60) | (uint64_t(p) << 8) | v); };
+        if (watched) {
+            c.watchStart = ref.watchStart = 0xa0000; c.watchLength = ref.watchLength = width;
+            c.watchWrite = [&](uint32_t, uint32_t, int) { trace.push_back((2ull << 60) | c.flags); };
+            ref.watchWrite = [&](uint32_t, uint32_t, int) { refTrace.push_back((2ull << 60) | ref.flags); };
+        }
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        while (!c.halted) {
+            auto part = jit.runBatch();
+            for (unsigned i = 0; i < part.instructions; ++i) ref.step();
+            equal(c, ref);
+        }
+        check(trace == refTrace && trace.size() == width * 3 + unsigned(watched) && !c.nativeMemoryCalls,
+              "memory shift zero/count MMIO/watch callbacks changed");
+    }
+    for (unsigned operation = 0; operation < 8; ++operation)
+     for (unsigned count : {0u, 1u, 32u, 255u})
+      for (bool crossPage : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0xc1, uint8_t((operation << 3) | 3), uint8_t(count), 0xf4}, true);
+        c.s[CS].selector = 3; c.r[AX] = 0xffffffff; c.r[BX] = crossPage ? 0x4fff : 0x5000;
+        uint32_t readOnly = 0x5005;
+        std::copy_n(reinterpret_cast<uint8_t *>(&readOnly), 4, c.mem.begin() + 0x81014); c.flushTLB();
+        CPU ref = c; unsigned faults = 0;
+        c.observeFault = ref.observeFault = [&](const Fault &f) {
+            check(f.vector == 14 && f.error == 7, "memory shift write fault type");
+            ++faults; throw std::runtime_error("shift fault");
+        };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        try { jit.runBatch(); check(false, "missing native shift fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "shift fault", "native shift fault"); }
+        try { ref.step(); ref.step(); check(false, "missing reference shift fault"); }
+        catch (const std::runtime_error &e) { check(std::string(e.what()) == "shift fault", "reference shift fault"); }
+        equal(c, ref); check(faults == 2 && c.ip == 3 && c.mem[0x4fff] == 0, "shift fault committed data/flags");
+    }
+    {
+        auto c = make({0xd3, 0x29, 0xf4}, true); // SHR [CX],CL
+        c.r[CX] = 0x101f; c.write(0x101f, 0xffffffff, 4); compare(c);
+        c = make({0x0f, 0xaf, 0x33, 0xc0, 0x17, 0, 0xf4}, true); // IMUL -> RCL byte [DI],0
+        c.flags = 2; c.r[BX] = 0x1000; c.r[DI] = 0x2000; c.r[SI] = 0x7fffffff;
+        c.write(0x1000, 2, 4); c.write(0x2000, 0x80, 1); compare(c);
+    }
+    for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0xd1, 0x0b, 0x83, 0xd0, 0, 0x83, 0xe9, 1, 0x75, 0xf6, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[AX] = 0; c.r[CX] = 1000; c.write(0x1000, 0x80000001, 4);
+        compare(c, 10000, mode); // Memory ROR -> ADC across linked iterations.
+    }
+}
+
 static void divisionTests() {
     auto native = [](CPU &c, Jit &jit) {
         try {
@@ -1579,6 +1738,7 @@ int main() {
             rotateAndSignExtendTests();
             invertAndMemoryMultiplyTests();
             divisionTests();
+            memoryShiftTests();
             hotShortFragmentTests();
             cycleTests();
         }
