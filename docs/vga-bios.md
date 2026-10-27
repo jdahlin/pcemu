@@ -97,7 +97,7 @@ mode intact. Defensive policy ignores invalid page numbers, cursor coordinates
 outside the text grid and empty scroll rectangles, clips scroll bottom/right,
 and bounds repeated writes to the selected page allocation. These policies are
 not claims about undocumented IBM behavior. Teletype scroll blanking uses the
-last row's first attribute, matching the existing Bochs ROM; IBM does not define
+last row's first attribute, matching the existing SeaVGABIOS ROM; IBM does not define
 that attribute in its 0Eh description.
 
 The font data comes from the upstream public-domain `dhepper/font8x8` project,
@@ -284,3 +284,7 @@ CRTC11 protection now blocks writes to timing registers 00h..07h while leaving
 Overflow.LC8 writable. Firmware unlocks timing registers around 40-column and
 font-height updates, then restores protection. Native tests cover lock, unlock
 and the Line Compare exception; the RAM-only probe also passes under QEMU.
+
+Reference-ROM attribution: embedded strings identify the local QEMU firmware as
+SeaVGABIOS. Four-way comparisons use its PCI `vgabios-stdvga.bin` variant so
+QEMU/SeaBIOS discovers it; the local legacy image lacks a PCI data structure.
