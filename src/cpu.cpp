@@ -1121,8 +1121,10 @@ void CPU::stepImpl() {
         auto m = fetch(1);
         auto rm = decode(m, a32, over);
         int seg = (m >> 3) & 7;
-        if (seg >= 6)
-            fail();
+        // MOV cannot load CS; reject the encoding before reading its source.
+        // Intel SDM Vol. 2, MOV: loading CS requires a far control transfer.
+        if (seg >= 6 || (op == 0x8e && seg == CS))
+            throw Fault{6, 0, false};
         if (op == 0x8c)
             store(rm, s[seg].selector, rm.reg ? w : 2);
         else {

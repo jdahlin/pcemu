@@ -278,8 +278,24 @@ static void operand_faults() {
               "unavailable coprocessor faults before FLD changes TOP or tags");
     }
 }
+// External test386.asm POST 03: MOV CS,r/m16 is #UD even with a memory
+// operand. The invalid encoding must not read that operand or change CS.
+static void reject_mov_cs() {
+    struct Stop {};
+    for(bool native:{false,true})for(bool prefix:{false,true})for(uint8_t modrm:{uint8_t(0xc8),uint8_t(0x08)}) {
+        CPU c;c.ip=0x100;c.s[DS].base=0xa0000;c.r[AX]=0x1234;
+        unsigned at=0x100;if(prefix)c.mem[at++]=0x66;c.mem[at++]=0x8e;c.mem[at]=modrm;
+        c.videoRead=[](uint32_t)->uint8_t{throw std::runtime_error("invalid MOV CS read its memory operand");};
+        unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+        Jit jit(c,native,0,65536);
+        try {if(native)jit.run();else c.step();}catch(const Stop &){}
+        check(vector==6 && c.ip==0x100 && c.s[CS].selector==0 && c.r[AX]==0x1234,
+              "MOV CS faults before source access and preserves restart state");
+    }
+}
 int main() {
     try {
+        reject_mov_cs();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";
