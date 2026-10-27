@@ -26,6 +26,7 @@ def pixels(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disk', type=Path, default=ROOT / 'media/quake.qcow2')
+    parser.add_argument('--backend', choices=['interpreter', 'jit'], default='jit')
     parser.add_argument('--timeout', type=int, default=120)
     args = parser.parse_args()
     subprocess.run(['make', '-s', 'build/pcemu', 'build/disk-tool'], cwd=ROOT, check=True)
@@ -33,7 +34,7 @@ def main():
     disk, control = work / 'guest.qcow2', work / 'control.txt'
     subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk), str(args.disk.resolve())], check=True)
     control.write_text('')
-    command = [str(ROOT / 'build/pcemu'), '--headless', '--backend', 'interpreter', '--ram-mb', '32',
+    command = [str(ROOT / 'build/pcemu'), '--headless', '--backend', args.backend, '--ram-mb', '32',
                '--disk', str(disk), '--steps', '2000000000', '--capture-every', '25000000',
                '--control-file', str(control), '--frame', str(work / 'live.ppm'),
                '--state-json', str(work / 'live.json')]
@@ -99,7 +100,8 @@ def main():
                     process.kill()
                     process.wait()
             (work / 'report.json').write_text(json.dumps({'success': success, 'command': command,
-                'scope': 'original shareware start-map HUD and changing 3D frames after IRQ1 forward input; interpreter, silent',
+                'scope': 'original shareware start-map HUD and changing 3D frames after IRQ1 forward input; silent',
+                'backend': args.backend,
                 'captures': captures}, indent=2) + '\n')
             if success:
                 disk.unlink()

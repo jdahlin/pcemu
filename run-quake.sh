@@ -15,6 +15,5 @@ if [[ ! -f "$disk" ]]; then
   exit 1
 fi
 ./tools/build.sh pcemu
-# The interpreter is the verified Quake backend; CWSDPMI still exposes a JIT
-# segment-state divergence. Do not silently select JIT through the auto backend.
-exec ./build/pcemu --backend interpreter --ram-mb 32 --disk "$disk" "$@"
+# Use the validated native JIT; --backend interpreter remains available.
+exec ./build/pcemu --backend jit --ram-mb 32 --disk "$disk" "$@"

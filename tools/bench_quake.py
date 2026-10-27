@@ -132,6 +132,7 @@ def put_id1_file(fat, filename, data):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disk', type=Path, default=ROOT / 'media/quake.qcow2')
+    parser.add_argument('--backend', choices=['interpreter', 'jit'], default='jit')
     parser.add_argument('--demo', help='embedded demo name; defaults to the first bundled demo')
     parser.add_argument('--frames', type=int, help='create and run a stock-demo prefix with this many timed frames')
     parser.add_argument('--timeout', type=int, default=1800, help='maximum seconds including DOS boot and demo loading')
@@ -144,6 +145,8 @@ def main():
     args = parser.parse_args()
     if args.timeout <= 0 or (args.frames is not None and args.frames <= 0) or not args.disk.is_file():
         parser.error('A prepared Quake disk, positive timeout and positive frame count are required; see docs/quake.md')
+    if args.backend == 'jit' and (args.measure_window or args.profile_mode != 'none'):
+        parser.error('Exact frame-window profiling currently requires --backend interpreter')
     if args.profile_mode == 'host' and (sys.platform != 'darwin' or not shutil.which('sample')):
         parser.error('Host stack sampling requires the macOS sample tool')
     target = 'quake-bench-profile' if args.profile_mode == 'counters' else 'quake-bench'
@@ -189,9 +192,9 @@ def main():
                        'C:\\QUAKE\\QUAKE ' + arguments + '\r\nECHO PCEMU QUAKE BENCHMARK DONE\r\n')
             fat.replace_existing('AUTOEXECBAT', startup.encode('ascii'))
         label = f'{demo}/{args.frames} frames' if args.frames is not None else demo
-        print(f'Quake timedemo: {label} (320x200, interpreter, silent, uncapped)', flush=True)
+        print(f'Quake timedemo: {label} (320x200, {args.backend}, silent, uncapped)', flush=True)
         command = [str(runner), '--disk', str(disk), '--output', str(work / 'result.json'),
-                   '--timeout', str(args.timeout)]
+                   '--timeout', str(args.timeout), '--backend', args.backend]
         if measure:
             command += ['--window-output', str(work / 'window.json')]
         if args.profile_mode == 'counters':
@@ -236,6 +239,8 @@ def main():
         if result.returncode:
             raise RuntimeError('Timedemo failed: ' + (work / 'stderr.log').read_text().strip())
         report = json.loads((work / 'result.json').read_text())
+        if report['backend'] != args.backend:
+            raise RuntimeError('Completed timedemo backend differs from the requested backend')
         if args.frames is not None and report['frames'] != args.frames:
             raise RuntimeError(f'Short demo reported {report["frames"]} frames; expected {args.frames}')
         # Confirm the same result was actually written to disk, not merely

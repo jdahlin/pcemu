@@ -174,7 +174,7 @@ def main():
         engine = diagnostic if mode == 'counters' else normal
         command = [sys.executable, str(source / 'tools/bench_quake.py'), '--disk', str(a.disk.resolve()),
                    '--frames', str(a.frames), '--timeout', str(a.timeout), '--runner', str(engine), '--no-build',
-                   '--measure-window', '--profile-mode', mode, '--output-dir', str(output)]
+                   '--backend', 'interpreter', '--measure-window', '--profile-mode', mode, '--output-dir', str(output)]
         if any(sha(Path(row['path'])) != row['sha256'] for row in metadata['guestDiskChain']):
             raise RuntimeError('Guest backing chain changed; refusing mixed-workload data')
         print(f'Collecting {name} ({mode})', flush=True)

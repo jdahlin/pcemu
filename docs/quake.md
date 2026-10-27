@@ -1,6 +1,6 @@
 # Quake shareware on MS-DOS
 
-**Quake 1.06 shareware runs in the x86 interpreter on MS-DOS 6.22.** It renders
+**Quake 1.06 shareware runs with the x86 JIT on MS-DOS 6.22.** It renders
 the start map, weapon and HUD and accepts keyboard movement. The 27 October 2026
 headless smoke test matched the original health display, injected an Up-arrow
 make/break through IRQ1 and captured two different 3D views. The second view
@@ -12,17 +12,28 @@ entered the normal-skill hall. Both captures remained in protected mode.
 ./run-quake.sh
 ```
 
-The launcher selects the verified **interpreter backend with 32 MiB RAM**.
+The launcher selects the verified **JIT backend with 32 MiB RAM**.
+Pass `--backend interpreter` to select the reference backend.
 Use arrow keys to move; Ctrl fires, Space jumps, Escape opens the menu.
 Sound, CD audio, joystick, DOS mouse and game networking are disabled in the
 prepared AUTOEXEC.BAT. This is a silent keyboard-controlled session.
 `QUAKE_DISK=/absolute/path/to/disk.qcow2` selects another prepared disk.
 
-The JIT still fails in CWSDPMI's segment trampoline: a lock-memory request can
-restore DS=0033 instead of the application selector 00AF, eventually causing a
-page fault at Quake EIP 00044d65. Disabling basic-block joining does not resolve
-it. The launcher deliberately uses the working interpreter; Quake performance
-and JIT compatibility are not claimed.
+The JIT supports the original CWSDPMI startup and protected-mode gameplay.
+A deferred native block previously reused a 16-bit stack address calculation
+after SS.B changed, corrupting the saved DS selector during a DPMI request.
+Deferred boundary blocks now validate stack and buffer assumptions just like
+ordinary native blocks. A RAM-only regression alternates SS.B across repeated
+far-transfer blocks and compares registers, segments and all RAM to the interpreter.
+
+Headless validation completed all three original bundled timedemos: `demo1`
+(969 frames), `demo2` (985), and `demo3` (1,090). Each result was confirmed in
+its closed DOS console log. The start-map smoke also verified the original HUD,
+keyboard movement, changing 3D frames and protected-mode state. See the
+[compatibility record](measurements/quake-jit-2026-10-27.json). This validates
+the JIT backend, including its normal interpreter fallbacks for unsupported
+instructions; it does not claim every instruction runs natively or that the
+entire game has been played through.
 
 ## Uncapped timedemo benchmark
 
@@ -30,11 +41,12 @@ and JIT compatibility are not claimed.
 ./run-quake.sh --benchmark
 ./run-quake.sh --benchmark --demo demo2
 ./run-quake.sh --benchmark --frames 50
+./run-quake.sh --benchmark --backend interpreter --frames 50
 ```
 
 Benchmark mode discovers the embedded `.dem` files in `ID1/PAK0.PAK` and picks
 the first by name (the original shareware selects `demo1`). It runs the original
-Quake `timedemo` command headlessly, with the interpreter, 32 MiB RAM, VGA
+Quake `timedemo` command headlessly, with the JIT, 32 MiB RAM, VGA
 320x200, view size 100, no retrace wait and sound disabled. Playback is uncapped;
 the renderer still executes normally and writes the emulated VGA framebuffer.
 There is no frontend presentation or host frame-rate limiter in the measured
@@ -115,7 +127,8 @@ failed to load the assets and is no longer used.
 ## Validate headlessly
 
 ```sh
-python3 tools/smoke_quake.py
+python3 tools/smoke_quake.py --backend jit
+python3 tools/smoke_quake.py --backend interpreter
 # One bounded cold-boot capture, without claiming gameplay automatically:
 python3 tools/probe_quake.py --dos media/quake-dos-base.qcow2 \
   --source build/quake/game --no-jit --steps 700000000 --timeout 90
@@ -123,7 +136,7 @@ python3 tools/probe_quake.py --dos media/quake-dos-base.qcow2 \
 ```
 
 The smoke uses a temporary compressed overlay of the prepared disk, selects the
-interpreter and checks the original 320x200 health-display pixels. It pauses to
+JIT by default and checks the original 320x200 health-display pixels. It pauses to
 capture the first view, holds the forward key for at least 100 million guest
 instructions and verifies a changed 3D scene in a second capture. It checks
 protected-mode state and an orderly emulator exit. Success removes its disk;

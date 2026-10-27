@@ -1,4 +1,7 @@
 import importlib.util
+import contextlib
+import tempfile
+from unittest.mock import patch
 import io
 import struct
 import sys
@@ -23,6 +26,22 @@ def pack(entries):
 
 
 class QuakeBenchmarkTests(unittest.TestCase):
+    def test_jit_rejects_interpreter_only_profiling_before_boot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            disk = Path(directory) / 'guest.qcow2'
+            disk.touch()
+            for options in [['--measure-window'], ['--profile-mode', 'counters'],
+                            ['--profile-mode', 'host']]:
+                with self.subTest(options=options), patch.object(sys, 'argv',
+                        ['bench_quake', '--disk', str(disk), '--backend', 'jit'] + options), \
+                        patch.object(bench.subprocess, 'run') as run, \
+                        contextlib.redirect_stderr(io.StringIO()) as errors:
+                    with self.assertRaises(SystemExit) as error:
+                        bench.main()
+                    self.assertEqual(error.exception.code, 2)
+                    self.assertIn('requires --backend interpreter', errors.getvalue())
+                    run.assert_not_called()
+
     def test_find_bundled_demos(self):
         self.assertEqual(bench.pak_demos(pack([('demo2.dem', b'2'), ('DEMO1.DEM', b'1'),
             ('maps/e1m1.bsp', b'map'), ('subdir/demo3.dem', b'x')])), ['demo1', 'demo2'])

@@ -86,5 +86,31 @@ int main(){try{
         auto p=std::make_unique<CPU>(65536);auto&c=*p;c.s[CS].big=true;c.s[SS].big=true;const uint8_t code[]={0x9a,7,0,0,0,0,0,0x43,0xf4};std::copy(std::begin(code),std::end(code),c.mem.begin());Jit jit(c,true,0,65536,mode);jit.setDirectLinks(links,0);
         for(unsigned n=0;n<100;++n){c.ip=0;c.s[CS].selector=0;c.s[CS].base=0;c.s[CS].big=true;c.r[SP]=0x2000;c.flags=0x202;auto ref=std::make_unique<CPU>(c);ref->step();auto batch=jit.runBatch();equal(c,*ref);check(batch.instructions==1&&batch.dispatches==1&&c.r[BX]==0,"far CALL keeps the poll before target execution");}check(jit.nativeInstructions==100,"hot far calls stay native");
     }
+    // CWSDPMI reuses 16-bit code with both SS.B values. A terminal far
+    // transfer owns a deferred native entry (ordinary fn is null); its prefix
+    // still embeds the stack address width and must rebuild when SS.B changes.
+    // Intel SDM Vol. 3A, 3.4.5.1 D/B: SS.B selects SP/ESP independently of CS.D.
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf
+    for(auto mode:{Jit::BlockMode::Basic,Jit::BlockMode::FollowJumps,Jit::BlockMode::Trace})
+    for(bool links:{false,true})for(bool initial32:{false,true})for(bool paged:{false,true}) {
+        auto p=std::make_unique<CPU>(1024*1024);auto &c=*p;
+        c.cr[0]=0x11;c.s[CS].selector=8;c.s[SS].big=initial32;
+        c.gdtBase=0x60000;c.gdtLimit=63;descriptor(c,8,0,true,false,0);
+        // PUSH byte +33; POP AX; JMP FAR 0008:0100.
+        const uint8_t code[]={0x6a,0x33,0x58,0xea,0,1,8,0};
+        std::copy(std::begin(code),std::end(code),c.mem.begin());
+        if(paged)paging(c,true);
+        Jit jit(c,true,0,65536,mode);jit.setDirectLinks(links,0);
+        for(unsigned round=0;round<4;++round) {
+            c.ip=0;c.r[SP]=0x28040;c.s[SS].big=initial32 ^ bool(round&1);
+            c.r[AX]=0xabcd0000;c.flags=0x202;
+            auto ref=std::make_unique<CPU>(c);
+            for(unsigned n=0;n<3;++n)ref->step();
+            auto before=jit.nativeInstructions;jit.run();equal(c,*ref);
+            check(jit.nativeInstructions-before==3,"deferred prefix remains native after SS.B change");
+            check(c.ip==0x100 && c.r[SP]==0x28040 && c.r[AX]==0xabcd0033,
+                  "deferred boundary uses current stack address width");
+        }
+    }
     std::cout<<"Passed "<<checks<<" far-transfer JIT checks\n";
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

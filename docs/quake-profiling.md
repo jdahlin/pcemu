@@ -9,7 +9,10 @@ python3 tools/profile_quake.py --output build/quake-profile-before
 ```
 
 This collects data for an optimization target; it does not assert that a 10x
-speedup is available. The normal interpreter remains the verified backend.
+speedup is available. This collection explicitly selects the interpreter.
+The JIT now runs Quake (see [compatibility validation](quake.md)), but exact
+frame-window hooks can be skipped inside native blocks. JIT collection is
+therefore rejected until it has a correct measurement boundary mechanism.
 Use the 50-frame prefix for iteration, then repeat milestones with `--frames 969`
 and the full correctness suite. The prefix measures the opening scene rather
 than the scene mix of the complete demo.

@@ -30,7 +30,7 @@ static void phase(const std::string &path, const char *state) {
 }
 int main(int argc, char **argv) {
     try {
-        std::string disk, output, windowOutput, guestProfile, awaitSampler;
+        std::string disk, output, windowOutput, guestProfile, awaitSampler, backend = "jit";
         unsigned timeout = 1800;
         for (int n = 1; n < argc; ++n) {
             std::string arg = argv[n];
@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
             else if (arg == "--window-output") windowOutput = argv[++n];
             else if (arg == "--await-sampler") awaitSampler = argv[++n];
             else if (arg == "--guest-profile") guestProfile = argv[++n];
+            else if (arg == "--backend") backend = argv[++n];
             else if (arg == "--timeout") timeout = std::stoul(argv[++n]);
             else throw std::runtime_error("Unknown argument: " + arg);
         }
@@ -50,6 +51,9 @@ int main(int argc, char **argv) {
 #endif
         if ((!guestProfile.empty() || !awaitSampler.empty()) && windowOutput.empty())
             throw std::runtime_error("Profiling requires --window-output");
+        if (backend != "jit" && backend != "interpreter") throw std::runtime_error("Invalid backend");
+        if (backend == "jit" && !windowOutput.empty())
+            throw std::runtime_error("Exact frame-window profiling currently requires the interpreter");
         Machine machine(disk, "", 32 * 1024 * 1024);
         auto &cpu = machine.cpu;
         // 8254 CLK is external board wiring. Only this runner supplies wall time;
@@ -63,7 +67,8 @@ int main(int argc, char **argv) {
             return (ns / 1000000000) * 1193182 + ((ns % 1000000000) * 1193182) / 1000000000;
         };
         machine.pit.reset(0);
-        Jit jit(cpu, false); // The interpreter is the verified original Quake backend.
+        Jit jit(cpu, backend == "jit");
+        if (backend == "jit" && !jit.enabled()) throw std::runtime_error("Native JIT unavailable on this host");
         std::ofstream console(output + ".console.log");
         if (!console) throw std::runtime_error("Cannot write console transcript");
         std::string transcript;
@@ -167,11 +172,13 @@ int main(int argc, char **argv) {
                 << ",\"hostSampled\":" << (!awaitSampler.empty() ? "true" : "false") << "}\n";
             if (!out) throw std::runtime_error("Cannot write frame-window result");
         }
+        if (backend == "jit" && !jit.nativeInstructions)
+            throw std::runtime_error("Timedemo completed without native JIT execution");
         machine.disk->flush();
         std::ofstream report(output);
         if (!report) throw std::runtime_error("Cannot write benchmark result");
         report << std::setprecision(12) << "{\"frames\":" << result->frames << ",\"seconds\":" << result->seconds
-               << ",\"fps\":" << result->fps << ",\"backend\":\"interpreter\",\"pitClock\":\"host-monotonic-1193182Hz\","
+               << ",\"fps\":" << result->fps << ",\"backend\":\"" << backend << "\",\"pitClock\":\"host-monotonic-1193182Hz\","
                << "\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
                << std::chrono::duration<double>(Clock::now() - origin).count() << "}\n";
         std::cout << result->frames << " frames, " << result->seconds << " seconds: " << result->fps << " FPS\n";

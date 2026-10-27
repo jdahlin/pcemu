@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-27",
+  "scope": "JIT compatibility, silent DOS Quake 1.06 shareware at 320x200 with 32 MiB RAM; no complete interactive playthrough claimed",
+  "demos": [
+    {
+      "demo": "demo1",
+      "frames": 969,
+      "backend": "jit",
+      "resultFileClosed": true,
+      "executableSha256": "486fb0aa829a45894f767548e15aacd671a294c36d6f4f6584ca261d519e6027"
+    },
+    {
+      "demo": "demo2",
+      "frames": 985,
+      "backend": "jit",
+      "resultFileClosed": true,
+      "executableSha256": "c58586d9c84d27c4428e4494beb141f7ff8c6569eec406c048ca7509fb5fd544"
+    },
+    {
+      "demo": "demo3",
+      "frames": 1090,
+      "backend": "jit",
+      "resultFileClosed": true,
+      "executableSha256": "c58586d9c84d27c4428e4494beb141f7ff8c6569eec406c048ca7509fb5fd544"
+    }
+  ],
+  "gameplay": {
+    "success": true,
+    "backend": "jit",
+    "captures": [
+      {
+        "frame": "frame-1.ppm",
+        "instructions": 355103678,
+        "sceneSha256": "4093ad093022e5486af841643faa34f448b55446ba3a095aeb9b110979f9f463",
+        "cr0": 2147483667
+      },
+      {
+        "frame": "frame-2.ppm",
+        "instructions": 458923027,
+        "sceneSha256": "a03824ccba80e801bd2faee8f4fd905f71497cdd292af29bcb29625aef6bdda7",
+        "cr0": 2147483667
+      }
+    ]
+  },
+  "regression": {
+    "unfixed": "far-transfer RAM/page effects mismatch",
+    "fixedFarTransferChecks": 61537,
+    "segmentStackChecks": 73616
+  },
+  "scratchDisksRemoved": true
+}

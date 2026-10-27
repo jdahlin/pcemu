@@ -299,9 +299,13 @@ uint32_t Jit::run() {
     }
     const auto boundary=cached && cached->pollBoundary?cached->boundaryEntry():nullptr;
     const bool crossPage=boundary && boundary->fetchTail.present;
+    // Deferred boundary entries also contain generated code and embed the
+    // same stack/buffer assumptions as ordinary blocks. Their public fn is
+    // deliberately null to prevent cached-tail dispatch, not to skip guards.
+    const bool native = cached && (cached->fn || (boundary && boundary->fn));
     uint32_t currentPage = 0;
     bool checkedPage = false;
-    if ((cpu.cr[0] & 0x80000000u) && cached && (cached->fn || crossPage || cached->tlbEpoch != cpu.tlbEpoch)) {
+    if ((cpu.cr[0] & 0x80000000u) && cached && (native || crossPage || cached->tlbEpoch != cpu.tlbEpoch)) {
         try {
             currentPage = instructionPage(cpu,cpu.ip);
             checkedPage = true;
@@ -319,7 +323,7 @@ uint32_t Jit::run() {
         // code. Negative and warming entries execute CPU::step(), which reads
         // the current buffers, watch callback and stack mode itself. Keep code
         // identity checks above immediate so changed code can be translated.
-        ((cached->fn || crossPage) &&
+        ((native || crossPage) &&
          (cached->watched != bool(cpu.watchWrite) ||
           (cached->usesStack && cached->stack32 != cpu.s[SS].big) ||
           cached->ram != cpu.mem.data() || cached->ramSize != cpu.mem.size() ||
