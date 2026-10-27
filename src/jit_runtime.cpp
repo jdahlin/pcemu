@@ -1,5 +1,7 @@
 #include "jit_runtime.hpp"
 #include <cstring>
+#include <algorithm>
+#include <array>
 namespace pc::jit_detail {
 void nativeFinish(CPU *cpu, int op, uint32_t a, uint32_t b, int w, int condition,
                          uint32_t target) {
@@ -74,6 +76,117 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     const uint64_t end = uint64_t(physical) + width;
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
+}
+namespace {
+struct StringSpan {uint32_t physical=0,elements=0;};
+struct StringSpans {std::array<StringSpan,8> spans;unsigned size=0;};
+bool stringSpans(const CPU &cpu,unsigned segment,uint32_t offset,unsigned elements,unsigned width,
+                 unsigned addressWidth,bool backwards,bool write,StringSpans &out) {
+    const uint32_t mask=addressWidth==4?UINT32_MAX:65535u;
+    const uint32_t delta=backwards?uint32_t(-int(width)):width;
+    while(elements) {
+        if(out.size==out.spans.size())return false;
+        const auto linear=cpu.address(segment,offset);
+        uint32_t physical;
+        if(!warmDataAddress(cpu,linear,width,write,physical))return false;
+        const auto pageElements=backwards?(linear&4095)/width+1:(4096-(linear&4095))/width;
+        const uint64_t wrapElements=backwards?uint64_t(offset)/width+1:(uint64_t(mask)-offset)/width+1;
+        const unsigned n=unsigned(std::min<uint64_t>(elements,std::min<uint64_t>(pageElements,wrapElements)));
+        if(!n)return false;
+        const auto low=backwards?physical-(n-1)*width:physical;
+        if(uint64_t(low)+n*width>cpu.mem.size())return false;
+        if(write) {
+            const auto last=low+n*width-1;
+            for(uint32_t word=low>>6;word<=last>>6;++word)if(cpu.codeUsed[word])return false;
+        }
+        out.spans[out.size++]={physical,n};
+        offset=(offset+delta*n)&mask;elements-=n;
+    }
+    return true;
+}
+struct StringCursor {
+    const StringSpans &all;unsigned span=0,index=0,width;bool backwards;
+    uint32_t address() const {return all.spans[span].physical+(backwards?uint32_t(-int(width)):width)*index;}
+    unsigned available() const {return all.spans[span].elements-index;}
+    void consume(unsigned n){index+=n;if(index==all.spans[span].elements){++span;index=0;}}
+};
+uint32_t stringRead(const CPU &cpu,uint32_t physical,unsigned width) {
+    uint32_t value=0;std::memcpy(&value,cpu.mem.data()+physical,width);return value;
+}
+void stringWrite(CPU &cpu,uint32_t physical,unsigned width,uint32_t value) {
+    std::memcpy(cpu.mem.data()+physical,&value,width);
+}
+}
+uint32_t nativeString(CPU *cpu,const NativeString *op) noexcept {
+    const auto kind=op->opcode&0xfe;
+    if((kind!=0xa4 && kind!=0xa6 && kind!=0xaa && kind!=0xac && kind!=0xae) ||
+       (op->width!=1 && op->width!=2 && op->width!=4) ||
+       (op->repeat && op->repeat!=0xf2 && op->repeat!=0xf3) || op->sourceSegment>=6)return 0;
+    const unsigned aw=op->address32?4:2,width=op->width;
+    const auto count=op->repeat?cpu->get(CX,aw):1u;
+    const auto batch=std::min(count,4096u);
+    if(!batch){cpu->repeatResume.valid=false;cpu->ip=op->end;return 1;}
+    const bool source=kind==0xa4 || kind==0xa6 || kind==0xac;
+    const bool destination=kind!=0xac;
+    const bool write=kind==0xa4 || kind==0xaa;
+    if(write && cpu->watchWrite)return 0;
+    const bool backwards=cpu->flags&DF;
+    const uint32_t delta=backwards?uint32_t(-int(width)):width;
+    const auto si=cpu->get(SI,aw),di=cpu->get(DI,aw);
+    StringSpans sources,destinations;
+    // The complete reference-sized batch must be safe before touching data.
+    // In particular, no partial native progress is replayed or counted twice.
+    try {
+        if(source && !stringSpans(*cpu,op->sourceSegment,si,batch,width,aw,backwards,false,sources))return 0;
+        if(destination && !stringSpans(*cpu,ES,di,batch,width,aw,backwards,write,destinations))return 0;
+    } catch(const Fault &) {return 0;}
+    auto initialFlags=cpu->flags;
+    const auto &resume=cpu->repeatResume;
+    if(op->repeat && resume.valid && resume.selector==cpu->s[CS].selector && resume.base==cpu->s[CS].base &&
+       resume.ip==op->start && resume.lastFlags==cpu->flags && resume.ax==cpu->r[AX] &&
+       resume.cx==cpu->r[CX] && resume.si==cpu->r[SI] && resume.di==cpu->r[DI])initialFlags=resume.initialFlags;
+    cpu->repeatResume.valid=false;
+    StringCursor src{sources,0,0,width,backwards},dst{destinations,0,0,width,backwards};
+    unsigned processed=0;bool done=false;
+    const auto accumulator=cpu->get(AX,width);
+    if(kind==0xac) {
+        // Warm ordinary RAM reads have no observable intermediate effects.
+        const auto &last=sources.spans[sources.size-1];
+        cpu->set(AX,stringRead(*cpu,last.physical+delta*(last.elements-1),width),width);
+        processed=batch;
+    } else while(processed<batch) {
+        if(kind==0xa4) {
+            const unsigned n=std::min(src.available(),dst.available()),bytes=n*width;
+            const auto s=src.address(),d=dst.address();
+            const auto lowS=backwards?s-(n-1)*width:s,lowD=backwards?d-(n-1)*width:d;
+            if(uint64_t(lowS)+bytes<=lowD || uint64_t(lowD)+bytes<=lowS)
+                std::memcpy(cpu->mem.data()+lowD,cpu->mem.data()+lowS,bytes);
+            else for(unsigned i=0;i<n;++i)stringWrite(*cpu,d+delta*i,width,stringRead(*cpu,s+delta*i,width));
+            src.consume(n);dst.consume(n);processed+=n;
+        } else if(kind==0xaa) {
+            const unsigned n=dst.available();const auto d=dst.address();
+            if(width==1)std::memset(cpu->mem.data()+(backwards?d-(n-1):d),accumulator,n);
+            else for(unsigned i=0;i<n;++i)stringWrite(*cpu,d+delta*i,width,accumulator);
+            dst.consume(n);processed+=n;
+        } else {
+            const auto left=kind==0xa6?stringRead(*cpu,src.address(),width):accumulator;
+            const auto right=stringRead(*cpu,dst.address(),width);
+            cpu->alu(7,left,right,width);
+            if(source)src.consume(1);dst.consume(1);++processed;
+            if(op->repeat && bool(cpu->flags&ZF)!=(op->repeat==0xf3)){done=true;break;}
+        }
+    }
+    if(source)cpu->set(SI,si+delta*processed,aw);
+    if(destination)cpu->set(DI,di+delta*processed,aw);
+    const auto remaining=count-processed;
+    if(op->repeat)cpu->set(CX,remaining,aw);
+    cpu->ip=op->end;
+    if(op->repeat && remaining && !done) {
+        cpu->ip=op->start;
+        cpu->repeatResume={true,cpu->s[CS].selector,cpu->s[CS].base,op->start,initialFlags,
+                           cpu->flags,cpu->r[AX],cpu->r[CX],cpu->r[SI],cpu->r[DI]};
+    }
+    return 1;
 }
 uint32_t nativePopMemory(CPU *cpu, const NativeMemoryMove *destination, uint32_t stackOffset,
                          uint32_t destinationOffset) noexcept {

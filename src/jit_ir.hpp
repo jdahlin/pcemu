@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -35,6 +35,7 @@ struct Instruction {
     bool predictedTaken = false; // Trace path only; terminal branches use imm/end.
     uint32_t target = 0;
     NativeMemoryMove memory, callPointer;
+    NativeString string;
 };
 struct DecodedBlock {
     std::vector<Instruction> instructions;

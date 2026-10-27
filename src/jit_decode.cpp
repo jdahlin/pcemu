@@ -75,6 +75,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             int w = cpu.s[CS].big ? 4 : 2;
             bool address32 = cpu.s[CS].big;
             int overrideSegment = -1;
+            unsigned repeat = 0;
             auto op = byte();
             for (unsigned prefixes = 0;; prefixes++) {
                 if (prefixes >= 15)
@@ -83,6 +84,8 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     w = cpu.s[CS].big ? 2 : 4;
                 else if (op == 0x67)
                     address32 = !cpu.s[CS].big;
+                else if (op == 0xf2 || op == 0xf3)
+                    repeat = op;
                 else if (op == 0x26 || op == 0x2e || op == 0x36 || op == 0x3e)
                     overrideSegment = (op >> 3) & 3;
                 else if (op == 0x64 || op == 0x65)
@@ -91,6 +94,8 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     break;
                 op = byte();
             }
+            const bool stringOpcode=(op>=0xa4 && op<=0xa7) || (op>=0xaa && op<=0xaf);
+            if(repeat && !stringOpcode) {pos=begin;break;}
             IR i{};
             i.w = w;
             i.kind = Kind::Unsupported;
@@ -384,6 +389,11 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Lea; // LEA computes an offset without accessing the segment or RAM.
                 i.dst = (m >> 3) & 7;
                 i.memory = memoryOperand(m, address32, overrideSegment);
+            } else if (stringOpcode && (repeat || op<0xaa || op>0xad)) {
+                i.kind=Kind::String;
+                i.string={unsigned(op),unsigned((op&1)?w:1),repeat,
+                          unsigned(overrideSegment<0?DS:overrideSegment),begin,pos,address32};
+                block.pollBoundary=true; // A REP batch keeps the reference device-poll boundary.
             } else if (op >= 0xaa && op <= 0xad) {
                 i.kind = Kind::Memory;
                 i.stringMove = true;
@@ -655,7 +665,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

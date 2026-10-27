@@ -12,4 +12,11 @@ struct NativeMemoryMove {
     int bit = -1; // Memory BT/BTS/BTR/BTC selector (4..7); value carries the bit index.
     int alu = -1; // Arithmetic/logical RMW; preserve old value for deferred flags.
 };
+// A decoded, terminal string batch. Host helpers may execute only after a
+// side-effect-free preflight validates every required RAM span.
+struct NativeString {
+    unsigned opcode = 0xa4, width = 1, repeat = 0, sourceSegment = DS;
+    uint32_t start = 0, end = 0;
+    bool address32 = false;
+};
 } // namespace pc

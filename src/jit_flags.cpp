@@ -20,7 +20,7 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
-        if (i.kind == Kind::Divide || i.kind == Kind::SegmentLoad || i.kind == Kind::InterruptControl) {
+        if (i.kind == Kind::Divide || i.kind == Kind::SegmentLoad || i.kind == Kind::InterruptControl || i.kind == Kind::String) {
             // Arithmetic/descriptor/privilege faults can expose the pre-instruction flags,
             // even when a following ALU would otherwise make them dead.
             liveFlags = arithmeticFlags;

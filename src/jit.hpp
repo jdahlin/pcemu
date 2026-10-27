@@ -93,6 +93,7 @@ class Jit {
         unsigned visits = 0;
         struct NativeState {
             std::vector<NativeMemoryMove> memory;
+            std::vector<NativeString> strings;
             std::unique_ptr<LinkState> link;
         };
         // Negative entries and register-only unlinked blocks own no native

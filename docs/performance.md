@@ -2076,3 +2076,14 @@ and 99.7% in Excel; all 48 matched release restores pass. CPU time is 27.05% bel
 the original Word baseline and 12.68% below Excel's. Incremental medians are 0.27%
 and 0.34% lower; Word remains within control variation, while Excel wins all four
 pairs. See [semantics, measurements and limits](measurements/office-conditional-loop-2026-10-27.md).
+
+### Word and Excel: guarded string coverage (2026-10-27)
+
+MOVS/CMPS/STOS/LODS/SCAS now use a guarded RAM backend for REP, with native
+non-REP MOVS/CMPS/SCAS admission. Full-batch preflight preserves replay, overlap,
+fault flags and 4,096-element polling semantics. New validation passes 88,295
+string checks plus the core and batch suites; all 48 matched release restores
+pass. Word CPU is 28.00% below the original baseline and 1.10% below the prior
+build. Excel remains 12.16% below original but regresses 0.83% versus prior in
+all four pairs. Coverage rises to 96.090%/99.719%; this is not a universal
+performance win. See [semantics, measurements and limits](measurements/office-string-2026-10-27.md).

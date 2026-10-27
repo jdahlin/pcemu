@@ -50,13 +50,17 @@ void compare(CPU c, unsigned batches = 10000, Jit::BlockMode mode = Jit::BlockMo
         auto p = jit.runBatch();
         Jit::BatchResult q;
         auto native = one.nativeInstructions;
-        while (q.instructions < 64 && !single.halted) {
+        // Per-block calls are independently pollable. Match the batch's
+        // instruction window: decoded string helpers can require an early
+        // poll even when every completed operation executed natively.
+        while (q.instructions < p.instructions && !single.halted) {
             auto n = one.run();
             q.instructions += n;
             ++q.dispatches;
             if (!n || one.nativeInstructions - native != q.instructions)
                 break;
         }
+        check(p.instructions <= 127 && p.dispatches <= 64, "cached batch bound");
         check(p.instructions == q.instructions && p.dispatches == q.dispatches, "calendar");
         for (unsigned i = 0; i < p.instructions; ++i)
             ref.step();
@@ -410,7 +414,7 @@ static void stringMoveTests() {
         auto c = make({0xf3, 0xac, 0xf4});
         c.r[SI] = 0x1000;
         c.r[CX] = 3;
-        compare(c); // REP remains interpreted and must retain its count semantics.
+        compare(c); // Native REP retains reference batch/count semantics.
     }
     {
         auto c = make({0xac, 0xf4});
@@ -1658,7 +1662,7 @@ static void hotShortFragmentTests() {
                 equal(c, ref);
             }
         }
-        check(jit.nativeInstructions == 0, "hot unsupported REP form was promoted");
+        check(jit.nativeInstructions >= 240, "hot REP LODS reaches native execution after warmup");
     }
 }
 

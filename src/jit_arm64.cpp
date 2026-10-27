@@ -34,7 +34,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     for (const auto &i : ir)
         if (i.kind == Kind::Memory)
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
-    if (linkCandidate || memoryMoves)
+    const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
+    if (linkCandidate || memoryMoves || stringMoves)
         block.native = std::make_unique<Block::NativeState>();
     if (linkCandidate) {
         block.native->link = std::make_unique<LinkState>();
@@ -92,7 +93,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl || i.kind == Kind::String)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -335,6 +336,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             if (i.memoryCall || i.memoryPush) block.native->memory.push_back(i.callPointer);
             block.native->memory.push_back(i.memory);
         }
+    if(stringMoves) {
+        block.native->strings.reserve(stringMoves);
+        for(const auto &i:ir)if(i.kind==Kind::String)block.native->strings.push_back(i.string);
+    }
+    size_t stringIndex=0;
     size_t memoryIndex = 0;
     unsigned dirtyRegisters = 0;
     auto flushRegisters = [&](unsigned dirty) {
@@ -662,10 +668,26 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
+        if(i.kind==Kind::String) {
+            // The terminal helper consumes canonical CPU GPRs/flags and commits
+            // its dynamic IP and repeat continuation. No stale cached GPR may
+            // overwrite its result in the ordinary epilogue.
+            flushRegisters(dirtyRegisters);
+            finishFlags(last,-1,0);
+            last=-1;dirtyRegisters=0;
+            imm(9,i.start);store(9,19,offsetof(CPU,ip));
+            emit(0xaa1303e0u);
+            pointer(1,reinterpret_cast<uintptr_t>(&block.native->strings[stringIndex++]));
+            call(reinterpret_cast<uintptr_t>(&jit_detail::nativeString));
+            const auto success=code.size();emit(0x35000000u);
+            replay(i.start,unsigned(n),0);
+            code[success] |= uint32_t(code.size()-success) << 5;
+            continue;
+        }
         if (i.kind == Kind::InterruptControl) {
             load(12,19,offsetof(CPU,flags));
             const unsigned cpl = block.vm ? 3 : (block.cr0 & 1) ? cpu.s[CS].selector & 3 : 0;
@@ -1525,7 +1547,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
-        ir.back().kind != Kind::CounterBranch) {
+        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::String) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);

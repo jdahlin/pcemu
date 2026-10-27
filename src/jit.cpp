@@ -483,7 +483,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     if (warmup && !hotShort && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
-                      !ir.front().stringMove) {
+                      !ir.front().stringMove && ir.back().kind != Kind::String) {
         block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
             return i.kind == Kind::Memory;
         }) ? 2 : 1;
