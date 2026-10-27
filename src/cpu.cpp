@@ -681,6 +681,26 @@ std::string CPU::location() const {
     snprintf(b, sizeof b, "%04x:%08x", s[CS].selector, ip);
     return b;
 }
+static void deliverInstructionFault(CPU &c,const Fault &fault) {
+    c.interruptBlockedThrough = 0;
+    if (c.observeFault)
+        c.observeFault(fault);
+    try {
+        int frameWidth =
+            (c.cr[0] & 1) && (c.systemRead(c.idtBase + fault.vector * 8 + 4, 4) & 0x800) ? 4 : 2;
+        c.interrupt(fault.vector);
+        if (fault.hasError && (c.cr[0] & 1))
+            c.push(fault.error, frameWidth);
+    } catch (...) {
+        throw std::runtime_error(
+            "fault delivery failed: vector=" + std::to_string(fault.vector) +
+            " error=" + std::to_string(fault.error) + " at " + c.location());
+    }
+}
+void CPU::stepInvalidOpcode() {
+    ++instructions;
+    deliverInstructionFault(*this,Fault{6,0,false});
+}
 template<class Execute> static void restartableInstruction(CPU &c,Execute execute) {
     // Faults restart the instruction. Demand-loaded NE segments depend on this.
     uint32_t savedRegs[8];
@@ -699,20 +719,7 @@ template<class Execute> static void restartableInstruction(CPU &c,Execute execut
         std::memcpy(c.s, savedSegments, sizeof c.s);
         c.ip = savedIP;
         c.flags = fault.partialRepeat ? fault.repeatFlags : savedFlags;
-        c.interruptBlockedThrough = 0;
-        if (c.observeFault)
-            c.observeFault(fault);
-        try {
-            int frameWidth =
-                (c.cr[0] & 1) && (c.systemRead(c.idtBase + fault.vector * 8 + 4, 4) & 0x800) ? 4 : 2;
-            c.interrupt(fault.vector);
-            if (fault.hasError && (c.cr[0] & 1))
-                c.push(fault.error, frameWidth);
-        } catch (...) {
-            throw std::runtime_error(
-                "fault delivery failed: vector=" + std::to_string(fault.vector) +
-                " error=" + std::to_string(fault.error) + " at " + c.location());
-        }
+        deliverInstructionFault(c,fault);
     }
 }
 void CPU::step() {

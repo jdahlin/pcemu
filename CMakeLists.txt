@@ -265,6 +265,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-invalid-opcode-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_invalid_opcode_test.cpp
+)
+
 pcemu_program(jit-descriptor-query-tests ZSTD
   SOURCES
     ${CORE}

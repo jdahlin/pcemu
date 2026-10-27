@@ -123,6 +123,13 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             if(repeat && !stringOpcode) {pos=begin;break;}
             IR i{};
             i.w = w;
+            if(op==0x63 && (!(block.cr0&1) || block.vm)){
+                // Opcode fetches from device memory retain their callbacks.
+                if((block.page>=0xa0 && block.page<0xb0) ||
+                   (block.page>=0xe0000 && block.page<0xe1000)){pos=begin;break;}
+                i.kind=Kind::InvalidOpcode;i.start=begin;i.end=pos;
+                ir.push_back(i);block.pollBoundary=true;break;
+            }
             i.kind = Kind::Unsupported;
             i.dst = 0;
             i.src = 0;

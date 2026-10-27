@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery, InvalidOpcode
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;

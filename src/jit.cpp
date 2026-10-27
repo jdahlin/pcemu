@@ -382,9 +382,16 @@ uint32_t Jit::run() {
     stopBatch = b.pollBoundary;
     auto n = uint32_t(function(&cpu, 0));
     const bool portExit=n&nativePortIOExit;
-    n &= ~nativePortIOExit;
+    const bool invalidOpcodeExit=n&nativeInvalidOpcodeExit;
+    n &= ~(nativePortIOExit|nativeInvalidOpcodeExit);
     cpu.instructions += n;
     nativeInstructions += n;
+    if(invalidOpcodeExit){
+        ++nativeInstructions;
+        profile::event(profile::NativeInvalidOpcode);
+        cpu.stepInvalidOpcode();
+        return n+1;
+    }
     if(portExit) {
         // Copy metadata before callbacks can invalidate or clear JIT state.
         const auto operation=b.boundaryEntry()->operation;
@@ -522,11 +529,11 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
         (ir[0].memoryAlu || ir[0].kind == Kind::Test || ir[0].kind == Kind::Alu);
     const bool doubleShiftPair = ir.size() == 2 &&
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
-    const bool scanOrDescriptorFragment = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
-        return i.kind == Kind::BitScan || i.memoryBitScan || i.kind == Kind::DescriptorQuery;
+    const bool specialShortFragment = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
+        return i.kind == Kind::BitScan || i.memoryBitScan || i.kind == Kind::DescriptorQuery || i.kind == Kind::InvalidOpcode;
     });
     if (ir.empty()) return block;
-    if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair && !scanOrDescriptorFragment &&
+    if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair && !specialShortFragment &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
                       !ir.front().stringMove && ir.front().kind != Kind::EnterFrame && ir.back().kind != Kind::EnterFrame && ir.back().kind != Kind::FarPointer && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {

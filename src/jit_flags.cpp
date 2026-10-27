@@ -26,7 +26,7 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
-        if (i.kind == Kind::DescriptorQuery) {
+        if (i.kind == Kind::DescriptorQuery || i.kind == Kind::InvalidOpcode) {
             // A selector/descriptor fault exposes the exact pre-query image.
             liveFlags = arithmeticFlags;
             continue;

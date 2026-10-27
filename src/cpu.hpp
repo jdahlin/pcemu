@@ -80,6 +80,8 @@ struct CPU {
     uint32_t address(int seg, uint32_t offset) const;
     void segment(int seg, uint16_t selector);
     uint32_t fetch(int width);
+    // Compiled pre-access #UD: registers/flags/IP already hold restart state.
+    void stepInvalidOpcode();
     void push(uint32_t v, int width);
     uint32_t pop(int width);
     bool condition(int cc) const;

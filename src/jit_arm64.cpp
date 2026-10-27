@@ -35,9 +35,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.kind == Kind::Memory || i.kind==Kind::FarPointer || (i.kind==Kind::DescriptorQuery && i.immediate))
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
-    if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
+    if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO || terminal.kind==Kind::InvalidOpcode)
         block.native = std::make_unique<Block::NativeState>();
-    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
         block.native->boundary=std::make_unique<Block::BoundaryEntry>();
         block.native->boundary->fetchTail=decoded.fetchTail;
         if(terminal.kind==Kind::PortIO)block.native->boundary->operation=decoded.portIO;
@@ -115,7 +115,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO || i.kind == Kind::InvalidOpcode)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply && !i.memoryBitScan) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -739,7 +739,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery", "InvalidOpcode"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -761,8 +761,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             code[success] |= uint32_t(code.size()-success)<<5;
             continue;
         }
-        if(i.kind==Kind::PortIO) {
-            // Device callbacks execute in the C++ dispatcher after this frame
+        if(i.kind==Kind::PortIO || i.kind==Kind::InvalidOpcode) {
+            // Deferred operations/faults execute in the C++ dispatcher after this frame
             // returns. Commit the exact prefix and retain the I/O restart IP.
             flushRegisters(dirtyRegisters);
             finishFlags(last,-1,0);
@@ -1733,7 +1733,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
-        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::String) {
+        ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::InvalidOpcode && ir.back().kind != Kind::String) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);
@@ -1742,7 +1742,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     mark("Flags and branch", ir.back().start);
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     mark("Instruction count", ir.back().start);
-    imm(0, terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) : uint32_t(ir.size()));
+    imm(0, terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) :
+           terminal.kind==Kind::InvalidOpcode ? nativeInvalidOpcodeExit|uint32_t(ir.size()-1) : uint32_t(ir.size()));
     if (linkCandidate) {
         const auto &tail = ir.back();
         if (tail.kind == Kind::Branch || tail.kind == Kind::CounterBranch) {
@@ -1794,7 +1795,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     compiledBlocks++;
     if (block.link()) block.link()->codeBytes = bytes;
     debugBlock(block, code, debugRegions);
-    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
         block.native->boundary->fn=block.fn;
         block.fn=nullptr;
     }
