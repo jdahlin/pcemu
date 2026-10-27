@@ -79,6 +79,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.stackMany) usedRegisters |= 255;
         if (i.leaveFrame) usedRegisters |= 1u << SP;
         if (i.kind == Kind::Divide || i.memoryDivide)
             usedRegisters |= (1u << AX) | (i.w == 1 ? 0 : 1u << DX);
@@ -867,6 +868,28 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto metadata = &block.native->memory[memoryIndex++];
             std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if (i.stackMany) {
+                    // Every access was guarded before the first read/write. Keep
+                    // original SP until its saved slot is written; POPA skips it.
+                    for (int slot = 0; slot < 8; ++slot) {
+                        const int reg = 7 - slot;
+                        const unsigned offset = slot * i.w;
+                        if (i.memory.store)
+                            emit((i.w == 4 ? 0xb9000000u : 0x79000000u) |
+                                 ((offset / i.w) << 10) | (11 << 5) | (20 + reg));
+                        else if (reg != SP) {
+                            emit((i.w == 4 ? 0xb9400000u : 0x79400000u) |
+                                 ((offset / i.w) << 10) | (11 << 5) | 10);
+                            insert(20 + reg, 10, i.w, 0);
+                        }
+                    }
+                    // Use a scratch distinct from the guarded host address.
+                    emit((i.memory.store ? 0x51000000u : 0x11000000u) |
+                         ((8 * i.w) << 10) | ((20 + SP) << 5) | 10);
+                    insert(20 + SP, 10, block.stack32 ? 4 : 2, 0);
+                    dirtyRegisters |= i.memory.store ? 1u << SP : 255u;
+                    return;
+                }
                 if (i.memoryShift) {
                     emit(0xf9000000u | (12u << 10) | (31 << 5) | 11); // str RAM address,[sp,#96]
                     mov(17, 10);
@@ -1008,6 +1031,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                         emit(0x6b00001fu | (15 << 16) | (reg << 5));
                     }
                 };
+                if (i.stackMany && !block.stack32) {
+                    // Per-element stack wrapping must replay with interpreter
+                    // ordering and partial-fault state, never become a flat span.
+                    compareImmediate(2, 65536 - accessWidth);
+                    guard(0x54000008u);
+                }
                 auto segmentOffset = offsetof(CPU, s) + i.memory.segment * sizeof(Segment);
                 if ((block.cr0 & 1) && !block.vm) {
                     emit(0x39400000u | ((segmentOffset + offsetof(Segment, unusable)) << 10) |
@@ -1089,7 +1118,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 compareImmediate(10, 10);
                 guard(0x54000000u); // b.eq slow (VGA aperture)
                 if (i.memory.store) {
-                    if (accessWidth > 1) {
+                    if (accessWidth > 1 && !i.stackMany) {
                         emit(0x1200152au); // and w10,w9,#63
                         compareImmediate(10, 64 - accessWidth);
                         guard(0x54000008u); // b.hi slow (two code bitmap words)
@@ -1103,9 +1132,21 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     }
                     emit(0xf940018au);  // ldr x10,[x12]
                     guard(0xb500000au); // cbnz x10,slow (possibly translated bytes)
+                    if (i.stackMany) {
+                        // The span can cover two 64-byte bitmap words. Check
+                        // both, including unaligned stacks, before any store.
+                        emit(0x11000000u | ((accessWidth - 1) << 10) | (9 << 5) | 10);
+                        emit(0x4a000000u | (9 << 16) | (10 << 5) | 10);
+                        bits(10, 10, 6, 1); // Last word is zero or one past first.
+                        emit(0x8b2a4d8cu); // add x12,x12,w10,uxtw #3
+                        emit(0xf940018au);
+                        guard(0xb500000au);
+                    }
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.memoryShift) {
+                if (i.stackMany) {
+                    // finishMove performs all accesses after the whole-span guard.
+                } else if (i.memoryShift) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
                 } else if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4 || i.memory.invert) {
@@ -1166,7 +1207,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift) {
+            if (i.memoryDivide || i.memoryShift || i.stackMany) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.

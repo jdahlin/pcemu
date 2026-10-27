@@ -19,6 +19,7 @@ struct Instruction {
     bool memoryMultiply = false; // Two/three-operand signed multiply after a successful read.
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;
+    bool stackMany = false; // PUSHA/POPA: guard the entire RAM span before any access.
     bool leaveFrame = false; // LEAVE reads at BP/EBP and commits SP/BP after success.
     bool stringMove = false; // Non-REP LODS/STOS; index changes only after successful access.
     bool indirectJump = false, indirectCall = false, memoryCall = false, memoryPush = false;

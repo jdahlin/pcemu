@@ -1977,3 +1977,14 @@ performance reference. PUSHA/POPA account for an estimated 3.6% of Word and 8.4%
 of Excel interpreter CPU; every sampled ARPL faults. Five arena resets in the
 mapped Word task also warrant a cache-retention experiment. See the
 [method, evidence and limits](measurements/office-interpreter-cost-2026-10-27.md).
+
+### Word and Excel: PUSHA/POPA coverage (2026-10-27)
+
+PUSHA/POPA now execute natively on fully guarded RAM spans, with independent
+operand/stack widths and pre-access replay for wrapping, faults, devices and code
+writes. New stack-many validation passes 4,724 checks; existing stack, bounded and
+cached suites also pass. Interpreted attempts fall about 94% in Word and 97% in
+Excel. All 48 matched release restores pass. The candidate is 23.84% below the
+original Word CPU baseline and 9.71% below Excel's. Incremental Word timing is
+inconclusive; Excel wins all four pairs with a small improvement. See
+[coverage, semantics, timing and limits](measurements/office-stack-many-2026-10-27.md).

@@ -120,6 +120,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = uint32_t(-w);
                 block.usesStack = true;
+            } else if (op == 0x60 || op == 0x61) {
+                i.kind = Kind::Memory;
+                i.stackMany = true;
+                i.memory.store = op == 0x60;
+                i.stackDelta = (i.memory.store ? -8 : 8) * w;
+                i.memory.base = SP;
+                i.memory.segment = SS;
+                i.memory.address32 = block.stack32;
+                i.memory.displacement = i.memory.store ? uint32_t(-8 * w) : 0;
+                block.usesStack = true;
             } else if (op == 0xc9) {
                 i.kind = Kind::Memory;
                 i.leaveFrame = true;
@@ -543,7 +553,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 }
             }
             if (i.kind == Kind::Memory) {
-                i.memory.width = i.sourceWidth ? i.sourceWidth : i.w;
+                i.memory.width = i.stackMany ? 8 * i.w : i.sourceWidth ? i.sourceWidth : i.w;
                 i.memory.begin = begin;
                 i.memory.end = i.nearCall ? i.target : pos;
             }
