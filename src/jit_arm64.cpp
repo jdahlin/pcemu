@@ -22,7 +22,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // A short decoder fallthrough ends at an interpreted instruction, so it
     // cannot acquire a native successor without invalidation. Spend link code
     // only on actual control-flow exits or a full-length decoded fragment.
-    const bool linkCandidate = directLinks && !terminal.nearReturn &&
+    const bool linkCandidate = directLinks && !block.changesShadow && !terminal.nearReturn &&
         !terminal.indirectJump && !terminal.indirectCall && terminal.kind != Kind::IndirectJump &&
         (terminal.kind == Kind::Branch || terminal.kind == Kind::CounterBranch ||
          terminal.nearCall || ir.size() == 64);
@@ -92,7 +92,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction)
             continue;
-        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -347,6 +347,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         block.link()->resetFlagOffset = code.size()*4;
         emit(0xd503201fu); // Remains a NOP until a linked frame exists.
     }
+    auto selector = [&](int dst, int segment) {
+        const unsigned offset = offsetof(CPU,s) + segment*sizeof(Segment) + offsetof(Segment,selector);
+        emit(0x79400000u | ((offset/2) << 10) | (19 << 5) | dst);
+    };
     // Signed operands arrive in w11/w12. Register and memory forms share
     // overflow detection and exact preservation of the other guest flags.
     auto multiplyResult = [&](const jit_detail::Instruction &i, bool flags, bool defer = false) {
@@ -368,6 +372,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         imm(9, start); store(9, 19, offsetof(CPU, ip));
         imm(0, completed);
         exits.push_back(code.size()); emit(0x14000000u);
+    };
+    // w10 holds the selector. Failure is side-effect-free and replays only
+    // after returning from the generated frame with its prior state committed.
+    auto segmentLoad = [&](const jit_detail::Instruction &i, unsigned n, unsigned dirty) {
+        mov(2,10);
+        emit(0xaa1303e0u);
+        imm(1,i.segmentRegister);
+        imm(3,n+1);
+        call(reinterpret_cast<uintptr_t>(&jit_detail::nativeSegment));
+        const auto success=code.size();emit(0x35000000u); // cbnz w0,success
+        replay(i.start,n,dirty);
+        code[success] |= uint32_t(code.size()-success) << 5;
     };
     // Divisor arrives in w10. Checks precede every implicit GPR update; failed
     // divisions replay in C++ after the native frame returns, preserving the
@@ -596,10 +612,21 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
+        if (i.kind == Kind::SegmentRead) {
+            selector(10,i.segmentRegister);
+            insert(20+i.dst,10,i.w,0);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
+        if (i.kind == Kind::SegmentLoad) {
+            extract(10,20+i.dst,2,0);
+            segmentLoad(i,unsigned(n),dirtyRegisters);
+            continue;
+        }
         if (i.kind == Kind::IndirectJump) {
             // Operand size selects the target width independently of CS.big.
             extract(10, 20 + i.src, i.w, 0);
@@ -868,6 +895,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto metadata = &block.native->memory[memoryIndex++];
             std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if (i.segmentLoad) {
+                    segmentLoad(i,unsigned(n),beforeLoad);
+                    return;
+                }
                 if (i.stackMany) {
                     // Every access was guarded before the first read/write. Keep
                     // original SP until its saved slot is written; POPA skips it.
@@ -1181,7 +1212,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                          (11 << 5) | 13);
                 } else if (i.memory.store) {
                     int source = 20 + i.dst;
-                    if (i.memoryPush) {
+                    if (i.segmentRegister >= 0) {
+                        selector(10,i.segmentRegister);
+                        source = 10;
+                    } else if (i.memoryPush) {
                         load(10, 31, 108);
                         source = 10;
                     } else if (i.immediate) {
@@ -1207,7 +1241,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift || i.stackMany) {
+            if (i.memoryDivide || i.memoryShift || i.stackMany || i.segmentLoad) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.
@@ -1218,7 +1252,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
             emit(0xaa1303e0u);
             pointer(1, reinterpret_cast<uintptr_t>(metadata));
-            if (i.memoryPush)
+            if (i.segmentRegister >= 0)
+                selector(3,i.segmentRegister);
+            else if (i.memoryPush)
                 load(3, 31, 108);
             else if (i.immediate)
                 imm(3, i.imm);

@@ -32,6 +32,8 @@ struct Segment {
     uint16_t selector = 0;
     bool big = false, unusable = false;
 };
+// Shared descriptor interpretation; callers choose how descriptor bytes are read.
+Segment decodeSegmentDescriptor(int segment, uint16_t selector, uint32_t low, uint32_t high);
 struct CPU {
     // Fixed layout is also the AArch64 JIT ABI. No host pointers in guest registers.
     uint32_t r[8]{};

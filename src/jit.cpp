@@ -329,7 +329,9 @@ uint32_t Jit::run() {
         ++directLinkPromotions;
         if (promoteBlock(*cached)) publishLinks(key, *cached);
     }
-    entry = {key, cached};
+    // SS needs a fully accounted boundary for its interrupt shadow. Keep
+    // those uncommon blocks out of runCached without taxing every hot hit.
+    entry = {key, cached->changesShadow ? nullptr : cached};
     auto &b = *cached;
     if (!b.fn) {
         profile::event(profile::InterpretedDispatch);

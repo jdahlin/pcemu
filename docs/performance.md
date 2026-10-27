@@ -1988,3 +1988,16 @@ Excel. All 48 matched release restores pass. The candidate is 23.84% below the
 original Word CPU baseline and 9.71% below Excel's. Incremental Word timing is
 inconclusive; Excel wins all four pairs with a small improvement. See
 [coverage, semantics, timing and limits](measurements/office-stack-many-2026-10-27.md).
+
+### Word and Excel: segment MOV coverage (2026-10-27)
+
+MOV from segment registers now lowers for register/memory destinations; MOV to
+ES/SS/DS/FS/GS uses guarded selector reads and a warm-descriptor helper shared
+with reference descriptor decoding. MOV SS preserves its accounted interrupt
+shadow and stays outside cached tails without adding an ordinary hot-hit guard.
+Segment validation passes 23,162 checks, plus the reference and batch suites.
+Interpreted segment loads fall 85% in Word and 90% in Excel; segment reads fall
+88% and 95%. All 60 final matched restores pass. Word CPU is 24.28% below the
+original baseline and Excel 10.39%; incremental medians are 1.12% and 0.89% lower.
+An initial Excel regression prompted Instruments analysis and removal of a
+per-dispatch guard. See [semantics, all runs and limits](measurements/office-segment-2026-10-27.md).

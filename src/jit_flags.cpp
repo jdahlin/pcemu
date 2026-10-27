@@ -20,8 +20,8 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
-        if (i.kind == Kind::Divide) {
-            // Zero/overflow can replay and expose the pre-instruction flags,
+        if (i.kind == Kind::Divide || i.kind == Kind::SegmentLoad) {
+            // Arithmetic/descriptor faults can expose the pre-instruction flags,
             // even when a following ALU would otherwise make them dead.
             liveFlags = arithmeticFlags;
             continue;

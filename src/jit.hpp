@@ -85,6 +85,7 @@ class Jit {
         bool a20 = true, attempted = false, linkRequested = false;
         uint8_t shortKind = 0; // Supported but rejected: 1 register-only, 2 memory.
         bool vm = false, watched = false, usesStack = false, stack32 = false;
+        bool changesShadow = false; // MOV SS needs an accounted instruction boundary.
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;

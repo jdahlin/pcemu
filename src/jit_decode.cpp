@@ -313,6 +313,24 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.dst = !(op & 2) ? m & 7 : (m >> 3) & 7;
                     i.src = !(op & 2) ? (m >> 3) & 7 : m & 7;
                 }
+            } else if (op == 0x8c || op == 0x8e) {
+                auto m = byte();
+                i.segmentRegister = (m >> 3) & 7;
+                if (i.segmentRegister >= 6 || (op == 0x8e && i.segmentRegister == CS)) {
+                    pos = begin; break;
+                }
+                i.segmentLoad = op == 0x8e;
+                if ((m >> 6) == 3) {
+                    i.kind = i.segmentLoad ? Kind::SegmentLoad : Kind::SegmentRead;
+                    i.dst = m & 7;
+                    i.immediate = true; // Selector source is not a guest GPR index.
+                } else {
+                    i.kind = Kind::Memory;
+                    i.memory = memoryOperand(m, address32, overrideSegment);
+                    i.memory.store = !i.segmentLoad;
+                    i.sourceWidth = 2;
+                }
+                if (i.segmentLoad && i.segmentRegister == SS) block.changesShadow = true;
             } else if (op == 0x8d) {
                 auto m = byte();
                 if ((m >> 6) == 3) {
@@ -572,7 +590,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if ((i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

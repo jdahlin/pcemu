@@ -254,6 +254,9 @@ void CPU::segment(int seg, uint16_t sel) {
     if (off + 7 > limit)
         throw Fault{13, uint32_t(sel & ~3u), true};
     uint32_t lo = systemRead(base + off, 4), hi = systemRead(base + off + 4, 4);
+    d = decodeSegmentDescriptor(seg, sel, lo, hi);
+}
+Segment decodeSegmentDescriptor(int seg, uint16_t sel, uint32_t lo, uint32_t hi) {
     // Type checks precede presence checks. Windows uses invalid nonpresent
     // descriptors for stale selectors; those require #GP, not demand-load #NP.
     unsigned type = (hi >> 8) & 15;
@@ -263,6 +266,7 @@ void CPU::segment(int seg, uint16_t sel) {
         throw Fault{13, uint32_t(sel & ~3u), true};
     if (!(hi & 0x8000))
         throw Fault{uint8_t(seg == SS ? 12 : 11), uint32_t(sel & ~3u), true};
+    Segment d;
     d.selector = sel;
     d.unusable = false;
     d.base = (lo >> 16) | ((hi & 255) << 16) | (hi & 0xff000000);
@@ -270,6 +274,7 @@ void CPU::segment(int seg, uint16_t sel) {
     if (hi & 0x800000)
         d.limit = (d.limit << 12) | 4095;
     d.big = hi & 0x400000;
+    return d;
 }
 uint32_t CPU::fetch(int w) {
     auto v = read(address(CS, ip), w);
