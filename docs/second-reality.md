@@ -41,9 +41,11 @@ build is not a prerequisite to testing the released executable.
   correction described below. Full completion and correct visuals remain
   unverified. Host-time sleeps used during exploration are not an automated
   progress/completion oracle.
-- Captures still render a single stable VGA state. Add beam-timed scanout that
-  retains palette/start-address/panning changes, with source-derived copper tests.
-  Implement blanking intervals and relevant register latching as required.
+- Legacy graphics now presents beam-timed completed frames, retaining mid-frame
+  palette/VRAM changes and latching display start for the next frame. Physical
+  doubled scanlines are retained. Blanking and wrapped retrace are implemented.
+  See [scanout scope and tests](vga-bios.md#beam-timed-legacy-graphics-presentation)
+  for remaining fetch/latch/address-counter limitations and reference needs.
 - ISA Sound Blaster/GUS and 8237 DMA remain absent. First validate the complete
   no-sound sequence (including music sequencing), then implement and validate a
   real sound path and its sample-clock/IRQ synchronization.
@@ -86,3 +88,10 @@ and continues through the plasma and 3D scenes; its final samples are still
 changing at 2.44 billion instructions. That shorter watchdog still expires, so
 it does not establish completion. The earlier 1.14-billion-instruction stall is
 resolved. Literal BIOS clock tests pass with the main CPU/component suites.
+
+
+The 180-second interpreter run still advances through the 3D scene at roughly
+2.9 billion instructions when sampled; that watchdog is insufficient to establish
+completion. The opt-in completion check now defaults to a bounded 600 seconds
+per engine and remains outside `make test`. A frozen-runner JIT validation of the
+new scanout is in progress; it must finish before claiming a complete run.

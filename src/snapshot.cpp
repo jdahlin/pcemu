@@ -204,6 +204,7 @@ class SnapshotCodec {
                 throw std::runtime_error("Invalid host cursor snapshot state");
         }
         auto &v = m.vga;
+        if constexpr (A::loading) v.scanout = {};
         a(v.planes, v.seq, v.gfx, v.crtc, v.attr, v.latch, v.seqIndex, v.gfxIndex, v.crtcIndex,
           v.attrIndex, v.attrData, v.graphics, v.dac, v.dacMask, v.dacRead, v.dacWrite,
           v.dacComponent, v.width, v.height, v.misc);

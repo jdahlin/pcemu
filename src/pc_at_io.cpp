@@ -76,12 +76,13 @@ void Machine::bindIoPorts() {
         counted([this](uint16_t p, int) -> uint32_t {
             return vga.read_display_interface_port(p == 0x1cf);
         }), [this](uint16_t p, uint32_t v, int) {
+            vga.advance_scanout(pitTicks());
             vga.write_display_interface_port(p == 0x1cf, v);
         });
     ioPorts.map("vga", 0x3b0, 0x30,
         counted([this](uint16_t p, int) -> uint32_t {
             return vga.read_io_register(p, pitTicks());
-        }), bytes([this](uint16_t p, uint32_t v, int) { vga.write_register(p, v); ports[p] = v; }));
+        }), bytes([this](uint16_t p, uint32_t v, int) { vga.advance_scanout(pitTicks()); vga.write_register(p, v); ports[p] = v; }));
     auto keyboardWritePort = bytes([this](uint16_t p, uint32_t v, int) {
         if (verbose)
             std::fprintf(stderr, "KBC OUT %04x=%02x at %s\n", p, unsigned(v), cpu.location().c_str());

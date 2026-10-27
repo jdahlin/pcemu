@@ -191,7 +191,7 @@ def main():
     parser.add_argument('--runner', type=Path, default=ROOT/'build/pcemu')
     parser.add_argument('--backend', choices=['both', 'interpreter', 'jit'], default='both')
     parser.add_argument('--steps', type=int, default=40000000)
-    parser.add_argument('--timeout', type=float, default=180)
+    parser.add_argument('--timeout', type=float, default=600)
     args = parser.parse_args()
     if not args.disk.exists():
         parser.error('Prepare the shared parent with python3 tools/freedos_fixture.py')

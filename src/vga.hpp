@@ -95,14 +95,23 @@ struct VGA {
     // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=91
     // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=95
     enum CrtcRegister : unsigned {
+        HorizontalTotalRegister = 0,
         HorizontalDisplayEndRegister = 1,
+        HorizontalBlankingStartRegister = 2,
+        HorizontalBlankingEndRegister = 3,
+        HorizontalRetraceEndRegister = 5,
+        VerticalTotalRegister = 6,
         OverflowRegister = 7,
         PresetRowScanRegister = 8,
         MaximumScanLineRegister = 9,
         StartAddressHighRegister = 0x0c,
         StartAddressLowRegister = 0x0d,
+        VerticalRetraceStartRegister = 0x10,
+        VerticalRetraceEndRegister = 0x11,
         VerticalDisplayEndRegister = 0x12,
         OffsetRegister = 0x13,
+        VerticalBlankingStartRegister = 0x15,
+        VerticalBlankingEndRegister = 0x16,
         ModeControlRegister = 0x17,
         LineCompareRegister = 0x18,
     };
@@ -214,7 +223,7 @@ struct VGA {
     // Translate a 4-bit color through Attribute palette/page selection.
     uint8_t attribute_palette_index(uint8_t color) const;
     // Resolve logical graphics row to plane offset and horizontal pixel pan.
-    unsigned graphics_scanline_address(unsigned y, unsigned &panning) const;
+    unsigned graphics_scanline_address(unsigned y, unsigned &panning, bool physicalScanline = false) const;
     // Read a selected Bochs register, capabilities or computed virtual height.
     uint16_t read_display_interface_register() const;
     // Validate/store a Bochs register and apply enable, geometry or memory effects.
@@ -257,7 +266,21 @@ struct VGA {
     // Write a selected VGA group/DAC component, advancing indexes and geometry as needed.
     void write_register(uint16_t port, uint8_t value);
     // Decode one graphics pixel to opaque AARRGGBB; out-of-range pixels are black.
-    uint32_t pixel_color(unsigned x, unsigned y) const;
+    uint32_t pixel_color(unsigned x, unsigned y, bool physicalScanline = false) const;
+    // Host presentation history, excluded from snapshots. Physical scanlines retain
+    // palette/address/VRAM changes at their beam position, including doubled rows.
+    struct RasterScanout {
+        uint64_t lastTicks = UINT64_MAX, lastDot = 0;
+        std::array<uint64_t, 9> timing{};
+        unsigned width = 0, height = 0;
+        bool ready = false, collecting = false;
+        uint16_t startAddress = 0;
+        std::vector<uint32_t> painting, completed;
+    } scanout;
+    // Advance emitted legacy graphics pixels before device mutation or presentation.
+    void advance_scanout(uint64_t pitTicks);
+    // Copy the latest completed raster frame when the destination geometry matches.
+    bool render_scanout(std::span<uint32_t> pixels, unsigned frameWidth, unsigned frameHeight) const;
     // Render a capture or frontend frame from a stable device state.
     void render_graphics(std::span<uint32_t> pixels, unsigned frameWidth,
                          unsigned frameHeight) const;

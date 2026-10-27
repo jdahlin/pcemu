@@ -16,7 +16,10 @@ const uint32_t palette[16] = {0xff000000, 0xff0000aa, 0xff00aa00, 0xff00aaaa,
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=87
 std::pair<unsigned,unsigned> PcDisplay::dimensions(const Machine &m) const {
     const auto &v=m.vga;
-    if(v.graphics) return {v.width,v.height};
+    if(v.graphics) {
+        if(v.scanout.ready) return {v.scanout.width,v.scanout.height};
+        return {v.width,v.height};
+    }
     if(v.seq[4]&VGA::OddEvenDisable) return {640,400};
     unsigned columns=unsigned(v.crtc[1])+1;
     unsigned dots=(v.seq[1]&1)?8:9;
@@ -36,6 +39,7 @@ void PcDisplay::loadFont(std::span<const uint8_t> bytes) {
 void PcDisplay::refresh(Machine &m, bool executeVga) {
     auto &c = m.cpu;
     m.vga.update_display_geometry();
+    m.vga.advance_scanout(m.pitTicks());
     if (!executeVga)
         return;
     auto mode = c.mem[0x449] & 127;
@@ -78,7 +82,8 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
     std::vector<uint32_t> graphics;
     if (m.vga.graphics) {
         graphics.resize(size_t(width) * height);
-        m.vga.render_graphics(graphics, width, height);
+        if (!m.vga.render_scanout(graphics,width,height))
+            m.vga.render_graphics(graphics, width, height);
     }
     for (unsigned y = 0; y < height; y++)
         for (unsigned x = 0; x < width; x++) {
@@ -98,7 +103,9 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
 void PcDisplay::render(Machine &m, std::span<uint32_t> pixels, unsigned displayWidth,
                        unsigned displayHeight, uint64_t frameTicks) const {
     if (m.vga.graphics) {
-        m.vga.render_graphics(pixels, displayWidth, displayHeight);
+        m.vga.advance_scanout(m.pitTicks());
+        if (!m.vga.render_scanout(pixels,displayWidth,displayHeight))
+            m.vga.render_graphics(pixels, displayWidth, displayHeight);
         return;
     }
     if (displayHeight && displayWidth > pixels.size() / displayHeight)

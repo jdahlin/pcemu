@@ -15,8 +15,9 @@
 // pixel buffer through a 64 KiB bank window or fixed linear framebuffer, with
 // virtual pitch and x/y offsets for panning. Plane storage and packed storage
 // are distinct here. The PCI wrapper describes the framebuffer BAR; the machine
-// maps memory/ports and provides the shared PIT-frequency guest clock. PcDisplay separately
-// renders text using BIOS state/font data and presents/captures graphics frames.
+// maps memory/ports and provides the shared PIT-frequency guest clock. Writes
+// advance emitted graphics pixels before mutating display state. PcDisplay renders
+// text using BIOS state/font data and presents the latest completed raster frame.
 //
 // IMPLEMENTATION NOTE: Reset installs simplified firmware presets, not power-on
 // electrical state. Retrace follows programmed CRTC timing on the shared guest clock.
@@ -26,7 +27,7 @@
 // not gated by RAM-enable or DISPI.LFB_ENABLED. Unknown ports return zero.
 // COMPATIBILITY: Text characters/attributes retain the machine's RAM shadow;
 // PcDisplay scans plane-2 fonts and Attribute palettes. Full CRTC text addressing,
-// split-screen/pel panning, raster timing and CRTC protection remain incomplete.
+// text split-screen/pel panning and full register-latch behavior remain incomplete.
 // FIXME: Implement those address/control effects before claiming full VGA
 // conformance. Legacy graphics geometry uses a simplified stride/address model.
 // IBM Hardware Interface Technical Reference, Video Subsystems, 42G2193,
@@ -102,6 +103,94 @@ uint8_t VGA::read_io_register(uint16_t port, uint64_t pitTicks) {
                           scan_interval(character, unsigned(crtc[0])+5, crtc[2], horizontalBlankEnd, 63) ||
                           scan_interval(line, verticalTotal, verticalBlankStart, crtc[0x16], 127);
     return (retrace ? VerticalRetrace : 0) | (inactive ? DisplayInactive : 0);
+}
+// Emit pixels crossed by the CRT beam using pre-mutation memory/register state.
+// Completed frames keep their RGB values even when the DAC changes afterward.
+// IBM Video Subsystems, CRTC timing/address generation and Video DAC interface.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=113
+// IMPLEMENTATION NOTE: Timing changes discard presentation history; snapshots do
+// likewise. Skipped unchanged frames are bounded to the final two frame periods.
+// Text and DISPI retain their existing stable-state renderer. Display start is
+// latched at frame wrap (visible-equivalent to loading during vertical retrace);
+// other address/panning behavior uses the existing CRTC decoder. Sub-character
+// fetch pipelines and exact horizontal register latching remain unsupported.
+void VGA::advance_scanout(uint64_t pitTicks) {
+    if (!graphics || (dispi[DisplayInterfaceRegister::EnableRegister]&DisplayInterfaceEnabled)) {
+        scanout.lastTicks = UINT64_MAX;
+        scanout.ready = false;
+        return;
+    }
+    if (pitTicks == scanout.lastTicks)
+        return;
+    constexpr uint64_t PitFrequencyHz=1193182;
+    // Miscellaneous Output selects the two standard crystal oscillators.
+    constexpr uint64_t PrimaryDotClockHz=25175000, AlternateDotClockHz=28322000;
+    const uint64_t frequency=(misc&0x0c)==4?AlternateDotClockHz:PrimaryDotClockHz;
+    const unsigned characterDots=((seq[1]&1)?8:9)*((seq[1]&8)?2:1);
+    const unsigned lineDots=(unsigned(crtc[CrtcRegister::HorizontalTotalRegister])+5)*characterDots;
+    const unsigned totalLines=(unsigned(crtc[CrtcRegister::VerticalTotalRegister])|((crtc[CrtcRegister::OverflowRegister]&1)<<8)|((crtc[CrtcRegister::OverflowRegister]&0x20)<<4))+2;
+    const unsigned visibleLines=(unsigned(crtc[CrtcRegister::VerticalDisplayEndRegister])|((crtc[CrtcRegister::OverflowRegister]&2)<<7)|((crtc[CrtcRegister::OverflowRegister]&0x40)<<3))+1;
+    const unsigned visibleDots=(unsigned(crtc[CrtcRegister::HorizontalDisplayEndRegister])+1)*characterDots;
+    const uint64_t frameDots=uint64_t(lineDots)*totalLines;
+    const uint64_t dots=(pitTicks/PitFrequencyHz)*frequency+(pitTicks%PitFrequencyHz)*frequency/PitFrequencyHz;
+    const std::array<uint64_t,9> timing={frequency,lineDots,totalLines,visibleLines,
+        visibleDots,width,height,characterDots,uint64_t(crtc[CrtcRegister::MaximumScanLineRegister]&0x9f)};
+    if (scanout.lastTicks==UINT64_MAX || pitTicks<scanout.lastTicks ||
+        scanout.timing!=timing || scanout.width!=width || scanout.height!=visibleLines) {
+        scanout.lastTicks=pitTicks;scanout.lastDot=dots;scanout.timing=timing;
+        scanout.width=width;scanout.height=visibleLines;scanout.ready=false;
+        scanout.collecting=dots%frameDots==0;
+        scanout.startAddress=(unsigned(crtc[CrtcRegister::StartAddressHighRegister])<<8)|crtc[CrtcRegister::StartAddressLowRegister];
+        scanout.painting.assign(size_t(width)*visibleLines,OpaqueBlack);
+        scanout.completed.clear();
+        return;
+    }
+    scanout.lastTicks=pitTicks;
+    uint64_t cursor=scanout.lastDot;
+    if (dots<cursor) {scanout.lastDot=dots;scanout.ready=false;return;}
+    if (dots-cursor>2*frameDots) cursor=dots-2*frameDots;
+    const unsigned verticalBlankStart=unsigned(crtc[CrtcRegister::VerticalBlankingStartRegister])|((crtc[CrtcRegister::OverflowRegister]&8)<<5)|((crtc[CrtcRegister::MaximumScanLineRegister]&0x20)<<4);
+    const unsigned horizontalBlankEnd=(crtc[CrtcRegister::HorizontalBlankingEndRegister]&31)|((crtc[CrtcRegister::HorizontalRetraceEndRegister]&0x80)>>2);
+    const uint8_t startHigh=crtc[CrtcRegister::StartAddressHighRegister],startLow=crtc[CrtcRegister::StartAddressLowRegister];
+    while (cursor<dots) {
+        crtc[CrtcRegister::StartAddressHighRegister]=scanout.startAddress>>8;crtc[CrtcRegister::StartAddressLowRegister]=scanout.startAddress;
+        const uint64_t phase=cursor%frameDots;
+        const unsigned line=phase/lineDots, firstDot=phase%lineDots;
+        const unsigned endDot=std::min<uint64_t>(lineDots,firstDot+dots-cursor);
+        if (line<visibleLines) {
+            unsigned first=std::min<uint64_t>(width,(uint64_t(firstDot)*width+visibleDots-1)/visibleDots);
+            unsigned end=std::min<uint64_t>(width,(uint64_t(endDot)*width+visibleDots-1)/visibleDots);
+            const bool verticalBlank=scan_interval(line,totalLines,verticalBlankStart,crtc[CrtcRegister::VerticalBlankingEndRegister],127);
+            for (unsigned x=first;x<end;++x) {
+                unsigned character=uint64_t(x)*visibleDots/width/characterDots;
+                bool blank=verticalBlank || scan_interval(character,unsigned(crtc[CrtcRegister::HorizontalTotalRegister])+5,crtc[CrtcRegister::HorizontalBlankingStartRegister],horizontalBlankEnd,63);
+                scanout.painting[size_t(line)*width+x]=blank?OpaqueBlack:pixel_color(x,line,true);
+            }
+        }
+        cursor+=endDot-firstDot;
+        if (cursor%frameDots==0) {
+            if (scanout.collecting) {
+                scanout.completed=scanout.painting;
+                scanout.ready=true;
+            }
+            scanout.collecting=true;
+            scanout.startAddress=(unsigned(startHigh)<<8)|startLow;
+        }
+    }
+    crtc[CrtcRegister::StartAddressHighRegister]=startHigh;crtc[CrtcRegister::StartAddressLowRegister]=startLow;
+    scanout.lastDot=dots;
+}
+// Present only a completed frame, validating storage independently of geometry.
+// Host presentation policy supporting the CRTC/DAC scanout described above.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=113
+bool VGA::render_scanout(std::span<uint32_t> pixels,unsigned frameWidth,unsigned frameHeight) const {
+    if (!scanout.ready || frameWidth!=scanout.width || frameHeight!=scanout.height)
+        return false;
+    if (frameHeight && frameWidth>pixels.size()/frameHeight)
+        throw std::invalid_argument("VGA raster frame buffer is too small");
+    std::copy(scanout.completed.begin(),scanout.completed.end(),pixels.begin());
+    return true;
 }
 // Read DISPI state; GETCAPS reports host limits and virtual height is memory/stride.
 // Bochs VBE Display API B0C1 virtual geometry and B0C3 capabilities.
@@ -210,6 +299,7 @@ void VGA::write_display_interface_register(uint16_t value) {
 // IBM Type 1 Subsystem Parameters / Graphics Modes.
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=40
 void VGA::set_bios_mode(unsigned mode, bool clear) {
+    scanout = {};
     dispi[DisplayInterfaceRegister::EnableRegister] = 0;
     graphics =
         mode >= BiosMode::Graphics320x200Color16 && mode <= BiosMode::Graphics320x200Color256;
@@ -573,14 +663,15 @@ void VGA::write_register(uint16_t p, uint8_t v) {
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=87
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=101
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=118
-unsigned VGA::graphics_scanline_address(unsigned y,unsigned &panning) const {
+unsigned VGA::graphics_scanline_address(unsigned y,unsigned &panning,bool physicalScanline) const {
     unsigned repeat=(unsigned(crtc[CrtcRegister::MaximumScanLineRegister]&31)+1)*
                     ((crtc[CrtcRegister::MaximumScanLineRegister]&DoubleScanning)?2:1);
     unsigned compare=crtc[CrtcRegister::LineCompareRegister]|
                      ((crtc[CrtcRegister::OverflowRegister]&0x10)<<4)|
                      ((crtc[CrtcRegister::MaximumScanLineRegister]&0x40)<<3);
-    bool lower=y*repeat>compare;
-    unsigned row=lower?(y*repeat-compare-1)/repeat:y;
+    unsigned scanLine=physicalScanline?y:y*repeat;
+    bool lower=scanLine>compare;
+    unsigned row=lower?(scanLine-compare-1)/repeat:scanLine/repeat;
     unsigned start=lower?0:(unsigned(crtc[CrtcRegister::StartAddressHighRegister])<<8)|crtc[CrtcRegister::StartAddressLowRegister];
     unsigned bytePan=lower?0:(crtc[CrtcRegister::PresetRowScanRegister]>>5)&3;
     panning=attr[0x13]&7;
@@ -592,8 +683,9 @@ unsigned VGA::graphics_scanline_address(unsigned y,unsigned &panning) const {
 // IMPLEMENTATION NOTE: Host rendering interprets only the implemented address/format subset;
 // out-of-bounds pixels return black. IBM Video Memory Organization / DAC.
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=49
-uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
-    if (x >= width || y >= height || (seq[1] & 0x20) || !(attrIndex & PaletteAddressSource))
+uint32_t VGA::pixel_color(unsigned x, unsigned y, bool physicalScanline) const {
+    unsigned repeat = (unsigned(crtc[9]&31)+1)*((crtc[9]&0x80)?2:1);
+    if (x >= width || y >= height*(physicalScanline?repeat:1) || (seq[1] & 0x20) || !(attrIndex & PaletteAddressSource))
         return OpaqueBlack;
     uint8_t color = 0;
     if (dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled) {
@@ -633,6 +725,7 @@ uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
     unsigned start = ((crtc[CrtcRegister::StartAddressHighRegister] << 8) |
                       crtc[CrtcRegister::StartAddressLowRegister]);
     if (cga_addressing()) {
+        if (physicalScanline) y /= repeat;
         bool twoBit = gfx[GraphicsRegister::GraphicsModeRegister] & InterleavedShiftRegister;
         unsigned at = ((y & 1) * 0x2000 + (y >> 1) * 80 + x / (twoBit ? 4 : 8) + start * 2) & 0x3fff;
         uint8_t packed = twoBit ? planes[at & 1][at >> 1] : planes[0][at];
@@ -640,7 +733,7 @@ uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
         color = attribute_palette_index(color);
     } else {
         unsigned pan;
-        unsigned address=graphics_scanline_address(y,pan);
+        unsigned address=graphics_scanline_address(y,pan,physicalScanline);
         x+=pan;
         if(gfx[GraphicsRegister::GraphicsModeRegister]&Color256Mode) {
             color=planes[x&3][(address+x/4)&PlaneAddressMask];

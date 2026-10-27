@@ -728,6 +728,67 @@ void protected_crtc_edges(Guest &g) {
     g.call(3);
 }
 
+// Emit physical scanlines through the real palette/plane decoder; later DAC
+// writes must not recolor pixels that the beam has already passed.
+void raster_scanout_contract() {
+    VGA v;v.set_bios_mode(0x13,true);
+    for(auto &plane:v.planes)plane.fill(1);
+    v.dac[1][0]=63;v.dac[1][1]=v.dac[1][2]=0;
+    auto ticks=[](uint64_t dots){return (dots*1193182+25175000-1)/25175000;};
+    v.advance_scanout(0);
+    v.advance_scanout(ticks(800*100));
+    v.dac[1][0]=0;v.dac[1][1]=63;
+    v.advance_scanout(ticks(800*449));
+    std::vector<uint32_t> frame(320*400);
+    check(v.render_scanout(frame,320,400),"completed raster frame includes physical doubled rows");
+    check(frame[99*320+100]==0xffff0000 && frame[100*320+100]==0xff00ff00,
+          "mid-frame DAC update retains red upper and green lower scanlines");
+    v.advance_scanout(ticks(800*(449+150)+320));
+    v.dac[1][1]=0;v.dac[1][2]=63;
+    v.advance_scanout(ticks(800*449*2));
+    check(v.render_scanout(frame,320,400) && frame[150*320+10]==0xff00ff00 &&
+          frame[150*320+300]==0xff0000ff,"DAC updates can split a single physical scanline");
+    v.dac[1][0]=63;
+    std::vector<uint32_t> stable=frame;
+    check(v.render_scanout(frame,320,400)&&frame==stable,"completed RGB is independent of later palette state");
+    bool rejected=false;
+    try { v.render_scanout(std::span<uint32_t>(frame.data(),1),320,400); }
+    catch(const std::invalid_argument &) {rejected=true;}
+    check(rejected,"raster presentation checks destination bounds");
+    for(auto &plane:v.planes)std::fill(plane.begin()+0x4000,plane.end(),2);
+    v.dac[2][0]=v.dac[2][1]=v.dac[2][2]=63;
+    v.advance_scanout(ticks(800*(449*2+100)));
+    v.crtc[12]=0x40;v.crtc[13]=0;
+    v.advance_scanout(ticks(800*449*3));
+    check(v.render_scanout(frame,320,400)&&frame[150*320+100]!=0xffffffff,
+          "start-address writes do not replace the active frame's latched start");
+    v.advance_scanout(ticks(800*449*4));
+    check(v.render_scanout(frame,320,400)&&frame[150*320+100]==0xffffffff,
+          "next frame uses the newly latched display start");
+    v.advance_scanout(0);
+    check(!v.scanout.ready,"clock rewind invalidates completed presentation history");
+}
+
+// Machine wiring must timestamp mutations before changing palette or VRAM.
+void raster_machine_contract() {
+    Machine m("","",2*1024*1024);
+    uint64_t now=0;m.pitClock=[&]{return now;};
+    auto &v=m.vga;v.set_bios_mode(0x13,true);
+    for(auto &plane:v.planes)plane.fill(1);
+    v.dac[1][0]=63;v.dac[1][1]=v.dac[1][2]=0;
+    m.poll();
+    now=(uint64_t(800)*100*1193182+25175000-1)/25175000;
+    m.out(0x3c8,1,1);m.out(0x3c9,0,1);m.out(0x3c9,63,1);m.out(0x3c9,0,1);
+    now=(uint64_t(800)*449*1193182+25175000-1)/25175000;
+    m.poll();
+    PcDisplay display;
+    check(display.dimensions(m)==std::pair<unsigned,unsigned>{320,400},
+          "frontend uses emitted physical raster dimensions");
+    std::vector<uint32_t> frame(320*400);display.render(m,frame,320,400,0);
+    check(frame[99*320+100]==0xffff0000&&frame[100*320+100]==0xff00ff00,
+          "machine DAC port writes preserve already-emitted pixels");
+}
+
 // Literal mode-13 timing: 800 dots/line, 449 lines, retrace at 412..413.
 // Sampling inside character cells avoids rounding ambiguity at the PIT resolution.
 void raster_clock_contract() {
@@ -809,6 +870,8 @@ int main(int argc, char **argv) {
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
         raster_clock_contract();
+        raster_scanout_contract();
+        raster_machine_contract();
         initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); vbe_indexed_scanout_edges(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); protected_crtc_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);

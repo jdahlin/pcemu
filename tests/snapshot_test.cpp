@@ -230,7 +230,11 @@ int main() {
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
         m.cpu.fp[3] = 0; m.cpu.fpControl = m.cpu.fpStatus = m.cpu.fpTag = 0;
+        m.vga.scanout.ready=true;
+        m.vga.scanout.completed.assign(3,0xff112233);
         m.loadSnapshot((root / "point").string());
+        check(!m.vga.scanout.ready && m.vga.scanout.completed.empty(),
+              "snapshot load discards presentation history from the previous timeline");
         check(m.cpu.fp[3] == 0x400921fb54442d18ull && m.cpu.fpControl == 0x77f &&
               m.cpu.fpStatus == 0x1800 && m.cpu.fpTag == 0xff3f,
               "snapshot v9 restores x87 registers, TOP, tags and control word");

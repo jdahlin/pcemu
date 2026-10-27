@@ -385,10 +385,9 @@ The default machine clock is still instruction-derived (one PIT tick per four
 retired instructions). This is deterministic timing, not instruction cycle
 accuracy or a calibrated CPU speed. Injected PIT clocks also drive VGA. Timing
 register writes currently change phase immediately. Reserved oscillator selections
-use 25.175 MHz. Mid-frame palette/address scanout, vertical interrupts, and frame-boundary
-register latching remain incomplete;
-current captures still render stable device state. These are material remaining
-requirements for Second Reality's copper effects.
+use 25.175 MHz. Beam-timed legacy graphics presentation is described below.
+Vertical interrupts and exact register/fetch latching remain incomplete and need
+further reference validation for Second Reality's copper effects.
 
 Reference: IBM Video Subsystems 42G2193, September 1992, section 2,
 [CRTC registers](https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78).
@@ -418,3 +417,37 @@ the actual counter reset at horizontal/vertical total: a vertical retrace that
 crosses frame end resumes comparing low bits from scanline zero, rather than
 extending a fictitious counter beyond total. Literal tests cover internal blanking
 and wrapped retrace, including the previously missed second line after reset.
+
+## Beam-timed legacy graphics presentation
+
+The machine advances a legacy graphics scanout before VGA memory/port writes,
+at device polls, and before presentation. It emits RGB pixels crossed by the
+shared PIT/VGA clock using the palette, plane memory and address state at that
+point. A later DAC write therefore cannot recolor previously emitted pixels.
+Writes can split a scanline. Blanking masks the emitted pixels. Completed frames
+retain physical scanlines, including repeated/doubled rows, while columns retain
+the existing logical VGA pixel width (for example mode 13h emits 320 by 400).
+The physical-row address decoder also preserves odd-scanline line-compare splits.
+
+Display start is latched at frame wrap. Loading it during vertical retrace is
+visible-equivalent for normal modes with no active display in that interval;
+unusual displays extending through retrace still require exact latch modeling.
+Panning and other address controls use the existing decoder. Sub-character fetch
+pipelines, precise horizontal latching and mode-dependent row-address counters
+remain incomplete. Text and DISPI use their existing stable-state renderer.
+`render_graphics` remains available for diagnostics that explicitly want current
+state rather than a historical frame.
+
+Geometry/clock changes invalidate presentation history. The first partial frame
+is discarded; only a complete subsequent frame becomes presentable. Clock rewinds
+and snapshot restores discard the old timeline. History is host presentation
+state, so existing snapshot formats remain compatible. Large unchanged time jumps
+render at most the final two frame periods. Two in-memory RGB buffers are retained;
+no guest disk is created for scanout.
+
+Literal tests cover upper/lower palette splits, palette changes within a scanline,
+independence from later DAC state, start-address latching, buffer bounds and clock
+rewinds. Machine-level tests exercise actual DAC ports with an injected clock and
+frontend dimensions/rendering. Snapshot tests verify timeline history is cleared.
+The CPU-derived clock remains an approximation; these checks do not establish
+complete raster fidelity against a hardware capture.

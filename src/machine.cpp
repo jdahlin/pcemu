@@ -29,6 +29,7 @@ void Machine::bindDevices() {
             cpu.written(a, 1);
             return;
         }
+        vga.advance_scanout(pitTicks());
         vga.write_memory(a, value);
     };
     cpu.bios = [this](uint8_t n) { return bios(n); };
@@ -128,6 +129,7 @@ void Machine::poll() {
         restart();
         return;
     }
+    vga.advance_scanout(pitTicks());
     if (pit.timer_interrupt_due(pitTicks()))
         pic[0].raise_interrupt(0);
     if (ps2.poll_due(cpu.instructions))
