@@ -521,7 +521,16 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             if (i.immediate) imm(9, i.imm);
             else {
                 bits(9, 20 + CX, 0, 5);
-                if (!carry && width < 32) bits(9, 9, 0, i.w == 1 ? 3 : 4);
+                if (!carry && width < 32) {
+                    // A nonzero whole-ring rotate still updates CF.
+                    mov(14,9);
+                    bits(9, 9, 0, i.w == 1 ? 3 : 4);
+                    imm(10,width);
+                    emit(0x7100013fu); // cmp w9,#0
+                    emit(0x1a890149u); // csel w9,w10,w9,eq
+                    emit(0x710001dfu); // cmp w14,#0
+                    emit(0x1a8903e9u); // csel w9,wzr,w9,eq
+                }
                 else if (carry && width < 32) {
                     imm(10, ring);
                     emit(0x1ac00800u | (10 << 16) | (9 << 5) | 14); // udiv quotient,count,ring
@@ -1183,13 +1192,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     bits(9,20+CX,0,5);
                     nonzero=code.size();emit(0x35000009u); // cbnz w9,normal memory path
                 }
-                if ((block.cr0 & 1) && !block.vm) {
-                    const auto offset=offsetof(CPU,s)+i.memory.segment*sizeof(Segment)+offsetof(Segment,unusable);
-                    emit(0x39400000u | (offset << 10) | (19 << 5) | 9);
-                    const auto usable=code.size();emit(0x34000009u);
-                    replay(i.start,unsigned(n),dirtyRegisters);
-                    code[usable] |= uint32_t(code.size()-usable) << 5;
-                }
+                replay(i.start,unsigned(n),dirtyRegisters);
                 zeroDoubleEnd=code.size();emit(0x14000000u);
                 if (nonzero!=size_t(-1))code[nonzero] |= uint32_t(code.size()-nonzero) << 5;
             }
@@ -1198,6 +1201,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             auto metadata = &block.native->memory[memoryIndex++];
             std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if (i.nearReturn) {
+                    load(9,19,offsetof(CPU,s)+CS*sizeof(Segment)+offsetof(Segment,limit));
+                    emit(0x6b09015fu); // cmp w10,w9: reject destination before SP commits
+                    const auto allowed=code.size();emit(0x54000009u); // b.ls
+                    replay(i.start,unsigned(n),beforeLoad);
+                    code[allowed] |= uint32_t(code.size()-allowed)<<5;
+                }
                 if (i.memoryDoubleShift) {
                     emit(0xf9000000u | (12u << 10) | (31 << 5) | 11);
                     mov(17,10);
@@ -1591,7 +1601,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     } else if (i.pushFlags) {
                         load(10,19,offsetof(CPU,flags));
                         if (i.w == 4) {
-                            imm(13,0x30000);
+                            imm(13,0xffff0000);
                             emit(0x0a200000u | (13 << 16) | (10 << 5) | 10);
                         }
                         source = 10;
@@ -1641,7 +1651,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             else if (i.pushFlags) {
                 load(3,19,offsetof(CPU,flags));
                 if (i.w == 4) {
-                    imm(13,0x30000);
+                    imm(13,0xffff0000);
                     emit(0x0a200000u | (13 << 16) | (3 << 5) | 3);
                 }
             } else if (i.segmentRegister >= 0)

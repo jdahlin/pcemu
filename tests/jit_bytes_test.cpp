@@ -196,6 +196,7 @@ int main() {
         for (bool store : {false, true}) {
             CPU mmio(1024 * 1024);
             mmio.s[CS].big = true;
+            mmio.s[DS].limit = 0xffffffff; // Flat synthetic MMIO address space.
             const uint8_t code[] = {
                 0xb8, 0xdd, 0xcc, 0xbb, 0xaa, 0x80, 0xc4, 1, uint8_t(store ? 0x88 : 0x8a),
                 0x25, 0,    0,    0x0a, 0,    0xf4};

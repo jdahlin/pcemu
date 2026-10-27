@@ -459,9 +459,9 @@ uint32_t CPU::shift(int op, uint32_t v, unsigned n, int w) {
         return v;
     uint32_t sign = 1u << (w * 8 - 1), m = mask(w), orig = v;
     bool c = false;
-    if (op < 2)
-        n %= w * 8;
-    else if (op < 4 && w < 4)
+    if (op < 2) {
+        if (n % (w * 8)) n %= w * 8;
+    } else if (op < 4 && w < 4)
         n %= (w * 8 + 1);
     if (!n)
         return v;
@@ -1112,6 +1112,18 @@ void CPU::stepImpl() {
                 set(i, v, w);
         }
         break;
+    case 0x62: {
+        auto m = fetch(1);
+        auto bounds = decode(m, a32, over);
+        if (bounds.reg) throw Fault{6, 0, false};
+        checkOperand(bounds, w);
+        auto value = signedValue(get((m >> 3) & 7, w), w);
+        auto low = signedValue(read(bounds.linear, w), w);
+        auto upperOffset = (bounds.linear - s[bounds.segment].base + w) & mask(aw);
+        auto high = signedValue(read(address(bounds.segment, upperOffset, w), w), w);
+        if (value < low || value > high) throw Fault{5, 0, false};
+        break;
+    }
     case 0x63: {
         if (!(cr[0] & 1) || (flags & 0x20000))
             throw Fault{6, 0, false};
@@ -1239,7 +1251,7 @@ void CPU::stepImpl() {
     case 0x9c:
         if ((flags & 0x20000) && ((flags >> 12) & 3) != 3)
             throw Fault{13, 0, true};
-        push(flags & (o32 ? ~0x30000u : 0xffffu), w);
+        push(flags & 0xffffu, w);
         break;
     case 0x9d: {
         if ((flags & 0x20000) && ((flags >> 12) & 3) != 3)
@@ -1484,7 +1496,9 @@ void CPU::stepImpl() {
     case 0xc2:
     case 0xc3: {
         auto extra = op == 0xc2 ? fetch(2) : 0;
-        ip = pop(w);
+        auto target = pop(w);
+        if (target > s[CS].limit) throw Fault{13, 0, true};
+        ip = target;
         set(SP, get(SP, s[SS].big ? 4 : 2) + extra, s[SS].big ? 4 : 2);
         break;
     }
@@ -1992,6 +2006,7 @@ void CPU::stepImpl() {
             auto m = fetch(1);
             auto dst = decode(m, a32, over);
             unsigned count = (op2 & 1 ? get(CX, 1) : fetch(1)) & 31;
+            checkOperand(dst, w);
             if (!count)
                 break;
             auto value = load(dst, w), src = get((m >> 3) & 7, w);

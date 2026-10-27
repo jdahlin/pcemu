@@ -420,9 +420,38 @@ static void encoded_operand_rules() {
         check(bit.read(0x391,2)==0x8000,"16-bit bit-string offset wraps after index adjustment");
     }
 }
+// Count-zero address checks, whole-ring carry, BOUND and control-transfer
+// limits follow the 386 instruction entries; expected values are literal.
+static void scalar_boundary_rules() {
+    struct Stop {};
+    for(bool native:{false,true}) {
+        CPU rotate;rotate.ip=0x100;rotate.r[AX]=0x81;rotate.r[CX]=8;
+        const uint8_t ror[]={0xd2,0xc8,0xf4};
+        std::copy(std::begin(ror),std::end(ror),rotate.mem.begin()+0x100);
+        Jit rj(rotate,native,0,65536);if(native)rj.run();else rotate.step();
+        check(rotate.r[AX]==0x81 && (rotate.flags&CF),"whole-ring ROR updates carry without changing data");
+        for(unsigned kind=0;kind<3;++kind) {
+            CPU c;c.ip=0x100;c.r[SP]=0x8000;c.r[BX]=0xffff;c.r[AX]=10;
+            std::vector<uint8_t> bytes;
+            if(kind==0)bytes={0x0f,0xa4,0x07,0}; // SHLD word [BX],AX,0.
+            if(kind==1){bytes={0x66,0xc3};c.write(0x8000,0x10000,4);}
+            if(kind==2){bytes={0x62,0x06,0,2};c.write(0x200,0,2);c.write(0x202,9,2);}
+            std::copy(bytes.begin(),bytes.end(),c.mem.begin()+0x100);
+            unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+            Jit j(c,native,0,65536);
+            try {if(native)j.run();else c.step();}catch(const Stop &){}
+            check(vector==(kind==2?5:13) && c.ip==0x100 && c.r[SP]==0x8000,
+                  "zero-count span, RET target and BOUND faults retain restart state");
+        }
+        CPU push;push.ip=0x100;push.r[SP]=0x8000;push.flags=0xfffc0246;
+        const uint8_t pf[]={0x66,0x9c,0xf4};std::copy(std::begin(pf),std::end(pf),push.mem.begin()+0x100);
+        Jit pj(push,native,0,65536);if(native)pj.run();else push.step();
+        check(push.read(0x7ffc,4)==0x246,"386 PUSHFD clears reserved high bits and RF/VM");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

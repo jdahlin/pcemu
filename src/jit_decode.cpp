@@ -358,7 +358,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 }
                 i.imm = i.immediate ? (op < 0xd0 ? byte() : 1) & 31 : 0;
                 if (i.op < 4 && i.immediate) {
-                    if (i.op < 2) i.imm %= i.w * 8;
+                    if (i.op < 2 && i.imm) i.imm = (i.imm - 1) % (i.w * 8) + 1;
                     else if (i.w < 4) i.imm %= i.w * 8 + 1;
                 }
                 if (i.immediate && !i.imm && !i.memoryShift)

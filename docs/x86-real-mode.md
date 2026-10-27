@@ -42,3 +42,12 @@ Faulting cases remain in validation. This follows the manual's
 [SAL/SAR/SHL/SHR](https://pdos.csail.mit.edu/6.828/2018/readings/i386/SAL.htm)
 entries. Upstream expected states are unchanged. Six adapter unit tests include
 count-zero, count-one, variable-count and undefined-width boundaries.
+
+Additional scalar rules now have literal interpreter/JIT checks: BOUND compares
+signed lower/upper bounds and raises #BR; the upper bound address wraps to the
+address size independently (hardware `62#1725`). Zero-count SHLD still validates
+the memory span without reading it. Whole-ring ROL/ROR update CF even when the
+operand is unchanged. RET validates its destination before committing SP.
+386 PUSHFD clears reserved bits 31:16 in the saved image. The corresponding
+nine-shard hardware run passes, as do 299 literal CPU checks and 2,957,189 byte
+JIT checks. See the manual's BOUND, SHLD, ROL/ROR, RET and PUSHF entries.
