@@ -638,6 +638,8 @@ void text_addressing_edges(Guest &g) {
     check(frame[7]==frame[8]&&frame[8]!=0xff000000,"line graphics replicate ninth dot");
     v.planes[0][0]=0x41;display.render(*g.m,frame,720,400,500);
     check(frame[7]!=0xff000000&&frame[8]==0xff000000,"ordinary glyph leaves ninth dot blank");
+    v.attr[0x12]=0;display.render(*g.m,frame,720,400,500);
+    check(frame[7]==0xff000000,"text Color Plane Enable masks the foreground color index");
     g.call(3);
 }
 
@@ -690,6 +692,9 @@ void protected_crtc_edges(Guest &g) {
     write(8,0x63);write(0x18,0x55);check(v.crtc[8]==0x63&&v.crtc[0x18]==0x55,"display panning/line compare remain writable");
     write(0x11,0x0e);write(0,0x55);write(7,0);
     check(v.crtc[0]==0x55&&v.crtc[7]==0,"unlocked timing registers accept writes");
+    v.attrData=true;
+    check(v.read_io_register(0x3ba,0)==0&&!v.attrData,"monochrome Status1 resets Attribute flip-flop");
+    check(v.read_io_register(0x3ba,1)==9,"monochrome Status1 shares retrace transitions");
     g.call(3);
 }
 

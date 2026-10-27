@@ -296,3 +296,8 @@ CS load or PE clear; the JIT interprets those few transitional instructions.
 Native/interpreter tests cover all four old-CS low-bit values and MOV CR0/LMSW.
 Snapshot version 8 preserves the entry state; encoded version 6/7 compatibility
 fixtures and a transitional-state restore are checked.
+
+Both color/monochrome Status1 aliases reset the Attribute flip-flop and share
+the synthetic retrace state. Text Color Plane Enable now masks foreground and
+background color indexes, as it already does in planar graphics. Native tests
+cover the monochrome status alias and masked text output.

@@ -57,7 +57,7 @@ VGA::VGA() {
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=68
 uint8_t VGA::read_io_register(uint16_t port, uint32_t ioClock) {
     auto value = read_register(port);
-    return port == Register::InputStatus1Register
+    return (port == Register::InputStatus1Register || port == Register::MonochromeInputStatus1Register)
                ? ((ioClock & 1) ? VerticalRetrace | DisplayInactive : 0)
                : value;
 }
@@ -424,6 +424,7 @@ uint8_t VGA::read_register(uint16_t p) {
         return v;
     }
     case Register::InputStatus1Register:
+    case Register::MonochromeInputStatus1Register:
         attrData = false;
         return VerticalRetrace | DisplayInactive;
     default:

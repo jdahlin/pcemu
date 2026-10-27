@@ -182,7 +182,7 @@ uint32_t PcDisplay::text_pixel(const Machine &m, unsigned x, unsigned y,
         scanline >= start && scanline <= end && (ticks / 500) % 2 == 0)
         color = native ? foreground : 7;
     if (!native) return palette[color];
-    unsigned index = v.attribute_palette_index(color) & v.dacMask;
+    unsigned index = v.attribute_palette_index(color & v.attr[0x12]) & v.dacMask;
     auto expand = [](uint8_t component) { return unsigned((component << 2) | (component >> 4)); };
     return 0xff000000 | (expand(v.dac[index][0]) << 16) | (expand(v.dac[index][1]) << 8) |
            expand(v.dac[index][2]);

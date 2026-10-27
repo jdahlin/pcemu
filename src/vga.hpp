@@ -32,6 +32,7 @@ struct VGA {
         MonochromeCrtcDataRegister = 0x3b5,
         ColorCrtcAddressRegister = 0x3d4,
         ColorCrtcDataRegister = 0x3d5,
+        MonochromeInputStatus1Register = 0x3ba, // Active status alias in monochrome modes.
         InputStatus1Register = 0x3da, // Read also returns the Attribute flip-flop to index state.
     };
     // Sequencer indexes: Map Mask enables writable planes; Memory Mode controls
