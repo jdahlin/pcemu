@@ -893,6 +893,7 @@ void CPU::stepImpl() {
     uint32_t start = ip;
     bool o32 = s[CS].big, a32 = s[CS].big;
     int over = -1, rep = 0;
+    bool locked = false;
     uint8_t op;
     int prefixes = 0;
     for (;;) {
@@ -918,6 +919,7 @@ void CPU::stepImpl() {
         else if (op == 0xf2 || op == 0xf3)
             rep = op;
         else if (op == 0xf0) {
+            locked = true;
             profile::locked();
         } else
             break;
@@ -931,6 +933,30 @@ void CPU::stepImpl() {
         throw std::runtime_error(b);
     };
     instructions++;
+    if (locked) {
+        // LOCK is valid only on specified read/modify/write memory forms.
+        // Invalid register destinations and read-only operations raise #UD
+        // before operand access. Intel SDM Vol. 2, LOCK prefix exceptions.
+        auto operandIP = ip;
+        bool allowed = false;
+        unsigned operation = op;
+        if (op == 0x0f) operation = 0x100 | fetch(1);
+        bool modrm = (operation < 0x40 && (operation & 7) <= 1 && (operation >> 3) != 7) ||
+                     (operation >= 0x80 && operation <= 0x83) || operation == 0x86 || operation == 0x87 ||
+                     operation == 0xf6 || operation == 0xf7 || operation == 0xfe || operation == 0xff ||
+                     operation == 0x1ab || operation == 0x1b3 || operation == 0x1bb || operation == 0x1ba ||
+                     operation == 0x1b0 || operation == 0x1b1 || operation == 0x1c0 || operation == 0x1c1;
+        if (modrm) {
+            auto m = fetch(1);unsigned group = (m >> 3) & 7;
+            allowed = (m >> 6) != 3;
+            if (operation >= 0x80 && operation <= 0x83) allowed &= group != 7;
+            if (operation == 0xf6 || operation == 0xf7) allowed &= group == 2 || group == 3;
+            if (operation == 0xfe || operation == 0xff) allowed &= group <= 1;
+            if (operation == 0x1ba) allowed &= group >= 5;
+        }
+        ip = operandIP;
+        if (!allowed) throw Fault{6, 0, false};
+    }
     if (op < 0x40 && (op & 7) <= 5) {
         int group = op >> 3, form = op & 7, bw = (form & 1) ? w : 1;
         uint32_t a, b;

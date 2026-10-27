@@ -293,9 +293,32 @@ static void reject_mov_cs() {
               "MOV CS faults before source access and preserves restart state");
     }
 }
+// Hardware 386EX vectors include invalid LOCK register forms. Verify #UD
+// priority, and retain legal memory read/modify/write execution on both paths.
+static void lock_prefix_forms() {
+    struct Stop {};
+    const std::vector<std::vector<uint8_t>> invalid={{0xf0,0x00,0xc0},{0xf0,0x90},
+        {0xf0,0x80,0x3e,0,2,1},{0xf0,0x0f,0xab,0xc0},{0xf0,0xf7,0x36,0,2}};
+    for(bool native:{false,true}) {
+        for(const auto &code:invalid) {
+            CPU c;c.ip=0x100;c.r[AX]=0x1234;c.s[DS].base=0xa0000;
+            std::copy(code.begin(),code.end(),c.mem.begin()+0x100);
+            c.videoRead=[](uint32_t)->uint8_t{throw std::runtime_error("invalid LOCK read memory");};
+            unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+            Jit jit(c,native,0,65536);
+            try {if(native)jit.run();else c.step();}catch(const Stop &){}
+            check(vector==6&&c.ip==0x100&&c.r[AX]==0x1234,"invalid LOCK form faults before operand access");
+        }
+        CPU c;c.ip=0x100;c.r[AX]=3;c.mem[0x200]=4;
+        const uint8_t code[]={0xf0,0x01,0x06,0,2,0xf4};
+        std::copy(std::begin(code),std::end(code),c.mem.begin()+0x100);
+        Jit jit(c,native,0,65536);if(native)jit.run();else c.step();
+        check(c.read(0x200,2)==7,"valid LOCK memory ADD executes normally");
+    }
+}
 int main() {
     try {
-        reject_mov_cs();
+        reject_mov_cs(); lock_prefix_forms();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";
