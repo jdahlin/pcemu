@@ -677,6 +677,22 @@ void graphics_addressing_edges(Guest &g) {
     g.call(3);
 }
 
+// CRTC protection must leave Line Compare's overflow bit writable.
+void protected_crtc_edges(Guest &g) {
+    g.call(3);auto &v=g.m->vga;
+    auto write=[&](unsigned index,unsigned value){v.write_register(0x3d4,index);v.write_register(0x3d5,value);};
+    write(0x11,0x0e);write(7,0x6f);
+    for(unsigned n=0;n<7;++n)write(n,n*17+3);
+    write(0x11,0x8e);
+    for(unsigned n=0;n<7;++n){auto before=v.crtc[n];write(n,before^255);check(v.crtc[n]==before,"CRTC protection blocks timing writes 00h..06h");}
+    write(7,0x10);check(v.crtc[7]==0x7f,"protected Overflow permits only LC8 set");
+    write(7,0);check(v.crtc[7]==0x6f,"protected Overflow permits only LC8 clear");
+    write(8,0x63);write(0x18,0x55);check(v.crtc[8]==0x63&&v.crtc[0x18]==0x55,"display panning/line compare remain writable");
+    write(0x11,0x0e);write(0,0x55);write(7,0);
+    check(v.crtc[0]==0x55&&v.crtc[7]==0,"unlocked timing registers accept writes");
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -721,7 +737,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); protected_crtc_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

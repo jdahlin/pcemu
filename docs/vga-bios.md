@@ -279,3 +279,8 @@ start/stride, byte and horizontal pel panning, lower-screen pan reset, and
 Attribute Color Plane Enable. Zero stride repeats a display row instead of
 substituting a default pitch. Independent plane-byte oracles cover wrapped
 starts, overflow boundaries, zero/custom stride and both pixel formats.
+
+CRTC11 protection now blocks writes to timing registers 00h..07h while leaving
+Overflow.LC8 writable. Firmware unlocks timing registers around 40-column and
+font-height updates, then restores protection. Native tests cover lock, unlock
+and the Line Compare exception; the RAM-only probe also passes under QEMU.

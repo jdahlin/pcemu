@@ -249,9 +249,13 @@ set_mode:
     mov ax,0x0801
     out dx,ax
     mov dx,CRTC
+    mov ax,0x0e11 ; unlock CRTC 0..7 before replacing horizontal timing.
+    out dx,ax
     mov si,text40_crtc
     mov cx,6
     call write_register_group
+    mov ax,0x8e11 ; restore the mode's protected timing state.
+    out dx,ax
 .horizontal_ready:
     test byte [MODESET_CONTROL],8
     jnz .palette_ready

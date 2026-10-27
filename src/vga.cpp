@@ -463,9 +463,17 @@ void VGA::write_register(uint16_t p, uint8_t v) {
         crtcIndex = v;
         break;
     case Register::ColorCrtcDataRegister:
-    case Register::MonochromeCrtcDataRegister:
-        crtc[crtcIndex & CrtcIndexMask] = v;
+    case Register::MonochromeCrtcDataRegister: {
+        unsigned index=crtcIndex&CrtcIndexMask;
+        // CRTC11.PR protects timing registers 00h..07h. Overflow.LC8
+        // remains writable so split-screen code need not unlock timings.
+        // IBM 42G2193 Vertical Retrace End, printed 2-68, PDF 94.
+        // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=94
+        if((crtc[0x11]&0x80)&&index<=7) {
+            if(index==7)crtc[7]=(crtc[7]&~0x10)|(v&0x10);
+        } else crtc[index]=v;
         break;
+    }
     case Register::PelMaskRegister:
         dacMask = v;
         break;

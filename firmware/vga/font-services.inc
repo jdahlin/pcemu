@@ -296,6 +296,11 @@ resize_text_font:
     mov al,0x12
     mov ah,cl
     out dx,ax
+    mov al,0x11
+    call read_indexed_register
+    push ax
+    and ah,0x7f ; Vertical Display End overflow bits require unlocked CRTC 7.
+    out dx,ax
     mov al,7
     call read_indexed_register
     and ah,0xbd ; retain all overflow bits except Vertical Display End 8/9.
@@ -307,6 +312,8 @@ resize_text_font:
     jz .overflow
     or ah,0x40
 .overflow:
+    out dx,ax
+    pop ax ; restore the caller's CRTC protection state.
     out dx,ax
     mov al,9
     call read_indexed_register
