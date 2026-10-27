@@ -110,6 +110,11 @@ stack wrapping, host FP register preservation, and precise mid-block faults and
 MMIO. The broader decoded-form matrix checks 16/32-bit operand/address sizes,
 EM/TS precedence, segment faults and cross-page accesses.
 
+The [50-frame native-x87 comparison](measurements/quake-native-x87-2026-10-27.md)
+records a 2.56× median paired speedup against the frozen baseline, strict compiled
+coverage, and the remaining compilation/generated-code costs. The 5–10× target
+is not reached.
+
 ## Prepare the local disk
 
 Downloaded game files, DOS images and private working disks remain ignored.

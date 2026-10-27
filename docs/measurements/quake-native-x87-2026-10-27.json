@@ -1,0 +1,3217 @@
+{
+  "date": "2026-10-27",
+  "implementationCommit": "8305377d749a59d4e5065b3a1b245775cd0b725a",
+  "baselineSourceCommit": "0ebca12b4a3f3a0a4baf6161727731408452d6b2",
+  "host": "macOS-26.3-arm64-arm-64bit",
+  "cpu": "Apple M1 Pro",
+  "flags": "-O3 -DNDEBUG -g -gdwarf-4 -fno-omit-frame-pointer",
+  "sourceManifestSha256": "fa692f741ac41b1da7d26e697944ab93f7d414ecea149c694814433523a4d278",
+  "sourceFiles": [
+    {
+      "path": "CMakeLists.txt",
+      "sha256": "9e5fd5fe719ebca110c4d5a6d2ec2cae40465d4c6b4c734aa68f5590d080ffb8"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "55991265acbbbb7c88b5298ffd4407fe1236a83c59f6e56b864533cd4fe3d747"
+    },
+    {
+      "path": "cmake/VgaBios.cmake",
+      "sha256": "b5be3aca78a75a85ecfc3e11e2cbf8ad3e57eb66befa75829feef10d53b4c96e"
+    },
+    {
+      "path": "firmware/int15.asm",
+      "sha256": "26c05fb491563a244dbf76eac0ebb6fb92ff6c682edc95a7cca0ffddb336597f"
+    },
+    {
+      "path": "firmware/pci32.asm",
+      "sha256": "5563165ce417452699c445fcab913c55000eee7b8975172f12707a852a4771fe"
+    },
+    {
+      "path": "firmware/vga/cga-services.inc",
+      "sha256": "22de6f84c047ee44355ef491db1d5e10825e3aca747d3d8e1a0918dc358c8c28"
+    },
+    {
+      "path": "firmware/vga/font-services.inc",
+      "sha256": "757eb09c87a0f7143deec029b100f8a569ba473205fd4b36e85d81ca00754e46"
+    },
+    {
+      "path": "firmware/vga/graphics-services.inc",
+      "sha256": "be961e9e013d6197fcae2465a8eb5515ad2bcfdd9794deac0d54d074ae3f683c"
+    },
+    {
+      "path": "firmware/vga/palette-services.inc",
+      "sha256": "fd9ddba9502f217e907bf4020608b46b74f39c93dc2f99e16cb4864bef48750e"
+    },
+    {
+      "path": "firmware/vga/query-services.inc",
+      "sha256": "468a71a5c38a10928417b54a42a853f9aba8ab735bf0f6db95d2688a55b1376f"
+    },
+    {
+      "path": "firmware/vga/state-services.inc",
+      "sha256": "3eca7554a0ef6a6be969e0f829e56b3fd8c3a7e883f396ec90e2e5a3bbaa0cb1"
+    },
+    {
+      "path": "firmware/vga/text-services.inc",
+      "sha256": "e1964f9826b174fa143a187049358c49425d5dc54eb31f0402b8dc935ec88b14"
+    },
+    {
+      "path": "firmware/vga/vbe-services.inc",
+      "sha256": "c8e2669974c67ade401727f8ae82f500b9f775fc57635990a0638642290fdc8f"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/.gitattributes",
+      "sha256": "025f1675d16b0111a79d0ed15ea1fb8bf3ed6fdfc710092f7c9c2e2100c4ec20"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/README",
+      "sha256": "885cc022fa9c844695b364e77e6a18ab2be74678a181827f1ce893071205cb65"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/UPSTREAM.json",
+      "sha256": "c4c14105b74aa3b31a31e238db5bdf776b51a64c427508e73c8e8c26ed3ac8ae"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_basic.h",
+      "sha256": "49d8df366296b203ca3211bc0672cf2a762135bf12710735b6292756b19dffd5"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_block.h",
+      "sha256": "a6b97a0819fa79fbba259f69e7dc2e34586703151648d68889e2a8b71831342f"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_box.h",
+      "sha256": "f7171735837d05bdfd943b0f54f72100a065d0bc0e50385edc7319ae65b0e2b6"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_control.h",
+      "sha256": "66c10295de288722d4c9384d5bf84e2c82c1a07f8ad020d2e3c0588e80dd1f9e"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_ext_latin.h",
+      "sha256": "e0582e9a6b3f85dbb983c72d95c9a50c3547ad5e895d16ef167e20777d053f1b"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_greek.h",
+      "sha256": "e80e7b27948f7729bd8d0fae4110124a812516ea65bae2d82d8c16fbf40b9ffd"
+    },
+    {
+      "path": "firmware/vga/vendor/font8x8/font8x8_misc.h",
+      "sha256": "01a77242dc9e623b359e1b262fdc02110de1a6834432b7167534196b769f23e5"
+    },
+    {
+      "path": "firmware/vga/vga.asm",
+      "sha256": "f3519b525fd1e579716f74cc87ebfb68f633ba19c1ca5282cadaccd5ae1a0428"
+    },
+    {
+      "path": "guest/host_cursor.asm",
+      "sha256": "f2321f2a9f20b5ba995fb06c9cbf28e3bb13048aa5f8bf31c90bfff654a359f5"
+    },
+    {
+      "path": "platform/arm64/dsdt-aml.json",
+      "sha256": "7256ccab3d4e441618c8abf464ebe57f02f3e7224e64b69d2523a3cfa9be69cc"
+    },
+    {
+      "path": "platform/arm64/dsdt.asl",
+      "sha256": "9f3bb6f620f18264ff26e480d39ffca8e46af79ad034caaa5a7b062542e605aa"
+    },
+    {
+      "path": "platform/arm64/pcemu-virt.dts",
+      "sha256": "18fd47341b0bfbd0dc483fd63db8ba2904ad4af4815e42b811aa82fbe50668bc"
+    },
+    {
+      "path": "platform/arm64/vmbus-aml.json",
+      "sha256": "3dcbb58286061780a2f2262700200074aef231c5fd4b8cb9ca485a0daf546c05"
+    },
+    {
+      "path": "platform/arm64/vmbus.asl",
+      "sha256": "3e6d6a73f6238f3a3706a1deed1c04ca160bab3fcf53c76745f0e0d7925f194d"
+    },
+    {
+      "path": "platform/macos/PCEmu/App.swift",
+      "sha256": "2d796a294029578fae9c62f7cde67168301405bc2b35f0fafd7121209547bcca"
+    },
+    {
+      "path": "platform/macos/PCEmu/Defaults.swift",
+      "sha256": "7f8027c08f534257f9b8b9c1bf9ebeb4ffb829f6f83296d2ff9c4f0e1fcdb828"
+    },
+    {
+      "path": "platform/macos/PCEmu/GuestDisplay.swift",
+      "sha256": "27c9cd42ccd20d7fd3e9fbe12c5eb793eca9c7509d96079468483ebe4652c830"
+    },
+    {
+      "path": "platform/macos/PCEmu/Library.swift",
+      "sha256": "35a335c3daa4a4022843b7874ceab21d3fecc3cea727082faa1549418360e056"
+    },
+    {
+      "path": "platform/macos/PCEmu/NativeBridge.cpp",
+      "sha256": "09048656f8e0b98ab9c83233a2b0f7b671590b4918ef049c400fa77b924f7842"
+    },
+    {
+      "path": "platform/macos/PCEmu/NativeBridge.h",
+      "sha256": "176c815b1022007bb0e1bcca239ea50c822009712dfd958b5bdf3dedc292005e"
+    },
+    {
+      "path": "platform/macos/hypervisor.entitlements",
+      "sha256": "35d4cf85dde95ca7c102cf0752ebece94bc7a7d1a7a022e7a60ef33bee9c57b6"
+    },
+    {
+      "path": "roms/README.md",
+      "sha256": "eabedec3b88bd988010b9651af11a111c2cb5e38a171a1c6dae23922feedc26f"
+    },
+    {
+      "path": "src/absolute_mouse.hpp",
+      "sha256": "66cff8347c31dfa444d4504ec0649d8d82fd1cde29497da996a08c6eb12741bf"
+    },
+    {
+      "path": "src/arm_fw_cfg.cpp",
+      "sha256": "77f7bc251c2e887a815e369ab1252e09614f0c2d767355bc87f419d3d00cd1c6"
+    },
+    {
+      "path": "src/arm_fw_cfg.hpp",
+      "sha256": "ccb6de77e44461f6f9f22bcee10402394892195dd6067ccbc34dbdbf6711af4c"
+    },
+    {
+      "path": "src/arm_gic_ns.cpp",
+      "sha256": "d1c47142126a234fa4a4821adff97faaba7cd53ce8c3e6060e0575fd10b76b8d"
+    },
+    {
+      "path": "src/arm_gic_ns.hpp",
+      "sha256": "9b404f9d862e00d2154970867397d311cb9810b3f103ac3fce06870f3b9e8ec9"
+    },
+    {
+      "path": "src/arm_gpadl.cpp",
+      "sha256": "968573435233169b42657a8da4f2de34c5a4998ff0e6a958e399484678e9d5ae"
+    },
+    {
+      "path": "src/arm_gpadl.hpp",
+      "sha256": "3b46919604e26265f8cceb46edd90c07fb1513f1ca3c330b3feec692f1564039"
+    },
+    {
+      "path": "src/arm_hyperv.cpp",
+      "sha256": "8101888be8f2decd63ed91845738bee6f42afbd0e976ab22c009235e7b245c34"
+    },
+    {
+      "path": "src/arm_hyperv.hpp",
+      "sha256": "20db25d0fcffde5893358ab41fc05930c46ab6402f54c924eab0ec1cc23f89b0"
+    },
+    {
+      "path": "src/arm_hyperv_heartbeat.cpp",
+      "sha256": "ae883407fee3e41d9c24dff81e65778ce421b8cd6707ea7692fbb0fdea3672f8"
+    },
+    {
+      "path": "src/arm_hyperv_heartbeat.hpp",
+      "sha256": "1e220a2ff48e062d437f7ae754f5bf741c8cb7209694456b95f2546ce977ef0b"
+    },
+    {
+      "path": "src/arm_hyperv_ic_protocol.hpp",
+      "sha256": "4182392d6735b00ab2a03c916148800e9872f64cca49a789e76be4cc5f04db36"
+    },
+    {
+      "path": "src/arm_hyperv_kvp.cpp",
+      "sha256": "9d3573d3953a4ec1f06e20dd3e81949b0cfb726eafdc5830667a776c757a3175"
+    },
+    {
+      "path": "src/arm_hyperv_kvp.hpp",
+      "sha256": "0f1f134cf86035e3738ac5de81a8003f59f215dd6762ab8f2b7a1ff68a844098"
+    },
+    {
+      "path": "src/arm_hyperv_kvp_codec.cpp",
+      "sha256": "9c88c09750d6a58dd32e6bdde7ce04fd753127cd0d68871b23e7dd245d749816"
+    },
+    {
+      "path": "src/arm_hyperv_kvp_codec.hpp",
+      "sha256": "508f575848cace69d4b7c9ab9dbc0e3234f34e839c72c2f2c6b5bc989ee654d7"
+    },
+    {
+      "path": "src/arm_hyperv_reference_clock.cpp",
+      "sha256": "0d049e2847fb51fce71cd9883bbcc025c2b5cd3c6618006564a31eb3863b1303"
+    },
+    {
+      "path": "src/arm_hyperv_reference_clock.hpp",
+      "sha256": "1405f96645e321999198eb8d7d036aacab859b224c13001c030dd5b751440463"
+    },
+    {
+      "path": "src/arm_hyperv_shutdown.cpp",
+      "sha256": "e166b8719edb72ecdc0b776dd7736096f8e6b56f066903d6fb4ff5b2922146c1"
+    },
+    {
+      "path": "src/arm_hyperv_shutdown.hpp",
+      "sha256": "3fa6f0d7b052441ddbdc041813552b8565ed823e1e7d6e8aaf5ea5bdd8424093"
+    },
+    {
+      "path": "src/arm_hyperv_timers.cpp",
+      "sha256": "f6db4f0b29a857b90240937b4aa8f7a79c2474a94c9dd00fa343127969352250"
+    },
+    {
+      "path": "src/arm_hyperv_timers.hpp",
+      "sha256": "39ea3314ef4a25104dbe05753ad96fcc98e949e616ffd73b984c0e74c7b51794"
+    },
+    {
+      "path": "src/arm_hyperv_timesync.cpp",
+      "sha256": "d1a623229c4057d6e8da7a9d101c7b50b591b648ec59c3af9109c3bb40450617"
+    },
+    {
+      "path": "src/arm_hyperv_timesync.hpp",
+      "sha256": "0261364d5b0cb6a9e5cf674382d67669a8d6374ac2d67dbcd9f5805270360936"
+    },
+    {
+      "path": "src/arm_mmio.cpp",
+      "sha256": "2bf787cf0bcb01bcab917a10cbb33beadbdf9e9002245508ad25d3718e669ff6"
+    },
+    {
+      "path": "src/arm_mmio.hpp",
+      "sha256": "45beacf615c05a651789fb58fc04b2272c70caed8167b25a7c5cd83066822d87"
+    },
+    {
+      "path": "src/arm_nor_flash.cpp",
+      "sha256": "bfafa63a7671c6b4589765a31c8b2d8e534fa19b543fa9030ac6f6136b90bcd4"
+    },
+    {
+      "path": "src/arm_nor_flash.hpp",
+      "sha256": "d574f77d37ec087b0bf048ad0c2da0a29e465fcc292a7ac3a591e4c40abe5b0d"
+    },
+    {
+      "path": "src/arm_os_lock.cpp",
+      "sha256": "22e07ba76f857bf3381fc7c6ce310d407849c58eb64faa4ec65ea74a5e76914b"
+    },
+    {
+      "path": "src/arm_os_lock.hpp",
+      "sha256": "4e857b242c627c07b3fd7b999873e46929ebc9b6c27c948c7a47f1b7bedf72b7"
+    },
+    {
+      "path": "src/arm_pl011.cpp",
+      "sha256": "f07c42dd9aaf093682816ad7fe952cb77b22751dfa75660cf8fcc9e0034f6037"
+    },
+    {
+      "path": "src/arm_pl011.hpp",
+      "sha256": "78ca1f1122e64c02efa62d4ae0d2eee82232c7ba9e0e6991e37f2df415fca93d"
+    },
+    {
+      "path": "src/arm_pl031.cpp",
+      "sha256": "fc08fc4adb8522da78dbe2ec4161ddf99067fdd0aec260bfff0ec7134339371b"
+    },
+    {
+      "path": "src/arm_pl031.hpp",
+      "sha256": "5f0356cc99c5fac4ced48cfdccce37e0dc16c17b40939dc7902f8c7b586dac8d"
+    },
+    {
+      "path": "src/arm_psci.cpp",
+      "sha256": "b4bc644621047e5fb5ebb0366f1b43ff06e2ce87fab4bba7db225735c4431137"
+    },
+    {
+      "path": "src/arm_psci.hpp",
+      "sha256": "03149637d26dd552dd1b895881bd0e64dde769b9ccf44febf56d9279794c4f9d"
+    },
+    {
+      "path": "src/arm_ramfb.cpp",
+      "sha256": "96947dabeeff7d48b71d6e31713a84a07637b392a665312503ea45f59b317f3b"
+    },
+    {
+      "path": "src/arm_ramfb.hpp",
+      "sha256": "020b1bc1caeb8332d4eb1266949b328124d019c20de96722789e169db7b2d4fe"
+    },
+    {
+      "path": "src/arm_session.cpp",
+      "sha256": "8bbc092d3da9b08702b73e962935161bfd64a29c32abf2f606666d94668ba353"
+    },
+    {
+      "path": "src/arm_session.hpp",
+      "sha256": "c61c2c243885eba258f84821f4ac61ea244ec7b271680f22d5c3ce5a1e3b3914"
+    },
+    {
+      "path": "src/arm_snapshot.cpp",
+      "sha256": "400e42b236818b2d40b0f369e9195368da02b9a179660ff612f2682855b6069d"
+    },
+    {
+      "path": "src/arm_snapshot_state.hpp",
+      "sha256": "3d92f03c656d8f4628da7e52046fc0e1594ec4ef697366ebe8310c1edf37a385"
+    },
+    {
+      "path": "src/arm_synic.cpp",
+      "sha256": "79ec684ed23e3f440f232d027560d453122535c7bde3cf492fba8c7a8a6e23ab"
+    },
+    {
+      "path": "src/arm_synic.hpp",
+      "sha256": "d1067706401eb029a705327036a5ccd1cddb1673852845e6bd2abb390468f792"
+    },
+    {
+      "path": "src/arm_virt.cpp",
+      "sha256": "6d7c72b01b34c76b4575fb346ddbbbdbb5dbf06014761024643701bd8253c565"
+    },
+    {
+      "path": "src/arm_virt.hpp",
+      "sha256": "86dc313b6d7c998c980ec28195a5d93ccf7b3038dc6ed0d63035f304e9e11c15"
+    },
+    {
+      "path": "src/arm_virt_devices.cpp",
+      "sha256": "ffcc1fbe7ac292f4c7f490b0e89d28dc9b76404a66983ba778b42cc2f46cabd4"
+    },
+    {
+      "path": "src/arm_vmbus.cpp",
+      "sha256": "14b39d8c35560d88dd16d8a6a2615bc35be3a1263d64992845dadf69d16ba03d"
+    },
+    {
+      "path": "src/arm_vmbus.hpp",
+      "sha256": "5c04c65b63a98680c43675d7ddfc7ed52bbac53c6d4e7c5fa252c61b02b18100"
+    },
+    {
+      "path": "src/arm_vmbus_ring.cpp",
+      "sha256": "9d3f593f9c4e1948a197f29267b130640f867af33f9d3135c2e0b552e53a00f3"
+    },
+    {
+      "path": "src/arm_vmbus_ring.hpp",
+      "sha256": "48c74dbb9f8d366d0a3dabf97106ce5edad24e1c74e0cb7bee902e46f02eeffe"
+    },
+    {
+      "path": "src/ata.cpp",
+      "sha256": "238591e4227051b68b71fa4c28b4870f661b3e6d3163949979acdcdf8e36e03f"
+    },
+    {
+      "path": "src/ata.hpp",
+      "sha256": "7fc39cf98a18f511aec8f5cb601118a68523351cecc97c15537bad5e55896b21"
+    },
+    {
+      "path": "src/cmos_rtc.cpp",
+      "sha256": "74216de7ac3bb5fd4b31ee809c7dc35f3b62fbe262c5aaf17c2ce7f886f2220d"
+    },
+    {
+      "path": "src/cmos_rtc.hpp",
+      "sha256": "275bf2c62600a9e7c0f0b865763711a24377b8565dfee296d723b36d3edf398d"
+    },
+    {
+      "path": "src/cpu.cpp",
+      "sha256": "1c7de70ecb428fb04b030011d7f26a7cc885e503f39c716a9fe7a3c1474b9d10"
+    },
+    {
+      "path": "src/cpu.hpp",
+      "sha256": "9869cba0a7fbb237eb784467031c1048836c52f8cd8063232eda32843e1378fd"
+    },
+    {
+      "path": "src/cpu_benchmarks.cpp",
+      "sha256": "c81237bc189de5bcbb667c6784acde7352049e050c4eafbcb7a44fd8cdbd06a6"
+    },
+    {
+      "path": "src/cpu_benchmarks.hpp",
+      "sha256": "923052e74416042e0a72407a9efc297bd09dcbccd2b28a3b5bac1ba4319baae6"
+    },
+    {
+      "path": "src/cpu_x87.cpp",
+      "sha256": "a4dc4f08c9dcde22b4497690b7c70773bd8d5d6d6498520d0641a535676fff6e"
+    },
+    {
+      "path": "src/debug_console.hpp",
+      "sha256": "0610a83b1a321c0f05fcd3265f038561a1977f5d4a5949844d5182fc74ccd4ce"
+    },
+    {
+      "path": "src/disk.cpp",
+      "sha256": "f10e430c045395e6e772bcd0626fefa55a369cbbf3ef2dcb7fcf121275aba49d"
+    },
+    {
+      "path": "src/disk.hpp",
+      "sha256": "19f0ab459b6ea13e8a0162a3985d53eff81a78fc6cf6bee292fd786a7c59c3e2"
+    },
+    {
+      "path": "src/frontend.hpp",
+      "sha256": "38389f0452675a2187ed9762c9283b65ad366b32ac3e06c97a0b49a446979115"
+    },
+    {
+      "path": "src/frontend_input.hpp",
+      "sha256": "908dbf33d8c3505c4f89faac0f46848e0f5a85b9fa5a95f8b4941fe767d09cae"
+    },
+    {
+      "path": "src/frontend_sdl.cpp",
+      "sha256": "ee68007a6a8aec91870620c1a231d638b108e1a6a281d9af6d3a5ad6f322a6d3"
+    },
+    {
+      "path": "src/frontend_spice.cpp",
+      "sha256": "910ebccd83b6394b5d9d427f31d7107e8fa730592b7112c60847f532c6f5c3f7"
+    },
+    {
+      "path": "src/frontend_spice.hpp",
+      "sha256": "84792e4e4c09318d3e61df4cfc960ffc23d5161f824154dc913792e643d9a4c0"
+    },
+    {
+      "path": "src/guest_agent_socket.cpp",
+      "sha256": "a6a2a20b98a78462c978dd4278b6ed89b0af6a56a80ba9bf4754e8dd4e4cad28"
+    },
+    {
+      "path": "src/guest_agent_socket.hpp",
+      "sha256": "16a19e56d26e94b5634a22895a145e8771afbb4625d22d98c27a619cd6c0e883"
+    },
+    {
+      "path": "src/host_audio.hpp",
+      "sha256": "11acfd9dcd86b8bee01ed9cb422271e5860096d8c01c25d7042dcb2503d803cb"
+    },
+    {
+      "path": "src/host_audio_sdl.cpp",
+      "sha256": "0d5ae7a2dc6369b6d579a319e388849aecc0aa069dc0be99c4144d4c138c7287"
+    },
+    {
+      "path": "src/host_cursor.hpp",
+      "sha256": "b239858a70150ecc82a19fc7b0c2395c19616e290ec5cedf84f8605cdcbc6563"
+    },
+    {
+      "path": "src/host_key.hpp",
+      "sha256": "2f0c57da69b4e8f714b7cf50b71ba58d38ccfc7bc52ba72fbe667e6dc9aa1832"
+    },
+    {
+      "path": "src/host_key_state.hpp",
+      "sha256": "5399d55d17be4c2d206f8895bca663f77034eed61c2b042753e103733a6b1b82"
+    },
+    {
+      "path": "src/host_keyboard.cpp",
+      "sha256": "e2e111bbad41028d981e1b99294aa16a3ee677f5684be0144cf0cd83094ef4f1"
+    },
+    {
+      "path": "src/host_keyboard.hpp",
+      "sha256": "4a108f6fc4d3b94e6e3ff41296649777eef9b0b98f8e210939276bd21a35c280"
+    },
+    {
+      "path": "src/hvf_gic_bootstrap.hpp",
+      "sha256": "a7d3cc582f3c09a0dcb1b221640b5d6820b406a5fe9612b5462ec0a5be913df7"
+    },
+    {
+      "path": "src/hvf_machine.cpp",
+      "sha256": "b3762b32aaa38b06a2c12d6065604823398a91288d3e5ee91494d269e08e0fd6"
+    },
+    {
+      "path": "src/hvf_machine.hpp",
+      "sha256": "16cd505445d86aad616aacb4354abd9eb7d1a307d0779cbec015721cc1d542b4"
+    },
+    {
+      "path": "src/hvf_secondary.hpp",
+      "sha256": "1ac1786ea8b1a71972dabe7661a894d9092ab75df0203439b9823fcddb3f4a08"
+    },
+    {
+      "path": "src/hvf_snapshot_registers.inc",
+      "sha256": "df560b324ab1b8311a5fcb3baf787de36981add29f9e680ce34fd5ad47915ff4"
+    },
+    {
+      "path": "src/i8042.cpp",
+      "sha256": "c72c22821d58adb824a00a955c4e5786062617058f4ea9abab71af9a4979bb9a"
+    },
+    {
+      "path": "src/i8042.hpp",
+      "sha256": "b78db50add1d1da757f6ee20779410a60b055e31c687a039c5182233b4d26d49"
+    },
+    {
+      "path": "src/i8259_pair.cpp",
+      "sha256": "e4e1a5c6978ed525e455d6bf855fbf4c001eb3fac026211473dabc40b2a3a3d8"
+    },
+    {
+      "path": "src/i8259_pair.hpp",
+      "sha256": "c4c9fda4fada64b4b93e573531309912b181c07e0747160308c0339369f5994e"
+    },
+    {
+      "path": "src/int15.hpp",
+      "sha256": "af15321cb2687577ee538de642280902a1ca01427056562c12c40cc591d5d580"
+    },
+    {
+      "path": "src/intel_hda.cpp",
+      "sha256": "2fc7452e38b6a8fb0fd790bdb5f44add6f49fe8e61f54441080f2364627f38d5"
+    },
+    {
+      "path": "src/intel_hda.hpp",
+      "sha256": "d6099f44b11e18f03342d86ba129975fccfe2980347e06acc69d271cf8e9e958"
+    },
+    {
+      "path": "src/io_port_space.hpp",
+      "sha256": "03c462d8bc24145e2dcaccbb2642824a66ff0647b87eb1f4db1f3d6e8af697d8"
+    },
+    {
+      "path": "src/jit.cpp",
+      "sha256": "28596b686d1850be4042cbbe5bf45df5906bce840eaa6081c1f86a02327f6b6e"
+    },
+    {
+      "path": "src/jit.hpp",
+      "sha256": "273a789d1baf36ac6a5b2e048509a937af1c4f6ed04c1f16df27aeb858c4f162"
+    },
+    {
+      "path": "src/jit_arm64.cpp",
+      "sha256": "055229e5736d96578d88221728727360ba7d301fd52423e0e52bbc634b52b3c8"
+    },
+    {
+      "path": "src/jit_decode.cpp",
+      "sha256": "8789411af4b97aff48373fafd99ebe5ed28c5a5f2848e2426ded50271872141e"
+    },
+    {
+      "path": "src/jit_flags.cpp",
+      "sha256": "e1432698d7f70407e1ff163efe3133445ba7d763209ed04e789dc8022a75e0ac"
+    },
+    {
+      "path": "src/jit_flags.hpp",
+      "sha256": "fa6d7ac85b8fb3db5fe33c3137c6104992173564dc6eaf2a39986e9e4b9cac4a"
+    },
+    {
+      "path": "src/jit_ir.hpp",
+      "sha256": "234c9db6bd041305a720ab15109a1e2804386a18fe0e83457fa6b461ac3adff8"
+    },
+    {
+      "path": "src/jit_memory.hpp",
+      "sha256": "94c9ff5225f17c2581f8d9000e52a6cc52cb64ab9b2fcf4871c544c7ade7db47"
+    },
+    {
+      "path": "src/jit_runtime.cpp",
+      "sha256": "d4d87597778b1f49bbaed194e3fa5cd6d6d90d334435aaffaf8f4835c117f3e8"
+    },
+    {
+      "path": "src/jit_runtime.hpp",
+      "sha256": "4c7b0845b5cf1ed074133ec9c3a6aacd98a10b4adfc5595eb925c1c7a76d0976"
+    },
+    {
+      "path": "src/jit_x87.hpp",
+      "sha256": "6f0e8b3d291c51fc8d9e12a8ee998daf15e8a98d16aa165b78fe63143d6b5ca8"
+    },
+    {
+      "path": "src/machine.cpp",
+      "sha256": "9a312767d4ecaf0b57b328dee8922e342e9b506dbe4c6ce82f616d459acd11ca"
+    },
+    {
+      "path": "src/machine.hpp",
+      "sha256": "92bdef734d4710b25a02391996873415c2191e5513c83ec8eb3196404eccdc28"
+    },
+    {
+      "path": "src/machine_profile.hpp",
+      "sha256": "314a9e770a91ada5550a529b243f374c11983714fb9424137c3dbee1b581cacd"
+    },
+    {
+      "path": "src/main.cpp",
+      "sha256": "f9634e6ad57c13e2ee7e2bfad63079877c5c70169db56c4416194aa9ba46ee65"
+    },
+    {
+      "path": "src/mmio_space.cpp",
+      "sha256": "52d96f8013131a0bfd9c3fbb95bc32c9922c556f13c02947a00506b8e74d3794"
+    },
+    {
+      "path": "src/mmio_space.hpp",
+      "sha256": "07d377d8a7a5951e5c75ccf6e159703072a10521155ecbfee5ae5d97a5ca5f84"
+    },
+    {
+      "path": "src/mouse.cpp",
+      "sha256": "61fad85a58881f2af76e73f231c546cde2734fe67cbc563fc9eba5a33abfeca7"
+    },
+    {
+      "path": "src/mouse.hpp",
+      "sha256": "7a38515ee873875f899d11dea5a7b7a7e0f547e45da1353b6506c0d4e1e2f35d"
+    },
+    {
+      "path": "src/ne2000.cpp",
+      "sha256": "57e24e75c6cadae2bfd56bfbd77f57bde5ecc6e3737b33a22fa58ccbd1f2b040"
+    },
+    {
+      "path": "src/ne2000.hpp",
+      "sha256": "6182f90eb7c3500a1bcf32f5996c958dfdd4b9d3c6a03414910c69760a79757f"
+    },
+    {
+      "path": "src/network.cpp",
+      "sha256": "8a283cf16e9263b78393ed95509e5c27d728a2c54acb54890bffcddc74eb60a0"
+    },
+    {
+      "path": "src/network.hpp",
+      "sha256": "5bc55170d08fad3dc4f6e7d5f1bc5d34821d71402f530d8d5315d3149223357f"
+    },
+    {
+      "path": "src/nvme.cpp",
+      "sha256": "3f159321fe348ec91a42b88810d336a8831dd5fb232058317e3aa4df38467ed6"
+    },
+    {
+      "path": "src/nvme.hpp",
+      "sha256": "e3ef75750846edbf8f768278773bfe65a8694bbdd7b28c4cae97aa13feef1df1"
+    },
+    {
+      "path": "src/pc_at_io.cpp",
+      "sha256": "35730e6f596021ed70f2de2bb3c1875bff369a41b01228fcda0d34b135c61e26"
+    },
+    {
+      "path": "src/pc_bios.cpp",
+      "sha256": "97e3b3c32804ef44ca05a6e5fb25245d6159e1875c68c29c051e4849bfa90c7c"
+    },
+    {
+      "path": "src/pc_bios_disk.cpp",
+      "sha256": "636674f9059ceac40541b43c6526df82b3b06eaec36867053257277ca51fa521"
+    },
+    {
+      "path": "src/pc_bios_disk.hpp",
+      "sha256": "a795a338dcbb804b0563ecf99ef8b37bc5966c96c66561c6f96341b9e42142cd"
+    },
+    {
+      "path": "src/pc_bios_video.cpp",
+      "sha256": "6f76e6a4d03eb67c796e6b81303b740d1a59f9d19c4a7864f72c57585b6b3a2b"
+    },
+    {
+      "path": "src/pc_display.cpp",
+      "sha256": "816a66df09dc2980b187ff63578d50ca4a3c7004eebb9a3a2ed299ff92de4b42"
+    },
+    {
+      "path": "src/pc_display.hpp",
+      "sha256": "ddf2a171031d487d696c5ba552b6293db96728a72d65b5af34541f6263ead89c"
+    },
+    {
+      "path": "src/pc_execution.hpp",
+      "sha256": "5e03adfc921e3ee9444b2a33e0be793eca4a27b5b80d5495e30bcca4d6665027"
+    },
+    {
+      "path": "src/pc_firmware.cpp",
+      "sha256": "b15b1f295270e15193948ed3f206ab58724b09b6ff849c46feae7702959e7b1a"
+    },
+    {
+      "path": "src/pc_input.cpp",
+      "sha256": "ab9885b6a2d1ffecd4ba489b3a6d4b84e8250609f82513bc4fb48bd4cbbe5cf9"
+    },
+    {
+      "path": "src/pc_input.hpp",
+      "sha256": "54975309d7ff287e2e5b9c853d3f5744c028386c8d5b7eda27ea7f725ff29c16"
+    },
+    {
+      "path": "src/pc_session.cpp",
+      "sha256": "893b81b4731f4c0e7d54c0fff508b37519069bcd04d76b6ebb6e4b1cfe3fc696"
+    },
+    {
+      "path": "src/pc_session.hpp",
+      "sha256": "316cf0fac1835f77a0ce5ac99aa121a153ccd63d0693d4aa70c18d5ab8f18023"
+    },
+    {
+      "path": "src/pc_vga_rom.cpp",
+      "sha256": "7d4e3a40328986bd6f6b38460b5cc1fba4cfe8c7061f54a56129526e7536bc5c"
+    },
+    {
+      "path": "src/pc_vga_rom.hpp",
+      "sha256": "bc99a0d550c0bcd144eb7a5053437722c7bad99655280a44e75eca77f5ebc5ef"
+    },
+    {
+      "path": "src/pci.cpp",
+      "sha256": "77a4d2ad329ffb66c4127d07b9a2e582b66d778334b85e4ea5fe302528d55ec5"
+    },
+    {
+      "path": "src/pci.hpp",
+      "sha256": "23c1c88c0359ba680a5c934685165aa57a2cbb8082c9d4359f84793bc2fd4108"
+    },
+    {
+      "path": "src/pci32.hpp",
+      "sha256": "a75fcb9d84947e170393fd92790e2d6eceebdd0f89735ff16ee364fc4497e387"
+    },
+    {
+      "path": "src/pci_ecam.cpp",
+      "sha256": "156ca98603c81a3a33597523723e76ddf6d396d04f239541945b2bcc77b0ca1b"
+    },
+    {
+      "path": "src/pci_ecam.hpp",
+      "sha256": "dbfa42879f3738558501c61e4b56d564c5030ef01ff11873b0691612d3d2e2a1"
+    },
+    {
+      "path": "src/pic.cpp",
+      "sha256": "ffee434f851b94e0b07b13e897b9ba14bb8adbeaf281833e951593153ca32f70"
+    },
+    {
+      "path": "src/pic.hpp",
+      "sha256": "bb04f03f2ed830c4e7e72f5f7466f562b3dc5b5a929da8d8f52cd2ae2fdaec2d"
+    },
+    {
+      "path": "src/pit.cpp",
+      "sha256": "3aa9a24eeeff595d9f25ea3bbbcbcf4e233472f04129fadd20d34818a13dc028"
+    },
+    {
+      "path": "src/pit.hpp",
+      "sha256": "b6284e2c7e813ddd93cca8c3f7eac878d02e3008614ca5e224b582fc68dadf9c"
+    },
+    {
+      "path": "src/pointer_shape.hpp",
+      "sha256": "0393841472f13ca341b12a5756b99baea7f6ccd7c5980fad3d64f65538220bc7"
+    },
+    {
+      "path": "src/port92.hpp",
+      "sha256": "3bfa4c2d1dc11a86b4fbdf495535527f49dc35ff2ac2183ca781f3f092993b92"
+    },
+    {
+      "path": "src/profile.hpp",
+      "sha256": "62e155b5a7cc1cd2238cd589d6cb4be57c02da5dd00711f653ae819e16905425"
+    },
+    {
+      "path": "src/ps2_guest_input.hpp",
+      "sha256": "e691fe5abee6f7e52d011ea1de05535bc371ae6fcc72dbe8d59753d07c0dd93a"
+    },
+    {
+      "path": "src/qcow2.hpp",
+      "sha256": "37822c22c8d00b18767bd9e688c9b9f6b6ede2e79f2364afc27fe268ae00fe7f"
+    },
+    {
+      "path": "src/qcow2_nbd.hpp",
+      "sha256": "b5aa932767fb327be479cd287c4f6e13ec27da11f8180e352d1f3cb7e6049add"
+    },
+    {
+      "path": "src/quake_benchmark.cpp",
+      "sha256": "aeeab8bf761e77fc25fc94a5037e624b0e879c9029c9e90b20cfe69641f4d517"
+    },
+    {
+      "path": "src/quake_benchmark.hpp",
+      "sha256": "f6df0b8ea6c1b1a4bd2802aba4a3ab786bc5346784e66e140cdfc7ddaa5fa25a"
+    },
+    {
+      "path": "src/session_diagnostics.cpp",
+      "sha256": "e9e561bc7f1fa33317bc2878bc17e1fb6a6f94b28b5f629fe24870cfb8da427a"
+    },
+    {
+      "path": "src/session_diagnostics.hpp",
+      "sha256": "2b96ff1fe80eef41bb7e600549d8d7b8e391ba04d94b66e1d943247fadd6743e"
+    },
+    {
+      "path": "src/snapshot.cpp",
+      "sha256": "9ef089085d3ac39e3a748c04500647f6213429249c56cab27cb12f0a9fdd3517"
+    },
+    {
+      "path": "src/socket_wakeup.hpp",
+      "sha256": "009ed00b5daafa915d8b76e7d02f0fc39159a25f578da6e1d89f462acc4f154e"
+    },
+    {
+      "path": "src/state_archive.hpp",
+      "sha256": "4ae468f9fd6ae9aca8c864e85165a060beb122051fa7ad2022c42a85748aa9c8"
+    },
+    {
+      "path": "src/system_port_b.hpp",
+      "sha256": "32101efed14d4f97a3fee8188fc0dd01365c0a8cfc7b49027ae941a539246655"
+    },
+    {
+      "path": "src/usb_guest_input.hpp",
+      "sha256": "bd332cc84ba0a9815debcbb098362f2e01fd1097e9dbc961a690f93da2db5aeb"
+    },
+    {
+      "path": "src/usb_xhci.cpp",
+      "sha256": "068d13d788c0a3d62b7d590f34047a6699bce20f58489e090d9e954066626c22"
+    },
+    {
+      "path": "src/usb_xhci.hpp",
+      "sha256": "ecfaa1c55cca5b368431ede5658a9786a1f17c380b5ba046f746f475de3d319c"
+    },
+    {
+      "path": "src/vga.cpp",
+      "sha256": "7ca1ee9e36ede8b5a3178b49d299fa717b410e31ff1b8dedd56d2eae97d9c4aa"
+    },
+    {
+      "path": "src/vga.hpp",
+      "sha256": "c59c8f3783a7b1031225da61c2e4001677c1e9db4fe5edec406a0a7fb1514b16"
+    },
+    {
+      "path": "src/vga_pci.cpp",
+      "sha256": "3667033c5358b58c63c6480f5d5cfdd5f8f6a6a724ac2e82c24c5429f696fd1d"
+    },
+    {
+      "path": "src/vga_pci.hpp",
+      "sha256": "6d37d603a1a00b494685676fd240ce6fa8d9e7c8e05662a8819177276c9f86e2"
+    },
+    {
+      "path": "src/vhdx.hpp",
+      "sha256": "77855c99ade9ef9316150eecd0ac3f804c2833dc10b6a2b287b797177853535f"
+    },
+    {
+      "path": "src/virtio_balloon.cpp",
+      "sha256": "7fcfd4c7a909e108770c8a324d28534c79e4077d8418b47e140007e941c0ade9"
+    },
+    {
+      "path": "src/virtio_balloon.hpp",
+      "sha256": "c70f1f6a26e6cdd2d774908cd496ac341a0cebe6b7ce55ca558ca30f50b9f7dd"
+    },
+    {
+      "path": "src/virtio_blk.cpp",
+      "sha256": "dab538fab2822d799b490d0aefb96d0b169ddab71713b99722e0ca2a5f2e8edd"
+    },
+    {
+      "path": "src/virtio_blk.hpp",
+      "sha256": "2ddb9bd35ca57735914a451def0b46cd64809d116958e4ad7981b56e36bfc90b"
+    },
+    {
+      "path": "src/virtio_device.cpp",
+      "sha256": "77e79b65b34f71e79e2ae2f4da5d0b83b4c5f3fa2461064cc3cfeb9ce5a9f62d"
+    },
+    {
+      "path": "src/virtio_device.hpp",
+      "sha256": "f43c2e3819ca0f965c5c9afbba89480cf35a8fd2691a5bb874d94aa25aaaa99b"
+    },
+    {
+      "path": "src/virtio_gpu.cpp",
+      "sha256": "989b8e0d37e0014c46469add9634cef8a6ad1f3340a0dd30d6a67fec853531bf"
+    },
+    {
+      "path": "src/virtio_gpu.hpp",
+      "sha256": "e9cbf0fd5d8350aba538e42ac9e4408407d0c5f365b2817c55195ed2fb217a46"
+    },
+    {
+      "path": "src/virtio_net.cpp",
+      "sha256": "bc0094bd5bf7f7f3a44f4ed565e5e774f123f3cdda95b27626fb798ddae5e27e"
+    },
+    {
+      "path": "src/virtio_net.hpp",
+      "sha256": "652454292e82c3137b290da62208fea55285959d16c897f8d58f71297285f000"
+    },
+    {
+      "path": "src/virtio_pci.cpp",
+      "sha256": "19cde5d6959755e62afe0b87f4b886b3f88593a04fe3543619919b49d782baa4"
+    },
+    {
+      "path": "src/virtio_pci.hpp",
+      "sha256": "8983a86de382e02f1d2cea40c7909dc234aade454e3b6f05ffd9e9ffa544c390"
+    },
+    {
+      "path": "src/virtio_registers.hpp",
+      "sha256": "7b487685232db26f23ea464ceae04a2d9413730cfd5c2637d34d6832fa1ee369"
+    },
+    {
+      "path": "src/virtio_rng.cpp",
+      "sha256": "70e1279905a538b1e6864cead88a4383128fcc77680311c57a3e11276914f4cd"
+    },
+    {
+      "path": "src/virtio_rng.hpp",
+      "sha256": "c3b2cf91fc628d4aa2cf049756f25f608ac9a77e1f243dd68968ea300d2cc2c4"
+    },
+    {
+      "path": "src/virtio_serial.cpp",
+      "sha256": "415811c9ce9fdb1ca17fca9586eb050b43dcc7138e33d9e069fb504d6517b2b0"
+    },
+    {
+      "path": "src/virtio_serial.hpp",
+      "sha256": "12bceb607b25f09104f51b6f13dc83f3112548f628d3aa2e6a9d624339151da8"
+    },
+    {
+      "path": "src/win95_shutdown.hpp",
+      "sha256": "518699b23c508ea90d13f827e5e23d99b26d353445fc2d47ec2de68a136e805c"
+    },
+    {
+      "path": "tests/arm_devices_test.cpp",
+      "sha256": "e5863f4ec1304eac657f07d2c8a64b9a66be60967c06701a22acb99a2e559198"
+    },
+    {
+      "path": "tests/arm_gic_ns_test.cpp",
+      "sha256": "ba2e01f2271fb9583b5cd7ad98702b0866f6d7b34f352800ce786b92ac79d22e"
+    },
+    {
+      "path": "tests/arm_gpadl_test.cpp",
+      "sha256": "0db4e2029c9a9f165f5edf1e2d2dc8a817fd47d35d081354e749211dde31dabf"
+    },
+    {
+      "path": "tests/arm_hvf_gic_test.cpp",
+      "sha256": "368d3dd3ba7484cbda2977d59647045fa5aa7b68460192c4ec812c931be90a28"
+    },
+    {
+      "path": "tests/arm_hvf_reference_counter_test.cpp",
+      "sha256": "730b6bc49e3d612a32fb629ca2a9139dafa17560f2fc7940b41bec93c55570e0"
+    },
+    {
+      "path": "tests/arm_hvf_reference_page_test.cpp",
+      "sha256": "9bd6d2bda160159cf83e64b966ead89b3baded61b70535f30953b3662ce90c02"
+    },
+    {
+      "path": "tests/arm_hyperv_heartbeat_test.cpp",
+      "sha256": "59d166d17ef4b11f42c2a1f939178d8191fc460cfbb459f421adb334bef39622"
+    },
+    {
+      "path": "tests/arm_hyperv_kvp_codec_test.cpp",
+      "sha256": "0a8654ea3ab73fa37118ad8eca15ff41c1100ad8eeb250616e0f5f68d968251e"
+    },
+    {
+      "path": "tests/arm_hyperv_kvp_integration_test.cpp",
+      "sha256": "9cfe9488b46548302b46fbf5e46c63e406e83386338c7ab13d7ebd0575a84508"
+    },
+    {
+      "path": "tests/arm_hyperv_kvp_test.cpp",
+      "sha256": "b14413ac60da9c38a4ab5a6c150f067a3d4aca97b3841b0d946c563dfca212b2"
+    },
+    {
+      "path": "tests/arm_hyperv_reference_clock_test.cpp",
+      "sha256": "f7dc3fa306b784e65140c37ef29ecf8eddb18aa8f20d95064afdab426618e857"
+    },
+    {
+      "path": "tests/arm_hyperv_shutdown_integration_test.cpp",
+      "sha256": "32219d59ad4b8828fe1b215639fc84303f38717094ad753058c34f75fea636a2"
+    },
+    {
+      "path": "tests/arm_hyperv_shutdown_test.cpp",
+      "sha256": "36e287b8a3e3bebd2e193e2ca35664b006776669d8074c00e9caa5b3217953da"
+    },
+    {
+      "path": "tests/arm_hyperv_test.cpp",
+      "sha256": "7a98f0622d5afff6423432f3d9caf21a6e59942c785ae7a7a76f17e689b96a1c"
+    },
+    {
+      "path": "tests/arm_hyperv_timesync_integration_test.cpp",
+      "sha256": "d52be158c0a6393f87cf9af46654cb6bbcea19618cd277e1de8fdf465ecb77e8"
+    },
+    {
+      "path": "tests/arm_hyperv_timesync_test.cpp",
+      "sha256": "7bebbd01507a579f6ee474341d7e868ce3a5cfc15ec18232c9a767d232ad02cb"
+    },
+    {
+      "path": "tests/arm_snapshot_test.cpp",
+      "sha256": "8a512dea555ff14219b9ae17a89c3b481c6182e76ff1fb29ced696bab92e1917"
+    },
+    {
+      "path": "tests/arm_vmbus_channel_test.cpp",
+      "sha256": "3e36eb48a9b01147948233da0a000d987d7139fc2916f437cc01b13da3830a79"
+    },
+    {
+      "path": "tests/arm_vmbus_ring_test.cpp",
+      "sha256": "b3d6a4fb98a349d7ccb5a5455870c0210bdb20c63d2d6e5bd1f5a3f6399bf358"
+    },
+    {
+      "path": "tests/bench_alu.cpp",
+      "sha256": "3190dd3daa887df9079d766205c725d0361b01f80ffd7999a3ee4c22a64d7924"
+    },
+    {
+      "path": "tests/bench_alu_arm64.s",
+      "sha256": "dbe608a162c55fa7135476c38f38f1ee77c3fe6be9915209e69bba72a946f335"
+    },
+    {
+      "path": "tests/bench_alu_x86_64.s",
+      "sha256": "84c9f1d5a0b634c5b1dff2ad4fab4a727daef8a0d25fd6a587079ff445fe67a0"
+    },
+    {
+      "path": "tests/bench_memory.cpp",
+      "sha256": "bbd6b2b74e75aa152c77ee54c95e756d647c70c24c09b09e9660dba404530149"
+    },
+    {
+      "path": "tests/bench_memory_arm64.s",
+      "sha256": "64e8ba7efa3e1baf151e171c1690f0ace5be3be8a6ce12061a6b173647f187b4"
+    },
+    {
+      "path": "tests/bench_memory_x86_64.s",
+      "sha256": "7b94062de7fc3895fa50f2829c03ac5f961871b6ada4f9c8837741e90ef16960"
+    },
+    {
+      "path": "tests/bios-text.asm",
+      "sha256": "07121f8e06be4993c8ed5b731a31d21180067e627793153997acfc09b292d21a"
+    },
+    {
+      "path": "tests/default_machines_test.swift",
+      "sha256": "b5f9138faec4f4597e89cbc4243a155ac28480a822ef992ffb3dbdd5a5e67065"
+    },
+    {
+      "path": "tests/device_bus_test.cpp",
+      "sha256": "0e7cfa7ff7caf91564593ab8271e0f67a55ec3f806c97a06107a4ceddedd1643"
+    },
+    {
+      "path": "tests/disk_progress_test.cpp",
+      "sha256": "19be63ed4c3d5bb6b594ef3e60b8f4618d2bd412b7c438595b1e4298fe8d4ad0"
+    },
+    {
+      "path": "tests/freedos/dosemu_hma.asm",
+      "sha256": "9302d398c7a9792b1ab70b50efd8f03b4bb68173f2e735ceab46034d272499e4"
+    },
+    {
+      "path": "tests/freedos/drivers.asm",
+      "sha256": "f85c9638d0d2426e8e110abc4430fe3a05616fbdae59dfc172b9e94f064bdfd8"
+    },
+    {
+      "path": "tests/frontend_input_test.cpp",
+      "sha256": "368cb928c7ad9f71587ccb88101f2c587a151c97aa3951894d8837627b01b324"
+    },
+    {
+      "path": "tests/frontend_test.cpp",
+      "sha256": "543289189ed99405aee27c33ceff0c8326acddbda895df357607692127e9b833"
+    },
+    {
+      "path": "tests/guest_perf/core_portme.c",
+      "sha256": "ad0d9cc0f2ed00491268336da060f532f2c0a2c636586d38926ce934a27b1ece"
+    },
+    {
+      "path": "tests/guest_perf/core_portme.h",
+      "sha256": "386eddb04d664edba4122696fb13b41077ba28b3a4af2f943634d99032359444"
+    },
+    {
+      "path": "tests/guest_perf/dos_loader.asm",
+      "sha256": "ed9c6317c3bd234f651524ce423142204c2cafeea5a111e6d25918aa0bac450d"
+    },
+    {
+      "path": "tests/guest_perf/entry.asm",
+      "sha256": "1568abcf30d849a130ee9304807c871e9c702f97ca03e19aba74a1e9c6378978"
+    },
+    {
+      "path": "tests/guest_perf/memory32.asm",
+      "sha256": "b295b730fea270004fb987d3c634f5252fd2fa0592502c59ece5571e8ca6d40d"
+    },
+    {
+      "path": "tests/guest_perf/micro16.asm",
+      "sha256": "fceb51f02ac7f6dc487511ce3c2507151f5b9c33af423a76c51ebe00c597f0ed"
+    },
+    {
+      "path": "tests/guest_perf/micro32.asm",
+      "sha256": "785d0c813afd079a9ddd1ca0e72c0390caf91fc1173b294a78b8fc64ae50acbb"
+    },
+    {
+      "path": "tests/guest_perf/payload.ld",
+      "sha256": "32fc1576ba3be35eecb682ce3fad3e49cde39005dd7b882caf9e18e813797982"
+    },
+    {
+      "path": "tests/guest_perf/qemu_boot.asm",
+      "sha256": "4ea89340ec7ba890c6523f5ad38d7828d4930d6955a7e876a9f10fbe425f22cd"
+    },
+    {
+      "path": "tests/guest_profile_test.cpp",
+      "sha256": "139c6d6f2c7b418843a197915b67a22707f14964f162c59206cd7a1ae45a1de5"
+    },
+    {
+      "path": "tests/hardware_devices_test.cpp",
+      "sha256": "6c4459198a19527bb40a70454f30bf270c29ef42621f03ddc8073d07782a5503"
+    },
+    {
+      "path": "tests/hvf_snapshot_test.cpp",
+      "sha256": "b8fa679b6adb3512a6f62591005d81fa3b0cd5ef02426cc0eb51a9369e0d6913"
+    },
+    {
+      "path": "tests/hyperv_kvp_roundtrip_test.cpp",
+      "sha256": "328fb671646c4cfabbf15d34fa24f11afa718eeff8ef339b91fca2d78a8e3f35"
+    },
+    {
+      "path": "tests/i8042_test.cpp",
+      "sha256": "65154653c11092cebf6b22a69e88c4e50a2cc5abed41439b0b78192ab7b8e2bf"
+    },
+    {
+      "path": "tests/i8259_pair_poll_test.cpp",
+      "sha256": "51086211d3266acdb2753910bd81ae0109fc6baf8c318f8efde283d212f485f2"
+    },
+    {
+      "path": "tests/integration_test.cpp",
+      "sha256": "aa578e8fdae1498644e9599280c3b010df55fe3d8a87db892ff0d4e325883aa1"
+    },
+    {
+      "path": "tests/intel_hda_test.cpp",
+      "sha256": "d178fa08e3c20edfd02bb149371014db104fda82ce38dc1e1198b55d8bfa8190"
+    },
+    {
+      "path": "tests/io_port_space_test.cpp",
+      "sha256": "7e457186c1b580ba49b334c9dd890ab3de53880e3db40db55323ef01467cf39f"
+    },
+    {
+      "path": "tests/jit_batch_test.cpp",
+      "sha256": "8c2d44d0b5618e1b171d6d7b08d1ebe59751521d630100d720bff349e25804e5"
+    },
+    {
+      "path": "tests/jit_bit_scan_test.cpp",
+      "sha256": "b6792546fd7c1b1992a3a139a28d20117917946294b20e8367eacf3876459659"
+    },
+    {
+      "path": "tests/jit_bytes_test.cpp",
+      "sha256": "4d4b5b7e1466b06fa965e44f81c4bde6f001fba722c74c77932dfb98b31433c8"
+    },
+    {
+      "path": "tests/jit_cached_batch_test.cpp",
+      "sha256": "eca3bda73f317ca0fa2d523981758e2adb202b0c41945723ebb60de2769127eb"
+    },
+    {
+      "path": "tests/jit_cached_context_test.cpp",
+      "sha256": "eb468089daed90d69e00cf476aab02f332a04e081e4b3be59db7cc359221120f"
+    },
+    {
+      "path": "tests/jit_conditional_loop_test.cpp",
+      "sha256": "54c0f05d3ae13a612a569acd275814ca47a2fd64a6de191e08cfb205aebc0fd5"
+    },
+    {
+      "path": "tests/jit_cross_page_test.cpp",
+      "sha256": "368c4c2be151a90de42723ba62476ce02a6860b9dd3d56a0052c6790f2a37857"
+    },
+    {
+      "path": "tests/jit_decoded_boundary_test.cpp",
+      "sha256": "183013d24e80522ee316561d9b2d6142e74b52ab0e2734565e056688f615e948"
+    },
+    {
+      "path": "tests/jit_descriptor_query_test.cpp",
+      "sha256": "844310c056a6cffecb483805ddf518343ca23866dd059d1697516734cb44ce36"
+    },
+    {
+      "path": "tests/jit_enter_test.cpp",
+      "sha256": "877665da87792a008e3700c27e7161fec9ec77fc765451b2bde2e9f687756b83"
+    },
+    {
+      "path": "tests/jit_far_pointer_test.cpp",
+      "sha256": "56db8b600ccc230962d31f20216b26e2027ba47006d54cb615538e588c62cebc"
+    },
+    {
+      "path": "tests/jit_far_return_test.cpp",
+      "sha256": "edee3fa4b96a75f5cdba1f76072d99fabcdeacffd2b740a5d9619489d53074bc"
+    },
+    {
+      "path": "tests/jit_far_transfer_test.cpp",
+      "sha256": "8bee107b8e1a058bafec9643528b02450a98967dba2e2d5ed6e70a86f536b26a"
+    },
+    {
+      "path": "tests/jit_flag_stack_test.cpp",
+      "sha256": "2ab0ff88f2e3c84e4521290babf995d00b85f57ecde595285cd3baeb8819bb4a"
+    },
+    {
+      "path": "tests/jit_flags_test.cpp",
+      "sha256": "407f3e241bb3960cdefce6ce9942c191bc762d3a1d2e84b2f885b6185caefbcd"
+    },
+    {
+      "path": "tests/jit_interrupt_control_test.cpp",
+      "sha256": "eada91039c5c2c741cfd63ce66cc78aa3e6cbee3a9a68b9cc97c0fad7ea5603f"
+    },
+    {
+      "path": "tests/jit_invalid_opcode_test.cpp",
+      "sha256": "93e2158dff7498169e1b2f9646869988652249133c0c1cf8430c2b4dc15b34a9"
+    },
+    {
+      "path": "tests/jit_jump_test.cpp",
+      "sha256": "fdf7013d0cd63e75588fca42a2ce179ff30b68826bf6c51dd94a3477faaf6a9e"
+    },
+    {
+      "path": "tests/jit_memory_call_test.cpp",
+      "sha256": "ce1e00f7457d580817c75ae8b64edaf4b4f8de6581254e761eaf824a09f42dba"
+    },
+    {
+      "path": "tests/jit_memory_double_shift_test.cpp",
+      "sha256": "116eb792987b1838507da9c31f9de6be347b53c7e6e574e4fc0523ff331dee07"
+    },
+    {
+      "path": "tests/jit_memory_push_test.cpp",
+      "sha256": "a200ed965e4d5d67f27ab35e832cf4d80c5a9a225ebcb86319ed60ab8755def5"
+    },
+    {
+      "path": "tests/jit_multiply_full_test.cpp",
+      "sha256": "5304bf564b41838146e147874bf0dd1b5df070d459489689797f44887673bbe4"
+    },
+    {
+      "path": "tests/jit_partial_flags_test.cpp",
+      "sha256": "89da89556e0fd0ec7849742d854b5b9852964d14fa68d06a4a984baf11dff2b8"
+    },
+    {
+      "path": "tests/jit_pop_memory_test.cpp",
+      "sha256": "18db0adfdfe5db0156e63ac96c18178de85fe8e998422a0f4295dbadfcf0ec39"
+    },
+    {
+      "path": "tests/jit_port_io_test.cpp",
+      "sha256": "81cc0946a0648d3a78627725964d0e297b25925ed0677f4e5330da9211a2ae9a"
+    },
+    {
+      "path": "tests/jit_read_test.cpp",
+      "sha256": "84d3047def1a8afa196c82033500c8985f718410c06447c0e2cd7c2028387625"
+    },
+    {
+      "path": "tests/jit_rmw_test.cpp",
+      "sha256": "0c6622dbc2c103814233c1a9c617b074aec178bf6a47b86439c63b553e5b3ab0"
+    },
+    {
+      "path": "tests/jit_segment_stack_test.cpp",
+      "sha256": "64de3b1b5a57160f9d5132f38b4e91de5a7842f29f02e499e5829ee2e32a3cb1"
+    },
+    {
+      "path": "tests/jit_segment_test.cpp",
+      "sha256": "ba64dbb243c0ebb80443ece05b34758e3bc28bd7b54eeed0bdfa4e2cc93ca29f"
+    },
+    {
+      "path": "tests/jit_setcc_test.cpp",
+      "sha256": "a2061fe1251b16377763bdf6e4cc033998d2457c85b635005d0bbbf1865b1f82"
+    },
+    {
+      "path": "tests/jit_stack_many_test.cpp",
+      "sha256": "a50bf3daafff972b22cc4b3129bb41b941f4303d7d2395fd07caa0fefb2dd040"
+    },
+    {
+      "path": "tests/jit_stack_test.cpp",
+      "sha256": "8c5c7bb6c2aff7ea0465402c742318cd001e89f46fd68d1a5a0a656ed08270b1"
+    },
+    {
+      "path": "tests/jit_string_test.cpp",
+      "sha256": "96ebcba2a3706f5c706e90d943011ce4ab619297d3fe406098e303c2c6e55480"
+    },
+    {
+      "path": "tests/jit_x87_test.cpp",
+      "sha256": "4aa472a9d6475458bf555909ba44133ed83575bfafe69911a91044c8beaced79"
+    },
+    {
+      "path": "tests/jit_xlat_test.cpp",
+      "sha256": "12b1797da70261b701df5658707f2a103928ab24f7361178664dcde597a14931"
+    },
+    {
+      "path": "tests/native_library_bridge_stub.cpp",
+      "sha256": "5f999d70f63e2174a7ed3f6938f52f65366657a63dcaa31a94cb50daca67e8db"
+    },
+    {
+      "path": "tests/native_library_ux_test.swift",
+      "sha256": "ad927c72bcb617dc35040fc2aa8b155eaad855ee1fbd49fe950bdc215a0169fc"
+    },
+    {
+      "path": "tests/native_metal_test.swift",
+      "sha256": "f6513a1c16a7181c23bac941ef9abbe81b0eee0f03e4b73a63710a80a677b4d5"
+    },
+    {
+      "path": "tests/network_test.cpp",
+      "sha256": "6f2a50fc9934bc75e8d90b2043c0c82e697a7968da4370e0b26a3267474dc950"
+    },
+    {
+      "path": "tests/nvme_test.cpp",
+      "sha256": "d617009010672968b1bb60664301dfd1d6d74e211dcf37ef53aaa8f1eb5e6ec0"
+    },
+    {
+      "path": "tests/pc_components_test.cpp",
+      "sha256": "096a5644455bb740be4adedd8a41c187a4eabb386b49e9cffd2336d03252a391"
+    },
+    {
+      "path": "tests/ps2_test_support.hpp",
+      "sha256": "03389e89686e102970326dab54618bc49b05542ffda855d0fbd29094d6e9a484"
+    },
+    {
+      "path": "tests/qcow2_test.cpp",
+      "sha256": "5a849c094dc9ffbbd622147cfa0231040e4c72d6abdf8d675b814edca67efb7b"
+    },
+    {
+      "path": "tests/quake_benchmark_test.cpp",
+      "sha256": "52d8358d37638cf7b96feb68d67e9b3b64fa3acf0455bbb2e0c5f05fe993b445"
+    },
+    {
+      "path": "tests/session_library_test.cpp",
+      "sha256": "42a2a6ff6aed6df9ef8b85eda25a754b3c70f08b9164afe1b3f553d84c760724"
+    },
+    {
+      "path": "tests/snapshot_test.cpp",
+      "sha256": "cdc81093413e667c5952fbd159828ce389c1c079d09cc18d3c80dfa9d8cb3fda"
+    },
+    {
+      "path": "tests/spice_client_fixture.hpp",
+      "sha256": "fee4314a8398b452c53a3dee917f241a62866218606eaf5dd63d68bc0fa42fc7"
+    },
+    {
+      "path": "tests/spice_test.cpp",
+      "sha256": "238563c3ebe11caad35f08dfe4e751ba62dec96b7b02295ab5f6c55da5bafb5d"
+    },
+    {
+      "path": "tests/state_archive_test.cpp",
+      "sha256": "9d56e6ad053411b3282477fbb0bfb7f4b45649d1a5943427f9b06cd062c6813d"
+    },
+    {
+      "path": "tests/test.cpp",
+      "sha256": "d149764f9c65c586d1a06eebc2627122acca2c9deb975e436c1247986b076ff9"
+    },
+    {
+      "path": "tests/test_analyze_guest_profiles.py",
+      "sha256": "afe8f8530fe1f34a384d0cfb70a655f4a5489b28b8899480d12342739d382581"
+    },
+    {
+      "path": "tests/test_analyze_instruments.py",
+      "sha256": "e73348142766b8ce1ff386c36871ad6ef928fd29f2fb856d823e105180b3fe18"
+    },
+    {
+      "path": "tests/test_analyze_jit_samples.py",
+      "sha256": "9642d0ff46559a8f74eb130c229701ed608f9956e1ea09e80e13e1285b698db4"
+    },
+    {
+      "path": "tests/test_analyze_samples.py",
+      "sha256": "a9bd771a525cf83e5f2b744fe33c81cf89353a3e2ad494512817e755ec2ef394"
+    },
+    {
+      "path": "tests/test_arm_acpi.py",
+      "sha256": "7b4a8f395902bfd45154fa4b5174f79567951e52168453d770bc871878c15625"
+    },
+    {
+      "path": "tests/test_arm_capture.py",
+      "sha256": "d3593fa4162ff9c0ac2e360e9322d4fc9ea5ecdbad560cdcd45afdbb33c4e191"
+    },
+    {
+      "path": "tests/test_arm_platform.py",
+      "sha256": "05844fb6d5516c2545a3fad4c0e36bf85496ba48b362513cd1161be6dd840a34"
+    },
+    {
+      "path": "tests/test_cleanup.py",
+      "sha256": "1f68944bf3747262a6459fba26a3a1cda91e6d52d7e48d7d2a152f7f2bce4784"
+    },
+    {
+      "path": "tests/test_debian_media.py",
+      "sha256": "d0996f27bdd7f3ff6b34c44c4ed63d4f3e67e1a3a426cf127676bec258861992"
+    },
+    {
+      "path": "tests/test_device_boundaries.py",
+      "sha256": "16fbaff931f994058c99d6a2d58f08c9310f41161564c9977c687bc380e0360d"
+    },
+    {
+      "path": "tests/test_display_modes.py",
+      "sha256": "27ca60249734c0907baec7e787f9a233ed5f8481f1ff056f9fb1068a35f2993c"
+    },
+    {
+      "path": "tests/test_freedos_fixture.py",
+      "sha256": "bafb710d5091cf6b7f13a453621771c326b7627a537662c0218370767e4f6e25"
+    },
+    {
+      "path": "tests/test_guest_memory.py",
+      "sha256": "e3044473501963889fcc3c6b4ee1c0294a91d717cc9e50c2686d5db44f94670a"
+    },
+    {
+      "path": "tests/test_host_cursor.py",
+      "sha256": "e66b8fdd45fcd36a289dfdf0d63946af34fa72eb7866a13d766f9ff6de858fa7"
+    },
+    {
+      "path": "tests/test_host_process_cpu.py",
+      "sha256": "08e3cba7fb939d5db584cdd649c601ba152aed3589f82901df0a12821a952223"
+    },
+    {
+      "path": "tests/test_hvf_cli.py",
+      "sha256": "6720f029d7a7aefcb50601593db97a504b15f6128d84c0082387f1f6299c0f3c"
+    },
+    {
+      "path": "tests/test_jit_debug_map.py",
+      "sha256": "d2e5da7d4b84113980b3d15d923043d2b51ce1d53c6c14706eaf3b0c5d99da97"
+    },
+    {
+      "path": "tests/test_machine_profiles.py",
+      "sha256": "55d9b3a64cf894eb2530a32e55482c9396340e22e6c6f87e736b85001a42a822"
+    },
+    {
+      "path": "tests/test_migrate_qcow2.py",
+      "sha256": "171cd19b285830d201eaecee0632f99b67fb69efdd737086eb3798a67c0cf9e4"
+    },
+    {
+      "path": "tests/test_qcow2_conversion.py",
+      "sha256": "41bcdba943acb44e543e826947a6899f41731b3d14a0f6d2f0df6fef44710a69"
+    },
+    {
+      "path": "tests/test_qcow2_interop.py",
+      "sha256": "0688a49793be8e6996872dd59b59fa43e0ff402a9148fe61c83b325985c742be"
+    },
+    {
+      "path": "tests/test_qemu_coremark.py",
+      "sha256": "db9376f77d928fd5760d252396121246565c328b79bc4fc70c54a67bae1e89ad"
+    },
+    {
+      "path": "tests/test_quake_benchmark.py",
+      "sha256": "684e2200876c7610b7f07e8c471b9b0745e1f7f3431e6cf009066e94f2673afc"
+    },
+    {
+      "path": "tests/test_quake_profiling.py",
+      "sha256": "051d2fdb786b0271b1343cb5baf3ac8ec44d573cf68fc200d7e6897af0fcb01f"
+    },
+    {
+      "path": "tests/test_run95.py",
+      "sha256": "28babd1cd3225efe60196b5e5405310cc808989dc8a479850007b95542cf7cab"
+    },
+    {
+      "path": "tests/test_session_control.py",
+      "sha256": "8fabae9a1826765fe84f7ca2702c20dd97a81391963fca1a213ab07d59a7ba9a"
+    },
+    {
+      "path": "tests/test_snapshot_task_shutdown.py",
+      "sha256": "4bf01e2aae2aa42ec932883a525134f60dc0d5862a84a85fc86d90fb0eacf381"
+    },
+    {
+      "path": "tests/test_stage_iso.py",
+      "sha256": "323ff961ace9cf865c422eb4d0e57fc5ce1684abf4ca75d628349d0b71c0bda3"
+    },
+    {
+      "path": "tests/test_validation_network.py",
+      "sha256": "2b47d653bb1b6b66829ecd47fc18033261854d4013d2f1f64111b04105990b04"
+    },
+    {
+      "path": "tests/test_vga_bios_build.py",
+      "sha256": "b22d7c2bca87d21e97e1ff91db6cd253d6ffbfae0ffdc5ce2299b52646f4fa06"
+    },
+    {
+      "path": "tests/test_viostor_trace.py",
+      "sha256": "c5811c144611d53a629401d0a3ed47ba0f5534d1f16d500ef665eb7c0ba36c0c"
+    },
+    {
+      "path": "tests/test_win11_boot_media.py",
+      "sha256": "2e8f87ca753a66d43822eb217317cb25710aecc6ef5facf75f04597f41931eef"
+    },
+    {
+      "path": "tests/test_win95_welcome.py",
+      "sha256": "c9632cee13526edff7e17a6eaf023b3e327f674d9d459d82876b8f1983054639"
+    },
+    {
+      "path": "tests/test_windows_account.py",
+      "sha256": "246ed4e7bbebe66d0ae7b7f9f6abd7e71cff0a2fa0ca7693394bce25ce0fc74e"
+    },
+    {
+      "path": "tests/test_windows_boot_report.py",
+      "sha256": "b0e39ac03047935e16c0bc5b7c825ba80dd15278b1446ebd04ed45ed3f48fca0"
+    },
+    {
+      "path": "tests/test_windows_disk_guard.py",
+      "sha256": "e66c251ae25f9595d08780b6f72dc2f7c1897894616849e12ff1093962182f18"
+    },
+    {
+      "path": "tests/test_windows_driver_bundle.py",
+      "sha256": "bfc98af7aabf00b75fe369706b261dc74b2356dcffc1146e2e8a644538857147"
+    },
+    {
+      "path": "tests/test_windows_hyperv.py",
+      "sha256": "cb797c2efb6921cbd14d9fb3a5fee1725c91e26586b12724e207955472c7834e"
+    },
+    {
+      "path": "tests/test_windows_media_server.py",
+      "sha256": "8db65dc3553d7495e0d7f37430d0a0ca6052351add12b11f9eb94dc50c8acda6"
+    },
+    {
+      "path": "tests/test_windows_rng.py",
+      "sha256": "667cc6651facb1c8813c07c67ea3c668722287fabfa2f49da157822ded708c30"
+    },
+    {
+      "path": "tests/test_x86_moo.py",
+      "sha256": "10cdccac2e2369f0160e11b249094ec0007863ec7fd17e299620f2c66dfd99a6"
+    },
+    {
+      "path": "tests/uefi/acpi_probe.S",
+      "sha256": "d1cf7595c54549c90725c0a1b820e82402b832db0ce343c47d27eddf38100ae0"
+    },
+    {
+      "path": "tests/uefi/boot_probe.S",
+      "sha256": "632d8de0fb62d5081dd06741774a8072f104ac38dca4c6ff5ad12fec1d1d2d55"
+    },
+    {
+      "path": "tests/uefi/hda_probe.S",
+      "sha256": "68d8864d27453a91f38f3ad991c258595df2b6e02aba5c6954177750137cf17d"
+    },
+    {
+      "path": "tests/uefi/hyperv_probe.S",
+      "sha256": "390b7f2258023737169b1466f011393be5330415ae62e0bdde13cc67467cf230"
+    },
+    {
+      "path": "tests/uefi/integration_probe.S",
+      "sha256": "2d7eafa049834a1ff70af3a892278c7863b4d6c7aa9327e502301c2fd8f0c296"
+    },
+    {
+      "path": "tests/uefi/reboot_probe.S",
+      "sha256": "40a407d25c79c25bd31c27d6cee373aa960023af991facb868c415b5f9f6e65d"
+    },
+    {
+      "path": "tests/usb_xhci_test.cpp",
+      "sha256": "b7276cf7e610d71bda001e89b34872848644cbaef196f562e7d93c76ba73f664"
+    },
+    {
+      "path": "tests/vendor/80386/LICENSE",
+      "sha256": "ea4af50f061c086cfbf22ea2c8041a30a6edda892b85b7a28f403b83b1938562"
+    },
+    {
+      "path": "tests/vendor/80386/README.md",
+      "sha256": "b59d11751165d75c57ac2d05d86b6df097b6717db6ef2096224c483685e72dcc"
+    },
+    {
+      "path": "tests/vendor/80386/UPSTREAM.json",
+      "sha256": "c9991dc1a53671490364e9f9d5fce34ee39035d3bb8a8345c61322eb158cd5a4"
+    },
+    {
+      "path": "tests/vendor/80386/quick.json",
+      "sha256": "6e619b33763c7e2e4d8c3f91e8a8b0b91e7d396b715dc8979f3b78c126cc4e77"
+    },
+    {
+      "path": "tests/vendor/coremark/APACHE-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "tests/vendor/coremark/LICENSE.md",
+      "sha256": "9577b9c846f61fd69a0d8ac965998c6450c7d8969f71f0bb4a931b91aebad28a"
+    },
+    {
+      "path": "tests/vendor/coremark/README.md",
+      "sha256": "5581fb67dc1609cbd1865f150dbcb1050d96c602987792456850eb96eb0dd08c"
+    },
+    {
+      "path": "tests/vendor/coremark/UPSTREAM.json",
+      "sha256": "c1778808b1bc330c467b350f0b65f31185ef62f3b0c8b07c9ab1837dbcaf89a4"
+    },
+    {
+      "path": "tests/vendor/coremark/core_list_join.c",
+      "sha256": "ca00e4e010ece47d7f040cb92aa50a95345a00d3171b59d088f6b243be06ce7b"
+    },
+    {
+      "path": "tests/vendor/coremark/core_main.c",
+      "sha256": "17884c93c5b94378eb0ff02b4df3725756cf2addb9b8cbcaa6200a4649ff5ca7"
+    },
+    {
+      "path": "tests/vendor/coremark/core_matrix.c",
+      "sha256": "ecdff717b5a5c4907d221a606760e25499899cbf617582c05d40db71c91351e4"
+    },
+    {
+      "path": "tests/vendor/coremark/core_state.c",
+      "sha256": "f4b84bb0a3452c45a4daa664ab502bfdccbd31cb57d93e9ac490c60937717a4e"
+    },
+    {
+      "path": "tests/vendor/coremark/core_util.c",
+      "sha256": "a3fbfcb9bb943b638624b8ece01c5836dd56a96d7bcde2697b248d077447327f"
+    },
+    {
+      "path": "tests/vendor/coremark/coremark.h",
+      "sha256": "42642b9a06c7ed2b3bd9eda971b7c3868c4f5d27bf7ef6c4bba11291a0c2598a"
+    },
+    {
+      "path": "tests/vendor/dosemu2/COPYING",
+      "sha256": "91f4ca18475c97dc4e98f1abf8544a293315cb44adfbdc6eb848fdc8f679de89"
+    },
+    {
+      "path": "tests/vendor/dosemu2/UPSTREAM.json",
+      "sha256": "ef002bd8c5b43045c0632a8d76826bc31e1514a4303c1d64d6d11befabd59398"
+    },
+    {
+      "path": "tests/vga-bios-boot.asm",
+      "sha256": "50c1770af498578be6ec4f0e20daff9ad258e6cc00b61ac590253980ee4c679d"
+    },
+    {
+      "path": "tests/vga_bios_test.cpp",
+      "sha256": "bba7c86694dba0136e37cd43be40cd3435c534280cb41441f7726e9153692703"
+    },
+    {
+      "path": "tests/vga_frame_test.cpp",
+      "sha256": "5eda94e352d12a1be5dab758c6d5f8fe6fb4bb5ae66335ec76faaa1df0abe173"
+    },
+    {
+      "path": "tests/vhdx_test.cpp",
+      "sha256": "90bc14af1e792a02c2ee404167b455f970891fb92f490861b9394adb99cddee2"
+    },
+    {
+      "path": "tests/virtio_balloon_test.cpp",
+      "sha256": "4d79d69c94ecd9520498ad657bf890136ba15d85915ef5082ee926e3df3107af"
+    },
+    {
+      "path": "tests/virtio_blk_test.cpp",
+      "sha256": "a56e7bf42ece88ec95787f15bbde7e26aa8efd30c5f230ac0194f85cf545a159"
+    },
+    {
+      "path": "tests/virtio_gpu_test.cpp",
+      "sha256": "140a1fd1ee6b570de0fae1e53b7d09613db309791c6311fc35fabc6fae66ce91"
+    },
+    {
+      "path": "tests/virtio_net_test.cpp",
+      "sha256": "e4404e3339cf49a2e2248b94d9dfdd9ce3156cbb27aa189fe874e4e8beeebc83"
+    },
+    {
+      "path": "tests/virtio_rng_test.cpp",
+      "sha256": "551e42f1875118c7b1ab854414b3db29823ddfdcde9797b7aa01824b19a62f39"
+    },
+    {
+      "path": "tests/virtio_serial_test.cpp",
+      "sha256": "3b62b1c79d011079b17addda20723402cbd9bdbce15b4cc154d0929d30e5ec6f"
+    },
+    {
+      "path": "tests/virtio_tool_fixture.hpp",
+      "sha256": "ac2c4d8a496f25fc295156480920ccd4bae4e47ab568396e2b584b883fc60d54"
+    },
+    {
+      "path": "tests/windows_disk_guard_test.c",
+      "sha256": "4bb7ed732c0ce963e74e67242713d55dffccc237cf3c805da137c3607dbcda16"
+    },
+    {
+      "path": "tests/windows_hyperv_clock_test.ps1",
+      "sha256": "f08d6f1859d0e183b0e113e988ca0a78cb3a088fd25f7ba464476e39263f0a28"
+    },
+    {
+      "path": "tests/windows_hyperv_services_test.ps1",
+      "sha256": "a7869136c2478588e02263cdaf26f0fcf93b35e03d220ec57ff8055c223d1ea2"
+    },
+    {
+      "path": "tests/windows_rng_test.c",
+      "sha256": "3fd46a944c85d1a5c3ade2235fc5b602a01886d3eff58e9bf12489c15940e790"
+    },
+    {
+      "path": "tests/x86_idiv_reference.asm",
+      "sha256": "73f9f87a14669f0907d701c167e4b1f4bcdf6265233bb4815d8a75d7f8b2982b"
+    },
+    {
+      "path": "tests/x86_task_x87_test.cpp",
+      "sha256": "c918d8c733b6f72d7ed52934c6a4c43e49e0b61a4c72b3462dce32542e433d18"
+    },
+    {
+      "path": "tools/analyze_guest_profiles.py",
+      "sha256": "e83dbf0ac6ed809946c2be3ffa4ee8a71bdd88332eda698d662e60e0e0860e27"
+    },
+    {
+      "path": "tools/analyze_instruments.py",
+      "sha256": "a39376ce1ff8f871c347224b0ea6408113ca910c7ddd826c038de0b026b918a0"
+    },
+    {
+      "path": "tools/analyze_jit_samples.py",
+      "sha256": "1e9cff0be7f55a6f783fd02298e1bc87f21b60b5db06934c20147326c05d6881"
+    },
+    {
+      "path": "tools/analyze_quake_jit.py",
+      "sha256": "7c713df3e12d3c8a11114a2f1086a50d6f2c3aec37fecba582afa76895d1026e"
+    },
+    {
+      "path": "tools/analyze_samples.py",
+      "sha256": "1b8480548b1da53d8afee06ab31693b8a27b89a00012d5cae2b4a6d45f7816d6"
+    },
+    {
+      "path": "tools/bench_compare.py",
+      "sha256": "859be105c265c97f1ab8359909812762430de2154d989d3d6971c0774971c5c4"
+    },
+    {
+      "path": "tools/bench_guest_memory.py",
+      "sha256": "338c6321aa86d71fd4c67371a795baaf5b727dcf049a797ac762c0c90ddd9826"
+    },
+    {
+      "path": "tools/bench_guest_perf.py",
+      "sha256": "f906c16567df9fb47da9321340be3ab585306a7ed9a55518cd9d87f7d06aab54"
+    },
+    {
+      "path": "tools/bench_qemu_coremark.py",
+      "sha256": "53fe03d5d479fde62f00751fab4a92b30487f93d745615630859747424723f82"
+    },
+    {
+      "path": "tools/bench_quake.py",
+      "sha256": "f486b4868e7de0d45ecd241534e07144a20c005f0647b7a2c8d1af2063408d33"
+    },
+    {
+      "path": "tools/bench_rosetta.py",
+      "sha256": "77f43c31b4a9cf3080ef3e4b5e2fc198c07b0d0827ca25311b4a02adb0ff6014"
+    },
+    {
+      "path": "tools/bench_snapshot_task.py",
+      "sha256": "42a89dc345aea2090bcb9991c6ff9b0ead925137cc5d3a2bce5c2b06a65ccc6c"
+    },
+    {
+      "path": "tools/benchmark_hyperv_timers.cpp",
+      "sha256": "02512e9ca64018963d702bcd3983721bb889e8ccc5eb97757080b3b0117eca19"
+    },
+    {
+      "path": "tools/build.sh",
+      "sha256": "5d9c6505f8aeb7c63bdd52f623cfb122f8d974c2e082db06ccd8c8cdac6f586b"
+    },
+    {
+      "path": "tools/build_app.py",
+      "sha256": "25215b27851f8c7c3d7a04f658e5c1b7aad1d0c3299ae61bb52e7790138d54a6"
+    },
+    {
+      "path": "tools/build_arm_acpi.py",
+      "sha256": "059d89fec796534ec581c62e4e4c780646e4d5a2a1798929a37970d34909a9b1"
+    },
+    {
+      "path": "tools/build_arm_platform.py",
+      "sha256": "2f9ed67f036482a03c13bd0dd7ec2767d7780cbf63e4670cd169510947bcbc29"
+    },
+    {
+      "path": "tools/build_excel_formula_load.mjs",
+      "sha256": "0a3cf0edc46aae4571815dd8f869629154ac6a166daa0b403b332171714ea1df"
+    },
+    {
+      "path": "tools/build_firmware.py",
+      "sha256": "60318605310021aeb3571864acf02bd67fb3e2063ba9cc4a34b268be75a7faf8"
+    },
+    {
+      "path": "tools/build_guest_perf.py",
+      "sha256": "e9f203944b5919797f434f934a8ff370376238e11be29ff393d448302e646587"
+    },
+    {
+      "path": "tools/build_hvf_app.py",
+      "sha256": "618eb1dcda9f622d15a3e1b1881e7d929772e780d6e67d461bd6f29e9ba1e14a"
+    },
+    {
+      "path": "tools/build_swiftui_app.py",
+      "sha256": "dd53ee2b8a7cbb60d6c7d076770954562aad21439e633fb60cc4ddc26998a802"
+    },
+    {
+      "path": "tools/build_uefi_probe.py",
+      "sha256": "ba7c6f5c809be5aa98f035e0579b652b7f47b4c0a216b5b4167700026fa1601d"
+    },
+    {
+      "path": "tools/build_vga_bios.py",
+      "sha256": "99c72dd11d1fae6e8873e3de16137a848fbd854120c85477740e06c32a8712ee"
+    },
+    {
+      "path": "tools/build_windows_driver_bundle.py",
+      "sha256": "87f91294d1203e7c743908e6f6f9bf20aebfe36a5432f6499e4f7d8ba1e6971a"
+    },
+    {
+      "path": "tools/build_windows_guest.py",
+      "sha256": "b91db7eba0c24c23fb9364cf840f0817f1ec114d5a11a117c8364a93955d35c1"
+    },
+    {
+      "path": "tools/check_setup_reboot.py",
+      "sha256": "3b0bfc744c96ec81f4551be23500268d950c0210a430d9a2b4ff75034a669e37"
+    },
+    {
+      "path": "tools/check_win95_mouse.py",
+      "sha256": "a50097e8f7510c245376f8e05d479abb71980517a29ebe0628eee5c4d760ee01"
+    },
+    {
+      "path": "tools/check_win95_restart.py",
+      "sha256": "86f6119858984e5ea927689793a69fd056db5bbf920e59d4f4efb29c1583fbf1"
+    },
+    {
+      "path": "tools/clean_workspace.py",
+      "sha256": "386229576b6a96e9c0ef7183d8da4b8c7f6459cae662a7f87fa7ce8ec693603a"
+    },
+    {
+      "path": "tools/compare_guest_perf.py",
+      "sha256": "92b0e914f9493118d75e80eb9cd953be9a985f3317a9fb5d07e1c7e7a0b1eaf9"
+    },
+    {
+      "path": "tools/configure_desktop.py",
+      "sha256": "ed75f49f89ca72a0d0412242bf257209e6ae945d966314719e1147a6b661ca6d"
+    },
+    {
+      "path": "tools/convert_qcow2.py",
+      "sha256": "f55ddc464eff3bcae5f98eaa8f100d256412a927a3980d2c50e34e52be9d0aca"
+    },
+    {
+      "path": "tools/cow_file.py",
+      "sha256": "1970017ab01b9ee595c81d47893af489e8c2c56470943439ce1db3b0914bd108"
+    },
+    {
+      "path": "tools/disk_tool.cpp",
+      "sha256": "531d141a4067a1039c46314160c23477b3d96a706cdb44dd9d09a75a6814df7f"
+    },
+    {
+      "path": "tools/export_excel_formula_load.py",
+      "sha256": "80dc2fcb8312a20cf23de113a2de8813e0acb203ba6ae4db4fd76c7681d976b6"
+    },
+    {
+      "path": "tools/fat_stage.py",
+      "sha256": "92d6a10f6824f6ddf55d7a0173eef766457b647029e1a29dbdd83bb3b67cf41a"
+    },
+    {
+      "path": "tools/fetch_arm64_uefi.py",
+      "sha256": "8c0d5a6fcb6396ee6285d1924b9933ef4a21495a87d90e7a6bdcafab1ad1cc83"
+    },
+    {
+      "path": "tools/fetch_netkvm_arm64.py",
+      "sha256": "193945c1bc8a2af4503e2a8abdf34ffaf5fab351122657e110eb7b7e572ece43"
+    },
+    {
+      "path": "tools/fetch_spice_agent_arm64.py",
+      "sha256": "1c80b3458be9afcff08c7f1956df84ed2719a1e93f15e394e43998c767a80623"
+    },
+    {
+      "path": "tools/fetch_validation_os.py",
+      "sha256": "03a35b458d89a0dc0f6147390903dc50408754144c4bb09146edc792d2b8f145"
+    },
+    {
+      "path": "tools/fetch_vga_diagnostics.py",
+      "sha256": "6156d5f0ba24a60dcd696c5eef0fdc4ac1af583fd3447b2d63a066419f27300d"
+    },
+    {
+      "path": "tools/fetch_virtio_arm64.py",
+      "sha256": "2eab8d413816059ee8582435d68c95bca1de8201bef84e83473c721bc39bb818"
+    },
+    {
+      "path": "tools/fetch_win11_arm64.py",
+      "sha256": "a97940b4b1f5005500ec43f264405703eb88f52311e4750e814c65fe1b830054"
+    },
+    {
+      "path": "tools/freedos_fixture.py",
+      "sha256": "005b5f9b7d6b9f44ef742d6107a3bbb381e345ec7ef796cf63d0a44ebe66e02b"
+    },
+    {
+      "path": "tools/guest/vbe_probe.asm",
+      "sha256": "17ca8894845a924e83923dc8484348be6b996128454f9bdbac184437908f31b1"
+    },
+    {
+      "path": "tools/guest_bench.cpp",
+      "sha256": "42d0cae1a22806ef175900f85c8e81a39a0ff6e244e4e1e39d54c1a5fbdb1cb6"
+    },
+    {
+      "path": "tools/guest_control.py",
+      "sha256": "aef8c60e3832cf2ce7de80b0b1fd42c4317d5a1586bcfafb34bdece4c1eb72c3"
+    },
+    {
+      "path": "tools/host_process_cpu.py",
+      "sha256": "e0f8cad363a7062422db87aff57c442f54f3910bcc516e8161840d340abb1a03"
+    },
+    {
+      "path": "tools/hvf_main.cpp",
+      "sha256": "0cb3ecb35c3c3e7d17c7c00bd2ee38f829aff4280a2ff2cab75444e7a8cbfb12"
+    },
+    {
+      "path": "tools/hyperv_kvp_roundtrip.hpp",
+      "sha256": "98b855816b7a9a02080f3e2228d9bee1a7cc7fabf9c48fb297484fa0bb55a159"
+    },
+    {
+      "path": "tools/inspect_guest.py",
+      "sha256": "90574f9b81104dace56f16038d69dcb6a6ff85662b765e4a74df9b2d175abd2f"
+    },
+    {
+      "path": "tools/inspect_validation_network.py",
+      "sha256": "2d32c15f3ace030f54ba7b45043d8d6c551542322236ba4caa8206566adfe4c5"
+    },
+    {
+      "path": "tools/inspect_validation_os.py",
+      "sha256": "00d33689e38c1fe879219bb8c475ab9739f29603a040b59b376f1f7dbea23cd5"
+    },
+    {
+      "path": "tools/inspect_viostor_trace.py",
+      "sha256": "0794a0e5e66d9059da8753b479cbc5ab98a92c5b0b58e293938dbfe75e7aa88d"
+    },
+    {
+      "path": "tools/inspect_win11_iso.py",
+      "sha256": "b5763a8711383594d6bc4d024df1ce1a435d9aac2bc0471df891df1e266544b3"
+    },
+    {
+      "path": "tools/install_apps.py",
+      "sha256": "27b673a166ae4016550e0ba85879977adc11fa28bcae8b91704eaa2021772f14"
+    },
+    {
+      "path": "tools/jit_debug_map.py",
+      "sha256": "afd347e98e7e08c20801d930acc18539eeb199e0be967fffcba0fe7939d8ae44"
+    },
+    {
+      "path": "tools/make_uefi_test_disk.py",
+      "sha256": "be38b4260058c3e30c9884680045aaefa116c26526b32437586a29b031947ff6"
+    },
+    {
+      "path": "tools/make_vhdx_test_disk.py",
+      "sha256": "c80b9ef16d7bec808e8eca701c45e7b917c54065f59d0123bf3d2a0e1cee8f53"
+    },
+    {
+      "path": "tools/memory_bench.cpp",
+      "sha256": "263846a43839b1fb1c448eef6b72ee741ab983cdd7987f375a25e9dcee8a0d7b"
+    },
+    {
+      "path": "tools/memory_chase_bench.cpp",
+      "sha256": "b215758547d3320729688ad586e36f75f0006605210bd815182831e8c112adb2"
+    },
+    {
+      "path": "tools/migrate_qcow2.py",
+      "sha256": "c83d39831aeb726e717a0157ae09d4f7c442f2b0a10261c7dd083371ab381482"
+    },
+    {
+      "path": "tools/observe_validation_os.py",
+      "sha256": "bec4f795d51bfcbde3f7897625394acd6d7d3062ec3dc9e3d0a5533a45ed8e44"
+    },
+    {
+      "path": "tools/prepare_debian_arm64.py",
+      "sha256": "827abca3a20556c11bbf77cdc71ed5c6848312ca3b76aaac4aa4a5826edd9632"
+    },
+    {
+      "path": "tools/prepare_media.py",
+      "sha256": "41462325f42b6b03ad6026e1b8add55236b5606b0864b759314855f8c9523f53"
+    },
+    {
+      "path": "tools/prepare_win11_boot.py",
+      "sha256": "a489fb9ab10eb19cc08ae0488eca6a8d13b423977eb3bc79774efcf442ea4e6f"
+    },
+    {
+      "path": "tools/prepare_win311.py",
+      "sha256": "579aaec27225b3c59063adcb6e10e8ed9221435ffcfa52399668290e7c48a702"
+    },
+    {
+      "path": "tools/prepare_win95.py",
+      "sha256": "88e1d11343ee302ee0f0987c0cc623b2fb85d109a1f2154be1ee44c979379046"
+    },
+    {
+      "path": "tools/prepare_windows_account.py",
+      "sha256": "a2a9606d10542d7bf6bed789f046e0f78c9a65dd392bd5a5a42b04d3a61ed070"
+    },
+    {
+      "path": "tools/probe_arm_hvf_synic.cpp",
+      "sha256": "842cc190da157bee6cc2276343b8ae8b2a86f573b710fdd9aa19a15ed5ded9e0"
+    },
+    {
+      "path": "tools/probe_quake.py",
+      "sha256": "701f3ab47d8daa1fa27f4c83c160227be6b14ae2777faffe0b8642f3f9b7bf5d"
+    },
+    {
+      "path": "tools/profile_hvf_idle.py",
+      "sha256": "4d1bbed718a0a34ae2f20d242ff49bf7aa8e964737f988222bd368fcffac0cf0"
+    },
+    {
+      "path": "tools/profile_quake.py",
+      "sha256": "363fc79d51ccf93abfe4f28d71d89864375c99523874f08938721bc1f1ff233f"
+    },
+    {
+      "path": "tools/quake_bench.cpp",
+      "sha256": "4b52c6ddea9b8505e20ec6a62f5a9e2b8253956123eda552039775965ba499b8"
+    },
+    {
+      "path": "tools/register_vm_defaults.swift",
+      "sha256": "bf714769421d0e90e02910c1d7fc6af0931ff5af6dcbb2aca7c25a04ffe99c6c"
+    },
+    {
+      "path": "tools/smoke_arm_acpi.py",
+      "sha256": "632ea5e50e6ed00cc979c5f5e6caa2353a1eb6a0c241a104bc6d30623b5c7c91"
+    },
+    {
+      "path": "tools/smoke_arm_hyperv.py",
+      "sha256": "0c236ae5ff6cc2082f86862d268ec71f2830fab55d4e402df8f6cdb3cecc55e6"
+    },
+    {
+      "path": "tools/smoke_arm_integration.py",
+      "sha256": "6793446457d3358763094d5ea5ee6fc5ecfed27147430c9c6de406012f9672cb"
+    },
+    {
+      "path": "tools/smoke_arm_reboot.py",
+      "sha256": "a4aa9adb59769e587b8c2a723058bc02161079cb2807f1dcce31555751654304"
+    },
+    {
+      "path": "tools/smoke_debian_arm64.py",
+      "sha256": "f6924cd6cb0219e998069d75f05a7ea1529641fc71e24846040b2827f59995c1"
+    },
+    {
+      "path": "tools/smoke_freedos.py",
+      "sha256": "e2f4c4ab53f10ac0506db1f0bc59c8da5340a6e767d73ff29c61309c651e13ef"
+    },
+    {
+      "path": "tools/smoke_guest_memory.py",
+      "sha256": "f816dfdd80553ee3d147f0e75f0a3a80d4c6bc4e8819c07a98d621b17ed09de9"
+    },
+    {
+      "path": "tools/smoke_guest_perf.py",
+      "sha256": "3085bdf7689e83580629bd04ac5c950e4bfd896c9ad309ee01bc35db2563aa77"
+    },
+    {
+      "path": "tools/smoke_guest_profile.py",
+      "sha256": "edda81f82f7b0fac2fe35d34ef42c1ce19d55ab6bd0746673506a46cbd541cbf"
+    },
+    {
+      "path": "tools/smoke_intel_hda.py",
+      "sha256": "e7ae6cb4b214232416b0aab40f9eba6ffec886158a0be11657db85b134b8035a"
+    },
+    {
+      "path": "tools/smoke_quake.py",
+      "sha256": "b3c59d5b172d514a4c91f691f3f618b4722328866eb39e28242e7b8612ebf424"
+    },
+    {
+      "path": "tools/smoke_reset.py",
+      "sha256": "b056a46f5a851f0e4aef09b8c824c815052e0635085e62a1ade1d0e244031042"
+    },
+    {
+      "path": "tools/smoke_startup_profile.py",
+      "sha256": "e013ff5105c02a4961057865d596494ed7b641206bdb12a7360793a30efd17a2"
+    },
+    {
+      "path": "tools/smoke_uefi.py",
+      "sha256": "c441378452b70f30bd5fcd1a60ec124cd159978e25514b967d88486493419bd2"
+    },
+    {
+      "path": "tools/smoke_vga_bios.py",
+      "sha256": "7039c42b322faa8c7d79ba62f409356679b350b62cf7868d1bb5b3c2207ed115"
+    },
+    {
+      "path": "tools/smoke_vga_diagnostics.py",
+      "sha256": "6a440fa33564ee3902bfb4e2b96eaa29ede67c96f4cee6c161f1558fbd555d1f"
+    },
+    {
+      "path": "tools/smoke_vga_edges.py",
+      "sha256": "42d4d44c0d35f42a6b7c84a862b4f2ea75c9b1623f4e4c0c2dc770d2761c2ab7"
+    },
+    {
+      "path": "tools/smoke_vhdx.py",
+      "sha256": "f79a1d6b9eb105d47f1f51b13be3a9c3a76ece7f7f2951cb5b34587430a5634a"
+    },
+    {
+      "path": "tools/smoke_virtio.py",
+      "sha256": "47d826b3d0f064bce4206263d2de02144446d3e60ffb16830685fd838418700c"
+    },
+    {
+      "path": "tools/smoke_win311.py",
+      "sha256": "192a524a3bc22b2dca56a9ac3c0171ee6af64f717eb46c7a12816559b1103331"
+    },
+    {
+      "path": "tools/smoke_win95.py",
+      "sha256": "85ec5a2a18a91f32f78b93680163b4ae97c4d2e5d85e59fcc7e9d631a42b36ab"
+    },
+    {
+      "path": "tools/smoke_windows_guest_tools.py",
+      "sha256": "9490a2e81284602b2b8f5492bfe7f17730f0cd00ffbce8ec1b1dc749f1748e26"
+    },
+    {
+      "path": "tools/smoke_windows_loader.py",
+      "sha256": "471345537ba1add8cafe01bc524884ede4fc046512d58104a5291f4a68f454bd"
+    },
+    {
+      "path": "tools/smoke_windows_virtio_serial.py",
+      "sha256": "89873fc8cd2ee112113df1ebe3e281521b58d37b373e106c6f8f61b583d5e6a6"
+    },
+    {
+      "path": "tools/spice_probe.cpp",
+      "sha256": "8bcb7d82b49fd7ccb53f1cf268df8467d6a4ad467b0564525390c4ab53ce5244"
+    },
+    {
+      "path": "tools/stage_display_driver.py",
+      "sha256": "00f631d3fe202f93a7f746509c9c5377da7991ec553ab7dca7c0b529e501b3c9"
+    },
+    {
+      "path": "tools/stage_host_cursor.py",
+      "sha256": "0819401051a1ebb30f7cb257144601809591be66ca9292486dff0c97a7810db4"
+    },
+    {
+      "path": "tools/stage_iso.py",
+      "sha256": "eadc23243bb8e042e04be37024978778002f5e65b2c779e8090ce1450fe32755"
+    },
+    {
+      "path": "tools/stage_mouse_driver.py",
+      "sha256": "aed237c9d9a4bd5ba4ec13a5b36d35261735d619435e5888f536279e7adc5250"
+    },
+    {
+      "path": "tools/stage_network.py",
+      "sha256": "53925228165655482654ff6429dc7f080284818fa1421de72b66e20299e7b0b3"
+    },
+    {
+      "path": "tools/stage_windows.py",
+      "sha256": "e955de604614289f21c57c0b13e0b4e300dea890cfa040bf6afe556c8fb85f69"
+    },
+    {
+      "path": "tools/test_x86_hardware.py",
+      "sha256": "ee7b0eafd6688e02cd3d2413ab4ee8916c163a298a83cd1a382c08238a00655f"
+    },
+    {
+      "path": "tools/test_x86_rom.py",
+      "sha256": "6b00fdd6b749cc1db43a438b5ef1ad7428809f342a9a23a331785c3530105737"
+    },
+    {
+      "path": "tools/verify_windows_boot.py",
+      "sha256": "7aeb5ed8dfdf6b94ab94b237b23fd3e1a5c3c6d36d4e430ebf8f541b6099fe96"
+    },
+    {
+      "path": "tools/verify_windows_hyperv.py",
+      "sha256": "762a4726198ed4b9ef2b740c49c584a35cac6f605068480c45610d0e38a9fa9f"
+    },
+    {
+      "path": "tools/vga_modes.py",
+      "sha256": "c6f58213b41f9c5927ef5dede4df3b338ac74a9289ac70c2c628f561a532d255"
+    },
+    {
+      "path": "tools/vga_text_oracle.py",
+      "sha256": "b508653cd71580b02cb49b391d4a3a01f46bd774dcbbf5c7522b1808dfc6ef88"
+    },
+    {
+      "path": "tools/windows/capture_desktop.ps1",
+      "sha256": "2ee8c147d43c5feb47bdc3f9b804bc1109f714b10a47a93a6e17da5359796ed6"
+    },
+    {
+      "path": "tools/windows/check_display.c",
+      "sha256": "037f6cc14bd244956a4586cf1eb4810120e2a436fef30d9b88dc0cb6d11eab19"
+    },
+    {
+      "path": "tools/windows/check_rng.c",
+      "sha256": "11ff45c73205c9083347e225a1ef9fbcc738a6ca9018193f04c82031d9c27be3"
+    },
+    {
+      "path": "tools/windows/check_serial.c",
+      "sha256": "fe2345caeba7a65cb56cef1548aa3de05c3428aa623f9b05e83f859a8e10d8c7"
+    },
+    {
+      "path": "tools/windows/check_spice.ps1",
+      "sha256": "c600ad94147a8786f3f655f06aa90df997a0d28794d76dbd0f8c6da3a1a1386a"
+    },
+    {
+      "path": "tools/windows/finalize.cmd",
+      "sha256": "26ab1b65645848739d4d9a5099ed4e5aac9e8bd01ef1dd2c163be1ed797f8eeb"
+    },
+    {
+      "path": "tools/windows/finalize_mount.txt",
+      "sha256": "7e06910b94a9c822f74f7fac8004b227bbb752e9c2dc03d7494d10a8a7403d3b"
+    },
+    {
+      "path": "tools/windows/firstboot.cmd",
+      "sha256": "afd984e57ba108cdcd52d7ccaaaf5be636eaf273efc727e2297617d8dfa803e9"
+    },
+    {
+      "path": "tools/windows/firstlogon.cmd",
+      "sha256": "b4199e4d2dbda84c08dca8747b27126f942434b14de43654a2c4c3928983bdfd"
+    },
+    {
+      "path": "tools/windows/guest_http.c",
+      "sha256": "27faaa08d2e6e94a83a372a021c27c1760ea92a870d8d3727325475cef088ee8"
+    },
+    {
+      "path": "tools/windows/install.cmd",
+      "sha256": "92cecd649756e1813e097357d6e5b04b26376e23f1571e352aa4073575148469"
+    },
+    {
+      "path": "tools/windows/install_guest_drivers.ps1",
+      "sha256": "d872eeb402ccdaf0fd20354e1047beee992cb9b98379ff759e25a4290fb18a2f"
+    },
+    {
+      "path": "tools/windows/install_spice_agent.ps1",
+      "sha256": "79d7fff862cda7191bf98e30f9d4da34b734edb37ac0207b600885f2e2dfd573"
+    },
+    {
+      "path": "tools/windows/partition_install_disk.txt",
+      "sha256": "52117bb67ee4df99ba96837b7bfd788f5d816333f97d2ed43f83cc7e57541167"
+    },
+    {
+      "path": "tools/windows/prepare_probe_logon.cmd",
+      "sha256": "edfc56d89cd96a16a97740b673057f265180bdf261506cfc265f779aee258f23"
+    },
+    {
+      "path": "tools/windows/trace_viostor.c",
+      "sha256": "56db66259d4a6aff86a7050db7fc2bf1846b4e64d48ad9bcafd5b033fccb9696"
+    },
+    {
+      "path": "tools/windows/unattend.xml",
+      "sha256": "e9633ae48b95116977f7168a819124dcf408b98aa49453065f6262fcdf88006f"
+    },
+    {
+      "path": "tools/windows/verify_hyperv_clock.ps1",
+      "sha256": "5d1d80557ffd2c8e02bb8deb0571fbebc11478aa8d70589bde5dc5527a9eb425"
+    },
+    {
+      "path": "tools/windows/verify_hyperv_services.ps1",
+      "sha256": "fff48545ed514d5893c67baaffa61266fa926436722999dbc9fd8584f2bc0929"
+    },
+    {
+      "path": "tools/windows/verify_install_disk.c",
+      "sha256": "8d3c6ac7a0fcd49a1ee20224f96af7a463faec55850313b5fec4f0298449521f"
+    },
+    {
+      "path": "tools/windows311.shh",
+      "sha256": "835f772d1868d426bb542c6aff3bd38881970be05b93a09136acf76874a060c3"
+    },
+    {
+      "path": "tools/windows_media_server.py",
+      "sha256": "707180fef3943019e4f5bd8fb1bc9c3ea97cb085a1eeed0866463e4d5f76df95"
+    },
+    {
+      "path": "tools/x86_external_runner.cpp",
+      "sha256": "e424777adbd7eede23c33bb76a5e918f55287588364f8e5f0ebb217ce8cdd678"
+    },
+    {
+      "path": "tools/x86_moo.py",
+      "sha256": "8a03d80632d58fa5b41c649ed0084f845848833f6918d5725877bd275744476f"
+    }
+  ],
+  "binarySha256": {
+    "baseline": "c67c8968293c1b3adaac18aafa93803ffcad63e76f4c59d4920c40daaa1c5618",
+    "candidate": "85e05cfcfbfe23bc315914e9a61d7c39271548137599ce41bc9a589faed192b5"
+  },
+  "guestDiskChain": [
+    {
+      "path": "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+      "sha256": "36e0379f82f7f1a0dba8f3f2a82d9906543c150702dc42553e37d09ebbcbf9a6"
+    },
+    {
+      "path": "/Users/johandahlin/dev/pcemu/media/quake-dos-base.qcow2",
+      "sha256": "52d5ea8ad32918f0ab3d59b9edcdd9f7579896f6fc400111ce35f99c608db90b"
+    }
+  ],
+  "workload": {
+    "frames": 50,
+    "demoSha256": "5557d165274f2b311306b01c94f75d16099daa08bb81c9c4c4e081d39d0f18a3",
+    "resolution": [
+      320,
+      200
+    ],
+    "sound": false,
+    "execution": {
+      "dispatch": "runBatch",
+      "budget": 64,
+      "blockMode": "follow-jumps",
+      "jitWarmup": 0,
+      "directLinks": false,
+      "arenaBytes": 16777216,
+      "polling": "shared-pc-execution"
+    },
+    "pitClock": "host-monotonic-1193182Hz",
+    "scope": "td_starttime-store to CL_FinishTimeDemo entry"
+  },
+  "summary": {
+    "baseline": {
+      "medianFps": 39.65744558404398,
+      "minFps": 39.0078027409243,
+      "maxFps": 39.81644485140249,
+      "cvPercent": 0.834863514102868,
+      "medianWallMsPerFrame": 25.215945839999996,
+      "medianCpuMsPerFrame": 25.204688339999997,
+      "medianJit": {
+        "nativeSteps": 87409610,
+        "decodedX87HelperSteps": 13078765,
+        "compiledBlocks": 68928,
+        "cacheRecycles": 4,
+        "residentCodeBytesAtEnd": 14534144,
+        "batchCalls": 13897707,
+        "dispatches": 21350319
+      }
+    },
+    "candidate": {
+      "medianFps": 101.87543341120325,
+      "minFps": 98.14504221379222,
+      "maxFps": 102.08184885483388,
+      "cvPercent": 1.6327379190850748,
+      "medianWallMsPerFrame": 9.81590916,
+      "medianCpuMsPerFrame": 9.804695,
+      "medianJit": {
+        "nativeSteps": 91291016,
+        "decodedX87HelperSteps": 26078,
+        "compiledBlocks": 32313,
+        "cacheRecycles": 5,
+        "residentCodeBytesAtEnd": 13279488,
+        "batchCalls": 1406632,
+        "dispatches": 9364686
+      }
+    },
+    "pairedSpeedRatios": [
+      2.574090371970557,
+      2.516036159884115,
+      2.5589618390921713,
+      2.561247724505226,
+      2.5609144821766616
+    ],
+    "medianPairedSpeedRatio": 2.5609144821766616
+  },
+  "runs": [
+    {
+      "pair": 1,
+      "kind": "baseline",
+      "directory": "build/quake-native-x87-final/pair-1-baseline",
+      "windowFps": 39.65744558404398,
+      "guestFps": 39.6,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 415563449,
+        "endInstructions": 502985845,
+        "wallSeconds": 1.260797292,
+        "threadCpuSeconds": 1.260234417,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120269921742000,
+        "endUnixNs": 1793120271182545000,
+        "jit": {
+          "nativeSteps": 87420723,
+          "decodedX87HelperSteps": 13078765,
+          "compiledBlocks": 68863,
+          "cacheRecycles": 4,
+          "residentCodeBytesAtEnd": 14521200,
+          "batchCalls": 13897867,
+          "dispatches": 21353287
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-1-baseline",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 1,
+      "kind": "candidate",
+      "directory": "build/quake-native-x87-final/pair-1-candidate",
+      "windowFps": 102.08184885483388,
+      "guestFps": 102,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 416255406,
+        "endInstructions": 507611848,
+        "wallSeconds": 0.489803041,
+        "threadCpuSeconds": 0.489256917,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120275305234000,
+        "endUnixNs": 1793120275795040000,
+        "jit": {
+          "nativeSteps": 91355203,
+          "decodedX87HelperSteps": 26065,
+          "compiledBlocks": 32059,
+          "cacheRecycles": 5,
+          "residentCodeBytesAtEnd": 12168960,
+          "batchCalls": 1407373,
+          "dispatches": 9381560
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-1-candidate",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 2,
+      "kind": "baseline",
+      "directory": "build/quake-native-x87-final/pair-2-baseline",
+      "windowFps": 39.0078027409243,
+      "guestFps": 39,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 415309072,
+        "endInstructions": 502698203,
+        "wallSeconds": 1.281794833,
+        "threadCpuSeconds": 1.2787295,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120279228979000,
+        "endUnixNs": 1793120280510781000,
+        "jit": {
+          "nativeSteps": 87387458,
+          "decodedX87HelperSteps": 13078765,
+          "compiledBlocks": 69078,
+          "cacheRecycles": 4,
+          "residentCodeBytesAtEnd": 14534144,
+          "batchCalls": 13896714,
+          "dispatches": 21350130
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-2-baseline",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 2,
+      "kind": "candidate",
+      "directory": "build/quake-native-x87-final/pair-2-candidate",
+      "windowFps": 98.14504221379222,
+      "guestFps": 98.1,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 417045234,
+        "endInstructions": 508257567,
+        "wallSeconds": 0.509450084,
+        "threadCpuSeconds": 0.50819375,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120283846481000,
+        "endUnixNs": 1793120284355935000,
+        "jit": {
+          "nativeSteps": 91211094,
+          "decodedX87HelperSteps": 26096,
+          "compiledBlocks": 32313,
+          "cacheRecycles": 5,
+          "residentCodeBytesAtEnd": 13290896,
+          "batchCalls": 1405855,
+          "dispatches": 9343240
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-2-candidate",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 3,
+      "kind": "baseline",
+      "directory": "build/quake-native-x87-final/pair-3-baseline",
+      "windowFps": 39.81644485140249,
+      "guestFps": 39.8,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 415876698,
+        "endInstructions": 503287981,
+        "wallSeconds": 1.255762542,
+        "threadCpuSeconds": 1.255287875,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120287840896000,
+        "endUnixNs": 1793120289096665000,
+        "jit": {
+          "nativeSteps": 87409610,
+          "decodedX87HelperSteps": 13078765,
+          "compiledBlocks": 68695,
+          "cacheRecycles": 4,
+          "residentCodeBytesAtEnd": 14777776,
+          "batchCalls": 13897707,
+          "dispatches": 21350319
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-3-baseline",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 3,
+      "kind": "candidate",
+      "directory": "build/quake-native-x87-final/pair-3-candidate",
+      "windowFps": 101.88876294305692,
+      "guestFps": 101.8,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 417114844,
+        "endInstructions": 508450504,
+        "wallSeconds": 0.49073125,
+        "threadCpuSeconds": 0.49023475,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120292467346000,
+        "endUnixNs": 1793120292958081000,
+        "jit": {
+          "nativeSteps": 91334421,
+          "decodedX87HelperSteps": 26076,
+          "compiledBlocks": 32309,
+          "cacheRecycles": 5,
+          "residentCodeBytesAtEnd": 13279488,
+          "batchCalls": 1407156,
+          "dispatches": 9376052
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-3-candidate",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 4,
+      "kind": "baseline",
+      "directory": "build/quake-native-x87-final/pair-4-baseline",
+      "windowFps": 39.77570480062925,
+      "guestFps": 39.8,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 415965006,
+        "endInstructions": 503397152,
+        "wallSeconds": 1.25704875,
+        "threadCpuSeconds": 1.25653575,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120296431352000,
+        "endUnixNs": 1793120297688410000,
+        "jit": {
+          "nativeSteps": 87430473,
+          "decodedX87HelperSteps": 13078765,
+          "compiledBlocks": 68928,
+          "cacheRecycles": 4,
+          "residentCodeBytesAtEnd": 14526672,
+          "batchCalls": 13897968,
+          "dispatches": 21356015
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-4-baseline",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 4,
+      "kind": "candidate",
+      "directory": "build/quake-native-x87-final/pair-4-candidate",
+      "windowFps": 101.87543341120325,
+      "guestFps": 101.8,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 417028537,
+        "endInstructions": 508320792,
+        "wallSeconds": 0.490795458,
+        "threadCpuSeconds": 0.490065791,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120301079683000,
+        "endUnixNs": 1793120301570482000,
+        "jit": {
+          "nativeSteps": 91291016,
+          "decodedX87HelperSteps": 26103,
+          "compiledBlocks": 32553,
+          "cacheRecycles": 5,
+          "residentCodeBytesAtEnd": 13675888,
+          "batchCalls": 1406632,
+          "dispatches": 9364686
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-4-candidate",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 5,
+      "kind": "baseline",
+      "directory": "build/quake-native-x87-final/pair-5-baseline",
+      "windowFps": 39.45650507664834,
+      "guestFps": 39.4,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 415925508,
+        "endInstructions": 503290219,
+        "wallSeconds": 1.267218166,
+        "threadCpuSeconds": 1.266339792,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120305052946000,
+        "endUnixNs": 1793120306320171000,
+        "jit": {
+          "nativeSteps": 87363038,
+          "decodedX87HelperSteps": 13078772,
+          "compiledBlocks": 68935,
+          "cacheRecycles": 4,
+          "residentCodeBytesAtEnd": 14548448,
+          "batchCalls": 13895664,
+          "dispatches": 21338822
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-jit-batched-baseline/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-5-baseline",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    },
+    {
+      "pair": 5,
+      "kind": "candidate",
+      "directory": "build/quake-native-x87-final/pair-5-candidate",
+      "windowFps": 101.0447352668657,
+      "guestFps": 101,
+      "window": {
+        "schemaVersion": 1,
+        "scope": "td_starttime-store to CL_FinishTimeDemo entry",
+        "frames": 50,
+        "beginFrame": 1,
+        "endFrame": 51,
+        "beginInstructions": 417491546,
+        "endInstructions": 508765555,
+        "wallSeconds": 0.494830333,
+        "threadCpuSeconds": 0.494157541,
+        "attachmentPauseSeconds": 0,
+        "guestProfiled": false,
+        "hostSampled": false,
+        "beginUnixNs": 1793120309688193000,
+        "endUnixNs": 1793120310183030000,
+        "jit": {
+          "nativeSteps": 91272770,
+          "decodedX87HelperSteps": 26078,
+          "compiledBlocks": 32350,
+          "cacheRecycles": 5,
+          "residentCodeBytesAtEnd": 13027616,
+          "batchCalls": 1406470,
+          "dispatches": 9359432
+        }
+      },
+      "execution": {
+        "dispatch": "runBatch",
+        "budget": 64,
+        "blockMode": "follow-jumps",
+        "jitWarmup": 0,
+        "directLinks": false,
+        "arenaBytes": 16777216,
+        "polling": "shared-pc-execution"
+      },
+      "command": [
+        "python3",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/tools/bench_quake.py",
+        "--disk",
+        "/Users/johandahlin/dev/pcemu/media/quake.qcow2",
+        "--frames",
+        "50",
+        "--measure-window",
+        "--backend",
+        "jit",
+        "--runner",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/source/build/quake-bench",
+        "--no-build",
+        "--output-dir",
+        "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/pair-5-candidate",
+        "--timeout",
+        "180"
+      ],
+      "scratchDisksRemoved": true
+    }
+  ],
+  "strictCoverage": {
+    "scope": "DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI",
+    "guestSteps": 91030919,
+    "nativeSteps": 91030919,
+    "interpretedSteps": 0,
+    "decodedX87HelperSteps": 26066,
+    "nativePercent": 100.0,
+    "predecodeInterpreterCalls": 0,
+    "complete": true
+  },
+  "hostSampling": {
+    "collections": 7,
+    "mainThreadSamples": 3794,
+    "categories": [
+      {
+        "name": "Compilation and decoding",
+        "samples": 1345,
+        "percent": 35.45071164997364
+      },
+      {
+        "name": "Generated code",
+        "samples": 1085,
+        "percent": 28.59778597785978
+      },
+      {
+        "name": "Dispatch/cache/fetch validation",
+        "samples": 534,
+        "percent": 14.074855034264628
+      },
+      {
+        "name": "Unmapped generated code",
+        "samples": 291,
+        "percent": 7.670005271481286
+      },
+      {
+        "name": "Compiled string helpers",
+        "samples": 284,
+        "percent": 7.485503426462836
+      },
+      {
+        "name": "Host clock reads (PIT/runner)",
+        "samples": 162,
+        "percent": 4.269899841855562
+      },
+      {
+        "name": "Other host work",
+        "samples": 47,
+        "percent": 1.238798102266737
+      },
+      {
+        "name": "Other compiled runtime helpers",
+        "samples": 22,
+        "percent": 0.5798629414865577
+      },
+      {
+        "name": "Compiled x87 helpers",
+        "samples": 10,
+        "percent": 0.2635740643120717
+      },
+      {
+        "name": "Device polling and IRQ delivery",
+        "samples": 8,
+        "percent": 0.21085925144965736
+      },
+      {
+        "name": "Compiled segment/interrupt/I-O helpers",
+        "samples": 4,
+        "percent": 0.10542962572482868
+      },
+      {
+        "name": "Interpreter and guest faults",
+        "samples": 1,
+        "percent": 0.02635740643120717
+      },
+      {
+        "name": "Diagnostic code-map bookkeeping",
+        "samples": 1,
+        "percent": 0.02635740643120717
+      }
+    ],
+    "selfTop20": [
+      {
+        "name": "pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)",
+        "samples": 241,
+        "percent": 6.352134949920928
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 161,
+        "percent": 4.243542435424354
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 148,
+        "percent": 3.900896151818661
+      },
+      {
+        "name": "mach_continuous_time",
+        "samples": 129,
+        "percent": 3.4001054296257247
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 117,
+        "percent": 3.0838165524512386
+      },
+      {
+        "name": "pc::Jit::atObservationPoint() const",
+        "samples": 100,
+        "percent": 2.635740643120717
+      },
+      {
+        "name": "unsigned int& std::__1::vector<unsigned int, std::__1::allocator<unsigned int>>::emplace_back<unsigned int const&>(unsigned int const&)",
+        "samples": 98,
+        "percent": 2.5830258302583027
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 84,
+        "percent": 2.2140221402214024
+      },
+      {
+        "name": "pc::VGA::write_memory(unsigned int, unsigned char)",
+        "samples": 83,
+        "percent": 2.187664733790195
+      },
+      {
+        "name": "pc::Jit::run()",
+        "samples": 78,
+        "percent": 2.0558777016341594
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 75,
+        "percent": 1.9768054823405377
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 65,
+        "percent": 1.713231418028466
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 49,
+        "percent": 1.2915129151291513
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 48,
+        "percent": 1.265155508697944
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 45,
+        "percent": 1.1860832894043225
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 45,
+        "percent": 1.1860832894043225
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 33,
+        "percent": 0.8697944122298366
+      },
+      {
+        "name": "bool pc::warmInstructionTranslation<pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)::'lambda'()>(pc::CPU&, unsigned int, unsigned int, unsigned int, pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)::'lambda'(), unsigned int&)",
+        "samples": 32,
+        "percent": 0.8434370057986295
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_26::operator()(unsigned int) const",
+        "samples": 31,
+        "percent": 0.8170795993674222
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 29,
+        "percent": 0.7643647865050079
+      }
+    ],
+    "jitRegions": [
+      {
+        "name": "Memory",
+        "scope": "self",
+        "samples": 697,
+        "percent": 18.371112282551397
+      },
+      {
+        "name": "Flags and branch",
+        "scope": "self",
+        "samples": 117,
+        "percent": 3.0838165524512386
+      },
+      {
+        "name": "Prologue",
+        "scope": "self",
+        "samples": 83,
+        "percent": 2.187664733790195
+      },
+      {
+        "name": "Alu",
+        "scope": "self",
+        "samples": 63,
+        "percent": 1.6605166051660516
+      },
+      {
+        "name": "Host epilogue",
+        "scope": "self",
+        "samples": 45,
+        "percent": 1.1860832894043225
+      },
+      {
+        "name": "Instruction count",
+        "scope": "self",
+        "samples": 39,
+        "percent": 1.0279388508170797
+      },
+      {
+        "name": "String",
+        "scope": "helper descendants",
+        "samples": 23,
+        "percent": 0.6062203479177649
+      },
+      {
+        "name": "Memory",
+        "scope": "helper descendants",
+        "samples": 13,
+        "percent": 0.3426462836056932
+      },
+      {
+        "name": "Shift",
+        "scope": "self",
+        "samples": 11,
+        "percent": 0.28993147074327885
+      },
+      {
+        "name": "GPR commit",
+        "scope": "self",
+        "samples": 10,
+        "percent": 0.2635740643120717
+      },
+      {
+        "name": "NativeX87",
+        "scope": "self",
+        "samples": 5,
+        "percent": 0.13178703215603585
+      },
+      {
+        "name": "String",
+        "scope": "self",
+        "samples": 5,
+        "percent": 0.13178703215603585
+      },
+      {
+        "name": "X87",
+        "scope": "self",
+        "samples": 3,
+        "percent": 0.0790722192936215
+      },
+      {
+        "name": "Move",
+        "scope": "self",
+        "samples": 2,
+        "percent": 0.05271481286241434
+      },
+      {
+        "name": "Test",
+        "scope": "self",
+        "samples": 2,
+        "percent": 0.05271481286241434
+      },
+      {
+        "name": "Direction",
+        "scope": "self",
+        "samples": 1,
+        "percent": 0.02635740643120717
+      },
+      {
+        "name": "IP commit",
+        "scope": "self",
+        "samples": 1,
+        "percent": 0.02635740643120717
+      },
+      {
+        "name": "Rotate",
+        "scope": "self",
+        "samples": 1,
+        "percent": 0.02635740643120717
+      }
+    ],
+    "evidence": [
+      {
+        "directory": "build/quake-native-x87-final/host-1",
+        "samples": 548,
+        "mapArchive": {
+          "rawSha256": "a65507a5ab54b054be3311172d7951fe06b4b7298cae3f8766902bf15bd6cd47",
+          "compressedSha256": "4d462e2e37dad1743e228ab5662b38899c6ae9186e0db1f283c0fea768fd0210",
+          "rawBytes": 367242922,
+          "compressedBytes": 16514156,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-1/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-2",
+        "samples": 544,
+        "mapArchive": {
+          "rawSha256": "6504fd35739ed3ec18057a1ec69f1680139a63e16aea4b97b8bf5be03a2de1af",
+          "compressedSha256": "cd40a4834ee1b9363867fa09f5fff5078a8141a2a73eaefcc9db8e73ad0323d2",
+          "rawBytes": 366247712,
+          "compressedBytes": 16542943,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-2/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-3",
+        "samples": 550,
+        "mapArchive": {
+          "rawSha256": "2ed51c419fbfed620d983dc2286b5b3af7ccfce1bb309d987e71605d7ea9a183",
+          "compressedSha256": "7170814e998fa7377ad064fd77f3384993660bad51ebbdb19d8ba1336337dc87",
+          "rawBytes": 365810103,
+          "compressedBytes": 16512604,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-3/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-4",
+        "samples": 540,
+        "mapArchive": {
+          "rawSha256": "c82349bf113f35e67cfa09f43895e6be5a6118ba4e3c913057578604b21ef6fb",
+          "compressedSha256": "65faef228782cf4a45f6275e3a7678db18439c81be7000524a57413f88779810",
+          "rawBytes": 365963177,
+          "compressedBytes": 16583334,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-4/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-5",
+        "samples": 537,
+        "mapArchive": {
+          "rawSha256": "84a20873c25843ca8bec3202d400b51d5c5b38c373d2a2537ff5989f662f1213",
+          "compressedSha256": "c8c129c41f1bd488c6a24c2926350cc95539f04eda1ef8379c4f824b8a0c1cbe",
+          "rawBytes": 365886795,
+          "compressedBytes": 16573354,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-5/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-6",
+        "samples": 540,
+        "mapArchive": {
+          "rawSha256": "7fbb21ef67856943133d2c4718fb917577d2399c1450f74a6aaf543dbdcf8a46",
+          "compressedSha256": "eae871ddb466a94be27d8d33e7ad15186f4eb717cf87b73b3d0756cd320782fe",
+          "rawBytes": 366235513,
+          "compressedBytes": 16531285,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-6/jit-debug.jsonl.zst"
+        }
+      },
+      {
+        "directory": "build/quake-native-x87-final/host-7",
+        "samples": 535,
+        "mapArchive": {
+          "rawSha256": "190acb269db259be6d88ba225c5d15493528ad431afba7d739cc52db2678c138",
+          "compressedSha256": "24dcd6cacf34669f0f2af1deb7c67c0b967bc6676cb4441926a366d36a615264",
+          "rawBytes": 366007258,
+          "compressedBytes": 16571120,
+          "path": "/Users/johandahlin/dev/pcemu/build/quake-native-x87-final/host-7/jit-debug.jsonl.zst"
+        }
+      }
+    ]
+  },
+  "scratchDisksRemoved": true,
+  "limitations": [
+    "Five alternating pairs on a shared host; spread is not a confidence interval.",
+    "Baseline is the requested frozen 0ebca12 binary; candidate also contains intervening CPU correctness fixes. This comparison is not an isolated single-commit ablation.",
+    "Host-sampled runs are separate and excluded from speed statistics; unmapped generated PCs remain unknown.",
+    "Guest instruction/step counts vary under the host-clock PIT. The fixed demo frames, not identical instruction counts, define useful work.",
+    "Native x87 preserves the existing binary64 model, not full 387 extended precision or exception semantics.",
+    "No full-length demo or new VM fixture was run."
+  ],
+  "evidenceRoot": "build/quake-native-x87-final"
+}
