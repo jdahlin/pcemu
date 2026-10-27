@@ -895,8 +895,10 @@ template<class Execute> static void restartableInstruction(CPU &c,Execute execut
 #ifdef PCEMU_PROFILE
         profile::instructionFault();
 #endif
-        if (!fault.partialRepeat)
-            std::memcpy(c.r, savedRegs, sizeof c.r);
+        if (!fault.partialRepeat) {
+            for(unsigned reg=0;reg<8;++reg)
+                if (!(fault.committedRegisters & (1u<<reg))) c.r[reg]=savedRegs[reg];
+        }
         std::memcpy(c.s, savedSegments, sizeof c.s);
         c.ip = savedIP;
         c.protectedEntry = savedEntry;
@@ -1384,17 +1386,40 @@ void CPU::stepImpl() {
     }
     case 0x60: {
         auto sp = get(SP, w);
-        for (int i = 0; i < 8; i++)
+        if (!(cr[0]&1)) {
+            // 386EX PUSHAD #SS captures (6660#302) write the low stack slots
+            // first. Retain completed stores if a later slot crosses the limit.
+            const auto stackMask=s[SS].big?UINT32_MAX:65535u;
+            auto bottom=(r[SP]-8*w)&stackMask;
+            for(unsigned slot=0;slot<8;++slot) {
+                const unsigned reg=7-slot;
+                write(address(SS,(bottom+slot*w)&stackMask,w),reg==SP?sp:get(reg,w),w);
+            }
+            set(SP,bottom,s[SS].big?4:2);
+        } else for (int i = 0; i < 8; i++)
             push(i == SP ? sp : get(i, w), w);
         break;
     }
-    case 0x61:
-        for (int i = 7; i >= 0; i--) {
-            auto v = pop(w);
-            if (i != SP)
-                set(i, v, w);
+    case 0x61: {
+        uint8_t committed=0;
+        const auto originalSP=r[SP];
+        try {
+            for (int i = 7; i >= 0; i--) {
+                auto v = pop(w);
+                if (i != SP) {set(i,v,w);committed|=1u<<i;}
+                else if (!(cr[0]&1) && w==4 && !s[SS].big) {
+                    // Measured 386EX POPAD behavior: only the popped ESP's
+                    // low word is discarded with a 16-bit real-mode stack.
+                    r[SP]=(r[SP]&65535)|(v&0xffff0000u);committed|=1u<<SP;
+                }
+            }
+        } catch(Fault fault) {
+            if(committed&(1u<<SP))r[SP]=(r[SP]&0xffff0000u)|(originalSP&65535);
+            fault.committedRegisters=committed;
+            throw fault;
         }
         break;
+    }
     case 0x62: {
         auto m = fetch(1);
         auto bounds = decode(m, a32, over);
@@ -1618,8 +1643,9 @@ void CPU::stepImpl() {
         auto src = decode(m, a32, over);
         if (src.reg)
             fail();
-        checkOperand(src, w + 2);
-        auto val = read(src.linear, w), sel = read(src.linear + w, 2);
+        checkOperand(src, w);
+        auto tail = address(src.segment, (src.linear - s[src.segment].base + w) & mask(aw), 2);
+        auto val = read(src.linear, w), sel = read(tail, 2);
         segment(op == 0xc4 ? ES : DS, sel);
         set((m >> 3) & 7, val, w);
         break;
@@ -1640,8 +1666,9 @@ void CPU::stepImpl() {
         push(get(BP, w), w);
         auto frame = get(SP, s[SS].big ? 4 : 2);
         for (unsigned i = 1; i < level; i++) {
-            set(BP, get(BP, w) - w, w);
-            push(read(address(SS, get(BP, w)), w), w);
+            const int stackWidth = s[SS].big ? 4 : 2;
+            set(BP, get(BP, stackWidth) - w, stackWidth);
+            push(read(address(SS, get(BP, stackWidth), w), w), w);
         }
         if (level)
             push(frame, w);
@@ -1834,8 +1861,8 @@ void CPU::stepImpl() {
             } else if (g == 3 || g == 5) {
                 if (dst.reg)
                     fail();
-                checkOperand(dst, w + 2);
-                auto seg = read(dst.linear + w, 2);
+                auto tail = address(dst.segment, (dst.linear - s[dst.segment].base + w) & mask(aw), 2);
+                auto seg = read(tail, 2);
                 farTransfer(seg, v, g == 3, w);
             } else if (g == 4)
                 ip = v;
@@ -2124,8 +2151,9 @@ void CPU::stepImpl() {
             auto src = decode(m, a32, over);
             if (src.reg)
                 fail();
-            checkOperand(src, w + 2);
-            auto v = read(src.linear, w), sel = read(src.linear + w, 2);
+            checkOperand(src, w);
+            auto tail = address(src.segment, (src.linear - s[src.segment].base + w) & mask(aw), 2);
+            auto v = read(src.linear, w), sel = read(tail, 2);
             segment(op2 == 0xb2 ? SS : op2 == 0xb4 ? FS : GS, sel);
             set((m >> 3) & 7, v, w);
             break;

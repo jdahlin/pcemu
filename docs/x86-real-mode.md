@@ -23,8 +23,9 @@ features. Synthetic tests that intentionally use flat cached real-mode segments
 must initialize their expanded limits explicitly, rather than relying on missing
 architectural checks.
 
-Far-pointer loads validate the offset and selector as one operand before either
-read; invalid register forms raise #UD. Register-indexed bit strings wrap the
+Far-pointer loads validate each complete component before accessing it; invalid
+register forms raise #UD. The selector address wraps independently to address
+size (`0FB2#1890`), unlike bytes within either component. Register-indexed bit strings wrap the
 adjusted offset to address size. Hardware vectors `0FAB#21` and `660FB3#1`
 establish this wrap, and literal tests cover it independently. See the manual's
 [BT entry](https://pdos.csail.mit.edu/6.828/2018/readings/i386/BT.htm) and
@@ -74,3 +75,26 @@ A separate synthetic RET-to-self test verifies that path. The native input
 format is now `PCX86V2` with an explicit encoding length. Seven adapter unit
 tests and 307 literal CPU checks pass. Focused segment-pop, DAS, REP, interrupt,
 bit-string, near-return and far-return shards pass.
+
+ENTER frame-chain reads now use the stack address width, not operand width;
+this matters with an arbitrary high EBP and a 16-bit stack. Native POP-to-memory
+checks both complete spans before committing SP or RAM. REP RAM spans stop at
+the cached segment limit even with 32-bit address overrides.
+
+The following are measured 386EX details beyond the manual's simple PUSHA/POPA
+pseudocode, kept explicit rather than claimed as requirements for every x86 CPU:
+
+- A faulting real-mode PUSHAD retains writes to the low stack slots performed
+  before the crossing slot (`6660#302`). The saved SP is restored before fault
+  delivery. The interpreter uses the observed low-to-high store order.
+- POPA retains completed GPR loads on a later stack fault (`61#681`). Fault state
+  carries an explicit committed-register mask; ordinary faults still restore all
+  registers, and REP retains its separate continuation behavior.
+- Real-mode POPAD with a 16-bit stack discards the popped ESP low word, but loads
+  its high word (`6661#0`). This measured rule is limited to that mode; it is not
+  presented as the manual's architectural discard-ESP rule for every processor.
+
+Literal tests verify each partial-state result, ENTER's frame chain, pointer
+wrapping and a fault after the first STOSD iteration. The four PUSHA/POPA shards
+pass all 20,000 executions; 319 literal CPU checks, 255,625 read-JIT checks and
+seven adapter tests pass. Wider hardware validation continues separately.

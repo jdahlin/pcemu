@@ -471,9 +471,45 @@ static void selector_and_repeat_rules() {
               "real-mode REP fault retains completed iteration and comparison carry");
     }
 }
+// Multi-access 386 rules are validated by literal state, independently of
+// hardware-file expectations or interpreter/JIT equality alone.
+static void multi_access_rules() {
+    struct Stop {};
+    for(bool native:{false,true}) {
+        CPU enter;enter.ip=0x100;enter.r[BP]=0xabcd2000;enter.r[SP]=0x8000;enter.write(0x1ffc,0x12345678,4);
+        const uint8_t ec[]={0x66,0xc8,0x10,0,2,0xf4};std::copy(std::begin(ec),std::end(ec),enter.mem.begin()+0x100);
+        Jit ej(enter,native,0,65536);if(native)ej.run();else enter.step();
+        check(enter.r[BP]==0x7ffc && enter.r[SP]==0x7fe4 && enter.read(0x7ff8,4)==0x12345678,
+              "ENTER uses the stack address width for frame-chain reads");
+        CPU pointer;pointer.ip=0x100;pointer.r[BX]=0xfffe;pointer.write(0xfffe,0x4321,2);pointer.write(0,0x1000,2);
+        pointer.mem[0x100]=0xc5;pointer.mem[0x101]=7;pointer.mem[0x102]=0xf4;
+        Jit fj(pointer,native,0,65536);if(native)fj.run();else pointer.step();
+        check(pointer.r[AX]==0x4321 && pointer.s[DS].selector==0x1000,"far pointer components wrap their own addresses");
+        CPU pop;pop.ip=0x100;pop.r[SP]=0x8000;
+        for(unsigned i=0;i<8;++i)pop.write(0x8000+i*4,i==3?0xcafe1234:i+1,4);
+        pop.mem[0x100]=0x66;pop.mem[0x101]=0x61;pop.mem[0x102]=0xf4;
+        Jit pj(pop,native,0,65536);if(native)pj.run();else pop.step();
+        check(pop.r[SP]==0xcafe8020 && pop.r[AX]==8,"386EX POPAD high ESP result with 16-bit stack");
+        for(unsigned kind=0;kind<3;++kind) {
+            CPU c;c.ip=0x100;c.r[SP]=kind==0?14:0xfff9;c.s[SS].base=0x10000;
+            c.r[DI]=0x11223344;c.r[SI]=0x55667788;c.r[BP]=0x99aabbcc;
+            if(kind==0){c.mem[0x100]=0x66;c.mem[0x101]=0x60;}
+            if(kind==1){c.mem[0x100]=0x61;c.write(0x1fff9,0x1111,2);c.write(0x1fffb,0x2222,2);c.write(0x1fffd,0x3333,2);}
+            if(kind==2){c.r[DI]=0xfff9;c.r[CX]=2;c.r[AX]=0x12345678;const uint8_t st[]={0x67,0x66,0xf3,0xab};std::copy(std::begin(st),std::end(st),c.mem.begin()+0x100);}
+            unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+            Jit j(c,native,0,65536);try {if(native)j.run();else c.step();}catch(const Stop &){}
+            if(kind==0)check(vector==12 && c.r[SP]==14 && c.read(0x1ffee,4)==0x11223344,
+                             "PUSHAD retains low-slot writes before stack fault");
+            if(kind==1)check(vector==12 && c.r[SP]==0xfff9 && c.r[DI]==0x11221111 && c.r[SI]==0x55662222 && c.r[BP]==0x99aa3333,
+                             "POPA retains completed register loads before stack fault");
+            if(kind==2)check(vector==13 && c.r[CX]==1 && c.r[DI]==0xfffd && c.read(0xfff9,4)==0x12345678,
+                             "REP span stops at segment limit with completed store retained");
+        }
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules(); selector_and_repeat_rules();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules(); scalar_boundary_rules(); selector_and_repeat_rules(); multi_access_rules();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";

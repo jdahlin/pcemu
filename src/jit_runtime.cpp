@@ -178,7 +178,7 @@ uint32_t nativeEnter(CPU *cpu,unsigned width,unsigned size,unsigned level) noexc
     const auto stackMask=stack32?UINT32_MAX:65535u,operandMask=width==4?UINT32_MAX:65535u;
     auto push=[&](uint32_t value){
         const auto offset=(sp-width)&stackMask;uint32_t physical;
-        if(count==writes.size() || !warmDataAddress(*cpu,cpu->address(SS,offset),width,true,physical))return false;
+        if(count==writes.size() || !warmDataAddress(*cpu,cpu->address(SS,offset,width),width,true,physical))return false;
         if(cpu->codeUsed[physical>>6] || cpu->codeUsed[(physical+width-1)>>6])return false;
         sp=(sp&~stackMask)|offset;writes[count++]={physical,value};return true;
     };
@@ -186,9 +186,9 @@ uint32_t nativeEnter(CPU *cpu,unsigned width,unsigned size,unsigned level) noexc
         if(!push(bp&operandMask))return 0;
         const auto frame=sp&stackMask;
         for(unsigned n=1;n<level;++n){
-            bp=(bp&~operandMask)|((bp-width)&operandMask);
+            bp=(bp&~stackMask)|((bp-width)&stackMask);
             uint32_t physical,value=0;
-            if(!warmDataAddress(*cpu,cpu->address(SS,bp&operandMask),width,false,physical))return 0;
+            if(!warmDataAddress(*cpu,cpu->address(SS,bp&stackMask,width),width,false,physical))return 0;
             std::memcpy(&value,cpu->mem.data()+physical,width);
             // Reference reads observe earlier pushes, even through partial
             // overlaps or different virtual addresses aliasing the same RAM.
@@ -220,11 +220,12 @@ uint32_t nativeFarPointer(CPU *cpu,const NativeMemoryMove *op,unsigned segment,u
         if(op->base>=0)offset+=cpu->r[op->base];
         if(op->index>=0)offset+=cpu->r[op->index]<<op->scale;
         if(!op->address32)offset&=65535;
-        const auto linear=cpu->address(op->segment,offset,op->width+2);
+        const auto linear=cpu->address(op->segment,offset,op->width);
+        const auto tail=cpu->address(op->segment,(offset+op->width)&(op->address32?UINT32_MAX:65535u),2);
         uint32_t value=0,selector=0,physical;
         if(!warmDataAddress(*cpu,linear,op->width,false,physical))return 0;
         std::memcpy(&value,cpu->mem.data()+physical,op->width);
-        if(!warmDataAddress(*cpu,linear+op->width,2,false,physical))return 0;
+        if(!warmDataAddress(*cpu,tail,2,false,physical))return 0;
         std::memcpy(&selector,cpu->mem.data()+physical,2);
         // LSS loads SS and its GPR atomically; unlike MOV/POP SS it creates
         // no interrupt shadow. Reuse segment validation, preserving that state.
@@ -537,8 +538,8 @@ uint32_t nativePopMemory(CPU *cpu, const NativeMemoryMove *destination, uint32_t
     if ((width != 2 && width != 4) || cpu->watchWrite) return 0;
     try {
         uint32_t source, target;
-        if (!warmDataAddress(*cpu,cpu->address(SS,stackOffset),width,false,source) ||
-            !warmDataAddress(*cpu,cpu->address(destination->segment,destinationOffset),width,true,target)) return 0;
+        if (!warmDataAddress(*cpu,cpu->address(SS,stackOffset,width),width,false,source) ||
+            !warmDataAddress(*cpu,cpu->address(destination->segment,destinationOffset,width),width,true,target)) return 0;
         if (cpu->codeUsed[target >> 6] || cpu->codeUsed[(target+width-1) >> 6]) return 0;
         // Both probes are side-effect-free. Capture the entire source before
         // the write, including physically aliased or overlapping operands.

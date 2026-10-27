@@ -148,6 +148,13 @@ int main() {
             ref.step();ref.step();
             Jit guarded(native,true,0);
             while(native.instructions<2) guarded.run();
+            if (expected.empty() || expected!=actual) {
+                std::cerr << "VGA access mismatch address=" << std::hex << address
+                          << " width=" << width << " operation=" << operation << " expected:";
+                for(auto value:expected)std::cerr << ' ' << value;
+                std::cerr << " actual:";for(auto value:actual)std::cerr << ' ' << value;
+                std::cerr << std::dec << '\n';
+            }
             check(!expected.empty() && expected==actual,"full VGA aperture callback address/value/order");
             check(ref.mem==native.mem && std::equal(std::begin(ref.r),std::end(ref.r),std::begin(native.r)) && ref.flags==native.flags && ref.ip==native.ip,
                   "CGA aperture access must not use RAM shadow in native code");
@@ -223,8 +230,12 @@ int main() {
                     check(native.ip == ref.ip && native.flags == ref.flags &&
                               native.instructions == ref.instructions && native.cr[2] == ref.cr[2],
                           "comparison replay matches interpreter state");
-                    for (unsigned r = 0; r < 8; ++r)
+                    for (unsigned r = 0; r < 8; ++r) {
+                        if(native.r[r]!=ref.r[r])std::cerr << "comparison mismatch kind=" << kind
+                            << " width=" << width << " access=" << access << " reg=" << r
+                            << " expected=" << std::hex << ref.r[r] << " actual=" << native.r[r] << std::dec << '\n';
                         check(native.r[r] == ref.r[r], "comparison replay register equality");
+                    }
                     check(native.mem == ref.mem && refReads == nativeReads,
                           "no duplicate device read or page side effects");
                     if (kind >= 10 && access >= 6)

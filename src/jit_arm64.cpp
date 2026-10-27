@@ -1269,7 +1269,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                         if (i.memory.store)
                             emit((i.w == 4 ? 0xb9000000u : 0x79000000u) |
                                  ((offset / i.w) << 10) | (11 << 5) | (20 + reg));
-                        else if (reg != SP) {
+                        else if (reg == SP && i.w==4 && !block.stack32 && !(block.cr0&1)) {
+                            emit(0xb9400000u | ((offset / i.w) << 10) | (11 << 5) | 10);
+                            emit(0x53107d4au); // lsr w10,w10,#16
+                            emit(0x33103c00u | (10 << 5) | (20+SP)); // bfi wSP,w10,#16,#16
+                        } else if (reg != SP) {
                             emit((i.w == 4 ? 0xb9400000u : 0x79400000u) |
                                  ((offset / i.w) << 10) | (11 << 5) | 10);
                             insert(20 + reg, 10, i.w, 0);

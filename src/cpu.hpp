@@ -13,6 +13,7 @@ struct Fault {
     bool hasError;
     bool partialRepeat = false; // Successful REP elements remain committed on a later fault.
     uint32_t repeatFlags = 0;
+    uint8_t committedRegisters = 0; // 386 POPA can fault after partial register loads.
 };
 enum Reg { AX, CX, DX, BX, SP, BP, SI, DI };
 enum Seg { ES, CS, SS, DS, FS, GS };
