@@ -451,7 +451,14 @@ int main(int argc, char **argv) {
         check(connect(ssh, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0,
               "host connects to loopback forward");
         setsockopt(ssh, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        std::this_thread::sleep_for(std::chrono::milliseconds(3)); endpoint();
+        // Socket readiness notifications run on another host thread. A fixed
+        // 3 ms sleep can expire before it is scheduled during parallel guest
+        // validation. Wait for the actual SYN, retaining a bounded deadline.
+        auto forwardDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+        do {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            endpoint();
+        } while (incoming.empty() && std::chrono::steady_clock::now() < forwardDeadline);
         check(incoming.size() == 1 && incoming.front()[47] == 2 &&
               get16(incoming.front().data() + 36) == 22, "forward injects guest SSH SYN");
         auto syn = std::move(incoming.front()); incoming.pop_front();
