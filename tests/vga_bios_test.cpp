@@ -468,6 +468,35 @@ void vbe_contract(Guest &g) {
 }
 
 
+// VBE 2.0 Function 07h supplies pixel origins, including unaligned 8-bit
+// starts and whole-page changes. Derive every packed pixel independently.
+// VBE Function 07h, printed 50..52, PDF 58..60:
+// https://read.seas.harvard.edu/~kohler/class/04f-aos/ref/hardware/vbe3.pdf#page=58
+void vbe_indexed_scanout_edges(Guest &g) {
+    auto &m=*g.m;auto &v=m.vga;auto &c=m.cpu;
+    g.call(0x4f02,0x4100);g.call(0x4f06,0,648);
+    for(unsigned n=0;n<256;++n){v.dac[n][0]=n&63;v.dac[n][1]=(n*3)&63;v.dac[n][2]=(n*7)&63;}
+    for(unsigned y=0;y<816;++y)for(unsigned x=0;x<648;++x)
+        v.vram[y*648+x]=uint8_t(x*17+y*29+(y/400)*71);
+    PcDisplay display;std::vector<uint32_t> frame(640*400);
+    const unsigned origins[][2]={{0,0},{1,1},{3,3},{4,4},{8,16},{0,400},{0,0}};
+    for(const auto &origin:origins) {
+        g.call(0x4f07,0,origin[0],origin[1]);
+        check(c.get(AX,2)==0x004f,"indexed pixel/page origin accepted");
+        g.call(0x4f07,1);
+        check(c.get(CX,2)==origin[0]&&c.get(DX,2)==origin[1],"indexed pixel/page origin readback");
+        display.refresh(m,true);display.render(m,frame,640,400,500);
+        for(unsigned y=0;y<400;++y)for(unsigned x=0;x<640;++x) {
+            unsigned sx=x+origin[0],sy=y+origin[1];
+            unsigned index=(sx*17+sy*29+(sy/400)*71)&255;
+            auto expand=[](unsigned n){return (n<<2)|(n>>4);};
+            uint32_t expected=0xff000000u|expand(index&63)<<16|expand((index*3)&63)<<8|expand((index*7)&63);
+            check(frame[y*640+x]==expected,"independent packed-pixel origin/page oracle");
+        }
+    }
+    g.call(3);
+}
+
 void protected_mode_contract(Guest &g) {
     auto &c=g.m->cpu;auto &v=g.m->vga;
     g.call(0x4f02,0x4142);g.call(0x4f06,0,800);
@@ -742,7 +771,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); protected_crtc_edges(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); vbe_indexed_scanout_edges(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); protected_crtc_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);
