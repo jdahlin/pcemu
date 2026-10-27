@@ -147,6 +147,10 @@ Jit::~Jit() {
         munmap(arena, capacity + stubCapacity);
 #endif
 }
+void Jit::setObservationPoints(std::vector<uint32_t> linear) {
+    if(directLinks)throw std::invalid_argument("Observation points require unlinked run() dispatch");
+    clear();observationPoints=std::move(linear);
+}
 void Jit::clear() {
     debugReset();
     incomingLinks.clear();
@@ -154,6 +158,7 @@ void Jit::clear() {
     blocks.clear();
     fast = {};
     used = stubUsed = 0;
+    nativeHelperInstructions = 0;
     nativeInstructions = compiledBlocks = cacheHits = cacheRecycles = 0;
     cachedContexts.clear();
     nextCachedContext = validatedCachedContext = 0;
@@ -413,11 +418,18 @@ uint32_t Jit::run() {
         profile::event(profile::CachedContextValidation);
     }
     auto n = uint32_t(function(&cpu, 0));
+    const bool x87Exit=n&nativeX87Exit;
     const bool portExit=n&nativePortIOExit;
     const bool invalidOpcodeExit=n&nativeInvalidOpcodeExit;
-    n &= ~(nativePortIOExit|nativeInvalidOpcodeExit);
+    n &= ~(nativePortIOExit|nativeInvalidOpcodeExit|nativeX87Exit);
     cpu.instructions += n;
     nativeInstructions += n;
+    if(x87Exit) {
+        const auto operation=b.boundaryEntry()->x87;
+        ++nativeInstructions;++nativeHelperInstructions;
+        cpu.stepX87(operation);
+        return n+1;
+    }
     if(invalidOpcodeExit){
         ++nativeInstructions;
         profile::event(profile::NativeInvalidOpcode);
@@ -584,7 +596,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     });
     if (ir.empty()) return block;
     if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair && !specialShortFragment &&
-                      ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
+                      ir.back().kind != Kind::X87 && ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
                       !ir.front().stringMove && ir.front().kind != Kind::EnterFrame && ir.back().kind != Kind::EnterFrame && ir.back().kind != Kind::FarPointer && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {
         block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {

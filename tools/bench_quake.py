@@ -136,8 +136,9 @@ def jit_coverage_result(result, counters):
     interpreted = total - native
     if counters['interpretedAttempts'] != interpreted:
         raise ValueError('Quake interpreted attempts do not reconcile with JIT coverage')
-    return dict(scope='DOS Quake 1.06 CS=00A7 base=10000000, including application startup and playback; excludes DOS/CWSDPMI',
+    return dict(scope='DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI',
                 guestSteps=total, nativeSteps=native, interpretedSteps=interpreted,
+                decodedX87HelperSteps=result.get('coverageX87HelperSteps',0),
                 nativePercent=100 * native / total, complete=interpreted == 0)
 
 
@@ -175,7 +176,7 @@ def main():
         work.mkdir(parents=True, exist_ok=False)
     else:
         work = Path(tempfile.mkdtemp(prefix='quake-benchmark-', dir=ROOT / 'build'))
-    measure = args.measure_window or args.profile_mode != 'none'
+    measure = args.measure_window or args.profile_mode != 'none' or args.jit_coverage
     disk = work / 'guest.qcow2'
     subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk), str(args.disk.resolve())], check=True)
     try:

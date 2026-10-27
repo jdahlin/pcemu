@@ -62,7 +62,7 @@ constexpr uint64_t QuietNaNSignificand = 0xc000000000000000ull;
 }
 // Execute an ESC instruction after its primary opcode has been fetched. EM/TS
 // cause #NM before ModR/M/operand accesses; successful operations update TOP,
-// tags and memory. JIT blocks use this same interpreter fallback. Vol. 2, FLD
+// tags and memory. Translated execution supplies an already decoded operand. Vol. 2, FLD
 // exceptions and FINIT/FNINIT; Vol. 1, 8.1 register-stack organization:
 // https://cdrdv2-public.intel.com/835757/325383-sdm-vol-2abcd.pdf#page=513
 void CPU::execute_x87_instruction(uint8_t op, bool a32, int over, bool o32) {
@@ -73,6 +73,12 @@ void CPU::execute_x87_instruction(uint8_t op, bool a32, int over, bool o32) {
     uint8_t m = fetch(1);
     profile::x87(op, m);
     auto operand = decode(m, a32, over);
+    execute_x87_decoded(op,m,operand,o32);
+}
+// Arithmetic/environment semantics shared after decoding. No CPU::step, byte
+// fetch or ModR/M decoding occurs here; JIT callers supply the dynamic operand.
+void CPU::execute_x87_decoded(uint8_t op,uint8_t m,Operand operand,bool o32) {
+    using namespace x87;
     unsigned g = (m >> 3) & 7, i = m & 7;
     unsigned top = (fpStatus >> 11) & 7;
     // Logical ST(i) wraps modulo eight from TOP; tags remain physical.

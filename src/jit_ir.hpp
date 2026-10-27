@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery, InvalidOpcode
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery, InvalidOpcode, X87
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -39,6 +39,7 @@ struct Instruction {
     uint32_t target = 0;
     NativeMemoryMove memory, callPointer;
     NativeString string;
+    CPU::DecodedX87 x87;
 };
 struct DecodedBlock {
     std::vector<Instruction> instructions;

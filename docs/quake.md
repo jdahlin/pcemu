@@ -175,18 +175,24 @@ Intel references, RAM-only tests and conformance boundaries in more detail.
 
 ## Strict JIT coverage
 
-`./run-quake.sh --benchmark --jit-coverage --frames 50` uses the diagnostic
-build to count Quake application guest steps executed by native blocks versus
-`CPU::step`. Counts include application startup and playback, with the pinned
-1.06 application selector `00A7`, base `10000000`, and 32-bit code. DOS and
-CWSDPMI selectors are excluded; this is not whole-machine coverage. Interpreter
-attempts must exactly reconcile with total minus native steps. Instruction
-counts use the emulator's existing step units (including resumable REP work),
-not a claim about hardware retirement.
+`./run-quake.sh --benchmark --jit-coverage --frames 50` counts Quake's
+32-bit application code (selector `00A7`, base `10000000`) during the exact
+original timed-frame interval. DOS/CWSDPMI code and application startup are
+excluded. Observation points stop native blocks before both timing boundaries;
+no guest instructions are patched. Interpreter attempts must reconcile exactly
+with application guest steps minus compiled steps. Counts use the emulator's
+existing step units, including resumable REP work, rather than hardware retirement.
+
+Decoded x87 operations now have compiled boundary entries with dynamic effective
+addresses and precise exception delivery after leaving the generated host frame.
+They share the reference arithmetic backend, without opcode fetch/ModR/M decode
+or a generic interpreter call. The report separately counts these helper steps;
+compiled coverage is not a claim that every operation is inline ARM64 arithmetic.
+Existing binary64/x87 conformance limitations still apply. Eager compilation in
+the Quake benchmark avoids warmup/short-block policy fallbacks.
 
 Use `--require-jit-coverage` to fail on even one interpreter step. The report
-retains precise counts, fallback opcode/reason diagnostics, and explicit scope;
-rounded percentages cannot pass the gate. Coverage runs are instrumented and
-excluded from performance scores. Run the gate against every complete bundled
-demo before claiming 100% application coverage. Current x87/warmup/memory
-fallbacks mean that gate does not yet pass.
+retains exact counts, fallback opcode/reason diagnostics, and scope; rounding
+cannot pass the gate. Coverage runs are instrumented and excluded from performance
+scores. Run every complete bundled demo before claiming 100% coverage. Remaining
+string, syscall and guard fallbacks mean the gate does not yet pass.

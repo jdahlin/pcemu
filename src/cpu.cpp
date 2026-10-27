@@ -883,6 +883,22 @@ void CPU::step() {
 #endif
     restartableInstruction(*this,[&]{stepImpl();});
 }
+void CPU::stepX87(const DecodedX87 &op) {
+    restartableInstruction(*this,[&]{
+        ++instructions;
+        ip=op.end;
+        // Intel SDM Vol. 2 FLD exceptions: #NM precedes memory operand access.
+        // https://cdrdv2-public.intel.com/835757/325383-sdm-vol-2abcd.pdf#page=513
+        if(cr[0]&12)throw Fault{7,0,false};
+        uint32_t offset=op.displacement;
+        if(op.base>=0)offset+=r[op.base];
+        if(op.index>=0)offset+=r[op.index]<<op.scale;
+        if(!op.address32)offset&=65535;
+        Operand operand{op.modrm>=0xc0,uint8_t(op.modrm&7),0};
+        if(!operand.reg)operand.linear=address(op.segment,offset);
+        execute_x87_decoded(op.opcode,op.modrm,operand,op.operand32);
+    });
+}
 void CPU::portIO(uint16_t port,int width,bool out) {
     ioPermission(port,width);
     if(out) {

@@ -37,6 +37,7 @@ struct NativePortIO {
     uint32_t start=0,end=0;
 };
 inline constexpr uint32_t nativePortIOExit=0x80000000u;
+inline constexpr uint32_t nativeX87Exit=0x20000000u;
 inline constexpr uint32_t nativeInvalidOpcodeExit=0x40000000u;
 // A decoded, terminal string batch. Host helpers may execute only after a
 // side-effect-free preflight validates every required RAM span.

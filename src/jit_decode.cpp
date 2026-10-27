@@ -1,6 +1,7 @@
 #include "jit.hpp"
 #include "jit_ir.hpp"
 #include <utility>
+#include <algorithm>
 namespace pc {
 using jit_detail::Kind;
 jit_detail::DecodedBlock Jit::decode(Block &block) {
@@ -11,7 +12,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     NativeCodeTail fetchTail;
     uint32_t pos = cpu.ip;
     auto ipmask = cpu.s[CS].big ? 0xffffffffu : 65535u;
+    unsigned fetchedBytes = 0;
+    bool fetchWrapped = false;
     auto byte = [&]() {
+        if (fetchWrapped || ++fetchedBytes > 15) throw 0;
         const auto address=cpu.address(CS,pos);
         const bool tail=(address>>12)!=(linear>>12);
         // Only the first instruction may span pages. It exits through a cold
@@ -42,6 +46,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
         }
         cpu.markCode(p);
         auto b = cpu.mem.at(p);
+        fetchWrapped = pos == ipmask;
         pos = (pos + 1) & ipmask;
         return b;
     };
@@ -94,7 +99,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
         return move;
     };
     for (unsigned count = 0; count < 64; count++) {
+        if(count && std::find(observationPoints.begin(),observationPoints.end(),cpu.s[CS].base+pos)!=observationPoints.end())break;
         auto begin = pos;
+        fetchedBytes = 0;
+        fetchWrapped = false;
         auto savedCR2 = cpu.cr[2];
         try {
             int w = cpu.s[CS].big ? 4 : 2;
@@ -146,7 +154,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 block.usesStack = true;
                 if (!store && segment == SS) block.changesShadow = true;
             };
-            if (op == 0x06 || op == 0x0e || op == 0x16 || op == 0x1e ||
+            if(op>=0xd8 && op<=0xdf) {
+                auto m=byte();i.kind=Kind::X87;
+                i.x87.opcode=op;i.x87.modrm=m;i.x87.address32=address32;i.x87.operand32=w==4;
+                if(m<0xc0) {
+                    auto memory=memoryOperand(m,address32,overrideSegment);
+                    i.x87.base=memory.base;i.x87.index=memory.index;i.x87.scale=memory.scale;
+                    i.x87.segment=memory.segment;i.x87.displacement=memory.displacement;
+                }
+                block.pollBoundary=true;
+            } else if (op == 0x06 || op == 0x0e || op == 0x16 || op == 0x1e ||
                 op == 0x07 || op == 0x17 || op == 0x1f) {
                 segmentStack(op >> 3, !(op & 1));
             } else if (op==0x9a || op==0xea) {
@@ -630,7 +647,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 // Address size selects CX/ECX; operand size selects the target
                 // IP mask. All LOOP variants and JCXZ preserve guest flags.
                 i.w = address32 ? 4 : 2;
-            } else if (op == 0x90) {
+            } else if ((op == 0x90 || op == 0x9b)) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
@@ -754,6 +771,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
+            if(i.kind==Kind::X87)i.x87.end=pos;
             if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert || i.kind == Kind::Divide || i.kind == Kind::SetCondition)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
@@ -783,7 +801,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.kind==Kind::X87 || i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

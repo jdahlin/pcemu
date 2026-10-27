@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
         if ((!guestProfile.empty() || !awaitSampler.empty()) && windowOutput.empty())
             throw std::runtime_error("Profiling requires --window-output");
         if (backend != "jit" && backend != "interpreter") throw std::runtime_error("Invalid backend");
-        if (backend == "jit" && !windowOutput.empty())
+        if (backend == "jit" && !windowOutput.empty() && coverageOutput.empty())
             throw std::runtime_error("Exact frame-window profiling currently requires the interpreter");
         Machine machine(disk, "", 32 * 1024 * 1024);
         auto &cpu = machine.cpu;
@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
             return (ns / 1000000000) * 1193182 + ((ns % 1000000000) * 1193182) / 1000000000;
         };
         machine.pit.reset(0);
-        Jit jit(cpu, backend == "jit");
+        Jit jit(cpu, backend == "jit", 0);
+        if (!coverageOutput.empty()) jit.setObservationPoints({0x10003ac9,0x10003f86});
         if (backend == "jit" && !jit.enabled()) throw std::runtime_error("Native JIT unavailable on this host");
         std::ofstream console(output + ".console.log");
         if (!console) throw std::runtime_error("Cannot write console transcript");
@@ -109,10 +110,8 @@ int main(int argc, char **argv) {
             }
         };
         machine.boot();
-        uint64_t coverageTotal = 0, coverageNative = 0;
-#ifdef PCEMU_PROFILE
-        if (!coverageOutput.empty()) { profile::start(cpu.instructions); profile::active = false; }
-#endif
+        uint64_t coverageTotal = 0, coverageNative = 0, coverageHelpers = 0;
+
         uint64_t nextCheck = 0;
         bool completed = false;
         QuakeProfileWindow window;
@@ -134,7 +133,7 @@ int main(int argc, char **argv) {
                         pausedNs += std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - pauseStart).count();
                     }
 #ifdef PCEMU_PROFILE
-                    if (!guestProfile.empty()) profile::start(cpu.instructions);
+                    if (!guestProfile.empty() || !coverageOutput.empty()) profile::start(cpu.instructions);
 #endif
                     phase(windowOutput + ".phase.json", "running");
                     beginInstructions = cpu.instructions; beginCpu = threadCpuNs(); beginWall = Clock::now();
@@ -142,6 +141,7 @@ int main(int argc, char **argv) {
                     endWall = Clock::now(); endCpu = threadCpuNs(); endInstructions = cpu.instructions;
 #ifdef PCEMU_PROFILE
                     if (!guestProfile.empty()) profile::stop(guestProfile, cpu.instructions);
+                    if (!coverageOutput.empty()) profile::stop(coverageOutput, cpu.instructions);
 #endif
                     phase(windowOutput + ".phase.json", "done");
                 }
@@ -150,15 +150,16 @@ int main(int argc, char **argv) {
             if (!cpu.halted) {
                 // Pinned DOS Quake 1.06 application code, including startup and
                 // all timed frames; DOS/CWSDPMI trampolines have other selectors.
-                const bool quake = cpu.s[CS].selector == 0xa7 && cpu.s[CS].base == 0x10000000 && cpu.s[CS].big;
+                const bool quake = window.begun && !window.ended && cpu.s[CS].selector == 0xa7 && cpu.s[CS].base == 0x10000000 && cpu.s[CS].big;
 #ifdef PCEMU_PROFILE
                 if (!coverageOutput.empty()) profile::active = quake;
 #endif
-                auto before = cpu.instructions, native = jit.nativeInstructions;
+                auto before = cpu.instructions, native = jit.nativeInstructions, helpers = jit.nativeHelperInstructions;
                 jit.run();
                 if (!coverageOutput.empty() && quake) {
                     coverageTotal += cpu.instructions - before;
                     coverageNative += jit.nativeInstructions - native;
+                    coverageHelpers += jit.nativeHelperInstructions - helpers;
                 }
 #ifdef PCEMU_PROFILE
                 if (!coverageOutput.empty()) profile::active = false;
@@ -190,22 +191,19 @@ int main(int argc, char **argv) {
                 << ",\"endInstructions\":" << endInstructions << ",\"wallSeconds\":" << std::chrono::duration<double>(endWall - beginWall).count()
                 << ",\"threadCpuSeconds\":" << double(endCpu - beginCpu) / 1e9
                 << ",\"attachmentPauseSeconds\":" << double(pausedNs) / 1e9
-                << ",\"guestProfiled\":" << (!guestProfile.empty() ? "true" : "false")
+                << ",\"guestProfiled\":" << (!guestProfile.empty() || !coverageOutput.empty() ? "true" : "false")
                 << ",\"hostSampled\":" << (!awaitSampler.empty() ? "true" : "false") << "}\n";
             if (!out) throw std::runtime_error("Cannot write frame-window result");
         }
         if (backend == "jit" && !jit.nativeInstructions)
             throw std::runtime_error("Timedemo completed without native JIT execution");
-        #ifdef PCEMU_PROFILE
-        if (!coverageOutput.empty()) profile::stop(coverageOutput, cpu.instructions);
-#endif
-        machine.disk->flush();
+                machine.disk->flush();
         std::ofstream report(output);
         if (!report) throw std::runtime_error("Cannot write benchmark result");
         report << std::setprecision(12) << "{\"frames\":" << result->frames << ",\"seconds\":" << result->seconds
                << ",\"fps\":" << result->fps << ",\"backend\":\"" << backend << "\",\"pitClock\":\"host-monotonic-1193182Hz\","
                << "\"coverageGuestSteps\":" << coverageTotal << ",\"coverageNativeSteps\":" << coverageNative
-               << ",\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
+               << ",\"coverageX87HelperSteps\":" << coverageHelpers << ",\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
                << std::chrono::duration<double>(Clock::now() - origin).count() << "}\n";
         std::cout << result->frames << " frames, " << result->seconds << " seconds: " << result->fps << " FPS\n";
     } catch (const std::exception &error) {

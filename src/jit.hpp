@@ -30,12 +30,17 @@ class Jit {
     // use run() instead for per-block debugger/trace observations.
     BatchResult runBatch(unsigned budget = 64);
     void clear();
+    // End decoded blocks before these linear guest addresses. With run()
+    // (not runBatch/direct links), callers can observe exact pre-instruction state.
+    void setObservationPoints(std::vector<uint32_t> linear);
+
     void setDirectLinks(bool enabled, unsigned hotEntries = 32);
     bool directLinksEnabled() const { return directLinks; }
     uint64_t directLinkTransitions = 0, directLinkPromotions = 0, directLinkBlocks = 0;
     // Optional diagnostic sidecar. Does not change arena capacity or generated code.
     void setDebugMap(const std::string &path);
     void flushDebugMap();
+    uint64_t nativeHelperInstructions = 0; // Decoded x87 helper operations, separately visible.
     uint64_t nativeInstructions = 0, compiledBlocks = 0, cacheHits = 0, cacheRecycles = 0;
     bool enabled() const {
         return active;
@@ -95,6 +100,7 @@ class Jit {
         struct BoundaryEntry {
             Function fn=nullptr;
             NativeCodeTail fetchTail;
+            CPU::DecodedX87 x87;
             union {
                 NativePortIO operation{};
                 NativeFarReturn farReturn;
@@ -118,6 +124,7 @@ class Jit {
     size_t used = 0, capacity = 16 * 1024 * 1024;
     bool active = false;
     bool stopBatch = false; // Set by run(); boundary blocks never enter cached tails.
+    std::vector<uint32_t> observationPoints;
     unsigned warmup;
     BlockMode blockMode;
     std::unordered_map<uint64_t, Block> blocks;

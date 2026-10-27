@@ -112,6 +112,15 @@ struct CPU {
     // Intel 253668-085US, 9.3/9.4:
     // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=274
     void switch_task(uint16_t selector, bool nested, bool returning = false);
+    // Decoded x87 operation shared by translated execution and the reference
+    // decoder. Address calculation remains dynamic; no guest byte fetch occurs.
+    struct DecodedX87 {
+        uint8_t opcode=0, modrm=0;
+        int base=-1,index=-1,scale=0,segment=DS;
+        uint32_t displacement=0,end=0;
+        bool address32=false,operand32=false;
+    };
+    void stepX87(const DecodedX87 &operation);
     void step();
     // Decoded scalar I/O, invoked only after leaving generated host frames.
     void stepPortIO(uint16_t port, int width, bool output, uint32_t end);
@@ -151,6 +160,7 @@ struct CPU {
         uint32_t linear;
         int segment = -1;
     };
+    void execute_x87_decoded(uint8_t opcode, uint8_t modrm, Operand operand, bool operand32);
     Operand decode(uint8_t modrm, bool address32, int overrideSeg);
     uint32_t load(Operand o, int w);
     void store(Operand o, uint32_t v, int w);
