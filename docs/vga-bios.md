@@ -385,8 +385,8 @@ The default machine clock is still instruction-derived (one PIT tick per four
 retired instructions). This is deterministic timing, not instruction cycle
 accuracy or a calibrated CPU speed. Injected PIT clocks also drive VGA. Timing
 register writes currently change phase immediately. Reserved oscillator selections
-use 25.175 MHz. Mid-frame palette/address scanout, blanking-register intervals,
-vertical interrupts, and frame-boundary register latching remain incomplete;
+use 25.175 MHz. Mid-frame palette/address scanout, vertical interrupts, and frame-boundary
+register latching remain incomplete;
 current captures still render stable device state. These are material remaining
 requirements for Second Reality's copper effects.
 
@@ -410,3 +410,11 @@ The RAM-only probe also reproduces the shipped Second Reality mode-3 calibration
 program FFFFh, wait a frame, reissue control word 36h, read the two-byte Counting
 Element, negate and divide by two. A control-word write no longer reloads the
 PIT's readable count. This variant passes the same PCEmu/QEMU execution matrix.
+
+
+Programmed horizontal/vertical blanking intervals now affect Display Disabled,
+including blanking inside the visible region. Truncated end comparators follow
+the actual counter reset at horizontal/vertical total: a vertical retrace that
+crosses frame end resumes comparing low bits from scanline zero, rather than
+extending a fictitious counter beyond total. Literal tests cover internal blanking
+and wrapped retrace, including the previously missed second line after reset.

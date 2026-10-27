@@ -51,6 +51,20 @@ namespace pc {
 VGA::VGA() {
     set_bios_mode(BiosMode::Text80Columns, true);
 }
+// Compare a reset-at-total scan counter against a start and truncated end.
+// End matches occur strictly after start; if total resets the counter first,
+// the next match uses low bits from zero rather than a fictitious extended count.
+// IBM Video Subsystems, Horizontal/Vertical Blanking and Vertical Retrace End.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78
+static bool scan_interval(unsigned position, unsigned total, unsigned start,
+                          unsigned end, unsigned mask) {
+    if (start >= total)
+        return false;
+    unsigned stop = start + ((end - start - 1) & mask) + 1;
+    if (stop >= total)
+        stop = total + (end & mask);
+    return (position + total - start) % total < stop - start;
+}
 // Sample the CRT beam using the same 1,193,182 Hz clock as the PIT. Reads do
 // not advance time. CRTC totals include hardware offsets (+5 characters/+2 lines),
 // and retrace ends compare only the low four scan-line counter bits.
@@ -78,12 +92,15 @@ uint8_t VGA::read_io_register(uint16_t port, uint64_t pitTicks) {
     const unsigned character = (dots % horizontalTotal) / (dotsPerCharacter * clockDivider);
     const unsigned retraceStart = unsigned(crtc[0x10]) | ((crtc[7] & 4) << 6) |
                                  ((crtc[7] & 0x80) << 2);
-    const unsigned retraceLength = ((unsigned(crtc[0x11]) - retraceStart - 1) & 15) + 1;
-    const bool retrace = retraceStart < verticalTotal &&
-                         (line + verticalTotal - retraceStart) % verticalTotal < retraceLength;
+    const bool retrace = scan_interval(line, verticalTotal, retraceStart, crtc[0x11], 15);
     const unsigned displayEnd = unsigned(crtc[0x12]) | ((crtc[7] & 2) << 7) |
                                 ((crtc[7] & 0x40) << 3);
-    const bool inactive = character > crtc[1] || line > displayEnd || (seq[1] & 0x20);
+    const unsigned verticalBlankStart = unsigned(crtc[0x15]) | ((crtc[7] & 8) << 5) |
+                                        ((crtc[9] & 0x20) << 4);
+    const unsigned horizontalBlankEnd = (crtc[3] & 31) | ((crtc[5] & 0x80) >> 2);
+    const bool inactive = character > crtc[1] || line > displayEnd || (seq[1] & 0x20) ||
+                          scan_interval(character, unsigned(crtc[0])+5, crtc[2], horizontalBlankEnd, 63) ||
+                          scan_interval(line, verticalTotal, verticalBlankStart, crtc[0x16], 127);
     return (retrace ? VerticalRetrace : 0) | (inactive ? DisplayInactive : 0);
 }
 // Read DISPI state; GETCAPS reports host limits and virtual height is memory/stride.
@@ -237,6 +254,13 @@ void VGA::set_bios_mode(unsigned mode, bool clear) {
                ((retrace >> 6) & 4) | ((retrace >> 2) & 0x80);
     crtc[0x10] = retrace;
     crtc[0x11] = (retrace + 2) & 15;
+    crtc[2] = crtc[1]+1;
+    crtc[3] = 0x80 | (99 & 31);
+    crtc[5] = (99 & 32) << 2;
+    crtc[0x15] = displayEnd+1;
+    crtc[7] |= ((displayEnd+1) >> 5) & 8;
+    crtc[9] |= ((displayEnd+1) >> 4) & 0x20;
+    crtc[0x16] = (total-1) & 127;
     crtc[CrtcRegister::LineCompareRegister]=0xff;
     crtc[CrtcRegister::OverflowRegister]|=0x10;
     crtc[CrtcRegister::MaximumScanLineRegister]|=0x40;

@@ -753,8 +753,15 @@ void raster_clock_contract() {
     check(sample(412,0,25175000,2)==9, "sequencer dot-clock division doubles line time");
     v.seq[1]&=~8;
     v.crtc[0x10]=447&255;v.crtc[7]|=4;v.crtc[0x11]=2;
-    check(sample(448,0)==9 && sample(449,0)==8 && sample(451,0)==0,
+    check(sample(448,0)==9 && sample(449,0)==8 && sample(450,0)==8 && sample(451,0)==0,
           "low-bit retrace comparator wraps across frame end");
+    v.set_bios_mode(0x13,true);
+    v.crtc[2]=20;v.crtc[3]=30;v.crtc[5]=0;
+    check(sample(0,16)==0 && sample(0,24)==1 && sample(0,34)==0,
+          "programmed horizontal blanking can mask visible display");
+    v.crtc[2]=80;v.crtc[0x15]=100;v.crtc[7]&=~8;v.crtc[9]&=~0x20;v.crtc[0x16]=110;
+    check(sample(99,0)==0 && sample(100,0)==1 && sample(109,0)==1 && sample(110,0)==0,
+          "vertical blanking start and low-seven-bit end boundaries");
 }
 
 void fonts_and_palette(Guest &g) {
