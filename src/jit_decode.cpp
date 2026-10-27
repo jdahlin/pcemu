@@ -552,16 +552,21 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.dst = i.src; // Index register; memory operations do not change it.
                     }
                     if (i.immediate) i.imm = byte() & (w * 8 - 1);
-                } else if (extended == 0xac || extended == 0xad) {
+                } else if (extended == 0xa4 || extended == 0xa5 || extended == 0xac || extended == 0xad) {
                     auto m = byte();
-                    if ((m >> 6) != 3) { pos = begin; break; }
-                    i.kind = Kind::DoubleShift;
+                    i.kind = (m >> 6) == 3 ? Kind::DoubleShift : Kind::Memory;
                     i.dst = m & 7;
                     i.src = (m >> 3) & 7;
-                    i.immediate = extended == 0xac;
+                    i.op = !(extended & 8); // Left versus right double shift.
+                    i.immediate = !(extended & 1);
+                    if (i.kind == Kind::Memory) {
+                        i.memoryDoubleShift = true;
+                        i.memory = memoryOperand(m,address32,overrideSegment);
+                        i.memory.store = true;
+                    }
                     if (i.immediate) {
                         i.imm = byte() & 31;
-                        if (!i.imm) i.kind = Kind::Nop;
+                        if (!i.imm && i.kind == Kind::DoubleShift) i.kind = Kind::Nop;
                     }
                 } else if (extended == 0xaf) {
                     auto m = byte();

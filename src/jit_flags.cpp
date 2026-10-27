@@ -16,7 +16,7 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             // A memory operation may replay before access or exit after a
             // successful access changes code. Keep both restart states exact,
             // including comparison flags even if a later ALU overwrites them.
-            neededFlags[n] = i.memoryAlu || i.memoryMultiply || i.memoryShift;
+            neededFlags[n] = i.memoryAlu || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift;
             liveFlags = arithmeticFlags;
             continue;
         }

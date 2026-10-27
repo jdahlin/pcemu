@@ -260,8 +260,8 @@ int main() {
                 equal(reference, actual);
             }
         }
-        // An unsupported rotate terminates this SHRD pair independently of CL
-        // shift coverage. Test normal pair admission, not just warmup=0 lowering.
+        // HLT terminates this SHRD pair independently of other native
+        // instruction coverage. Test normal pair admission, not just warmup=0 lowering.
         for (bool code32 : {false, true})
             for (unsigned width : {2u, 4u}) {
                 CPU a(65536), b(65536);
@@ -272,7 +272,7 @@ int main() {
                     code.insert(code.end(), {0x0f, 0xad, modrm});
                 }
                 const auto pairEnd = code.size();
-                code.insert(code.end(), {0xd3, 0xca});
+                code.push_back(0xf4);
                 for (auto c : {&a, &b}) {
                     c->s[CS].big = code32;
                     for (unsigned n = 0; n < code.size(); ++n) c->write(n, code[n], 1);
@@ -328,8 +328,9 @@ int main() {
                                         equal(reference, actual);
                                     }
                                 }
-        // SHRD register forms: all register overlaps, full CL/immediate byte
+        // SHLD/SHRD register forms: all register overlaps, full CL/immediate byte
         // range (including masked zero and 16-bit overshifts), and pending flags.
+        for (bool left : {false,true})
         for (bool code32 : {false, true})
             for (unsigned width : {2u, 4u})
                 for (bool immediate : {false, true})
@@ -339,7 +340,7 @@ int main() {
                                 for (bool dead : {false, true}) {
                                     std::vector<uint8_t> code = {0x04, 1};
                                     if ((width == 4) != code32) code.push_back(0x66);
-                                    code.insert(code.end(), {0x0f, uint8_t(immediate ? 0xac : 0xad),
+                                    code.insert(code.end(), {0x0f, uint8_t((left ? 0xa4 : 0xac) + !immediate),
                                                              uint8_t(0xc0 | (src << 3) | dst)});
                                     if (immediate) code.push_back(count);
                                     if (dead) code.insert(code.end(), {0x85, 0xf6});
@@ -356,7 +357,7 @@ int main() {
                                             c->set(CX, count, 1);
                                         }
                                         for (unsigned k = 0; k < (dead ? 4u : 3u); ++k) reference.step();
-                                        check(jit.run() == (dead ? 4u : 3u), "SHRD with live/dead flags executes natively");
+                                        check(jit.run() == (dead ? 4u : 3u), "double shift with live/dead flags executes natively");
                                         equal(reference, actual);
                                     }
                                 }

@@ -79,6 +79,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if (i.memoryDoubleShift) usedRegisters |= 1u << i.src;
         if (i.memoryPop) usedRegisters |= 1u << SP;
         if (i.stackMany) usedRegisters |= 255;
         if (i.leaveFrame) usedRegisters |= 1u << SP;
@@ -89,11 +90,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             if (i.callPointer.base >= 0) usedRegisters |= 1u << i.callPointer.base;
             if (i.callPointer.index >= 0) usedRegisters |= 1u << i.callPointer.index;
         }
-        if (i.kind == Kind::DoubleShift && !i.immediate)
+        if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl)
             continue;
-        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -609,6 +610,54 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             return;
         }
     };
+    auto doubleShiftResult = [&](const jit_detail::Instruction &i, bool memory) {
+        if (i.immediate) imm(9, i.imm);
+        else bits(9, 20 + CX, 0, 5);
+        auto zero = code.size();
+        emit(0x34000009u); // cbz w9: count zero preserves destination and flags
+        extract(11, memory ? 17 : 20 + i.dst, i.w, 0);
+        extract(12, 20 + i.src, i.w, 0);
+        if (i.op) {
+            emit(0xaa000000u | (11 << 16) | ((i.w * 8) << 10) | (12 << 5) | 13);
+            imm(10,i.w*16);
+            emit(0x4b000000u | (9 << 16) | (10 << 5) | 10); // pair width - count
+            emit(0x9ac02400u | (10 << 16) | (13 << 5) | 14); // carry from original pair
+            emit(0x9ac02000u | (9 << 16) | (13 << 5) | 13); // lslv x13,pair,count
+            emit(0xd340fc00u | ((i.w*8) << 16) | (13 << 5) | 13); // lsr x13,#operand bits
+        } else {
+            emit(0xaa000000u | (12 << 16) | ((i.w * 8) << 10) | (11 << 5) | 13);
+            emit(0x51000400u | (9 << 5) | 10); // count - 1
+            emit(0x9ac02400u | (10 << 16) | (13 << 5) | 14);
+            emit(0x9ac02400u | (9 << 16) | (13 << 5) | 13);
+        }
+        extract(13, 13, i.w, 0);
+        load(12, 19, offsetof(CPU, flags));
+        imm(10, ~(CF | PF | AF | ZF | SF | OF));
+        emit(0x0a000000u | (10 << 16) | (12 << 5) | 12);
+        imm(10, AF | 2); // Reference AND(result,mask) defines undefined AF as 1.
+        emit(0x2a000000u | (10 << 16) | (12 << 5) | 12);
+        flagBit(14, 0);
+        emit(0x7100053fu); // cmp w9,#1
+        auto notOne = code.size(); emit(0x54000001u); // b.ne
+        emit(0x4a000000u | (13 << 16) | (11 << 5) | 14);
+        bits(14, 14, i.w * 8 - 1, 1); flagBit(14, 11);
+        code[notOne] |= uint32_t(code.size() - notOne) << 5;
+        emit(0x710001bfu); // cmp w13,#0
+        emit(0x1a9f17eeu); // cset w14,eq
+        flagBit(14, 6);
+        bits(14, 13, i.w * 8 - 1, 1); flagBit(14, 7);
+        bits(14, 13, 0, 8);
+        for (unsigned shift : {4u, 2u, 1u})
+            emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
+        emit(0x2a2e03eeu); flagBit(14, 2);
+        store(12, 19, offsetof(CPU, flags));
+        if (memory) {
+            emit(0xf9400000u | (12u << 10) | (31 << 5) | 15); // Guarded RAM address.
+            emit((i.w==4 ? 0xb9000000u : 0x79000000u) | (15 << 5) | 13);
+        } else insert(20 + i.dst, 13, i.w, 0);
+        code[zero] |= uint32_t(code.size() - zero) << 5;
+        if (!memory) dirtyRegisters |= 1u << i.dst;
+    };
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
@@ -752,42 +801,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             continue;
         }
         if (i.kind == Kind::DoubleShift) {
-            finishFlags(last, -1, 0);
-            last = -1;
-            if (i.immediate) imm(9, i.imm);
-            else bits(9, 20 + CX, 0, 5);
-            auto zero = code.size();
-            emit(0x34000009u); // cbz w9: count zero preserves destination and flags
-            extract(11, 20 + i.dst, i.w, 0);
-            extract(12, 20 + i.src, i.w, 0);
-            emit(0xaa000000u | (12 << 16) | ((i.w * 8) << 10) | (11 << 5) | 13);
-            emit(0x51000400u | (9 << 5) | 10); // count - 1
-            emit(0x9ac02400u | (10 << 16) | (13 << 5) | 14); // lsrv x14,pair,count-1
-            emit(0x9ac02400u | (9 << 16) | (13 << 5) | 13); // lsrv x13,pair,count
-            extract(13, 13, i.w, 0);
-            load(12, 19, offsetof(CPU, flags));
-            imm(10, ~(CF | PF | AF | ZF | SF | OF));
-            emit(0x0a000000u | (10 << 16) | (12 << 5) | 12);
-            imm(10, AF | 2); // Reference AND(result,mask) defines undefined AF as 1.
-            emit(0x2a000000u | (10 << 16) | (12 << 5) | 12);
-            flagBit(14, 0);
-            emit(0x7100053fu); // cmp w9,#1
-            auto notOne = code.size(); emit(0x54000001u); // b.ne
-            emit(0x4a000000u | (13 << 16) | (11 << 5) | 14);
-            bits(14, 14, i.w * 8 - 1, 1); flagBit(14, 11);
-            code[notOne] |= uint32_t(code.size() - notOne) << 5;
-            emit(0x710001bfu); // cmp w13,#0
-            emit(0x1a9f17eeu); // cset w14,eq
-            flagBit(14, 6);
-            bits(14, 13, i.w * 8 - 1, 1); flagBit(14, 7);
-            bits(14, 13, 0, 8);
-            for (unsigned shift : {4u, 2u, 1u})
-                emit(0x4a400000u | (14 << 16) | (shift << 10) | (14 << 5) | 14);
-            emit(0x2a2e03eeu); flagBit(14, 2);
-            store(12, 19, offsetof(CPU, flags));
-            insert(20 + i.dst, 13, i.w, 0);
-            code[zero] |= uint32_t(code.size() - zero) << 5;
-            dirtyRegisters |= 1u << i.dst;
+            finishFlags(last,-1,0);
+            last=-1;
+            doubleShiftResult(i,false);
             continue;
         }
         if (i.kind == Kind::MultiplyByte) {
@@ -941,7 +957,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
             }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
-            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiply || i.memoryShift) {
+            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift) {
                 // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
                 // all other flags; IMUL preserves its undefined flags too.
                 // Publish the exact restart state before
@@ -954,11 +970,34 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     store(13, 31, 104);
                 }
             }
+            size_t zeroDoubleEnd=size_t(-1);
+            if (i.memoryDoubleShift && (!i.immediate || !i.imm)) {
+                size_t nonzero=size_t(-1);
+                if (!i.immediate) {
+                    bits(9,20+CX,0,5);
+                    nonzero=code.size();emit(0x35000009u); // cbnz w9,normal memory path
+                }
+                if ((block.cr0 & 1) && !block.vm) {
+                    const auto offset=offsetof(CPU,s)+i.memory.segment*sizeof(Segment)+offsetof(Segment,unusable);
+                    emit(0x39400000u | (offset << 10) | (19 << 5) | 9);
+                    const auto usable=code.size();emit(0x34000009u);
+                    replay(i.start,unsigned(n),dirtyRegisters);
+                    code[usable] |= uint32_t(code.size()-usable) << 5;
+                }
+                zeroDoubleEnd=code.size();emit(0x14000000u);
+                if (nonzero!=size_t(-1))code[nonzero] |= uint32_t(code.size()-nonzero) << 5;
+            }
             const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
             auto metadata = &block.native->memory[memoryIndex++];
             std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if (i.memoryDoubleShift) {
+                    emit(0xf9000000u | (12u << 10) | (31 << 5) | 11);
+                    mov(17,10);
+                    doubleShiftResult(i,true);
+                    return;
+                }
                 if (i.segmentLoad) {
                     segmentLoad(i,unsigned(n),beforeLoad);
                     if (i.stackDelta) {
@@ -1274,7 +1313,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
                 if (i.stackMany) {
                     // finishMove performs all accesses after the whole-span guard.
-                } else if (i.memoryShift) {
+                } else if (i.memoryShift || i.memoryDoubleShift) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
                          (11 << 5) | 10);
                 } else if (i.memory.delta || i.memory.alu >= 0 || i.memory.exchange || i.memory.bit > 4 || i.memory.invert) {
@@ -1345,13 +1384,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift || i.stackMany || i.segmentLoad || i.popFlags) {
+            if (i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.
                 for (auto at : divisionErrors) code[at] |= uint32_t(code.size() - at) << 5;
                 replay(i.memory.begin, unsigned(n), beforeLoad);
                 if (fastSuccess != size_t(-1)) code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
+                if (zeroDoubleEnd!=size_t(-1))code[zeroDoubleEnd] |= uint32_t(code.size()-zeroDoubleEnd);
                 continue;
             }
             emit(0xaa1303e0u);

@@ -2045,3 +2045,14 @@ fall 90% in Word and 93% in Excel. All 48 matched release restores pass. CPU tim
 is 26.94% below the original Word baseline and 12.57% below Excel's. Incremental
 medians are within control variation, so no reliable speedup is established.
 See [semantics, measurements and limits](measurements/office-pop-memory-2026-10-27.md).
+
+### Word and Excel: SHLD/SHRD register and memory coverage (2026-10-27)
+
+Both double-shift directions now share native result/flag generation for register
+and guarded memory operands. Zero memory counts validate segment usability but
+perform no data access. Validation passes 23,348 memory checks, 102,230,994
+flag-liveness checks and the reference/batch suites. Interpreted immediate SHLD
+attempts fall 93% in Word and 99% in Excel; all 48 matched release restores pass.
+CPU time is 26.76% below the original Word baseline and 12.34% below Excel's.
+Small incremental medians are higher (0.08%/0.14%), so no performance gain is
+claimed. See [semantics, measurements and limits](measurements/office-double-shift-2026-10-27.md).

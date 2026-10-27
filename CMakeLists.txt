@@ -260,6 +260,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-memory-double-shift-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_memory_double_shift_test.cpp
+)
+
 pcemu_program(jit-pop-memory-tests ZSTD
   SOURCES
     ${CORE}
