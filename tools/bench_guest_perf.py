@@ -11,9 +11,12 @@ import tempfile
 from pathlib import Path
 from cow_file import CowFile
 from fat_stage import Writer
+from freedos_fixture import startup
 
 ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--disk', type=Path, default=ROOT/'media/dos.raw',
+                    help='existing DOS/FreeDOS parent; validation uses a private overlay')
 parser.add_argument('--suite', choices=['coremark', 'micro'], default='coremark')
 parser.add_argument('--loops', type=int, default=1000000)
 parser.add_argument('--iterations', type=int, default=0,
@@ -56,14 +59,13 @@ if disk.exists():
 subprocess.run(['python3', str(ROOT / 'tools/build_guest_perf.py'), '--suite', args.suite,
                 '--iterations', str(args.iterations), '--output', str(work / 'program')], check=True)
 subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk),
-                str(ROOT / 'media/dos.raw')], check=True)
+                str(args.disk.resolve())], check=True)
 with CowFile(disk) as handle:
     fat = Writer(handle)
     program = (work / 'program/PCBENCH.COM').read_bytes()
     fat.root_entry(fat.entry('PCBENCH.COM', 32, fat.allocate(program), len(program)))
     fat.commit()
-    fat.replace_existing('CONFIG  SYS', b'FILES=30\r\nBUFFERS=20\r\n')
-    fat.replace_existing('AUTOEXECBAT', b'@ECHO OFF\r\nPCBENCH.COM\r\n'
+    startup(fat, b'FILES=30\r\nBUFFERS=20\r\n', b'@ECHO OFF\r\nPCBENCH.COM\r\n'
                          b'ECHO PCEMU benchmark returned to DOS\r\n')
     entry = next(entry for entry in fat.entries() if entry[1] == 'PCBENCH COM')
     if fat.read_file(entry[2], entry[3]) != program:

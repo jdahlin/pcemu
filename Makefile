@@ -17,6 +17,7 @@ test: build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-t
 	./build/vga-bios-tests
 	python3 tools/smoke_vga_bios.py
 	python3 -m unittest discover -s tests -p test_guest_memory.py
+	python3 -m unittest discover -s tests -p test_freedos_fixture.py
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
 	python3 -m unittest discover -s tests -p test_display_modes.py
 	./build/hardware-device-tests
@@ -309,3 +310,19 @@ test-arm-native:
 	./build/state-archive-tests
 	./build/hvf-snapshot-tests
 	./build/arm-snapshot-tests
+
+# Optional downloadable x86 integration fixture; ordinary test stays offline.
+FREEDOS_DISK ?= $(CURDIR)/build/freedos/freedos.qcow2
+.PHONY: freedos smoke-freedos test-freedos test-freedos-vga
+freedos: build/disk-tool
+	python3 tools/freedos_fixture.py --output "$(FREEDOS_DISK)"
+smoke-freedos: build/pcemu freedos
+	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)"
+test-freedos: build/pcemu build/guest-bench freedos
+	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)"
+	python3 tools/smoke_freedos.py --disk "$(FREEDOS_DISK)" --no-jit
+	python3 tools/bench_guest_perf.py --disk "$(FREEDOS_DISK)" --suite micro --loops 1024
+	python3 tools/bench_guest_perf.py --disk "$(FREEDOS_DISK)" --suite micro --loops 1024 --no-jit
+test-freedos-vga: build/pcemu freedos
+	python3 tools/smoke_vga_edges.py --disk "$(FREEDOS_DISK)"
+	python3 tools/smoke_vga_edges.py --disk "$(FREEDOS_DISK)" --no-jit

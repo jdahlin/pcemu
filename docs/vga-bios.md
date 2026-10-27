@@ -365,3 +365,7 @@ independent text oracle, without changing VGA read latches. External results,
 firmware/executable hashes, exact comparison scopes and retained evidence paths
 are recorded in [the edge validation measurement](measurements/standalone-vga-edges-2026-10-27.json). This suite does
 not automate every interactive diagnostic, animated page flip, or timing test.
+
+The external edge suite can now use the downloadable FreeDOS fixture, with no
+private MS-DOS installation: run `make test-freedos-vga`. See
+[FreeDOS validation](freedos-validation.md) for setup, CPU and driver checks.

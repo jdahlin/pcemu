@@ -106,8 +106,13 @@ host-backed; ARM UEFI remains a separate firmware dependency.
 
 ## Validate
 
+[FreeDOS validation](docs/freedos-validation.md) provides a reproducible guest
+fixture and headless CPU, memory-manager, mouse, storage and network driver checks.
+
 ```sh
 make test
+make test-freedos     # downloadable FreeDOS CPU + driver checks, interpreter/JIT
+make test-freedos-vga # external VGA suites on FreeDOS, with QEMU comparisons
 make bench
 ./build/pcemu --benchmark-memory # checked flat/paged load-add-store loops
 make smoke-win311 # installed disk + tesseract required; private compressed overlay, file readback

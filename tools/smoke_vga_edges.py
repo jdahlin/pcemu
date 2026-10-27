@@ -12,6 +12,7 @@ import time
 from PIL import ImageChops
 from cow_file import CowFile
 from fat_stage import Writer
+from freedos_fixture import startup
 from prepare_media import FAT
 from fetch_vga_diagnostics import prepare, prepare_edges
 from vga_text_oracle import render_text
@@ -63,8 +64,8 @@ class EdgeRun:
         seed=self.overlay('seed',self.args.disk)
         with CowFile(seed) as disk:
             fat=Writer(disk)
-            fat.replace_existing('CONFIG  SYS',b'FILES=40\r\nBUFFERS=20\r\n')
-            fat.replace_existing('AUTOEXECBAT',b'@ECHO OFF\r\nPATH C:\\DOS\r\nCD \\DIAG\r\nVGATEST0.EXE\r\n')
+            startup(fat,b'FILES=40\r\nBUFFERS=20\r\n',
+                    b'@ECHO OFF\r\nPATH C:\\FREEDOS\\BIN;C:\\DOS\r\nCD \\DIAG\r\nVGATEST0.EXE\r\n')
             files={'VGATEST0.EXE':(folder/'VGATEST0.EXE').read_bytes()}
             files.update({p.name:p.read_bytes() for p in (ROOT/'build/vga-edge/tools').glob('*.EXE')})
             files['X-VESA.COM']=(folder/'X-VESA.COM').read_bytes()

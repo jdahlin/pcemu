@@ -1,0 +1,1613 @@
+{
+  "date": "2026-10-27",
+  "scope": "Headless functional FreeDOS CPU/device/driver validation; no performance score or complete x86 conformance claim",
+  "fixture": {
+    "distribution": "FreeDOS 1.4 LiteUSB",
+    "url": "https://download.freedos.org/1.4/FD14-LiteUSB.zip",
+    "archiveSHA256": "857dcd2ebf9d3d094320154db5fb5b830acba6fb98f981a95a0ca7ab3350338b",
+    "verification": "https://download.freedos.org/1.4/verify.txt",
+    "fdnet": {
+      "revision": "1fa2d28a107f726bb1cc11087b2b9a68ab345fc8",
+      "url": "https://gitlab.com/FreeDOS/net/fdnet/-/archive/1fa2d28a107f726bb1cc11087b2b9a68ab345fc8/fdnet-1fa2d28a107f726bb1cc11087b2b9a68ab345fc8.zip",
+      "sha256": "b770ce088a23b2b0f223989d74cf8072c4511eb8f5262f5bc7a21eb7a50af6db"
+    },
+    "builderSHA256": "005b5f9b7d6b9f44ef742d6107a3bbb381e345ec7ef796cf63d0a44ebe66e02b",
+    "diskSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+    "logicalBytes": 33554432,
+    "policy": "Generated bootable fixture; original packages/source/licenses retained; per-run overlays only"
+  },
+  "makeTargets": {
+    "test-freedos": {
+      "status": "passed",
+      "evidence": "build/freedos/test-freedos-current.log"
+    },
+    "test-freedos-vga": {
+      "status": "passed",
+      "evidence": "build/freedos/test-freedos-vga.log"
+    },
+    "test": {
+      "status": "passed",
+      "evidence": "build/freedos/make-test-final.log",
+      "additionalCheck": "four offline fixture tests rerun after adding checksum-rejection coverage"
+    }
+  },
+  "driverRuns": [
+    {
+      "evidence": "build/freedos-minimal-juo3_5e9/report.json",
+      "profile": "minimal",
+      "backend": "jit",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "b5e7e4be6ce2c63c4d5accfe59e41341da45f4ab445c8a33b83fcd7afb03f14c",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "",
+      "driverCommands": "",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-xms-gik7zhor/report.json",
+      "profile": "xms",
+      "backend": "jit",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "1e3144244644cb14ef566844d98511da28f870f689c0ae913ab3a5d20e57db5b",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n",
+      "driverCommands": "C:\\DRIVERS\\CTMOUSE.EXE /P\r\n",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "XMS-MOVE-8192",
+        "PS2-MOUSE-IRQ-MOTION",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-ems-lmq_qawf/report.json",
+      "profile": "ems",
+      "backend": "jit",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "7fddcbcbb599dfff57ee5aff1c53e78a20ab6edd9d2e021a975bf6fe11626f44",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "DEVICE=C:\\FREEDOS\\BIN\\JEMMEX.EXE I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF\r\nDOS=HIGH,UMB\r\n",
+      "driverCommands": "C:\\DRIVERS\\CTMOUSE.EXE /P\r\n",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "XMS-MOVE-8192",
+        "EMS-4-PAGES-65536",
+        "PS2-MOUSE-IRQ-MOTION",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-network-c_mbny95/report.json",
+      "profile": "network",
+      "backend": "jit",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "b5e7e4be6ce2c63c4d5accfe59e41341da45f4ab445c8a33b83fcd7afb03f14c",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "",
+      "driverCommands": "C:\\DRIVERS\\NE2000.COM 0x60 0xA 0x300\r\nSET MTCPCFG=C:\\TCP.CFG\r\nC:\\DRIVERS\\DHCP.EXE > C:\\DHCP.LOG\r\nIF ERRORLEVEL 1 GOTO FAILED\r\n",
+      "status": "passed",
+      "dhcp": "mTCP DHCP Client by M Brutman (mbbrutman@gmail.com) (C)opyright 2008-2024\r\nVersion: Oct 20 2024\r\n\r\nTimeout per request: 10 seconds, Retry attempts: 3\r\nRequesting a 28800 second lease\r\nSending DHCP requests, Press [ESC] to abort.\r\n\r\nDHCP request sent, attempt 1: Offer received, Acknowledged\r\n\r\nGood news everyone!\r\n\r\nHOSTNAME PCEMU\r\nDOMAIN \r\nIPADDR 10.0.2.15\r\nNETMASK 255.255.255.0\r\nGATEWAY 10.0.2.2\r\nNAMESERVER 10.0.2.3\r\nLEASE_TIME 86400 seconds\r\n\r\nWarning: Your DHCP server may not have honored your hostname request.\r\nRequested hostname: \"PCEMU\", Assigned hostname: \"\"\r\n\r\nSettings written to 'C:\\TCP.CFG'\r\n",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-minimal-9cyurjxv/report.json",
+      "profile": "minimal",
+      "backend": "interpreter",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "b5e7e4be6ce2c63c4d5accfe59e41341da45f4ab445c8a33b83fcd7afb03f14c",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "",
+      "driverCommands": "",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-xms-53b_ezsw/report.json",
+      "profile": "xms",
+      "backend": "interpreter",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "1e3144244644cb14ef566844d98511da28f870f689c0ae913ab3a5d20e57db5b",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n",
+      "driverCommands": "C:\\DRIVERS\\CTMOUSE.EXE /P\r\n",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "XMS-MOVE-8192",
+        "PS2-MOUSE-IRQ-MOTION",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-ems-t7nzds_4/report.json",
+      "profile": "ems",
+      "backend": "interpreter",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "7fddcbcbb599dfff57ee5aff1c53e78a20ab6edd9d2e021a975bf6fe11626f44",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "DEVICE=C:\\FREEDOS\\BIN\\JEMMEX.EXE I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF\r\nDOS=HIGH,UMB\r\n",
+      "driverCommands": "C:\\DRIVERS\\CTMOUSE.EXE /P\r\n",
+      "status": "passed",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "XMS-MOVE-8192",
+        "EMS-4-PAGES-65536",
+        "PS2-MOUSE-IRQ-MOTION",
+        "PROBE-COMPLETE"
+      ]
+    },
+    {
+      "evidence": "build/freedos-network-l6mwmz05/report.json",
+      "profile": "network",
+      "backend": "interpreter",
+      "runnerSHA256": "b91b332d186f67c7e298d6a92e2c1881ca896ecb62abc91c5094c1acc9132425",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "probeSHA256": "b5e7e4be6ce2c63c4d5accfe59e41341da45f4ab445c8a33b83fcd7afb03f14c",
+      "parentSHA256": "c5087da5be238719ab3004a11e4af9ff0652b2d3468237799bb5a10e090acc31",
+      "sourceCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "config": "",
+      "driverCommands": "C:\\DRIVERS\\NE2000.COM 0x60 0xA 0x300\r\nSET MTCPCFG=C:\\TCP.CFG\r\nC:\\DRIVERS\\DHCP.EXE > C:\\DHCP.LOG\r\nIF ERRORLEVEL 1 GOTO FAILED\r\n",
+      "status": "passed",
+      "dhcp": "mTCP DHCP Client by M Brutman (mbbrutman@gmail.com) (C)opyright 2008-2024\r\nVersion: Oct 20 2024\r\n\r\nTimeout per request: 10 seconds, Retry attempts: 3\r\nRequesting a 28800 second lease\r\nSending DHCP requests, Press [ESC] to abort.\r\n\r\nDHCP request sent, attempt 1: Offer received, Acknowledged\r\n\r\nGood news everyone!\r\n\r\nHOSTNAME PCEMU\r\nDOMAIN \r\nIPADDR 10.0.2.15\r\nNETMASK 255.255.255.0\r\nGATEWAY 10.0.2.2\r\nNAMESERVER 10.0.2.3\r\nLEASE_TIME 86400 seconds\r\n\r\nWarning: Your DHCP server may not have honored your hostname request.\r\nRequested hostname: \"PCEMU\", Assigned hostname: \"\"\r\n\r\nSettings written to 'C:\\TCP.CFG'\r\n",
+      "checks": [
+        "DOS-FILE-8192",
+        "ATA-PIO-IDENTIFY-READ",
+        "BIOS-KEYBOARD-RING",
+        "PIT-IRQ-TICKS",
+        "PROBE-COMPLETE"
+      ]
+    }
+  ],
+  "cpuRuns": [
+    {
+      "evidence": "build/guest-perf-ozs16y38/result.json",
+      "status": "passed",
+      "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+      "jit": true,
+      "returnedToDos": true,
+      "microValidated": true,
+      "loops": 1024,
+      "runnerSha256": "32a677f474d08de8fe6240ab2e0fa6a771b62ccd0cd3e00b45baee5f498c47b7",
+      "gitCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "gitDirty": true,
+      "programSHA256": "7c0f51ccedc48d568adf35163a96da824336fbe3288e894acb7cab871827e3a4",
+      "intervals": [
+        {
+          "case": 21,
+          "name": "loop-counter",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 21,
+          "name": "loop-counter",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 22,
+          "name": "byte-exchange",
+          "codeBits": 16,
+          "operandBits": 8,
+          "cache": "cold",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 22,
+          "name": "byte-exchange",
+          "codeBits": 16,
+          "operandBits": 8,
+          "cache": "warm",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 16,
+          "name": "alu",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 16,
+          "name": "alu",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 17,
+          "name": "memory-update",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 17,
+          "name": "memory-update",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 18,
+          "name": "branch",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 18,
+          "name": "branch",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 19,
+          "name": "call-ret",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 19,
+          "name": "call-ret",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 20,
+          "name": "rep-copy",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 20,
+          "name": "rep-copy",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 23,
+          "name": "rep-fill",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 23,
+          "name": "rep-fill",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 32,
+          "name": "alu",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 32,
+          "name": "alu",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 33,
+          "name": "memory-update",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 33,
+          "name": "memory-update",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 34,
+          "name": "branch",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 34,
+          "name": "branch",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 35,
+          "name": "call-ret",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 35,
+          "name": "call-ret",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 36,
+          "name": "rep-copy",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 36,
+          "name": "rep-copy",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 37,
+          "name": "loop-counter",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 37,
+          "name": "loop-counter",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 38,
+          "name": "byte-exchange",
+          "codeBits": 32,
+          "operandBits": 8,
+          "cache": "cold",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 38,
+          "name": "byte-exchange",
+          "codeBits": 32,
+          "operandBits": 8,
+          "cache": "warm",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 39,
+          "name": "rep-fill",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 39,
+          "name": "rep-fill",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        }
+      ]
+    },
+    {
+      "evidence": "build/guest-perf-eelzqgxe/result.json",
+      "status": "passed",
+      "scope": "actual minimal DOS boot, original protected-mode loader, host monotonic wall time, no SDL",
+      "jit": false,
+      "returnedToDos": true,
+      "microValidated": true,
+      "loops": 1024,
+      "runnerSha256": "32a677f474d08de8fe6240ab2e0fa6a771b62ccd0cd3e00b45baee5f498c47b7",
+      "gitCommit": "f81f4a6524d36cda81f0a0c79cce97cbde238379",
+      "gitDirty": true,
+      "programSHA256": "7c0f51ccedc48d568adf35163a96da824336fbe3288e894acb7cab871827e3a4",
+      "intervals": [
+        {
+          "case": 21,
+          "name": "loop-counter",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 21,
+          "name": "loop-counter",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 22,
+          "name": "byte-exchange",
+          "codeBits": 16,
+          "operandBits": 8,
+          "cache": "cold",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 22,
+          "name": "byte-exchange",
+          "codeBits": 16,
+          "operandBits": 8,
+          "cache": "warm",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 16,
+          "name": "alu",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 16,
+          "name": "alu",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 17,
+          "name": "memory-update",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 17,
+          "name": "memory-update",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 18,
+          "name": "branch",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 18,
+          "name": "branch",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 19,
+          "name": "call-ret",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 19,
+          "name": "call-ret",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 20,
+          "name": "rep-copy",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 20,
+          "name": "rep-copy",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 23,
+          "name": "rep-fill",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "cold",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 23,
+          "name": "rep-fill",
+          "codeBits": 16,
+          "operandBits": 16,
+          "cache": "warm",
+          "checksum": 1480320,
+          "checksumChecked": true
+        },
+        {
+          "case": 32,
+          "name": "alu",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 32,
+          "name": "alu",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 49152,
+          "checksumChecked": true
+        },
+        {
+          "case": 33,
+          "name": "memory-update",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 33,
+          "name": "memory-update",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 8192,
+          "checksumChecked": true
+        },
+        {
+          "case": 34,
+          "name": "branch",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 34,
+          "name": "branch",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2048,
+          "checksumChecked": true
+        },
+        {
+          "case": 35,
+          "name": "call-ret",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 35,
+          "name": "call-ret",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 4096,
+          "checksumChecked": true
+        },
+        {
+          "case": 36,
+          "name": "rep-copy",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 36,
+          "name": "rep-copy",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 37,
+          "name": "loop-counter",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 37,
+          "name": "loop-counter",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 3072,
+          "checksumChecked": true
+        },
+        {
+          "case": 38,
+          "name": "byte-exchange",
+          "codeBits": 32,
+          "operandBits": 8,
+          "cache": "cold",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 38,
+          "name": "byte-exchange",
+          "codeBits": 32,
+          "operandBits": 8,
+          "cache": "warm",
+          "checksum": 4,
+          "checksumChecked": true
+        },
+        {
+          "case": 39,
+          "name": "rep-fill",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "cold",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        },
+        {
+          "case": 39,
+          "name": "rep-fill",
+          "codeBits": 32,
+          "operandBits": 32,
+          "cache": "warm",
+          "checksum": 2526451328,
+          "checksumChecked": true
+        }
+      ]
+    }
+  ],
+  "vgaRuns": [
+    {
+      "evidence": "build/vga-edge-doin9po3/report.json",
+      "status": "passed",
+      "sourceCommit": "f7f30605a610a6b7fe00e18a6203c81961686346",
+      "backend": "jit",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "runnerSHA256": "920f82d5273d6417ece5f695c65fb8d5a1c76efcb1f711dfe973e5c7020d2edd",
+      "harnessSHA256": "20b7035f3a38208c9bc2482856788305254ece54600f3ea4eaec24a64c140951",
+      "results": [
+        {
+          "case": "text-split",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "3451d0cf28f32a0b5f5475cab27fbe360c45a71e6ed261c0ee3690dcfc4c91f3"
+        },
+        {
+          "case": "text-hpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "73e45a903a2857fd851154da211f6f0bf95d22324dc7d76842a71359e35610fd"
+        },
+        {
+          "case": "text-vpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "333969bf0275b9eea1a3de46313c0a120ee702139b1ec75fb3b4bbe147e6260d"
+        },
+        {
+          "case": "text-split-overflow",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "5147a9523c9c6683fa5e17e0031bb3b8faf2a1dbb08510175337ada4bd2d50b2"
+        },
+        {
+          "case": "text-start",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "6f87e92d43d775178e6e9420825b174fa4ab43519ee9e92178f3b9d43c12572e"
+        },
+        {
+          "case": "graphics-split",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d",
+          "qemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d"
+        },
+        {
+          "case": "graphics-hpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee",
+          "qemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee"
+        },
+        {
+          "case": "graphics-vpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d",
+          "qemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d"
+        },
+        {
+          "case": "graphics-split-overflow",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb",
+          "qemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb"
+        },
+        {
+          "case": "graphics-start",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b",
+          "qemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b"
+        },
+        {
+          "case": "graphics-pan-reset",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84",
+          "qemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84"
+        },
+        {
+          "case": "L24-1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a",
+          "qemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a"
+        },
+        {
+          "case": "L25-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0",
+          "qemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0"
+        },
+        {
+          "case": "L25-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3",
+          "qemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3"
+        },
+        {
+          "case": "L25-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650",
+          "qemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650"
+        },
+        {
+          "case": "L25-4",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12",
+          "qemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12"
+        },
+        {
+          "case": "L26-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368",
+          "qemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368"
+        },
+        {
+          "case": "L26-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f",
+          "qemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f"
+        },
+        {
+          "case": "L28-2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f",
+          "qemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f"
+        },
+        {
+          "case": "L28-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a",
+          "qemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a"
+        },
+        {
+          "case": "L30-1-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0",
+          "qemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0"
+        },
+        {
+          "case": "L30-1-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b",
+          "qemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b"
+        },
+        {
+          "case": "L30-2-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "L30-2-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "xvesa-display-start-PcGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "xvesa-display-start-QemuGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "doslib-pcemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        },
+        {
+          "case": "doslib-qemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        }
+      ]
+    },
+    {
+      "evidence": "build/vga-edge-wz0k4qca/report.json",
+      "status": "passed",
+      "sourceCommit": "f7f30605a610a6b7fe00e18a6203c81961686346",
+      "backend": "interpreter",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "runnerSHA256": "e6fc3ae375707f5267ef47cffb76b33676c801b5cc5dfb8f0b3bb89c61a50dbf",
+      "harnessSHA256": "42d4d44c0d35f42a6b7c84a862b4f2ea75c9b1623f4e4c0c2dc770d2761c2ab7",
+      "results": [
+        {
+          "case": "text-split",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "3451d0cf28f32a0b5f5475cab27fbe360c45a71e6ed261c0ee3690dcfc4c91f3"
+        },
+        {
+          "case": "text-hpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "73e45a903a2857fd851154da211f6f0bf95d22324dc7d76842a71359e35610fd"
+        },
+        {
+          "case": "text-vpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "333969bf0275b9eea1a3de46313c0a120ee702139b1ec75fb3b4bbe147e6260d"
+        },
+        {
+          "case": "text-split-overflow",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "5147a9523c9c6683fa5e17e0031bb3b8faf2a1dbb08510175337ada4bd2d50b2"
+        },
+        {
+          "case": "text-start",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "pcemuSHA256": "6f87e92d43d775178e6e9420825b174fa4ab43519ee9e92178f3b9d43c12572e"
+        },
+        {
+          "case": "graphics-split",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d",
+          "qemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d"
+        },
+        {
+          "case": "graphics-hpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee",
+          "qemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee"
+        },
+        {
+          "case": "graphics-vpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d",
+          "qemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d"
+        },
+        {
+          "case": "graphics-split-overflow",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb",
+          "qemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb"
+        },
+        {
+          "case": "graphics-start",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b",
+          "qemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b"
+        },
+        {
+          "case": "graphics-pan-reset",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84",
+          "qemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84"
+        },
+        {
+          "case": "L24-1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a",
+          "qemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a"
+        },
+        {
+          "case": "L25-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0",
+          "qemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0"
+        },
+        {
+          "case": "L25-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3",
+          "qemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3"
+        },
+        {
+          "case": "L25-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650",
+          "qemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650"
+        },
+        {
+          "case": "L25-4",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12",
+          "qemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12"
+        },
+        {
+          "case": "L26-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368",
+          "qemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368"
+        },
+        {
+          "case": "L26-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f",
+          "qemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f"
+        },
+        {
+          "case": "L28-2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f",
+          "qemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f"
+        },
+        {
+          "case": "L28-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a",
+          "qemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a"
+        },
+        {
+          "case": "L30-1-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0",
+          "qemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0"
+        },
+        {
+          "case": "L30-1-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b",
+          "qemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b"
+        },
+        {
+          "case": "L30-2-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "L30-2-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "xvesa-display-start-PcGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "xvesa-display-start-QemuGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "doslib-pcemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        },
+        {
+          "case": "doslib-qemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        }
+      ]
+    }
+  ],
+  "guestFilesSHA256": {
+    "KERNEL.SYS": "932c0c155701eddb7b902f7269a1b2ce31f5c82a6dc195172f2336d18a74e1fb",
+    "COMMAND.COM": "077808379e896476f7f69d62e6c8989d8fc23e8ef58d1c8492db1ac106784107",
+    "FREEDOS/BIN/HIMEMX.EXE": "abd7a5f5cae2a3a34e577e20097076062dd9177bb754058b35d754537d32fbbd",
+    "FREEDOS/BIN/JEMMEX.EXE": "4b3046802518739652e0d90b92bbe240ac58870c572e3db9f6bbb94cc7d10ec2",
+    "DRIVERS/CTMOUSE.EXE": "822cf550c9e19a22785722d2306aa08ede10ff20bfe931d5a81a15f77c5f363e",
+    "DRIVERS/NE2000.COM": "df25f56665a623995ca0791a02826398683863cdbb884c771a285744835bb3ac",
+    "DRIVERS/DHCP.EXE": "5c84412a57e41c6f2c32ff72f8e4005c92ec5d99286c38b0528cf59026fa1fb5"
+  },
+  "coverageNotes": [
+    "Driver profile success requires exact guest-file PASS records, not load banners.",
+    "Mouse test injects PS/2 motion behind a blocking guest readiness fence and requires nonzero driver motion counts.",
+    "DHCP requires an acknowledged offer and committed IPADDR 10.0.2.15/GATEWAY 10.0.2.2; no public host is contacted.",
+    "XMS moves and compares 8192 bytes; EMS writes/remaps/compares four complete 16 KiB pages.",
+    "ATA PIO IDENTIFY and sector read are tested separately from DOS file I/O, whose block driver uses BIOS INT13.",
+    "All CPU intervals have independently calculated checksums; 1024-loop runs are acceptance tests, not performance scores.",
+    "The parent disk hash is checked before/after every driver run; successful child overlays are removed.",
+    "Each sourceCommit/gitCommit is the repository base at run start; frozen executable/ROM/probe hashes identify actual inputs, including concurrent work.",
+    "QEMU VGA comparisons retain the independent IBM text oracle and four-byte-aligned DISPI display-start comparison rules."
+  ],
+  "limits": [
+    "JEMMEX uses an explicit EMS frame: I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF. Writable ISA upper-memory/ROM regions prevent reliable automatic hole discovery.",
+    "Not every x86 instruction, FreeDOS driver, UMB discovery path or physical raster/timer behavior is covered.",
+    "ATAPI/CD-ROM, USB and sound driver support is not claimed by this matrix."
+  ]
+}
