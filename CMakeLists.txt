@@ -932,3 +932,5 @@ if(TARGET pcemu-arm-session)
 endif()
 
 pcemu_program(state-archive-tests SOURCES tests/state_archive_test.cpp)
+
+include(cmake/VgaBios.cmake)

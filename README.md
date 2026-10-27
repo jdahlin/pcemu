@@ -94,6 +94,9 @@ between executables. Development builds default to `-O1 -g`; opt into `-O3` with
 compilation to Ninja. Dependencies are located through pkg-config. A compatible
 VGA BIOS ROM is read from `roms/vgabios.bin` for its text font; this local copy
 came from the already-installed Homebrew QEMU package. See `roms/README.md`.
+An optional original standalone text-mode VGA ROM builds with
+`cmake --build build --target vga-bios-tests`; see [VGA BIOS](docs/vga-bios.md)
+for its specification contract, headless tests and current compatibility limits.
 
 ## Validate
 

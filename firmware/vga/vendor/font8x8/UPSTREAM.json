@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/dhepper/font8x8",
+  "revision": "8e279d2d864e79128e96188a6b9526cfa3fbfef9",
+  "license": "Public Domain, as declared in upstream file headers",
+  "files": {
+    "README": "885cc022fa9c844695b364e77e6a18ab2be74678a181827f1ce893071205cb65",
+    "font8x8_basic.h": "49d8df366296b203ca3211bc0672cf2a762135bf12710735b6292756b19dffd5",
+    "font8x8_control.h": "66c10295de288722d4c9384d5bf84e2c82c1a07f8ad020d2e3c0588e80dd1f9e",
+    "font8x8_ext_latin.h": "e0582e9a6b3f85dbb983c72d95c9a50c3547ad5e895d16ef167e20777d053f1b",
+    "font8x8_greek.h": "e80e7b27948f7729bd8d0fae4110124a812516ea65bae2d82d8c16fbf40b9ffd",
+    "font8x8_box.h": "f7171735837d05bdfd943b0f54f72100a065d0bc0e50385edc7319ae65b0e2b6",
+    "font8x8_block.h": "a6b97a0819fa79fbba259f69e7dc2e34586703151648d68889e2a8b71831342f",
+    "font8x8_misc.h": "01a77242dc9e623b359e1b262fdc02110de1a6834432b7167534196b769f23e5"
+  }
+}
