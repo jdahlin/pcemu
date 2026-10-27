@@ -100,7 +100,7 @@ class PcGuest:
 
 class QemuGuest:
     """Own one independent headless QEMU/SeaBIOS validation guest over QMP."""
-    def __init__(self, work, disk, rom):
+    def __init__(self, work, disk, rom, icount=False):
         work.mkdir()
         self.work, self.frame = work, work / 'frame.ppm'
         self.log = (work / 'guest.log').open('w')
@@ -109,6 +109,10 @@ class QemuGuest:
                         '-drive', f'file={disk},format=qcow2,if=ide', '-boot', 'c',
                         '-display', 'none', '-serial', 'none', '-monitor', 'none',
                         '-qmp', f'unix:{work / "qmp.sock"},server=on,wait=off', '-no-reboot']
+        if icount:
+            # Deterministic guest time lets busy-wait DOS diagnostics run without
+            # minutes of wall-clock delays; it is never a speed/timing oracle.
+            self.command += ['-icount', 'shift=7,align=off,sleep=off']
         self.process = subprocess.Popen(self.command, stdout=self.log, stderr=subprocess.STDOUT,
                                         start_new_session=True)
         self.connection = socket.socket(socket.AF_UNIX)

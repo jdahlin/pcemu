@@ -6,6 +6,40 @@
 #include <iomanip>
 #include <iostream>
 namespace pc {
+// Capture a stable, read-only device image for independent headless oracles.
+// IMPLEMENTATION NOTE: JSON arrays/hex plane bytes are a diagnostic format,
+// not a guest hardware interface or the machine snapshot format.
+void writeVgaState(std::ostream &j, const VGA &v) {
+    auto array = [&](const auto &values) {
+        j << '[';
+        bool first = true;
+        for (auto value : values) {
+            if (!first) j << ',';
+            first = false;
+            j << unsigned(value);
+        }
+        j << ']';
+    };
+    j << "{\"version\":1,\"seq\":"; array(v.seq);
+    j << ",\"gfx\":"; array(v.gfx);
+    j << ",\"crtc\":"; array(v.crtc);
+    j << ",\"attr\":"; array(v.attr);
+    j << ",\"dacMask\":" << unsigned(v.dacMask);
+    j << ",\"attributeAddress\":" << unsigned(v.attrIndex) << ",\"dac\":[";
+    for (unsigned n = 0; n < 256; ++n) {
+        if (n) j << ',';
+        array(v.dac[n]);
+    }
+    j << "],\"planes\":[";
+    constexpr char hex[] = "0123456789abcdef";
+    for (unsigned p = 0; p < 4; ++p) {
+        if (p) j << ',';
+        j << '"';
+        for (auto value : v.planes[p]) j << hex[value >> 4] << hex[value & 15];
+        j << '"';
+    }
+    j << "]}\n";
+}
 void dumpCpu(CPU &c) {
     std::cerr << "\nCPU " << c.location() << " instructions=" << c.instructions
               << " flags=" << std::hex << c.flags << " CR0=" << c.cr[0] << " CR3=" << c.cr[3]

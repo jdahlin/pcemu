@@ -499,6 +499,13 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                                 throw std::runtime_error("mouse needs DX DY BUTTONS [WHEEL]");
                             command >> wheel;
                             m.ps2.accumulate_motion(dx, dy, buttons, wheel);
+                        } else if (op == "dump-vga") {
+                            std::string path;
+                            std::getline(command >> std::ws, path);
+                            if (path.empty()) throw std::runtime_error("VGA diagnostic path is required");
+                            std::ofstream output(path);
+                            if (!output) throw std::runtime_error("Cannot write VGA diagnostic state");
+                            writeVgaState(output, m.vga);
                         } else if (op == "capture")
                             captureRequested = 1;
                         else if (op == "profile-wait") {

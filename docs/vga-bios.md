@@ -189,7 +189,7 @@ selective state restoration. ABI checks cover full 32-bit register preservation,
 segments, stack balance, DF/CF, guarded buffers and immutable ROM bytes.
 Protected-mode tests relocate the VBE entry points into RAM and execute them
 in flat 32-bit mode. Display tests include direct CRTC text geometry changes.
-The roughly 2.3 million assertions include per-byte/per-pixel checks; that number
+The assertion count includes per-byte/per-pixel checks; that number
 is not a count of independently covered features.
 
 The optional reference-ROM run compares only shared supported contracts:
@@ -248,10 +248,10 @@ firmware restart. Successful runs remove their private compressed overlays.
 `tools/smoke_win311.py` and `tools/smoke_win95.py` accept `--vgabios FILE` for
 explicit comparison; omission exercises the embedded default.
 
-The focused suite also covers snapshots (including version-6 compatibility),
+The focused suite also covers snapshots (including version-6/7 compatibility),
 hardware devices, input/video integration and native memory access boundaries.
-Remaining device limits include split screen, pel panning, complete text-address
-generation, protected CRTC registers and accurate raster timing. Not every
+Remaining device limits include complete CRTC word/doubleword address
+multiplexing and accurate raster timing. Not every
 interactive VGATEST/X-VESA demo has been validated. Optional LCD, dual-adapter,
 DDC/EDID and VBE 3.0 functions are not advertised. Published BIOS save/parameter
 tables do not imply support for arbitrary guest replacement mode tables.
@@ -301,3 +301,67 @@ Both color/monochrome Status1 aliases reset the Attribute flip-flop and share
 the synthetic retrace state. Text Color Plane Enable now masks foreground and
 background color indexes, as it already does in planar graphics. Native tests
 cover the monochrome status alias and masked text output.
+
+
+The expanded external suite is reproducible with:
+
+```sh
+python3 tools/smoke_vga_edges.py --disk /absolute/path/existing-dos.qcow2
+# Repeat with --no-jit for the interpreter.
+# A reference firmware run needs a PCI option ROM, e.g. QEMU's vgabios-stdvga.bin:
+python3 tools/smoke_vga_edges.py --disk /absolute/path/existing-dos.qcow2 --rom /absolute/path/vgabios-stdvga.bin
+```
+
+`--case text|graphics|blackbook|doslib|xvesa` selects an individual group;
+`all` runs every group. Dependencies and private-overlay handling match the
+older diagnostics runner. DOSLIB's first fetch downloads its 221 MB release
+archive, validates it, extracts only the selected small binaries, then removes
+that archive. Later runs use the checksum-verified cache. Nothing is installed
+in the existing guest parent or committed from those downloads.
+
+The edge groups exercise these specific contracts:
+
+- VGATEST: text and planar splits, horizontal/preset-row panning, Line Compare
+  overflow, display start, and lower-screen horizontal pan reset. Text uses the
+  independent IBM plane/font/DAC oracle; graphics compares every pixel to QEMU.
+- Abrash Black Book, unmodified PCjs executables: L24-1, L25-1 through L25-4,
+  L26-1/2, L28-2/3, and two phases each of L30-1/2. The 13 compared screens cover
+  memory/latch/mask examples and split/pan interaction. This does not claim all
+  30 executables from the disk were tested.
+- DOSLIB's logged video/PC test: modes 00h..07h and 0Dh..13h. Success requires all
+  15 mode sections, normal exit and **zero WARN/ERROR log entries**. Space skips
+  timed display pauses only. Visual demonstrations without machine-readable
+  checks are not independently certified by a clean log.
+- X-VESA: BITS/BURST/MATRIX VRAM reliability patterns, one 256 KiB pass through
+  INT 10h banking, far-pointer banking and linear/unreal addressing. Banked
+  pointer and LFB runs reach the final 256 KiB of the advertised 16 MiB.
+  A bounded virtual-width sweep (640..648) and virtual-height range (400..416)
+  leads to exact 648x416 grid and scrolling captures in a 640x400 viewport;
+  display-start set/get alignment must report one pixel on each axis. The
+  program labels its larger-bound search UNTESTED for this deliberately small
+  range, so this is not evidence of exhaustive bounds probing.
+
+An additional full-frame packed-pixel oracle checks indexed VBE origins (0,0),
+(1,1), (3,3), (4,4), (8,16), a flip to the second 640x400 page, and a flip back.
+It executes ROM set/get calls and derives every expected pixel from the original
+pattern, independently of device address helpers.
+
+QEMU's DISPI renderer truncates the display-start byte address to four-byte
+units. Its comparison therefore scrolls by four pixels/rows; native tests still
+check one-pixel starts independently. Requested virtual widths may round
+according to the board, so the harness checks a usable returned range rather
+than requiring identical numbers of accepted pitches. QEMU uses instruction
+counting to accelerate DOS delay loops; these are functional tests, with no
+claim about retrace synchronization or physical raster timings.
+
+X-VESA's direct BIOS Data Area keyboard polling exposed a separate system BIOS
+bug. IRQ1 and INT 16h now share the standard bounded keyboard ring, including
+wrap, full status and direct guest flushing. Host typeahead waits when that ring
+is full. Windows 3.11 validation starts Windows through the private overlay's
+AUTOEXEC script, since DOS startup utilities may correctly flush queued keys.
+
+`dump-vga PATH` captures read-only register, palette and plane JSON for the
+independent text oracle, without changing VGA read latches. External results,
+firmware/executable hashes, exact comparison scopes and retained evidence paths
+are recorded in [the edge validation measurement](measurements/standalone-vga-edges-2026-10-27.json). This suite does
+not automate every interactive diagnostic, animated page flip, or timing test.

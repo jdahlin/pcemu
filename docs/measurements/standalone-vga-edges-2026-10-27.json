@@ -1,0 +1,2422 @@
+{
+  "date": "2026-10-27",
+  "scope": "Headless functional VGA/VBE edge validation; no raster timing or complete VGA certification claim",
+  "harness": "tools/smoke_vga_edges.py",
+  "recordingHarnessSHA256": "20b7035f3a38208c9bc2482856788305254ece54600f3ea4eaec24a64c140951",
+  "diagnostics": {
+    "vgatest": {
+      "version": "1.5",
+      "url": "https://github.com/barotto/VGATEST/releases/download/v1.5/VGATEST-1.5-DOS.zip",
+      "sha256": "fd5a229310a05e18008864642b510e6033999df17111f4ce66fa408a50ac9681",
+      "license": "GPL-3.0-or-later"
+    },
+    "xvesa": {
+      "revision": "96ff78f92f7b6832046f42486641bf9dafbc29b6",
+      "url": "https://raw.githubusercontent.com/Marco-Pistella/X-VESA/96ff78f92f7b6832046f42486641bf9dafbc29b6/Release/X-VESA.COM",
+      "sha256": "15040fafa9749139e97ca51f719ebffc12d33a6e2fa4d2739854573320bac366",
+      "license": "GPL-3.0"
+    },
+    "files": {
+      "VGATEST0.EXE": "19b5566ab63af2ecd0564b8c4eb5eaf0fdd81f19236b8012559b6a06d4d6445c",
+      "VGATEST.EXE": "effd89d96ae3ce8ba2c0990b8f06cc4a8d76298d32edaea586c70aa01b1647ee",
+      "DOS4GW.EXE": "b8265123ac8a189637448618409ef3ecd2e9f3e1a47062c685a02240f688dec1",
+      "COPYING": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "README": "aa9d34f2e329f24512aeba891105b5d596d38a95bcd1882580849d3ef372279f",
+      "VERSION": "d0b3d79fc9bcbd21f36abefe3ba16bb79bd81a2fd8cdc1799dfc3a77ef9bbb31",
+      "X-VESA.COM": "15040fafa9749139e97ca51f719ebffc12d33a6e2fa4d2739854573320bac366"
+    }
+  },
+  "edgeDiagnostics": {
+    "doslib": {
+      "revision": "473980b3f58d2dc4a6e614b843aba1cec4c03df1",
+      "url": "https://github.com/joncampbell123/doslib/releases/download/doslib-20250729/doslib-20250729-110756-commit-473980b3f58d2dc4a6e614b843aba1cec4c03df1-binary.tar.xz",
+      "archiveSHA256": "9b58757c3de68fd72c9ce13aeb4694c8f6e07e866548acb7178e276cf1704759",
+      "license": "LGPL-2.1 (see cached upstream LICENSE)"
+    },
+    "blackbook": {
+      "revision": "cd3433748b09837a4c60ca7066f3642772b2d711",
+      "url": "https://raw.githubusercontent.com/jeffpar/pcjs-diskettes/cd3433748b09837a4c60ca7066f3642772b2d711/pcx86/test/vga/blackbook/VGABIN.json",
+      "sha256": "db3ab25f00789f358005ea7b34f9cd8f6ced5833814f7b412b8af1d9db85c8da",
+      "source": "https://www.pcjs.org/software/pcx86/test/vga/blackbook/",
+      "terms": "Upstream Abrash book/source terms; no binaries bundled with PCEmu"
+    },
+    "files": {
+      "L23-1.EXE": "7b49366fcb54cf3b50ec86e313699937fc22a5cde31a715cc04a492235027fcd",
+      "L24-1.EXE": "d95d0c16be24a2c9d39a7f2017e187c7398614a40801a0d883f0e8d99e64531f",
+      "L25-1.EXE": "764f71d71024dea506697847d52115bd5889f83a945af4988c6eb5f9a6de75cc",
+      "L25-2.EXE": "8e5b8f3ea5641dde8d9fd235474950f569f5e72677facb929ea1ee8fcbc5f9e1",
+      "L25-3.EXE": "b483437288dc6ecd06832019a56c9b68c8cea6298ea9f7a877ffc6f4774d9b95",
+      "L25-4.EXE": "c8f23b8c557363d0a310c94f55b8905013175a20ec049c5a5725a2c05be31f28",
+      "L26-1.EXE": "f13ad445fdfee00f9c8807d87fc43529ad5900aa28e78e4b98a5350ab2a573e2",
+      "L26-2.EXE": "99b5307756b49852efc23423571f128fec25eaa14fa362ecf41e9b0cdc3c0fee",
+      "L27-1.EXE": "762e9b3998900f935af2d6eab6484799ad7edf7c642f19a7730b04df0e6cb320",
+      "L27-2.EXE": "2134cad53d534d414b034772ebdf638a393b32d4f93ca68cb2569239895cf4d3",
+      "L27-3.EXE": "2295becaecd64393b5e48305fb06a79cf01a793edeefc17afe5e2b0da83abf89",
+      "L28-1.EXE": "f90e0ba8340900547bcac60c064494d406c5564e6229254ae6910bcec0fb3521",
+      "L28-2.EXE": "85c24801f7557ce1bee5165ef52e96e0ff7bc50a3d6e8f2cb1d49b25b7eb054e",
+      "L28-3.EXE": "d3b1ace813b6b8609c64758b9ae9004dff51736a1e972310f61a0adde29249d2",
+      "L29-1.EXE": "5fcf66d6b80aca82f87606c4ccd4333700c0ba854f35db37fa2bcd3a146afe36",
+      "L29-2.EXE": "fc94fc9e867c8055d86a709179afdba325dc68894465f19121cbeb3c4cc805c6",
+      "L29-3.EXE": "f6240fa2b073eb72df1327f935bcef1de127fca1311ddd7fa8a3168f6106f48f",
+      "L29-4.EXE": "cc2db119767f37f80ed97d0276506657739c4adfc83f57931a01a2582728f7ff",
+      "L30-1.EXE": "682b9fad7d4c72c1c87b9a1f421a147e9bad2cd236243632d76084637cca5faa",
+      "L30-2.EXE": "90d85c1689f31103acaa6f18d3ffc3bd036bf2bc4998becbd111cb3c6e7b011a",
+      "L31-1.EXE": "cf51ad765bd26b88d548084da4002f0a857f0263c04c1cc2b4fde33fb58a74f6",
+      "L31-2.EXE": "f3147bfcefac7b2af55e50dd18a20884a048c40a7662d62e4685592fc7226f71",
+      "L33-1.EXE": "461ca0793201eab296220d1ba0ba44b0689d9ca509fc2fcbc868983ab32a111e",
+      "L34-1.EXE": "1fa1bf28a673f816fd59023ab5ed5ff4e8bbdfbfbeb917c55a6f6ad1932bcbca",
+      "L35-1.EXE": "23e2e0830a59e1ea2a332ca808fe3da2a9b7d519c4df4a91692bfd7c392744b5",
+      "L35-3.EXE": "f9e3c19258dacc4df4e66d25813eaa8a252bf27bb6129d6c972c1db92d8a46e7",
+      "L47-4.EXE": "777fc3db9ff29beba76a24ab2ac6a50c730d0ca29ce59c1d4255ea18fe6d479e",
+      "L47-5.EXE": "dff5acd4df120cc183310df08cea6b8e1b6873eb78f0412ce53cc87ce39aed0c",
+      "L47-6.EXE": "c8d9f530f24f03bcb7894e1265482e8a69b3eb895dfe161042eca5bcbf1a6671",
+      "L48-2.EXE": "1a88df8d831c9eed53d277fc49abe41c2103b185a9cac9a686da6b53ccf62173",
+      "DTEST.EXE": "9c1e1c076c2df47676b7a42af849df3b98fcf6cfc1a486c6a2350edcf0a8ae18",
+      "VGAACDAC.EXE": "30ad8bb431627c4a4e6d0de42cd625b0a781f1dd8b5a32f83ea7907b0d915592",
+      "VGA256T1.EXE": "cdc70a8e9ae847d8dd3571179fec996374a8b4ab0eafb76c1600a2b54f77ad41",
+      "VGA256B4.EXE": "a5c3420fd9d7ccb02f60046ee559b6888ba428f33d5e574433604f96d41fee38",
+      "TMODESET.EXE": "5352bcfb4ec8b8a8bd0ddf1757ecb12d4f984d92ab0b7366b893112c138e9c0e"
+    }
+  },
+  "comparisonRules": [
+    "Native text: independent IBM CRTC/plane/font/DAC per-pixel oracle; QEMU text omits relevant panning rules.",
+    "Graphics: compare all pixels at six-bit DAC precision, normalize logical scanline duplication; no masked graphic regions.",
+    "Virtual-screen comparison uses origin (4,4) because QEMU truncates the byte start address to four-byte units.",
+    "DOSLIB requires 15 mode sections, zero WARN/ERROR entries and NORMAL EXIT; skipping timed pauses does not assert visual demos.",
+    "X-VESA reliability checks exact addressing-model strings and literal zero-error counters for BITS/BURST/MATRIX in 256 KiB.",
+    "Virtual geometry is deliberately bounded; X-VESA reports its larger-bound search UNTESTED.",
+    "Legacy-register availability prompts are accepted only when presented; reliability/graphics results must subsequently pass.",
+    "QEMU uses icount shift=7,align=off,sleep=off to accelerate guest delays; no throughput/retrace timing conclusions.",
+    "Unmodified third-party binaries live only in ignored build caches. Existing DOS parent is read-only; successful owned overlays removed."
+  ],
+  "runs": [
+    {
+      "sourceCommit": "b95f4a4b8956d9378806cc8d1eb924544d8f47b0",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "runnerSHA256": "70490c17bae1c032d4e57b750e0f161633f26015d3389789b3a1924f762f71a3",
+      "harnessSHA256": "bbc431af162a0f063dfdaac262ded6551739444e42402e2dd58a1f0e6db29f66",
+      "backend": "jit",
+      "status": "passed",
+      "results": [
+        {
+          "case": "text-split",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "3451d0cf28f32a0b5f5475cab27fbe360c45a71e6ed261c0ee3690dcfc4c91f3"
+        },
+        {
+          "case": "text-hpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "73e45a903a2857fd851154da211f6f0bf95d22324dc7d76842a71359e35610fd"
+        },
+        {
+          "case": "text-vpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "333969bf0275b9eea1a3de46313c0a120ee702139b1ec75fb3b4bbe147e6260d"
+        },
+        {
+          "case": "text-split-overflow",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "5147a9523c9c6683fa5e17e0031bb3b8faf2a1dbb08510175337ada4bd2d50b2"
+        },
+        {
+          "case": "text-start",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            3,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "6f87e92d43d775178e6e9420825b174fa4ab43519ee9e92178f3b9d43c12572e"
+        },
+        {
+          "case": "graphics-split",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d",
+          "qemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d"
+        },
+        {
+          "case": "graphics-hpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee",
+          "qemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee"
+        },
+        {
+          "case": "graphics-vpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d",
+          "qemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d"
+        },
+        {
+          "case": "graphics-split-overflow",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb",
+          "qemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb"
+        },
+        {
+          "case": "graphics-start",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b",
+          "qemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b"
+        },
+        {
+          "case": "graphics-pan-reset",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84",
+          "qemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84"
+        },
+        {
+          "case": "L24-1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a",
+          "qemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a"
+        },
+        {
+          "case": "L25-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0",
+          "qemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0"
+        },
+        {
+          "case": "L25-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3",
+          "qemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3"
+        },
+        {
+          "case": "L25-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650",
+          "qemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650"
+        },
+        {
+          "case": "L25-4",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12",
+          "qemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12"
+        },
+        {
+          "case": "L26-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368",
+          "qemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368"
+        },
+        {
+          "case": "L26-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f",
+          "qemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f"
+        },
+        {
+          "case": "L28-2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f",
+          "qemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f"
+        },
+        {
+          "case": "L28-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a",
+          "qemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a"
+        },
+        {
+          "case": "L30-1-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0",
+          "qemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0"
+        },
+        {
+          "case": "L30-1-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b",
+          "qemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b"
+        },
+        {
+          "case": "L30-2-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "L30-2-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "doslib-pcemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        },
+        {
+          "case": "doslib-qemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        }
+      ],
+      "evidence": "build/vga-edge-z5mcehmk/report.json",
+      "legacyRegisterPrompts": 15
+    },
+    {
+      "sourceCommit": "d30605c049aececec20ac5246e109898e9d18685",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "runnerSHA256": "c4995ad245d5c5b209f3f4dca0d00d2a1495b69e7b9fe6259bd0f236d54ecd04",
+      "harnessSHA256": "ce25469fb2728484236c450ededcabcdfb99e6e227a50b1f7e3a16ed4f509719",
+      "backend": "interpreter",
+      "status": "passed",
+      "results": [
+        {
+          "case": "text-split",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "3451d0cf28f32a0b5f5475cab27fbe360c45a71e6ed261c0ee3690dcfc4c91f3"
+        },
+        {
+          "case": "text-hpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "73e45a903a2857fd851154da211f6f0bf95d22324dc7d76842a71359e35610fd"
+        },
+        {
+          "case": "text-vpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "333969bf0275b9eea1a3de46313c0a120ee702139b1ec75fb3b4bbe147e6260d"
+        },
+        {
+          "case": "text-split-overflow",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "5147a9523c9c6683fa5e17e0031bb3b8faf2a1dbb08510175337ada4bd2d50b2"
+        },
+        {
+          "case": "text-start",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            14,
+            15,
+            0,
+            3,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "6f87e92d43d775178e6e9420825b174fa4ab43519ee9e92178f3b9d43c12572e"
+        },
+        {
+          "case": "graphics-split",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d",
+          "qemuSHA256": "274220613a99c97f0b79338efbfa196c3c62c6903d5def6c1d7e7a6f85f0849d"
+        },
+        {
+          "case": "graphics-hpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee",
+          "qemuSHA256": "afef50312513dc35537fb4c843d7f6bf91ce5fccc1281efa4d768a4569e982ee"
+        },
+        {
+          "case": "graphics-vpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d",
+          "qemuSHA256": "7ebef18b559cf59f2d0e30946007e12808da3a0417cc19b7b657687eea74cc1d"
+        },
+        {
+          "case": "graphics-split-overflow",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb",
+          "qemuSHA256": "663ab2c9122c00f3c21715f9af90f59e4fa4e03fdc31170a1cec2de201fce8fb"
+        },
+        {
+          "case": "graphics-start",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b",
+          "qemuSHA256": "85179158d01d5075a3263d8469d01087ac8f9d1f952c2418c7f948f5ad7eab5b"
+        },
+        {
+          "case": "graphics-pan-reset",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84",
+          "qemuSHA256": "a7ffb1e3aed943740095efeba885779bd8a5ac4348b5d3b7bad79e4ba3e1dd84"
+        },
+        {
+          "case": "L24-1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a",
+          "qemuSHA256": "255fecd277ed3fc93e95abe325ee769acec83bab17d20159de15cc75fb4ccc8a"
+        },
+        {
+          "case": "L25-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0",
+          "qemuSHA256": "99d29a3321cafeb0d3467b5a41eb49a0c559ed656e54508ddd1bffb4232741d0"
+        },
+        {
+          "case": "L25-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3",
+          "qemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3"
+        },
+        {
+          "case": "L25-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650",
+          "qemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650"
+        },
+        {
+          "case": "L25-4",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12",
+          "qemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12"
+        },
+        {
+          "case": "L26-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368",
+          "qemuSHA256": "9a789f98277e298fe7af1255ce64d3951aa5ba0f275fc1613ef9f99280c94368"
+        },
+        {
+          "case": "L26-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f",
+          "qemuSHA256": "a5abff04af530f36f3a8b446bc93137c9a1929d5a1294d2f94aca7900feb978f"
+        },
+        {
+          "case": "L28-2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f",
+          "qemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f"
+        },
+        {
+          "case": "L28-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a",
+          "qemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a"
+        },
+        {
+          "case": "L30-1-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0",
+          "qemuSHA256": "7ebd8ad213d04e22909426a3809a9ff5efbb8f362a807db77635b93012ac2bc0"
+        },
+        {
+          "case": "L30-1-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b",
+          "qemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b"
+        },
+        {
+          "case": "L30-2-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "L30-2-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "xvesa-display-start-PcGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "xvesa-display-start-QemuGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "doslib-pcemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        },
+        {
+          "case": "doslib-qemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        }
+      ],
+      "evidence": "build/vga-edge-hvqnno9n/report.json",
+      "legacyRegisterPrompts": 20
+    },
+    {
+      "sourceCommit": "992b69e28d1bd1b7188ebb76a4216307ace7b0ca",
+      "romSHA256": "e8fc9e55790dbe3cb31f019a3deb57206ba6c54f5e581adb2ab2677a9d391472",
+      "runnerSHA256": "c4995ad245d5c5b209f3f4dca0d00d2a1495b69e7b9fe6259bd0f236d54ecd04",
+      "harnessSHA256": "ce25469fb2728484236c450ededcabcdfb99e6e227a50b1f7e3a16ed4f509719",
+      "backend": "jit",
+      "status": "passed",
+      "results": [
+        {
+          "case": "text-split",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            13,
+            14,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "e97d766b0ae4851c1486132de2358c0e0be254cb453621e3b24c0c46f503ce6d"
+        },
+        {
+          "case": "text-hpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            0,
+            15,
+            13,
+            14,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "ced358644eb2cfdeb4ef36cabad16182931d43f266ec5758c0b68eb126ed9c4a"
+        },
+        {
+          "case": "text-vpan",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            13,
+            14,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            200,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "11d2a7d139630b75fe91d5f1be30287c297144f3e884bd785752533c91b2ac2b"
+        },
+        {
+          "case": "text-split-overflow",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            13,
+            14,
+            0,
+            0,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "7118c34f9eb5fe5b01415837e532a3358282b50d38f54483c3bd573c54ba8c25"
+        },
+        {
+          "case": "text-start",
+          "oracle": "IBM scan-line/plane/DAC model",
+          "differentPixels": 0,
+          "dimensions": [
+            720,
+            400
+          ],
+          "crtc": [
+            95,
+            79,
+            80,
+            130,
+            85,
+            129,
+            191,
+            15,
+            3,
+            15,
+            13,
+            14,
+            0,
+            3,
+            0,
+            0,
+            156,
+            142,
+            143,
+            40,
+            31,
+            150,
+            185,
+            163,
+            209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "attribute": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            20,
+            7,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            12,
+            0,
+            15,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "pcemuSHA256": "4c8eb7d215cd575bb04d41320bbbaa2ea4d85fd5b33136d72b3db99683cc5cbf"
+        },
+        {
+          "case": "graphics-split",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7747f9a0a65ba792c1c3b1ce2e3230333b82aa83db9ca9916bd98d4e68420caa",
+          "qemuSHA256": "7747f9a0a65ba792c1c3b1ce2e3230333b82aa83db9ca9916bd98d4e68420caa"
+        },
+        {
+          "case": "graphics-hpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "2111abd1f62449e4e655fe39b678e0cb81b0cdd3afef9974a70f8d24ab236461",
+          "qemuSHA256": "2111abd1f62449e4e655fe39b678e0cb81b0cdd3afef9974a70f8d24ab236461"
+        },
+        {
+          "case": "graphics-vpan",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "71b27ad46bbb8fc2433e675da0076f02e3a9fa8c9807d90565d8f86b0412a375",
+          "qemuSHA256": "71b27ad46bbb8fc2433e675da0076f02e3a9fa8c9807d90565d8f86b0412a375"
+        },
+        {
+          "case": "graphics-split-overflow",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "0bbcad26182d2d3fa35017aa983fa035723aebca637aa7a587a8d0aa47b2d8d0",
+          "qemuSHA256": "0bbcad26182d2d3fa35017aa983fa035723aebca637aa7a587a8d0aa47b2d8d0"
+        },
+        {
+          "case": "graphics-start",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7f6e33cc194181307ce407a4693ee272a31d23e3cb22ca9a4fe2a41bec3c2554",
+          "qemuSHA256": "7f6e33cc194181307ce407a4693ee272a31d23e3cb22ca9a4fe2a41bec3c2554"
+        },
+        {
+          "case": "graphics-pan-reset",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "791fe9cbffe5f1473c02d02b26754bb73e2d0e5cd45c02aac3102382ea06fdd4",
+          "qemuSHA256": "791fe9cbffe5f1473c02d02b26754bb73e2d0e5cd45c02aac3102382ea06fdd4"
+        },
+        {
+          "case": "L24-1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "2ef393edf43cdd7eb52ff7f89bd8cce1c6ac634eae6de5b97cb65f5058c6e16e",
+          "qemuSHA256": "2ef393edf43cdd7eb52ff7f89bd8cce1c6ac634eae6de5b97cb65f5058c6e16e"
+        },
+        {
+          "case": "L25-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "9e08c794b573d8582608f3cba5f485c830e9c2c15cb9738a85a664d77b3e93b0",
+          "qemuSHA256": "9e08c794b573d8582608f3cba5f485c830e9c2c15cb9738a85a664d77b3e93b0"
+        },
+        {
+          "case": "L25-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3",
+          "qemuSHA256": "e64c1107b57c0691dd8b22660baf367d7f0337aab9ec1fc2935925bfe45c08e3"
+        },
+        {
+          "case": "L25-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650",
+          "qemuSHA256": "249a8df560601c142c50c7ee122cd82631d0a3628ff76ca9d5745c48fa1e2650"
+        },
+        {
+          "case": "L25-4",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12",
+          "qemuSHA256": "8335e0b273417e37337adc090072e408c7bb51ae2ed25aedd4e71d1a503c0d12"
+        },
+        {
+          "case": "L26-1",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "5264a2aa5e7630327fc6c45e152de2b5c0db0c1b257518e9cc5f126d8a4b899d",
+          "qemuSHA256": "5264a2aa5e7630327fc6c45e152de2b5c0db0c1b257518e9cc5f126d8a4b899d"
+        },
+        {
+          "case": "L26-2",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "e4e17e0773b392babd25cd4a4e2fbe95b0bc5896a80ab9e4a26561bf5d430065",
+          "qemuSHA256": "e4e17e0773b392babd25cd4a4e2fbe95b0bc5896a80ab9e4a26561bf5d430065"
+        },
+        {
+          "case": "L28-2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f",
+          "qemuSHA256": "7d3639fdba881a1f25f0f55252fda53dc1a4033f93c138bbd7fe67257380230f"
+        },
+        {
+          "case": "L28-3",
+          "dimensions": [
+            640,
+            480
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a",
+          "qemuSHA256": "ceb5acdd44590eb83ba3727efa5a62b5614fc2e612506e8fa12491445e06840a"
+        },
+        {
+          "case": "L30-1-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "fa5af368479fc88391eb326dbc04e4e679adc4bbc688f1cb6f5a51510299a56f",
+          "qemuSHA256": "fa5af368479fc88391eb326dbc04e4e679adc4bbc688f1cb6f5a51510299a56f"
+        },
+        {
+          "case": "L30-1-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b",
+          "qemuSHA256": "ccfe574b8975807e6194d37487155b833a29961f4e504ea57ba3ecaa68befe6b"
+        },
+        {
+          "case": "L30-2-phase1",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "L30-2-phase2",
+          "dimensions": [
+            640,
+            350
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13",
+          "qemuSHA256": "755d24058fefd82f439a349b3a54f55165ab3d0d2c35ca8283936ec44325bf13"
+        },
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "xvesa-display-start-PcGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "xvesa-display-start-QemuGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "doslib-pcemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        },
+        {
+          "case": "doslib-qemu",
+          "modes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "warnings": [],
+          "normalExit": true
+        }
+      ],
+      "evidence": "build/vga-edge-qenlfkii/report.json",
+      "legacyRegisterPrompts": 0
+    },
+    {
+      "sourceCommit": "d30605c049aececec20ac5246e109898e9d18685",
+      "romSHA256": "f6ad547efe24dccc047b7bc3a31ee33370ca42b003f2d876a723785174dbf7c1",
+      "runnerSHA256": "c4995ad245d5c5b209f3f4dca0d00d2a1495b69e7b9fe6259bd0f236d54ecd04",
+      "harnessSHA256": "20b7035f3a38208c9bc2482856788305254ece54600f3ea4eaec24a64c140951",
+      "backend": "jit",
+      "status": "passed",
+      "results": [
+        {
+          "case": "xvesa-interrupt-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-interrupt-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 0,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Int 10h/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-far-pointer-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Window via Call pointer/Real"
+        },
+        {
+          "case": "xvesa-linear-PcGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-linear-QemuGuest",
+          "VRAM errors": 0,
+          "VRAM test offset": 16128,
+          "VRAM test size": 256,
+          "Test pass": 1,
+          "memoryModel": "Linear/Unreal"
+        },
+        {
+          "case": "xvesa-virtual-grid",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2",
+          "qemuSHA256": "75b067938943d08197032efdc7f73819c70e394172a9e5005661e26bdce853f2"
+        },
+        {
+          "case": "xvesa-virtual-pan",
+          "dimensions": [
+            640,
+            400
+          ],
+          "differentPixels": 0,
+          "pcemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a",
+          "qemuSHA256": "75264f76652d340fad2a2cc94a6bf8dac03ef3ec86940c1fca0c52194093c38a"
+        },
+        {
+          "case": "xvesa-display-start-PcGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        },
+        {
+          "case": "xvesa-display-start-QemuGuest",
+          "horizontalAlignment": 1,
+          "verticalAlignment": 1,
+          "boundsSearch": "UNTESTED (bounded virtual extent)",
+          "comparedOrigin": [
+            4,
+            4
+          ],
+          "qemuStartByteAlignment": 4
+        }
+      ],
+      "evidence": "build/vga-edge-ortd05rb/report.json",
+      "legacyRegisterPrompts": 14
+    }
+  ],
+  "repositoryChecks": {
+    "make test": {
+      "status": "passed",
+      "evidence": "build/vga-edge/make-test-final-complete.log"
+    },
+    "indexedVBEOriginsAndPageFlips": {
+      "status": "passed",
+      "origins": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          8,
+          16
+        ],
+        [
+          0,
+          400
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "oracle": "Independent full-frame packed-pattern/DAC oracle executes ROM 4F07 set/get",
+      "evidence": "build/vga-edge/vbe-indexed-final.log"
+    },
+    "RAMBootProbe": {
+      "status": "passed",
+      "variants": [
+        "embedded/file ROM, interpreter/JIT",
+        "same ROM under QEMU TCG"
+      ],
+      "evidence": "build/vga-edge/boot-final.log"
+    },
+    "Windows3.11": {
+      "status": "passed",
+      "scope": "Notepad save and exact DOS readback; private AUTOEXEC startup",
+      "evidence": "build/win311-smoke-sfcw5l0q"
+    },
+    "Windows95": {
+      "status": "passed",
+      "scope": "Application arithmetic, clipboard, exact file persistence and guest-requested restart",
+      "evidence": "build/win95-smoke-bx8_jsa3"
+    },
+    "nativeAppBuild": {
+      "status": "passed",
+      "scope": "Build/sign only; no GUI launch",
+      "evidence": "build/vga-edge/native-app-final.log"
+    }
+  },
+  "remainingLimits": [
+    "Physical raster/retrace timing",
+    "Complete CRTC word/doubleword address multiplexing",
+    "Not all 30 Abrash binaries, every interactive diagnostic or animated page flip were automated",
+    "LCD/dual-adapter/DDC/EDID/VBE3 functions not advertised"
+  ]
+}
