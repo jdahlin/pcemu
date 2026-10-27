@@ -396,7 +396,16 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             } else if (op == 0xf6 || op == 0xf7) {
                 i.w = op == 0xf6 ? 1 : w;
                 auto m = byte();
-                if ((m & 0x38) == 0x10) {
+                if ((m & 0x38) >= 0x30) {
+                    i.kind = (m >> 6) == 3 ? Kind::Divide : Kind::Memory;
+                    i.op = (m >> 3) & 7;
+                    i.dst = AX;
+                    i.src = m & 7;
+                    if (i.kind == Kind::Memory) {
+                        i.memoryDivide = true;
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                    }
+                } else if ((m & 0x38) == 0x10) {
                     i.kind = (m >> 6) == 3 ? Kind::Invert : Kind::Memory;
                     i.immediate = true; // Unary operation: no register RHS.
                     if (i.kind == Kind::Memory) {
@@ -522,7 +531,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert)) {
+            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert || i.kind == Kind::Divide)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != Kind::Memory) {

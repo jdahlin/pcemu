@@ -1941,3 +1941,16 @@ All 60 final restores pass. The complete candidate is 21.7% below the original
 Word baseline and 9.7% below the original Excel baseline; incremental timing is
 about 1.3% lower for Word and neutral for Excel. Eager/deferred flag strategies
 are indistinguishable within timing noise. See the [full comparison and limits](measurements/office-not-imul-2026-10-27.md).
+
+### Word and Excel: guarded integer division (2026-10-27)
+
+DIV/IDIV now lower natively for register operands and side-effect-free RAM hits,
+with byte/word/dword widths, aliases, quotient checks and exact interpreter error
+replay outside native frames. Cold/unsafe memory replays before translation or
+MMIO. Cached validation passes 16,066,216 checks. Interpreted word/dword IDIV
+attempts fall from 41,376 to 919 in Word and 33,830 to 361 in Excel; unsigned DIV
+also falls substantially. Native shares reach 94.30% and 99.428%. All 48 task
+restores pass. The complete candidate remains 20.1% below the original Word CPU
+baseline and 9.0% below Excel's. Incremental medians are higher in this run, but
+large A/A variation and a separate active VM make attribution inconclusive.
+See [the full results and noise limits](measurements/office-divide-2026-10-27.md).

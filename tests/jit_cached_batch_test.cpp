@@ -475,6 +475,178 @@ static void stringMoveTests() {
     }
 }
 
+static void divisionTests() {
+    auto native = [](CPU &c, Jit &jit) {
+        try {
+            for (unsigned k = 0; k < 1000 && !c.halted; ++k) jit.runBatch();
+            return c.halted ? std::string{} : std::string("native division did not terminate");
+        } catch (const std::runtime_error &e) { return std::string(e.what()); }
+    };
+    auto reference = [](CPU &c) {
+        try {
+            for (unsigned k = 0; k < 10000 && !c.halted; ++k) c.step();
+            return c.halted ? std::string{} : std::string("reference division did not terminate");
+        } catch (const std::runtime_error &e) { return std::string(e.what()); }
+    };
+    auto compareDivision = [&](CPU c, bool requireNative = false, Jit::BlockMode mode = Jit::BlockMode::FollowJumps) {
+        CPU ref = c; Jit jit(c, true, 0, 65536, mode); jit.setDirectLinks(linksMode, 0);
+        LinkProbe probe{jit};
+        const auto want = reference(ref), got = native(c, jit);
+        check(got == want, "division replay changed error behavior");
+        equal(c, ref);
+        check(!c.nativeFallback, "division left native replay pending");
+        if (requireNative && want.empty()) check(jit.nativeInstructions, "division success never ran natively");
+    };
+    // Exhaust all 16-bit byte dividends for representative divisors covering
+    // positive/negative, odd, extreme and overflow-producing cases. Reuse the
+    // same small RAM-only programs and compare error state as well as successes.
+    for (unsigned operation : {6u, 7u}) {
+        CPU c(16384); c.cr[0] = 0x11; c.s[CS].big = true; c.flags = 2;
+        c.mem[0] = 0xf6; c.mem[1] = uint8_t(0xc0 | (operation << 3) | 3); c.mem[2] = 0xf4;
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        for (unsigned divisor : {1u, 3u, 0x7fu, 0x80u, 0xffu})
+         for (unsigned dividend = 0; dividend <= 65535; ++dividend) {
+            std::fill_n(c.r, 8, 0x12345678);
+            c.r[AX] = 0xabcd0000 | dividend; c.r[BX] = 0x56780000 | divisor;
+            c.flags = dividend & 1 ? 0xcd7 : 2; c.ip = 0; c.instructions = 0; c.halted = false;
+            CPU ref = c; const auto before = jit.nativeInstructions;
+            const auto want = reference(ref), got = native(c, jit);
+            check(got == want, "byte division exhaustive error"); equal(c, ref);
+            check(!c.nativeFallback && (want.empty() ? jit.nativeInstructions == before + 1 : jit.nativeInstructions == before),
+                  "byte division native success/replay accounting");
+        }
+    }
+    for (bool code32 : {false, true})
+     for (unsigned width : {1u, 2u, 4u})
+      for (unsigned operation : {6u, 7u})
+       for (uint64_t numerator : {0ull, 1ull, 0x7full, 0x80ull, 0xffffull, 0x7fffffffull, 0x80000000ull, 0xffffffffull, 0x7fffffffffffffffull, 0x8000000000000000ull, 0xffffffffffffffffull})
+        for (uint32_t denominator : {0u, 1u, 2u, 3u, 0x7fu, 0x80u, 0xffu, 0x7fffu, 0x8000u, 0xffffu, 0x7fffffffu, 0x80000000u, 0xffffffffu})
+         for (bool memory : {false, true}) {
+            auto c = make({}, true); c.s[CS].big = code32;
+            unsigned p = 0;
+            if (width != 1 && code32 != (width == 4)) c.mem[p++] = 0x66;
+            c.mem[p++] = width == 1 ? 0xf6 : 0xf7;
+            c.mem[p++] = uint8_t((memory ? 0 : 0xc0) | (operation << 3) | 3);
+            c.mem[p] = 0xf4;
+            if (!code32 && memory) { // 16-bit rm=3 is [BP+DI], deliberately distinct from BX.
+                c.r[BP] = 0x800; c.r[DI] = 0x800;
+            }
+            c.r[AX] = width == 4 ? uint32_t(numerator) : 0xabcd0000 | uint32_t(numerator & 65535);
+            c.r[DX] = width == 4 ? uint32_t(numerator >> 32) : 0x56780000 | uint32_t((numerator >> 16) & 65535);
+            c.r[BX] = memory ? 0x1000 : denominator;
+            if (memory) { c.write(0x1000, denominator, width); c.read(0x1000, width); }
+            compareDivision(c, true);
+        }
+    for (unsigned width : {1u, 2u, 4u})
+     for (unsigned operation : {6u, 7u})
+      for (unsigned reg = 0; reg < 8; ++reg)
+       for (uint32_t value : {0u, 1u, 0xff81u, 0xffffffffu, 0x80000000u}) {
+        auto c = make({}); std::fill_n(c.r, 8, value);
+        unsigned p = 0;
+        if (width == 2) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xf6 : 0xf7;
+        c.mem[p++] = uint8_t(0xc0 | (operation << 3) | reg); c.mem[p] = 0xf4;
+        compareDivision(c, true); // Includes AL/AH/AX/DX divisor/numerator aliases.
+    }
+    for (bool paging : {false, true})
+     for (bool address32 : {false, true})
+      for (unsigned width : {1u, 2u, 4u}) {
+        auto c = make({}, paging); c.s[FS].base = 0x2000;
+        c.r[BX] = address32 ? 0x1000 : 0x12341000; c.r[SI] = address32 ? 0x10 : 0xabcd0010;
+        c.r[AX] = 100; c.r[DX] = 0;
+        std::vector<uint8_t> code{0x64};
+        if (!address32) code.push_back(0x67);
+        if (width == 2) code.push_back(0x66);
+        code.push_back(width == 1 ? 0xf6 : 0xf7); code.push_back(address32 ? 0x74 : 0x70);
+        if (address32) code.push_back(0x73);
+        code.push_back(0x20); code.push_back(0xf4);
+        std::copy(code.begin(), code.end(), c.mem.begin());
+        c.write(address32 ? 0x3040 : 0x3030, 3, width);
+        compareDivision(c, true);
+    }
+    for (unsigned width : {1u, 2u, 4u})
+     for (unsigned addressRegister : {unsigned(AX), unsigned(DX)}) {
+        auto c = make({}, true);
+        unsigned p = 0;
+        if (width == 2) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xf6 : 0xf7;
+        c.mem[p++] = uint8_t(0x30 | addressRegister); c.mem[p] = 0xf4;
+        c.r[AX] = addressRegister == AX ? 0x1000 : 100;
+        c.r[DX] = addressRegister == DX ? 0x1000 : 0;
+        c.write(0x1000, width == 1 ? 64 : 0x2000, width);
+        compareDivision(c, true); // Capture addresses before implicit quotient/remainder writes.
+    }
+    for (bool warm : {false, true})
+     for (unsigned operation : {6u, 7u}) {
+        auto c = make({0xf7, uint8_t((operation << 3) | 3), 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[AX] = 100; c.r[DX] = 0;
+        c.mem[0x1000] = 3; c.flushTLB();
+        if (warm) c.read(0x1000, 4);
+        CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        check(reference(ref).empty() && native(c, jit).empty(), "cold/warm memory division failed"); equal(c, ref);
+        check(jit.compiledBlocks && (warm ? jit.nativeInstructions == 1 : jit.nativeInstructions == 0) && !c.nativeMemoryCalls,
+              "memory division did not distinguish side-effect-free hits from cold replay");
+    }
+    for (unsigned width : {1u, 2u, 4u})
+     for (bool zero : {false, true}) {
+        auto c = make({0x83, 0xc0, 1}); c.r[AX] = 100; c.r[DX] = 0; c.r[BX] = 0xa0000;
+        unsigned p = 3;
+        if (width == 2) c.mem[p++] = 0x66;
+        c.mem[p++] = width == 1 ? 0xf6 : 0xf7; c.mem[p++] = 0x33; c.mem[p] = 0xf4;
+        CPU ref = c; std::vector<uint64_t> trace, refTrace;
+        c.videoRead = [&](uint32_t a) { trace.push_back((uint64_t(c.r[AX]) << 32) | c.flags); trace.push_back(a); return uint8_t(!zero && a == 0xa0000 ? 3 : 0); };
+        ref.videoRead = [&](uint32_t a) { refTrace.push_back((uint64_t(ref.r[AX]) << 32) | ref.flags); refTrace.push_back(a); return uint8_t(!zero && a == 0xa0000 ? 3 : 0); };
+        Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
+        check(reference(ref) == native(c, jit), "division MMIO error changed"); equal(c, ref);
+        check(trace == refTrace && trace.size() == width * 2 && !c.nativeMemoryCalls,
+              "division MMIO replay repeated or reordered a callback");
+    }
+    for (bool crossPage : {false, true}) {
+        auto c = make({0x83, 0xc0, 1, 0xf7, 0x33, 0x83, 0xc6, 1, 0xf4}, true);
+        c.s[CS].selector = 3; c.r[BX] = crossPage ? 0x4fff : 0x5000;
+        uint32_t absent = 0x5004;
+        std::copy_n(reinterpret_cast<uint8_t *>(&absent), 4, c.mem.begin() + 0x81014); c.flushTLB();
+        unsigned faults = 0;
+        c.observeFault = [&](const Fault &f) { check(f.vector == 14 && f.error == 4, "division page fault type"); ++faults; throw std::runtime_error("division page fault"); };
+        compareDivision(c);
+        check(faults == 2, "division page fault was suppressed or duplicated");
+    }
+    for (bool warm : {false, true}) {
+        auto c = make({0xf7, 0x33, 0xf4}, true);
+        uint32_t selfPte = 0x81007;
+        std::copy_n(reinterpret_cast<uint8_t *>(&selfPte), 4, c.mem.begin() + 0x81024); c.flushTLB();
+        c.r[BX] = 0x9024; c.r[AX] = c.r[DX] = 0xffffffff;
+        if (warm) c.read(0x9024, 4);
+        compareDivision(c); // Read-side A updates precede the existing overflow error exactly once.
+    }
+    for (unsigned operation : {6u, 7u}) {
+        auto c = make({0x83, 0xc0, 1, 0xf7, uint8_t(0xc3 | (operation << 3)), 0x83, 0xc6, 1, 0xf4});
+        c.r[AX] = 0xffffffff; c.r[DX] = 0x80000000; c.r[BX] = operation == 6 ? 0 : 0xffffffff;
+        c.flags = 2;
+        compareDivision(c); // Error observes prefix flags even when a later ALU would overwrite them.
+    }
+    for (unsigned form : {0u, 1u, 2u}) {
+        auto c = form == 0 ? make({0x0f, 0xaf, 0x33, 0xf7, 0xf1, 0xf4}, true)
+                           : make({0x0f, 0xaf, 0x33, 0xf7, 0x37, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[DI] = 0x2000; c.r[SI] = 0x7fffffff;
+        c.r[AX] = 100; c.r[DX] = 0; c.r[CX] = 3; c.flags = 2;
+        c.write(0x1000, 2, 4);
+        if (form == 2) c.mem[0x2000] = 3;
+        else c.write(0x2000, 3, 4);
+        compare(c); // Preserve a deferred 64-bit IMUL product across DIV and cold replay.
+    }
+    for (auto mode : {Jit::BlockMode::Basic, Jit::BlockMode::FollowJumps, Jit::BlockMode::Trace}) {
+        auto c = make({0xb8, 100, 0, 0, 0, 0xf6, 0xf1, 0x49, 0xeb, 0xf6});
+        c.r[CX] = 3; compareDivision(c, false, mode);
+        c = make({0xb8, 100, 0, 0, 0, 0xf7, 0x33, 0x83, 0x2b, 1, 0xeb, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[DX] = 0; c.write(0x1000, 3, 4);
+        compareDivision(c, false, mode); // Reach zero after successful native/link iterations.
+        c = make({0xf7, 0x33, 0x83, 0xe9, 1, 0x75, 0xf9, 0xf4}, true);
+        c.r[BX] = 0x1000; c.r[CX] = 1000; c.r[AX] = 100; c.r[DX] = 0; c.write(0x1000, 3, 4);
+        compare(c, 10000, mode);
+    }
+}
+
 static void invertAndMemoryMultiplyTests() {
     auto append = [](std::vector<uint8_t> &code, uint32_t value, unsigned width) {
         for (unsigned b = 0; b < width; ++b) code.push_back(uint8_t(value >> (8 * b)));
@@ -1406,6 +1578,7 @@ int main() {
             leaveTests();
             rotateAndSignExtendTests();
             invertAndMemoryMultiplyTests();
+            divisionTests();
             hotShortFragmentTests();
             cycleTests();
         }

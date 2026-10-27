@@ -20,6 +20,12 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
+        if (i.kind == Kind::Divide) {
+            // Zero/overflow can replay and expose the pre-instruction flags,
+            // even when a following ALU would otherwise make them dead.
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         if (i.kind == Kind::LoadFlags) {
             // AH observes the low flags even if a later ALU overwrites them.
             liveFlags |= CF | PF | AF | ZF | SF;

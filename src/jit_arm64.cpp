@@ -80,6 +80,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     unsigned usedRegisters = 0;
     for (auto i : ir) {
         if (i.leaveFrame) usedRegisters |= 1u << SP;
+        if (i.kind == Kind::Divide || i.memoryDivide)
+            usedRegisters |= (1u << AX) | (i.w == 1 ? 0 : 1u << DX);
         if (i.indirectCall && !i.memoryCall) usedRegisters |= 1u << i.src;
         if (i.memoryCall || i.memoryPush) {
             if (i.callPointer.base >= 0) usedRegisters |= 1u << i.callPointer.base;
@@ -356,11 +358,58 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         insert(20 + i.dst, 13, i.w, 0);
         dirtyRegisters |= 1u << i.dst;
     };
+    auto replay = [&](uint32_t start, unsigned completed, unsigned dirty) {
+        flushRegisters(dirty);
+        finishFlags(last, -1, 0);
+        static_assert(offsetof(CPU, nativeFallback) < 4096);
+        imm(9, 1);
+        emit(0x39000000u | (offsetof(CPU, nativeFallback) << 10) | (19 << 5) | 9);
+        imm(9, start); store(9, 19, offsetof(CPU, ip));
+        imm(0, completed);
+        exits.push_back(code.size()); emit(0x14000000u);
+    };
+    // Divisor arrives in w10. Checks precede every implicit GPR update; failed
+    // divisions replay in C++ after the native frame returns, preserving the
+    // interpreter's existing error behavior without unwinding through ARM64.
+    auto divideResult = [&](const jit_detail::Instruction &i, std::vector<size_t> &errors) {
+        auto reject = [&](uint32_t branch) { errors.push_back(code.size()); emit(branch); };
+        reject(0x3400000au); // cbz w10: divisor zero
+        if (i.op == 7)
+            emit(0x93400000u | ((i.w * 8 - 1) << 10) | (10 << 5) | 10);
+        extract(11, 20 + AX, i.w == 1 ? 2 : i.w, 0);
+        if (i.w != 1) {
+            extract(12, 20 + DX, i.w, 0);
+            emit(0xaa000000u | (12 << 16) | ((i.w * 8) << 10) | (11 << 5) | 11);
+        }
+        if (i.op == 7 && i.w < 4)
+            emit(0x93400000u | ((i.w * 16 - 1) << 10) | (11 << 5) | 11);
+        if (i.op == 7 && i.w == 4) {
+            pointer(13, uint64_t(1) << 63);
+            emit(0xeb00001fu | (13 << 16) | (11 << 5));
+            const auto notMinimum = code.size(); emit(0x54000001u); // b.ne safe
+            emit(0xb100001fu | (1u << 10) | (10 << 5)); // cmn x10,#1: denominator -1
+            reject(0x54000000u); // b.eq: INT64_MIN / -1
+            code[notMinimum] |= uint32_t(code.size() - notMinimum) << 5;
+        }
+        emit((i.op == 7 ? 0x9ac00c00u : 0x9ac00800u) | (10 << 16) | (11 << 5) | 13);
+        if (i.op == 7) {
+            emit(0x93400000u | ((i.w * 8 - 1) << 10) | (13 << 5) | 14);
+            emit(0xeb00001fu | (14 << 16) | (13 << 5));
+            reject(0x54000001u); // quotient differs from its signed truncation
+        } else {
+            emit(0xd3400000u | ((i.w * 8) << 16) | (63u << 10) | (13 << 5) | 14);
+            reject(0xb500000eu); // quotient exceeds unsigned operand width
+        }
+        emit(0x9b008000u | (10 << 16) | (11 << 10) | (13 << 5) | 14); // remainder = num - q*den
+        insert(20 + AX, 13, i.w, 0);
+        insert(20 + (i.w == 1 ? AX : DX), 14, i.w, i.w == 1 ? 8 : 0);
+        dirtyRegisters |= (1u << AX) | (i.w == 1 ? 0 : 1u << DX);
+    };
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert"};
+            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -407,6 +456,17 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             load(11, 19, offsetof(CPU, flags));
             insert(20 + AX, 11, 1, 8);
             dirtyRegisters |= 1u << AX;
+            continue;
+        }
+        if (i.kind == Kind::Divide) {
+            const auto prefixDirty = dirtyRegisters;
+            extract(10, 20 + i.src, i.w, i.srcShift);
+            std::vector<size_t> errors;
+            divideResult(i, errors);
+            const auto success = code.size(); emit(0x14000000u);
+            for (auto at : errors) code[at] |= uint32_t(code.size() - at) << 5;
+            replay(i.start, unsigned(n), prefixDirty);
+            code[success] |= uint32_t(code.size() - success);
             continue;
         }
         if (i.kind == Kind::Invert) {
@@ -790,7 +850,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
             auto metadata = &block.native->memory[memoryIndex++];
+            std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if (i.memoryDivide) {
+                    divideResult(i, divisionErrors);
+                    return;
+                }
                 if (i.memoryMultiply) {
                     emit(0x13000000u | ((i.w * 8 - 1) << 10) | (10 << 5) | 11);
                     if (i.immediate) imm(12, i.imm);
@@ -1074,6 +1139,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 emit(0x14000000u);
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
+            }
+            if (i.memoryDivide) {
+                // Cold/unsafe reads replay BEFORE translation or device access.
+                // Reading first and then replaying a divide error could repeat
+                // MMIO or observe code changed by a page-table accessed bit.
+                for (auto at : divisionErrors) code[at] |= uint32_t(code.size() - at) << 5;
+                replay(i.memory.begin, unsigned(n), beforeLoad);
+                if (fastSuccess != size_t(-1)) code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
+                continue;
             }
             emit(0xaa1303e0u);
             pointer(1, reinterpret_cast<uintptr_t>(metadata));
