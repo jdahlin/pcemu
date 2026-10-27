@@ -20,6 +20,7 @@ test: build/pc-audio-tests build/jit-decoded-boundary-tests build/jit-x87-tests 
 	python3 tools/smoke_sound_blaster.py --hlt
 	python3 -m unittest discover -s tests -p test_guest_memory.py
 	python3 -m unittest discover -s tests -p test_freedos_fixture.py
+	python3 -m unittest discover -s tests -p test_second_reality.py
 	python3 -m unittest discover -s tests -p test_device_boundaries.py
 	python3 -m unittest discover -s tests -p test_display_modes.py
 	./build/hardware-device-tests

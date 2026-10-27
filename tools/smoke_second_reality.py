@@ -49,13 +49,22 @@ def release(archive):
     return files
 
 
+def completion_verified(text):
+    """Require the complete status and a later, separate end marker."""
+    lines=[line.strip() for line in text.splitlines()]
+    if 'SECOND REALITY END PASS' not in lines or 'SECOND REALITY FINISHED' not in lines:
+        return False
+    return ('SECOND REALITY END FAIL' not in lines and
+            lines.index('SECOND REALITY END PASS')<lines.index('SECOND REALITY FINISHED'))
+
+
 def run_demo(command, work, timeout, sound):
     """Select no sound by observed menu state, collect frames, require DOS return."""
     control = work/'control.txt'
     control.write_text('')
     command += ['--control-file', str(control)]
     command[command.index('--steps')+1] = '0'
-    command[command.index('--until-text')+1] = 'SECOND REALITY END'
+    command[command.index('--until-text')+1] = 'SECOND REALITY FINISHED'
     samples = []
     with (work/'run.log').open('w') as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
@@ -116,7 +125,7 @@ def run_demo(command, work, timeout, sound):
                 raise RuntimeError('Emulator exited with '+str(process.returncode))
             text = (work/'run.log').read_text()
             distinct = {x['sha256'] for x in samples if x['nonblack'] and x['geometry'] != '720 400'}
-            if 'SECOND REALITY END PASS' not in text or len(distinct) < 5:
+            if not completion_verified(text) or len(distinct) < 5:
                 raise RuntimeError('Clean DOS return and changing graphics were not established')
         finally:
             if process.poll() is None:
@@ -148,7 +157,7 @@ def run(args, backend, files):
             config=(b'DEVICE=C:\\FREEDOS\\BIN\\HIMEMX.EXE\r\nDOS=HIGH\r\n' if args.sound=='none' else
                     b'DEVICE=C:\\FREEDOS\\BIN\\JEMMEX.EXE I=E000-EFFF FRAME=E000 X=C000-DFFF X=F000-FFFF\r\nDOS=HIGH,UMB\r\n')
             startup(fat,config+b'FILES=20\r\nBUFFERS=10\r\n',
-                    b'@ECHO OFF\r\nSET BLASTER=A220 I7 D1 T4\r\nC:\\SECOND.EXE'+(b' '+args.part.encode() if args.part else b'')+b'\r\nIF ERRORLEVEL 1 GOTO FAILED\r\nECHO SECOND REALITY END PASS\r\nGOTO END\r\n:FAILED\r\nECHO SECOND REALITY END FAIL\r\n:END\r\n')
+                    b'@ECHO OFF\r\nSET BLASTER=A220 I7 D1 T4\r\nC:\\SECOND.EXE'+(b' '+args.part.encode() if args.part else b'')+b'\r\nIF ERRORLEVEL 1 GOTO FAILED\r\nECHO SECOND REALITY END PASS\r\nGOTO END\r\n:FAILED\r\nECHO SECOND REALITY END FAIL\r\n:END\r\nECHO SECOND REALITY FINISHED\r\n')
             fat.commit()
         runner = work/'runner'
         shutil.copyfile(args.runner.resolve(), runner)

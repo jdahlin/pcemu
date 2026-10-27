@@ -106,3 +106,15 @@ and clean DOS return. [Pinned input hashes and result](measurements/second-reali
 The temporary overlay and copied runner/ROM were removed after success. This
 establishes full no-sound execution completion; it does not establish reference
 pixel fidelity, sound, or realtime performance. The full interpreter run also completes successfully: 4,748,857,405 instructions, 3,173 frame observations and 2,621 distinct frame hashes. Both frozen-runner results are recorded in the measurement file.
+
+
+### Completion marker granularity
+
+The first interpreter SB run reached the closing screen and DOS return but the
+harness stopped on `SECOND REALITY END` before the final status finished printing
+(`... END PAS` was captured). That result remains recorded as a failed check,
+not promoted to a pass. The completion batch now prints a separate final marker
+after either PASS or FAIL, and the harness waits for it. Its parser requires a
+complete PASS line followed by FINISHED and rejects FAIL, reversed markers and
+partial status lines. These parser regressions are included in `make test`.
+A full interpreter SB replay with the corrected gate is running.
