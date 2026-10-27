@@ -170,7 +170,7 @@ uint32_t nativeFarPointer(CPU *cpu,const NativeMemoryMove *op,unsigned segment,u
         if(op->base>=0)offset+=cpu->r[op->base];
         if(op->index>=0)offset+=cpu->r[op->index]<<op->scale;
         if(!op->address32)offset&=65535;
-        const auto linear=cpu->address(op->segment,offset);
+        const auto linear=cpu->address(op->segment,offset,op->width+2);
         uint32_t value=0,selector=0,physical;
         if(!warmDataAddress(*cpu,linear,op->width,false,physical))return 0;
         std::memcpy(&value,cpu->mem.data()+physical,op->width);

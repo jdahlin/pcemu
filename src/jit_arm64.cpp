@@ -1392,13 +1392,16 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 emit(0x53003c00u | (2 << 5) | 2);
             if (i.memory.bit >= 4 && !i.immediate) {
                 // Signed register indexes address a bit string. Apply the word
-                // displacement AFTER address-size wrapping; never wrap again
-                // at 16 bits. Arithmetic shift implements floor for negatives.
+                // displacement and then wrap to the selected address size.
+                // 386EX hardware vectors 0FAB#21 and 660FB3#1 verify wrapping.
+                // Arithmetic shift implements floor for negative indexes.
                 emit(0x13000000u | ((i.w * 8 - 1) << 10) | ((20 + i.dst) << 5) | 13);
                 const unsigned shift = i.w == 2 ? 4 : 5;
                 emit(0x13007c00u | (shift << 16) | (13 << 5) | 13); // asr w13,#shift
                 emit(0x0b000000u | (13 << 16) | ((i.w == 2 ? 1 : 2) << 10) | (2 << 5) | 2);
             }
+            if (i.memory.bit >= 4 && !i.immediate && !i.memory.address32)
+                extract(2, 2, 2, 0);
             // Keep w2 (the adjusted segment offset) intact for the slow helper.
             // Inline only side-effect-free TLB hits and ordinary RAM. Misses,
             // dirty-bit updates, code writes and devices retain the precise

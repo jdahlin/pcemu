@@ -962,6 +962,8 @@ int main() {
                         for (unsigned n = 0; n < 2; n++) {
                             auto &c = n ? native : ref;
                             c.a20 = a20;
+                            // Flat synthetic real-mode cache for the RAM/MMIO sweep.
+                            c.s[DS].limit = 0xffffffff;
                             c.s[CS].big = true;
                             c.flags = 2 | CF | OF;
                             c.write(address, 0x7fffffffu, width);
@@ -1018,6 +1020,7 @@ int main() {
             for (uint32_t address : {65535u, 65536u, 65537u, 65539u}) {
                 CPU ref(65539), native(65539);
                 for (auto c : {&ref, &native}) {
+                    c->s[DS].limit = 0xffffffff; // Intentional flat RAM-boundary fixture.
                     c->s[CS].big = true;
                     c->r[AX] = 0x12345678;
                     std::vector<uint8_t> code;
@@ -1309,6 +1312,7 @@ int main() {
         for (bool store : {false, true}) {
             CPU c(1024 * 1024);
             c.s[CS].big = true;
+            c.s[DS].limit = 0xffffffff; // Flat MMIO fixture, not a segment fault.
             unsigned accesses = 0;
             c.videoRead = [&](uint32_t) {
                 accesses++;
@@ -1370,6 +1374,7 @@ int main() {
         {
             CPU recycleMemory(256 * 1024);
             recycleMemory.s[CS].big = true;
+            recycleMemory.s[DS].limit = 0xffffffff; // Flat cache-recycling fixture.
             const uint8_t code[] = {0xa1, 0, 0, 2, 0, 0x83, 0xc0, 1, 0xa3, 0, 0, 2, 0, 0xf4};
             for (unsigned block = 0; block < 1024; block++)
                 std::copy(std::begin(code), std::end(code), recycleMemory.mem.begin() + block * 32);

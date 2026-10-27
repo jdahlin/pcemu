@@ -104,10 +104,10 @@ now raises #UD before operand access; invalid LOCK forms raise #UD; DIV/IDIV
 zero-divisor/overflow and AAM base zero now deliver restartable #DE instead of
 host errors. Each has offline regressions in `x86-task-x87-tests`.
 
-The wider hardware target currently returns nonzero for remaining architectural
-mismatches, notably real-mode segment/access boundaries and instruction fetches
-crossing FFFFh. They remain visible in the extended logs and are not silently
-filtered into the passing smoke sample. Recorded scopes, counts, failures and
+The original wider hardware run returned nonzero for real-mode segment/access
+boundaries and instruction fetches crossing FFFFh. The selected 28-shard target
+now passes all 109,076 executions after the follow-up fixes. The complete corpus
+still exposes additional mismatches, retained visibly in the extended logs. Recorded scopes, counts, failures and
 reference status are in [the validation record](measurements/x86-external-2026-10-27.json).
 
 The first follow-up enforces complete real/V86 memory operand and stack bounds

@@ -378,15 +378,19 @@ CPU::Operand CPU::decode(uint8_t m, bool a32, int over) {
     seg = over < 0 ? seg : over;
     return {false, 0, over == -2 ? off : address(seg, off), over == -2 ? -1 : seg};
 }
+// Validate the entire encoded memory operand before its first access.
+void CPU::checkOperand(Operand o, unsigned width) const {
+    if (!o.reg && o.segment >= 0) address(o.segment, o.linear - s[o.segment].base, width);
+}
 uint32_t CPU::load(Operand o, int w) {
-    if (!o.reg && o.segment >= 0) address(o.segment, o.linear - s[o.segment].base, w);
+    checkOperand(o, w);
     return o.reg ? get(o.index, w) : read(o.linear, w);
 }
 void CPU::store(Operand o, uint32_t v, int w) {
     if (o.reg)
         set(o.index, v, w);
     else {
-        if (o.segment >= 0) address(o.segment, o.linear - s[o.segment].base, w);
+        checkOperand(o, w);
         write(o.linear, v, w);
     }
 }
@@ -965,11 +969,8 @@ void CPU::stepImpl() {
     int w = o32 ? 4 : 2, aw = a32 ? 4 : 2;
     profile::opcode(op, s[CS].selector, s[CS].base, cr[3], start);
     auto rel = [&](int32_t d) { ip = (ip + d) & (o32 ? 0xffffffff : 65535); };
-    auto fail = [&]() {
-        char b[160];
-        snprintf(b, sizeof b, "unsupported opcode %02x at %04x:%08x", op, s[CS].selector, start);
-        throw std::runtime_error(b);
-    };
+    // Reserved opcodes and invalid ModR/M forms are guest #UD faults.
+    auto fail = [&]() { throw Fault{6, 0, false}; };
     instructions++;
     if (locked) {
         // LOCK is valid only on specified read/modify/write memory forms.
@@ -1493,6 +1494,7 @@ void CPU::stepImpl() {
         auto src = decode(m, a32, over);
         if (src.reg)
             fail();
+        checkOperand(src, w + 2);
         auto val = read(src.linear, w), sel = read(src.linear + w, 2);
         segment(op == 0xc4 ? ES : DS, sel);
         set((m >> 3) & 7, val, w);
@@ -1742,6 +1744,7 @@ void CPU::stepImpl() {
             } else if (g == 3 || g == 5) {
                 if (dst.reg)
                     fail();
+                checkOperand(dst, w + 2);
                 auto seg = read(dst.linear + w, 2);
                 farTransfer(seg, v, g == 3, w);
             } else if (g == 4)
@@ -1968,7 +1971,9 @@ void CPU::stepImpl() {
                 int32_t word = index >= 0
                                    ? index / (w * 8)
                                    : -int32_t((uint32_t(-int64_t(index)) + w * 8 - 1) / (w * 8));
-                dst.linear += word * w;
+                auto offset = dst.linear - s[dst.segment].base + word * w;
+                if (!a32) offset &= 65535;
+                dst.linear = s[dst.segment].base + offset;
             }
             auto value = load(dst, w);
             flags = (flags & ~CF) | ((value & (1u << bit)) ? CF : 0);
@@ -2027,6 +2032,7 @@ void CPU::stepImpl() {
             auto src = decode(m, a32, over);
             if (src.reg)
                 fail();
+            checkOperand(src, w + 2);
             auto v = read(src.linear, w), sel = read(src.linear + w, 2);
             segment(op2 == 0xb2 ? SS : op2 == 0xb4 ? FS : GS, sel);
             set((m >> 3) & 7, v, w);
@@ -2057,10 +2063,7 @@ void CPU::stepImpl() {
             break;
         }
         default: {
-            char b[140];
-            snprintf(b, sizeof b, "unsupported opcode 0f %02x at %04x:%08x", op2, s[CS].selector,
-                     start);
-            throw std::runtime_error(b);
+            throw Fault{6, 0, false};
         }
         }
         break;

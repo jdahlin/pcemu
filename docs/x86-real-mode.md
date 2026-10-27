@@ -22,3 +22,12 @@ sequencing need separate checks; the real/V86 limit fix does not establish those
 features. Synthetic tests that intentionally use flat cached real-mode segments
 must initialize their expanded limits explicitly, rather than relying on missing
 architectural checks.
+
+Far-pointer loads validate the offset and selector as one operand before either
+read; invalid register forms raise #UD. Register-indexed bit strings wrap the
+adjusted offset to address size. Hardware vectors `0FAB#21` and `660FB3#1`
+establish this wrap, and literal tests cover it independently. See the manual's
+[BT entry](https://pdos.csail.mit.edu/6.828/2018/readings/i386/BT.htm) and
+[LDS/LSS/LES/LFS/LGS entry](https://pdos.csail.mit.edu/6.828/2018/readings/i386/LDS.htm).
+The focused five-shard validation (BT/BTS/BTR, invalid LEA, LGS) now passes;
+289 literal task/x87/CPU checks and 355,094 native core checks pass as well.

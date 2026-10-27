@@ -166,6 +166,7 @@ struct CPU {
     };
     void execute_x87_decoded(uint8_t opcode, uint8_t modrm, Operand operand, bool operand32);
     Operand decode(uint8_t modrm, bool address32, int overrideSeg);
+    void checkOperand(Operand o, unsigned width) const;
     uint32_t load(Operand o, int w);
     void store(Operand o, uint32_t v, int w);
     uint32_t shift(int op, uint32_t value, unsigned count, int w);

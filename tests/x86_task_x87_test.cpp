@@ -345,7 +345,9 @@ static void real_segment_bounds() {
         {{0x66,0x01,0x07},DS,4,0xfffd,13},
         {{0x36,0x01,0x07},SS,2,0xffff,12},
         {{0x67,0x88,0x03},DS,1,0xffffffff,13},
-        {{0xa1,0xff,0xff},DS,2,0xffff,13}};
+        {{0xa1,0xff,0xff},DS,2,0xffff,13},
+        {{0xc5,0x07},DS,4,0xfffd,13},
+        {{0x36,0x0f,0xb5,0x07},SS,4,0xfffd,12}};
     for(bool native:{false,true})for(const auto &test:cases) {
         CPU c;c.ip=0x100;c.r[BX]=test.offset;c.r[AX]=0x1234;c.r[SP]=0x8000;
         c.s[test.segment].base=0xa0000;
@@ -399,9 +401,28 @@ static void fetch_and_interrupt_boundaries() {
         check(alias.read(2,2)==0x100,"aliased interrupt frame contains faulting IP");
     }
 }
+// Invalid memory-only encodings produce #UD. Register-indexed bit strings
+// wrap their adjusted offset to address size, as verified by 386EX captures.
+static void encoded_operand_rules() {
+    struct Stop {};
+    for(bool native:{false,true}) {
+        for(const auto &bytes:std::vector<std::vector<uint8_t>>{{0x8d,0xc0},{0xc5,0xc0},{0x0f,0xb5,0xc0},{0x8f,0xc8}}) {
+            CPU c;c.ip=0x100;std::copy(bytes.begin(),bytes.end(),c.mem.begin()+0x100);
+            unsigned vector=255;c.observeFault=[&](const Fault &f){vector=f.vector;throw Stop{};};
+            Jit jit(c,native,0,65536);
+            try {if(native)jit.run();else c.step();}catch(const Stop &){}
+            check(vector==6 && c.ip==0x100,"invalid memory-only form delivers restartable UD");
+        }
+        CPU bit;bit.ip=0x100;bit.r[BP]=0x4a8f;
+        const uint8_t code[]={0x0f,0xab,0x2e,0x41,0xfa,0xf4};
+        std::copy(std::begin(code),std::end(code),bit.mem.begin()+0x100);
+        Jit bj(bit,native,0,65536);if(native)bj.run();else bit.step();
+        check(bit.read(0x391,2)==0x8000,"16-bit bit-string offset wraps after index adjustment");
+    }
+}
 int main() {
     try {
-        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries();
+        reject_mov_cs(); lock_prefix_forms(); divide_faults(); real_segment_bounds(); fetch_and_interrupt_boundaries(); encoded_operand_rules();
         task_transfers(); task_rejections(); task_paging(); stack_and_comparisons();
         register_arithmetic(); integer_conversions(); environment_images(); operand_faults();
         std::cout << "Passed " << checks << " 386 task/x87 specification checks\n";
