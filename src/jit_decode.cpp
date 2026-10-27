@@ -308,6 +308,14 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.dst = op == 0x98 ? AX : DX;
                 i.op = op - 0x98;
                 i.sourceWidth = op == 0x98 ? w / 2 : w;
+            } else if (op == 0x9e) {
+                i.kind = Kind::StoreFlags;
+                i.dst = AX;
+                i.immediate = true;
+            } else if (op == 0xf5 || op == 0xf8 || op == 0xf9) {
+                i.kind = Kind::CarryControl;
+                i.op = op;
+                i.immediate = true;
             } else if (op == 0x9f) {
                 i.kind = Kind::LoadFlags;
                 i.dst = AX;

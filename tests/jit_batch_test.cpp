@@ -124,8 +124,8 @@ int main() {
                                 check(r.instructions == 1 && r.dispatches == 1,
                                       "warming interpreter fragment batched");
                         }
-        // CMC remains an interpreter boundary; CLI now lowers natively.
-        for (uint8_t barrier : {uint8_t(0xf5), uint8_t(0xf4)}) {
+        // WAIT remains an interpreter boundary; CMC and CLI now lower natively.
+        for (uint8_t barrier : {uint8_t(0x9b), uint8_t(0xf4)}) {
             CPU c(65536);
             c.cr[0] = 0x11;
             c.s[CS].big = true;

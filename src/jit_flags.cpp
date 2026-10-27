@@ -53,6 +53,10 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
         unsigned written = 0;
         if (i.kind == Kind::Alu || i.kind == Kind::Test)
             written = i.kind == Kind::Alu && i.op >= 8 ? arithmeticFlags & ~CF : arithmeticFlags;
+        else if (i.kind == Kind::StoreFlags)
+            written = CF | PF | AF | ZF | SF;
+        else if (i.kind == Kind::CarryControl)
+            written = CF;
         else if (i.kind == Kind::BitTest)
             written = CF;
         else if (i.kind == Kind::Multiply || i.kind == Kind::MultiplyFull)
@@ -61,7 +65,8 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             written = CF | SF | ZF | PF | (i.imm == 1 ? OF : 0);
         neededFlags[n] = written & liveFlags;
         liveFlags &= ~written;
-        if (i.kind == Kind::Alu && (i.op == 2 || i.op == 3))
+        if ((i.kind == Kind::Alu && (i.op == 2 || i.op == 3)) ||
+            (i.kind == Kind::CarryControl && i.op == 0xf5))
             liveFlags |= CF; // Carry is an input even when output flags are dead.
     }
     return neededFlags;

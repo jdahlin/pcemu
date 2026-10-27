@@ -2099,3 +2099,13 @@ CPU is 27.67%/12.52% below the original baselines and 0.67%/0.52% below prior.
 A separate mapped Word Instruments trace puts dispatch at 22.9%, compilation
 at 21.1% and string helper descendants at 1.3% of 1,400 main-thread samples.
 See [semantics, measurements and limits](measurements/office-multiply-full-2026-10-27.md).
+
+### Word and Excel: carry controls and SAHF (2026-10-27)
+
+CLC/STC/CMC and SAHF now lower with exact partial flag masks and lazy input
+preservation. Validation passes 39,360 new checks, the core/batch suites and
+102,230,994 flag-liveness checks. Interpreted attempts for these opcodes fall
+92.2% in Word and 95.3% in Excel. All 48 matched release restores pass; CPU
+remains 27.89%/12.70% below original, while incremental differences of
+-0.05%/+0.09% versus prior remain within control variation. No speedup is
+claimed for this change. See [semantics, measurements and limits](measurements/office-partial-flags-2026-10-27.md).

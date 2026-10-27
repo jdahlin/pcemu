@@ -93,7 +93,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::InterruptControl || i.kind == Kind::String)
+        if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -699,7 +699,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -789,6 +789,26 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             imm(10, DF);
             emit((i.imm ? 0x2a000000u : 0x0a200000u) | (10 << 16) | (9 << 5) | 9);
             store(9, 19, offsetof(CPU, flags));
+            continue;
+        }
+        if (i.kind == Kind::CarryControl || i.kind == Kind::StoreFlags) {
+            finishFlags(last,-1,0);
+            last=-1;
+            load(12,19,offsetof(CPU,flags));
+            if(i.kind==Kind::StoreFlags) {
+                // SAHF replaces only SF/ZF/AF/PF/CF; OF and all control bits
+                // survive. AH's reserved bits cannot enter the flags image.
+                imm(13,0xd5);
+                emit(0x0a200000u | (13<<16) | (12<<5) | 12);
+                extract(11,20+AX,1,8);
+                emit(0x0a000000u | (13<<16) | (11<<5) | 11);
+                emit(0x2a000000u | (11<<16) | (12<<5) | 12);
+            } else {
+                imm(13,CF);
+                const auto op=i.op==0xf5?0x4a000000u:i.op==0xf9?0x2a000000u:0x0a200000u;
+                emit(op | (13<<16) | (12<<5) | 12);
+            }
+            store(12,19,offsetof(CPU,flags));
             continue;
         }
         if (i.kind == Kind::LoadFlags) {
