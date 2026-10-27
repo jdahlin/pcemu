@@ -58,3 +58,9 @@ instruction budget completed, and is never a gameplay assertion.
 Next compatibility gates are a completed CWSDPMI startup, correct x87 behavior,
 and a visibly rendered shareware demo advancing across multiple frames. No
 playability or performance claim is made by the current capture.
+
+The 386 TSS far-JMP/CALL and nested IRET implementation now passes focused
+save/load, backlink, busy-bit and CR0.TS checks. The original CWSDPMI bootstrap
+advances past its task transfer; the next observed screen is Quake's SIGFPE
+"Coprocessor not available" at EIP 0005425b. This supersedes the initial
+protected-mode stop above, but still does not establish gameplay.

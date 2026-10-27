@@ -95,6 +95,7 @@ struct CPU {
     }
     void farTransfer(uint16_t selector, uint32_t offset, bool call, int width);
     void farReturn(int width, uint16_t extra, bool iret);
+    void taskSwitch(uint16_t selector, bool nested, bool returning = false);
     void step();
     // Decoded scalar I/O, invoked only after leaving generated host frames.
     void stepPortIO(uint16_t port, int width, bool output, uint32_t end);

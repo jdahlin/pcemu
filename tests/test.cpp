@@ -1951,6 +1951,38 @@ int main() {
         check(denied, "VM86 memory uses user paging privilege despite CS RPL zero");
         check(protection.systemRead(0, 1) == 0,
               "descriptor-table accesses use supervisor paging privilege");
+        {
+            CPU task;
+            task.cr[0] = 1;
+            task.gdtBase = 0x1000; task.gdtLimit = 0x3f;
+            auto descriptor = [&](int selector, uint32_t low, uint32_t high) {
+                task.write(0x1000 + selector, low, 4);
+                task.write(0x1004 + selector, high, 4);
+            };
+            descriptor(8, 0xffff, 0x00cf9a00);
+            descriptor(16, 0xffff, 0x00cf9200);
+            descriptor(24, 0x30000067, 0x00008b00);
+            descriptor(32, 0x40000067, 0x00008900);
+            task.trSelector = 24; task.trBase = 0x3000; task.trLimit = 0x67; task.tr32 = true;
+            task.segment(CS, 8); task.segment(SS, 16);
+            task.ip = 0x123; task.r[AX] = 0x456;
+            task.write(0x4020, 0x789, 4); task.write(0x4024, 2, 4);
+            task.write(0x4028, 0xabc, 4);
+            for (int n = 0; n < 6; ++n) task.write(0x4048 + n * 4, n == CS ? 8 : 16, 2);
+            task.farTransfer(32, 0, true, 2);
+            check(task.ip == 0x789 && task.r[AX] == 0xabc && task.trSelector == 32,
+                  "far CALL loads 386 task state");
+            check(task.read(0x3020, 4) == 0x123 && task.read(0x3028, 4) == 0x456 &&
+                  task.read(0x4000, 2) == 24 && (task.flags & 0x4000) && (task.cr[0] & 8),
+                  "nested task saves outgoing state, backlink, NT and TS");
+            task.farReturn(4, 0, true);
+            check(task.ip == 0x123 && task.r[AX] == 0x456 && task.trSelector == 24 &&
+                  !(task.read(0x1024, 4) & 0x200) && (task.read(0x101c, 4) & 0x200),
+                  "nested IRET returns through backlink and releases outgoing busy bit");
+            task.farTransfer(32, 0, false, 2);
+            check(task.trSelector == 32 && !(task.read(0x101c, 4) & 0x200),
+                  "far JMP task switch releases old TSS");
+        }
         CPU nofpu;
         nofpu.r[SP] = 0x1000;
         nofpu.write(0, 0xe3db, 2);

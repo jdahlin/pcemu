@@ -492,6 +492,64 @@ uint32_t CPU::shift(int op, uint32_t v, unsigned n, int w) {
     }
     return v;
 }
+// Switch 386 tasks through a TSS, including CWSDPMI's ring-3 bootstrap.
+// Intel SDM volume 3A, Task Switching and Task Linking:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf
+void CPU::taskSwitch(uint16_t sel, bool nested, bool returning) {
+    SystemAccess access(*this);
+    uint32_t error = sel & ~3u;
+    if (!(sel & ~7u) || (sel & 4) || (sel & ~7u) + 7 > gdtLimit)
+        throw Fault{uint8_t(returning ? 10 : 13), error, true};
+    auto descriptor = gdtBase + (sel & ~7u);
+    auto lo = read(descriptor, 4), hi = read(descriptor + 4, 4);
+    unsigned type = (hi >> 8) & 15;
+    if ((hi & 0x1000) || type != (returning ? 11u : 9u))
+        throw Fault{uint8_t(returning ? 10 : 13), error, true};
+    if (!(hi & 0x8000)) throw Fault{11, error, true};
+    auto base = (lo >> 16) | ((hi & 255) << 16) | (hi & 0xff000000);
+    auto limit = (lo & 65535) | (hi & 0xf0000);
+    if (hi & 0x800000) limit = (limit << 12) | 4095;
+    if (limit < 0x67) throw Fault{10, error, true};
+    // Read incoming fields before changing CR3; a page fault leaves the old task.
+    uint32_t incoming[18];
+    for (unsigned n = 0; n < 18; ++n) incoming[n] = read(base + 28 + n * 4, 4);
+    if (trSelector) {
+        if (!tr32 || trLimit < 0x67) throw Fault{10, uint32_t(trSelector & ~3u), true};
+        write(trBase + 28, cr[3], 4);
+        write(trBase + 32, ip, 4);
+        write(trBase + 36, returning ? flags & ~0x4000u : flags, 4);
+        for (int n = 0; n < 8; ++n) write(trBase + 40 + n * 4, r[n], 4);
+        for (int n = 0; n < 6; ++n) write(trBase + 72 + n * 4, s[n].selector, 2);
+        write(trBase + 96, ldtSelector, 2);
+        if (!nested) {
+            auto old = gdtBase + (trSelector & ~7u) + 4;
+            write(old, read(old, 4) & ~0x200u, 4);
+        }
+    }
+    if (nested) write(base, trSelector, 2);
+    if (!returning) write(descriptor + 4, hi | 0x200, 4);
+    trSelector = sel; trBase = base; trLimit = limit; tr32 = true;
+    cr[3] = incoming[0]; flushTLB();
+    ip = incoming[1]; flags = incoming[2] | 2 | (nested ? 0x4000 : 0);
+    for (int n = 0; n < 8; ++n) r[n] = incoming[3 + n];
+    ldtSelector = incoming[17];
+    ldtBase = ldtLimit = 0;
+    if (ldtSelector & ~3u) {
+        if ((ldtSelector & 4) || (ldtSelector & ~7u) + 7 > gdtLimit)
+            throw Fault{10, uint32_t(ldtSelector & ~3u), true};
+        auto at = gdtBase + (ldtSelector & ~7u);
+        auto low = read(at, 4), high = read(at + 4, 4);
+        if ((high & 0x9f00) != 0x8200) throw Fault{10, uint32_t(ldtSelector & ~3u), true};
+        ldtBase = (low >> 16) | ((high & 255) << 16) | (high & 0xff000000);
+        ldtLimit = (low & 65535) | (high & 0xf0000);
+    }
+    protectedEntry = false;
+    // Load CS first so subsequent segment checks use the incoming CPL.
+    segment(CS, incoming[12]);
+    for (int n : {ES, SS, DS, FS, GS}) segment(n, incoming[11 + n]);
+    cr[0] |= 8; // Lazy floating-point context switch (#NM until CLTS).
+    dr[7] &= ~0x55u;
+}
 void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
     if ((cr[0] & 1) && !(flags & 0x20000)) {
         auto table = (sel & 4) ? ldtBase : gdtBase;
@@ -499,6 +557,13 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
         auto lo = systemRead(descriptor, 4), hi = systemRead(descriptor + 4, 4);
         int type = (hi >> 8) & 15;
         if (!(hi & 0x1000)) {
+            if (type == 9 || type == 5) {
+                if (std::max(cpl(), unsigned(sel & 3)) > ((hi >> 13) & 3))
+                    throw Fault{13, uint32_t(sel & ~3u), true};
+                if (!(hi & 0x8000)) throw Fault{11, uint32_t(sel & ~3u), true};
+                taskSwitch(type == 5 ? uint16_t(lo >> 16) : sel, call);
+                return;
+            }
             if (type != 4 && type != 12)
                 throw std::runtime_error("unsupported far transfer to system descriptor at " +
                                          location());
@@ -549,6 +614,10 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
 }
 void CPU::farReturn(int w, uint16_t extra, bool iret) {
     bool vm = flags & 0x20000;
+    if (iret && (cr[0] & 1) && !vm && (flags & 0x4000)) {
+        taskSwitch(systemRead(trBase, 2), false, true);
+        return;
+    }
     if (iret && vm && ((flags >> 12) & 3) != 3)
         throw Fault{13, 0, true};
     auto off = pop(w), sel = pop(w);
