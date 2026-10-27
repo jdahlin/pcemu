@@ -1,4 +1,5 @@
 #include "machine.hpp"
+#include "pc_execution.hpp"
 #include "quake_benchmark.hpp"
 #include <iostream>
 using namespace pc;
@@ -9,6 +10,16 @@ static void check(bool value, const char *message) {
 }
 int main() {
     try {
+        {
+            Machine m("","",1024*1024);m.cpu.cr[0]=0x11;m.cpu.s[CS].big=true;m.cpu.flags=2;
+            m.cpu.mem[0]=0x40;m.cpu.mem[1]=0xf4;unsigned polls=0;
+            m.pitClock=[&]{++polls;return uint64_t(0);};
+            Jit jit(m.cpu,true,0);uint64_t next=0;
+            auto batch=runPcBatch(m,jit,next,64);
+            check(batch.instructions==2 && m.cpu.r[AX]==1 && m.cpu.halted,"shared session batch executes guest code");
+            check(polls==2 && next==m.cpu.instructions+50000,"shared session timer checkpoint polls exactly twice");
+            polls=0;pollPcDevices(m,next);check(polls==1,"ordinary session poll retains timer checkpoint");
+        }
         for (auto text : {"969 frames  12.3 seconds  78.8 fps\n", "Loading...\n969 frames 12.3 seconds 78.8 fps\r\n"}) {
             auto result = parseQuakeTimedemo(text);
             check(result && result->frames == 969 && result->seconds == 12.3 && result->fps == 78.8,

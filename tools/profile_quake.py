@@ -23,11 +23,25 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def archive_map(path):
+    """Keep reproducible raw-map evidence compressed, checking the round trip."""
+    original=sha(path);target=path.with_suffix(path.suffix+'.zst')
+    subprocess.run(['zstd','-q','-3',str(path),'-o',str(target)],check=True)
+    process=subprocess.Popen(['zstd','-q','-d','-c',str(target)],stdout=subprocess.PIPE)
+    digest=hashlib.sha256()
+    for chunk in iter(lambda:process.stdout.read(1024*1024),b''):digest.update(chunk)
+    if process.wait() or digest.hexdigest()!=original:raise RuntimeError('JIT-map archive round trip failed')
+    result=dict(rawSha256=original,compressedSha256=sha(target),rawBytes=path.stat().st_size,
+                compressedBytes=target.stat().st_size,path=str(target))
+    path.unlink();return result
+
+
 def summarize_baselines(runs):
     """Use exact frame-window timings only; never mix diagnostic FPS into scores."""
     if len(runs) < 3:
         raise ValueError('At least three independent baseline runs are required')
-    identities = {(r['executableSha256'], r['demoSha256'], r['frames']) for r in runs}
+    identities = {(r['executableSha256'], r['demoSha256'], r['frames'], r.get('backend'),
+                   json.dumps(r.get('execution'),sort_keys=True)) for r in runs}
     if len(identities) != 1 or any(not r['scoreEligible'] or r['profileMode'] != 'none' for r in runs):
         raise ValueError('Baseline binaries, workloads or profiling modes differ')
     for r in runs:
@@ -41,13 +55,26 @@ def summarize_baselines(runs):
         raise ValueError('Invalid baseline timing')
     median = statistics.median(values)
     cpu = [r['frames'] / r['window']['threadCpuSeconds'] for r in runs]
-    return {'runs': len(runs), 'medianFps': median, 'medianThreadCpuFps': statistics.median(cpu),
+    result = {'runs': len(runs), 'medianFps': median, 'medianThreadCpuFps': statistics.median(cpu),
             'minFps': min(values), 'maxFps': max(values),
             'madFps': statistics.median(abs(v - median) for v in values),
             'cvPercent': 100 * statistics.stdev(values) / statistics.mean(values),
             'valuesFps': values,
             'threadCpuToWallRatios': [r['window']['threadCpuSeconds'] / r['window']['wallSeconds'] for r in runs],
-            'firstToLastChangePercent': 100 * (values[-1] / values[0] - 1)}
+            'firstToLastChangePercent': 100 * (values[-1] / values[0] - 1),
+            'medianWallMsPerFrame': statistics.median(r['window']['wallSeconds']*1000/r['frames'] for r in runs),
+            'medianCpuMsPerFrame': statistics.median(r['window']['threadCpuSeconds']*1000/r['frames'] for r in runs)}
+    if all('jit' in r['window'] for r in runs):
+        work=[]
+        for r in runs:
+            w=r['window'];j=w['jit'];steps=w['endInstructions']-w['beginInstructions']
+            work.append(dict(guestStepsPerFrame=steps/r['frames'],batchCallsPerFrame=j['batchCalls']/r['frames'],
+                stepsPerBatch=steps/j['batchCalls'],dispatchesPerBatch=j['dispatches']/j['batchCalls'],
+                x87BoundaryBatchFraction=j['decodedX87HelperSteps']/j['batchCalls'],
+                compiledBlocksPerFrame=j['compiledBlocks']/r['frames'],cacheRecycles=j['cacheRecycles']))
+        result['executionWork']={key:statistics.median(row[key] for row in work) for key in work[0]}
+    return result
+
 
 
 def analyze_sample(text):
@@ -130,12 +157,16 @@ def main():
     p.add_argument('--repeat', type=int, default=5)
     p.add_argument('--timeout', type=int, default=180)
     p.add_argument('--output', type=Path)
+    p.add_argument('--host-repeat', type=int, default=3, help='independent short-demo Instruments collections')
+    p.add_argument('--backend', choices=['jit','interpreter'], default='jit')
     p.add_argument('--no-host-sample', action='store_true', help='collect counters without macOS native stacks')
     a = p.parse_args()
-    if a.repeat < 3 or a.frames < 1 or a.timeout < 1 or not a.disk.is_file():
+    if a.repeat < 3 or a.host_repeat < 1 or a.frames < 1 or a.timeout < 1 or not a.disk.is_file():
         p.error('Need an existing Quake disk, positive frames/timeout, and at least three repeats')
-    if not a.no_host_sample and (sys.platform != 'darwin' or not shutil.which('sample')):
-        p.error('macOS sample is required; use --no-host-sample for counters only')
+    if not a.no_host_sample and not shutil.which('zstd'):
+        p.error('zstd is required to archive JIT maps')
+    if not a.no_host_sample and (sys.platform != 'darwin' or not shutil.which('xcrun')):
+        p.error('macOS Instruments is required; use --no-host-sample for counters only')
     work = a.output.resolve() if a.output else Path(tempfile.mkdtemp(prefix='quake-profile-', dir=ROOT / 'build'))
     if a.output: work.mkdir(parents=True, exist_ok=False)
     source = work / 'source'; source.mkdir()
@@ -174,7 +205,7 @@ def main():
         engine = diagnostic if mode == 'counters' else normal
         command = [sys.executable, str(source / 'tools/bench_quake.py'), '--disk', str(a.disk.resolve()),
                    '--frames', str(a.frames), '--timeout', str(a.timeout), '--runner', str(engine), '--no-build',
-                   '--backend', 'interpreter', '--measure-window', '--profile-mode', mode, '--output-dir', str(output)]
+                   '--backend', a.backend, '--measure-window', '--profile-mode', mode, '--output-dir', str(output)]
         if any(sha(Path(row['path'])) != row['sha256'] for row in metadata['guestDiskChain']):
             raise RuntimeError('Guest backing chain changed; refusing mixed-workload data')
         print(f'Collecting {name} ({mode})', flush=True)
@@ -188,7 +219,8 @@ def main():
         return data
     run('warmup') # Host caches/temperature warmup, stored but excluded from statistics.
     run('baseline-1')
-    if not a.no_host_sample: run('host-sample', 'host')
+    if not a.no_host_sample:
+        for index in range(1,a.host_repeat+1): run(f'host-sample-{index}', 'host')
     run('guest-counters', 'counters')
     for index in range(2, a.repeat + 1): run(f'baseline-{index}')
     baseline = [r for r in runs if r['name'].startswith('baseline-')]
@@ -197,15 +229,29 @@ def main():
     if summary['cvPercent'] > 5: warnings.append('Baseline variance exceeds 5%; collect more runs on an idle host.')
     if any(x < .95 for x in summary['threadCpuToWallRatios']): warnings.append('Baseline thread CPU/wall ratio below 95%; host contention or waits affected timings.')
     host = None
-    if a.no_host_sample: warnings.append('Native host sampling was skipped; guest counters alone cannot establish whole-process bottlenecks.')
-    if not a.no_host_sample:
-        sampler_log = (work / 'host-sample/sampler.log').read_text()
-        symbol_warnings = [line for line in sampler_log.splitlines() if 'DWARF' in line or 'warning' in line.lower()]
-        if symbol_warnings: warnings.append('Native symbol decoder reported warnings; inspect host-sample/sampler.log.')
-        host = analyze_sample((work / 'host-sample/sample.txt').read_text())
-        if host['nonIdleSamples'] < 1000: warnings.append('Fewer than 1000 non-idle main-thread samples; extend the demo for stronger attribution.')
-        host['symbolWarnings'] = symbol_warnings
-        (work / 'host-analysis.json').write_text(json.dumps(host, indent=2) + '\n')
+    sys.path.insert(0,str(source/'tools'))
+    if a.no_host_sample:
+        warnings.append('Host CPU sampling skipped; guest counters cannot establish whole-process bottlenecks.')
+    else:
+        from analyze_quake_jit import analyze as analyze_host
+        profiles=[]
+        for run_data in (r for r in runs if r['profileMode']=='host'):
+            profiles.append(analyze_host(Path(run_data['artifactDirectory']),run_data['window'],run_data['pid']))
+        categories,functions,regions=collections.Counter(),collections.Counter(),collections.Counter()
+        for data in profiles:
+            categories.update({r['name']:r['samples'] for r in data['categories']})
+            functions.update({r['name']:r['samples'] for r in data['self']})
+            regions.update({(r['region'],r['scope']):r['samples'] for r in data['jitRegions']})
+        total=sum(r['mainThreadSamples'] for r in profiles)
+        def rows(counter):
+            return [dict(symbol=k,samples=v,percentOfMainThread=100*v/total) for k,v in counter.most_common()]
+        host=dict(mainThreadSamples=total,categories=rows(categories),self=rows(functions),runs=profiles,
+                  unmappedGeneratedSelfSamples=sum(r['unmappedGeneratedSelfSamples'] for r in profiles),
+                  jitRegions=[dict(region=k[0],scope=k[1],samples=v,percentOfMainThread=100*v/total) for k,v in regions.most_common()])
+        if total<3000: warnings.append('Fewer than 3000 CPU samples; repeat the 50-frame host collection for stronger attribution.')
+        if host['unmappedGeneratedSelfSamples']/total>.01:
+            warnings.append('More than 1% of CPU samples have ambiguous/unmapped generated PCs; use exclusive categories but avoid precise guest-block rankings.')
+        (work/'host-analysis.json').write_text(json.dumps(host,indent=2)+'\n')
     sys.path.insert(0, str(source / 'tools'))
     from analyze_guest_profiles import analyze
     guest_file = work / 'guest-counters/guest-profile.json'
@@ -218,27 +264,32 @@ def main():
     guest['x87Instructions'] = x87
     guest['sampledIPsByCount'] = sorted(raw['sampledIPs'], key=lambda x: -x['samples'])[:50]
     (work / 'guest-analysis.json').write_text(json.dumps(guest, indent=2) + '\n')
+    if host:
+        metadata['archivedJitMaps']=[archive_map(Path(r['artifactDirectory'])/'jit-debug.jsonl') for r in runs if r['profileMode']=='host']
+        (work/'manifest.json').write_text(json.dumps(metadata,indent=2)+'\n')
     report = {'schemaVersion': 1,
               'workload': {'demoSha256': baseline[0]['demoSha256'], 'frames': a.frames,
-                           'resolution': [320, 200], 'sound': False, 'backend': 'interpreter',
+                           'resolution': [320, 200], 'sound': False, 'backend': a.backend, 'execution': baseline[0]['execution'],
                            'pitClock': baseline[0]['pitClock'], 'releaseFlags': RELEASE_FLAGS},
-              'baselineExecutableSha256': metadata['binaries']['quake-bench'], 'scope': 'Quake 1.06 original demo1 prefix, exact timed-frame window, silent interpreter',
-              'baseline': summary, 'warnings': warnings, 'runs': runs, 'loadAtEnd': os.getloadavg(),
+              'baselineExecutableSha256': metadata['binaries']['quake-bench'], 'scope': 'Quake 1.06 original demo1 prefix, exact timed-frame window, shared runBatch path',
+              'baseline': summary,
+              'diagnosticSpeedRatios': [dict(name=r['name'],ratioToBaselineMedian=r['windowFps']/summary['medianFps']) for r in runs if r['profileMode']!='none'],
+              'warnings': warnings, 'runs': runs, 'loadAtEnd': os.getloadavg(),
               'hostAnalysis': 'host-analysis.json' if host else None, 'guestAnalysis': 'guest-analysis.json',
               'tenfoldTargetFps': summary['medianFps'] * 10,
               'notes': ['Only baseline-* runs contribute speed measurements; warmup/host/counter runs do not.',
                         'Optimized source and binaries are frozen; working-tree edits cannot alter this session.',
                         'Baseline timing includes the lightweight guest-IP boundary checks; sampled/counter overhead is kept separate.',
                         'Guest sampling/counter timings include instrumentation overhead and only rank diagnostic work.',
-                        '50 frames cover the opening scene; validate optimizations with the full demo and correctness suite.',
+                        '50 frames are the development/profiling workload; full demos are deferred until a speed milestone.',
                         '10x is a target, not a predicted or achieved speedup.']}
     (work / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
     lines = [f'Quake profiling: {a.frames} timed frames', '',
              f'Baseline median: {summary["medianFps"]:.3f} FPS; MAD {summary["madFps"]:.3f}; CV {summary["cvPercent"]:.2f}%',
              f'Range: {summary["minFps"]:.3f}–{summary["maxFps"]:.3f} FPS',
-             f'10x target: {summary["medianFps"] * 10:.3f} FPS (not achieved)', '', 'Native main-thread self samples:']
+             f'5–10x target: {summary["medianFps"] * 5:.3f}–{summary["medianFps"] * 10:.3f} FPS (not achieved)', '', f'CPU/wall ms per frame: {summary["medianCpuMsPerFrame"]:.3f} / {summary["medianWallMsPerFrame"]:.3f}', '', 'Exclusive main-thread CPU sample categories:']
     if host:
-        lines += [f'{r["percentOfMainThread"]:5.1f}% {r["symbol"]}' for r in host['self'][:12]]
+        lines += [f'{r["percentOfMainThread"]:5.1f}% {r["symbol"]}' for r in host['categories']]
     lines += ['', 'Guest opcodes by execution frequency (not CPU share):']
     lines += [f'{r["percentOfInterpretedAttempts"]:5.1f}% {r["opcode"]} {r["name"]}' for r in guest['opcodes'][:12]]
     lines += ['', 'Warnings:'] + (warnings or ['None from the automated checks.'])

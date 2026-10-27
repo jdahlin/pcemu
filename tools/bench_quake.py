@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import time
 import shutil
+import signal
 import sys
 from pathlib import Path
 from cow_file import CowFile
@@ -155,6 +156,7 @@ def main():
     parser.add_argument('--no-build', action='store_true')
     parser.add_argument('--output-dir', type=Path, help='new directory for this run')
     parser.add_argument('--measure-window', action='store_true', help='measure the pinned Quake 1.06 timed-frame interval')
+    parser.add_argument('--host-profiler', choices=['instruments', 'sample'], default='instruments')
     parser.add_argument('--profile-mode', choices=['none', 'host', 'counters'], default='none')
     parser.add_argument('--require-jit-coverage', action='store_true', help='fail unless pinned Quake application executes without interpreter steps')
     parser.add_argument('--jit-coverage', action='store_true', help='count pinned Quake application JIT/interpreter work over startup and playback')
@@ -165,10 +167,8 @@ def main():
         parser.error('JIT coverage requires --backend jit and a separate run from frame-window profiling')
     if args.timeout <= 0 or (args.frames is not None and args.frames <= 0) or not args.disk.is_file():
         parser.error('A prepared Quake disk, positive timeout and positive frame count are required; see docs/quake.md')
-    if args.backend == 'jit' and (args.measure_window or args.profile_mode != 'none'):
-        parser.error('Exact frame-window profiling currently requires --backend interpreter')
-    if args.profile_mode == 'host' and (sys.platform != 'darwin' or not shutil.which('sample')):
-        parser.error('Host stack sampling requires the macOS sample tool')
+    if args.profile_mode == 'host' and (sys.platform != 'darwin' or not shutil.which('xcrun' if args.host_profiler == 'instruments' else 'sample')):
+        parser.error('Host stack profiling requires macOS Instruments or sample')
     target = 'quake-bench-profile' if (args.profile_mode == 'counters' or args.jit_coverage) else 'quake-bench'
     if not args.no_build:
         subprocess.run(['make', '-s', 'build/' + target, 'build/disk-tool'], cwd=ROOT, check=True)
@@ -223,6 +223,8 @@ def main():
             command += ['--guest-profile', str(work / 'guest-profile.json')]
         if args.profile_mode == 'host':
             command += ['--await-sampler', str(work / 'resume')]
+            if args.host_profiler == 'instruments':
+                command += ['--jit-debug-map', str(work / 'jit-debug.jsonl')]
         sampler = None
         with (work / 'stdout.log').open('w') as out, (work / 'stderr.log').open('w') as err:
             process = subprocess.Popen(command, cwd=ROOT, stdout=out, stderr=err)
@@ -238,20 +240,31 @@ def main():
                         if process.poll() is not None or time.monotonic() > deadline:
                             raise RuntimeError('Guest did not reach the timed-frame attachment boundary')
                         time.sleep(.02)
+                    if args.host_profiler == 'instruments':
+                        profiler_command = ['xcrun', 'xctrace', 'record', '--template', 'Time Profiler',
+                            '--attach', str(process.pid), '--time-limit', str(args.timeout) + 's',
+                            '--output', str(work / 'instruments.trace'), '--no-prompt']
+                        ready_text = 'Ctrl-C to stop the recording'
+                    else:
+                        profiler_command = ['sample', str(process.pid), str(args.timeout), '1', '-mayDie',
+                            '-file', str(work / 'sample.txt')]
+                        ready_text = 'Sampling process'
                     with (work / 'sampler.log').open('w') as log:
-                        sampler = subprocess.Popen(['sample', str(process.pid), str(args.timeout), '1', '-mayDie',
-                            '-file', str(work / 'sample.txt')], stdout=log, stderr=subprocess.STDOUT)
-                    attach_deadline = time.monotonic() + 15
-                    while 'Sampling process' not in (work / 'sampler.log').read_text():
+                        sampler = subprocess.Popen(profiler_command, stdout=log, stderr=subprocess.STDOUT)
+                    attach_deadline = time.monotonic() + 25
+                    while ready_text not in (work / 'sampler.log').read_text():
                         if sampler.poll() is not None or time.monotonic() > attach_deadline:
-                            raise RuntimeError('Host sampler failed to attach; see sampler.log')
+                            raise RuntimeError('Host profiler failed to attach; see sampler.log')
                         time.sleep(.01)
                     (work / 'resume').touch()
                 process.wait(timeout=max(.1, deadline - time.monotonic()))
                 if sampler:
-                    sampler.wait(timeout=15)
-                    if sampler.returncode or not (work / 'sample.txt').is_file():
-                        raise RuntimeError('Host sampler failed to produce its trace')
+                    if args.host_profiler == 'instruments' and sampler.poll() is None:
+                        sampler.send_signal(signal.SIGINT)
+                    sampler.wait(timeout=30)
+                    trace = work / ('instruments.trace' if args.host_profiler == 'instruments' else 'sample.txt')
+                    if sampler.returncode or not trace.exists():
+                        raise RuntimeError('Host profiler failed to produce its trace')
             finally:
                 if process.poll() is None:
                     process.kill(); process.wait()
@@ -272,7 +285,7 @@ def main():
         (work / 'qconsole.log').write_text(console)
         if not re.search(rf'\b{report["frames"]} frames\s+[0-9.]+ seconds\s+{report["fps"]:.1f} fps', console):
             raise RuntimeError('Stopped guest console log did not confirm the FPS result')
-        report.update(profileMode='jit-coverage' if args.jit_coverage else args.profile_mode, scoreEligible=args.profile_mode == 'none' and not args.jit_coverage, demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
+        report.update(hostProfiler=args.host_profiler if args.profile_mode == 'host' else None, profileMode='jit-coverage' if args.jit_coverage else args.profile_mode, scoreEligible=args.profile_mode == 'none' and not args.jit_coverage, demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
                       executableSha256=hashlib.sha256(runner.read_bytes()).hexdigest())
         if measure:
             window = json.loads((work / 'window.json').read_text())

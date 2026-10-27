@@ -63,5 +63,21 @@ int main(){try{
         check(c.ip==6 && c.r[AX]==2 && c.r[CX]==0 && jit.nativeInstructions==2,"exact native observation boundary");
         jit.run();check(c.r[CX]==1 && c.r[DX]==1,"observation does not skip target instruction");
     }
+    // Warming both the fence entry and its predecessors must not let the
+    // cached batching path execute through an observation boundary.
+    for(auto mode:{Jit::BlockMode::Basic,Jit::BlockMode::FollowJumps,Jit::BlockMode::Trace})
+    for(bool warm:{false,true}) {
+        CPU c(65536);c.cr[0]=0x11;c.s[CS].big=true;
+        c.mem[0]=0xeb;c.mem[1]=6;c.mem[8]=0xeb;c.mem[9]=6;c.mem[16]=0x40;c.mem[17]=0xf4;
+        Jit jit(c,true,0,65536,mode);jit.setObservationPoints({16});
+        if(warm)for(unsigned ip:{0u,8u,16u}){c.ip=ip;jit.run();}
+        c.ip=0;c.r[AX]=0;c.halted=false;auto before=jit.nativeInstructions;
+        auto batch=jit.runBatch(64);
+        check(c.ip==16 && c.r[AX]==0 && batch.instructions==2 && jit.nativeInstructions-before==2,
+              "cold/cached batching stops before observation point");
+        jit.runBatch(64);check(c.r[AX]==1 && c.halted,"next batch executes observed entry once");
+        bool rejected=false;try{jit.setDirectLinks(true);}catch(const std::invalid_argument&){rejected=true;}
+        check(rejected,"links cannot be enabled after observation points");
+    }
     std::cout<<"Passed "<<checks<<" decoded x87 JIT checks\n";
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -85,6 +85,9 @@ the scratch disk unless `--keep-disk` is supplied. The prepared disk and game
 files are preserved. The standalone `pcemu --benchmark` synthetic CPU benchmark
 keeps its existing meaning; use the Quake launcher for this timedemo mode.
 
+The benchmark shares the session's `runBatch(64)` and device-polling path, with
+eager compilation and same-page jump joining.
+
 For optimization work, `./run-quake.sh --profile --frames 50 --repeat 5` freezes
 an optimized build and collects separate baseline timings, native host stacks
 and guest opcode/x87 diagnostics. See [Quake profiling](quake-profiling.md) for

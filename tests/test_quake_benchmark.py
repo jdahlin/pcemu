@@ -26,21 +26,13 @@ def pack(entries):
 
 
 class QuakeBenchmarkTests(unittest.TestCase):
-    def test_jit_rejects_interpreter_only_profiling_before_boot(self):
-        with tempfile.TemporaryDirectory() as directory:
-            disk = Path(directory) / 'guest.qcow2'
-            disk.touch()
-            for options in [['--measure-window'], ['--profile-mode', 'counters'],
-                            ['--profile-mode', 'host']]:
-                with self.subTest(options=options), patch.object(sys, 'argv',
-                        ['bench_quake', '--disk', str(disk), '--backend', 'jit'] + options), \
-                        patch.object(bench.subprocess, 'run') as run, \
-                        contextlib.redirect_stderr(io.StringIO()) as errors:
-                    with self.assertRaises(SystemExit) as error:
-                        bench.main()
-                    self.assertEqual(error.exception.code, 2)
-                    self.assertIn('requires --backend interpreter', errors.getvalue())
-                    run.assert_not_called()
+    def test_coverage_and_sampling_are_separate_runs(self):
+        with patch.object(sys, 'argv', ['bench_quake', '--jit-coverage', '--profile-mode', 'host']), \
+                patch.object(bench.subprocess, 'run') as run, contextlib.redirect_stderr(io.StringIO()) as errors:
+            with self.assertRaises(SystemExit) as error: bench.main()
+            self.assertEqual(error.exception.code, 2)
+            self.assertIn('separate run', errors.getvalue())
+            run.assert_not_called()
 
     def test_jit_coverage_reconciles_and_never_rounds_up_completion(self):
         report = dict(coverageGuestSteps=1000000000, coverageNativeSteps=999999999)

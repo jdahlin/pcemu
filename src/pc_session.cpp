@@ -1,5 +1,6 @@
 #include "pc_vga_rom.hpp"
 #include "pc_session.hpp"
+#include "pc_execution.hpp"
 #include "ps2_guest_input.hpp"
 #include "jit.hpp"
 #include "machine.hpp"
@@ -425,16 +426,12 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                         unsigned budget = 64;
                         if (headless && limit && limit - c.instructions < budget)
                             budget = unsigned(limit - c.instructions);
-                        auto result = jit.runBatch(budget);
+                        auto result = runPcBatch(m,jit,nextTimer,budget);
                         batch += result.dispatches;
                     } else {
                         jit.run();
                         ++batch;
-                    }
-                    m.poll();
-                    if (c.instructions >= nextTimer) {
-                        m.poll();
-                        nextTimer = c.instructions + 50000;
+                        pollPcDevices(m,nextTimer);
                     }
                     if (headless && limit && c.instructions >= limit)
                         break;

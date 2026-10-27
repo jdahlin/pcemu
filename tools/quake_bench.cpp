@@ -3,6 +3,7 @@
 // without OCR, guest RAM scanning, executable patches or concurrent disk readers.
 #include "machine.hpp"
 #include "jit.hpp"
+#include "pc_execution.hpp"
 #include "quake_benchmark.hpp"
 #include "profile.hpp"
 #include <chrono>
@@ -15,6 +16,13 @@
 #include <ctime>
 using namespace pc;
 using Clock = std::chrono::steady_clock;
+static int64_t unixNs() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+struct JitCounters {
+    uint64_t native=0,x87=0,blocks=0,recycles=0;
+    static JitCounters read(const Jit &jit) {return {jit.nativeInstructions,jit.nativeHelperInstructions,jit.compiledBlocks,jit.cacheRecycles};}
+};
 // Boundary-only CPU time; no per-instruction clock reads in the baseline binary.
 static uint64_t threadCpuNs() {
     timespec t{};
@@ -30,7 +38,7 @@ static void phase(const std::string &path, const char *state) {
 }
 int main(int argc, char **argv) {
     try {
-        std::string disk, output, windowOutput, guestProfile, awaitSampler, backend = "jit", coverageOutput;
+        std::string disk, output, windowOutput, guestProfile, awaitSampler, backend = "jit", coverageOutput, debugMap;
         unsigned timeout = 1800;
         for (int n = 1; n < argc; ++n) {
             std::string arg = argv[n];
@@ -41,6 +49,7 @@ int main(int argc, char **argv) {
             else if (arg == "--await-sampler") awaitSampler = argv[++n];
             else if (arg == "--guest-profile") guestProfile = argv[++n];
             else if (arg == "--coverage-output") coverageOutput = argv[++n];
+            else if (arg == "--jit-debug-map") debugMap = argv[++n];
             else if (arg == "--backend") backend = argv[++n];
             else if (arg == "--timeout") timeout = std::stoul(argv[++n]);
             else throw std::runtime_error("Unknown argument: " + arg);
@@ -54,8 +63,6 @@ int main(int argc, char **argv) {
         if ((!guestProfile.empty() || !awaitSampler.empty()) && windowOutput.empty())
             throw std::runtime_error("Profiling requires --window-output");
         if (backend != "jit" && backend != "interpreter") throw std::runtime_error("Invalid backend");
-        if (backend == "jit" && !windowOutput.empty() && coverageOutput.empty())
-            throw std::runtime_error("Exact frame-window profiling currently requires the interpreter");
         Machine machine(disk, "", 32 * 1024 * 1024);
         auto &cpu = machine.cpu;
         // 8254 CLK is external board wiring. Only this runner supplies wall time;
@@ -69,8 +76,9 @@ int main(int argc, char **argv) {
             return (ns / 1000000000) * 1193182 + ((ns % 1000000000) * 1193182) / 1000000000;
         };
         machine.pit.reset(0);
-        Jit jit(cpu, backend == "jit", 0);
-        if (!coverageOutput.empty()) jit.setObservationPoints({0x10003ac9,0x10003f86});
+        Jit jit(cpu, backend == "jit", 0,16*1024*1024,Jit::BlockMode::FollowJumps);
+        if (!windowOutput.empty()) jit.setObservationPoints({0x10003ac9,0x10003f86});
+        if (!debugMap.empty()) jit.setDebugMap(debugMap);
         if (backend == "jit" && !jit.enabled()) throw std::runtime_error("Native JIT unavailable on this host");
         std::ofstream console(output + ".console.log");
         if (!console) throw std::runtime_error("Cannot write console transcript");
@@ -112,11 +120,15 @@ int main(int argc, char **argv) {
         machine.boot();
         uint64_t coverageTotal = 0, coverageNative = 0, coverageHelpers = 0;
 
-        uint64_t nextCheck = 0;
+        uint64_t nextCheck = 0, nextTimer = 50000;
         bool completed = false;
         QuakeProfileWindow window;
         uint64_t beginInstructions = 0, endInstructions = 0, beginCpu = 0, endCpu = 0;
         Clock::time_point beginWall, endWall;
+        int64_t beginUnix=0,endUnix=0;
+        JitCounters beginJit,endJit;
+        uint64_t windowBatches=0,windowDispatches=0,endCodeBytes=0;
+
         const bool measureWindow = !windowOutput.empty();
         while (true) {
             if (measureWindow && (cpu.ip == 0x3ac9 || cpu.ip == 0x3f86)) {
@@ -136,9 +148,11 @@ int main(int argc, char **argv) {
                     if (!guestProfile.empty() || !coverageOutput.empty()) profile::start(cpu.instructions);
 #endif
                     phase(windowOutput + ".phase.json", "running");
-                    beginInstructions = cpu.instructions; beginCpu = threadCpuNs(); beginWall = Clock::now();
+                    beginInstructions = cpu.instructions;beginJit=JitCounters::read(jit);
+                    beginUnix=unixNs();beginCpu = threadCpuNs(); beginWall = Clock::now();
                 } else if (event == QuakeProfileWindow::Event::End) {
-                    endWall = Clock::now(); endCpu = threadCpuNs(); endInstructions = cpu.instructions;
+                    endWall = Clock::now(); endCpu = threadCpuNs();endUnix=unixNs();
+                    endInstructions = cpu.instructions;endJit=JitCounters::read(jit);endCodeBytes=jit.residentCodeBytes();
 #ifdef PCEMU_PROFILE
                     if (!guestProfile.empty()) profile::stop(guestProfile, cpu.instructions);
                     if (!coverageOutput.empty()) profile::stop(coverageOutput, cpu.instructions);
@@ -148,14 +162,15 @@ int main(int argc, char **argv) {
             }
             observeDosWrite();
             if (!cpu.halted) {
-                // Pinned DOS Quake 1.06 application code, including startup and
-                // all timed frames; DOS/CWSDPMI trampolines have other selectors.
+                // Coverage filters application entries; timing includes the whole
+                // frame window, including DOS/CWSDPMI and normal device polling.
                 const bool quake = window.begun && !window.ended && cpu.s[CS].selector == 0xa7 && cpu.s[CS].base == 0x10000000 && cpu.s[CS].big;
 #ifdef PCEMU_PROFILE
                 if (!coverageOutput.empty()) { profile::active = quake; if(quake)profile::data.untilSample=1; }
 #endif
                 auto before = cpu.instructions, native = jit.nativeInstructions, helpers = jit.nativeHelperInstructions;
-                jit.run();
+                auto batch=runPcBatch(machine,jit,nextTimer);
+                if(window.begun && !window.ended){++windowBatches;windowDispatches+=batch.dispatches;}
                 if (!coverageOutput.empty() && quake) {
                     coverageTotal += cpu.instructions - before;
                     coverageNative += jit.nativeInstructions - native;
@@ -164,8 +179,7 @@ int main(int argc, char **argv) {
 #ifdef PCEMU_PROFILE
                 if (!coverageOutput.empty()) profile::active = false;
 #endif
-            }
-            machine.poll();
+            } else pollPcDevices(machine,nextTimer);
             if (cpu.instructions < nextCheck && !cpu.halted) continue;
             nextCheck = cpu.instructions + 20000;
             if (Clock::now() - origin > std::chrono::seconds(timeout))
@@ -192,17 +206,26 @@ int main(int argc, char **argv) {
                 << ",\"threadCpuSeconds\":" << double(endCpu - beginCpu) / 1e9
                 << ",\"attachmentPauseSeconds\":" << double(pausedNs) / 1e9
                 << ",\"guestProfiled\":" << (!guestProfile.empty() || !coverageOutput.empty() ? "true" : "false")
-                << ",\"hostSampled\":" << (!awaitSampler.empty() ? "true" : "false") << "}\n";
+                << ",\"hostSampled\":" << (!awaitSampler.empty() ? "true" : "false")
+                << ",\"beginUnixNs\":" << beginUnix << ",\"endUnixNs\":" << endUnix
+                << ",\"jit\":{\"nativeSteps\":" << endJit.native-beginJit.native
+                << ",\"decodedX87HelperSteps\":" << endJit.x87-beginJit.x87
+                << ",\"compiledBlocks\":" << endJit.blocks-beginJit.blocks
+                << ",\"cacheRecycles\":" << endJit.recycles-beginJit.recycles
+                << ",\"residentCodeBytesAtEnd\":" << endCodeBytes
+                << ",\"batchCalls\":" << windowBatches << ",\"dispatches\":" << windowDispatches << "}}\n";
             if (!out) throw std::runtime_error("Cannot write frame-window result");
         }
         if (backend == "jit" && !jit.nativeInstructions)
             throw std::runtime_error("Timedemo completed without native JIT execution");
-                machine.disk->flush();
+        jit.flushDebugMap();
+        machine.disk->flush();
         std::ofstream report(output);
         if (!report) throw std::runtime_error("Cannot write benchmark result");
         report << std::setprecision(12) << "{\"frames\":" << result->frames << ",\"seconds\":" << result->seconds
                << ",\"fps\":" << result->fps << ",\"backend\":\"" << backend << "\",\"pitClock\":\"host-monotonic-1193182Hz\","
-               << "\"coverageGuestSteps\":" << coverageTotal << ",\"coverageNativeSteps\":" << coverageNative
+               << "\"execution\":{\"dispatch\":\"runBatch\",\"budget\":64,\"blockMode\":\"follow-jumps\",\"jitWarmup\":0,\"directLinks\":false,\"arenaBytes\":16777216,\"polling\":\"shared-pc-execution\"},"
+               << "\"pid\":" << getpid() << ",\"coverageGuestSteps\":" << coverageTotal << ",\"coverageNativeSteps\":" << coverageNative
                << ",\"coverageX87HelperSteps\":" << coverageHelpers << ",\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
                << std::chrono::duration<double>(Clock::now() - origin).count() << "}\n";
         std::cout << result->frames << " frames, " << result->seconds << " seconds: " << result->fps << " FPS\n";

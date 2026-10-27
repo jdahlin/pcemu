@@ -149,7 +149,7 @@ Jit::~Jit() {
 #endif
 }
 void Jit::setObservationPoints(std::vector<uint32_t> linear) {
-    if(directLinks)throw std::invalid_argument("Observation points require unlinked run() dispatch");
+    if(directLinks)throw std::invalid_argument("Observation points require unlinked dispatch");
     clear();observationPoints=std::move(linear);
 }
 void Jit::clear() {
@@ -179,6 +179,7 @@ uint32_t Jit::contextFor(const Block &b) {
     cachedContexts.emplace(key,id);profile::event(profile::CachedContextChange);return id;
 }
 void Jit::setDirectLinks(bool enabled, unsigned hotEntries) {
+    if(enabled && !observationPoints.empty())throw std::invalid_argument("Direct links cannot bypass observation points");
     // Stub/body edges use ARM64 B immediates in both directions. Keep the
     // entire allocation aligned and within the conservative signed range.
     if (enabled && ((capacity & 15) || capacity + stubCapacity >= (size_t(1) << 27)))
@@ -510,7 +511,7 @@ template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noe
     const bool userFetch=cpu.cpl()==3&&!cpu.systemAccess;
     const auto a20Mask=cpu.a20?UINT32_MAX:~(1u<<20);
     while (result.count.instructions < budget) {
-        if (cpu.nativeDecodedExit || cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
+        if (atObservationPoint() || cpu.nativeDecodedExit || cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
             (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough))
             return result;
         uint64_t key = prefix | cpu.ip;
@@ -575,7 +576,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
         auto n = run();
         ++result.dispatches;
         result.instructions += n;
-        if (!n || nativeInstructions - before != result.instructions || stopBatch)
+        if (!n || nativeInstructions - before != result.instructions || stopBatch || atObservationPoint())
             break;
         if (result.instructions < budget) {
             auto tail = runCached(budget - result.instructions);
@@ -594,7 +595,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
                 ++result.instructions;
                 break;
             }
-            if (tail.stoppedZero)
+            if (tail.stoppedZero || atObservationPoint())
                 break;
         }
     }

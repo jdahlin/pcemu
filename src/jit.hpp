@@ -30,8 +30,9 @@ class Jit {
     // use run() instead for per-block debugger/trace observations.
     BatchResult runBatch(unsigned budget = 64);
     void clear();
-    // End decoded blocks before these linear guest addresses. With run()
-    // (not runBatch/direct links), callers can observe exact pre-instruction state.
+    // End blocks/batches before these linear guest addresses. The first run()
+    // in a new batch executes a point normally, so observers cannot stall there.
+    // Direct links are incompatible with these externally observed boundaries.
     void setObservationPoints(std::vector<uint32_t> linear);
 
     void setDirectLinks(bool enabled, unsigned hotEntries = 32);
@@ -130,6 +131,12 @@ class Jit {
     bool active = false;
     bool stopBatch = false; // Set by run(); boundary blocks never enter cached tails.
     std::vector<uint32_t> observationPoints;
+    bool atObservationPoint() const {
+        if(observationPoints.empty())return false;
+        const auto linear=cpu.s[CS].base+cpu.ip;
+        for(auto point:observationPoints)if(point==linear)return true;
+        return false;
+    }
     unsigned warmup;
     BlockMode blockMode;
     std::unordered_map<uint64_t, Block> blocks;
