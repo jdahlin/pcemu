@@ -624,6 +624,17 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.srcShift = (i.src & 4) ? 8 : 0;
                         i.src &= 3;
                     }
+                } else if (extended >= 0x90 && extended <= 0x9f) {
+                    auto m=byte();
+                    i.kind=(m>>6)==3?Kind::SetCondition:Kind::Memory;
+                    i.setCondition=extended&15;
+                    i.w=1;
+                    i.immediate=true;
+                    i.dst=m&7;
+                    if(i.kind==Kind::Memory) {
+                        i.memory=memoryOperand(m,address32,overrideSegment);
+                        i.memory.store=true;
+                    }
                 } else if (extended >= 0x80 && extended <= 0x8f) {
                     auto raw = immediate(w);
                     auto displacement = w == 2 ? int32_t(int16_t(raw)) : int32_t(raw);
@@ -652,7 +663,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
-            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert || i.kind == Kind::Divide)) {
+            if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert || i.kind == Kind::Divide || i.kind == Kind::SetCondition)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;
                 if (!i.immediate && i.kind != Kind::Memory) {

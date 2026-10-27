@@ -26,11 +26,11 @@ int main(){try{
         std::vector<uint8_t> code={0x04,1,uint8_t(op)};
         if(tail==0)code.insert(code.end(),{0x80,0xd2,0}); // ADC DL,0
         if(tail==1)code.push_back(0x9f);
-        if(tail==2)code.insert(code.end(),{0x0f,0x90,0xc2}); // SETO DL: interpreter observes restart flags
+        if(tail==2)code.insert(code.end(),{0x0f,0x90,0xc2}); // SETO DL: native consumer observes prior OF
         if(tail==3)code.insert(code.end(),{0x80,0xea,1}); // SUB DL,1 kills flags
         auto instructions=3u;code.push_back(0xf4);std::copy(code.begin(),code.end(),c.mem.begin());
         auto ref=std::make_unique<CPU>(c);for(unsigned n=0;n<instructions;++n)ref->step();Jit jit(c,true,0,65536,mode);while(c.ip<code.size()-1)jit.run();equal(c,*ref);
-        check(jit.nativeInstructions==(tail==2?2:instructions),"partial flag producer/update native, SETO replay exact");
+        check(jit.nativeInstructions==instructions,"partial flag producer/update/consumer native");
     }
     // Mixed updates and consumers in cached/linked frames. Every iteration
     // observes CMC input, SAHF OF preservation and reserved AH bit masking.

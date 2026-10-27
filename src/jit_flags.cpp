@@ -26,6 +26,11 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
+        if (i.kind == Kind::SetCondition) {
+            // SETcc observes prior flags even if a later full writer kills them.
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         if (i.kind == Kind::LoadFlags) {
             // AH observes the low flags even if a later ALU overwrites them.
             liveFlags |= CF | PF | AF | ZF | SF;

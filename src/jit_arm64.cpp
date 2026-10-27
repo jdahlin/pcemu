@@ -699,7 +699,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -790,6 +790,23 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             emit((i.imm ? 0x2a000000u : 0x0a200000u) | (10 << 16) | (9 << 5) | 9);
             store(9, 19, offsetof(CPU, flags));
             continue;
+        }
+        if(i.setCondition>=0) {
+            finishFlags(last,-1,0);
+            last=-1;
+            conditionValue(i.setCondition,true);
+            if(i.setCondition&1) {
+                imm(14,1);
+                emit(0x4a000000u | (14<<16) | (13<<5) | 13);
+            }
+            if(i.kind==Kind::SetCondition) {
+                insert(20+i.dst,13,1,i.dstShift);
+                dirtyRegisters |= 1u<<i.dst;
+                continue;
+            }
+            // Address/translation guards and the slow helper may clobber the
+            // predicate temporaries. Retain the captured byte until the store.
+            store(13,31,104);
         }
         if (i.kind == Kind::CarryControl || i.kind == Kind::StoreFlags) {
             finishFlags(last,-1,0);
@@ -1427,7 +1444,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                          (11 << 5) | 13);
                 } else if (i.memory.store) {
                     int source = 20 + i.dst;
-                    if (i.pushFlags) {
+                    if(i.setCondition>=0) {
+                        load(10,31,104);
+                        source=10;
+                    } else if (i.pushFlags) {
                         load(10,19,offsetof(CPU,flags));
                         if (i.w == 4) {
                             imm(13,0x30000);
@@ -1475,7 +1495,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
             emit(0xaa1303e0u);
             pointer(1, reinterpret_cast<uintptr_t>(metadata));
-            if (i.pushFlags) {
+            if(i.setCondition>=0)
+                load(3,31,104);
+            else if (i.pushFlags) {
                 load(3,19,offsetof(CPU,flags));
                 if (i.w == 4) {
                     imm(13,0x30000);

@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -14,6 +14,7 @@ struct Instruction {
     uint32_t imm, end;
     uint32_t start = 0; // Guest start, including prefixes and followed jumps.
     bool immediate;
+    int setCondition = -1; // SETcc byte result; memory stores save it across access guards.
     int segmentRegister = -1;
     bool segmentLoad = false; // Register/guarded memory selector -> hidden segment state.
     bool xlat = false; // BX/EBX + zero-extended AL, with guarded pre-access replay.

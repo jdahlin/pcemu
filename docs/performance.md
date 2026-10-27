@@ -2109,3 +2109,14 @@ preservation. Validation passes 39,360 new checks, the core/batch suites and
 remains 27.89%/12.70% below original, while incremental differences of
 -0.05%/+0.09% versus prior remain within control variation. No speedup is
 claimed for this change. See [semantics, measurements and limits](measurements/office-partial-flags-2026-10-27.md).
+
+### Word and Excel: SETcc register/memory coverage (2026-10-27)
+
+All sixteen SETcc predicates now lower for byte registers and guarded memory
+stores, preserving flags, aliases, faults and code invalidation. Validation
+passes 225,360 new checks plus the partial-flags, core, batch and liveness
+suites. Interpreted SETcc attempts fall 96.5% in Word and 97.3% in Excel. All
+48 matched release restores pass; median CPU is 28.40%/12.96% below original
+and 1.05%/0.35% below prior. Paired gains are modest with host-noise limits,
+especially Word's paired median within A/A variation. See
+[semantics, measurements and limits](measurements/office-setcc-2026-10-27.md).
