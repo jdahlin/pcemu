@@ -10,6 +10,7 @@ The broader suites have separate targets:
 
 | Command | Scope |
 |---|---|
+| `make test-x86-extended` | All native JIT and literal CPU suites, offline, with bounded CTest workers. New JIT suites join automatically. |
 | `make test-x86-hardware` | All cases in 28 selected opcode/size shards: about 54,500 hardware vectors, both execution backends. Downloads only those pinned shards. |
 | `make test-x86-hardware-full` | All 941 available opcode/size shards. About 576 MiB of compressed input on first use; explicitly unsupported adapter cases are reported. |
 | `make test-x86-reference` | Small Intel-defined IDIV overflow/minimum-quotient ROM, both backends and QEMU. |

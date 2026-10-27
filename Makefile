@@ -352,3 +352,7 @@ test-freedos-extended: build/pcemu freedos
 .PHONY: test-x86-reference
 test-x86-reference: build/x86-external-runner
 	python3 tools/test_x86_rom.py --reference-cases --qemu --jobs "$(X86_TEST_JOBS)"
+
+.PHONY: test-x86-extended
+test-x86-extended: build/x86-extended-tests
+	ctest --test-dir build -L '^x86-extended$$' --output-on-failure -j "$(X86_TEST_JOBS)"

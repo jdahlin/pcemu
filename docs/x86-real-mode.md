@@ -162,3 +162,9 @@ requirements. The literal CPU suite has 327 checks.
 comparisons. An archived pre-bounds binary passed XMS, the first bounds commit
 reproduced the hang, and the cached-limit fix restores XMS on the current binary.
 The fixture itself is unchanged; each run uses its own compressed overlay.
+
+`make test-x86-extended` builds the CMake `x86-extended-tests` target and runs the
+35 labelled CPU/JIT suites with `X86_TEST_JOBS` workers. Registration happens in
+`pcemu_program`, so a new `jit-*` test is automatically included without extending
+a second static target list. This tier is offline and independent of FreeDOS,
+QEMU and hardware-corpus downloads.

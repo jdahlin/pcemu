@@ -188,6 +188,10 @@ function(pcemu_program name)
   elseif(name MATCHES "tests$")
     add_test(NAME ${name} COMMAND ${name})
     set_tests_properties(${name} PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    if(name MATCHES "^jit-" OR name STREQUAL "x86-task-x87-tests")
+      set_tests_properties(${name} PROPERTIES LABELS x86-extended)
+      set_property(GLOBAL APPEND PROPERTY PCEMU_X86_EXTENDED_TESTS ${name})
+    endif()
   endif()
 endfunction()
 
@@ -977,3 +981,6 @@ include(cmake/VgaBios.cmake)
 pcemu_program(x86-external-runner ZSTD
   SOURCES ${CORE} tools/x86_external_runner.cpp
 )
+
+get_property(PCEMU_X86_EXTENDED_TESTS GLOBAL PROPERTY PCEMU_X86_EXTENDED_TESTS)
+add_custom_target(x86-extended-tests DEPENDS ${PCEMU_X86_EXTENDED_TESTS})

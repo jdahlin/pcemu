@@ -114,6 +114,7 @@ regressions from the larger hardware and ROM suites, including known failures.
 
 ```sh
 make test             # offline checks + small hardware-derived CPU sample
+make test-x86-extended # all offline native JIT/CPU suites
 make test-x86-hardware # broader hardware vectors; bounded worker pool
 make test-x86-rom      # standalone CPU ROM + QEMU reference
 make test-freedos-extended # DOSEMU-derived HMA checks
