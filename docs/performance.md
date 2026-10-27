@@ -2134,3 +2134,12 @@ final and 96 retained preliminary restores pass. Final CPU remains
 within control variation. A separate final Excel Instruments trace puts
 dispatch/cache validation at 45.7% and interpreted execution at 2.7% of samples.
 See [semantics, measurements and limits](measurements/office-port-io-2026-10-27.md).
+
+### SAHF reserved-bit normalization (2026-10-27)
+
+Native SAHF now forces flags bit 1 to one, matching the interpreter even when
+the incoming image has that bit clear. The expanded partial-flags matrix failed
+before the fix and passes 72,128 checks afterward, including all AH bytes and
+clear/set reserved-bit inputs. Reference core (354,964) and flag liveness
+(102,230,994) also pass. This correctness fix has no new performance claim;
+existing original-baseline measurements remain attributed to their builds.

@@ -833,6 +833,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 extract(11,20+AX,1,8);
                 emit(0x0a000000u | (13<<16) | (11<<5) | 11);
                 emit(0x2a000000u | (11<<16) | (12<<5) | 12);
+                imm(13,2);
+                emit(0x2a000000u | (13<<16) | (12<<5) | 12); // Reserved bit 1 is always set.
             } else {
                 imm(13,CF);
                 const auto op=i.op==0xf5?0x4a000000u:i.op==0xf9?0x2a000000u:0x0a200000u;

@@ -10,7 +10,7 @@ static void equal(const CPU&a,const CPU&b){check(std::equal(a.r,a.r+8,b.r),"part
     check(a.ip==b.ip && a.flags==b.flags && a.instructions==b.instructions && a.cr[2]==b.cr[2],"partial-flags flags/IP/count/CR2");check(a.mem==b.mem,"partial-flags RAM");}
 int main(){try{
     for(bool code32:{false,true})for(unsigned op:{0xf5u,0xf8u,0xf9u,0x9eu})
-    for(unsigned image=0;image<256;++image)for(unsigned flags:{2u,0xad7u,0x3202u,0x30002u}){
+    for(unsigned image=0;image<256;++image)for(unsigned flags:{0u,2u,0xad5u,0xad7u,0x3200u,0x3202u,0x30000u,0x30002u}){
         auto p=std::make_unique<CPU>(65536);auto&c=*p;c.s[CS].big=code32;c.r[AX]=0x123400ab|(image<<8);c.flags=flags;
         // Prefixes do not change the width of these fixed flag operations.
         c.mem[0]=0x66;c.mem[1]=0x67;c.mem[2]=op;c.mem[3]=0xf4;
