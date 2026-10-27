@@ -724,8 +724,37 @@ void protected_crtc_edges(Guest &g) {
     check(v.crtc[0]==0x55&&v.crtc[7]==0,"unlocked timing registers accept writes");
     v.attrData=true;
     check(v.read_io_register(0x3ba,0)==0&&!v.attrData,"monochrome Status1 resets Attribute flip-flop");
-    check(v.read_io_register(0x3ba,1)==9,"monochrome Status1 shares retrace transitions");
+    check(v.read_io_register(0x3ba,0)==v.read_io_register(0x3da,0),"Status1 aliases sample the same clock");
     g.call(3);
+}
+
+// Literal mode-13 timing: 800 dots/line, 449 lines, retrace at 412..413.
+// Sampling inside character cells avoids rounding ambiguity at the PIT resolution.
+void raster_clock_contract() {
+    VGA v;
+    v.set_bios_mode(0x13, true);
+    auto sample = [&](unsigned line, unsigned character, uint64_t frequency = 25175000,
+                      unsigned divider = 1) {
+        uint64_t dots = (uint64_t(line) * 800 + character * 8 + 4) * divider;
+        uint64_t ticks = (dots * 1193182 + frequency - 1) / frequency;
+        return v.read_io_register(0x3da, ticks);
+    };
+    check(sample(0,0)==0, "visible beam starts active");
+    check(sample(0,76)==0 && sample(0,82)==1, "horizontal display-end boundary");
+    check(sample(399,0)==0 && sample(400,0)==1, "vertical display-end overflow");
+    check(sample(411,0)==1 && sample(412,0)==9 && sample(413,0)==9 && sample(414,0)==1,
+          "two-line retrace begins and ends at CRTC boundaries");
+    check(sample(449,0)==0, "frame wraps at vertical total plus two");
+    for (unsigned n=0;n<100;++n)
+        check(v.read_io_register(0x3da,0)==0, "polling does not advance the beam");
+    v.misc=0x67;
+    check(sample(412,0,28322000)==9, "alternate oscillator controls retrace time");
+    v.misc=0x63;v.seq[1]|=8;
+    check(sample(412,0,25175000,2)==9, "sequencer dot-clock division doubles line time");
+    v.seq[1]&=~8;
+    v.crtc[0x10]=447&255;v.crtc[7]|=4;v.crtc[0x11]=2;
+    check(sample(448,0)==9 && sample(449,0)==8 && sample(451,0)==0,
+          "low-bit retrace comparator wraps across frame end");
 }
 
 void fonts_and_palette(Guest &g) {
@@ -772,6 +801,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
+        raster_clock_contract();
         initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); vbe_indexed_scanout_edges(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); text_addressing_edges(guest); graphics_addressing_edges(guest); protected_crtc_edges(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);

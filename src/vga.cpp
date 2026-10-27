@@ -15,12 +15,12 @@
 // pixel buffer through a 64 KiB bank window or fixed linear framebuffer, with
 // virtual pitch and x/y offsets for panning. Plane storage and packed storage
 // are distinct here. The PCI wrapper describes the framebuffer BAR; the machine
-// maps memory/ports and provides the synthetic I/O clock. PcDisplay separately
+// maps memory/ports and provides the shared PIT-frequency guest clock. PcDisplay separately
 // renders text using BIOS state/font data and presents/captures graphics frames.
 //
 // IMPLEMENTATION NOTE: Reset installs simplified firmware presets, not power-on
-// electrical state. Retrace is simulated by I/O-clock parity; there are no scan
-// clocks, blanking interrupts or analog signals. Rendering produces opaque host
+// electrical state. Retrace follows programmed CRTC timing on the shared guest clock.
+// There are no blanking interrupts or analog signals. Rendering produces opaque host
 // AARRGGBB pixels. Geometry bounds and accepted DISPI modes protect host storage.
 // COMPATIBILITY: Both CRTC port aliases are accepted regardless of IOS; decode is
 // not gated by RAM-enable or DISPI.LFB_ENABLED. Unknown ports return zero.
@@ -51,15 +51,40 @@ namespace pc {
 VGA::VGA() {
     set_bios_mode(BiosMode::Text80Columns, true);
 }
-// Read the selected port, then synthesize retrace/display-inactive from I/O-clock parity.
-// COMPATIBILITY: Status1 is 09h/00h on alternating board ticks, not CRT timing.
-// IBM Input Status Register 1, printed 2-42.
-// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=68
-uint8_t VGA::read_io_register(uint16_t port, uint32_t ioClock) {
+// Sample the CRT beam using the same 1,193,182 Hz clock as the PIT. Reads do
+// not advance time. CRTC totals include hardware offsets (+5 characters/+2 lines),
+// and retrace ends compare only the low four scan-line counter bits.
+// IBM Video Subsystems, CRTC timing registers and Input Status Register 1.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78
+// IMPLEMENTATION NOTE: Reserved clock selections use the first VGA oscillator;
+// programming timing takes effect immediately rather than at a frame boundary.
+uint8_t VGA::read_io_register(uint16_t port, uint64_t pitTicks) {
     auto value = read_register(port);
-    return (port == Register::InputStatus1Register || port == Register::MonochromeInputStatus1Register)
-               ? ((ioClock & 1) ? VerticalRetrace | DisplayInactive : 0)
-               : value;
+    if (port != Register::InputStatus1Register && port != Register::MonochromeInputStatus1Register)
+        return value;
+    constexpr uint64_t PitFrequencyHz = 1193182;
+    constexpr uint64_t VgaDotClockHz = 25175000, VgaAlternateDotClockHz = 28322000;
+    const uint64_t frequency = (misc & 0x0c) == 4 ? VgaAlternateDotClockHz : VgaDotClockHz;
+    const unsigned dotsPerCharacter = (seq[1] & 1) ? 8 : 9;
+    const unsigned clockDivider = (seq[1] & 8) ? 2 : 1;
+    const unsigned horizontalTotal = (unsigned(crtc[0]) + 5) * dotsPerCharacter * clockDivider;
+    const unsigned verticalTotal = (unsigned(crtc[6]) | ((crtc[7] & 1) << 8) |
+                                    ((crtc[7] & 0x20) << 4)) + 2;
+    const uint64_t frameDots = uint64_t(horizontalTotal) * verticalTotal;
+    // Reduce whole seconds before multiplication to avoid long-running clock overflow.
+    const uint64_t dots = ((pitTicks / PitFrequencyHz) % frameDots * frequency +
+                          (pitTicks % PitFrequencyHz) * frequency / PitFrequencyHz) % frameDots;
+    const unsigned line = dots / horizontalTotal;
+    const unsigned character = (dots % horizontalTotal) / (dotsPerCharacter * clockDivider);
+    const unsigned retraceStart = unsigned(crtc[0x10]) | ((crtc[7] & 4) << 6) |
+                                 ((crtc[7] & 0x80) << 2);
+    const unsigned retraceLength = ((unsigned(crtc[0x11]) - retraceStart - 1) & 15) + 1;
+    const bool retrace = retraceStart < verticalTotal &&
+                         (line + verticalTotal - retraceStart) % verticalTotal < retraceLength;
+    const unsigned displayEnd = unsigned(crtc[0x12]) | ((crtc[7] & 2) << 7) |
+                                ((crtc[7] & 0x40) << 3);
+    const bool inactive = character > crtc[1] || line > displayEnd || (seq[1] & 0x20);
+    return (retrace ? VerticalRetrace : 0) | (inactive ? DisplayInactive : 0);
 }
 // Read DISPI state; GETCAPS reports host limits and virtual height is memory/stride.
 // Bochs VBE Display API B0C1 virtual geometry and B0C3 capabilities.
@@ -200,6 +225,18 @@ void VGA::set_bios_mode(unsigned mode, bool clear) {
     crtc[CrtcRegister::MaximumScanLineRegister] = mode == BiosMode::Graphics320x200Color256 ? 1 : 0;
     crtc[CrtcRegister::OffsetRegister] =
         width / (mode == BiosMode::Graphics320x200Color256 ? 8 : 16);
+    // Post-BIOS timing preset: 800 dots/line, 449 lines for 200/350-line modes,
+    // or 525 lines for 480-line modes. Real firmware can replace every field.
+    seq[1] = 1;
+    misc = 0x63;
+    crtc[0] = 95;
+    const unsigned total = height == 480 ? 525 : 449;
+    const unsigned retrace = height == 480 ? 490 : 412;
+    crtc[6] = total - 2;
+    crtc[7] |= (((total - 2) >> 8) & 1) | (((total - 2) >> 4) & 0x20) |
+               ((retrace >> 6) & 4) | ((retrace >> 2) & 0x80);
+    crtc[0x10] = retrace;
+    crtc[0x11] = (retrace + 2) & 15;
     crtc[CrtcRegister::LineCompareRegister]=0xff;
     crtc[CrtcRegister::OverflowRegister]|=0x10;
     crtc[CrtcRegister::MaximumScanLineRegister]|=0x40;

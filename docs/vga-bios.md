@@ -369,3 +369,39 @@ not automate every interactive diagnostic, animated page flip, or timing test.
 The external edge suite can now use the downloadable FreeDOS fixture, with no
 private MS-DOS installation: run `make test-freedos-vga`. See
 [FreeDOS validation](freedos-validation.md) for setup, CPU and driver checks.
+
+## Shared PIT/VGA raster clock
+
+VGA Input Status Register 1 now samples the same 1,193,182 Hz guest clock
+as the PIT, replacing read-count parity. CRTC horizontal total (+5 character
+clocks), vertical total (+2 scanlines and overflow bits), display ends, vertical
+retrace start/end, sequencer 8/9-dot characters and clock division, and the two
+standard VGA oscillators determine beam position. Repeated reads without clock
+advancement return the same status; both port aliases reset the Attribute
+Controller flip-flop. Retrace end compares its low four bits, including intervals
+that cross the frame boundary.
+
+The default machine clock is still instruction-derived (one PIT tick per four
+retired instructions). This is deterministic timing, not instruction cycle
+accuracy or a calibrated CPU speed. Injected PIT clocks also drive VGA. Timing
+register writes currently change phase immediately. Reserved oscillator selections
+use 25.175 MHz. Mid-frame palette/address scanout, blanking-register intervals,
+vertical interrupts, and frame-boundary register latching remain incomplete;
+current captures still render stable device state. These are material remaining
+requirements for Second Reality's copper effects.
+
+Reference: IBM Video Subsystems 42G2193, September 1992, section 2,
+[CRTC registers](https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78).
+
+`make test` includes literal timing-boundary tests and a RAM-only guest probe
+that measures three successive mode-13 retrace intervals against latched PIT
+counts (16,000–18,000 ticks, around the expected 17,025). The probe runs with
+both execution engines and embedded/file VGA ROMs. Optional independent execution:
+
+```sh
+python3 tools/smoke_vga_bios.py --qemu
+```
+
+The QEMU reference explicitly selects `retrace=precise`; its default polling
+shortcut cannot establish PIT/retrace coherence. This probe establishes frame
+calibration, not complete raster-effect or Second Reality compatibility.

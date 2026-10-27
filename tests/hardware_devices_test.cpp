@@ -82,7 +82,7 @@ int main() {
         check(output == "A" && debug.read_data_register() == 'B');
         debug.reset(); check(debug.read_data_register() == 0 && output == "A");
         VGA vga;
-        check(vga.read_io_register(0x3da, 1) == 9 && vga.read_io_register(0x3da, 2) == 0);
+        check(vga.read_io_register(0x3da, 1) == 0 && vga.read_io_register(0x3da, 2) == 0);
         vga.write_display_interface_port(false, 1); vga.write_display_interface_port(true, 800);
         check(vga.read_display_interface_port(true) == 800);
         PCI bus;

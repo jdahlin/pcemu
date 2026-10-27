@@ -227,9 +227,8 @@ struct VGA {
     void reset() {
         *this = VGA{};
     }
-    // The board supplies the existing I/O-derived retrace clock.
-    // Read a VGA port using the board's I/O-derived synthetic retrace clock.
-    uint8_t read_io_register(uint16_t port, uint32_t ioClock);
+    // Sample status on the board's shared 1,193,182 Hz PIT clock; no read-driven time.
+    uint8_t read_io_register(uint16_t port, uint64_t pitTicks);
     // Read either DISPI index or selected data register.
     // Bochs VBE Display API, index/data protocol.
     // https://github.com/bochs-emu/VGABIOS/blob/master/vgabios/vbe_display_api.txt#L153

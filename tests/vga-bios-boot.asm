@@ -303,6 +303,7 @@ real_exit:
     mov sp,0x7c00
     cmp byte [probe_failed],0
     jne fail
+    call raster_calibration
     mov ax,3
     int 0x10
     mov si,pass_text
@@ -321,6 +322,65 @@ fail:
     out 0xf4,al
     hlt
     jmp $
+; Like Second Reality's copper synchronizer, measure successive VGA retraces
+; using a latched PIT countdown. Mode 13h is about 70 Hz: roughly 17,025 PIT
+; ticks per frame. Read-count parity would give a near-zero interval and fail.
+; CLI keeps BIOS IRQ0 bookkeeping out of this bounded RAM-only probe.
+raster_calibration:
+    mov bp,9
+    mov ax,0x13
+    int 0x10
+    mov al,0x34
+    out 0x43,al
+    xor al,al
+    out 0x40,al
+    out 0x40,al
+    mov di,3
+    call retrace_edge
+    call latch_timer
+    mov si,ax
+.next:
+    call retrace_edge
+    call latch_timer
+    mov bx,si
+    sub bx,ax
+    mov si,ax
+    cmp bx,16000
+    jb fail
+    cmp bx,18000
+    ja fail
+    dec di
+    jnz .next
+    ret
+; Poll a full low-to-high edge with a watchdog independent of the PIT.
+retrace_edge:
+    mov dx,0x3da
+    mov ecx,10000000
+.low:
+    in al,dx
+    test al,8
+    jz .wait_high
+    a32 loop .low
+    jmp fail
+.wait_high:
+    mov ecx,10000000
+.high:
+    in al,dx
+    test al,8
+    jnz .done
+    a32 loop .high
+    jmp fail
+.done:
+    ret
+; Counter-latch command freezes both bytes despite intervening I/O time.
+latch_timer:
+    xor al,al
+    out 0x43,al
+    in al,0x40
+    mov ah,al
+    in al,0x40
+    xchg al,ah
+    ret
 ; Print through the tested BIOS and the emulator-independent debug console.
 print:
     lodsb

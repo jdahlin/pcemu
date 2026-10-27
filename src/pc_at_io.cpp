@@ -80,7 +80,7 @@ void Machine::bindIoPorts() {
         });
     ioPorts.map("vga", 0x3b0, 0x30,
         counted([this](uint16_t p, int) -> uint32_t {
-            return vga.read_io_register(p, ioReads);
+            return vga.read_io_register(p, pitTicks());
         }), bytes([this](uint16_t p, uint32_t v, int) { vga.write_register(p, v); ports[p] = v; }));
     auto keyboardWritePort = bytes([this](uint16_t p, uint32_t v, int) {
         if (verbose)

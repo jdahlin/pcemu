@@ -28,7 +28,7 @@ def run_probe(runner, rom, qemu=None):
             print(f'PCEmu {backend}, {source} ROM: guest boot probe passed')
         if qemu:
             result = subprocess.run([
-                qemu, '-machine', 'pc', '-accel', 'tcg', '-m', '16', '-vga', 'none',
+                qemu, '-machine', 'pc', '-accel', 'tcg', '-m', '16', '-vga', 'none,retrace=precise',
                 '-device', f'VGA,romfile={rom}',
                 '-drive', f'file={disk},format=raw,if=floppy,readonly=on', '-boot', 'a',
                 '-display', 'none', '-serial', 'none', '-monitor', 'none', '-no-reboot',
