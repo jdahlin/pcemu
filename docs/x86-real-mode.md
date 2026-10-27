@@ -168,3 +168,7 @@ The fixture itself is unchanged; each run uses its own compressed overlay.
 `pcemu_program`, so a new `jit-*` test is automatically included without extending
 a second static target list. This tier is offline and independent of FreeDOS,
 QEMU and hardware-corpus downloads.
+
+The two contradictory IDIV overflow inputs also run as literal regressions in
+`make test`, protecting the specified #DE behavior from a future change made only
+to match those captures. The current literal suite passes 331 checks.
