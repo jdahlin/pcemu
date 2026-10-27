@@ -260,6 +260,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-conditional-loop-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_conditional_loop_test.cpp
+)
+
 pcemu_program(jit-xlat-tests ZSTD
   SOURCES
     ${CORE}

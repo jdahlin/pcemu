@@ -528,7 +528,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     }
                     i.imm = immediate(i.w);
                 }
-            } else if (op == 0xe2 || op == 0xe3) {
+            } else if (op >= 0xe0 && op <= 0xe3) {
                 auto displacement = int8_t(byte());
                 i.kind = Kind::CounterBranch;
                 i.dst = CX;
@@ -536,7 +536,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.op = op;
                 i.imm = (pos + displacement) & (w == 4 ? UINT32_MAX : 65535u);
                 // Address size selects CX/ECX; operand size selects the target
-                // IP mask. Neither LOOP nor JCXZ changes guest flags.
+                // IP mask. All LOOP variants and JCXZ preserve guest flags.
                 i.w = address32 ? 4 : 2;
             } else if (op == 0x90) {
                 i.kind = Kind::Nop;

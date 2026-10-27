@@ -2066,3 +2066,13 @@ suites. Interpreter attempts fall from 44,552 to 123 in Word and 111,641 to 64 i
 Excel. All 48 matched release restores pass. CPU time is 27.76% below the original
 Word baseline and 13.06% below Excel's; the small incremental differences remain
 within control variation. See [semantics, measurements and limits](measurements/office-xlat-2026-10-27.md).
+
+### Word and Excel: conditional LOOP coverage (2026-10-27)
+
+LOOPE/LOOPNE now lower alongside LOOP/JCXZ, consuming prior lazy ZF while preserving
+all flags and independent counter/target widths. Validation passes 23,846 new
+checks plus the core/batch suites. Interpreted LOOPNE attempts fall 99.8% in Word
+and 99.7% in Excel; all 48 matched release restores pass. CPU time is 27.05% below
+the original Word baseline and 12.68% below Excel's. Incremental medians are 0.27%
+and 0.34% lower; Word remains within control variation, while Excel wins all four
+pairs. See [semantics, measurements and limits](measurements/office-conditional-loop-2026-10-27.md).

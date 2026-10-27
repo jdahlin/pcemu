@@ -855,8 +855,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             continue;
         }
         if (i.kind == Kind::CounterBranch) {
+            if (i.op <= 0xe1) {
+                finishFlags(last,-1,0); // Conditional LOOP consumes prior ZF.
+                last=-1;
+            }
             extract(11, 20 + CX, i.w, 0);
-            if (i.op == 0xe2) {
+            if (i.op != 0xe3) {
                 emit(0x5100056bu); // sub w11,w11,#1, without changing NZCV
                 insert(20 + CX, 11, i.w, 0);
                 dirtyRegisters |= 1u << CX;
@@ -864,10 +868,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             imm(9, pos);
             store(9, 19, offsetof(CPU, ip));
             auto fallthrough = code.size();
-            emit(i.op == 0xe2 ? 0x3400000bu : 0x3500000bu); // cbz/cbnz w11
+            emit(i.op != 0xe3 ? 0x3400000bu : 0x3500000bu); // cbz/cbnz w11
+            size_t wrongZero=size_t(-1);
+            if (i.op <= 0xe1) {
+                load(12,19,offsetof(CPU,flags));
+                bits(12,12,6,1);
+                wrongZero=code.size();
+                emit(i.op==0xe0 ? 0x3500000cu : 0x3400000cu); // LOOPNE/LOOPE reject the opposite ZF.
+            }
             imm(9, i.imm);
             store(9, 19, offsetof(CPU, ip));
             code[fallthrough] |= uint32_t(code.size() - fallthrough) << 5;
+            if(wrongZero!=size_t(-1))code[wrongZero] |= uint32_t(code.size()-wrongZero) << 5;
             continue;
         }
         if (i.kind == Kind::Lea) {
