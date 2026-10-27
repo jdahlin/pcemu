@@ -1,0 +1,361 @@
+{
+  "date": "2026-10-27",
+  "scope": "Headless standalone VGA/VBE firmware validation; no physical timing or complete VGA conformance claim",
+  "romSHA256": "44cb354b0443934086c99f689d30267ad9255d6c44a2b6ca121e60525c401d7e",
+  "romBytes": 32768,
+  "qemu": "QEMU emulator version 11.1.2",
+  "diagnostics": {
+    "vgatest": {
+      "version": "1.5",
+      "url": "https://github.com/barotto/VGATEST/releases/download/v1.5/VGATEST-1.5-DOS.zip",
+      "sha256": "fd5a229310a05e18008864642b510e6033999df17111f4ce66fa408a50ac9681",
+      "license": "GPL-3.0-or-later"
+    },
+    "xvesa": {
+      "revision": "96ff78f92f7b6832046f42486641bf9dafbc29b6",
+      "url": "https://raw.githubusercontent.com/Marco-Pistella/X-VESA/96ff78f92f7b6832046f42486641bf9dafbc29b6/Release/X-VESA.COM",
+      "sha256": "15040fafa9749139e97ca51f719ebffc12d33a6e2fa4d2739854573320bac366",
+      "license": "GPL-3.0"
+    },
+    "files": {
+      "VGATEST0.EXE": "19b5566ab63af2ecd0564b8c4eb5eaf0fdd81f19236b8012559b6a06d4d6445c",
+      "VGATEST.EXE": "effd89d96ae3ce8ba2c0990b8f06cc4a8d76298d32edaea586c70aa01b1647ee",
+      "DOS4GW.EXE": "b8265123ac8a189637448618409ef3ecd2e9f3e1a47062c685a02240f688dec1",
+      "COPYING": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "README": "aa9d34f2e329f24512aeba891105b5d596d38a95bcd1882580849d3ef372279f",
+      "VERSION": "d0b3d79fc9bcbd21f36abefe3ba16bb79bd81a2fd8cdc1799dfc3a77ef9bbb31",
+      "X-VESA.COM": "15040fafa9749139e97ca51f719ebffc12d33a6e2fa4d2739854573320bac366"
+    }
+  },
+  "runs": {
+    "jit": {
+      "romSHA256": "44cb354b0443934086c99f689d30267ad9255d6c44a2b6ca121e60525c401d7e",
+      "runnerSHA256": "f303bc4c6c10f3a7f7cbd97da3923723541470bd6a0cd0336da9c1c06a4eae8c",
+      "gitCommit": "13e4f57d52baeb69085cb728daaafb15c5265bb9",
+      "results": [
+        {
+          "case": "font-map0",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "05562a7fc35bbc5fecb4416b6ba668ab6eb2fc9d17cfebbdbd37d620e1213e9c",
+          "differentPixels": 0,
+          "qemuSHA256": "05562a7fc35bbc5fecb4416b6ba668ab6eb2fc9d17cfebbdbd37d620e1213e9c"
+        },
+        {
+          "case": "font-map2",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "985cff97c2b0fc4dd2df1af02ffa4f51f64c8f51fbbd27a78a110d92eb4d5f46",
+          "differentPixels": 0,
+          "qemuSHA256": "985cff97c2b0fc4dd2df1af02ffa4f51f64c8f51fbbd27a78a110d92eb4d5f46"
+        },
+        {
+          "case": "font-80x50",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "ca4be62cf8efcfd6b1929d5e8389de47c8dd5f32c0c16187905c3e0a78bff635",
+          "differentPixels": 0,
+          "qemuSHA256": "ca4be62cf8efcfd6b1929d5e8389de47c8dd5f32c0c16187905c3e0a78bff635"
+        },
+        {
+          "case": "test-card-04",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "324414f08a5c4e58935d0fee671c7d0f70a378d4cd93759f877d15258f65dc15",
+          "differentPixels": 0,
+          "qemuSHA256": "324414f08a5c4e58935d0fee671c7d0f70a378d4cd93759f877d15258f65dc15"
+        },
+        {
+          "case": "test-card-06",
+          "dimensions": [
+            640,
+            200
+          ],
+          "pcemuSHA256": "b6b3f3a0b038e383d5d1dac28878e802e1afe1b897ca2a9e4c0b759d8850764b",
+          "differentPixels": 0,
+          "qemuSHA256": "b6b3f3a0b038e383d5d1dac28878e802e1afe1b897ca2a9e4c0b759d8850764b"
+        },
+        {
+          "case": "test-card-0d",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "d462926ab6fe50330b2500a7eaff25657cbadcd0f71f0dfa36c4d95fc5d52d84",
+          "differentPixels": 0,
+          "qemuSHA256": "d462926ab6fe50330b2500a7eaff25657cbadcd0f71f0dfa36c4d95fc5d52d84"
+        },
+        {
+          "case": "test-card-12",
+          "dimensions": [
+            640,
+            480
+          ],
+          "pcemuSHA256": "b07676944089edce2d004696a722b509ac844192219e5efc4ce3fccbf13210b2",
+          "differentPixels": 0,
+          "qemuSHA256": "b07676944089edce2d004696a722b509ac844192219e5efc4ce3fccbf13210b2"
+        },
+        {
+          "case": "test-card-13",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "8ed1126abf41dc3c497de6992c7da1c874dca4fce911c242de76680c5e5463c5",
+          "differentPixels": 0,
+          "qemuSHA256": "8ed1126abf41dc3c497de6992c7da1c874dca4fce911c242de76680c5e5463c5"
+        },
+        {
+          "case": "test-card-18",
+          "dimensions": [
+            320,
+            240
+          ],
+          "pcemuSHA256": "174f5a0207e54f0ef777d5702459b7447e094419a5a4837ff77c7158ce8e197b",
+          "differentPixels": 0,
+          "qemuSHA256": "174f5a0207e54f0ef777d5702459b7447e094419a5a4837ff77c7158ce8e197b"
+        },
+        {
+          "case": "xvesa-enumeration",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "40902e20f7f97c063729257bb02be59d79bd6321b852671753fa11de587dbba6",
+          "differentPixels": 0,
+          "qemuSHA256": "40902e20f7f97c063729257bb02be59d79bd6321b852671753fa11de587dbba6"
+        },
+        {
+          "case": "xvesa-mode-information",
+          "status": "passed",
+          "note": "Decoded fields checked by OCR; platform PCI BARs legitimately differ"
+        },
+        {
+          "case": "xvesa-dac-initial",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "50b74207e7f5bd1f4aade2e0a5867e642350b768590da3786db7c54858e6cf16",
+          "differentPixels": 0,
+          "qemuSHA256": "50b74207e7f5bd1f4aade2e0a5867e642350b768590da3786db7c54858e6cf16"
+        },
+        {
+          "case": "xvesa-dac-toggled",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "e0e0edfdea95f49d4712cefc79df128fddd033a848090ad1a4b8640e1b1a0ff1",
+          "differentPixels": 0,
+          "qemuSHA256": "e0e0edfdea95f49d4712cefc79df128fddd033a848090ad1a4b8640e1b1a0ff1"
+        },
+        {
+          "case": "xvesa-dac-entry",
+          "note": "Accepted identical unchanged-legacy-register heuristic on both DISPI boards"
+        }
+      ],
+      "fontMapDifference": "QEMU clone-style foreground intensity folded to IBM low palette for font-map2 only",
+      "comparison": "Six-bit DAC components; ninth text column removed; first-row text cursor footprint excluded",
+      "status": "passed",
+      "romSourceCommit": "13e4f57d52baeb69085cb728daaafb15c5265bb9"
+    },
+    "interpreter": {
+      "romSHA256": "44cb354b0443934086c99f689d30267ad9255d6c44a2b6ca121e60525c401d7e",
+      "runnerSHA256": "da55d71230fd53d4b3bbc1975956927f7cbfb0199f3e9fb07f68569b13c2990e",
+      "gitCommit": "13e4f57d52baeb69085cb728daaafb15c5265bb9",
+      "results": [
+        {
+          "case": "font-map0",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "05562a7fc35bbc5fecb4416b6ba668ab6eb2fc9d17cfebbdbd37d620e1213e9c",
+          "differentPixels": 0,
+          "qemuSHA256": "05562a7fc35bbc5fecb4416b6ba668ab6eb2fc9d17cfebbdbd37d620e1213e9c"
+        },
+        {
+          "case": "font-map2",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "985cff97c2b0fc4dd2df1af02ffa4f51f64c8f51fbbd27a78a110d92eb4d5f46",
+          "differentPixels": 0,
+          "qemuSHA256": "985cff97c2b0fc4dd2df1af02ffa4f51f64c8f51fbbd27a78a110d92eb4d5f46"
+        },
+        {
+          "case": "font-80x50",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "ca4be62cf8efcfd6b1929d5e8389de47c8dd5f32c0c16187905c3e0a78bff635",
+          "differentPixels": 0,
+          "qemuSHA256": "ca4be62cf8efcfd6b1929d5e8389de47c8dd5f32c0c16187905c3e0a78bff635"
+        },
+        {
+          "case": "test-card-04",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "324414f08a5c4e58935d0fee671c7d0f70a378d4cd93759f877d15258f65dc15",
+          "differentPixels": 0,
+          "qemuSHA256": "324414f08a5c4e58935d0fee671c7d0f70a378d4cd93759f877d15258f65dc15"
+        },
+        {
+          "case": "test-card-06",
+          "dimensions": [
+            640,
+            200
+          ],
+          "pcemuSHA256": "b6b3f3a0b038e383d5d1dac28878e802e1afe1b897ca2a9e4c0b759d8850764b",
+          "differentPixels": 0,
+          "qemuSHA256": "b6b3f3a0b038e383d5d1dac28878e802e1afe1b897ca2a9e4c0b759d8850764b"
+        },
+        {
+          "case": "test-card-0d",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "d462926ab6fe50330b2500a7eaff25657cbadcd0f71f0dfa36c4d95fc5d52d84",
+          "differentPixels": 0,
+          "qemuSHA256": "d462926ab6fe50330b2500a7eaff25657cbadcd0f71f0dfa36c4d95fc5d52d84"
+        },
+        {
+          "case": "test-card-12",
+          "dimensions": [
+            640,
+            480
+          ],
+          "pcemuSHA256": "b07676944089edce2d004696a722b509ac844192219e5efc4ce3fccbf13210b2",
+          "differentPixels": 0,
+          "qemuSHA256": "b07676944089edce2d004696a722b509ac844192219e5efc4ce3fccbf13210b2"
+        },
+        {
+          "case": "test-card-13",
+          "dimensions": [
+            320,
+            200
+          ],
+          "pcemuSHA256": "8ed1126abf41dc3c497de6992c7da1c874dca4fce911c242de76680c5e5463c5",
+          "differentPixels": 0,
+          "qemuSHA256": "8ed1126abf41dc3c497de6992c7da1c874dca4fce911c242de76680c5e5463c5"
+        },
+        {
+          "case": "test-card-18",
+          "dimensions": [
+            320,
+            240
+          ],
+          "pcemuSHA256": "174f5a0207e54f0ef777d5702459b7447e094419a5a4837ff77c7158ce8e197b",
+          "differentPixels": 0,
+          "qemuSHA256": "174f5a0207e54f0ef777d5702459b7447e094419a5a4837ff77c7158ce8e197b"
+        },
+        {
+          "case": "xvesa-enumeration",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "40902e20f7f97c063729257bb02be59d79bd6321b852671753fa11de587dbba6",
+          "differentPixels": 0,
+          "qemuSHA256": "40902e20f7f97c063729257bb02be59d79bd6321b852671753fa11de587dbba6"
+        },
+        {
+          "case": "xvesa-mode-information",
+          "status": "passed",
+          "note": "Decoded fields checked by OCR; platform PCI BARs legitimately differ"
+        },
+        {
+          "case": "xvesa-dac-initial",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "50b74207e7f5bd1f4aade2e0a5867e642350b768590da3786db7c54858e6cf16",
+          "differentPixels": 0,
+          "qemuSHA256": "50b74207e7f5bd1f4aade2e0a5867e642350b768590da3786db7c54858e6cf16"
+        },
+        {
+          "case": "xvesa-dac-toggled",
+          "dimensions": [
+            640,
+            400
+          ],
+          "pcemuSHA256": "e0e0edfdea95f49d4712cefc79df128fddd033a848090ad1a4b8640e1b1a0ff1",
+          "differentPixels": 0,
+          "qemuSHA256": "e0e0edfdea95f49d4712cefc79df128fddd033a848090ad1a4b8640e1b1a0ff1"
+        },
+        {
+          "case": "xvesa-dac-entry",
+          "note": "Accepted identical unchanged-legacy-register heuristic on both DISPI boards"
+        }
+      ],
+      "fontMapDifference": "QEMU clone-style foreground intensity folded to IBM low palette for font-map2 only",
+      "comparison": "Six-bit DAC components; ninth text column removed; first-row text cursor footprint excluded",
+      "status": "passed",
+      "romSourceCommit": "13e4f57d52baeb69085cb728daaafb15c5265bb9"
+    }
+  },
+  "installedGuests": [
+    {
+      "guest": "Windows 3.11",
+      "scope": "Win3.11 standard-mode boot, Notepad save, DOS exit and exact FAT file contents",
+      "emulatorSHA256": "7ccd20c9b370ad05ba98da3cb21ecf365e5f3fdc2f4349ffbff85c70c502d5e2",
+      "firmwareSelection": "embedded default",
+      "privateDiskRemoved": true,
+      "fileVerification": {
+        "verifiedBytes": 25,
+        "verifiedSHA256": "8b9c6f73335b8e193dfbde6d6eae207bbef1584917aed6160f2d8aa2b966eb82"
+      }
+    },
+    {
+      "guest": "Windows 95",
+      "scope": "cold boot, applications and guest restart",
+      "emulatorSHA256": "fea71309573fcdefbc2c77551868ef97ee7d2250b38b54241cdf563e43f8c136",
+      "firmwareSelection": "embedded default",
+      "privateDiskRemoved": true,
+      "fileVerification": {
+        "scope": "applications, restart, desktop and exact file persistence",
+        "beforeInstructions": 1109174460,
+        "afterInstructions": 4271565143,
+        "beforeResets": 0,
+        "afterResets": 1,
+        "applications": {
+          "file": "C:\\P205B9FB.TXT",
+          "fatName": "P205B9FBTXT",
+          "expectedContents": " 4\r\nPCEMU Win95 applications 205B9FB9.",
+          "scope": "Calculator 2+2, clipboard transfer, Notepad save and exact stopped-guest FAT readback after restart",
+          "verifiedBytes": 38,
+          "verifiedSha256": "72a8ff6cddc02891b0ea2ac479849f8a36fda035adc01bcafe56e08f1e2df972"
+        }
+      }
+    }
+  ],
+  "integrationBuildNote": "OS checks ran against the embedded-default integration during development; exact executable hashes retained, then firmware budget accounting was verified by session-library-tests.",
+  "checks": [
+    "make test including firmware packaging, ROM oracles and interpreter/JIT RAM boot probes",
+    "focused CTest: VGA BIOS, snapshot, PC components, hardware devices, integration and JIT read/RMW/cross-page",
+    "session-library-tests: default embedded firmware, guest reset, snapshot restore and 512 KiB worker stack",
+    "boot probe with embedded and explicit ROM under interpreter/JIT; explicit ROM under QEMU TCG",
+    "native SwiftUI frontend compiled and signed; no GUI launched"
+  ],
+  "limits": [
+    "Remaining device raster/split-screen/panning/text-addressing/CRTC-protection gaps documented in docs/vga-bios.md",
+    "X-VESA unchanged-legacy-register heuristic explicitly accepted on both DISPI boards before actual DAC tests",
+    "No external Bochs testbios.c run; no claims for unexercised interactive diagnostic demos"
+  ],
+  "cleanup": "Owned temporary guest overlays removed after successful checks; source OS images unchanged; diagnostic binaries and captures stay ignored under build/"
+}

@@ -13,6 +13,10 @@ plus generated font/mode tables, the builder and tests.
 
 ## Build and run
 
+`make test` includes firmware packaging tests, ROM oracles and interpreter/JIT
+RAM-only boot probes. QEMU and installed-DOS checks remain explicit optional
+validation commands.
+
 NASM and Python 3 are build dependencies. All font sources are vendored and
 hash-checked: firmware builds require no network, Watcom, DOS image or QEMU.
 
@@ -218,7 +222,7 @@ execution requires Pillow, Tesseract and, for comparison, QEMU.
 | External diagnostic | Verified scope |
 |---|---|
 | [VGATEST 1.5, Marco Bortolin](https://github.com/barotto/VGATEST/tree/905460440c23cf033eaf078b779236fcb70182aa) | Unmodified 16-bit DOS binary: font maps 0/2, 80x50 text, static test cards in modes 04h, 06h, 0Dh, 12h, 13h and Mode X 320x240. Interpreter and JIT captures compared with QEMU. |
-| [X-VESA 2.0, Marco Pistella](https://github.com/Marco-Pistella/X-VESA/tree/96ff78f92f7b6832046f42486641bf9dafbc29b6) | Unmodified COM binary enumerates all 28 VBE modes; 80x50 enumeration agrees with QEMU. Additional interactive tests are recorded separately when run. |
+| [X-VESA 2.0, Marco Pistella](https://github.com/Marco-Pistella/X-VESA/tree/96ff78f92f7b6832046f42486641bf9dafbc29b6) | Unmodified COM binary: all 28 VBE modes enumerated, detailed mode information decoded, and 6/8-bit DAC gradients toggled. Enumeration and both gradients compared with QEMU; native precision latch also checked. |
 | [Bochs testbios.c](https://github.com/bochs-emu/VGABIOS/blob/12d978bd86fe88ee6b8620b0f1e91c7fb81bc2e6/vgabios/tests/testbios.c) | Inspected, not compiled or run. Requires a compatible DOS C toolchain; its interactive reports are not automated assertions. |
 
 Pixel comparisons reduce captured RGB channels to their six-bit DAC values,
@@ -228,6 +232,14 @@ font-map case alone, QEMU's clone-style foreground intensity is mapped to IBM's
 low palette: IBM reassigns that intensity bit to font selection. Independent
 native tests verify PCEmu's palette behavior. These adjustments are recorded in
 the report; font shapes and remaining pixels must match exactly.
+X-VESA's DAC test initially asks to continue because DISPI mode selection leaves
+legacy VGA registers unchanged. Its register-based heuristic makes the same
+request on both boards. The harness records and accepts that prompt, then
+requires both actual gradient screens and an enabled eight-bit DAC latch;
+it does not count the warning screen as a successful DAC test.
+
+Recorded results, binary hashes and comparison adjustments are in
+[the validation record](measurements/standalone-vga-2026-10-27.json).
 
 Headless installed-guest checks on existing Windows images passed with the ROM:
 Windows 3.11 Notepad save/DOS readback, and Windows 95 cold boot, Calculator
