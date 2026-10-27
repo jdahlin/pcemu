@@ -29,6 +29,7 @@ and JIT compatibility are not claimed.
 ```sh
 ./run-quake.sh --benchmark
 ./run-quake.sh --benchmark --demo demo2
+./run-quake.sh --benchmark --frames 50
 ```
 
 Benchmark mode discovers the embedded `.dem` files in `ID1/PAK0.PAK` and picks
@@ -38,6 +39,16 @@ Quake `timedemo` command headlessly, with the interpreter, 32 MiB RAM, VGA
 the renderer still executes normally and writes the emulated VGA framebuffer.
 There is no frontend presentation or host frame-rate limiter in the measured
 run. `--timeout SECONDS` changes the default 30-minute watchdog.
+
+Use `--frames 50` for a quick stock-demo prefix. The wrapper preserves the
+recording's initial signon/warmup messages, copies 50 timed messages intact and
+adds a normal disconnect message. It retains `demo1-50.dem` in the result folder
+and stages `ID1/PCBENCH.DEM` only in the private child; the original PAK and demo
+are unchanged. Quake's actual reported count must equal the requested count or
+the run fails. This prefix layout is intended for the bundled shareware demos;
+third-party recordings may have different signon sequencing. Settings are loaded
+from `PCBENCH.CFG` to stay within DOS's command-tail limit. A short prefix
+measures the opening scene, so its FPS differs from a complete demo run.
 
 Quake's [timedemo implementation](https://github.com/id-Software/Quake/blob/master/WinQuake/cl_demo.c)
 excludes loading and its first frame, then prints frame count, elapsed seconds

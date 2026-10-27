@@ -1,0 +1,25 @@
+{
+  "frames": 50,
+  "seconds": 4.8,
+  "fps": 10.3,
+  "backend": "interpreter",
+  "pitClock": "host-monotonic-1193182Hz",
+  "resultFileClosed": true,
+  "instructions": 419720001,
+  "totalWallSeconds": 21.987574625,
+  "demo": "demo1",
+  "requestedFrames": 50,
+  "playbackDemo": "pcbench",
+  "resolution": [
+    320,
+    200
+  ],
+  "sound": false,
+  "executableSha256": "73997f99b77e339761e05f2ecc19d34207663aba8228d12056f2d768ef19a858",
+  "scope": "Short original shareware demo1 prefix with exact Quake-reported frame-count validation; silent headless interpreter",
+  "date": "2026-10-27",
+  "demoFile": "demo1-50.dem",
+  "demoSha256": "5557d165274f2b311306b01c94f75d16099daa08bb81c9c4c4e081d39d0f18a3",
+  "generatedDemoBytes": 11567,
+  "scratchDiskRemoved": true
+}

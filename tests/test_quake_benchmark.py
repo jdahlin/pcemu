@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import struct
 import sys
 import unittest
@@ -35,6 +36,70 @@ class QuakeBenchmarkTests(unittest.TestCase):
         struct.pack_into('<I', bad, len(bad) - 4, 1000000)
         with self.assertRaises(ValueError):
             bench.pak_demos(bad)
+
+    def test_short_demo_preserves_complete_packets(self):
+        angles = struct.pack('<fff', 1, 2, 3)
+        records = [struct.pack('<i', 2) + angles + bytes([1, n]) for n in range(65)]
+        original = b'2\n' + b''.join(records) + struct.pack('<i', 1) + angles + b'\x02'
+        short = bench.shorten_demo(original, 50)
+        expected_prefix = b'2\n' + b''.join(records[:55])
+        self.assertEqual(short, expected_prefix + struct.pack('<i', 1) + angles + b'\x02')
+        self.assertEqual(len(original), 2 + 65 * 18 + 17)
+        self.assertEqual(original[-1:], b'\x02')
+        for count in [0, -1, 61]:
+            with self.subTest(count=count), self.assertRaises(ValueError):
+                bench.shorten_demo(original, count)
+
+    def test_short_demo_rejects_damaged_recording(self):
+        for demo in [b'bad', b'bad\n', b'-1\n' + bytes(15),
+                     b'2\n' + struct.pack('<i', -1) + bytes(12),
+                     b'2\n' + struct.pack('<i', 8001) + bytes(8013),
+                     b'2\n' + struct.pack('<i', 2) + bytes(13)]:
+            with self.subTest(demo=demo[:20]), self.assertRaises(ValueError):
+                bench.shorten_demo(demo, 50)
+        with self.assertRaises(ValueError):
+            bench.shorten_demo(b'2\n' + struct.pack('<i', 1) + bytes(12) + b'\x01', 50)
+
+    def test_extract_selected_demo(self):
+        archive = pack([('demo1.dem', b'first'), ('DEMO2.DEM', b'second')])
+        bench.pak_demos(archive)
+        self.assertEqual(bench.demo_from_pak(archive, 'demo2'), b'second')
+        with self.assertRaises(ValueError):
+            bench.demo_from_pak(archive, 'missing')
+
+    def test_add_owned_guest_file_and_preserve_existing(self):
+        class Fat:
+            cluster_bytes = 512
+            database = 0
+            entry = staticmethod(bench.Writer.entry)
+            def __init__(self):
+                self.f = io.BytesIO(bytes(2048))
+                self.allocations = 0
+            def entries(self): return [(0, 'ID1        ', 2, 0)]
+            def chain(self, cluster): return iter([cluster])
+            def read_file(self, cluster, size):
+                self.f.seek((cluster - 2) * 512)
+                return self.f.read(size)
+            def allocate(self, data):
+                self.allocations += 1
+                self.f.seek(512)
+                self.f.write(data.ljust(512, b'\0'))
+                return 3
+            def commit(self): pass
+        fat = Fat()
+        bench.put_id1_file(fat, 'PCBENCH.DEM', b'test demo')
+        self.assertEqual(bench.read_guest_file(fat, 'ID1/PCBENCH.DEM'), b'test demo')
+        self.assertEqual(fat.f.getvalue()[:11], b'PCBENCH DEM')
+        before = fat.f.getvalue()
+        with self.assertRaises(ValueError):
+            bench.put_id1_file(fat, 'PCBENCH.DEM', b'replacement')
+        self.assertEqual(fat.f.getvalue(), before)
+        self.assertEqual(fat.allocations, 1)
+        full = Fat()
+        full.f.write(b'A' * 512)
+        with self.assertRaises(ValueError):
+            bench.put_id1_file(full, 'PCBENCH.CFG', b'timedemo pcbench')
+        self.assertEqual(full.allocations, 0)
 
     def test_offline_nested_file_read(self):
         # Literal FAT directory layout: first cluster is a directory, next a file.
