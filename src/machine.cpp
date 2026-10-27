@@ -101,7 +101,18 @@ void Machine::key(uint16_t value) {
     cpu.halted = false;
 }
 I8042Device::IrqState Machine::ps2IrqState() const {
-    return {bool(pic[0].isr & 2), bool(pic[0].mask & 2),
+    // Host typing can be queued before DOS starts reading. Apply backpressure
+    // to that injected stream while our real-mode BIOS ring is full, rather
+    // than losing a startup command. Guest keyboard drivers retain their own
+    // controller behavior; this is host-input policy, not an 8042 register bit.
+    auto word=[&](unsigned p){return unsigned(cpu.mem[p])|(unsigned(cpu.mem[p+1])<<8);};
+    bool firmwareRingFull=false;
+    if(!(cpu.cr[0]&1) && word(0x58)==0x1058 && word(0x5a)==0xf000) {
+        unsigned start=word(0x480),end=word(0x482),head=word(0x41a),tail=word(0x41c);
+        if(start>=0x1e && end>start+2 && end<=0x100 && head>=start && head<end && tail>=start && tail<end)
+            firmwareRingFull=(tail+2==end?start:tail+2)==head;
+    }
+    return {bool(pic[0].isr & 2), bool(pic[0].mask & 2)||firmwareRingFull,
             bool(pic[1].isr & 0x10), bool(pic[1].mask & 0x10)};
 }
 void Machine::applyPs2Irqs(I8042Device::Irqs irqs) {

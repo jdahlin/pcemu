@@ -2399,6 +2399,14 @@ int main() {
         for(unsigned i=0;i<15;++i){machine.cpu.r[AX]=0x0500;machine.cpu.r[CX]=0x2000+i;machine.service(0x16);check(machine.cpu.get(AX,1)==0,"keyboard ring accepts capacity");}
         machine.cpu.r[AX]=0x0500;machine.service(0x16);
         check(machine.cpu.get(AX,1)==1,"INT16 insert reports a full ring without overwriting");
+        check(machine.ps2IrqState().keyboardMasked,"host typing waits while the firmware ring is full");
+        machine.cpu.cr[0]|=1;
+        check(!machine.ps2IrqState().keyboardMasked,"protected-mode keyboard drivers own their input stream");
+        machine.cpu.cr[0]&=~1u;
+        auto oldInt16=machine.cpu.read(0x58,4);machine.cpu.write(0x58,0x10000000,4);
+        check(!machine.ps2IrqState().keyboardMasked,"guest INT16 replacement owns keyboard backpressure");
+        machine.cpu.write(0x58,oldInt16,4);
+
         for(unsigned i=0;i<15;++i){machine.cpu.r[AX]=0;machine.service(0x16);check(machine.cpu.get(AX,2)==0x2000+i,"keyboard ring wraps in FIFO order");}
         machine.cpu.r[AX]=0x0500;machine.cpu.r[CX]=0x1e61;machine.service(0x16);
         machine.cpu.write(0x41a,machine.cpu.read(0x41c,2),2);
