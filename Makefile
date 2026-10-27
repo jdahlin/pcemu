@@ -356,3 +356,8 @@ test-x86-reference: build/x86-external-runner
 .PHONY: test-x86-extended
 test-x86-extended: build/x86-extended-tests
 	ctest --test-dir build -L '^x86-extended$$' --output-on-failure -j "$(X86_TEST_JOBS)"
+
+# Original release setup/unpacking only; full demo/raster/audio acceptance is separate.
+.PHONY: test-second-reality-setup
+test-second-reality-setup: build/pcemu build/disk-tool
+	python3 tools/smoke_second_reality.py
