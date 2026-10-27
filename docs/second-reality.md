@@ -47,10 +47,20 @@ build is not a prerequisite to testing the released executable.
 - ISA Sound Blaster/GUS and 8237 DMA remain absent. First validate the complete
   no-sound sequence (including music sequencing), then implement and validate a
   real sound path and its sample-clock/IRQ synchronization.
-- Add a separate full-run test using start points 1–5 for localization and a
-  complete non-looping run for acceptance. Scene/music markers and reference
-  captures must distinguish real progress from a running CPU or black frame.
-  Realtime performance and audio/visual reference comparison remain unmeasured.
+- `make test-second-reality` now runs an opt-in no-sound completion check in
+  both engines. `--part 1` through `--part 5` select released start points for
+  localization. It waits for observed setup/confirmation text before sending
+  keys, records frame hashes/instruction positions, and requires clean DOS
+  return plus changing graphics. This is a completion smoke, not a pixel oracle.
+  Source scene/music markers and reference captures remain needed for fidelity.
+  Realtime performance and audio/visual comparison remain unmeasured.
+
+The first full-run check fails honestly: 955 observations contain 71 distinct
+frames, then the frame stops changing at about 1.14 billion instructions. The
+120-second watchdog expires without DOS return (about 15.3 billion instructions).
+The final screenshot, state, `frames.json`, and failure report remain in ignored
+build evidence. Successful checks remove copied runners/ROMs and overlays.
+Do not interpret a running CPU, timer IRQs, or graphics entry as completion.
 
 ### Copper calibration correction
 

@@ -361,3 +361,7 @@ test-x86-extended: build/x86-extended-tests
 .PHONY: test-second-reality-setup
 test-second-reality-setup: build/pcemu build/disk-tool
 	python3 tools/smoke_second_reality.py
+
+.PHONY: test-second-reality
+test-second-reality: build/pcemu build/disk-tool
+	python3 tools/smoke_second_reality.py --mode run
