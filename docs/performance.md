@@ -2213,3 +2213,17 @@ CPU is 24.17%/13.04% below original, while prior-relative medians are 1.57%/0.21
 higher with evenly split pairs and substantial A/A variation; no speedup is
 claimed. Separate Instruments traces retain Word compilation at 19.2% and Excel
 dispatch/validation at 43.2%. See [semantics, measurements and limits](measurements/office-far-pointer-2026-10-27.md).
+
+### Word document load and Excel recalculation: native ENTER (2026-10-27)
+
+ENTER supports all nesting levels and mixed operand/stack widths through ordered
+warm-RAM preflight. Planned reads observe earlier pushes, including partial and
+physical aliases; unsafe accesses replay with exact faults and partial frame
+writes. Native continuation, ENTER/LEAVE, cached blocks and promoted links pass
+37,835 new checks plus regression suites. ENTER interpreter attempts fall
+76.8%/76.0% in Word/Excel and declined attempts reach zero. All 48 scored
+restores pass. CPU is 26.34%/13.20% below original; versus prior, Word is 0.38%
+higher and Excel 0.51% lower, without a reliable incremental speedup. These are
+Word document-load CPU and Excel recalculation CPU, with elapsed task-response
+recorded separately. Final Instruments traces retain Word compilation at 16.8%
+and Excel dispatch/validation at 43.2%. See [semantics, measurements and limits](measurements/office-enter-2026-10-27.md).

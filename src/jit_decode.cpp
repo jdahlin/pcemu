@@ -216,6 +216,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.memory.address32 = block.stack32;
                 i.memory.displacement = i.memory.store ? uint32_t(-8 * w) : 0;
                 block.usesStack = true;
+            } else if(op==0xc8) {
+                i.kind=Kind::EnterFrame;i.immediate=true;
+                i.imm=immediate(2);i.op=byte()&31;
+                block.usesStack=true;
             } else if (op == 0xc9) {
                 i.kind = Kind::Memory;
                 i.leaveFrame = true;

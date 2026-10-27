@@ -77,6 +77,51 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+uint32_t nativeEnter(CPU *cpu,unsigned width,unsigned size,unsigned level) noexcept {
+    if((width!=2 && width!=4) || cpu->watchWrite)return 0;
+    struct Write {uint32_t physical,value;};
+    std::array<Write,32> writes;
+    unsigned count=0;level&=31;size&=65535;
+    const bool stack32=cpu->s[SS].big;
+    uint32_t sp=cpu->r[SP],bp=cpu->r[BP];
+    const auto stackMask=stack32?UINT32_MAX:65535u,operandMask=width==4?UINT32_MAX:65535u;
+    auto push=[&](uint32_t value){
+        const auto offset=(sp-width)&stackMask;uint32_t physical;
+        if(count==writes.size() || !warmDataAddress(*cpu,cpu->address(SS,offset),width,true,physical))return false;
+        if(cpu->codeUsed[physical>>6] || cpu->codeUsed[(physical+width-1)>>6])return false;
+        sp=(sp&~stackMask)|offset;writes[count++]={physical,value};return true;
+    };
+    try {
+        if(!push(bp&operandMask))return 0;
+        const auto frame=sp&stackMask;
+        for(unsigned n=1;n<level;++n){
+            bp=(bp&~operandMask)|((bp-width)&operandMask);
+            uint32_t physical,value=0;
+            if(!warmDataAddress(*cpu,cpu->address(SS,bp&operandMask),width,false,physical))return 0;
+            std::memcpy(&value,cpu->mem.data()+physical,width);
+            // Reference reads observe earlier pushes, even through partial
+            // overlaps or different virtual addresses aliasing the same RAM.
+            for(unsigned k=0;k<count;++k){
+                const auto begin=std::max(uint64_t(physical),uint64_t(writes[k].physical));
+                const auto end=std::min(uint64_t(physical)+width,uint64_t(writes[k].physical)+width);
+                for(auto p=begin;p<end;++p){
+                    const auto shift=unsigned(p-physical)*8,source=unsigned(p-writes[k].physical)*8;
+                    value=(value&~(255u<<shift))|(((writes[k].value>>source)&255u)<<shift);
+                }
+            }
+            if(!push(value))return 0;
+        }
+        if(level && !push(frame))return 0;
+        bp=(bp&~operandMask)|(frame&operandMask);
+        sp=(sp&~stackMask)|((sp-size)&stackMask);
+        for(unsigned n=0;n<count;++n){
+            std::memcpy(cpu->mem.data()+writes[n].physical,&writes[n].value,width);
+            cpu->written(writes[n].physical,width);
+        }
+        cpu->r[BP]=bp;cpu->r[SP]=sp;return 1;
+    } catch(const Fault &){return 0;}
+}
+
 uint32_t nativeFarPointer(CPU *cpu,const NativeMemoryMove *op,unsigned segment,unsigned completed) noexcept {
     if((op->width!=2 && op->width!=4) || op->reg<0 || op->reg>=8 || segment>=6 || segment==CS)return 0;
     try {
