@@ -492,10 +492,49 @@ uint32_t CPU::shift(int op, uint32_t v, unsigned n, int w) {
     }
     return v;
 }
-// Switch 386 tasks through a TSS, including CWSDPMI's ring-3 bootstrap.
-// Intel SDM volume 3A, Task Switching and Task Linking:
-// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf
-void CPU::taskSwitch(uint16_t sel, bool nested, bool returning) {
+// Hardware task switching lets protected-mode software suspend a complete 386
+// context in a Task-State Segment (TSS), then resume another context. CWSDPMI
+// uses it to cross between its DOS server and protected-mode client. The task
+// register (TR) caches the active TSS; CALL nests tasks, JMP replaces one, and
+// IRET with EFLAGS.NT follows the previous-task backlink instead of a stack frame.
+// Model: 386 32-bit TSS, with the legacy rules described by Intel SDM vol. 3A,
+// System Programming Guide, Part 1, 253668-085US, October 2024, 9.2.1/9.3/9.4.
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=267
+// FIXME: 16-bit TSS, task-gate interrupts, TSS trap-bit #DB, full incoming segment
+// qualification and faults after task commitment are not modeled completely.
+// Table 9-1 identifies which errors belong to the old versus new task:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=277
+namespace task_state {
+// Byte offsets within a 32-bit TSS (not descriptor-table offsets). Selector
+// fields occupy 16 bits in four-byte slots. Intel Figure 9-2:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=268
+constexpr unsigned PreviousTask = 0;  // Backlink followed by nested-task IRET.
+constexpr unsigned PageDirectory = 28; // Incoming address-space CR3.
+constexpr unsigned InstructionPointer = 32; // Resume EIP after the transfer.
+constexpr unsigned Flags = 36;        // Suspended EFLAGS, including NT.
+constexpr unsigned GeneralRegisters = 40; // EAX..EDI in x86 register order.
+constexpr unsigned SegmentSelectors = 72; // ES,CS,SS,DS,FS,GS, four-byte stride.
+constexpr unsigned LocalDescriptorTable = 96; // Incoming LDTR selector.
+constexpr unsigned MinimumLimit = 0x67; // Inclusive end of fixed 104-byte TSS.
+// Descriptor types and fields; B is bit 1 of the four-bit TSS type. P=1 marks
+// the descriptor present, S=0 identifies a system descriptor. Sections 9.2.2/9.4:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=269
+constexpr unsigned AvailableTss = 9, BusyTss = 11;
+constexpr uint32_t CodeOrDataDescriptor = 0x1000, Present = 0x8000, Busy = 0x200;
+// EFLAGS.NT (bit 14) selects task return; CR0.TS (bit 3) makes subsequent x87
+// instructions fault with #NM until software manages the floating-point context.
+// DR7 local enable bits are cleared so breakpoints do not leak between tasks.
+// Sections 9.3/9.4, Table 9-2:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=279
+constexpr uint32_t NestedTask = 0x4000, TaskSwitched = 8, LocalBreakpoints = 0x55;
+}
+// Transfer the architectural context and task-link bookkeeping. Direct JMP/CALL
+// privilege checks are performed by farTransfer; nested IRET bypasses that DPL
+// check. This implements the non-CET subset of 9.3 and the 9.4 Table 9-2 rules.
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=274
+void CPU::switch_task(uint16_t sel, bool nested, bool returning) {
+    using namespace task_state;
+    // TSS/descriptor references are supervisor accesses even for a CPL3 caller.
     SystemAccess access(*this);
     uint32_t error = sel & ~3u;
     if (!(sel & ~7u) || (sel & 4) || (sel & ~7u) + 7 > gdtLimit)
@@ -503,34 +542,50 @@ void CPU::taskSwitch(uint16_t sel, bool nested, bool returning) {
     auto descriptor = gdtBase + (sel & ~7u);
     auto lo = read(descriptor, 4), hi = read(descriptor + 4, 4);
     unsigned type = (hi >> 8) & 15;
-    if ((hi & 0x1000) || type != (returning ? 11u : 9u))
+    if ((hi & CodeOrDataDescriptor) || type != (returning ? BusyTss : AvailableTss))
         throw Fault{uint8_t(returning ? 10 : 13), error, true};
-    if (!(hi & 0x8000)) throw Fault{11, error, true};
+    if (!(hi & Present)) throw Fault{11, error, true};
     auto base = (lo >> 16) | ((hi & 255) << 16) | (hi & 0xff000000);
     auto limit = (lo & 65535) | (hi & 0xf0000);
     if (hi & 0x800000) limit = (limit << 12) | 4095;
-    if (limit < 0x67) throw Fault{10, error, true};
-    // Read incoming fields before changing CR3; a page fault leaves the old task.
+    if (limit < MinimumLimit) throw Fault{10, error, true};
+    // IMPLEMENTATION NOTE: prefetch incoming state through the old address
+    // space before committing TR. A fault in these reads leaves the old task
+    // active. This is not the complete Intel late-fault sequencing algorithm.
+    // Intel 9.3/Table 9-1:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=277
     uint32_t incoming[18];
-    for (unsigned n = 0; n < 18; ++n) incoming[n] = read(base + 28 + n * 4, 4);
+    for (unsigned n = 0; n < 18; ++n) incoming[n] = read(base + PageDirectory + n * 4, 4);
     if (trSelector) {
-        if (!tr32 || trLimit < 0x67) throw Fault{10, uint32_t(trSelector & ~3u), true};
-        write(trBase + 28, cr[3], 4);
-        write(trBase + 32, ip, 4);
-        write(trBase + 36, returning ? flags & ~0x4000u : flags, 4);
-        for (int n = 0; n < 8; ++n) write(trBase + 40 + n * 4, r[n], 4);
-        for (int n = 0; n < 6; ++n) write(trBase + 72 + n * 4, s[n].selector, 2);
-        write(trBase + 96, ldtSelector, 2);
+        if (!tr32 || trLimit < MinimumLimit) throw Fault{10, uint32_t(trSelector & ~3u), true};
+        // FIXME: CR3 and LDTR are static TSS fields; hardware saves only the
+        // dynamic subset. Retained writes need a separate compatibility fix.
+        // Intel 9.2.1, dynamic/static fields:
+        // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=269
+        write(trBase + PageDirectory, cr[3], 4);
+        write(trBase + InstructionPointer, ip, 4);
+        write(trBase + Flags, returning ? flags & ~NestedTask : flags, 4);
+        for (int n = 0; n < 8; ++n) write(trBase + GeneralRegisters + n * 4, r[n], 4);
+        for (int n = 0; n < 6; ++n) write(trBase + SegmentSelectors + n * 4, s[n].selector, 2);
+        write(trBase + LocalDescriptorTable, ldtSelector, 2);
         if (!nested) {
             auto old = gdtBase + (trSelector & ~7u) + 4;
-            write(old, read(old, 4) & ~0x200u, 4);
+            write(old, read(old, 4) & ~Busy, 4);
         }
     }
-    if (nested) write(base, trSelector, 2);
-    if (!returning) write(descriptor + 4, hi | 0x200, 4);
+    // CALL leaves the old descriptor busy and records its selector in the new
+    // backlink. JMP/IRET release the old descriptor; IRET keeps the destination
+    // busy and saves the departing task with NT cleared. Intel Table 9-2:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=279
+    if (nested) write(base + PreviousTask, trSelector, 2);
+    if (!returning) write(descriptor + 4, hi | Busy, 4);
     trSelector = sel; trBase = base; trLimit = limit; tr32 = true;
+    // FIXME: hardware only loads CR3 when paging is enabled. This backend
+    // currently reloads it unconditionally, then drops all cached translations.
+    // Intel 9.3, incoming task state:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=275
     cr[3] = incoming[0]; flushTLB();
-    ip = incoming[1]; flags = incoming[2] | 2 | (nested ? 0x4000 : 0);
+    ip = incoming[1]; flags = incoming[2] | 2 | (nested ? NestedTask : 0);
     for (int n = 0; n < 8; ++n) r[n] = incoming[3 + n];
     ldtSelector = incoming[17];
     ldtBase = ldtLimit = 0;
@@ -547,9 +602,14 @@ void CPU::taskSwitch(uint16_t sel, bool nested, bool returning) {
     // Load CS first so subsequent segment checks use the incoming CPL.
     segment(CS, incoming[12]);
     for (int n : {ES, SS, DS, FS, GS}) segment(n, incoming[11 + n]);
-    cr[0] |= 8; // Lazy floating-point context switch (#NM until CLTS).
-    dr[7] &= ~0x55u;
+    cr[0] |= TaskSwitched;
+    dr[7] &= ~LocalBreakpoints;
 }
+// Dispatch a far CALL/JMP through the selected descriptor. Available TSS/task
+// gates enter switch_task; ordinary code and call-gate handling remain below.
+// The task branch enforces selector/gate privilege before changing task state.
+// Intel 253668-085US, 9.2.5/9.3:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=272
 void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
     if ((cr[0] & 1) && !(flags & 0x20000)) {
         auto table = (sel & 4) ? ldtBase : gdtBase;
@@ -557,11 +617,16 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
         auto lo = systemRead(descriptor, 4), hi = systemRead(descriptor + 4, 4);
         int type = (hi >> 8) & 15;
         if (!(hi & 0x1000)) {
+            // A direct available TSS and a task gate share the same switch
+            // operation. For a gate, the operand's DPL is checked here; its
+            // embedded TSS selector supplies the target, not the far offset.
+            // Intel 9.2.5 Task-Gate Descriptor / 9.3 Task Switching:
+            // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=272
             if (type == 9 || type == 5) {
                 if (std::max(cpl(), unsigned(sel & 3)) > ((hi >> 13) & 3))
                     throw Fault{13, uint32_t(sel & ~3u), true};
                 if (!(hi & 0x8000)) throw Fault{11, uint32_t(sel & ~3u), true};
-                taskSwitch(type == 5 ? uint16_t(lo >> 16) : sel, call);
+                switch_task(type == 5 ? uint16_t(lo >> 16) : sel, call);
                 return;
             }
             if (type != 4 && type != 12)
@@ -612,10 +677,17 @@ void CPU::farTransfer(uint16_t sel, uint32_t off, bool call, int w) {
     segment(CS, sel);
     ip = off;
 }
+// Return through a TSS backlink for protected NT IRET; otherwise consume the
+// existing far-return/interrupt stack frame. A task return does not pop EIP,
+// CS or EFLAGS from the current stack. Intel 253668-085US, 9.4 Task Linking:
+// https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=279
 void CPU::farReturn(int w, uint16_t extra, bool iret) {
     bool vm = flags & 0x20000;
+    // NT return uses the current TSS backlink and consumes no stack frame.
+    // Intel 9.4 Task Linking:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=279
     if (iret && (cr[0] & 1) && !vm && (flags & 0x4000)) {
-        taskSwitch(systemRead(trBase, 2), false, true);
+        switch_task(systemRead(trBase, 2), false, true);
         return;
     }
     if (iret && vm && ((flags >> 12) & 3) != 3)
@@ -1439,7 +1511,7 @@ void CPU::stepImpl() {
     case 0xdd:
     case 0xde:
     case 0xdf: {
-        stepX87(op, a32, over, o32);
+        execute_x87_instruction(op, a32, over, o32);
         break;
     }
     case 0xe0:

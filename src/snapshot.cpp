@@ -264,6 +264,13 @@ class SnapshotCodec {
         }
         if(version>=8)a(c.protectedEntry);
         else if constexpr(A::loading)c.protectedEntry=false;
+        // IMPLEMENTATION NOTE: schema 9 persists binary64 register bit patterns
+        // as explicit little-endian integers, plus physical tags/TOP/environment.
+        // No host floating-point object layout enters the file. Older snapshots
+        // had no coprocessor state, so restore the same control/status/tag state
+        // as FNINIT rather than retaining the destination machine's live stack.
+        // FNINIT defaults: Intel 325383-085US, FINIT/FNINIT:
+        // https://cdrdv2-public.intel.com/835757/325383-sdm-vol-2abcd.pdf#page=506
         if (version >= 9)
             a(c.fp, c.fpControl, c.fpStatus, c.fpTag, c.fpIP, c.fpData, c.fpCS, c.fpDS, c.fpOpcode);
         else if constexpr (A::loading) {

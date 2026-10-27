@@ -102,3 +102,6 @@ Arithmetic uses binary64 internally. Bit-exact 387 extended precision, precision
 control, full exception/stack-fault semantics and instruction/data-pointer
 tracking remain incomplete. This is sufficient for the verified Quake workload;
 it is not full 80387 conformance.
+
+The [386 task/x87 specification checks](x86-task-x87.md) document the pinned
+Intel references, RAM-only tests and conformance boundaries in more detail.

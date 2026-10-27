@@ -45,8 +45,12 @@ struct CPU {
     uint16_t gdtLimit = 0, idtLimit = 0x3ff, ldtLimit = 0, ldtSelector = 0, trSelector = 0;
     uint32_t trBase = 0, trLimit = 0;
     bool tr32 = false;
-    // Binary64 arithmetic backend; guest 80-bit memory/register images convert
-    // explicitly. Extended precision and complete exception timing are pending.
+    // 387 register stack: fp[] holds physical R0..R7 as binary64 bit patterns;
+    // fpStatus.TOP maps logical ST(i) to R[(TOP+i)&7]. fpTag has physical tags.
+    // IMPLEMENTATION NOTE: binary64 is the current arithmetic backend, not an
+    // 80-bit register representation. See cpu_x87.cpp for conformance gaps.
+    // Intel 253665-081US, 8.1.2/8.1.3/8.1.7 (September 2023):
+    // https://cdrdv2-public.intel.com/789574/253665-sdm-vol-1.pdf#page=203
     uint64_t fp[8]{};
     uint16_t fpControl = 0x37f, fpStatus = 0, fpTag = 0xffff;
     uint32_t fpIP = 0, fpData = 0;
@@ -101,7 +105,13 @@ struct CPU {
     }
     void farTransfer(uint16_t selector, uint32_t offset, bool call, int width);
     void farReturn(int width, uint16_t extra, bool iret);
-    void taskSwitch(uint16_t selector, bool nested, bool returning = false);
+    // Load an available 32-bit TSS, or a busy TSS for nested IRET. Saves the
+    // outgoing dynamic state, updates busy/backlink/NT/TS, reloads descriptors
+    // and invalidates translations. Caller checks the transfer gate's DPL.
+    // Early Faults precede task replacement; late-fault sequencing is incomplete.
+    // Intel 253668-085US, 9.3/9.4:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=274
+    void switch_task(uint16_t selector, bool nested, bool returning = false);
     void step();
     // Decoded scalar I/O, invoked only after leaving generated host frames.
     void stepPortIO(uint16_t port, int width, bool output, uint32_t end);
@@ -126,7 +136,12 @@ struct CPU {
   private:
     uint32_t physicalSlow(uint32_t linear, bool write);
     void stepImpl();
-    void stepX87(uint8_t opcode, bool address32, int overrideSeg, bool operand32);
+    // Execute D8..DF after prefixes/opcode fetch; decode ModR/M, enforce EM/TS,
+    // update stack/environment and use ordinary guest paging for memory operands.
+    // Unsupported encodings raise #UD; see the implementation's explicit limits.
+    // Intel 253665-081US, 8.1:
+    // https://cdrdv2-public.intel.com/789574/253665-sdm-vol-1.pdf#page=203
+    void execute_x87_instruction(uint8_t opcode, bool address32, int overrideSeg, bool operand32);
     void ioPermission(uint16_t port, int width);
     void portIO(uint16_t port, int width, bool output);
     bool descriptorVisible(uint16_t selector, uint32_t high) const;

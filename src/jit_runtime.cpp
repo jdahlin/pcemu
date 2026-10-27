@@ -294,6 +294,10 @@ uint32_t nativeFarReturn(CPU *cpu,const NativeFarReturn *operation) noexcept {
     const unsigned w=operation->width;
     if(w!=2 && w!=4)return 0;
     const bool vm=cpu->flags&0x20000,protectedMode=cpu->cr[0]&1;
+    // NT IRET is a task switch, not a stack-frame return. Decline before any
+    // pops or mutation so the interpreter follows TR's backlink, updates busy
+    // bits and sets TS. Intel 253668-085US, 9.4 / Table 9-2:
+    // https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf#page=279
     if(operation->iret && protectedMode && !vm && (cpu->flags & 0x4000))return 0;
     if(operation->iret && vm && ((cpu->flags>>12)&3)!=3)return 0;
     uint32_t sp=cpu->r[SP],off=0,sel=0,f=cpu->flags;

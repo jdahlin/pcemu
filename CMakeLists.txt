@@ -233,6 +233,12 @@ pcemu_program(jit-byte-tests ZSTD
     tests/jit_bytes_test.cpp
 )
 
+pcemu_program(x86-task-x87-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/x86_task_x87_test.cpp
+)
+
 pcemu_program(jit-stack-tests ZSTD
   SOURCES
     ${CORE}
