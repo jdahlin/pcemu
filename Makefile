@@ -12,7 +12,7 @@ all: build/pcemu
 smoke-guest-memory: build/memory-bench
 	python3 tools/smoke_guest_memory.py
 
-test: build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
+test: build/quake-benchmark-tests build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-tests build/jit-rmw-tests build/hardware-device-tests build/i8042-tests build/pc-component-tests build/io-port-space-tests build/frontend-tests build/jit-read-tests build/network-tests build/integration-tests build/tests build/snapshot-tests build/jit-byte-tests build/jit-stack-tests build/jit-flags-tests
 	python3 -m unittest discover -s tests -p test_vga_bios_build.py
 	./build/vga-bios-tests
 	python3 tools/smoke_vga_bios.py
@@ -32,6 +32,8 @@ test: build/x86-task-x87-tests build/pcemu build/vga-bios-tests build/jit-jump-t
 	./build/integration-tests
 	./build/tests
 	./build/x86-task-x87-tests
+	./build/quake-benchmark-tests
+	python3 -m unittest discover -s tests -p test_quake_benchmark.py
 	./build/snapshot-tests
 	./build/jit-byte-tests
 	./build/jit-stack-tests

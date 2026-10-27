@@ -9,8 +9,10 @@
 // and counter 2 for the speaker. Machine wiring and sound presentation are external.
 //
 // IMPLEMENTATION NOTE: now is a caller-supplied tick count, not host wall time.
-// This PC supplies CPU instruction count divided by four. Whole periods skipped
-// between polls coalesce into one pending event; this is not cycle-accurate timing.
+// Normal PC sessions supply CPU instruction count divided by four; the Quake
+// benchmark instead supplies monotonic host time at 1,193,182 ticks/second. Whole
+// periods skipped between polls coalesce into one pending event; this is not
+// cycle-accurate timing.
 // COMPATIBILITY: Initial modes, refresh divisor and speaker gate match existing
 // firmware assumptions; physical 8254 power-up state is undefined.
 // FIXME: Model next-CLK count transfers, deferred periodic reloads and trigger-only

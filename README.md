@@ -59,7 +59,8 @@ See [Office installation and benchmarks](docs/office97.md).
 Quake 1.06 shareware now renders and accepts keyboard movement under MS-DOS 6.22
 with the x86 interpreter. Run `./run-quake.sh` after preparing its private disk;
 see [DOS Quake](docs/quake.md) for headless validation, setup and remaining x87/JIT
-limits. Sound is disabled.
+limits. `./run-quake.sh --benchmark` runs a bundled timedemo headlessly, reports
+FPS and quits. Sound is disabled.
 
 ## Run this checkout
 

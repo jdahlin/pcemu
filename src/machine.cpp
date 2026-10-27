@@ -64,7 +64,7 @@ void Machine::restart() {
     cpu.flushTLB();
     ata.reset(disk.get());
     pic.reset();
-    pit.reset(cpu.instructions / 4);
+    pit.reset(pitTicks());
     vga.reset();
     std::fill(std::begin(ports), std::end(ports), 0);
     ataLine = false;
@@ -128,7 +128,7 @@ void Machine::poll() {
         restart();
         return;
     }
-    if (pit.timer_interrupt_due(cpu.instructions / 4))
+    if (pit.timer_interrupt_due(pitTicks()))
         pic[0].raise_interrupt(0);
     if (ps2.poll_due(cpu.instructions))
         pollPs2();

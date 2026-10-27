@@ -233,6 +233,13 @@ pcemu_program(jit-byte-tests ZSTD
     tests/jit_bytes_test.cpp
 )
 
+pcemu_program(quake-bench ZSTD
+  SOURCES ${CORE} src/quake_benchmark.cpp tools/quake_bench.cpp
+)
+pcemu_program(quake-benchmark-tests ZSTD
+  SOURCES ${CORE} src/quake_benchmark.cpp tests/quake_benchmark_test.cpp
+)
+
 pcemu_program(x86-task-x87-tests ZSTD
   SOURCES
     ${CORE}

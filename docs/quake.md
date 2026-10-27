@@ -24,6 +24,44 @@ page fault at Quake EIP 00044d65. Disabling basic-block joining does not resolve
 it. The launcher deliberately uses the working interpreter; Quake performance
 and JIT compatibility are not claimed.
 
+## Uncapped timedemo benchmark
+
+```sh
+./run-quake.sh --benchmark
+./run-quake.sh --benchmark --demo demo2
+```
+
+Benchmark mode discovers the embedded `.dem` files in `ID1/PAK0.PAK` and picks
+the first by name (the original shareware selects `demo1`). It runs the original
+Quake `timedemo` command headlessly, with the interpreter, 32 MiB RAM, VGA
+320x200, view size 100, no retrace wait and sound disabled. Playback is uncapped;
+the renderer still executes normally and writes the emulated VGA framebuffer.
+There is no frontend presentation or host frame-rate limiter in the measured
+run. `--timeout SECONDS` changes the default 30-minute watchdog.
+
+Quake's [timedemo implementation](https://github.com/id-Software/Quake/blob/master/WinQuake/cl_demo.c)
+excludes loading and its first frame, then prints frame count, elapsed seconds
+and FPS. For this runner only, every PIT port/count/interrupt uses monotonic
+host time at 1,193,182 ticks per second. This lets Quake's own FPS reflect host
+throughput; normal emulator sessions retain their deterministic instruction
+clock. This is a guest-reported measurement through the emulated PIT, rounded
+to Quake's one-decimal output precision. Total boot-to-completion wall time is
+reported separately in the JSON and does not define the FPS interval.
+
+A private compressed overlay contains the benchmark AUTOEXEC and console log.
+The runner observes DOS file-write/close handler entries, including CWSDPMI's
+saved-vector calls, without patching the executable or reading a writable disk
+from another process. Once the completed result's file close returns to the
+32-bit client, it flushes and closes the emulator. It does not wait for Quake's
+quit menu or require a GUI. The wrapper then reads the stopped guest's
+`QCONSOLE.LOG` and confirms the result before printing FPS. A missing result,
+failed log confirmation or watchdog expiry exits with failure, not a score.
+
+Results and logs are saved in `build/quake-benchmark-*`. Successful runs remove
+the scratch disk unless `--keep-disk` is supplied. The prepared disk and game
+files are preserved. The standalone `pcemu --benchmark` synthetic CPU benchmark
+keeps its existing meaning; use the Quake launcher for this timedemo mode.
+
 ## Prepare the local disk
 
 Downloaded game files, DOS images and private working disks remain ignored.

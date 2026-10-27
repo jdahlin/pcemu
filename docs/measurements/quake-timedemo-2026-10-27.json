@@ -1,0 +1,21 @@
+{
+  "frames": 969,
+  "seconds": 134.3,
+  "fps": 7.2,
+  "backend": "interpreter",
+  "pitClock": "host-monotonic-1193182Hz",
+  "resultFileClosed": true,
+  "instructions": 2803880001,
+  "totalWallSeconds": 150.62431475,
+  "demo": "demo1",
+  "resolution": [
+    320,
+    200
+  ],
+  "sound": false,
+  "executableSha256": "1565975fcfec8718cfffa7950b9d2a18beae2d19264d1cd4ee8346eb7ccc4e4f",
+  "scope": "One headless original Quake 1.06 demo1 timedemo, silent interpreter, host-monotonic PIT; not a comparative performance claim",
+  "date": "2026-10-27",
+  "consoleLogSha256": "1091941c2c87cc0128751d8e8f8de8756e59313546f43cb95a2449b0a9e1af44",
+  "scratchDiskRemoved": true
+}

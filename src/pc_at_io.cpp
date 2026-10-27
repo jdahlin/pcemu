@@ -67,8 +67,8 @@ void Machine::bindIoPorts() {
     ioPorts.map("pit", 0x40, 4,
         [this](uint16_t p, int) -> uint32_t {
             if (p == 0x43) { ++ioReads; return ports[p]; }
-            return pit.read_counter(p - 0x40, cpu.instructions / 4);
-        }, [this](uint16_t p, uint32_t v, int) { pit.write_register(p - 0x40, v, cpu.instructions / 4); });
+            return pit.read_counter(p - 0x40, pitTicks());
+        }, [this](uint16_t p, uint32_t v, int) { pit.write_register(p - 0x40, v, pitTicks()); });
     ioPorts.map("pci-config", 0xcf8, 8,
         counted([this](uint16_t p, int w) { return pci.read_io_register(p, w); }),
         [this](uint16_t p, uint32_t v, int w) { pci.write_io_register(p, v, w); });
@@ -106,12 +106,13 @@ void Machine::bindIoPorts() {
     ioPorts.map("speaker", 0x61, 1,
         counted([this](uint16_t p, int) -> uint32_t {
             (void)p;
-            return systemPortB.read_register(pit.counters[1].output_high(cpu.instructions / 4),
-                                    pit.counters[2].output_high(cpu.instructions / 4));
+            const auto now = pitTicks();
+            return systemPortB.read_register(pit.counters[1].output_high(now),
+                                    pit.counters[2].output_high(now));
         }), [this, speakerWrite](uint16_t p, uint32_t v, int w) {
             // The gate was updated before splitting a wide write, then again
             // for its low byte. Preserve this until timing is refactored.
-            pit.counters[2].set_gate(systemPortB.write_register(v), cpu.instructions / 4);
+            pit.counters[2].set_gate(systemPortB.write_register(v), pitTicks());
             speakerWrite(p, v, w);
         });
     ioPorts.map("cmos", 0x70, 2,

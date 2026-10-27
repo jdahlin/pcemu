@@ -31,6 +31,12 @@ struct Machine {
     Port92Device port92;
     DebugConsoleDevice debugConsole;
     PIT8254 pit;
+    // Runtime clock wiring, not snapshot state. Ordinary machines retain the
+    // deterministic instruction-derived PIT clock. Benchmark owners may inject
+    // a monotonic 1,193,182-Hz clock; reset the PIT at that clock's origin before
+    // boot, and do not restore snapshots from another clock domain.
+    std::function<uint64_t()> pitClock;
+    uint64_t pitTicks() const { return pitClock ? pitClock() : cpu.instructions / 4; }
     I8042Device ps2;
     AbsoluteMouse absoluteMouse;
     HostCursor hostCursor;
