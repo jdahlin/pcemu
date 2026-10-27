@@ -27,8 +27,8 @@ class VgaBiosBuild(unittest.TestCase):
             build(second)
             data = first.read_bytes()
             self.assertEqual(data, second.read_bytes())
-            self.assertEqual(len(data), 16384)
-            self.assertEqual(data[:3], b'\x55\xaa\x20')
+            self.assertEqual(len(data), 32768)
+            self.assertEqual(data[:3], b'\x55\xaa\x40')
             self.assertEqual(sum(data) & 255, 0)
             pcir = struct.unpack_from('<H', data, 24)[0]
             self.assertEqual(data[pcir:pcir+4], b'PCIR')

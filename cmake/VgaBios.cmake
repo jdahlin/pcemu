@@ -4,11 +4,12 @@ find_package(Python3 QUIET COMPONENTS Interpreter)
 if(PCEMU_VGA_NASM AND Python3_Interpreter_FOUND)
   file(GLOB VGA_FONT_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/firmware/vga/vendor/font8x8/*")
+  file(GLOB VGA_SERVICE_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/firmware/vga/*.inc")
   set(VGA_ROM "${CMAKE_BINARY_DIR}/firmware/pcemu-vga.bin")
   add_custom_command(OUTPUT "${VGA_ROM}"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/build_vga_bios.py"
       --output "${VGA_ROM}"
-    DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py ${VGA_FONT_SOURCES}
+    DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py ${VGA_FONT_SOURCES} ${VGA_SERVICE_SOURCES}
     VERBATIM)
   add_custom_target(vga-bios DEPENDS "${VGA_ROM}")
   pcemu_program(vga-bios-tests ZSTD SOURCES ${CORE} tests/vga_bios_test.cpp)

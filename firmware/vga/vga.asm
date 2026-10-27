@@ -1,4 +1,4 @@
-; PCEmu standalone VGA option ROM, initial 80x25 text-mode implementation.
+; PCEmu standalone VGA option ROM, VGA and Bochs DISPI implementation.
 ; All services execute on the guest CPU using VGA ports and video memory; no
 ; host BIOS trap, SDL call, or mutable ROM state is used. Requires an 80386+ CPU.
 ; This is a documented subset, NOT a complete IBM VGA or VBE implementation.
@@ -23,7 +23,7 @@ org 0
 ; B, "Adapter ROM", printed 4-12, PDF page 173.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=173
 dw 0xaa55
-db 32
+db 64
 jmp initialize
 times 0x18-($-$$) db 0
 dw pci_data ; PCI expansion-ROM header: offset of the PCI data structure.
@@ -36,10 +36,10 @@ pci_data:
     db 'PCIR'
     dw 0x1234,0x1111,0,24 ; vendor, device, VPD pointer, structure length.
     db 0,0,0,3 ; revision 0; VGA display class 030000h, least-significant first.
-    dw 32,0 ; image length in 512-byte blocks; firmware code revision.
+    dw 64,0 ; image length in 512-byte blocks; firmware code revision.
     db 0,0x80 ; x86 executable image; final image in this ROM.
     dw 0 ; reserved.
-identification db 'PCEmu standalone VGA BIOS (text milestone)',0
+identification db 'PCEmu standalone VGA BIOS VGA/VBE',0
 
 ; Absolute VGA ports, named according to H General/Sequencer/CRTC/Graphics/
 ; Attribute/DAC register descriptions, printed 2-39..2-89, PDF pages 65..115.
@@ -71,6 +71,10 @@ identification db 'PCEmu standalone VGA BIOS (text milestone)',0
 %define ROWS_MINUS_ONE 0x84
 %define CHARACTER_HEIGHT 0x85
 %define VIDEO_CONTROL 0x87
+%define VIDEO_SWITCHES 0x88
+%define MODESET_CONTROL 0x89
+%define DCC_INDEX 0x8a
+%define VIDEO_SAVE_POINTER 0xa8
 
 ; Install INT 10h and font pointers, then initialize mode 3. Preserve the
 ; caller's registers and FLAGS, including its direction/interrupt settings.
@@ -91,6 +95,15 @@ initialize:
     mov [es:0x7e],cs
     mov word [es:0x10c],font_16
     mov [es:0x10e],cs
+    mov word [es:0x74],video_parameters ; INT 1Dh mode parameter table.
+    mov [es:0x76],cs
+    mov ax,0x40
+    mov ds,ax
+    mov byte [MODESET_CONTROL],0x51 ; 400 lines, cursor emulation, VGA enabled.
+    mov byte [VIDEO_SWITCHES],0xf9
+    mov byte [DCC_INDEX],0
+    mov word [VIDEO_SAVE_POINTER],video_save_table
+    mov [VIDEO_SAVE_POINTER+2],cs
     mov ax,3
     int 0x10
     pop es
@@ -104,24 +117,19 @@ initialize:
 ; incoming FLAGS (including DF); string operations always run forward here.
 ; B INT 10H per-function register contracts, PDF pages 30..54.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=30
-%define in_ax ss:bp-16
-%define in_bx ss:bp-14
+%define in_ax ss:bp-8
+%define in_bx ss:bp-20
 %define in_cx ss:bp-12
-%define in_dx ss:bp-10
-%define in_si ss:bp-8
-%define in_di ss:bp-6
+%define in_dx ss:bp-16
+%define in_si ss:bp-32
+%define in_di ss:bp-36
 %define in_es ss:bp-4
 video_interrupt:
     push bp
     mov bp,sp
     push ds
     push es
-    push di
-    push si
-    push dx
-    push cx
-    push bx
-    push ax
+    pushad
     cld
     mov ax,0x40
     mov ds,ax
@@ -152,20 +160,21 @@ video_interrupt:
     je read_mode
     cmp ah,0x10
     je palette_service
-    cmp ax,0x1130
-    je font_information
-    cmp ax,0x1a00
+    cmp ah,0x11
+    je font_service
+    cmp ah,0x12
+    je alternate_select
+    cmp ah,0x13
+    je write_string
+    cmp ah,0x1b
+    je functionality_information
+    cmp ah,0x1a
     je display_information
     cmp ah,0x4f
     jne return_interrupt
     mov word [in_ax],0x014f ; VBE standard status: function unsupported.
 return_interrupt:
-    pop ax
-    pop bx
-    pop cx
-    pop dx
-    pop si
-    pop di
+    popad
     pop es
     pop ds
     pop bp
@@ -192,7 +201,10 @@ write_register_group:
 set_mode:
     and al,0x7f
     cmp al,3
+    jbe .accepted
+    cmp al,7
     jne return_interrupt
+.accepted:
     mov dx,DISPI_INDEX
     mov ax,4 ; DISPI Enable index: disable extended framebuffer before VGA setup.
     out dx,ax
@@ -216,6 +228,21 @@ set_mode:
     mov si,text_graphics
     mov cx,9
     call write_register_group
+    ; 40-column modes divide the dot clock and use half-width horizontal timing.
+    mov al,[in_ax]
+    and al,0x7f
+    cmp al,2
+    jae .horizontal_ready
+    mov dx,SEQUENCER
+    mov ax,0x0801
+    out dx,ax
+    mov dx,CRTC
+    mov si,text40_crtc
+    mov cx,6
+    call write_register_group
+.horizontal_ready:
+    test byte [MODESET_CONTROL],8
+    jnz .palette_ready
     mov dx,STATUS1
     in al,dx
     mov dx,ATTRIBUTE
@@ -230,7 +257,6 @@ set_mode:
     jb .attr
     mov al,0x20 ; Palette Address Source: enable display.
     out dx,al
-    call load_text_font
     mov dx,DAC_MASK
     mov al,0xff
     out dx,al
@@ -245,17 +271,37 @@ set_mode:
     out dx,al
     inc si
     loop .dac
-    mov byte [MODE],3
+.palette_ready:
+    call load_text_font
+    mov al,[in_ax]
+    and al,0x7f
+    mov [MODE],al
     mov word [COLUMNS],80
     mov word [PAGE_BYTES],4096
+    cmp al,2
+    jae .text_geometry
+    mov word [COLUMNS],40
+    mov word [PAGE_BYTES],2048
+.text_geometry:
     mov word [DISPLAY_START],0
     mov byte [ACTIVE_PAGE],0
     mov word [CRTC_BASE],CRTC
+    cmp byte [MODE],7
+    jne .color_crtc
+    mov word [CRTC_BASE],0x3b4
+    mov dx,MISC_OUTPUT
+    mov al,0x66
+    out dx,al
+    mov dx,GRAPHICS
+    mov ax,0x0a06 ; B0000 monochrome text aperture.
+    out dx,ax
+.color_crtc:
     mov word [CURSOR_SHAPE],0x0d0e
     mov byte [ROWS_MINUS_ONE],24
     mov word [CHARACTER_HEIGHT],16
     mov al,[in_ax]
     and al,0x80
+    or al,0x60
     mov [VIDEO_CONTROL],al
     mov ax,0x40
     mov es,ax
@@ -263,10 +309,35 @@ set_mode:
     mov cx,8
     xor ax,ax
     rep stosw
+    mov al,16
+    test byte [MODESET_CONTROL],0x80
+    jz .not_200
+    mov al,8
+    jmp .font_geometry
+.not_200:
+    test byte [MODESET_CONTROL],0x10
+    jnz .font_geometry
+    mov al,14
+.font_geometry:
+    ; Use the character-generator service so scan-line and font state agree.
+    mov bl,0
+    mov ah,0x11
+    cmp al,8
+    mov al,0x12
+    je .font_call
+    mov al,0x11
+    test byte [MODESET_CONTROL],0x10
+    jz .font_call
+    mov al,0x14
+.font_call:
+    cmp byte [MODE],7
+    jne .font_selected
+    mov al,0x11
+.font_selected:
+    int 0x10
     test byte [in_ax],0x80
     jnz return_interrupt
-    mov ax,0xb800
-    mov es,ax
+    call text_memory_segment
     xor di,di
     mov ax,0x0720
     mov cx,0x4000 ; clear all eight 4-KiB text pages, including their padding.
@@ -326,7 +397,31 @@ load_text_font:
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=30
 set_cursor_shape:
     mov [CURSOR_SHAPE],cx
-    mov dx,CRTC
+    test byte [MODESET_CONTROL],1
+    jz .hardware_shape
+    cmp byte [CHARACTER_HEIGHT],8
+    jbe .hardware_shape
+    cmp ch,8
+    jae .hardware_shape
+    cmp cl,8
+    jae .hardware_shape
+    cmp ch,cl
+    ja .hardware_shape
+    mov bl,cl
+    mov al,ch
+    inc al
+    mul byte [CHARACTER_HEIGHT]
+    shr ax,3
+    dec ax
+    mov ch,al
+    mov al,bl
+    inc al
+    mul byte [CHARACTER_HEIGHT]
+    shr ax,3
+    dec ax
+    mov cl,al
+.hardware_shape:
+    mov dx,[CRTC_BASE]
     mov al,0x0a
     mov ah,ch
     out dx,ax
@@ -367,7 +462,7 @@ update_cursor:
     call cursor_address
     mov cx,di
     shr cx,1
-    mov dx,CRTC
+    mov dx,[CRTC_BASE]
     mov al,0x0e
     mov ah,ch
     out dx,ax
@@ -381,16 +476,18 @@ update_cursor:
 ; B 02H, PDF page 30.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=30
 set_cursor_position:
-    cmp bh,8
-    jae return_interrupt
+    call validate_text_page
+    jc return_interrupt
     xor ax,ax
     mov al,bh
     shl ax,1
     mov si,ax
-    cmp dh,24
+    cmp dh,[ROWS_MINUS_ONE]
     ja return_interrupt
-    cmp dl,79
-    ja return_interrupt
+    xor ax,ax
+    mov al,dl
+    cmp ax,[COLUMNS]
+    jae return_interrupt
     mov [CURSORS+si],dx
     call update_cursor
     jmp return_interrupt
@@ -399,8 +496,8 @@ set_cursor_position:
 ; B 03H, PDF page 30.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=30
 read_cursor_position:
-    cmp bh,8
-    jae return_interrupt
+    call validate_text_page
+    jc return_interrupt
     call cursor_address
     mov [in_dx],dx
     mov cx,[CURSOR_SHAPE]
@@ -411,16 +508,16 @@ read_cursor_position:
 ; B 05H, PDF page 31; H Start Address High/Low, PDF page 93.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=31
 select_page:
-    cmp al,8
-    jae return_interrupt
-    mov [ACTIVE_PAGE],al
     mov bh,al
+    call validate_text_page
+    jc return_interrupt
+    mov [ACTIVE_PAGE],al
     xor ah,ah
     mul word [PAGE_BYTES]
     mov [DISPLAY_START],ax
     shr ax,1
     mov cx,ax
-    mov dx,CRTC
+    mov dx,[CRTC_BASE]
     mov al,0x0c
     mov ah,ch
     out dx,ax
@@ -434,11 +531,10 @@ select_page:
 ; B 08H, PDF page 32.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=32
 read_character:
-    cmp bh,8
-    jae return_interrupt
+    call validate_text_page
+    jc return_interrupt
     call cursor_address
-    mov ax,0xb800
-    mov es,ax
+    call text_memory_segment
     mov ax,[es:di]
     mov [in_ax],ax
     jmp return_interrupt
@@ -448,17 +544,21 @@ read_character:
 ; B 09H/0AH, PDF pages 32..33; clamp is defensive implementation policy.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=32
 write_character:
-    cmp bh,8
-    jae return_interrupt
+    call validate_text_page
+    jc return_interrupt
     call cursor_address
-    mov ax,0xb800
-    mov es,ax
+    call text_memory_segment
     mov ax,[in_ax]
     mov cx,[in_cx]
     mov dx,di
-    and dx,4095
+    xor ax,ax
+    mov al,bh
+    mul word [PAGE_BYTES]
+    mov dx,di
+    sub dx,ax
     neg dx
-    add dx,4096
+    add dx,[PAGE_BYTES]
+    mov ax,[in_ax]
     shr dx,1
     cmp cx,dx
     jbe .count_ok
@@ -482,17 +582,18 @@ write_character:
 ; rows using BH. B 06H/07H, PDF page 31. No guest cursor moves.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=31
 scroll_window:
-    cmp ch,24
+    cmp ch,[ROWS_MINUS_ONE]
     ja return_interrupt
-    cmp cl,79
-    ja return_interrupt
-    cmp dh,24
+    cmp cl,[COLUMNS]
+    jae return_interrupt
+    cmp dh,[ROWS_MINUS_ONE]
     jbe .row_ok
-    mov dh,24
+    mov dh,[ROWS_MINUS_ONE]
 .row_ok:
-    cmp dl,79
-    jbe .col_ok
-    mov dl,79
+    cmp dl,[COLUMNS]
+    jb .col_ok
+    mov dl,[COLUMNS]
+    dec dl
 .col_ok:
     cmp ch,dh
     ja return_interrupt
@@ -500,22 +601,21 @@ scroll_window:
     ja return_interrupt
     ; Stack locals: rectangle, operation/lines, fill attribute, destination row.
     sub sp,10
-    mov [ss:bp-18],cx
-    mov [ss:bp-20],dx
-    mov [ss:bp-22],ax
-    mov [ss:bp-24],bx
+    mov [ss:bp-38],cx
+    mov [ss:bp-40],dx
+    mov [ss:bp-42],ax
+    mov [ss:bp-44],bx
     xor ax,ax
     mov al,ch
     cmp byte [in_ax+1],7
     jne .first_row
     mov al,dh
 .first_row:
-    mov [ss:bp-26],ax
-    mov ax,0xb800
-    mov es,ax
+    mov [ss:bp-46],ax
+    call text_memory_segment
 .row:
-    mov ax,[ss:bp-26]
-    mov bx,[ss:bp-22]
+    mov ax,[ss:bp-46]
+    mov bx,[ss:bp-42]
     xor bh,bh
     cmp byte [in_ax+1],7
     je .down
@@ -527,10 +627,10 @@ scroll_window:
     ; AX source row; zero lines or source outside window means blank row.
     mov si,ax
     xor dx,dx
-    mov dl,[ss:bp-17] ; CH, top
+    mov dl,[ss:bp-37] ; CH, top
     cmp ax,dx
     jb .blank
-    mov dl,[ss:bp-19] ; DH, bottom
+    mov dl,[ss:bp-39] ; DH, bottom
     cmp ax,dx
     ja .blank
     test bx,bx
@@ -541,11 +641,13 @@ scroll_window:
     xor bx,bx
 .offsets:
     mov ax,si
-    mov dx,160
+    mov dx,[COLUMNS]
+    shl dx,1
     mul dx
     mov si,ax
-    mov ax,[ss:bp-26]
-    mov dx,160
+    mov ax,[ss:bp-46]
+    mov dx,[COLUMNS]
+    shl dx,1
     mul dx
     mov di,ax
     xor ax,ax
@@ -554,15 +656,15 @@ scroll_window:
     add di,ax
     add si,ax
     xor ax,ax
-    mov al,[ss:bp-18] ; CL, left
+    mov al,[ss:bp-38] ; CL, left
     shl ax,1
     add di,ax
     add si,ax
     xor cx,cx
-    mov cl,[ss:bp-20] ; DL, right
-    sub cl,[ss:bp-18]
+    mov cl,[ss:bp-40] ; DL, right
+    sub cl,[ss:bp-38]
     inc cx
-    mov ah,[ss:bp-23] ; BH, blank attribute
+    mov ah,[ss:bp-43] ; BH, blank attribute
     mov al,0x20
 .cell:
     test bx,bx
@@ -572,20 +674,20 @@ scroll_window:
     stosw
     add si,2
     loop .cell
-    mov ax,[ss:bp-26]
+    mov ax,[ss:bp-46]
     cmp byte [in_ax+1],7
     je .next_down
     inc ax
-    mov [ss:bp-26],ax
-    cmp al,[ss:bp-19] ; DH, bottom
+    mov [ss:bp-46],ax
+    cmp al,[ss:bp-39] ; DH, bottom
     jbe .row
     jmp .done
 .next_down:
     dec ax
-    mov [ss:bp-26],ax
+    mov [ss:bp-46],ax
     cmp ax,0
     jl .done
-    cmp al,[ss:bp-17] ; CH, top
+    cmp al,[ss:bp-37] ; CH, top
     jae .row
 .done:
     add sp,10
@@ -598,8 +700,7 @@ scroll_window:
 teletype:
     mov bh,[ACTIVE_PAGE]
     call cursor_address
-    mov ax,0xb800
-    mov es,ax
+    call text_memory_segment
     mov al,[in_ax]
     cmp al,7
     je return_interrupt
@@ -611,7 +712,7 @@ teletype:
     je .newline
     mov [es:di],al
     inc dl
-    cmp dl,80
+    cmp dl,[COLUMNS]
     jb .position
     xor dl,dl
 .newline:
@@ -625,8 +726,8 @@ teletype:
     jz .position
     dec dl
 .position:
-    cmp dh,25
-    jb .save
+    cmp dh,[ROWS_MINUS_ONE]
+    jbe .save
     ; COMPATIBILITY: use the last row's first attribute, matching Bochs VGABIOS.
     ; The IBM 0EH description does not specify the blank-line attribute.
     push dx
@@ -635,14 +736,21 @@ teletype:
     mov al,[ACTIVE_PAGE]
     mul word [PAGE_BYTES]
     mov si,ax
-    mov bh,[es:si+3841]
+    xor ax,ax
+    mov al,[ROWS_MINUS_ONE]
+    mul word [COLUMNS]
+    shl ax,1
+    add si,ax
+    mov bh,[es:si+1]
     mov ax,0x0601
     xor cx,cx
-    mov dx,0x184f
+    mov dh,[ROWS_MINUS_ONE]
+    mov dl,[COLUMNS]
+    dec dl
     int 0x10
     pop bx
     pop dx
-    mov dh,24
+    mov dh,[ROWS_MINUS_ONE]
 .save:
     xor ax,ax
     mov al,bh
@@ -665,91 +773,10 @@ read_mode:
     mov [in_bx+1],al
     jmp return_interrupt
 
-; Read the active INT 1Fh/43h font pointers or ROM 8x8/8x16 fonts. Returned CX
-; describes CURRENT character height, DL is rows minus one (not requested font).
-; B 1130H, PDF page 47 (BH=02h returns the 8x16 font as specified). No invented 8x14 font is advertised.
-; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=41
-font_information:
-    cmp bh,0
-    je .vector_1f
-    cmp bh,1
-    je .vector_43
-    cmp bh,2
-    je .rom_pointer
-    cmp bh,3
-    je .rom_pointer
-    cmp bh,4
-    je .rom_pointer
-    cmp bh,6
-    jne return_interrupt
-.rom_pointer:
-    mov ax,cs
-    mov [in_es],ax
-    mov ax,font_8
-    cmp bh,3
-    je .pointer
-    mov ax,font_8+1024
-    cmp bh,4
-    je .pointer
-    mov ax,font_16
-    jmp .pointer
-.vector_1f:
-    mov si,0x7c
-    jmp .vector
-.vector_43:
-    mov si,0x10c
-.vector:
-    xor ax,ax
-    mov es,ax
-    mov ax,[es:si+2]
-    mov [in_es],ax
-    mov ax,[es:si]
-.pointer:
-    mov [ss:bp],ax ; caller's BP is the documented font-pointer output.
-    mov ax,[CHARACTER_HEIGHT]
-    mov [in_cx],ax
-    mov al,[ROWS_MINUS_ONE]
-    mov [in_dx],al
-    jmp return_interrupt
-
-; Report the fixed analog color VGA display combination. B 1A00H, PDF page 54.
-; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=54
-display_information:
-    mov byte [in_ax],0x1a
-    mov word [in_bx],8
-    jmp return_interrupt
-
-; Single DAC color read/write (1010H/1015H). The DAC uses 6-bit components;
-; preserve all inputs except DH/CH/CL for reads. B 10H, PDF pages 36..37.
-; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=36
-palette_service:
-    cmp al,0x10
-    je .write_dac
-    cmp al,0x15
-    jne return_interrupt
-    mov dx,DAC_READ
-    mov al,bl
-    out dx,al
-    mov dx,DAC_DATA
-    in al,dx
-    mov [in_dx+1],al
-    in al,dx
-    mov [in_cx+1],al
-    in al,dx
-    mov [in_cx],al
-    jmp return_interrupt
-.write_dac:
-    mov dx,DAC_WRITE
-    mov al,bl
-    out dx,al
-    inc dx
-    mov al,[in_dx+1]
-    out dx,al
-    mov al,ch
-    out dx,al
-    mov al,cl
-    out dx,al
-    jmp return_interrupt
+%include "text-services.inc"
+%include "font-services.inc"
+%include "palette-services.inc"
+%include "query-services.inc"
 
 ; Mode-3 programming values encode 720x400 raster, 80x25 characters, 9x16
 ; cells, 4-KiB pages. H CRTC/Sequencer/Graphics/Attribute register definitions.
@@ -757,6 +784,7 @@ palette_service:
 ; currently models register state and pixels rather than physical sync timing.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=65
 text_sequencer db 3,0,3,0,2
+text40_crtc db 0x2d,0x27,0x28,0x90,0x2b,0xa0
 text_crtc db 0x5f,0x4f,0x50,0x82,0x55,0x81,0xbf,0x1f,0,0x4f,0x0d,0x0e,0,0,0,0
           db 0x9c,0x8e,0x8f,0x28,0x1f,0x96,0xb9,0xa3,0xff
 text_graphics db 0,0,0,0,0,0x10,0x0e,0,0xff
@@ -775,5 +803,5 @@ text_dac:
 %endrep
 
 %include "pcemu-vga-fonts.inc"
-times 16383-($-$$) db 0
+times 32767-($-$$) db 0
 db 0 ; build script sets the checksum byte; ROM is immutable at runtime.

@@ -35,12 +35,14 @@ struct Guest {
     }
     // Start each call with distinct sentinel registers and DF set. The handler
     // must restore DF and segment/stack state despite using REP instructions.
-    void call(uint16_t ax, uint16_t bx = 0, uint16_t cx = 0, uint16_t dx = 0) {
+    void call(uint16_t ax, uint16_t bx = 0, uint16_t cx = 0, uint16_t dx = 0,
+              uint16_t es = 0x2345, uint16_t bp = 0x6789, uint16_t di = 0x5678) {
         auto &c = m->cpu;
-        c.segment(CS, 0); c.segment(DS, 0x1234); c.segment(ES, 0x2345);
+        c.segment(CS, 0); c.segment(DS, 0x1234); c.segment(ES, es);
         c.segment(SS, 0); c.r[SP] = 0x8000;
         c.r[AX] = ax; c.r[BX] = bx; c.r[CX] = cx; c.r[DX] = dx;
-        c.r[SI] = 0x4567; c.r[DI] = 0x5678; c.r[BP] = 0x6789;
+        c.r[SI] = 0x4567; c.r[DI] = di; c.r[BP] = bp;
+        for (unsigned r=0;r<8;++r) if (r != SP) c.r[r] |= 0xa5a50000;
         c.flags = 2 | DF | CF; c.halted = false; c.ip = 0x700;
         c.write(0x700, 0x10cd, 2); c.write(0x702, 0xf4, 1);
         uint64_t limit = c.instructions + 2000000;
@@ -48,20 +50,21 @@ struct Guest {
         check(c.halted && c.ip == 0x703, "INT 10h returned within instruction budget");
         check(c.r[SP] == 0x8000 && c.s[SS].selector == 0, "balanced interrupt stack");
         check(c.s[DS].selector == 0x1234, "DS preserved");
-        check(c.r[SI] == 0x4567 && c.r[DI] == 0x5678, "SI/DI preserved");
+        check(c.get(SI,2) == 0x4567 && c.get(DI,2) == di, "SI/DI preserved");
         check((c.flags & (DF | CF)) == (DF | CF), "FLAGS/DF restored");
-        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 15 && ax != 0x1a00 && (ax >> 8) != 0x4f)
+        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 15 && (ax >> 8) != 0x1a && (ax >> 8) != 0x12 && (ax >> 8) != 0x1b && (ax >> 8) != 0x4f)
             check(c.get(AX, 2) == ax, "AX preserved for call " + std::to_string(ax) + " got " + std::to_string(c.get(AX, 2)));
-        if ((ax >> 8) != 15 && ax != 0x1a00) check(c.get(BX, 2) == bx, "BX preserved");
-        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015)
+        if ((ax >> 8) != 15 && (ax >> 8) != 0x1a && ax != 0x1007 && ax != 0x1008 && ax != 0x1019 && ax != 0x101a && (ax >> 8) != 0x12) check(c.get(BX, 2) == bx, "BX preserved");
+        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12)
             check(c.get(CX, 2) == cx, "CX preserved");
-        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015)
+        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12)
             check(c.get(DX, 2) == dx, "DX preserved");
-        bool font = ax == 0x1130 && ((bx >> 8) == 0 || (bx >> 8) == 1 ||
-                                      (bx >> 8) == 2 || (bx >> 8) == 3 || (bx >> 8) == 4 || (bx >> 8) == 6);
+        for (unsigned r=0;r<8;++r) if (r != SP)
+            check((c.r[r] >> 16) == 0xa5a5, "upper register halves preserved");
+        bool font = ax == 0x1130 && (bx >> 8) < 8;
         if (!font) {
-            check(c.s[ES].selector == 0x2345, "ES preserved");
-            check(c.r[BP] == 0x6789, "BP preserved");
+            check(c.s[ES].selector == es, "ES preserved");
+            check(c.get(BP,2) == bp, "BP preserved");
         }
     }
     uint16_t word(unsigned a) { return m->cpu.read(a, 2); }
@@ -95,7 +98,7 @@ void text_contract(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
     check(g.word(0x44a) == 80 && g.word(0x44c) == 4096 &&
-          c.read(0x484, 1) == 24 && g.word(0x485) == 16, "mode 3 BIOS geometry");
+          c.read(0x484, 1) == 24 && g.word(0x485) == 16, "mode 3 BIOS geometry: " + std::to_string(g.word(0x44a)) + "," + std::to_string(g.word(0x44c)) + "," + std::to_string(c.read(0x484,1)) + "," + std::to_string(g.word(0x485)));
     check((m.vga.seq[2] & 15) == 3 && (m.vga.seq[4] & 6) == 2 && (m.vga.gfx[6] & 15) == 0x0e,
           "mode set programs text memory addressing");
     for (unsigned p = 0; p < 8; ++p) {
@@ -192,15 +195,97 @@ void boundaries(Guest &g) {
     check(c.read(0x462, 1) == 7 && g.word(0x45e) == 0x184f, "invalid page does not alter BDA");
     g.call(0x0013); g.call(0x0f00);
     check(c.get(AX, 2) == 0x5003, "unsupported graphics mode does not change geometry");
-    g.call(0x1130, 0x0500);
+    g.call(0x1130, 0x0800);
     check(c.get(CX, 2) == 0 && c.get(DX, 2) == 0, "unsupported font query leaves registers alone");
 }
+
+void extended_text_contract(Guest &g) {
+    auto &c = g.m->cpu; auto &v = g.m->vga;
+    for (unsigned mode : {0u,1u,2u,3u,7u}) {
+        g.call(mode);
+        unsigned columns = mode < 2 ? 40 : 80;
+        unsigned segment = mode == 7 ? 0xb0000 : 0xb8000;
+        check(g.word(0x44a) == columns, "text mode column count");
+        g.call(0x0200,0x0100,0,0x0203);
+        g.call(0x0942,0x012e,2);
+        unsigned bytes = g.word(0x44c);
+        check(g.word(segment+bytes+2*columns*2+6) == 0x2e42, "text mode page/aperture");
+        g.call(0x0501);
+        check(((unsigned(v.crtc[12])<<8)|v.crtc[13]) == bytes/2, "text mode CRTC page start");
+    }
+    g.call(3);
+    g.call(0x1112); // ROM 8x8, resize to 80x50.
+    check(g.word(0x485) == 8 && c.read(0x484,1) == 49 && g.word(0x44c) == 8192,
+          "font resize 80x50 geometry");
+    g.call(0x0503);
+    check(c.read(0x462,1) == 3, "fourth 80x50 page accepted");
+    g.call(0x0504);
+    check(c.read(0x462,1) == 3, "fifth 80x50 page rejected before ROM aperture");
+    g.call(3);
+    g.call(0x0100,0,0x0607);
+    check(v.crtc[10] == 13 && v.crtc[11] == 15 && g.word(0x460) == 0x0607,
+          "CGA cursor emulation scales hardware but preserves BIOS shape");
+    g.call(0x1201,0x0034);
+    g.call(0x0100,0,0x0607);
+    check(v.crtc[10] == 6 && v.crtc[11] == 7, "cursor emulation can be disabled");
+    g.call(0x1200,0x0034);
+    // User font: two 12-line characters in font block 5, starting at code 65.
+    for (unsigned i=0;i<24;++i) c.write(0x20100+i,0x80+i,1);
+    auto old_seq=v.seq; auto old_gfx=v.gfx;
+    g.call(0x1100,0x0c05,2,65,0x2000,0x0100);
+    for (unsigned ch=0;ch<2;++ch) for (unsigned row=0;row<32;++row)
+        check(v.planes[2][0x6000+(65+ch)*32+row] == (row<12 ? 0x80+ch*12+row : 0),
+              "user font block/character offset, source stride and padding");
+    check(v.seq==old_seq && v.gfx==old_gfx,"font loading restores register programming");
+    g.call(0x1103,0x0028);
+    check(v.seq[3]==0x28,"character-generator block selector");
+    // Both counted-string formats, non-active page, cursor control and CR/LF.
+    const uint8_t message[]={'A',0x2e,'B',0x3f,13,0x4a,10,0x4a,'C',0x5b};
+    for (unsigned i=0;i<sizeof(message);++i)c.write(0x20200+i,message[i],1);
+    g.call(0x0200,0x0200,0,0x0405);
+    g.call(0x1302,0x0207,5,0x0102,0x2000,0x0200);
+    check(g.cell(2,1,2)==0x2e41 && g.cell(2,1,3)==0x3f42 && g.cell(2,2,0)==0x5b43,
+          "counted string per-character attributes and controls");
+    check(g.word(0x454)==0x0405 && c.read(0x462,1)==0,"string keeps caller cursor and active page");
+    c.write(0x20200,'X',1);c.write(0x20201,'Y',1);
+    g.call(0x1301,0x026c,2,0x0304,0x2000,0x0200);
+    check(g.cell(2,3,4)==0x6c58 && g.cell(2,3,5)==0x6c59 && g.word(0x454)==0x0306,
+          "counted string uniform attribute and final cursor");
+    // EGA palette block includes overscan at index 11h, skipping mode control.
+    for (unsigned i=0;i<17;++i)c.write(0x20300+i,i+1,1);
+    g.call(0x1002,0,0,0x0300,0x2000);
+    g.call(0x1009,0,0,0x0400,0x2000);
+    for(unsigned i=0;i<17;++i)check(c.read(0x20400+i,1)==i+1,"attribute palette block roundtrip");
+    g.call(0x1003,0);check(!(v.attr[0x10]&8),"background intensity");
+    g.call(0x1003,1);check(v.attr[0x10]&8,"attribute blinking");
+    g.call(0x1013,0x0100);g.call(0x1013,0x0b01);g.call(0x101a);
+    check(c.get(BX,2)==0x0b01,"16-color paging mode and page query: " + std::to_string(c.get(BX,2)) + ", ctrl=" + std::to_string(v.attr[0x10]) + ", page=" + std::to_string(v.attr[0x14]));
+    g.call(0x1018,0x55);g.call(0x1019);
+    check(c.get(BX,1)==0x55,"PEL mask roundtrip");
+    g.call(0x1018,0xff);
+    for(unsigned i=0;i<12;++i)c.write(0x20500+i,i*3,1);
+    g.call(0x1012,252,4,0x0500,0x2000);
+    g.call(0x1017,252,4,0x0600,0x2000);
+    for(unsigned i=0;i<12;++i)check(c.read(0x20600+i,1)==i*3,"DAC block roundtrip at last entry");
+    g.call(0x1010,50,0,0x3f00);g.call(0x101b,50,1);
+    check(v.dac[50][0]==19 && v.dac[50][1]==19 && v.dac[50][2]==19,"weighted grayscale");
+    g.call(0x1201,0x0031);g.call(0x1010,1,0x0203,0x0100);g.call(3);
+    check(v.dac[1][0]==1 && v.dac[1][1]==2 && v.dac[1][2]==3,"mode set palette-loading disable");
+    g.call(0x1200,0x0031);g.call(3);
+    g.call(0x1b00,0,0,0,0x2000,0x6789,0x0700);
+    check(c.get(AX,1)==0x1b && g.word(0x20705)==80 && c.read(0x20722,1)==25 &&
+          g.word(0x20723)==16 && c.read(0x20725,1)==8,"functionality/state buffer fields");
+    g.call(0x1210,0x0010);
+    check(c.get(BX,2)==3 && c.get(CX,2)==9,"EGA memory/monitor query");
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
     g.call(0x1130, 0x0600);
     unsigned font = c.s[ES].base + c.get(BP, 2);
-    check(font >= 0xc0000 && font + 4096 <= 0xc4000, "ROM 8x16 font bounds");
+    check(font >= 0xc0000 && font + 4096 <= 0xc8000, "ROM 8x16 font bounds");
     check(c.get(CX, 2) == 16 && c.get(DX, 1) == 24, "font geometry");
     for (unsigned ch = 0; ch < 256; ++ch) for (unsigned row = 0; row < 16; ++row)
         check(m.vga.planes[2][ch * 32 + row] == c.read(font + ch * 16 + row, 1),
@@ -227,8 +312,8 @@ int main(int argc, char **argv) {
     try {
         const char *romPath = argc > 1 ? argv[1] : PCEMU_VGA_TEST_ROM;
         Guest guest(romPath);
-        check(guest.rom.size() == 16384 && guest.rom[0] == 0x55 && guest.rom[1] == 0xaa &&
-              guest.rom[2] == 32, "option ROM signature/size");
+        check(guest.rom.size() == 32768 && guest.rom[0] == 0x55 && guest.rom[1] == 0xaa &&
+              guest.rom[2] == 64, "option ROM signature/size");
         check((std::accumulate(guest.rom.begin(), guest.rom.end(), 0u) & 255) == 0,
               "option ROM checksum");
         auto &rom = guest.rom;
@@ -236,10 +321,10 @@ int main(int argc, char **argv) {
         check(pcir + 24 <= rom.size() && std::equal(rom.begin()+pcir, rom.begin()+pcir+4, "PCIR"),
               "PCI option ROM data structure");
         check(rom[pcir+4] == 0x34 && rom[pcir+5] == 0x12 && rom[pcir+6] == 0x11 &&
-              rom[pcir+7] == 0x11 && rom[pcir+16] == 32 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
+              rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

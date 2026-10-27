@@ -1,10 +1,11 @@
 # Standalone VGA BIOS
 
-PCEmu now has an original, optional 16-KiB x86 VGA option ROM in
+PCEmu now has an original, optional 32-KiB x86 VGA option ROM in
 `firmware/vga/vga.asm`. Its entry point installs INT 10h and initializes VGA
-through guest port I/O. BIOS calls execute guest instructions; no private BIOS
+through guest port I/O. The text implementation now includes color 40/80-column
+and monochrome modes, font loading/resizing, strings and full palette controls. BIOS calls execute guest instructions; no private BIOS
 trap, host video service or SDL call implements these services. The existing
-host-backed system BIOS remains in use. This is the first text-mode milestone,
+host-backed system BIOS remains in use. This is the text implementation,
 not a complete VGA BIOS replacement and not yet the default for installed guests.
 
 ## Build and run
@@ -69,15 +70,19 @@ scaling. References distinguish BIOS contracts from register programming:
 | Interface | Implemented behavior |
 |---|---|
 | ROM entry | Install INT 10h, INT 1Fh and INT 43h font pointers; set mode 3; preserve caller registers/FLAGS; far return |
-| AH=00h | Mode 03h and 83h; 80x25, 16-line characters; eight 4-KiB pages; bit 7 preserves text memory |
+| AH=00h | Modes 00h..03h and 07h; 40/80-column color/monochrome; scan-line/font geometry; bit 7 preserves text memory |
 | AH=01h/02h/03h | Cursor shape, page-specific position, query; update hardware only for active page |
 | AH=05h | Page selection, BDA byte start, CRTC word start and cursor |
 | AH=06h/07h | Overlap-safe window scrolling, zero/oversized counts clear, blank attribute, active-page isolation |
 | AH=08h/09h/0Ah | Read at requested page's cursor; repeated character/attribute writes; cursor unchanged |
 | AH=0Eh | Active-page teletype, CR/LF/BS/BEL, wrapping and scrolling; bell is silent |
 | AH=0Fh | Current mode, no-clear bit, columns and active page |
-| AX=1010h/1015h | Individual 6-bit RGB DAC color write/read |
-| AX=1130h | Font information for BH=00h/01h/02h/03h/04h/06h; ROM 8x8 and 8x16 tables |
+| AX=1010h/1015h | Individual RGB DAC colors; AH=10h also implements EGA palette blocks, blinking, color paging, PEL masks, DAC blocks and grayscale |
+| AX=1130h | Font information for BH=00h..07h; ROM 8x8, 8x14 and 8x16 tables |
+| AH=11h | User/ROM font loading, eight font blocks, character-map selection, font resizing and graphics font pointers |
+| AH=12h | EGA information, text scan-line selection, palette/grayscale/cursor controls, screen/address enable |
+| AH=13h | Counted strings, optional attributes/cursor movement, control characters and page isolation |
+| AH=1Bh | Standard 64-byte functionality/state block |
 | AX=1A00h | Analog color VGA identification |
 | AH=4Fh | Return AX=014Fh (unsupported); do not advertise a VBE version |
 
@@ -92,11 +97,8 @@ that attribute in its 0Eh description.
 The font data comes from the upstream public-domain `dhepper/font8x8` project,
 pinned at `8e279d2d864e79128e96188a6b9526cfa3fbfef9`. Unmodified source headers,
 attribution and SHA-256 hashes are in `firmware/vga/vendor/font8x8/`. The builder
-maps Unicode glyphs into CP437 and reverses the source's bit order. Twelve
-supplementary mathematical glyphs are original. The 8x16 font doubles each 8x8
-row: it is usable but does not claim IBM ROM glyph identity. Control-code
-pictures 00h..1Fh and the 7Fh house are currently blank; printable Latin, Greek,
-box-drawing and mathematical characters have glyphs. Font data is not taken
+maps Unicode glyphs into CP437 and reverses the source's bit order. CP437 control pictures and twelve supplementary mathematical glyphs are original. The 8x14/8x16 fonts resample the 8x8 rows: it is usable but does not claim IBM ROM glyph identity. Control pictures, the 7Fh house, printable Latin, Greek, box-drawing and
+mathematical characters have glyphs. Font data is not taken
 from the external VGA ROM.
 
 ## Validation and its limits
@@ -164,9 +166,8 @@ not depend on a person approving an interactive screen.
 
 ## Next milestones
 
-1. Complete text services: palette/attribute operations, AH=13h strings, user and
-   ROM font loading, 8x14/native 8x16 and control pictures, mode parameter tables,
-   EGA/VGA queries and scan-line selection. Run the external legacy diagnostics.
+1. Validate the expanded text services with the external legacy diagnostics.
+   Add state save/restore and complete parameter tables alongside graphics modes.
 2. Add standard mono/40-column/CGA/EGA/VGA graphics modes with mode-specific
    register and palette tables. Verify pixels, planar memory effects, transitions,
    font drawing, no-clear behavior and page limits, then VGATEST captures.
@@ -178,3 +179,9 @@ not depend on a person approving an interactive screen.
 4. Validate DOS applications and Windows 3.11/95 startup, display transitions,
    application use, snapshot restore and firmware restart on existing guest
    images before changing the default ROM. Migrate the system BIOS separately.
+
+Text expansion validation: the same mode-3 differential contracts still pass;
+new tests exercise 40-column/monochrome addressing, 80x50 font resizing/page
+bounds, user font block 5, cursor emulation, counted strings on an inactive
+page, palette blocks, color paging, masks, grayscale, palette-loading policy and
+functionality buffers. Interrupt wrappers preserve full 32-bit registers.
