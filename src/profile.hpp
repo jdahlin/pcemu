@@ -62,6 +62,7 @@ struct Data {
     std::array<std::array<uint64_t, 2>, 512> operands{};
     std::array<std::array<uint64_t, 8>, 512> groups{};
     std::map<std::tuple<uint32_t, uint32_t, uint16_t, uint32_t, unsigned, unsigned>, uint64_t> sampledIPs;
+    std::array<std::array<uint64_t, 256>, 8> x87{};
     uint64_t attempts = 0;
     uint32_t random = 0x731be5;
     unsigned untilSample = 1;
@@ -186,6 +187,9 @@ inline void extended(unsigned op) {
     if(currentScope && currentScope->lockPrefix)++data.lockedOpcodes[currentOpcode];
     ++data.interpretationReasons[currentOpcode][unsigned(interpretationReason)];
 }
+// Count decoded ESC forms separately: D9 register subopcodes otherwise collapse
+// into the primary opcode's broad ModR/M group. #NM before decode is excluded.
+inline void x87(unsigned op, uint8_t modrm) { if (active) ++data.x87[op - 0xd8][modrm]; }
 inline void operand(uint8_t modrm) {
     if (!active)
         return;
@@ -267,6 +271,14 @@ inline void stop(const std::string &path, uint64_t instructions) {
             << ",\"interpretationReason\":" << std::quoted(interpretationReasonNames[reason]) << ",\"samples\":" << n << '}';
         first = false;
     }
+    out << "],\"x87Instructions\":[";
+    first = true;
+    for (unsigned op = 0; op < 8; ++op) for (unsigned m = 0; m < 256; ++m) {
+        if (!data.x87[op][m]) continue;
+        out << (first ? "" : ",") << "{\"opcode\":" << op + 0xd8 << ",\"modrm\":" << m
+            << ",\"attempts\":" << data.x87[op][m] << '}';
+        first = false;
+    }
     out << "]}\n";
 }
 #else
@@ -279,5 +291,6 @@ inline void locked() {}
 inline void opcode(unsigned, uint16_t, uint32_t, uint32_t, uint32_t) {}
 inline void extended(unsigned) {}
 inline void operand(uint8_t) {}
+inline void x87(unsigned, uint8_t) {}
 #endif
 } // namespace pc::profile

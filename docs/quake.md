@@ -73,6 +73,11 @@ the scratch disk unless `--keep-disk` is supplied. The prepared disk and game
 files are preserved. The standalone `pcemu --benchmark` synthetic CPU benchmark
 keeps its existing meaning; use the Quake launcher for this timedemo mode.
 
+For optimization work, `./run-quake.sh --profile --frames 50 --repeat 5` freezes
+an optimized build and collects separate baseline timings, native host stacks
+and guest opcode/x87 diagnostics. See [Quake profiling](quake-profiling.md) for
+measurement boundaries, reproducibility and interpretation.
+
 ## Prepare the local disk
 
 Downloaded game files, DOS images and private working disks remain ignored.

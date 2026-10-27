@@ -2,6 +2,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 disk="${QUAKE_DISK:-media/quake.qcow2}"
+if [[ "${1:-}" == --profile ]]; then
+  shift
+  exec python3 tools/profile_quake.py --disk "$disk" "$@"
+fi
 if [[ "${1:-}" == --benchmark ]]; then
   shift
   exec python3 tools/bench_quake.py --disk "$disk" "$@"

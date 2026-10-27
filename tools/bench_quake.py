@@ -7,6 +7,9 @@ import re
 import struct
 import subprocess
 import tempfile
+import time
+import shutil
+import sys
 from pathlib import Path
 from cow_file import CowFile
 from fat_stage import Writer
@@ -132,17 +135,36 @@ def main():
     parser.add_argument('--demo', help='embedded demo name; defaults to the first bundled demo')
     parser.add_argument('--frames', type=int, help='create and run a stock-demo prefix with this many timed frames')
     parser.add_argument('--timeout', type=int, default=1800, help='maximum seconds including DOS boot and demo loading')
+    parser.add_argument('--runner', type=Path, help='use a specified frozen benchmark executable')
+    parser.add_argument('--no-build', action='store_true')
+    parser.add_argument('--output-dir', type=Path, help='new directory for this run')
+    parser.add_argument('--measure-window', action='store_true', help='measure the pinned Quake 1.06 timed-frame interval')
+    parser.add_argument('--profile-mode', choices=['none', 'host', 'counters'], default='none')
     parser.add_argument('--keep-disk', action='store_true')
     args = parser.parse_args()
     if args.timeout <= 0 or (args.frames is not None and args.frames <= 0) or not args.disk.is_file():
         parser.error('A prepared Quake disk, positive timeout and positive frame count are required; see docs/quake.md')
-    subprocess.run(['make', '-s', 'build/quake-bench', 'build/disk-tool'], cwd=ROOT, check=True)
-    work = Path(tempfile.mkdtemp(prefix='quake-benchmark-', dir=ROOT / 'build'))
+    if args.profile_mode == 'host' and (sys.platform != 'darwin' or not shutil.which('sample')):
+        parser.error('Host stack sampling requires the macOS sample tool')
+    target = 'quake-bench-profile' if args.profile_mode == 'counters' else 'quake-bench'
+    if not args.no_build:
+        subprocess.run(['make', '-s', 'build/' + target, 'build/disk-tool'], cwd=ROOT, check=True)
+    runner = args.runner.resolve() if args.runner else ROOT / 'build' / target
+    if args.output_dir:
+        work = args.output_dir.resolve()
+        work.mkdir(parents=True, exist_ok=False)
+    else:
+        work = Path(tempfile.mkdtemp(prefix='quake-benchmark-', dir=ROOT / 'build'))
+    measure = args.measure_window or args.profile_mode != 'none'
     disk = work / 'guest.qcow2'
     subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk), str(args.disk.resolve())], check=True)
     try:
         with CowFile(disk) as handle:
             fat = Writer(handle)
+            if measure:
+                exe_sha = hashlib.sha256(read_guest_file(fat, 'QUAKE/QUAKE.EXE')).hexdigest()
+                if exe_sha != '7cdb244122cc607cc6f162524bfcac60f6d11d8ca2ff07473d6cd962311161fb':
+                    raise ValueError('Profiling boundaries require the pinned original DOS Quake 1.06 executable')
             pak = read_guest_file(fat, 'ID1/PAK0.PAK')
             demos = pak_demos(pak)
             demo = args.demo.lower().removesuffix('.dem') if args.demo else demos[0]
@@ -168,10 +190,49 @@ def main():
             fat.replace_existing('AUTOEXECBAT', startup.encode('ascii'))
         label = f'{demo}/{args.frames} frames' if args.frames is not None else demo
         print(f'Quake timedemo: {label} (320x200, interpreter, silent, uncapped)', flush=True)
-        command = [str(ROOT / 'build/quake-bench'), '--disk', str(disk), '--output', str(work / 'result.json'),
+        command = [str(runner), '--disk', str(disk), '--output', str(work / 'result.json'),
                    '--timeout', str(args.timeout)]
+        if measure:
+            command += ['--window-output', str(work / 'window.json')]
+        if args.profile_mode == 'counters':
+            command += ['--guest-profile', str(work / 'guest-profile.json')]
+        if args.profile_mode == 'host':
+            command += ['--await-sampler', str(work / 'resume')]
+        sampler = None
         with (work / 'stdout.log').open('w') as out, (work / 'stderr.log').open('w') as err:
-            result = subprocess.run(command, cwd=ROOT, stdout=out, stderr=err, timeout=args.timeout + 30)
+            process = subprocess.Popen(command, cwd=ROOT, stdout=out, stderr=err)
+            try:
+                deadline = time.monotonic() + args.timeout + 30
+                if args.profile_mode == 'host':
+                    while True:
+                        try:
+                            ready = json.loads((work / 'window.json.phase.json').read_text())['phase'] == 'ready'
+                        except (OSError, ValueError, KeyError):
+                            ready = False
+                        if ready: break
+                        if process.poll() is not None or time.monotonic() > deadline:
+                            raise RuntimeError('Guest did not reach the timed-frame attachment boundary')
+                        time.sleep(.02)
+                    with (work / 'sampler.log').open('w') as log:
+                        sampler = subprocess.Popen(['sample', str(process.pid), str(args.timeout), '1', '-mayDie',
+                            '-file', str(work / 'sample.txt')], stdout=log, stderr=subprocess.STDOUT)
+                    attach_deadline = time.monotonic() + 15
+                    while 'Sampling process' not in (work / 'sampler.log').read_text():
+                        if sampler.poll() is not None or time.monotonic() > attach_deadline:
+                            raise RuntimeError('Host sampler failed to attach; see sampler.log')
+                        time.sleep(.01)
+                    (work / 'resume').touch()
+                process.wait(timeout=max(.1, deadline - time.monotonic()))
+                if sampler:
+                    sampler.wait(timeout=15)
+                    if sampler.returncode or not (work / 'sample.txt').is_file():
+                        raise RuntimeError('Host sampler failed to produce its trace')
+            finally:
+                if process.poll() is None:
+                    process.kill(); process.wait()
+                if sampler and sampler.poll() is None:
+                    sampler.terminate(); sampler.wait(timeout=5)
+        result = process
         if result.returncode:
             raise RuntimeError('Timedemo failed: ' + (work / 'stderr.log').read_text().strip())
         report = json.loads((work / 'result.json').read_text())
@@ -184,8 +245,14 @@ def main():
         (work / 'qconsole.log').write_text(console)
         if not re.search(rf'\b{report["frames"]} frames\s+[0-9.]+ seconds\s+{report["fps"]:.1f} fps', console):
             raise RuntimeError('Stopped guest console log did not confirm the FPS result')
-        report.update(demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
-                      executableSha256=hashlib.sha256((ROOT / 'build/quake-bench').read_bytes()).hexdigest())
+        report.update(profileMode=args.profile_mode, scoreEligible=args.profile_mode == 'none', demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
+                      executableSha256=hashlib.sha256(runner.read_bytes()).hexdigest())
+        if measure:
+            window = json.loads((work / 'window.json').read_text())
+            if window['frames'] != report['frames']:
+                raise RuntimeError('Measured frame interval differs from completed timedemo')
+            report['window'] = window
+            report['windowFps'] = report['frames'] / window['wallSeconds']
         if args.frames is not None:
             report['demoFile'] = f'{demo}-{args.frames}.dem'
             report['demoSha256'] = hashlib.sha256(short).hexdigest()

@@ -21,6 +21,14 @@ static void begin() {
 int main() {
     try {
         begin();
+        profile::x87(0xd9, 0xe8); profile::x87(0xd9, 0xe8); profile::x87(0xdb, 0x1d);
+        check(profile::data.x87[1][0xe8] == 2 && profile::data.x87[3][0x1d] == 1,
+              "x87 profile distinguishes exact opcode/ModR/M forms");
+        profile::active = false; profile::x87(0xd9, 0xe8);
+        check(profile::data.x87[1][0xe8] == 2, "inactive x87 profile does not count");
+        begin();
+        check(profile::data.x87[1][0xe8] == 0, "new interval resets x87 diagnostics");
+        begin();
         tickStep = 5;
         profile::start(10);
         check(profile::data.clockPairMeanNs == 5, "clock baseline");

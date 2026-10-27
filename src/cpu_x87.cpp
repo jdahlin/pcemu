@@ -23,6 +23,7 @@
 // Vol. 1, 8.1.2, 8.1.5, 8.5 and 8.6:
 // https://cdrdv2-public.intel.com/789574/253665-sdm-vol-1.pdf#page=203
 #include "cpu.hpp"
+#include "profile.hpp"
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -70,6 +71,7 @@ void CPU::execute_x87_instruction(uint8_t op, bool a32, int over, bool o32) {
     // context handling. MP only changes FWAIT's behavior, not these ESC checks.
     if (cr[0] & 12) throw Fault{7, 0, false};
     uint8_t m = fetch(1);
+    profile::x87(op, m);
     auto operand = decode(m, a32, over);
     unsigned g = (m >> 3) & 7, i = m & 7;
     unsigned top = (fpStatus >> 11) & 7;

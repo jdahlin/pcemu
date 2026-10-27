@@ -4,36 +4,62 @@
 #include "machine.hpp"
 #include "jit.hpp"
 #include "quake_benchmark.hpp"
+#include "profile.hpp"
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <thread>
 #include <unordered_set>
+#include <filesystem>
+#include <ctime>
 using namespace pc;
 using Clock = std::chrono::steady_clock;
+// Boundary-only CPU time; no per-instruction clock reads in the baseline binary.
+static uint64_t threadCpuNs() {
+    timespec t{};
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t)) throw std::runtime_error("Thread CPU clock unavailable");
+    return uint64_t(t.tv_sec) * 1000000000 + t.tv_nsec;
+}
+static void phase(const std::string &path, const char *state) {
+    std::ofstream out(path + ".tmp");
+    out << "{\"phase\":\"" << state << "\"}\n";
+    out.close();
+    if (!out) throw std::runtime_error("Cannot write profiling phase");
+    std::filesystem::rename(path + ".tmp", path);
+}
 int main(int argc, char **argv) {
     try {
-        std::string disk, output;
+        std::string disk, output, windowOutput, guestProfile, awaitSampler;
         unsigned timeout = 1800;
         for (int n = 1; n < argc; ++n) {
             std::string arg = argv[n];
             if (n + 1 >= argc) throw std::runtime_error("Missing argument for " + arg);
             if (arg == "--disk") disk = argv[++n];
             else if (arg == "--output") output = argv[++n];
+            else if (arg == "--window-output") windowOutput = argv[++n];
+            else if (arg == "--await-sampler") awaitSampler = argv[++n];
+            else if (arg == "--guest-profile") guestProfile = argv[++n];
             else if (arg == "--timeout") timeout = std::stoul(argv[++n]);
             else throw std::runtime_error("Unknown argument: " + arg);
         }
         if (disk.empty() || output.empty() || !timeout)
             throw std::runtime_error("Usage: quake-bench --disk PRIVATE.qcow2 --output RESULT.json [--timeout SECONDS]");
+#ifndef PCEMU_PROFILE
+        if (!guestProfile.empty()) throw std::runtime_error("Guest counters require quake-bench-profile");
+#endif
+        if ((!guestProfile.empty() || !awaitSampler.empty()) && windowOutput.empty())
+            throw std::runtime_error("Profiling requires --window-output");
         Machine machine(disk, "", 32 * 1024 * 1024);
         auto &cpu = machine.cpu;
         // 8254 CLK is external board wiring. Only this runner supplies wall time;
         // the emulator's normal instruction-clock and snapshot behavior remain.
         // Tick conversion avoids multiplying a long-running nanosecond counter.
         auto origin = Clock::now();
+        uint64_t pausedNs = 0;
         machine.pitClock = [&] {
             auto ns = uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - origin).count());
+            ns -= pausedNs;
             return (ns / 1000000000) * 1193182 + ((ns % 1000000000) * 1193182) / 1000000000;
         };
         machine.pit.reset(0);
@@ -78,7 +104,37 @@ int main(int argc, char **argv) {
         machine.boot();
         uint64_t nextCheck = 0;
         bool completed = false;
+        QuakeProfileWindow window;
+        uint64_t beginInstructions = 0, endInstructions = 0, beginCpu = 0, endCpu = 0;
+        Clock::time_point beginWall, endWall;
+        const bool measureWindow = !windowOutput.empty();
         while (true) {
+            if (measureWindow && (cpu.ip == 0x3ac9 || cpu.ip == 0x3f86)) {
+                auto event = window.observe(cpu);
+                if (event == QuakeProfileWindow::Event::Begin) {
+                    if (!awaitSampler.empty()) {
+                        auto pauseStart = Clock::now();
+                        phase(windowOutput + ".phase.json", "ready");
+                        while (!std::filesystem::exists(awaitSampler)) {
+                            if (Clock::now() - pauseStart > std::chrono::seconds(30))
+                                throw std::runtime_error("Host sampler did not release attachment barrier");
+                            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        }
+                        pausedNs += std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - pauseStart).count();
+                    }
+#ifdef PCEMU_PROFILE
+                    if (!guestProfile.empty()) profile::start(cpu.instructions);
+#endif
+                    phase(windowOutput + ".phase.json", "running");
+                    beginInstructions = cpu.instructions; beginCpu = threadCpuNs(); beginWall = Clock::now();
+                } else if (event == QuakeProfileWindow::Event::End) {
+                    endWall = Clock::now(); endCpu = threadCpuNs(); endInstructions = cpu.instructions;
+#ifdef PCEMU_PROFILE
+                    if (!guestProfile.empty()) profile::stop(guestProfile, cpu.instructions);
+#endif
+                    phase(windowOutput + ".phase.json", "done");
+                }
+            }
             observeDosWrite();
             if (!cpu.halted) jit.run();
             machine.poll();
@@ -97,6 +153,20 @@ int main(int argc, char **argv) {
             if (cpu.halted) std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         if (!result || !completed) throw std::runtime_error("Quake exited without a completed timedemo result");
+        if (measureWindow) {
+            if (!window.ended || window.endFrame - window.beginFrame != result->frames)
+                throw std::runtime_error("Quake profile boundaries do not match reported frames");
+            std::ofstream out(windowOutput);
+            out << std::setprecision(15) << "{\"schemaVersion\":1,\"scope\":\"td_starttime-store to CL_FinishTimeDemo entry\","
+                << "\"frames\":" << result->frames << ",\"beginFrame\":" << window.beginFrame
+                << ",\"endFrame\":" << window.endFrame << ",\"beginInstructions\":" << beginInstructions
+                << ",\"endInstructions\":" << endInstructions << ",\"wallSeconds\":" << std::chrono::duration<double>(endWall - beginWall).count()
+                << ",\"threadCpuSeconds\":" << double(endCpu - beginCpu) / 1e9
+                << ",\"attachmentPauseSeconds\":" << double(pausedNs) / 1e9
+                << ",\"guestProfiled\":" << (!guestProfile.empty() ? "true" : "false")
+                << ",\"hostSampled\":" << (!awaitSampler.empty() ? "true" : "false") << "}\n";
+            if (!out) throw std::runtime_error("Cannot write frame-window result");
+        }
         machine.disk->flush();
         std::ofstream report(output);
         if (!report) throw std::runtime_error("Cannot write benchmark result");

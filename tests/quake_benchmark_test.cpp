@@ -19,6 +19,34 @@ int main() {
              "1 frames inf seconds 1 fps\n", "1 frames 1 seconds 0 fps\n", "1 frames 1 seconds 1 fps extra\n",
              "1 frames 1 seconds\n1 fps\n", "Can't play demo1.dem\n"})
             check(!parseQuakeTimedemo(text), "reject incomplete, invalid or unrelated output");
+        {
+            CPU c(2 * 1024 * 1024);
+            c.cr[0] = 1; c.s[CS].selector = 3; c.s[CS].big = true;
+            c.s[CS].base = c.s[DS].base = 0x10000;
+            const uint8_t begin[] = {0xd9,0x1d,0x94,0xc9,6,0};
+            const uint8_t end[] = {0x83,0xec,4,0xc7,5,0x80,0xc9,6,0,0,0,0,0};
+            for (unsigned n=0;n<sizeof(begin);++n) c.write(0x13ac3+n,begin[n],1);
+            for (unsigned n=0;n<sizeof(end);++n) c.write(0x13f86+n,end[n],1);
+            c.write(0x10000+0x95bb4,101,4); c.write(0x10000+0x6c990,100,4);
+            QuakeProfileWindow w;
+            c.ip=0x3f86;
+            check(w.observe(c)==QuakeProfileWindow::Event::None,"finish cannot start a profiling interval");
+            c.ip=0x3ac9; c.cr[0]=0;
+            check(w.observe(c)==QuakeProfileWindow::Event::None,"real-mode aliases cannot trigger the Quake window");
+            c.cr[0]=1;
+            check(w.observe(c)==QuakeProfileWindow::Event::Begin&&w.beginFrame==101,"profile starts after the excluded first frame");
+            check(w.observe(c)==QuakeProfileWindow::Event::None,"begin event is emitted only once");
+            c.ip=0x3f86;c.write(0x10000+0x95bb4,151,4);
+            check(w.observe(c)==QuakeProfileWindow::Event::End&&w.endFrame-w.beginFrame==50,"profile records exactly fifty completed frames");
+            check(w.observe(c)==QuakeProfileWindow::Event::None,"end event is emitted only once");
+            QuakeProfileWindow bad;c.ip=0x3ac9;
+            bool rejected=false;
+            try{bad.observe(c);}catch(const std::runtime_error &){rejected=true;}
+            check(rejected,"wrong warmup frame rejects a misleading profile");
+            c.write(0x10000+0x95bb4,101,4);c.write(0x13ac3,0x90,1);rejected=false;
+            try{bad.observe(c);}catch(const std::runtime_error &){rejected=true;}
+            check(rejected,"changed instruction fingerprints reject the profile map");
+        }
         auto owner = std::make_unique<Machine>("", "", 2 * 1024 * 1024);
         auto &m = *owner;
         m.cpu.instructions = 400;
