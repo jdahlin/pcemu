@@ -83,7 +83,7 @@ int main(){try{
             check(c.r[SP]==(old32?0x28044u:0xbeef8044u) && c.s[SS].big!=old32,"POP SS uses old stack width");
         }
     }
-    // POP reads the full operand width, not just the selector's low word.
+    // POP reads a 16-bit selector while operand size still advances SP/ESP.
     for(unsigned seg:{unsigned(DS),unsigned(SS),unsigned(FS),unsigned(GS)}){
         auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.cr[0]=0x11;c.s[CS].big=c.s[SS].big=true;
         c.flags=0x202;c.r[AX]=0xff;c.r[SP]=0x28ffe;c.write(0x28ffe,8,2);
@@ -95,7 +95,7 @@ int main(){try{
             check(f.vector==14 && cpu->cr[2]==0x29000 && cpu->ip==2,"segment POP high-word stack page fault");faults[k]=true;throw Stop{};};}
         try{ref->step();ref->step();}catch(const Stop&){}
         Jit jit(c,true,0,65536);try{jit.run();}catch(const Stop&){}
-        equal(c,*ref);check(faults[0]&&faults[1],"segment POP full-width fault replay");
+        equal(c,*ref);check(!faults[0]&&!faults[1] && c.r[SP]==0x29002 && jit.nativeInstructions==2,"segment POP reads only selector width and advances full operand width");
     }
     std::cout<<"Passed "<<checks<<" segment-stack JIT checks\n";
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

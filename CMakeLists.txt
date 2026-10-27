@@ -239,6 +239,9 @@ pcemu_program(quake-bench ZSTD
 pcemu_program(quake-bench-profile PROFILE ZSTD
   SOURCES ${CORE} src/quake_benchmark.cpp tools/quake_bench.cpp
 )
+pcemu_program(jit-decoded-boundary-tests ZSTD
+  SOURCES ${CORE} tests/jit_decoded_boundary_test.cpp
+)
 pcemu_program(jit-x87-tests ZSTD
   SOURCES ${CORE} tests/jit_x87_test.cpp
 )

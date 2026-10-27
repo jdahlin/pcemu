@@ -16,4 +16,4 @@ if [[ ! -f "$disk" ]]; then
 fi
 ./tools/build.sh pcemu
 # Use the validated native JIT; --backend interpreter remains available.
-exec ./build/pcemu --backend jit --ram-mb 32 --disk "$disk" "$@"
+exec ./build/pcemu --backend jit --jit-eager --ram-mb 32 --disk "$disk" "$@"

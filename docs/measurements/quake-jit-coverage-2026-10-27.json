@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-27",
+  "purpose": "Compatibility and strict compiled-coverage validation; not a performance baseline",
+  "concurrentValidation": true,
+  "scope": "DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI",
+  "compiledHelpersIncluded": true,
+  "stable100PercentAcrossRepeatedRuns": false,
+  "runs": [
+    {
+      "demo": "demo1",
+      "frames": 969,
+      "coverage": {
+        "scope": "DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI",
+        "guestSteps": 2466069021,
+        "nativeSteps": 2466069019,
+        "interpretedSteps": 2,
+        "decodedX87HelperSteps": 404902165,
+        "nativePercent": 99.99999991889926,
+        "predecodeInterpreterCalls": 0,
+        "complete": false
+      },
+      "executableSha256": "24f412755ac9c5da62fc16f9c44bc594973ba746a5adaa3b1d90475bbc6af4b1",
+      "predecodeInterpreterCalls": 0,
+      "fallbacks": [
+        {
+          "cr3": 188416,
+          "base": 268435456,
+          "cs": 167,
+          "ip": 208894,
+          "primaryOpcode": 131,
+          "interpretationReason": "warming",
+          "samples": 2
+        }
+      ],
+      "consoleSha256": "4924e7abf057b1b8050062bc422cd8f957e355b6ea50ba29e39b0903263f4c82"
+    },
+    {
+      "demo": "demo2",
+      "frames": 985,
+      "coverage": {
+        "scope": "DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI",
+        "guestSteps": 2465568089,
+        "nativeSteps": 2465568088,
+        "interpretedSteps": 1,
+        "decodedX87HelperSteps": 379116564,
+        "nativePercent": 99.9999999594414,
+        "predecodeInterpreterCalls": 0,
+        "complete": false
+      },
+      "executableSha256": "24f412755ac9c5da62fc16f9c44bc594973ba746a5adaa3b1d90475bbc6af4b1",
+      "predecodeInterpreterCalls": 0,
+      "fallbacks": [
+        {
+          "cr3": 188416,
+          "base": 268435456,
+          "cs": 167,
+          "ip": 192507,
+          "primaryOpcode": 217,
+          "interpretationReason": "warming",
+          "samples": 1
+        }
+      ],
+      "consoleSha256": "1067414f4b1b8f3c9f53f732d1e9d597da9fe595604255a4c8861e776481e8bd"
+    },
+    {
+      "demo": "demo3",
+      "frames": 1090,
+      "coverage": {
+        "scope": "DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI",
+        "guestSteps": 2981092229,
+        "nativeSteps": 2981092229,
+        "interpretedSteps": 0,
+        "decodedX87HelperSteps": 488506144,
+        "nativePercent": 100.0,
+        "predecodeInterpreterCalls": 0,
+        "complete": true
+      },
+      "executableSha256": "24f412755ac9c5da62fc16f9c44bc594973ba746a5adaa3b1d90475bbc6af4b1",
+      "predecodeInterpreterCalls": 0,
+      "fallbacks": [],
+      "consoleSha256": "37361a859cfa9c1f25d9f50e9a0083a87d57c0e99e0d7e4750afeb06c31f0217"
+    }
+  ],
+  "note": "Earlier sequential runs reached zero interpreter steps in all three demos; repeated concurrent runs expose remaining cold-fetch fallbacks. Preserve the failing strict gate."
+}

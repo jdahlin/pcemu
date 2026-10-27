@@ -134,12 +134,14 @@ def jit_coverage_result(result, counters):
     if total <= 0 or not 0 <= native <= total:
         raise ValueError('Invalid Quake JIT coverage accounting')
     interpreted = total - native
+    unknown = counters.get('cpuTiming', {}).get('unknownAttempts', 0)
     if counters['interpretedAttempts'] != interpreted:
         raise ValueError('Quake interpreted attempts do not reconcile with JIT coverage')
     return dict(scope='DOS Quake 1.06 application CS=00A7 base=10000000 during exact timed-frame window; excludes DOS/CWSDPMI',
                 guestSteps=total, nativeSteps=native, interpretedSteps=interpreted,
                 decodedX87HelperSteps=result.get('coverageX87HelperSteps',0),
-                nativePercent=100 * native / total, complete=interpreted == 0)
+                nativePercent=100 * native / total, predecodeInterpreterCalls=unknown,
+                complete=interpreted == 0 and unknown == 0)
 
 
 def main():

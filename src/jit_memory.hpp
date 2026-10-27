@@ -15,6 +15,7 @@ struct NativeMemoryMove {
 struct NativeCodeTail {
     uint32_t ip=0,page=0,generation=0;
     bool present=false;
+    bool earlyFetchSafe=false, requiresWarmRead=false, requiresUsableSegments=false;
 };
 struct NativeFarTransfer {
     NativeMemoryMove memory;
@@ -37,13 +38,13 @@ struct NativePortIO {
     uint32_t start=0,end=0;
 };
 inline constexpr uint32_t nativePortIOExit=0x80000000u;
+inline constexpr uint32_t nativeSegmentExit=0x04000000u;
+inline constexpr uint32_t nativeArithmeticExit=0x02000000u;
+inline constexpr uint32_t nativeStringExit=0x10000000u;
+inline constexpr uint32_t nativeInterruptExit=0x08000000u;
 inline constexpr uint32_t nativeX87Exit=0x20000000u;
 inline constexpr uint32_t nativeInvalidOpcodeExit=0x40000000u;
 // A decoded, terminal string batch. Host helpers may execute only after a
 // side-effect-free preflight validates every required RAM span.
-struct NativeString {
-    unsigned opcode = 0xa4, width = 1, repeat = 0, sourceSegment = DS;
-    uint32_t start = 0, end = 0;
-    bool address32 = false;
-};
+using NativeString = CPU::DecodedString;
 } // namespace pc

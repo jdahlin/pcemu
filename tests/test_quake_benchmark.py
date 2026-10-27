@@ -49,6 +49,8 @@ class QuakeBenchmarkTests(unittest.TestCase):
         self.assertEqual(coverage['interpretedSteps'], 1)
         report['coverageNativeSteps'] += 1
         self.assertTrue(bench.jit_coverage_result(report, dict(interpretedAttempts=0))['complete'])
+        self.assertFalse(bench.jit_coverage_result(report, dict(interpretedAttempts=0,
+            cpuTiming=dict(unknownAttempts=1)))['complete'])
         for total, native, attempts in [(0,0,0),(10,11,0),(10,9,0),(10,-1,11)]:
             with self.subTest(total=total, native=native), self.assertRaises(ValueError):
                 bench.jit_coverage_result(dict(coverageGuestSteps=total, coverageNativeSteps=native),

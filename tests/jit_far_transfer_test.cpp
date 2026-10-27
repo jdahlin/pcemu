@@ -20,7 +20,7 @@ int main(){try{
     for(bool a32:{false,true})for(bool indirect:{false,true})for(bool call:{false,true})for(bool ldt:{false,true})for(unsigned translation=0;translation<3;++translation){
         auto p=std::make_unique<CPU>(1024*1024);auto&c=*p;c.cr[0]=mode?0x11:0x10;c.flags=0xa03|(mode==3?0x20000:0);c.s[CS].big=code32;c.s[CS].selector=mode==2?11:8;c.s[SS].base=0x20000;c.s[SS].big=stack32;c.s[SS].selector=16;c.s[FS].base=0x10000;c.r[AX]=0xff;c.r[BX]=0x2000;c.r[SI]=0x20;c.r[SP]=stack32?0x4000:0xabcd0000;
         c.gdtBase=0x60000;c.gdtLimit=63;c.ldtBase=0x61000;c.ldtLimit=63;const uint16_t selector=mode==3?0x300:uint16_t(8|(ldt?4:0)|(mode==2?3:0));descriptor(c,selector,0x10000,true,!code32,mode==2?3:0);
-        const auto off=w==4?0x87654321u:0x4321u;auto address=a32?0x12053:0x12033;c.write(address,off,w);c.write(address+w,selector,2);
+        const auto off=w==4 && mode!=0 && mode!=3?0x87654321u:0x4321u;auto address=a32?0x12053:0x12033;c.write(address,off,w);c.write(address+w,selector,2);
         auto code=program(code32,w,a32,indirect,call,off,selector);auto end=code.size()-1;std::copy(code.begin(),code.end(),c.mem.begin());if(translation)paging(c,translation==2);
         auto ref=std::make_unique<CPU>(c);ref->step();ref->step();Jit jit(c,true,0,65536);jit.run();equal(c,*ref);
         if(!translation||translation==2)check(jit.nativeInstructions==2,"warm direct/indirect CALL/JMP stays native");

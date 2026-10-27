@@ -1,5 +1,6 @@
 #include "jit.hpp"
 #include "jit_ir.hpp"
+#include "jit_runtime.hpp"
 #include "profile.hpp"
 #include <utility>
 #include <algorithm>
@@ -270,6 +271,19 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     patchIncoming(key);
     return &stored;
 }
+void Jit::finishDecodedExit() {
+    const auto kind=cpu.nativeDecodedExit;
+    const auto pointer=cpu.nativeDecodedOperation;
+    cpu.nativeDecodedExit=0;cpu.nativeFallback=false;
+    ++nativeInstructions;
+    if(kind&nativeSegmentExit) {
+        const auto op=*static_cast<const CPU::DecodedSegment*>(pointer);
+        cpu.stepSegment(op,uint16_t(cpu.nativeValue),kind&1);
+    } else {
+        const auto op=*static_cast<const CPU::DecodedMemoryArithmetic*>(pointer);
+        cpu.stepMemoryArithmetic(op);
+    }
+}
 uint32_t Jit::run() {
     profile::InterpretationScope interpretation(profile::InterpretationReason::Forced);
     stopBatch = false;
@@ -343,7 +357,15 @@ uint32_t Jit::run() {
             if(cpu.cr[0]&0x80000000u) {
                 // Do not page-walk a later fetch ahead of an earlier operand
                 // segment fault. A cold/denied tail replays in reference order.
-                if(!warmInstructionPage(cpu,tail.ip,page)) {
+                if(!warmInstructionPage(cpu,tail.ip,page) && tail.earlyFetchSafe &&
+                   (!tail.requiresUsableSegments || std::none_of(std::begin(cpu.s),std::end(cpu.s),[](const Segment&s){return s.unusable;})) &&
+                   (!tail.requiresWarmRead || jit_detail::canPrefetchImmediateTail(cpu,cached->native->memory.front(),tail.ip))) {
+                    try {
+                        if(tail.requiresWarmRead)jit_detail::warmImmediateOperand(cpu,cached->native->memory.front());
+                        page=cpu.physical(cpu.address(CS,tail.ip))>>12;
+                    }
+                    catch(const Fault&){cpu.step();return 1;}
+                } else if(!warmInstructionPage(cpu,tail.ip,page)) {
                     interpretation.set(profile::InterpretationReason::Replay);
                     profile::event(profile::NativeReplay);
                     cpu.step();return 1;
@@ -410,6 +432,7 @@ uint32_t Jit::run() {
     cacheHits++;
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
+    cpu.nativeDecodedExit = 0;
     stopBatch = b.pollBoundary;
     // Only ordinary callback-free blocks enter cached tails. Context-changing
     // operations and deferred callbacks return to run() for full validation.
@@ -418,12 +441,24 @@ uint32_t Jit::run() {
         profile::event(profile::CachedContextValidation);
     }
     auto n = uint32_t(function(&cpu, 0));
+    const bool stringExit=n&nativeStringExit;
+    const bool interruptExit=n&nativeInterruptExit;
     const bool x87Exit=n&nativeX87Exit;
     const bool portExit=n&nativePortIOExit;
     const bool invalidOpcodeExit=n&nativeInvalidOpcodeExit;
-    n &= ~(nativePortIOExit|nativeInvalidOpcodeExit|nativeX87Exit);
+    n &= ~(nativePortIOExit|nativeInvalidOpcodeExit|nativeX87Exit|nativeStringExit|nativeInterruptExit);
     cpu.instructions += n;
     nativeInstructions += n;
+    if(cpu.nativeDecodedExit) {finishDecodedExit();stopBatch=true;return n+1;}
+    if(stringExit) {
+        const auto operation=b.boundaryEntry()->string;
+        ++nativeInstructions;cpu.stepString(operation);return n+1;
+    }
+    if(interruptExit) {
+        const auto vector=b.boundaryEntry()->interruptVector;
+        const auto end=b.boundaryEntry()->interruptEnd;
+        ++nativeInstructions;cpu.stepInterrupt(vector,end);return n+1;
+    }
     if(x87Exit) {
         const auto operation=b.boundaryEntry()->x87;
         ++nativeInstructions;++nativeHelperInstructions;
@@ -475,7 +510,7 @@ template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noe
     const bool userFetch=cpu.cpl()==3&&!cpu.systemAccess;
     const auto a20Mask=cpu.a20?UINT32_MAX:~(1u<<20);
     while (result.count.instructions < budget) {
-        if (cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
+        if (cpu.nativeDecodedExit || cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
             (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough))
             return result;
         uint64_t key = prefix | cpu.ip;
@@ -548,6 +583,9 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
             nativeInstructions += tail.count.instructions;
             result.instructions += tail.count.instructions;
             result.dispatches += tail.count.dispatches;
+            if(cpu.nativeDecodedExit) {
+                finishDecodedExit();++result.instructions;break;
+            }
             if (cpu.nativeFallback) {
                 profile::InterpretationScope interpretation(profile::InterpretationReason::Replay);
                 profile::event(profile::NativeReplay);
@@ -596,7 +634,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
     });
     if (ir.empty()) return block;
     if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair && !specialShortFragment &&
-                      ir.back().kind != Kind::X87 && ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
+                      ir.back().kind != Kind::SoftwareInterrupt && ir.back().kind != Kind::X87 && ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
                       !ir.front().stringMove && ir.front().kind != Kind::EnterFrame && ir.back().kind != Kind::EnterFrame && ir.back().kind != Kind::FarPointer && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {
         block.shortKind = std::any_of(ir.begin(), ir.end(), [](const auto &i) {

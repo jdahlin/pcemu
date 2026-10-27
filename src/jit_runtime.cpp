@@ -77,6 +77,56 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xc0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+// After the pure proof below, preserve operand-before-immediate page-walk order.
+void warmImmediateOperand(CPU &cpu,const NativeMemoryMove &op) {
+    uint32_t offset=op.displacement;
+    if(op.base>=0)offset+=cpu.r[op.base];
+    if(op.index>=0)offset+=cpu.r[op.index]<<op.scale;
+    if(!op.address32)offset&=65535;
+    cpu.physical(cpu.address(op.segment,offset,op.width));
+}
+// Group-1 immediates read the operand before fetching the immediate. Prove
+// present ordinary RAM and exclude aliases of the later fetch's PDE/PTE writes
+// before warming either translation. This probe itself has no side effects.
+bool canPrefetchImmediateTail(CPU &cpu,const NativeMemoryMove &op,uint32_t codeIP) noexcept {
+    try {
+        uint32_t offset=op.displacement,physical;
+        if(op.base>=0)offset+=cpu.r[op.base];
+        if(op.index>=0)offset+=cpu.r[op.index]<<op.scale;
+        if(!op.address32)offset&=65535;
+        const auto source=cpu.address(op.segment,offset,op.width);
+        if((source&4095)+op.width>4096)return false;
+        if(!warmDataAddress(cpu,source,op.width,false,physical)) {
+            if(!(cpu.cr[0]&0x80000000u))return false;
+            auto raw=[&](uint32_t at,uint32_t &value){
+                if(!cpu.a20)at&=~(1u<<20);
+                if(uint64_t(at)+4>cpu.mem.size())return false;
+                std::memcpy(&value,cpu.mem.data()+at,4);return bool(value&1);
+            };
+            uint32_t pde,pte;
+            if(!raw((cpu.cr[3]&~4095u)+(source>>22)*4,pde) ||
+               !raw((pde&~4095u)+((source>>12)&1023)*4,pte))return false;
+            if(cpu.cpl()==3 && !cpu.systemAccess && !(pde&pte&4))return false;
+            physical=(pte&~4095u)|(source&4095);
+            if(!cpu.a20)physical&=~(1u<<20);
+            if(uint64_t(physical)+op.width>cpu.mem.size() ||
+               (physical<0xc0000 && uint64_t(physical)+op.width>0xa0000))return false;
+        }
+        if(!(cpu.cr[0]&0x80000000u))return true;
+        auto linear=cpu.address(CS,codeIP);
+        auto raw=[&](uint32_t at,uint32_t &value){
+            if(!cpu.a20)at&=~(1u<<20);
+            if(uint64_t(at)+4>cpu.mem.size() || (physical<at+4 && uint64_t(physical)+op.width>at))return false;
+            std::memcpy(&value,cpu.mem.data()+at,4);return bool(value&1);
+        };
+        uint32_t pde,pte;
+        if(!raw((cpu.cr[3]&~4095u)+(linear>>22)*4,pde) || !raw((pde&~4095u)+((linear>>12)&1023)*4,pte))return false;
+        if(cpu.cpl()==3 && !cpu.systemAccess && !(pde&pte&4))return false;
+        auto target=(pte&~4095u)|(linear&4095);
+        if(!cpu.a20)target&=~(1u<<20);
+        return target<cpu.mem.size() && !(target>=0xa0000 && target<0xc0000);
+    } catch(const Fault&) {return false;}
+}
 uint32_t nativeDescriptorQuery(CPU *cpu,const NativeMemoryMove *source,unsigned selector,unsigned destination,unsigned width,unsigned limitQuery) noexcept {
     if(destination>=8 || (width!=2 && width!=4) || !(cpu->cr[0]&1) || (cpu->flags&0x20000))return 0;
     try {

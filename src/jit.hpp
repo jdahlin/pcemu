@@ -101,6 +101,9 @@ class Jit {
             Function fn=nullptr;
             NativeCodeTail fetchTail;
             CPU::DecodedX87 x87;
+            NativeString string;
+            uint8_t interruptVector=0;
+            uint32_t interruptEnd=0;
             union {
                 NativePortIO operation{};
                 NativeFarReturn farReturn;
@@ -109,6 +112,8 @@ class Jit {
         };
         struct NativeState {
             std::vector<NativeMemoryMove> memory;
+            std::vector<CPU::DecodedSegment> segments;
+            std::vector<CPU::DecodedMemoryArithmetic> arithmetic;
             std::vector<NativeString> strings;
             std::unique_ptr<LinkState> link;
             std::unique_ptr<BoundaryEntry> boundary;
@@ -154,6 +159,7 @@ class Jit {
     template <bool Linking> CachedBatch runCachedImpl(unsigned budget) noexcept;
     static bool warmInstructionPage(CPU&,uint32_t ip,uint32_t &page);
     static uint32_t instructionPage(CPU&,uint32_t ip);
+    void finishDecodedExit();
     Block compile(bool translate = true, bool hotShort = false);
     jit_detail::DecodedBlock decode(Block &block);
     Block emitArm64(Block block, const jit_detail::DecodedBlock &decoded);

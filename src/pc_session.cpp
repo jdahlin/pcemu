@@ -50,7 +50,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
     bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true, traceJit = false;
     std::string machineId = "pc-legacy", backendId = "auto";
     bool directLinks = false;
-    unsigned linkWarmup = 256;
+    unsigned linkWarmup = 256, jitWarmup = 8;
     bool initiallyPaused = false;
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
          executeVga = true, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
@@ -82,6 +82,8 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                 executeVga = false;
             else if (arg == "--execute-vgabios")
                 executeVga = true;
+            else if (arg == "--jit-eager")
+                jitWarmup = 0;
             else if (arg == "--jit-link-warmup")
                 linkWarmup = std::stoul(value());
             else if (arg == "--jit-direct-links")
@@ -171,6 +173,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                              "  --benchmark-memory-bytes (byte loads/stores with wraparound)\n"
                              "    --backend jit|interpreter selects one benchmark engine\n"
                              "  --machine ID --list-machines --backend auto|interpreter|jit\n"
+                             "  --jit-eager (compile supported instructions immediately, including short blocks)\n"
                              "  --jit-link-warmup N (native entries before link promotion; default 256)\n"
                              "  --jit-direct-links (experimental same-page native links)\n"
                              "  --jit-debug-map FILE (timestamped generated-code diagnostics)\n"
@@ -275,7 +278,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         }
         if (snapshotPath.empty())
             m.boot(fromFloppy);
-        auto engine = std::make_unique<Jit>(c, enableJit, 8, 16 * 1024 * 1024,
+        auto engine = std::make_unique<Jit>(c, enableJit, jitWarmup, 16 * 1024 * 1024,
                 traceJit ? Jit::BlockMode::Trace
                          : followJumps ? Jit::BlockMode::FollowJumps : Jit::BlockMode::Basic);
         auto &jit = *engine;

@@ -1,5 +1,6 @@
 #include "jit.hpp"
 #include "jit_ir.hpp"
+#include "jit_runtime.hpp"
 #include <utility>
 #include <algorithm>
 namespace pc {
@@ -11,7 +12,8 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     NativePortIO portIO;
     NativeCodeTail fetchTail;
     uint32_t pos = cpu.ip;
-    bool coldTailSafe=false;
+    bool coldTailSafe=false, immediateTail=false, tailNeedsSegments=false;
+    NativeMemoryMove immediateSource;
     unsigned fetchedBytes = 0;
     bool fetchWrapped = false;
     auto byte = [&]() {
@@ -31,7 +33,11 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             if(!warmInstructionPage(cpu,pos,page)) {
                 // Retry after reference execution warms the fetch; do not
                 // permanently negative-cache a transient translation miss.
-                block.attempted=false;throw 0;
+                if(coldTailSafe || (immediateTail && jit_detail::canPrefetchImmediateTail(cpu,immediateSource,pos))) {
+                    if(immediateTail)jit_detail::warmImmediateOperand(cpu,immediateSource);
+                    page=cpu.physical(address)>>12;
+                }
+                else {block.attempted=false;throw 0;}
             }
             p=(page<<12)|(address&4095);
         } else p=cpu.physical(address);
@@ -42,7 +48,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             if(p>=cpu.mem.size() || (p>=0xa0000 && p<0xc0000) ||
                (p>=0xe0000000 && p<0xe1000000))throw 0;
             if(fetchTail.present && fetchTail.page!=(p>>12))throw 0;
-            if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true,coldTailSafe};
+            if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true,coldTailSafe||immediateTail,immediateTail,tailNeedsSegments};
         }
         cpu.markCode(p);
         auto b = cpu.mem.at(p);
@@ -101,6 +107,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
     for (unsigned count = 0; count < 64; count++) {
         if(count && std::find(observationPoints.begin(),observationPoints.end(),cpu.s[CS].base+pos)!=observationPoints.end())break;
         auto begin = pos;
+        immediateTail=false;
         fetchedBytes = 0;
         fetchWrapped = false;
         auto savedCR2 = cpu.cr[2];
@@ -127,6 +134,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     break;
                 op = byte();
             }
+            // These forms fetch every remaining code byte before their first
+            // operand access. Usable segments exclude decode-time #GP ahead
+            // of an immediate fetch. Cold tail fetches may therefore warm now.
+            tailNeedsSegments=op==0xc7;
+            coldTailSafe=(op==0x03 || op==0xe8 || (op>=0x70 && op<=0x7f)) ||
+                (op==0xc7 && std::none_of(std::begin(cpu.s),std::end(cpu.s),[](const Segment&s){return s.unusable;}));
             const bool stringOpcode=(op>=0xa4 && op<=0xa7) || (op>=0xaa && op<=0xaf);
             if(repeat && !stringOpcode) {pos=begin;break;}
             IR i{};
@@ -155,7 +168,10 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 block.usesStack = true;
                 if (!store && segment == SS) block.changesShadow = true;
             };
-            if(op>=0xd8 && op<=0xdf) {
+            if(op==0xcd || op==0xcc) {
+                i.kind=Kind::SoftwareInterrupt;i.imm=op==0xcc?3:byte();block.pollBoundary=true;
+            } else if(op>=0xd8 && op<=0xdf) {
+                coldTailSafe=!(cpu.cr[0]&12);
                 auto m=byte();i.kind=Kind::X87;
                 i.x87.opcode=op;i.x87.modrm=m;i.x87.address32=address32;i.x87.operand32=w==4;
                 if(m<0xc0) {
@@ -563,6 +579,8 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = i.memoryAlu ? Kind::Memory : Kind::Alu;
                 i.dst = i.memoryAlu ? 0 : m & 7;
                 i.immediate = true;
+                if(i.kind==Kind::Memory){immediateTail=true;immediateSource=i.memory;immediateSource.width=i.w;}
+                else coldTailSafe=true;
                 i.imm = op == 0x83 ? uint32_t(int32_t(int8_t(byte()))) : immediate(i.w);
             } else if (op == 0x84 || op == 0x85) {
                 i.w = (op & 1) ? w : 1;
@@ -652,6 +670,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
+                if(extended>=0x80 && extended<=0x8f)coldTailSafe=true;
                 if (extended == 2 || extended == 3) {
                     const auto m=byte();
                     i.kind=Kind::DescriptorQuery;i.op=extended&1;
@@ -802,7 +821,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 pos = i.predictedTaken ? i.imm : i.end;
                 continue;
             }
-            if (i.kind==Kind::X87 || i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
+            if (i.kind==Kind::SoftwareInterrupt || i.kind==Kind::X87 || i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn || i.kind==Kind::PortIO || i.kind==Kind::String || i.popFlags || (i.kind == Kind::InterruptControl && i.op) || (i.segmentLoad && i.segmentRegister == SS) || i.kind == Kind::Branch || i.kind == Kind::CounterBranch || i.nearCall || i.nearReturn || i.indirectJump)
                 break;
         } catch (int) {
             pos = begin;

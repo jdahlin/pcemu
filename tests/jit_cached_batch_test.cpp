@@ -563,7 +563,7 @@ static void memoryShiftTests() {
             for (unsigned i = 0; i < part.instructions; ++i) ref.step();
             equal(c, ref);
         }
-        check(jit.compiledBlocks && (warm ? jit.nativeInstructions == 1 : jit.nativeInstructions == 0) && !c.nativeMemoryCalls,
+        check(jit.compiledBlocks && jit.nativeInstructions == 1 && !c.nativeMemoryCalls,
               "memory shift cold/warm replay accounting");
     }
     for (unsigned operation = 0; operation < 8; ++operation)
@@ -747,8 +747,8 @@ static void divisionTests() {
         if (warm) c.read(0x1000, 4);
         CPU ref = c; Jit jit(c, true, 0); jit.setDirectLinks(linksMode, 0);
         check(reference(ref).empty() && native(c, jit).empty(), "cold/warm memory division failed"); equal(c, ref);
-        check(jit.compiledBlocks && (warm ? jit.nativeInstructions == 1 : jit.nativeInstructions == 0) && !c.nativeMemoryCalls,
-              "memory division did not distinguish side-effect-free hits from cold replay");
+        check(jit.compiledBlocks && jit.nativeInstructions == 1 && !c.nativeMemoryCalls,
+              "memory division stays compiled through warm hits and decoded cold helpers");
     }
     for (unsigned width : {1u, 2u, 4u})
      for (bool zero : {false, true}) {

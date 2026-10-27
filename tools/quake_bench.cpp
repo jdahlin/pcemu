@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
                 // all timed frames; DOS/CWSDPMI trampolines have other selectors.
                 const bool quake = window.begun && !window.ended && cpu.s[CS].selector == 0xa7 && cpu.s[CS].base == 0x10000000 && cpu.s[CS].big;
 #ifdef PCEMU_PROFILE
-                if (!coverageOutput.empty()) profile::active = quake;
+                if (!coverageOutput.empty()) { profile::active = quake; if(quake)profile::data.untilSample=1; }
 #endif
                 auto before = cpu.instructions, native = jit.nativeInstructions, helpers = jit.nativeHelperInstructions;
                 jit.run();

@@ -189,10 +189,30 @@ They share the reference arithmetic backend, without opcode fetch/ModR/M decode
 or a generic interpreter call. The report separately counts these helper steps;
 compiled coverage is not a claim that every operation is inline ARM64 arithmetic.
 Existing binary64/x87 conformance limitations still apply. Eager compilation in
-the Quake benchmark avoids warmup/short-block policy fallbacks.
+the Quake benchmark avoids warmup/short-block policy fallbacks. The normal
+launcher also passes `--jit-eager`; other emulator workloads retain their
+existing warmup policy.
 
 Use `--require-jit-coverage` to fail on even one interpreter step. The report
 retains exact counts, fallback opcode/reason diagnostics, and scope; rounding
 cannot pass the gate. Coverage runs are instrumented and excluded from performance
-scores. Run every complete bundled demo before claiming 100% coverage. Remaining
-string, syscall and guard fallbacks mean the gate does not yet pass.
+scores. Predecode interpreter calls (including fetch faults before an opcode
+counter exists) also prevent the gate from passing.
+
+REP/MMIO strings, software interrupts, selector loads and cold arithmetic guards
+have decoded helper continuations. They preserve the prefix registers/flags and
+leave generated host frames before callbacks or fault delivery. Cached and linked
+execution also stops for these continuations before the next device poll. Cold
+code tails are warmed only when instruction ordering and page-table alias checks
+permit it; ambiguous cases retain the reference fallback.
+
+Coverage evidence for the complete bundled demos is recorded separately from
+performance scores. This checks exercised application paths, not every possible
+Quake code path, all DOS startup code, or complete x87 hardware conformance.
+
+The [2026-10-27 repeated coverage record](measurements/quake-jit-coverage-2026-10-27.json)
+shows why rounding cannot establish completion: all three full demos finish, but
+the latest concurrent repeats contain 2 / 1 / 0 interpreted steps for demo1/2/3.
+Earlier sequential runs reached zero in each. Stable 100% coverage is therefore
+not yet established; the remaining cold-fetch cases retain their safe fallback.
+These instrumented validation timings must not be published as JIT speed scores.

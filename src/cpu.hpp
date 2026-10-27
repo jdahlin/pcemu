@@ -61,6 +61,9 @@ struct CPU {
     bool protectedEntry = false;
     bool nativeFallback = false;
     uint32_t nativeValue = 0;
+    // Transient compiled-helper continuation; never guest state or serialized.
+    uint32_t nativeDecodedExit = 0;
+    const void *nativeDecodedOperation = nullptr;
     uint64_t nativeMemoryCalls = 0; // Diagnostic: slow RAM guards entered by native code.
     uint64_t executionEpoch = 0;    // Host cache identity; never rewound by snapshot restore.
     uint64_t instructions = 0;
@@ -123,6 +126,32 @@ struct CPU {
         bool address32=false,operand32=false;
     };
     void stepX87(const DecodedX87 &operation);
+    struct DecodedString {
+        unsigned opcode=0xa4,width=1,repeat=0,sourceSegment=DS;
+        uint32_t start=0,end=0;
+        bool address32=false;
+    };
+    void stepString(const DecodedString &operation);
+    void stepInterrupt(uint8_t vector,uint32_t end);
+    struct DecodedSegment {
+        uint32_t start=0,end=0;
+        unsigned segment=DS,popWidth=0;
+        bool stack32=false;
+        int base=-1,index=-1,scale=0,sourceSegment=DS;
+        uint32_t displacement=0;
+        unsigned sourceWidth=2;
+        bool address32=false;
+    };
+    void stepSegment(const DecodedSegment &operation,uint16_t selector,bool readSource=false);
+    struct DecodedMemoryArithmetic {
+        uint32_t start=0,end=0,displacement=0,count=0;
+        int base=-1,index=-1,scale=0,segment=DS;
+        unsigned width=4,operation=0;
+        bool group3=false,immediate=false,address32=false;
+        bool alu=false,store=false,reverse=false,writeResult=false;
+        unsigned sourceRegister=0;
+    };
+    void stepMemoryArithmetic(const DecodedMemoryArithmetic &operation);
     void step();
     // Decoded scalar I/O, invoked only after leaving generated host frames.
     void stepPortIO(uint16_t port, int width, bool output, uint32_t end);
@@ -166,6 +195,8 @@ struct CPU {
         uint32_t linear;
         int segment = -1;
     };
+    void execute_group3(unsigned operation,uint32_t value,int width);
+    void execute_string(unsigned op,int bw,int aw,unsigned rep,int over,uint32_t start);
     void execute_x87_decoded(uint8_t opcode, uint8_t modrm, Operand operand, bool operand32);
     Operand decode(uint8_t modrm, bool address32, int overrideSeg);
     void checkOperand(Operand o, unsigned width) const;

@@ -34,12 +34,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     for (const auto &i : ir)
         if (i.kind == Kind::Memory || i.kind==Kind::FarPointer || (i.kind==Kind::DescriptorQuery && i.immediate))
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
+    const bool segmentMoves=std::any_of(ir.begin(),ir.end(),[](const auto&i){return i.segmentLoad;});
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
-    if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::InvalidOpcode)
+    if (decoded.fetchTail.present || linkCandidate || segmentMoves || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::SoftwareInterrupt || terminal.kind==Kind::String || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::InvalidOpcode)
         block.native = std::make_unique<Block::NativeState>();
-    if(decoded.fetchTail.present || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::SoftwareInterrupt || terminal.kind==Kind::String || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
         block.native->boundary=std::make_unique<Block::BoundaryEntry>();
         block.native->boundary->fetchTail=decoded.fetchTail;
+        if(terminal.kind==Kind::String)block.native->boundary->string=terminal.string;
+        if(terminal.kind==Kind::SoftwareInterrupt){block.native->boundary->interruptVector=terminal.imm;block.native->boundary->interruptEnd=terminal.end;}
         if(terminal.kind==Kind::X87)block.native->boundary->x87=terminal.x87;
         if(terminal.kind==Kind::PortIO)block.native->boundary->operation=decoded.portIO;
         else if(terminal.kind==Kind::FarReturn)
@@ -116,7 +119,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         }
         if ((i.kind == Kind::DoubleShift || i.memoryDoubleShift) && !i.immediate)
             usedRegisters |= 1u << CX;
-        if (i.kind == Kind::X87 || i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO || i.kind == Kind::InvalidOpcode)
+        if (i.kind == Kind::SoftwareInterrupt || i.kind == Kind::X87 || i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO || i.kind == Kind::InvalidOpcode)
             continue;
         if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply && !i.memoryBitScan) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
@@ -377,6 +380,19 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             if (i.memoryCall || i.memoryPush) block.native->memory.push_back(i.callPointer);
             block.native->memory.push_back(i.memory);
         }
+    for(const auto&i:ir) {
+        if(i.segmentLoad) {
+            const auto&m=i.memory;
+            block.native->segments.push_back({i.start,i.end,unsigned(i.segmentRegister),unsigned(i.stackDelta?i.w:0),block.stack32,
+                m.base,m.index,m.scale,m.segment,m.displacement,unsigned(m.width),m.address32});
+        }
+        if(i.memoryShift || i.memoryDivide || i.memoryMultiplyFull || i.memoryAlu) {
+            const auto&m=i.memory;
+            block.native->arithmetic.push_back({i.start,i.end,m.displacement,i.imm,m.base,m.index,m.scale,m.segment,
+                unsigned(i.w),unsigned(i.op),i.memoryDivide||i.memoryMultiplyFull,i.immediate,m.address32,
+                i.memoryAlu,m.store,i.reverse,i.memoryResult||m.store,unsigned(i.dst+(i.dstShift?4:0))});
+        }
+    }
     if(stringMoves) {
         block.native->strings.reserve(stringMoves);
         for(const auto &i:ir)if(i.kind==Kind::String)block.native->strings.push_back(i.string);
@@ -453,16 +469,33 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         imm(0, completed);
         exits.push_back(code.size()); emit(0x14000000u);
     };
+    auto deferred = [&](const jit_detail::Instruction &i,unsigned n,unsigned dirty,unsigned kind) {
+        flushRegisters(dirty);finishFlags(last,-1,0);
+        const void *metadata=nullptr;
+        if(kind&nativeSegmentExit) {
+            auto it=std::find_if(block.native->segments.begin(),block.native->segments.end(),[&](const auto&op){return op.start==i.start;});
+            metadata=&*it;
+        } else {
+            auto it=std::find_if(block.native->arithmetic.begin(),block.native->arithmetic.end(),[&](const auto&op){return op.start==i.start;});
+            metadata=&*it;
+        }
+        pointer(9,reinterpret_cast<uintptr_t>(metadata));
+        static_assert(offsetof(CPU,nativeDecodedOperation)%8==0);
+        emit(0xf9000000u|((offsetof(CPU,nativeDecodedOperation)/8)<<10)|(19<<5)|9);
+        imm(9,kind);store(9,19,offsetof(CPU,nativeDecodedExit));
+        imm(9,i.start);store(9,19,offsetof(CPU,ip));
+        imm(0,n);exits.push_back(code.size());emit(0x14000000u);
+    };
     // w10 holds the selector. Failure is side-effect-free and replays only
     // after returning from the generated frame with its prior state committed.
     auto segmentLoad = [&](const jit_detail::Instruction &i, unsigned n, unsigned dirty) {
-        mov(2,10);
+        mov(2,10);store(2,19,offsetof(CPU,nativeValue));
         emit(0xaa1303e0u);
         imm(1,i.segmentRegister);
         imm(3,n+1);
         call(reinterpret_cast<uintptr_t>(&jit_detail::nativeSegment));
         const auto success=code.size();emit(0x35000000u); // cbnz w0,success
-        replay(i.start,n,dirty);
+        deferred(i,n,dirty,nativeSegmentExit);
         code[success] |= uint32_t(code.size()-success) << 5;
     };
     // Divisor arrives in w10. Checks precede every implicit GPR update; failed
@@ -749,7 +782,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery", "InvalidOpcode", "X87"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery", "InvalidOpcode", "X87", "SoftwareInterrupt"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -771,7 +804,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             code[success] |= uint32_t(code.size()-success)<<5;
             continue;
         }
-        if(i.kind==Kind::X87 || i.kind==Kind::PortIO || i.kind==Kind::InvalidOpcode) {
+        if(i.kind==Kind::SoftwareInterrupt || i.kind==Kind::X87 || i.kind==Kind::PortIO || i.kind==Kind::InvalidOpcode) {
             // Deferred operations/faults execute in the C++ dispatcher after this frame
             // returns. Commit the exact prefix and retain the I/O restart IP.
             flushRegisters(dirtyRegisters);
@@ -792,7 +825,8 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             pointer(1,reinterpret_cast<uintptr_t>(&block.native->strings[stringIndex++]));
             call(reinterpret_cast<uintptr_t>(&jit_detail::nativeString));
             const auto success=code.size();emit(0x35000000u);
-            replay(i.start,unsigned(n),0);
+            imm(0,nativeStringExit|unsigned(n));
+            exits.push_back(code.size());emit(0x14000000u);
             code[success] |= uint32_t(code.size()-success) << 5;
             continue;
         }
@@ -1639,7 +1673,10 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.
                 for (auto at : divisionErrors) code[at] |= uint32_t(code.size() - at) << 5;
-                replay(i.memory.begin, unsigned(n), beforeLoad);
+                if(i.memoryShift || i.memoryDivide || i.memoryMultiplyFull || i.memoryAlu) {
+                    deferred(i,unsigned(n),beforeLoad,nativeArithmeticExit);
+                } else if(i.segmentLoad)deferred(i,unsigned(n),beforeLoad,nativeSegmentExit|1);
+                else replay(i.memory.begin, unsigned(n), beforeLoad);
                 if (fastSuccess != size_t(-1)) code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
                 if (zeroDoubleEnd!=size_t(-1))code[zeroDoubleEnd] |= uint32_t(code.size()-zeroDoubleEnd);
                 continue;
@@ -1694,7 +1731,9 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 imm(9, 1);
                 emit(0x39000000u | (offsetof(CPU, nativeFallback) << 10) | (19 << 5) | 9);
             }
-            // Declined access: preserve the pre-move destination and replay it.
+            // A decoded ALU slow path performs MMIO/faults after frame return.
+            if(i.memoryAlu)deferred(i,unsigned(n),beforeLoad,nativeArithmeticExit);
+            // Other lowering families retain their guarded interpreter replay.
             flushRegisters(beforeLoad);
             finishFlags(last, -1, 0);
             imm(9, i.memory.begin);
@@ -1760,7 +1799,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     bool branch = ir.back().kind == Kind::Branch;
     mark("IP commit", ir.back().start);
     if (!ir.back().nearReturn && !ir.back().indirectJump && !ir.back().indirectCall &&
-        ir.back().kind != Kind::X87 && ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::InvalidOpcode && ir.back().kind != Kind::String) {
+        ir.back().kind != Kind::SoftwareInterrupt && ir.back().kind != Kind::X87 && ir.back().kind != Kind::CounterBranch && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::InvalidOpcode && ir.back().kind != Kind::String) {
         imm(9, ir.back().nearCall ? ir.back().target
                                  : branch ? (ir.back().dst < 0 ? ir.back().imm : ir.back().end)
                                           : pos);
@@ -1769,7 +1808,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     mark("Flags and branch", ir.back().start);
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     mark("Instruction count", ir.back().start);
-    imm(0, terminal.kind==Kind::X87 ? nativeX87Exit|uint32_t(ir.size()-1) : terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) :
+    imm(0, terminal.kind==Kind::SoftwareInterrupt ? nativeInterruptExit|uint32_t(ir.size()-1) : terminal.kind==Kind::X87 ? nativeX87Exit|uint32_t(ir.size()-1) : terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) :
            terminal.kind==Kind::InvalidOpcode ? nativeInvalidOpcodeExit|uint32_t(ir.size()-1) : uint32_t(ir.size()));
     if (linkCandidate) {
         const auto &tail = ir.back();
@@ -1822,7 +1861,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     compiledBlocks++;
     if (block.link()) block.link()->codeBytes = bytes;
     debugBlock(block, code, debugRegions);
-    if(decoded.fetchTail.present || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
+    if(decoded.fetchTail.present || terminal.kind==Kind::SoftwareInterrupt || terminal.kind==Kind::String || terminal.kind==Kind::X87 || terminal.kind==Kind::PortIO || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::InvalidOpcode) {
         block.native->boundary->fn=block.fn;
         block.fn=nullptr;
     }

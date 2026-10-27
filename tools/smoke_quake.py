@@ -38,6 +38,8 @@ def main():
                '--disk', str(disk), '--steps', '2000000000', '--capture-every', '25000000',
                '--control-file', str(control), '--frame', str(work / 'live.ppm'),
                '--state-json', str(work / 'live.json')]
+    if args.backend == 'jit':
+        command.append('--jit-eager')
     success = False
     captures = []
     previous_instruction = -1

@@ -1,6 +1,8 @@
 #pragma once
 #include "jit_memory.hpp"
 namespace pc::jit_detail {
+void warmImmediateOperand(CPU &cpu,const NativeMemoryMove &source);
+bool canPrefetchImmediateTail(CPU &cpu,const NativeMemoryMove &source,uint32_t codeIP) noexcept;
 // ABI entry points called by generated code. Memory faults are declined and
 // replayed by the dispatcher; exceptions must not cross generated frames.
 void nativeFinish(CPU *cpu, int op, uint32_t a, uint32_t b, int width, int condition,

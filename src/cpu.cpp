@@ -396,6 +396,14 @@ void CPU::store(Operand o, uint32_t v, int w) {
     }
 }
 uint32_t CPU::alu(int op, uint32_t a, uint32_t b, int w) {
+    // The decoded native slow path uses operations 8/9 for INC/DEC. Their
+    // arithmetic flags follow ADD/SUB by one, but the incoming carry survives.
+    if (op == 8 || op == 9) {
+        const auto carry = flags & CF;
+        auto value = alu(op == 8 ? 0 : 5, a, 1, w);
+        flags = (flags & ~CF) | carry;
+        return value;
+    }
     uint32_t m = mask(w), sign = 1u << (w * 8 - 1), v = 0;
     uint64_t full = 0;
     bool carry = false, overflow = false;
@@ -902,6 +910,275 @@ void CPU::step() {
 #endif
     restartableInstruction(*this,[&]{stepImpl();});
 }
+// Shared decoded string semantics retain scalar MMIO, paging and partial-REP
+// ordering. Translated slow paths call this after the generated frame returns.
+void CPU::execute_string(unsigned op,int bw,int aw,unsigned rep,int over,uint32_t start) {
+        if (op >= 0x6c && op <= 0x6f)
+            ioPermission(get(DX, 2), bw);
+        uint32_t count = rep ? get(CX, aw) : 1, delta = (flags & DF) ? -bw : bw;
+        // REP is interruptible and bounded so UI/device scheduling remains live.
+        uint32_t batch = count > 4096 ? 4096 : count;
+        bool done = false;
+        auto initialFlags = flags;
+        if (rep && repeatResume.valid && repeatResume.selector == s[CS].selector &&
+            repeatResume.base == s[CS].base && repeatResume.ip == start &&
+            repeatResume.lastFlags == flags && repeatResume.ax == r[AX] &&
+            repeatResume.cx == r[CX] && repeatResume.si == r[SI] && repeatResume.di == r[DI])
+            initialFlags = repeatResume.initialFlags;
+        repeatResume.valid = false;
+        try {
+            while (batch--) {
+                auto si = get(SI, aw), di = get(DI, aw);
+                unsigned kind = op & 0xfe;
+                auto src = (kind == 0x6e || kind == 0xa4 || kind == 0xa6 || kind == 0xac)
+                               ? address(over < 0 ? DS : over, si, bw)
+                               : 0;
+                auto dst =
+                    (kind == 0x6c || kind == 0xa4 || kind == 0xa6 || kind == 0xaa || kind == 0xae)
+                        ? address(ES, di, bw)
+                        : 0;
+                // Repeated forward fills can reuse a validated translation until
+                // the next linear page. Never speculate a page walk or a write:
+                // the scalar path retains first-fault and dirty-bit ordering.
+                if (rep && kind == 0xaa && !(flags & DF) && a20 && !watchWrite) {
+                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
+                    if (!(cr[0]&1) || (flags&0x20000))
+                        elements = std::min<uint64_t>(elements,(uint64_t(s[ES].limit)+1-di)/bw);
+                    uint32_t physicalStart = dst;
+                    bool ready = true;
+                    if (cr[0] & 0x80000000u) {
+                        uint32_t page = dst >> 12;
+                        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                        ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&
+                                entry.tag == page && entry.dirty &&
+                                (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);
+                        physicalStart = entry.base | (dst & 4095);
+                    }
+                    uint32_t bytes = elements * bw;
+                    ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&
+                            !(physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000);
+                    if (ready) {
+                        for (uint32_t word = physicalStart >> 6;
+                             word <= (physicalStart + bytes - 1) >> 6; ++word)
+                            if (codeUsed[word]) {
+                                ready = false;
+                                break;
+                            }
+                    }
+                    if (ready) {
+                        auto value = get(AX, bw);
+                        if (bw == 1)
+                            std::memset(&mem[physicalStart], value, bytes);
+                        else
+                            for (uint32_t offset = 0; offset < bytes; offset += bw)
+                                storeRAM(&mem[physicalStart + offset], value, bw);
+                        set(DI, di + bytes, aw);
+                        count -= elements;
+                        set(CX, count, aw);
+                        batch -= elements - 1;
+                        continue;
+                    }
+                }
+                // Reuse translations only within the current linear page.
+                // Never speculate a page walk or dirty-bit update: scalar
+                // execution retains first-fault and partial-repeat ordering.
+                if (rep && kind == 0xa4 && !(flags & DF) && a20 && !watchWrite) {
+                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
+                    if (!(cr[0]&1) || (flags&0x20000))
+                        elements = std::min<uint64_t>(elements,(uint64_t(s[ES].limit)+1-di)/bw);
+                    elements = std::min(elements, (4096u - (src & 4095)) / bw);
+                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - si) / bw));
+                    if (!(cr[0]&1) || (flags&0x20000))
+                        elements = std::min<uint64_t>(elements,(uint64_t(s[over<0?DS:over].limit)+1-si)/bw);
+                    uint32_t bytes = elements * bw;
+                    auto ramSpan = [&](uint32_t linear, bool write, uint32_t &physicalStart) {
+                        physicalStart = linear;
+                        if (cr[0] & 0x80000000u) {
+                            uint32_t page = linear >> 12;
+                            const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
+                            unsigned permissions = write ? 6 : 4;
+                            if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||
+                                (write && !entry.dirty) ||
+                                (cpl() == 3 && !systemAccess &&
+                                 (entry.permissions & permissions) != permissions))
+                                return false;
+                            physicalStart = entry.base | (linear & 4095);
+                        }
+                        if (uint64_t(physicalStart) + bytes > mem.size() ||
+                            (physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000))
+                            return false;
+                        if (write)
+                            for (uint32_t word = physicalStart >> 6;
+                                 word <= (physicalStart + bytes - 1) >> 6; ++word)
+                                if (codeUsed[word])
+                                    return false;
+                        return true;
+                    };
+                    uint32_t destination = 0, source = 0;
+                    bool ready = elements > 1 && ramSpan(dst, true, destination);
+                    if (ready)
+                        // memcpy is valid only for disjoint physical ranges.
+                        // Overlapping MOVS can propagate values; memmove would
+                        // silently give different architectural results.
+                        ready = ramSpan(src, false, source) &&
+                                (uint64_t(source) + bytes <= destination ||
+                                 uint64_t(destination) + bytes <= source);
+                    if (ready) {
+                        std::memcpy(&mem[destination], &mem[source], bytes);
+                        set(SI, si + bytes, aw);
+                        set(DI, di + bytes, aw);
+                        count -= elements;
+                        set(CX, count, aw);
+                        batch -= elements - 1;
+                        continue;
+                    }
+                }
+                switch (op & 0xfe) {
+                case 0x6c:
+                    write(dst, input ? input(get(DX, 2), bw) : mask(bw), bw);
+                    set(DI, di + delta, aw);
+                    break;
+                case 0x6e:
+                    if (output)
+                        output(get(DX, 2), read(src, bw), bw);
+                    set(SI, si + delta, aw);
+                    break;
+                case 0xa4:
+                    write(dst, read(src, bw), bw);
+                    set(SI, si + delta, aw);
+                    set(DI, di + delta, aw);
+                    break;
+                case 0xa6:
+                    alu(7, read(src, bw), read(dst, bw), bw);
+                    set(SI, si + delta, aw);
+                    set(DI, di + delta, aw);
+                    break;
+                case 0xaa:
+                    write(dst, get(AX, bw), bw);
+                    set(DI, di + delta, aw);
+                    break;
+                case 0xac:
+                    set(AX, read(src, bw), bw);
+                    set(SI, si + delta, aw);
+                    break;
+                case 0xae:
+                    alu(7, get(AX, bw), read(dst, bw), bw);
+                    set(DI, di + delta, aw);
+                    break;
+                }
+                --count;
+                if (rep)
+                    set(CX, count, aw);
+                if (rep && ((op & 0xfe) == 0xa6 || (op & 0xfe) == 0xae) &&
+                    bool(flags & ZF) != (rep == 0xf3)) {
+                    done = true;
+                    break;
+                }
+            }
+        } catch (Fault fault) {
+            // REP faults restart at the prefixed instruction, but SI/DI/CX
+            // (and LODS' accumulator) retain all completed elements. EFLAGS
+            // follow the 386EX real-mode capture after a completed CMPS/SCAS;
+            // protected-mode page-fault restarts retain the original flags.
+            fault.partialRepeat = bool(rep);
+            fault.repeatFlags = (cr[0] & 1) ? initialFlags : flags;
+            throw fault;
+        }
+        if (rep && count && !done) {
+            ip = start;
+            // A host scheduling yield is not an architectural interruption.
+            // Keep the original comparison flags across multiple batches.
+            repeatResume = {true,  s[CS].selector, s[CS].base, start, initialFlags,
+                            flags, r[AX],          r[CX],      r[SI], r[DI]};
+        }
+}
+void CPU::execute_group3(unsigned g,uint32_t v,int bw) {
+    auto a=get(AX,bw);
+        if (g == 4 || g == 5) {
+            uint64_t p = g == 4 ? uint64_t(a) * v
+                                : uint64_t(int64_t(signedValue(a, bw)) * signedValue(v, bw));
+            if (bw == 1)
+                set(AX, p, 2);
+            else {
+                set(AX, p, bw);
+                set(DX, p >> (bw * 8), bw);
+            }
+            bool c = g == 4 ? (p >> (bw * 8)) != 0 : int64_t(p) != signedValue(p, bw);
+            flags = (flags & ~(CF | OF)) | (c ? CF | OF : 0);
+        } else {
+            if (!v)
+                throw Fault{0, 0, false};
+            uint64_t dividend = bw == 1 ? get(AX, 2) : (uint64_t(get(DX, bw)) << (bw * 8)) | a;
+            if (g == 6) {
+                auto q = dividend / v;
+                if (q > mask(bw))
+                    throw Fault{0, 0, false};
+                auto rem = dividend % v;
+                set(AX, q, bw);
+                set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
+            } else {
+                int64_t num = bw == 1   ? int16_t(dividend)
+                              : bw == 2 ? int32_t(dividend)
+                                        : int64_t(dividend),
+                        den = signedValue(v, bw);
+                if (num == INT64_MIN && den == -1)
+                    throw Fault{0, 0, false};
+                int64_t q = num / den, rem = num % den;
+                if (q != signedValue(q, bw))
+                    throw Fault{0, 0, false};
+                set(AX, q, bw);
+                set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
+            }
+        }
+}
+void CPU::stepSegment(const DecodedSegment &op,uint16_t selector,bool readSource) {
+    restartableInstruction(*this,[&]{
+        ++instructions;ip=op.end;
+        if(readSource) {
+            uint32_t offset=op.displacement;
+            if(op.base>=0)offset+=r[op.base];
+            if(op.index>=0)offset+=r[op.index]<<op.scale;
+            if(!op.address32)offset&=65535;
+            selector=read(address(op.sourceSegment,offset,op.sourceWidth),op.sourceWidth);
+        }
+        if(op.popWidth)set(SP,get(SP,op.stack32?4:2)+op.popWidth,op.stack32?4:2);
+        segment(op.segment,selector);
+        if(op.segment==SS)interruptBlockedThrough=instructions;
+    });
+}
+void CPU::stepMemoryArithmetic(const DecodedMemoryArithmetic &op) {
+    restartableInstruction(*this,[&]{
+        ++instructions;ip=op.end;
+        uint32_t offset=op.displacement;
+        if(op.base>=0)offset+=r[op.base];
+        if(op.index>=0)offset+=r[op.index]<<op.scale;
+        if(!op.address32)offset&=65535;
+        auto linear=address(op.segment,offset,op.width);
+        uint32_t source=op.immediate?op.count:0;
+        if(op.alu && op.reverse && !op.immediate)source=get(op.sourceRegister,op.width);
+        auto value=read(linear,op.width);
+        if(op.group3)execute_group3(op.operation,value,op.width);
+        else if(op.alu) {
+            if(!op.reverse && !op.immediate)source=get(op.sourceRegister,op.width);
+            auto result=alu(op.operation,op.reverse?source:value,op.reverse?value:source,op.width);
+            if(op.operation!=7 && (op.store || op.reverse)) {
+                if(op.store)write(linear,result,op.width);
+                else set(op.sourceRegister,result,op.width);
+            }
+        } else write(linear,shift(op.operation,value,op.immediate?op.count:get(CX,1),op.width),op.width);
+    });
+}
+void CPU::stepString(const DecodedString &op) {
+    restartableInstruction(*this,[&]{
+        ++instructions;ip=op.end;
+        execute_string(op.opcode,op.width,op.address32?4:2,op.repeat,op.sourceSegment,op.start);
+    });
+}
+void CPU::stepInterrupt(uint8_t vector,uint32_t end) {
+    restartableInstruction(*this,[&]{++instructions;ip=end;interrupt(vector,true);});
+}
 void CPU::stepX87(const DecodedX87 &op) {
     restartableInstruction(*this,[&]{
         ++instructions;
@@ -914,7 +1191,7 @@ void CPU::stepX87(const DecodedX87 &op) {
         if(op.index>=0)offset+=r[op.index]<<op.scale;
         if(!op.address32)offset&=65535;
         Operand operand{op.modrm>=0xc0,uint8_t(op.modrm&7),0};
-        if(!operand.reg)operand.linear=address(op.segment,offset);
+        if(!operand.reg){operand.linear=address(op.segment,offset);operand.segment=op.segment;}
         execute_x87_decoded(op.opcode,op.modrm,operand,op.operand32);
     });
 }
@@ -1310,181 +1587,7 @@ void CPU::stepImpl() {
     case 0xad:
     case 0xae:
     case 0xaf: {
-        int bw = op & 1 ? w : 1;
-        if (op >= 0x6c && op <= 0x6f)
-            ioPermission(get(DX, 2), bw);
-        uint32_t count = rep ? get(CX, aw) : 1, delta = (flags & DF) ? -bw : bw;
-        // REP is interruptible and bounded so UI/device scheduling remains live.
-        uint32_t batch = count > 4096 ? 4096 : count;
-        bool done = false;
-        auto initialFlags = flags;
-        if (rep && repeatResume.valid && repeatResume.selector == s[CS].selector &&
-            repeatResume.base == s[CS].base && repeatResume.ip == start &&
-            repeatResume.lastFlags == flags && repeatResume.ax == r[AX] &&
-            repeatResume.cx == r[CX] && repeatResume.si == r[SI] && repeatResume.di == r[DI])
-            initialFlags = repeatResume.initialFlags;
-        repeatResume.valid = false;
-        try {
-            while (batch--) {
-                auto si = get(SI, aw), di = get(DI, aw);
-                unsigned kind = op & 0xfe;
-                auto src = (kind == 0x6e || kind == 0xa4 || kind == 0xa6 || kind == 0xac)
-                               ? address(over < 0 ? DS : over, si, bw)
-                               : 0;
-                auto dst =
-                    (kind == 0x6c || kind == 0xa4 || kind == 0xa6 || kind == 0xaa || kind == 0xae)
-                        ? address(ES, di, bw)
-                        : 0;
-                // Repeated forward fills can reuse a validated translation until
-                // the next linear page. Never speculate a page walk or a write:
-                // the scalar path retains first-fault and dirty-bit ordering.
-                if (rep && kind == 0xaa && !(flags & DF) && a20 && !watchWrite) {
-                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
-                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
-                    uint32_t physicalStart = dst;
-                    bool ready = true;
-                    if (cr[0] & 0x80000000u) {
-                        uint32_t page = dst >> 12;
-                        const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
-                        ready = tlbCR3 == cr[3] && entry.epoch == tlbEpoch &&
-                                entry.tag == page && entry.dirty &&
-                                (cpl() != 3 || systemAccess || (entry.permissions & 6) == 6);
-                        physicalStart = entry.base | (dst & 4095);
-                    }
-                    uint32_t bytes = elements * bw;
-                    ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&
-                            !(physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000);
-                    if (ready) {
-                        for (uint32_t word = physicalStart >> 6;
-                             word <= (physicalStart + bytes - 1) >> 6; ++word)
-                            if (codeUsed[word]) {
-                                ready = false;
-                                break;
-                            }
-                    }
-                    if (ready) {
-                        auto value = get(AX, bw);
-                        if (bw == 1)
-                            std::memset(&mem[physicalStart], value, bytes);
-                        else
-                            for (uint32_t offset = 0; offset < bytes; offset += bw)
-                                storeRAM(&mem[physicalStart + offset], value, bw);
-                        set(DI, di + bytes, aw);
-                        count -= elements;
-                        set(CX, count, aw);
-                        batch -= elements - 1;
-                        continue;
-                    }
-                }
-                // Reuse translations only within the current linear page.
-                // Never speculate a page walk or dirty-bit update: scalar
-                // execution retains first-fault and partial-repeat ordering.
-                if (rep && kind == 0xa4 && !(flags & DF) && a20 && !watchWrite) {
-                    uint32_t elements = std::min(batch + 1, (4096u - (dst & 4095)) / bw);
-                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - di) / bw));
-                    elements = std::min(elements, (4096u - (src & 4095)) / bw);
-                    elements = std::min(elements, uint32_t((uint64_t(mask(aw)) + 1 - si) / bw));
-                    uint32_t bytes = elements * bw;
-                    auto ramSpan = [&](uint32_t linear, bool write, uint32_t &physicalStart) {
-                        physicalStart = linear;
-                        if (cr[0] & 0x80000000u) {
-                            uint32_t page = linear >> 12;
-                            const auto &entry = tlb[(page ^ (page >> 10)) & (tlb.size() - 1)];
-                            unsigned permissions = write ? 6 : 4;
-                            if (tlbCR3 != cr[3] || entry.epoch != tlbEpoch || entry.tag != page ||
-                                (write && !entry.dirty) ||
-                                (cpl() == 3 && !systemAccess &&
-                                 (entry.permissions & permissions) != permissions))
-                                return false;
-                            physicalStart = entry.base | (linear & 4095);
-                        }
-                        if (uint64_t(physicalStart) + bytes > mem.size() ||
-                            (physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000))
-                            return false;
-                        if (write)
-                            for (uint32_t word = physicalStart >> 6;
-                                 word <= (physicalStart + bytes - 1) >> 6; ++word)
-                                if (codeUsed[word])
-                                    return false;
-                        return true;
-                    };
-                    uint32_t destination = 0, source = 0;
-                    bool ready = elements > 1 && ramSpan(dst, true, destination);
-                    if (ready)
-                        // memcpy is valid only for disjoint physical ranges.
-                        // Overlapping MOVS can propagate values; memmove would
-                        // silently give different architectural results.
-                        ready = ramSpan(src, false, source) &&
-                                (uint64_t(source) + bytes <= destination ||
-                                 uint64_t(destination) + bytes <= source);
-                    if (ready) {
-                        std::memcpy(&mem[destination], &mem[source], bytes);
-                        set(SI, si + bytes, aw);
-                        set(DI, di + bytes, aw);
-                        count -= elements;
-                        set(CX, count, aw);
-                        batch -= elements - 1;
-                        continue;
-                    }
-                }
-                switch (op & 0xfe) {
-                case 0x6c:
-                    write(dst, input ? input(get(DX, 2), bw) : mask(bw), bw);
-                    set(DI, di + delta, aw);
-                    break;
-                case 0x6e:
-                    if (output)
-                        output(get(DX, 2), read(src, bw), bw);
-                    set(SI, si + delta, aw);
-                    break;
-                case 0xa4:
-                    write(dst, read(src, bw), bw);
-                    set(SI, si + delta, aw);
-                    set(DI, di + delta, aw);
-                    break;
-                case 0xa6:
-                    alu(7, read(src, bw), read(dst, bw), bw);
-                    set(SI, si + delta, aw);
-                    set(DI, di + delta, aw);
-                    break;
-                case 0xaa:
-                    write(dst, get(AX, bw), bw);
-                    set(DI, di + delta, aw);
-                    break;
-                case 0xac:
-                    set(AX, read(src, bw), bw);
-                    set(SI, si + delta, aw);
-                    break;
-                case 0xae:
-                    alu(7, get(AX, bw), read(dst, bw), bw);
-                    set(DI, di + delta, aw);
-                    break;
-                }
-                --count;
-                if (rep)
-                    set(CX, count, aw);
-                if (rep && ((op & 0xfe) == 0xa6 || (op & 0xfe) == 0xae) &&
-                    bool(flags & ZF) != (rep == 0xf3)) {
-                    done = true;
-                    break;
-                }
-            }
-        } catch (Fault fault) {
-            // REP faults restart at the prefixed instruction, but SI/DI/CX
-            // (and LODS' accumulator) retain all completed elements. EFLAGS
-            // follow completed 386EX real-mode comparisons; protected-mode
-            // page-fault restarts retain the original flags.
-            fault.partialRepeat = bool(rep);
-            fault.repeatFlags = (cr[0] & 1) ? initialFlags : flags;
-            throw fault;
-        }
-        if (rep && count && !done) {
-            ip = start;
-            // A host scheduling yield is not an architectural interruption.
-            // Keep the original comparison flags across multiple batches.
-            repeatResume = {true,  s[CS].selector, s[CS].base, start, initialFlags,
-                            flags, r[AX],          r[CX],      r[SI], r[DI]};
-        }
+        execute_string(op,op&1?w:1,aw,rep,over,start);
         break;
     }
     case 0xc0:
@@ -1679,49 +1782,14 @@ void CPU::stepImpl() {
         auto m = fetch(1);
         auto dst = decode(m, a32, over);
         int bw = op & 1 ? w : 1, g = (m >> 3) & 7;
-        auto v = load(dst, bw), a = get(AX, bw);
+        auto v = load(dst, bw);
         if (g < 2)
             alu(4, v, fetch(bw), bw);
         else if (g == 2)
             store(dst, ~v, bw);
         else if (g == 3)
             store(dst, alu(5, 0, v, bw), bw);
-        else if (g == 4 || g == 5) {
-            uint64_t p = g == 4 ? uint64_t(a) * v
-                                : uint64_t(int64_t(signedValue(a, bw)) * signedValue(v, bw));
-            if (bw == 1)
-                set(AX, p, 2);
-            else {
-                set(AX, p, bw);
-                set(DX, p >> (bw * 8), bw);
-            }
-            bool c = g == 4 ? (p >> (bw * 8)) != 0 : int64_t(p) != signedValue(p, bw);
-            flags = (flags & ~(CF | OF)) | (c ? CF | OF : 0);
-        } else {
-            if (!v)
-                throw Fault{0, 0, false};
-            uint64_t dividend = bw == 1 ? get(AX, 2) : (uint64_t(get(DX, bw)) << (bw * 8)) | a;
-            if (g == 6) {
-                auto q = dividend / v;
-                if (q > mask(bw))
-                    throw Fault{0, 0, false};
-                auto rem = dividend % v;
-                set(AX, q, bw);
-                set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
-            } else {
-                int64_t num = bw == 1   ? int16_t(dividend)
-                              : bw == 2 ? int32_t(dividend)
-                                        : int64_t(dividend),
-                        den = signedValue(v, bw);
-                if (num == INT64_MIN && den == -1)
-                    throw Fault{0, 0, false};
-                int64_t q = num / den, rem = num % den;
-                if (q != signedValue(q, bw))
-                    throw Fault{0, 0, false};
-                set(AX, q, bw);
-                set(bw == 1 ? 4 : DX, rem, bw == 1 ? 1 : bw);
-            }
-        }
+        else execute_group3(g,v,bw);
         break;
     }
     case 0xf8:
