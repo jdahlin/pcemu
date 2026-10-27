@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 TIMING_FIELDS = ('cpuLeafAttempts', 'cpuSamples', 'cpuRawNs', 'cpuAdjustedNs',
-                 'cpuFaultSamples', 'cpuExceptionSamples')
+                 'cpuFaultSamples', 'cpuExceptionSamples', 'lockPrefixAttempts')
 NAMES = {0xe0:'LOOPNE',0xe1:'LOOPE',0xe2:'LOOP',0xe3:'JCXZ/JECXZ',0xd7:'XLAT',0x63:'ARPL',0xcd:'INT imm8',0xab:'STOSW/D',0xe6:'OUT imm8,AL',0x8f:'POP rm',0x8b:'MOV r,rm',0x89:'MOV rm,r',0x83:'ALU rm,imm8',0x74:'JZ',0x75:'JNZ',
          0xff:'INC/DEC/CALL/JMP/PUSH group',0x3b:'CMP r,rm',0x39:'CMP rm,r',0x2b:'SUB r,rm',
          0xe8:'CALL relative',0xc3:'RET near',0xc2:'RET near imm',0xf6:'TEST/unary byte group',
@@ -23,6 +23,7 @@ NAMES = {0xe0:'LOOPNE',0xe1:'LOOPE',0xe2:'LOOP',0xe3:'JCXZ/JECXZ',0xd7:'XLAT',0x
 def analyze(files):
     opcodes = collections.defaultdict(collections.Counter)
     groups = collections.defaultdict(collections.Counter)
+    reasons = collections.defaultdict(collections.Counter)
     events = collections.Counter()
     unknown = collections.Counter()
     timing_files = []
@@ -42,8 +43,13 @@ def analyze(files):
                 raise ValueError('Invalid unknown CPU sample accounting')
         for op in s['opcodes']:
             code = op['opcode']
+            if 'interpretationReasons' in op:
+                attribution = op['interpretationReasons']
+                if any(v < 0 for v in attribution.values()) or sum(attribution.values()) != op['attempts']:
+                    raise ValueError('Invalid interpretation reason accounting')
+                reasons[code].update(attribution)
             values = {k: op.get(k, 0) for k in TIMING_FIELDS}
-            if (any(v < 0 for v in values.values()) or values['cpuSamples'] > values['cpuLeafAttempts'] or
+            if (values['lockPrefixAttempts'] > op['attempts'] or any(v < 0 for v in values.values()) or values['cpuSamples'] > values['cpuLeafAttempts'] or
                     values['cpuLeafAttempts'] > op['attempts'] or values['cpuAdjustedNs'] > values['cpuRawNs'] or
                     values['cpuFaultSamples'] > values['cpuSamples'] or values['cpuExceptionSamples'] > values['cpuSamples']):
                 raise ValueError('Invalid opcode CPU sample accounting')
@@ -62,7 +68,7 @@ def analyze(files):
         rows.append({'opcode': f'{code:02x}' if code < 256 else f'0f {code-256:02x}',
                      'name': NAMES.get(code, ''), **counts,
                      'percentOfInterpretedAttempts': 100 * counts['attempts'] / attempts if attempts else 0,
-                     'modRMGroups': dict(groups[code]), 'cpuMeanAdjustedNs': mean,
+                     'modRMGroups': dict(groups[code]), 'interpretationReasons': dict(reasons[code]), 'cpuMeanAdjustedNs': mean,
                      'cpuEstimatedNs': mean * counts['cpuLeafAttempts'],
                      'cpuLowSampleCount': counts['cpuSamples'] < 20})
     total = unknown_estimate + sum(row['cpuEstimatedNs'] for row in rows)
@@ -84,6 +90,7 @@ def analyze(files):
                       'Estimated time extrapolates sampled mean to scoped leaf attempts, not aggregate opcode counts.',
                       'Unknown scopes include fetch faults or steps that decoded no opcode. Nested step cost stays in its outer scope.',
                       'Low sample counts and clock/counter overhead limit precision; this ranks diagnostic work, not release timings.',
+                      'Interpretation reasons identify JIT dispatch decisions, not the underlying guard that caused replay. Older profiles may omit attribution.',
                       'Operand/group counts include only instructions calling the ModRM decoder.',
                       'Attempt counts include faults and REP host-batch resumptions.',
                       'Disk read sectors include recursive parent reads; they are not physical IO bytes.',

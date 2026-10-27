@@ -256,6 +256,11 @@ pcemu_program(jit-cached-batch-tests
 
 pcemu_program(guest-profile-tests PROFILE
   SOURCES
+    src/jit.cpp
+    src/jit_decode.cpp
+    src/jit_flags.cpp
+    src/jit_runtime.cpp
+    src/jit_arm64.cpp
     src/cpu.cpp
     tests/guest_profile_test.cpp
 )

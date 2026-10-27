@@ -2173,3 +2173,14 @@ Instruments traces identify Word compilation (20.9%) and dispatch/validation
 (24.1%), while Excel dispatch/validation remains 45.5%. Far-transfer helper
 descendants occupy about 0.1% in each. This extends coverage without claiming
 an incremental speedup. See [measurements and limits](measurements/office-far-transfer-2026-10-27.md).
+
+### Word and Excel: attribute remaining interpreter coverage (2026-10-27)
+
+Diagnostic opcode and sampled-site records now distinguish warmup, deliberately
+short fragments, declined translation, forced interpretation and native replay.
+Both existing headless tasks pass. Word fallbacks are 84.84% warming; Excel has
+472,216 declined CMP attempts at a single hot code-page boundary, 30707ffe. All
+1,860 sampled declined Excel CMPs identify that site. This makes validated
+two-page instruction decoding the next concrete coverage target, ahead of
+normal ARPL support (all sampled ARPL attempts fault). No new release speedup is
+claimed. Profile/analyzer/core/batch tests pass; see [evidence and limits](measurements/office-interpretation-reasons-2026-10-27.md).

@@ -1,6 +1,8 @@
 #include "cpu.hpp"
+#include "jit.hpp"
 #include "profile.hpp"
 #include <iostream>
+#include <cstring>
 #include <stdexcept>
 using namespace pc;
 static uint64_t ticks, tickStep;
@@ -102,6 +104,62 @@ int main() {
             check(time.rawNs == 203 && time.faults == 1 && time.exceptions == 1 && c.ip == 0,
                   "fault timing/error attribution changed restart");
         }
+        begin();
+        {
+            profile::InterpretationScope warming(profile::InterpretationReason::Warming);
+            profile::opcode(0x0f,0,0,0,0); profile::extended(0xa3);
+            try {
+                profile::InterpretationScope replay(profile::InterpretationReason::Replay);
+                profile::opcode(0x8b,0,0,0,0);
+                throw 1;
+            } catch(int) {}
+            profile::opcode(0x8b,0,0,0,0);
+        }
+        profile::opcode(0x8b,0,0,0,0);
+        check(profile::data.interpretationReasons[0xf][unsigned(profile::InterpretationReason::Warming)]==1 &&
+              profile::data.interpretationReasons[0x1a3][unsigned(profile::InterpretationReason::Warming)]==1,
+              "extended dispatch reason attribution");
+        for(auto reason:{profile::InterpretationReason::Warming,profile::InterpretationReason::Replay,profile::InterpretationReason::OutsideJit})
+            check(profile::data.interpretationReasons[0x8b][unsigned(reason)]==1,"nested reason restored after exception");
+        for(unsigned mode=0;mode<4;++mode) {
+#if !defined(__APPLE__) || !defined(__aarch64__)
+            if(mode>=2)continue;
+#endif
+            begin(); CPU c(65536);c.s[CS].big=true;
+            const uint8_t code[]={0x40,0x43,0x41,0xf4};
+            std::copy(std::begin(code),std::end(code),c.mem.begin());
+            if(mode==2)c.mem[0]=0xf4; // Unsupported first instruction.
+            if(mode==3)c.mem[1]=0xf4; // Supported single-instruction fragment.
+            Jit jit(c,mode!=0,mode==1?8:1,65536);jit.run();
+            const auto reason=mode==0?profile::InterpretationReason::Forced:mode==1?profile::InterpretationReason::Warming:
+                              mode==2?profile::InterpretationReason::Declined:profile::InterpretationReason::ShortFragment;
+            check(profile::data.interpretationReasons[c.mem[0]][unsigned(reason)]==1,"actual JIT dispatch reason");
+            check(profile::interpretationReason==profile::InterpretationReason::OutsideJit,"JIT reason leaked to caller");
+        }
+#if defined(__APPLE__) && defined(__aarch64__)
+        {
+            begin(); CPU c(65536);c.s[CS].big=true;c.r[BX]=0x2000;
+            c.mem[0]=0xf0;c.mem[1]=0x39;c.mem[2]=3;
+            Jit jit(c,true,1,65536);jit.run();
+            check(profile::data.lockedOpcodes[0x39]==1 && profile::data.interpretationReasons[0x39][unsigned(profile::InterpretationReason::Declined)]==1,
+                  "LOCK-prefixed declined comparison attribution");
+            c.ip=1;c.step();check(profile::data.lockedOpcodes[0x39]==1,"LOCK prefix leaked to next instruction");
+        }
+        for(bool cached:{false,true}) {
+            CPU c(65536);c.s[CS].big=true;c.r[BX]=0x2000;
+            c.mem[0]=0xe9;c.mem[1]=11;
+            c.mem[16]=0x89;c.mem[17]=3;c.mem[18]=0xe9;
+            const uint32_t back=uint32_t(-23);std::memcpy(c.mem.data()+19,&back,4);
+            unsigned writes=0;c.watchStart=0x2000;c.watchLength=4;
+            c.watchWrite=[&](uint32_t,uint32_t,int){++writes;};
+            Jit jit(c,true,0,65536);jit.run();jit.run(); // Populate both entries.
+            begin();writes=0;c.ip=cached?0:16;
+            if(cached)jit.runBatch();else jit.run();
+            check(writes==1 && profile::data.interpretationReasons[0x89][unsigned(profile::InterpretationReason::Replay)]==1,
+                  "direct/cached replay dispatch reason");
+            check(profile::interpretationReason==profile::InterpretationReason::OutsideJit,"replay reason leaked");
+        }
+#endif
         profile::instructionClockNs = profile::threadCpuNs;
         profile::start(0);
         const auto first = profile::threadCpuNs(), second = profile::threadCpuNs();

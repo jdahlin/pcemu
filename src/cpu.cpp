@@ -766,6 +766,7 @@ void CPU::stepImpl() {
         else if (op == 0xf2 || op == 0xf3)
             rep = op;
         else if (op == 0xf0) {
+            profile::locked();
         } else
             break;
     }

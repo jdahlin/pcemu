@@ -243,6 +243,7 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
     return &stored;
 }
 uint32_t Jit::run() {
+    profile::InterpretationScope interpretation(profile::InterpretationReason::Forced);
     stopBatch = false;
     profile::event(profile::Dispatch);
     if (cpu.halted)
@@ -339,6 +340,8 @@ uint32_t Jit::run() {
     if(!function)
         if(const auto deferred=b.boundaryEntry())function=deferred->fn;
     if (!function) {
+        interpretation.set(b.shortKind ? profile::InterpretationReason::ShortFragment :
+                           b.attempted ? profile::InterpretationReason::Declined : profile::InterpretationReason::Warming);
         profile::event(profile::InterpretedDispatch);
         if (b.attempted)
             profile::event(profile::NegativeHit);
@@ -367,6 +370,7 @@ uint32_t Jit::run() {
         return n+1;
     }
     if (cpu.nativeFallback) {
+        interpretation.set(profile::InterpretationReason::Replay);
         profile::event(profile::NativeReplay);
         cpu.nativeFallback = false;
         cpu.step();
@@ -452,6 +456,7 @@ Jit::BatchResult Jit::runBatch(unsigned budget) {
             result.instructions += tail.count.instructions;
             result.dispatches += tail.count.dispatches;
             if (cpu.nativeFallback) {
+                profile::InterpretationScope interpretation(profile::InterpretationReason::Replay);
                 profile::event(profile::NativeReplay);
                 cpu.nativeFallback = false;
                 cpu.step();

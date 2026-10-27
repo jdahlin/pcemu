@@ -88,6 +88,24 @@ class GuestCpuAccounting(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Primary opcode'):
             self.read(value)
 
+    def test_lock_prefix_accounting(self):
+        row=op(0x39,3);row['lockPrefixAttempts']=2
+        self.assertEqual(self.read(profile([row]))['opcodes'][0]['lockPrefixAttempts'],2)
+        for invalid in [-1,4]:
+            row['lockPrefixAttempts']=invalid
+            with self.assertRaisesRegex(ValueError,'opcode CPU'):
+                self.read(profile([row]))
+
+    def test_interpretation_reasons(self):
+        row=op(0x8b,3); row['interpretationReasons']={'warming':2,'replay':1}
+        result=self.read(profile([row]),profile([row]))
+        self.assertEqual(result['opcodes'][0]['interpretationReasons'],{'warming':4,'replay':2})
+        row['interpretationReasons']['replay']=2
+        with self.assertRaisesRegex(ValueError,'interpretation reason'):
+            self.read(profile([row]))
+        row['interpretationReasons']={'warming':4,'replay':-1}
+        with self.assertRaisesRegex(ValueError,'interpretation reason'):
+            self.read(profile([row]))
 
 if __name__ == '__main__':
     unittest.main()
