@@ -14,8 +14,11 @@ int main() {
             check(result && result->frames == 969 && result->seconds == 12.3 && result->fps == 78.8,
                   "parse a complete original timedemo line");
         }
+        auto rounded = parseQuakeTimedemo("1 frames 0.0 seconds 20.4 fps\n");
+        check(rounded && rounded->frames == 1 && rounded->seconds == 0 && rounded->fps == 20.4,
+              "short timedemo rounded elapsed seconds");
         for (auto text : {"969 frames 12.3 seconds 78.8 fps", "0 frames 1 seconds 1 fps\n",
-             "-1 frames 1 seconds 1 fps\n", "1 frames 0 seconds 1 fps\n", "1 frames 1 seconds nan fps\n",
+             "-1 frames 1 seconds 1 fps\n", "1 frames -0.1 seconds 1 fps\n", "1 frames 1 seconds nan fps\n",
              "1 frames inf seconds 1 fps\n", "1 frames 1 seconds 0 fps\n", "1 frames 1 seconds 1 fps extra\n",
              "1 frames 1 seconds\n1 fps\n", "Can't play demo1.dem\n"})
             check(!parseQuakeTimedemo(text), "reject incomplete, invalid or unrelated output");

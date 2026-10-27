@@ -129,6 +129,18 @@ def put_id1_file(fat, filename, data):
         raise ValueError('Guest file readback mismatch: ' + filename)
 
 
+def jit_coverage_result(result, counters):
+    total, native = result['coverageGuestSteps'], result['coverageNativeSteps']
+    if total <= 0 or not 0 <= native <= total:
+        raise ValueError('Invalid Quake JIT coverage accounting')
+    interpreted = total - native
+    if counters['interpretedAttempts'] != interpreted:
+        raise ValueError('Quake interpreted attempts do not reconcile with JIT coverage')
+    return dict(scope='DOS Quake 1.06 CS=00A7 base=10000000, including application startup and playback; excludes DOS/CWSDPMI',
+                guestSteps=total, nativeSteps=native, interpretedSteps=interpreted,
+                nativePercent=100 * native / total, complete=interpreted == 0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disk', type=Path, default=ROOT / 'media/quake.qcow2')
@@ -141,15 +153,20 @@ def main():
     parser.add_argument('--output-dir', type=Path, help='new directory for this run')
     parser.add_argument('--measure-window', action='store_true', help='measure the pinned Quake 1.06 timed-frame interval')
     parser.add_argument('--profile-mode', choices=['none', 'host', 'counters'], default='none')
+    parser.add_argument('--require-jit-coverage', action='store_true', help='fail unless pinned Quake application executes without interpreter steps')
+    parser.add_argument('--jit-coverage', action='store_true', help='count pinned Quake application JIT/interpreter work over startup and playback')
     parser.add_argument('--keep-disk', action='store_true')
     args = parser.parse_args()
+    args.jit_coverage |= args.require_jit_coverage
+    if args.jit_coverage and (args.backend != 'jit' or args.measure_window or args.profile_mode != 'none'):
+        parser.error('JIT coverage requires --backend jit and a separate run from frame-window profiling')
     if args.timeout <= 0 or (args.frames is not None and args.frames <= 0) or not args.disk.is_file():
         parser.error('A prepared Quake disk, positive timeout and positive frame count are required; see docs/quake.md')
     if args.backend == 'jit' and (args.measure_window or args.profile_mode != 'none'):
         parser.error('Exact frame-window profiling currently requires --backend interpreter')
     if args.profile_mode == 'host' and (sys.platform != 'darwin' or not shutil.which('sample')):
         parser.error('Host stack sampling requires the macOS sample tool')
-    target = 'quake-bench-profile' if args.profile_mode == 'counters' else 'quake-bench'
+    target = 'quake-bench-profile' if (args.profile_mode == 'counters' or args.jit_coverage) else 'quake-bench'
     if not args.no_build:
         subprocess.run(['make', '-s', 'build/' + target, 'build/disk-tool'], cwd=ROOT, check=True)
     runner = args.runner.resolve() if args.runner else ROOT / 'build' / target
@@ -164,7 +181,7 @@ def main():
     try:
         with CowFile(disk) as handle:
             fat = Writer(handle)
-            if measure:
+            if measure or args.jit_coverage:
                 exe_sha = hashlib.sha256(read_guest_file(fat, 'QUAKE/QUAKE.EXE')).hexdigest()
                 if exe_sha != '7cdb244122cc607cc6f162524bfcac60f6d11d8ca2ff07473d6cd962311161fb':
                     raise ValueError('Profiling boundaries require the pinned original DOS Quake 1.06 executable')
@@ -197,6 +214,8 @@ def main():
                    '--timeout', str(args.timeout), '--backend', args.backend]
         if measure:
             command += ['--window-output', str(work / 'window.json')]
+        if args.jit_coverage:
+            command += ['--coverage-output', str(work / 'jit-coverage.json')]
         if args.profile_mode == 'counters':
             command += ['--guest-profile', str(work / 'guest-profile.json')]
         if args.profile_mode == 'host':
@@ -250,7 +269,7 @@ def main():
         (work / 'qconsole.log').write_text(console)
         if not re.search(rf'\b{report["frames"]} frames\s+[0-9.]+ seconds\s+{report["fps"]:.1f} fps', console):
             raise RuntimeError('Stopped guest console log did not confirm the FPS result')
-        report.update(profileMode=args.profile_mode, scoreEligible=args.profile_mode == 'none', demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
+        report.update(profileMode='jit-coverage' if args.jit_coverage else args.profile_mode, scoreEligible=args.profile_mode == 'none' and not args.jit_coverage, demo=demo, requestedFrames=args.frames, playbackDemo=playback_demo, command=command, resolution=[320, 200], sound=False,
                       executableSha256=hashlib.sha256(runner.read_bytes()).hexdigest())
         if measure:
             window = json.loads((work / 'window.json').read_text())
@@ -261,7 +280,12 @@ def main():
         if args.frames is not None:
             report['demoFile'] = f'{demo}-{args.frames}.dem'
             report['demoSha256'] = hashlib.sha256(short).hexdigest()
+        if args.jit_coverage:
+            report['jitCoverage'] = jit_coverage_result(report, json.loads((work / 'jit-coverage.json').read_text()))
         (work / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
+        if args.require_jit_coverage and not report['jitCoverage']['complete']:
+            raise RuntimeError(f'Quake JIT coverage is {report["jitCoverage"]["nativePercent"]:.6f}%; '
+                               f'{report["jitCoverage"]["interpretedSteps"]} interpreter steps remain')
         if not args.keep_disk:
             disk.unlink()
             Path(str(disk) + '.idx').unlink(missing_ok=True)

@@ -5,7 +5,8 @@
 #include <string>
 namespace pc {
 // Original Quake prints frames, elapsed real time, then frames/time, with one
-// decimal place. Require every label and a complete line before reporting it.
+// decimal place, so a short successful demo can print 0.0 seconds. Positive
+// FPS still distinguishes it from a missing/invalid result. Require every label and a complete line before reporting it.
 // https://github.com/id-Software/Quake/blob/master/WinQuake/cl_demo.c#L311-L324
 std::optional<QuakeTimedemoResult> parseQuakeTimedemo(std::string_view transcript) {
     size_t start = 0;
@@ -18,7 +19,7 @@ std::optional<QuakeTimedemoResult> parseQuakeTimedemo(std::string_view transcrip
         std::string a, b, c, extra;
         if (input >> frames >> a >> seconds >> b >> fps >> c && !(input >> extra) &&
             frames > 0 && frames < 10000000 && a == "frames" && b == "seconds" && c == "fps" &&
-            std::isfinite(seconds) && seconds > 0 && std::isfinite(fps) && fps > 0)
+            std::isfinite(seconds) && seconds >= 0 && std::isfinite(fps) && fps > 0)
             return QuakeTimedemoResult{frames, seconds, fps};
         start = end + 1;
     }

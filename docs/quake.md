@@ -172,3 +172,21 @@ it is not full 80387 conformance.
 
 The [386 task/x87 specification checks](x86-task-x87.md) document the pinned
 Intel references, RAM-only tests and conformance boundaries in more detail.
+
+## Strict JIT coverage
+
+`./run-quake.sh --benchmark --jit-coverage --frames 50` uses the diagnostic
+build to count Quake application guest steps executed by native blocks versus
+`CPU::step`. Counts include application startup and playback, with the pinned
+1.06 application selector `00A7`, base `10000000`, and 32-bit code. DOS and
+CWSDPMI selectors are excluded; this is not whole-machine coverage. Interpreter
+attempts must exactly reconcile with total minus native steps. Instruction
+counts use the emulator's existing step units (including resumable REP work),
+not a claim about hardware retirement.
+
+Use `--require-jit-coverage` to fail on even one interpreter step. The report
+retains precise counts, fallback opcode/reason diagnostics, and explicit scope;
+rounded percentages cannot pass the gate. Coverage runs are instrumented and
+excluded from performance scores. Run the gate against every complete bundled
+demo before claiming 100% application coverage. Current x87/warmup/memory
+fallbacks mean that gate does not yet pass.

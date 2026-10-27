@@ -42,6 +42,18 @@ class QuakeBenchmarkTests(unittest.TestCase):
                     self.assertIn('requires --backend interpreter', errors.getvalue())
                     run.assert_not_called()
 
+    def test_jit_coverage_reconciles_and_never_rounds_up_completion(self):
+        report = dict(coverageGuestSteps=1000000000, coverageNativeSteps=999999999)
+        coverage = bench.jit_coverage_result(report, dict(interpretedAttempts=1))
+        self.assertFalse(coverage['complete'])
+        self.assertEqual(coverage['interpretedSteps'], 1)
+        report['coverageNativeSteps'] += 1
+        self.assertTrue(bench.jit_coverage_result(report, dict(interpretedAttempts=0))['complete'])
+        for total, native, attempts in [(0,0,0),(10,11,0),(10,9,0),(10,-1,11)]:
+            with self.subTest(total=total, native=native), self.assertRaises(ValueError):
+                bench.jit_coverage_result(dict(coverageGuestSteps=total, coverageNativeSteps=native),
+                                          dict(interpretedAttempts=attempts))
+
     def test_find_bundled_demos(self):
         self.assertEqual(bench.pak_demos(pack([('demo2.dem', b'2'), ('DEMO1.DEM', b'1'),
             ('maps/e1m1.bsp', b'map'), ('subdir/demo3.dem', b'x')])), ['demo1', 'demo2'])

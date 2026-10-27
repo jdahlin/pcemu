@@ -30,7 +30,7 @@ static void phase(const std::string &path, const char *state) {
 }
 int main(int argc, char **argv) {
     try {
-        std::string disk, output, windowOutput, guestProfile, awaitSampler, backend = "jit";
+        std::string disk, output, windowOutput, guestProfile, awaitSampler, backend = "jit", coverageOutput;
         unsigned timeout = 1800;
         for (int n = 1; n < argc; ++n) {
             std::string arg = argv[n];
@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
             else if (arg == "--window-output") windowOutput = argv[++n];
             else if (arg == "--await-sampler") awaitSampler = argv[++n];
             else if (arg == "--guest-profile") guestProfile = argv[++n];
+            else if (arg == "--coverage-output") coverageOutput = argv[++n];
             else if (arg == "--backend") backend = argv[++n];
             else if (arg == "--timeout") timeout = std::stoul(argv[++n]);
             else throw std::runtime_error("Unknown argument: " + arg);
@@ -47,6 +48,7 @@ int main(int argc, char **argv) {
         if (disk.empty() || output.empty() || !timeout)
             throw std::runtime_error("Usage: quake-bench --disk PRIVATE.qcow2 --output RESULT.json [--timeout SECONDS]");
 #ifndef PCEMU_PROFILE
+        if (!coverageOutput.empty()) throw std::runtime_error("Coverage requires quake-bench-profile");
         if (!guestProfile.empty()) throw std::runtime_error("Guest counters require quake-bench-profile");
 #endif
         if ((!guestProfile.empty() || !awaitSampler.empty()) && windowOutput.empty())
@@ -107,6 +109,10 @@ int main(int argc, char **argv) {
             }
         };
         machine.boot();
+        uint64_t coverageTotal = 0, coverageNative = 0;
+#ifdef PCEMU_PROFILE
+        if (!coverageOutput.empty()) { profile::start(cpu.instructions); profile::active = false; }
+#endif
         uint64_t nextCheck = 0;
         bool completed = false;
         QuakeProfileWindow window;
@@ -141,7 +147,23 @@ int main(int argc, char **argv) {
                 }
             }
             observeDosWrite();
-            if (!cpu.halted) jit.run();
+            if (!cpu.halted) {
+                // Pinned DOS Quake 1.06 application code, including startup and
+                // all timed frames; DOS/CWSDPMI trampolines have other selectors.
+                const bool quake = cpu.s[CS].selector == 0xa7 && cpu.s[CS].base == 0x10000000 && cpu.s[CS].big;
+#ifdef PCEMU_PROFILE
+                if (!coverageOutput.empty()) profile::active = quake;
+#endif
+                auto before = cpu.instructions, native = jit.nativeInstructions;
+                jit.run();
+                if (!coverageOutput.empty() && quake) {
+                    coverageTotal += cpu.instructions - before;
+                    coverageNative += jit.nativeInstructions - native;
+                }
+#ifdef PCEMU_PROFILE
+                if (!coverageOutput.empty()) profile::active = false;
+#endif
+            }
             machine.poll();
             if (cpu.instructions < nextCheck && !cpu.halted) continue;
             nextCheck = cpu.instructions + 20000;
@@ -174,12 +196,16 @@ int main(int argc, char **argv) {
         }
         if (backend == "jit" && !jit.nativeInstructions)
             throw std::runtime_error("Timedemo completed without native JIT execution");
+        #ifdef PCEMU_PROFILE
+        if (!coverageOutput.empty()) profile::stop(coverageOutput, cpu.instructions);
+#endif
         machine.disk->flush();
         std::ofstream report(output);
         if (!report) throw std::runtime_error("Cannot write benchmark result");
         report << std::setprecision(12) << "{\"frames\":" << result->frames << ",\"seconds\":" << result->seconds
                << ",\"fps\":" << result->fps << ",\"backend\":\"" << backend << "\",\"pitClock\":\"host-monotonic-1193182Hz\","
-               << "\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
+               << "\"coverageGuestSteps\":" << coverageTotal << ",\"coverageNativeSteps\":" << coverageNative
+               << ",\"resultFileClosed\":true,\"instructions\":" << cpu.instructions << ",\"totalWallSeconds\":"
                << std::chrono::duration<double>(Clock::now() - origin).count() << "}\n";
         std::cout << result->frames << " frames, " << result->seconds << " seconds: " << result->fps << " FPS\n";
     } catch (const std::exception &error) {
