@@ -62,6 +62,7 @@ int main() {
             CPU c(65536);
             c.cr[0] = 0x11;
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             c.r[SP] = 0x9000;
             c.s[CS].limit = 0x101;
             const uint8_t code[] = {0xe8, 0xfc, 0, 0, 0};
@@ -172,6 +173,7 @@ int main() {
             c.s[CS].big = true;
             const uint8_t code[] = {0xb8, 0x78, 0x56, 0x34, 0x12, 0x50, 0x5b, 0x70, 0};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
+            c.s[SS].limit = UINT32_MAX; // This fixture changes only stack address size.
             Jit cached(c, true, 0);
             for (bool stack32 : {false, true, false}) {
                 c.s[SS].big = stack32;
@@ -188,6 +190,7 @@ int main() {
         for (unsigned target : {unsigned(AX), unsigned(SP)}) {
             CPU c(65536);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xff, uint8_t(0xd0 | target)};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             c.r[AX] = 0x100; c.r[SP] = 5;
@@ -199,6 +202,7 @@ int main() {
         {
             CPU c(1024 * 1024);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             c.mem[0] = 0xff; c.mem[1] = 0xd0;
             c.r[AX] = 0x100; c.r[SP] = 0xa0004;
             unsigned accesses = 0;
@@ -284,6 +288,7 @@ int main() {
         for (bool store : {false, true}) {
             CPU c(1024 * 1024);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xb8, 0x44, 0x33, 0x22, 0x11, uint8_t(store ? 0x50 : 0x5c),
                                     0xf4};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
@@ -306,6 +311,7 @@ int main() {
         {
             CPU c(65536);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xb8, 0x44, 0x33, 0x22, 0x11, 0x50, 0xbb, 0, 0, 0, 0, 0xf4};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             c.r[SP] = 11;
@@ -367,6 +373,7 @@ int main() {
         {
             CPU c(65536);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xe8, 5, 0, 0, 0};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             c.r[SP] = 5;
@@ -378,6 +385,7 @@ int main() {
         {
             CPU c(1024 * 1024);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xe8, 5, 0, 0, 0};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             c.r[SP] = 0xa0004;
@@ -411,6 +419,7 @@ int main() {
                                 for (auto c : {&ref, &native}) {
                                     c->cr[0] = 1;
                                     c->s[CS].big = code32;
+                                    c->s[CS].limit = UINT32_MAX; // Valid wide return targets.
                                     c->s[SS].big = stack32;
                                     c->s[SS].base = 0x10000;
                                     c->r[SP] = (0x7ffc + edge) | (stack32 ? 0 : 0xabcd0000u);
@@ -444,6 +453,7 @@ int main() {
         {
             CPU c(1024 * 1024);
             c.s[CS].big = c.s[SS].big = true;
+            c.s[SS].limit = c.s[CS].limit = UINT32_MAX; // Flat synthetic stack/MMIO fixture.
             const uint8_t code[] = {0xc2, 0xff, 0xff};
             std::copy(std::begin(code), std::end(code), c.mem.begin());
             c.r[SP] = 0xa0000;

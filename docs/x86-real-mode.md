@@ -120,3 +120,8 @@ captured bus data and the captured accumulator. For example `E5#422` records
 FFh at both ports 21h/22h but a final AX of 7FFFh. These mismatches remain visible;
 an integrated peripheral or capture issue is a possibility, not an established
 explanation. The adapter does not copy expected accumulator bits to force a pass.
+
+The stack/MMIO regression fixtures explicitly set their flat cached segment
+limits, including wide return destinations. This preserves their intended
+memory/device tests with architectural bounds enabled. All 43,600 stack-JIT
+checks pass with those fixture limits.
