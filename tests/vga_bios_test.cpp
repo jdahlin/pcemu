@@ -1,6 +1,7 @@
 // Execute the actual option ROM and software interrupts. Expected BIOS data,
 // port values and video memory are literal, independent of firmware constants.
 #include "machine.hpp"
+#include "pc_display.hpp"
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -275,6 +276,17 @@ void extended_text_contract(Guest &g) {
     g.call(0x1b00,0,0,0,0x2000,0x6789,0x0700);
     check(c.get(AX,1)==0x1b && g.word(0x20705)==80 && c.read(0x20722,1)==25 &&
           g.word(0x20723)==16 && c.read(0x20725,1)==8,"functionality/state buffer fields");
+    for (unsigned pair : {0x0108u,0x0801u,0x0008u}) {
+        g.call(0x1a01,pair);g.call(0x1a00);
+        check(c.get(BX,2)==pair,"DCC primary/alternate ordering roundtrip");
+    }
+    unsigned save=c.read(0x4a8,2)+(c.read(0x4aa,2)<<4);
+    unsigned secondary=c.read(save+16,2)+(c.read(save+18,2)<<4);
+    unsigned dcc=c.read(secondary+2,2)+(c.read(secondary+4,2)<<4);
+    check(save>=0xc0000 && secondary>=0xc0000 && g.word(secondary)==26 && c.read(dcc,1)==16,
+          "required primary/secondary/DCC save pointers are valid");
+    unsigned legacy=c.read(0x74,2)+(c.read(0x76,2)<<4);
+    check(c.read(legacy+1,1)==40 && c.read(legacy+17,1)==80,"INT 1Dh legacy parameter sets");
     g.call(0x1210,0x0010);
     check(c.get(BX,2)==3 && c.get(CX,2)==9,"EGA memory/monitor query");
     g.call(3);
@@ -499,6 +511,85 @@ void protected_mode_contract(Guest &g) {
     g.call(3);
 }
 
+
+void cga_contract(Guest &g) {
+    auto &c=g.m->cpu;auto &v=g.m->vga;
+    for(unsigned mode:{4u,5u,6u}) {
+        g.call(mode);
+        unsigned width=mode==6?640:320, mask=mode==6?1:3;
+        check(v.graphics && v.width==width && v.height==200,"CGA mode register geometry");
+        c.write(0xb8000,0xe4,1);c.write(0xba000,0x1b,1);
+        for(unsigned x=0;x<(mode==6?8u:4u);++x) {
+            unsigned shift=mode==6?7-x:(3-x)*2;
+            g.call(0x0d00,0,x,0);check(c.get(AX,1)==((0xe4>>shift)&mask),"direct CGA even-row memory decode");
+            g.call(0x0d00,0,x,1);check(c.get(AX,1)==((0x1b>>shift)&mask),"direct CGA odd-row bank decode");
+        }
+        check(c.read(0xa0000,1)==0xff,"inactive A0000 aperture does not alias CGA memory");
+        if(mode==6)check(v.planes[0][0]==0xe4 && v.planes[0][0x2000]==0x1b,"CGA mono sequential plane offsets");
+        else check(v.planes[0][0]==0xe4 && v.planes[0][0x1000]==0x1b,"CGA odd/even plane offsets");
+        g.call(0x0c00|mask,0,width-1,199);g.call(0x0d00,0,width-1,199);
+        check(c.get(AX,1)==mask,"CGA BIOS packed pixel write/read");
+        g.call(0x0c80|mask,0,width-1,199);g.call(0x0d00,0,width-1,199);
+        check(c.get(AX,1)==0,"CGA XOR pixel");
+        g.call(0x0200,0,0,0x0304);g.call(0x0941,mask,1);g.call(0x0800);
+        check(c.get(AX,1)=='A',"CGA graphics glyph readback");
+        for(unsigned down:{0u,1u})for(unsigned lines:{0u,1u,50u}) {
+            g.call(mode);
+            for(unsigned a=0;a<16384;++a)c.write(0xb8000+a,(a*37+19)&255,1);
+            auto before=v.planes;
+            g.call((down?0x0700:0x0600)|lines,uint16_t(mask<<8),0x0203,0x0406);
+            unsigned factor=mode==6?1:2;
+            for(unsigned a=0;a<16384;++a) {
+                unsigned row=(a%8192)/80*2+a/8192,col=(a%8192)%80;
+                auto get=[&](unsigned address){return mode==6?before[0][address]:before[address&1][address>>1];};
+                uint8_t expected=get(a);
+                if(row>=16 && row<40 && col>=3*factor && col<7*factor) {
+                    int source=down?int(row)-int(lines*8):int(row)+int(lines*8);
+                    expected=lines && source>=16 && source<40
+                        ?get((source&1)*8192+(source/2)*80+col):(mode==6?255:255);
+                }
+                auto actual=mode==6?v.planes[0][a]:v.planes[a&1][a>>1];
+                check(actual==expected,"CGA scrolling interleaved-row oracle");
+            }
+            check(v.planes[2]==before[2] && v.planes[3]==before[3],"CGA scroll does not overwrite font/unused planes");
+        }
+    }
+    g.call(4);g.call(0x0b00,0x0014);
+    check(v.attr[0]==4 && v.attr[1]==58 && v.attr[2]==60 && v.attr[3]==62,"CGA background and bright palette");
+    g.call(0x0b00,0x0101);
+    check(v.attr[1]==59 && v.attr[2]==61 && v.attr[3]==63,"CGA alternate bright palette");
+    g.call(6);g.call(0x0b00,2);
+    check(v.attr[1]==2,"CGA mono foreground selection");
+    g.call(3);
+}
+
+
+void text_scanout_contract(Guest &g) {
+    auto &c=g.m->cpu;auto &m=*g.m;
+    PcDisplay display;std::vector<uint32_t> pixels(640*400);
+    auto frame=[&](uint64_t ticks=500){display.refresh(m,true);display.render(m,pixels,640,400,ticks);};
+    auto font=[&](unsigned block,unsigned height,uint8_t first){
+        for(unsigned i=0;i<height;++i)c.write(0x20100+i,i==0?first:0,1);
+        g.call(0x1100,(height<<8)|block,1,65,0x2000,0x0100);
+    };
+    g.call(3);font(0,16,0x80);font(5,16,0x40);
+    g.call(0x1103,0x24);g.call(0x0200,0,0,0);g.call(0x0941,0x07,1);
+    g.call(0x0200,0,0,1);g.call(0x0941,0x0f,1);frame();
+    check(pixels[0]==0xffaaaaaa && pixels[1]==0xff000000 && pixels[8]==0xff000000 &&
+          pixels[9]==0xffaaaaaa,"dual font maps select plane-2 glyphs without foreground intensity");
+    g.call(0);font(0,16,0x80);g.call(0x0941,0x1e,1);frame();
+    check(pixels[0]==0xffffff55 && pixels[1]==0xffffff55 && pixels[2]==0xff0000aa,"40-column text scales full logical frame");
+    g.call(3);g.call(0x1112);g.call(0x0941,0x1e,1);frame();
+    check(m.rows==50 && pixels[2]==0xffffff55 && pixels[640+1]==0xffffff55,"80x50 uses actual 8-line glyph scanout");
+    g.call(7);font(0,14,0x80);g.call(0x0941,0x07,1);frame();
+    check(pixels[0]==0xffaaaaaa && c.read(0xb0000,1)=='A',"monochrome text aperture renders");
+    g.call(3);g.call(0x1003,0);g.call(0x0900,0xf0,1);frame();
+    check(pixels[0]==0xffffffff,"background intensity replaces blink bit");
+    g.call(0x1201,0x0036);frame();check(pixels[0]==0xff000000,"sequencer screen-off control renders black");
+    g.call(0x1200,0x0036);frame();check(pixels[0]==0xffffffff,"sequencer screen-on restores scanout");
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -543,7 +634,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); cga_contract(guest); text_scanout_contract(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

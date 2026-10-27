@@ -51,10 +51,13 @@ void Machine::character(uint8_t c, uint8_t attr, bool tty) {
 }
 std::string Machine::text() const {
     std::string result;
+    const unsigned base = (cpu.mem[0x449] & 127) == 7 ? 0xb0000 : 0xb8000;
+    unsigned pageBytes = cpu.mem[0x44c] | (cpu.mem[0x44d] << 8);
+    if (!pageBytes) pageBytes = 4096;
     for (unsigned y = 0; y < rows; y++) {
         std::string line;
         for (unsigned x = 0; x < columns; x++) {
-            auto ch = cpu.mem[0xb8000 + activePage * 4096 + (y * columns + x) * 2];
+            auto ch = cpu.mem[base + activePage * pageBytes + (y * columns + x) * 2];
             line += ch >= 32 && ch < 127 ? char(ch) : ' ';
         }
         while (!line.empty() && line.back() == ' ')

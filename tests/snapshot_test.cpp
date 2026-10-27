@@ -160,6 +160,8 @@ int main() {
         m.vga.latch[1] = 0x39;
         m.vga.dac[9][2] = 0x27;
         m.vga.attrData = true;
+        m.vga.attrIndex = 0x3f;
+        m.vga.dacReadMode = true;
         m.vga.seqIndex = 0xff;
         ps2State(m).keyboardFull = true;
         ps2State(m).keyboardData = 0x1c;
@@ -193,11 +195,37 @@ int main() {
         for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
         check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
               "TLB snapshot retains its legacy 18-byte record");
+        {
+            auto legacy = first;
+            legacy.erase(legacy.end() - 9); // v7 DAC direction precedes checksum.
+            legacy[8] = 6;
+            // v6 did not preserve the Attribute source bit: locate the index
+            // after the deliberately unique sequencer-index FFh marker.
+            const uint8_t marker[] = {0,0x39,0,0,0xff,0,0,0x3f};
+            auto position = std::search(legacy.begin(), legacy.end(), std::begin(marker), std::end(marker));
+            check(position != legacy.end(), "locate VGA index fields in legacy fixture");
+            position[7] &= 31;
+            uint64_t sum = 14695981039346656037ull;
+            for (auto it=legacy.begin(); it!=legacy.end()-8; ++it) sum=(sum^*it)*1099511628211ull;
+            for (unsigned n=0;n<8;++n) legacy[legacy.size()-8+n]=sum>>(n*8);
+            auto directory = root / "legacy-v6";
+            fs::copy(root / "point", directory, fs::copy_options::recursive);
+            std::vector<uint8_t> packed(ZSTD_compressBound(legacy.size()));
+            auto size=ZSTD_compress(packed.data(),packed.size(),legacy.data(),legacy.size(),1);
+            check(!ZSTD_isError(size), "encode version-6 compatibility fixture");
+            {std::ofstream out(directory / "state.bin",std::ios::binary);out.write(reinterpret_cast<char*>(packed.data()),size);}
+            Machine compatibility("","",2*1024*1024);
+            compatibility.loadSnapshot(directory.string());
+            check(compatibility.vga.attrIndex==0x3f && !compatibility.vga.dacReadMode,
+                  "version-6 snapshot restores display-enable compatibility and default DAC direction");
+        }
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
         ps2State(m).keyboardReplies.clear();
         m.absoluteMouse.reset();
         m.loadSnapshot((root / "point").string());
+        check(m.vga.attrIndex == 0x3f && m.vga.dacReadMode,
+              "VGA Attribute source bit and DAC read direction survive snapshot restore");
         check(m.hostCursor.active && m.hostCursor.uploading && m.hostCursor.received == 2 &&
               m.hostCursor.pending[0] == 17 && m.hostCursor.revision == 42,
               "native cursor state and interrupted upload survive restore");
@@ -214,7 +242,7 @@ int main() {
         m.saveSnapshot((root / "roundtrip").string());
         auto second = unpack(root / "roundtrip/state.bin");
         check(first.size() == second.size() &&
-                  std::equal(first.begin(), first.end() - 16, second.begin()),
+                  std::equal(first.begin(), first.end() - 17, second.begin()),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
         check(m.systemPortB.read_register(false, false) == 3 && m.debugConsole.read_data_register() == 'A',
               "system/debug device latches restore from the existing port-state encoding");

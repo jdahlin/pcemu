@@ -32,14 +32,13 @@ void PcDisplay::refresh(Machine &m, bool executeVga) {
     if (columns == 40 || columns == 80)
         m.columns = columns;
     m.activePage = c.mem[0x462] & 7;
-    m.rows = std::min(50u, unsigned(c.mem[0x484]) + 1);
+    m.rows = std::min(256u, unsigned(c.mem[0x484]) + 1);
     if (!m.rows)
         m.rows = 25;
     auto pos = c.mem[0x450 + m.activePage * 2] | (c.mem[0x451 + m.activePage * 2] << 8);
     m.cursor = (pos >> 8) * m.columns + (pos & 255);
 }
 void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) const {
-    auto &c = m.cpu;
     if (verbose) {
         std::cerr << "VGA attribute palette:";
         for (int k = 0; k < 16; k++)
@@ -65,11 +64,7 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
             if (m.vga.graphics)
                 px = graphics[size_t(y) * width + x];
             else {
-                auto off =
-                    0xb8000 + m.activePage * 4096 + ((y / 16) * m.columns + x / 8) * 2;
-                auto ch = c.mem[off], attr = c.mem[off + 1];
-                bool on = font[ch * 8 + (y % 16) / 2] & (128 >> (x & 7));
-                px = palette[on ? (attr & 15) : (attr >> 4) & 7];
+                px = text_pixel(m, x, y, width, height, false, 0);
             }
             auto at = (size_t(y) * width + x) * 3;
             rgb[at] = px >> 16;
@@ -80,26 +75,62 @@ void PcDisplay::save(Machine &m, const std::string &framePath, bool verbose) con
 }
 void PcDisplay::render(Machine &m, std::span<uint32_t> pixels, unsigned displayWidth,
                        unsigned displayHeight, uint64_t frameTicks) const {
-    auto &c = m.cpu;
     if (m.vga.graphics) {
         m.vga.render_graphics(pixels, displayWidth, displayHeight);
         return;
     }
+    if (displayHeight && displayWidth > pixels.size() / displayHeight)
+        throw std::invalid_argument("Text frame buffer is too small");
     for (unsigned y = 0; y < displayHeight; y++)
-        for (unsigned x = 0; x < displayWidth; x++) {
-            unsigned col = x / 8, row = y / 16;
-            uint32_t px = palette[0];
-            if (col < m.columns && row < m.rows) {
-                auto off = 0xb8000 + m.activePage * 4096 + (row * m.columns + col) * 2;
-                uint8_t ch = c.mem[off], attr = c.mem[off + 1],
-                        bits = font[ch * 8 + (y % 16) / 2];
-                px = palette[(bits & (128 >> (x % 8))) ? (attr & 15)
-                                                       : ((attr >> 4) & 7)];
-                if (row * m.columns + col == m.cursor && y % 16 >= 14 &&
-                    (frameTicks / 500) % 2 == 0)
-                    px = palette[7];
-            }
-            pixels[y * displayWidth + x] = px;
-        }
+        for (unsigned x = 0; x < displayWidth; x++)
+            pixels[size_t(y) * displayWidth + x] =
+                text_pixel(m, x, y, displayWidth, displayHeight, true, frameTicks);
+}
+// Host presentation keeps a 640x400 logical text surface, scaling 40/80-column
+// and font-height/row variants into it. Guest firmware still programs real VGA
+// memory/register state. Native VGA text uses plane-2 font maps and DAC colors;
+// the original host BIOS's simplified preset retains its ROM-font fallback.
+// IBM 42G2193 character map selection and Attribute controls, PDF 76/113/119.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=76
+uint32_t PcDisplay::text_pixel(const Machine &m, unsigned x, unsigned y,
+                             unsigned width, unsigned height, bool animate, uint64_t ticks) const {
+    const auto &c = m.cpu;
+    const auto &v = m.vga;
+    if (!width || !height || !m.columns || !m.rows || (v.seq[1] & 0x20) || !(v.attrIndex & 0x20))
+        return 0xff000000;
+    const bool native = !(v.seq[4] & VGA::OddEvenDisable);
+    unsigned glyphHeight = native ? std::clamp(unsigned(c.mem[0x485] | (c.mem[0x486] << 8)), 1u, 32u) : 16;
+    unsigned dotX = uint64_t(x) * m.columns * 8 / width;
+    unsigned dotY = uint64_t(y) * m.rows * glyphHeight / height;
+    unsigned col = dotX / 8, row = dotY / glyphHeight, scanline = dotY % glyphHeight;
+    unsigned pageBytes = c.mem[0x44c] | (c.mem[0x44d] << 8);
+    if (!pageBytes) pageBytes = 4096;
+    unsigned base = (c.mem[0x449] & 127) == 7 ? 0xb0000 : 0xb8000;
+    uint64_t offset = base + uint64_t(m.activePage) * pageBytes + (uint64_t(row) * m.columns + col) * 2;
+    if (offset + 1 >= c.mem.size()) return 0xff000000;
+    uint8_t character = c.mem[offset], attributes = c.mem[offset + 1];
+    unsigned firstMap = (v.seq[3] & 3) | ((v.seq[3] >> 2) & 4);
+    unsigned secondMap = ((v.seq[3] >> 2) & 3) | ((v.seq[3] >> 3) & 4);
+    unsigned map = attributes & 8 ? secondMap : firstMap;
+    unsigned mapOffset = ((map & 3) << 14) | ((map & 4) << 11);
+    uint8_t bits = native ? v.planes[2][mapOffset + character * 32 + scanline]
+                          : font[character * 8 + scanline / 2];
+    bool on = bits & (128 >> (dotX & 7));
+    if (native && animate && (v.attr[0x10] & 8) && (attributes & 0x80) && (ticks / 500) % 2)
+        on = false;
+    unsigned foreground = attributes & ((native && firstMap != secondMap) ? 7 : 15);
+    unsigned background = (attributes >> 4) & ((native && !(v.attr[0x10] & 8)) ? 15 : 7);
+    unsigned color = on ? foreground : background;
+    unsigned shape = c.mem[0x460] | (c.mem[0x461] << 8);
+    unsigned start = native ? (shape >> 8) & 31 : 14;
+    unsigned end = native ? shape & 31 : 15;
+    if (animate && !(shape & 0x2000) && row * m.columns + col == m.cursor &&
+        scanline >= start && scanline <= end && (ticks / 500) % 2 == 0)
+        color = native ? foreground : 7;
+    if (!native) return palette[color];
+    unsigned index = v.attribute_palette_index(color) & v.dacMask;
+    auto expand = [](uint8_t component) { return unsigned((component << 2) | (component >> 4)); };
+    return 0xff000000 | (expand(v.dac[index][0]) << 16) | (expand(v.dac[index][1]) << 8) |
+           expand(v.dac[index][2]);
 }
 } // namespace pc

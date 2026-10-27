@@ -9,12 +9,11 @@
 ; Hardware reference H: IBM 42G2193, September 1992, section 2 VGA Function.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf
 ;
-; IMPLEMENTATION NOTE: Only mode 03h/83h is accepted in this milestone. Unknown
-; legacy functions leave registers unchanged; VBE calls return unsupported.
-; FIXME: Graphics modes, 40-column/mono modes, font loading, state save/restore,
-; video parameter tables, and additional palette functions are not implemented.
-; B, INT 10H function summary, PDF page 25 (link below).
-; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=25
+; The ROM implements the standard single-adapter VGA service families and VBE
+; 2.0 for our Bochs DISPI board. Undefined legacy calls and unsupported optional
+; LCD/dual-adapter/VBE 3.0 interfaces do not advertise success. Host BIOS services
+; remain responsible for non-video interrupts. Hardware timing/raster limits
+; belong to the device model; running its ROM does not imply full VGA conformance.
 bits 16
 cpu 386
 org 0
@@ -95,13 +94,13 @@ initialize:
     mov [es:0x7e],cs
     mov word [es:0x10c],font_16
     mov [es:0x10e],cs
-    mov word [es:0x74],video_parameters ; INT 1Dh mode parameter table.
+    mov word [es:0x74],cga_parameters ; INT 1Dh mode parameter table.
     mov [es:0x76],cs
     mov ax,0x40
     mov ds,ax
     mov byte [MODESET_CONTROL],0x51 ; 400 lines, cursor emulation, VGA enabled.
     mov byte [VIDEO_SWITCHES],0xf9
-    mov byte [DCC_INDEX],0
+    mov byte [DCC_INDEX],11
     mov word [VIDEO_SAVE_POINTER],video_save_table
     mov [VIDEO_SAVE_POINTER+2],cs
     mov ax,3
@@ -154,6 +153,10 @@ video_interrupt:
     je write_character
     cmp ah,0x0a
     je write_character
+    cmp ah,0x0b
+    je cga_palette_service
+    cmp ah,0x04
+    je light_pen
     cmp ah,0x0c
     je write_dot
     cmp ah,0x0d
@@ -178,6 +181,9 @@ video_interrupt:
     je display_information
     cmp ah,0x4f
     je vbe_service
+    jmp return_interrupt
+light_pen:
+    mov byte [in_ax+1],0 ; VGA does not implement a light pen (PS/2 contract).
     jmp return_interrupt
 return_interrupt:
     popad
@@ -815,6 +821,7 @@ read_mode:
     jmp return_interrupt
 
 %include "pcemu-vga-modes.inc"
+%include "cga-services.inc"
 %include "graphics-services.inc"
 %include "vbe-services.inc"
 %include "state-services.inc"

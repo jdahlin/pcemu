@@ -150,20 +150,20 @@ uint32_t CPU::physicalSlow(uint32_t a, bool wr) {
 }
 uint32_t CPU::read(uint32_t a, int w) {
     if (!(cr[0] & 0x80000000u) && a20 && uint64_t(a) + w <= mem.size() &&
-        !(a < 0xb0000 && uint64_t(a) + w > 0xa0000 && videoRead)) {
+        !(a < 0xc0000 && uint64_t(a) + w > 0xa0000 && videoRead)) {
         return loadRAM(&mem[a], w);
     }
     if ((a & 4095) + unsigned(w) <= 4096) {
         auto p = physical(a);
         if (uint64_t(p) + w <= mem.size() &&
-            !(p < 0xb0000 && uint64_t(p) + w > 0xa0000 && videoRead)) {
+            !(p < 0xc0000 && uint64_t(p) + w > 0xa0000 && videoRead)) {
             return loadRAM(&mem[p], w);
         }
     }
     uint32_t v = 0;
     for (int i = 0; i < w; i++) {
         auto p = physical(a + i);
-        auto byte = ((p >= 0xa0000 && p < 0xb0000) || (p >= 0xe0000000 && p < 0xe1000000)) && videoRead ? videoRead(p)
+        auto byte = ((p >= 0xa0000 && p < 0xc0000) || (p >= 0xe0000000 && p < 0xe1000000)) && videoRead ? videoRead(p)
                     : p < mem.size()                         ? mem[p]
                                                              : 0xff;
         v |= uint32_t(byte) << (i * 8);
@@ -175,7 +175,7 @@ void CPU::write(uint32_t a, uint32_t v, int w) {
         uint64_t(a) + w > watchStart)
         watchWrite(a, v, w);
     if (!(cr[0] & 0x80000000u) && a20 && uint64_t(a) + w <= mem.size() &&
-        !(a < 0xb0000 && uint64_t(a) + w > 0xa0000 && videoWrite)) {
+        !(a < 0xc0000 && uint64_t(a) + w > 0xa0000 && videoWrite)) {
         storeRAM(&mem[a], v, w);
         written(a, w);
         return;
@@ -183,7 +183,7 @@ void CPU::write(uint32_t a, uint32_t v, int w) {
     if ((a & 4095) + unsigned(w) <= 4096) {
         auto p = physical(a, true);
         if (uint64_t(p) + w <= mem.size() &&
-            !(p < 0xb0000 && uint64_t(p) + w > 0xa0000 && videoWrite)) {
+            !(p < 0xc0000 && uint64_t(p) + w > 0xa0000 && videoWrite)) {
             storeRAM(&mem[p], v, w);
             written(p, w);
             return;
@@ -196,7 +196,7 @@ void CPU::write(uint32_t a, uint32_t v, int w) {
         pages[i] = physical(a + i, true);
     for (int i = 0; i < w; i++) {
         auto p = pages[i];
-        if (((p >= 0xa0000 && p < 0xb0000) || (p >= 0xe0000000 && p < 0xe1000000)) && videoWrite)
+        if (((p >= 0xa0000 && p < 0xc0000) || (p >= 0xe0000000 && p < 0xe1000000)) && videoWrite)
             videoWrite(p, v >> (i * 8));
         else if (p < mem.size()) {
             mem[p] = v >> (i * 8);
@@ -1119,7 +1119,7 @@ void CPU::stepImpl() {
                     }
                     uint32_t bytes = elements * bw;
                     ready = ready && elements > 1 && uint64_t(physicalStart) + bytes <= mem.size() &&
-                            !(physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000);
+                            !(physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000);
                     if (ready) {
                         for (uint32_t word = physicalStart >> 6;
                              word <= (physicalStart + bytes - 1) >> 6; ++word)
@@ -1165,7 +1165,7 @@ void CPU::stepImpl() {
                             physicalStart = entry.base | (linear & 4095);
                         }
                         if (uint64_t(physicalStart) + bytes > mem.size() ||
-                            (physicalStart < 0xb0000 && uint64_t(physicalStart) + bytes > 0xa0000))
+                            (physicalStart < 0xc0000 && uint64_t(physicalStart) + bytes > 0xa0000))
                             return false;
                         if (write)
                             for (uint32_t word = physicalStart >> 6;

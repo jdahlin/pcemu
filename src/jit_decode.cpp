@@ -19,7 +19,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
         if(tail && (!ir.empty() || (fetchTail.present &&
                     (cpu.address(CS,fetchTail.ip)>>12)!=(address>>12))))throw 0;
         const auto head=block.page<<12;
-        if(tail && ((head>=0xa0000 && head<0xb0000) ||
+        if(tail && ((head>=0xa0000 && head<0xc0000) ||
                     (head>=0xe0000000 && head<0xe1000000)))throw 0;
         uint32_t p;
         if(tail && (cpu.cr[0]&0x80000000u)) {
@@ -35,7 +35,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
         if(tail) {
             // Fetch callbacks and unmapped RAM bytes belong to CPU::fetch,
             // not a speculative direct load from the code buffer.
-            if(p>=cpu.mem.size() || (p>=0xa0000 && p<0xb0000) ||
+            if(p>=cpu.mem.size() || (p>=0xa0000 && p<0xc0000) ||
                (p>=0xe0000000 && p<0xe1000000))throw 0;
             if(fetchTail.present && fetchTail.page!=(p>>12))throw 0;
             if(!fetchTail.present)fetchTail={pos,p>>12,cpu.generation.at(p>>12),true};
@@ -125,7 +125,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
             i.w = w;
             if(op==0x63 && (!(block.cr0&1) || block.vm)){
                 // Opcode fetches from device memory retain their callbacks.
-                if((block.page>=0xa0 && block.page<0xb0) ||
+                if((block.page>=0xa0 && block.page<0xc0) ||
                    (block.page>=0xe0000 && block.page<0xe1000)){pos=begin;break;}
                 i.kind=Kind::InvalidOpcode;i.start=begin;i.end=pos;
                 ir.push_back(i);block.pollBoundary=true;break;

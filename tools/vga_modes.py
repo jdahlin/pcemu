@@ -39,7 +39,23 @@ def graphics_tables():
             crtc[0x17] = 0xa3
             attr = list(range(16)) + [0x41,0,15,0,0]
         records.append((mode,w,h,page,bpp,font,misc,seq,crtc,gfx,attr))
-    return records
+    cga_crtc=[0x2d,0x27,0x28,0x90,0x2b,0xa0,0xbf,0x1f,0,0xc0,0,0,0,0,0,0,
+              0x9c,0x8e,0x8f,0x14,0,0x96,0xb9,0xa2,0xff]
+    for mode in (4,5,6):
+        crtc=list(cga_crtc)
+        seq=[3,9,3,0,2]
+        gfx=[0,0,0,0,0,0x30,0x0f,15,255]
+        attr=[0,2,4,20]+[0]*12+[1,0,3,0,0]
+        if mode==5:attr[:4]=[0,3,4,7]
+        if mode==6:
+            crtc[:6]=[0x5f,0x4f,0x50,0x82,0x54,0x80]
+            crtc[0x13]=0x28
+            crtc[0x17]=0xc2
+            seq=[3,1,1,0,6]
+            gfx[5],gfx[6]=0,0x0d
+            attr=[0,63]+[0]*14+[1,0,1,0,0]
+        records.append((mode,640 if mode==6 else 320,200,0x4000,1 if mode==6 else 2,8,0x63,seq,crtc,gfx,attr))
+    return sorted(records)
 
 
 def assembly_tables():

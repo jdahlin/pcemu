@@ -196,7 +196,7 @@ planar scrolling uses the hardware latches/write mode 1 and preserves register
 programming. The graphics tests compare literal plane offsets and use independent
 byte/pixel oracles for overlapping scrolling in both directions. The boot-sector
 probe also checks modes 12h and 13h under PCEmu interpreter/JIT and QEMU TCG.
-CGA-compatible modes remain a separate device/firmware integration step.
+CGA-compatible modes 04h/05h/06h are implemented with B8000 packed/interleaved addressing.
 
 ## VBE 2.0 and state management
 
@@ -223,3 +223,33 @@ restoration never erases them. Signature/version/selector validation occurs
 before restoration. Tests verify an all-group state roundtrip across a legacy
 mode change, buffer guards, display-byte preservation and corrupt-image rejection.
 The QEMU boot probe independently verifies save/restore and mode reconstruction.
+
+## CGA compatibility and native text scanout
+
+Modes 04h/05h/06h use the documented B8000 aperture, even/odd scan-line banks,
+odd/even plane selection for two-bit pixels, packed pixel/XOR services, glyphs,
+scrolling, foreground/background/intensity and palette selection. The CPU and
+JIT route the full A0000..BFFFF video window through the device callbacks;
+graphics reads/writes no longer bypass CGA memory as ordinary RAM. Legacy
+VGA memory-map selection is decoded before plane addressing. Headless boot
+probes independently check direct B8000 writes and BIOS pixels in QEMU.
+
+Text presentation uses the loaded plane-2 font maps, selected glyph height,
+40/80-column geometry, monochrome B0000 memory, page allocation, DAC colors,
+background intensity, blinking and screen blanking. The host-backed system
+BIOS retains its existing RAM-shadow/ROM-font fallback. CRTC split-screen,
+horizontal pel panning, complete text-address generation, timing and protected
+CRTC registers remain device-model limitations; the ROM itself does not supply
+host rendering shortcuts for those features.
+
+Attribute Address reads now include Palette Address Source, and the DAC State
+register reports the documented read/write direction. Snapshot version 7 stores
+the DAC direction latch and Attribute source bit; versions 1..6 remain readable
+with their previous always-enabled display behavior. Tests include an encoded
+version-6 compatibility image, a version-7 roundtrip and active DAC direction.
+VGA write mode 3 now applies the requested logical operation to its latches.
+
+The primary and secondary video save-pointer tables, DCC table and separate
+legacy INT 1Dh parameter sets are present. DCC reads/writes preserve primary and
+alternate display ordering. Functionality reports use mode-specific color/page
+counts and scan-line codes rather than assuming text mode.

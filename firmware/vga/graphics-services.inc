@@ -75,6 +75,11 @@ set_graphics_mode:
     pop si
     mov al,[cs:si]
     mov [MODE],al
+    mov byte [0x66],0
+    cmp al,6
+    jne .cga_palette
+    mov byte [0x66],15
+.cga_palette:
     mov ax,[cs:si+MODE_WIDTH]
     shr ax,3
     mov [COLUMNS],ax
@@ -118,10 +123,15 @@ set_graphics_mode:
     test byte [in_ax],0x80
     jnz return_interrupt
     mov ax,0xa000
+    mov cx,0x8000
+    cmp byte [MODE],6
+    ja .clear_segment
+    mov ax,0xb800
+    mov cx,0x2000
+.clear_segment:
     mov es,ax
     xor di,di
     xor ax,ax
-    mov cx,0x8000
     rep stosw
     jmp return_interrupt
 
@@ -130,6 +140,16 @@ set_graphics_mode:
 ; IBM BIOS Interface mode/page table, PDF 26.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=26
 validate_graphics_page:
+    cmp byte [MODE],6
+    ja .vga
+    test bh,bh
+    jnz .cga_invalid
+    clc
+    ret
+.cga_invalid:
+    stc
+    ret
+.vga:
     push ax
     push dx
     cmp bh,8
@@ -177,6 +197,8 @@ pixel_address:
     mul dx
     cmp di,ax
     jae .invalid
+    cmp byte [MODE],6
+    jbe .cga
     mov ax,0xa000
     mov es,ax
     mov ax,di
@@ -202,6 +224,36 @@ pixel_address:
     mov al,0x80
     shr al,cl
     mov cl,al
+    jmp .valid
+.cga:
+    mov ax,0xb800
+    mov es,ax
+    mov ax,di
+    shr ax,1
+    mov dx,80
+    mul dx
+    test di,1
+    jz .cga_row
+    add ax,0x2000
+.cga_row:
+    mov di,ax
+    mov ax,cx
+    mov dl,cl
+    cmp byte [MODE],6
+    je .cga_mono
+    shr ax,2
+    and dl,3
+    mov cl,3
+    sub cl,dl
+    shl cl,1
+    jmp .cga_column
+.cga_mono:
+    shr ax,3
+    and dl,7
+    mov cl,7
+    sub cl,dl
+.cga_column:
+    add di,ax
 .valid:
     pop dx
     pop ax
@@ -225,6 +277,8 @@ pixel_write:
     mov bp,sp
     call pixel_address
     jc .done
+    cmp byte [MODE],6
+    jbe .cga
     cmp byte [MODE],0x13
     jne .planar
     mov [es:di],al
@@ -285,6 +339,98 @@ pixel_write:
     out dx,ax
     pop ax
     out dx,al
+    jmp .done
+.cga:
+    mov si,ax
+    mov dx,SEQUENCER
+    in al,dx
+    push ax
+    mov al,2
+    call read_indexed_register
+    push ax
+    mov al,4
+    call read_indexed_register
+    push ax
+    mov ax,0x0302
+    cmp byte [MODE],6
+    jne .cga_mask
+    mov ah,1
+.cga_mask:
+    out dx,ax
+    mov ax,0x0204
+    cmp byte [MODE],6
+    jne .cga_memory
+    mov ah,6
+.cga_memory:
+    out dx,ax
+    mov dx,GRAPHICS
+    in al,dx
+    push ax
+    mov al,0
+    call read_indexed_register
+    push ax
+    mov al,1
+    call read_indexed_register
+    push ax
+    mov al,3
+    call read_indexed_register
+    push ax
+    mov al,5
+    call read_indexed_register
+    push ax
+    mov al,8
+    call read_indexed_register
+    push ax
+    mov ax,0
+    out dx,ax
+    mov al,1
+    out dx,ax
+    mov al,3
+    out dx,ax
+    mov ax,0x3005
+    cmp byte [MODE],6
+    jne .cga_mode
+    xor ah,ah
+.cga_mode:
+    out dx,ax
+    mov ax,0xff08
+    out dx,ax
+    mov bl,[es:di]
+    mov ax,si
+    mov bh,3
+    cmp byte [MODE],6
+    jne .cga_field
+    mov bh,1
+.cga_field:
+    and al,bh
+    shl al,cl
+    mov ch,al
+    shl bh,cl
+    test si,0x80
+    jnz .cga_xor
+    not bh
+    and bl,bh
+    or bl,ch
+    jmp .cga_store
+.cga_xor:
+    xor bl,ch
+.cga_store:
+    mov [es:di],bl
+    mov cx,5
+.cga_restore:
+    pop ax
+    out dx,ax
+    loop .cga_restore
+    pop ax
+    out dx,al
+    mov dx,SEQUENCER
+    pop ax
+    out dx,ax
+    pop ax
+    out dx,ax
+    pop ax
+    out dx,al
+
 .done:
     pop es
     popad
@@ -299,6 +445,8 @@ pixel_read:
     mov bp,sp
     call pixel_address
     jc .zero
+    cmp byte [MODE],6
+    jbe .cga
     cmp byte [MODE],0x13
     jne .planar
     mov al,[es:di]
@@ -343,6 +491,17 @@ pixel_read:
 .mono:
     and al,1
     jmp .result
+.cga:
+    mov al,[es:di]
+    shr al,cl
+    cmp byte [MODE],6
+    je .cga_mono
+    and al,3
+    jmp .result
+.cga_mono:
+    and al,1
+    jmp .result
+
 .zero:
     xor ax,ax
 .result:
@@ -651,6 +810,11 @@ scroll_graphics_window:
 .first:
     mov [ss:bp-48],ax
     mov word [ss:bp-54],1
+    cmp byte [MODE],6
+    jae .vga_factor
+    mov word [ss:bp-54],2
+    jmp .factor
+.vga_factor:
     cmp byte [MODE],0x13
     jne .factor
     mov word [ss:bp-54],8
@@ -662,6 +826,12 @@ scroll_graphics_window:
     call read_indexed_register
     push ax
     mov ax,0x0f02
+    cmp byte [MODE],6
+    ja .scroll_mask
+    mov ah,3
+    jne .scroll_mask
+    mov ah,1
+.scroll_mask:
     out dx,ax
     mov dx,GRAPHICS
     in al,dx
@@ -680,6 +850,10 @@ scroll_graphics_window:
     mov ax,0xff08
     out dx,ax
     mov ax,0xa000
+    cmp byte [MODE],6
+    ja .scroll_segment
+    mov ax,0xb800
+.scroll_segment:
     mov es,ax
 .row:
     mov ax,[ss:bp-48]
@@ -710,6 +884,8 @@ scroll_graphics_window:
     inc cx
     imul cx,[ss:bp-54]
     mov dx,GRAPHICS
+    cmp byte [MODE],6
+    jbe .cga
     cmp byte [MODE],0x13
     je .packed
     mov ax,0x0005
@@ -743,6 +919,30 @@ scroll_graphics_window:
     cmp word [ss:bp-50],0
     jne .copy
     mov al,[ss:bp-51]
+    rep stosb
+    jmp .advance
+.cga:
+    mov ax,0x3005
+    cmp byte [MODE],6
+    jne .cga_copy_mode
+    xor ah,ah
+.cga_copy_mode:
+    out dx,ax
+    mov ax,1
+    out dx,ax
+    cmp word [ss:bp-50],0
+    jne .copy
+    mov al,[ss:bp-51]
+    cmp byte [MODE],6
+    je .cga_fill_mono
+    and al,3
+    mov bl,0x55
+    mul bl
+    jmp .cga_fill
+.cga_fill_mono:
+    and al,1
+    neg al
+.cga_fill:
     rep stosb
 .advance:
     mov ax,[ss:bp-48]
@@ -780,8 +980,21 @@ scroll_graphics_window:
 ; IBM 42G2193 graphics memory addressing, PDF 49.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=49
 graphics_line_offset:
+    cmp byte [MODE],6
+    ja .vga
+    push ax
+    shr ax,1
     mul word [COLUMNS]
     imul ax,[ss:bp-54]
+    pop dx
+    and dx,1
+    shl dx,13
+    add ax,dx
+    jmp .left
+.vga:
+    mul word [COLUMNS]
+    imul ax,[ss:bp-54]
+.left:
     push ax
     mov ax,[ss:bp-38]
     imul ax,[ss:bp-54]

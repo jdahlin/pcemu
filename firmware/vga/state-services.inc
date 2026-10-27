@@ -376,10 +376,10 @@ state_restore_dac:
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=127
 state_restore_dac_index:
     mov bx,[in_bx]
-    mov dx,DAC_READ
+    mov dx,DAC_WRITE
     cmp byte [es:bx+STATE_DAC+770],3
     jne .address
-    mov dx,DAC_WRITE
+    mov dx,DAC_READ
 .address:
     mov al,[es:bx+STATE_DAC+769]
     out dx,al

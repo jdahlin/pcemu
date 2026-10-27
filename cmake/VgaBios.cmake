@@ -12,7 +12,7 @@ if(PCEMU_VGA_NASM AND Python3_Interpreter_FOUND)
     DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py tools/vga_modes.py ${VGA_FONT_SOURCES} ${VGA_SERVICE_SOURCES}
     VERBATIM)
   add_custom_target(vga-bios DEPENDS "${VGA_ROM}")
-  pcemu_program(vga-bios-tests ZSTD SOURCES ${CORE} tests/vga_bios_test.cpp)
+  pcemu_program(vga-bios-tests ZSTD SOURCES ${CORE} src/pc_display.cpp tests/vga_bios_test.cpp)
   add_dependencies(vga-bios-tests vga-bios)
   target_compile_definitions(obj_tests_vga_bios_test_cpp_FALSE_FALSE PRIVATE
     PCEMU_VGA_TEST_ROM="${VGA_ROM}")

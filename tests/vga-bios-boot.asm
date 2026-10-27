@@ -91,6 +91,34 @@ probe_start:
     int 0x10
     cmp al,0xfe
     jne fail
+    mov bp,10
+    mov ax,4
+    int 0x10
+    mov ax,0xb800
+    mov es,ax
+    mov byte [es:0],0xe4
+    mov ax,0x0d00
+    xor bx,bx
+    xor cx,cx
+    xor dx,dx
+    int 0x10
+    cmp al,3
+    jne fail
+    mov ax,0x0c01
+    int 0x10
+    cmp byte [es:0],0x64
+    jne fail
+    mov ax,6
+    int 0x10
+    mov byte [es:0],0x80
+    mov ax,0x0d00
+    int 0x10
+    cmp al,1
+    jne fail
+    mov ax,0x0c81
+    int 0x10
+    cmp byte [es:0],0
+    jne fail
     mov bp,7
     mov ax,0x1000
     mov es,ax
@@ -140,6 +168,18 @@ probe_start:
     int 0x10
     cmp ax,0x004f
     jne fail
+    mov dx,0x3c8
+    mov al,50
+    out dx,al
+    mov dx,0x3c7
+    in al,dx
+    test al,al
+    jnz fail
+    mov al,50
+    out dx,al
+    in al,dx
+    cmp al,3
+    jne fail
     mov bp,8
     mov ax,0x4f04
     mov bx,0x0800
@@ -156,6 +196,10 @@ probe_start:
     mov dx,2
     int 0x10
     cmp ax,0x004f
+    jne fail
+    mov dx,0x3c7
+    in al,dx
+    cmp al,3
     jne fail
     mov ax,0x4f03
     int 0x10

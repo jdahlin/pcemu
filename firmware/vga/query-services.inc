@@ -102,31 +102,59 @@ display_information:
     je .set
     test al,al
     jnz return_interrupt
-    mov word [in_bx],8
-    cmp byte [DCC_INDEX],1
-    jne .done
-    mov word [in_bx],7
-.done:
+    xor bx,bx
+    mov bl,[DCC_INDEX]
+    and bl,0x7f
+    cmp bl,16
+    jae return_interrupt
+    shl bx,1
+    mov bx,[cs:dcc_entries+bx]
+    test byte [DCC_INDEX],0x80
+    jz .output
+    xchg bl,bh
+.output:
+    mov [in_bx],bx
+.success:
     mov byte [in_ax],0x1a
     jmp return_interrupt
 .set:
-    test bh,bh
-    jnz return_interrupt
-    cmp bl,8
-    je .color
-    cmp bl,7
-    jne return_interrupt
-    mov byte [DCC_INDEX],1
-    jmp .done
-.color:
-    mov byte [DCC_INDEX],0
-    jmp .done
+    xor si,si
+.next:
+    mov ax,[cs:dcc_entries+si]
+    cmp ax,bx
+    je .found
+    add si,2
+    cmp si,32
+    jb .next
+    xchg bl,bh
+    xor si,si
+.reverse:
+    mov ax,[cs:dcc_entries+si]
+    cmp ax,bx
+    je .reversed
+    add si,2
+    cmp si,32
+    jb .reverse
+    jmp return_interrupt
+.reversed:
+    shr si,1
+    mov ax,si
+    or al,0x80
+    mov [DCC_INDEX],al
+    jmp .success
+.found:
+    shr si,1
+    mov ax,si
+    mov [DCC_INDEX],al
+    jmp .success
 
 ; Return the standard 64-byte functionality/state block and a ROM pointer to
 ; immutable capabilities. Only documented fields are populated; reserved bytes
 ; are zero. IBM BIOS Interface, printed 2-40..43, PDF 55..58.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=55
 functionality_information:
+    cmp byte [MODE],0xff
+    je return_interrupt
     test bx,bx
     jnz return_interrupt
     cmp di,0xffc0
@@ -148,20 +176,67 @@ functionality_information:
     rep movsb
     pop di
     inc byte [es:di+0x22]
-    mov byte [es:di+0x25],8
-    cmp byte [DCC_INDEX],1
-    jne .display
-    mov byte [es:di+0x25],7
-.display:
+    mov ax,0x1a00
+    int 0x10
+    mov [es:di+0x25],bx
     mov word [es:di+0x27],16
+    mov dx,0
     mov ax,0x8000
-    xor dx,dx
+    cmp byte [MODE],7
+    je .page_count
+    cmp byte [MODE],4
+    jb .page_count
+    cmp byte [MODE],6
+    jbe .cga
+    mov word [es:di+0x27],2
+    cmp byte [MODE],0x0f
+    je .vga_pages
+    cmp byte [MODE],0x11
+    je .vga_pages
+    mov word [es:di+0x27],256
+    cmp byte [MODE],0x13
+    je .one_page
+    mov word [es:di+0x27],16
+.vga_pages:
+    xor ax,ax
+    mov dx,1
+    jmp .page_count
+.cga:
+    mov word [es:di+0x27],4
+    cmp byte [MODE],6
+    jne .one_page
+    mov word [es:di+0x27],2
+.one_page:
+    mov ax,1
+    jmp .pages
+.page_count:
     div word [PAGE_BYTES]
     cmp ax,8
     jbe .pages
     mov ax,8
 .pages:
     mov [es:di+0x29],al
+    cmp byte [MODE],7
+    je .scan_350
+    cmp byte [MODE],4
+    jb .text_scanlines
+    cmp byte [MODE],0x11
+    je .scan_480
+    cmp byte [MODE],0x12
+    je .scan_480
+    cmp byte [MODE],0x0f
+    je .scan_350
+    cmp byte [MODE],0x10
+    je .scan_350
+    xor al,al
+    jmp .scanlines
+.scan_480:
+    mov al,3
+    jmp .scanlines
+.scan_350:
+    mov al,1
+    jmp .scanlines
+.text_scanlines:
     mov al,2
     test byte [MODESET_CONTROL],0x10
     jnz .scanlines
@@ -212,8 +287,33 @@ functionality_information:
 ; IBM BIOS Interface static functionality table, PDF 57..58.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=57
 static_functionality:
-    db 0x8f,0xe0,0x0f,0,0,0,0,7,8,2,0xfe,0x0e,0,0,0,0
+    db 0xff,0xe0,0x0f,0,0,0,0,7,8,2,0xfe,0x0e,0,0,0,0
 video_save_table:
-    dw video_parameters
-    dw 0xc000
-    times 6 dd 0
+    dw video_parameters,0xc000
+    dd 0,0,0
+    dw secondary_save_table,0xc000
+    dd 0,0
+; Both required pointers in the primary/secondary save-pointer tables are
+; valid ROM far pointers. Optional dynamic/font/palette overrides default zero.
+; IBM BIOS Interface, printed 3-12..15, PDF 149..152.
+; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=149
+secondary_save_table:
+    dw 26
+    dw dcc_table,0xc000
+    dd 0,0,0,0,0
+dcc_table:
+    db 16,1,0x0c,0
+dcc_entries:
+    dw 0x0000,0x0001,0x0002,0x0201,0x0004,0x0401,0x0005,0x0205
+    dw 0x0006,0x0106,0x0506,0x0008,0x0108,0x0007,0x0207,0x0206
+
+; Legacy INT 1Dh exposes four sixteen-byte 6845 parameter sets (40/80-column
+; text, 320/640-pixel CGA graphics). The VGA's separate 64-byte records are
+; reached through the save-pointer table, not this legacy interrupt vector.
+; IBM BIOS Interface INT 1Dh/ROM parameter conventions; CGA compatibility data.
+; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=149
+cga_parameters:
+    db 0x38,0x28,0x2d,0x0a,0x1f,6,0x19,0x1c,2,7,6,7,0,0,0,0
+    db 0x71,0x50,0x5a,0x0a,0x1f,6,0x19,0x1c,2,7,6,7,0,0,0,0
+    db 0x38,0x28,0x2d,0x0a,0x7f,6,0x64,0x70,2,1,6,7,0,0,0,0
+    db 0x71,0x50,0x5a,0x0a,0x7f,6,0x64,0x70,2,1,6,7,0,0,0,0

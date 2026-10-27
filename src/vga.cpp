@@ -23,12 +23,12 @@
 // clocks, blanking interrupts or analog signals. Rendering produces opaque host
 // AARRGGBB pixels. Geometry bounds and accepted DISPI modes protect host storage.
 // COMPATIBILITY: Both CRTC port aliases are accepted regardless of IOS; decode is
-// not gated by RAM-enable/map bits or DISPI.LFB_ENABLED. Unknown ports return zero.
-// Most timing and attribute controls are stored without rendering effects. Odd/even
-// addressing, full text/font scanout, split-screen/pel panning and CRTC protection
-// are not modeled here. Legacy geometry uses a simplified stride/address model.
-// FIXME: Implement those documented address/control effects before claiming full
-// VGA conformance; write mode 3 must also apply the requested logic operation.
+// not gated by RAM-enable or DISPI.LFB_ENABLED. Unknown ports return zero.
+// COMPATIBILITY: Text characters/attributes retain the machine's RAM shadow;
+// PcDisplay scans plane-2 fonts and Attribute palettes. Full CRTC text addressing,
+// split-screen/pel panning, raster timing and CRTC protection remain incomplete.
+// FIXME: Implement those address/control effects before claiming full VGA
+// conformance. Legacy graphics geometry uses a simplified stride/address model.
 // IBM Hardware Interface Technical Reference, Video Subsystems, 42G2193,
 // September 1992, section 2 VGA Function (not the XGA extension in section 3).
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=65
@@ -245,6 +245,36 @@ void VGA::update_display_geometry() {
     if (rows >= MinimumLegacyHeight && rows <= MaximumLegacyHeight)
         height = rows;
 }
+// Decode Graphics Miscellaneous.MemoryMap, relative to its selected aperture.
+// Mapping 0 spans A0000..BFFFF; odd/even addressing can use its seventeenth
+// system-address bit before reducing the offset to a 64-KiB plane address.
+// IBM 42G2193, Miscellaneous Register, printed 2-84, PDF 110.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=110
+bool VGA::decode_legacy_address(uint32_t address, unsigned &offset) const {
+    unsigned mapping = (gfx[GraphicsRegister::MiscellaneousRegister] >> 2) & 3;
+    const uint32_t bases[] = {0xa0000, 0xa0000, 0xb0000, 0xb8000};
+    const unsigned sizes[] = {0x20000, 0x10000, 0x8000, 0x8000};
+    if (address < bases[mapping] || address - bases[mapping] >= sizes[mapping]) return false;
+    offset = address - bases[mapping];
+    return true;
+}
+// CRTC Mode Control.MAP13=0 sources display address bit 13 from row-scan bit
+// zero, yielding CGA's even/odd scan-line banks. Limit this path to B8000
+// graphics; planar and chain-4 VGA modes retain their normal display addressing.
+// IBM 42G2193, CRTC Mode Control Register, PDF 98..99.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=98
+bool VGA::cga_addressing() const {
+    return !(dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled) &&
+           (gfx[GraphicsRegister::MiscellaneousRegister] & 0x0d) == 0x0d && !(crtc[CrtcRegister::ModeControlRegister] & 1);
+}
+// Attribute Color Select contributes DAC address bits 6/7 and, when P54S is
+// selected in Mode Control, bits 4/5. IBM 42G2193 Color Select, PDF 119.
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=119
+uint8_t VGA::attribute_palette_index(uint8_t color) const {
+    unsigned index = attr[color & 15] & 0x3f;
+    if (attr[AttributeModeControl] & 0x80) index = (index & 15) | ((attr[AttributeColorSelect] & 3) << 4);
+    return uint8_t(index | ((attr[AttributeColorSelect] & 12) << 4));
+}
 // Read packed linear/banked memory, or latch all legacy planes and apply the selected read mode.
 // Board memory decode is supplied by the machine; low address bits select the plane offset.
 // IBM Memory Read Operations and Sequencer Memory Mode.
@@ -253,14 +283,23 @@ uint8_t VGA::read_memory(uint32_t a) {
     if (a >= lfbBase && a - lfbBase < vramSize)
         return vram[a - lfbBase];
     if (dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled)
-        return vram[unsigned(dispi[DisplayInterfaceRegister::BankRegister]) * PlaneBytes +
-                    (a & PlaneAddressMask)];
-    unsigned plane = gfx[GraphicsRegister::ReadMapSelectRegister] & (PlaneCount - 1),
-             off = a & PlaneAddressMask;
+        return a >= 0xa0000 && a < 0xb0000
+                   ? vram[unsigned(dispi[DisplayInterfaceRegister::BankRegister]) * PlaneBytes + (a & PlaneAddressMask)]
+                   : 0xff;
+    unsigned off;
+    if (!decode_legacy_address(a, off)) return 0xff;
+    unsigned plane = gfx[GraphicsRegister::ReadMapSelectRegister] & (PlaneCount - 1);
     if (seq[SequencerRegister::MemoryModeRegister] & Chain4) {
         plane = off & 3;
         off >>= 2;
+    } else if (gfx[GraphicsRegister::GraphicsModeRegister] & OddEvenReadAddressing) {
+        // GR05.OE substitutes address bit 0 for Read Map Select bit 0.
+        // IBM 42G2193, Graphics Mode Register, PDF 108.
+        // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=108
+        plane = (plane & 2) | (off & 1);
+        off >>= 1;
     }
+    off &= PlaneAddressMask;
     for (unsigned p = 0; p < PlaneCount; p++)
         latch[p] = planes[p][off];
     // A memory read latches all maps first. Read mode 1 compares each pixel's
@@ -287,15 +326,24 @@ void VGA::write_memory(uint32_t a, uint8_t v) {
         return;
     }
     if (dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled) {
-        vram[unsigned(dispi[DisplayInterfaceRegister::BankRegister]) * PlaneBytes +
-             (a & PlaneAddressMask)] = v;
+        if (a >= 0xa0000 && a < 0xb0000)
+            vram[unsigned(dispi[DisplayInterfaceRegister::BankRegister]) * PlaneBytes + (a & PlaneAddressMask)] = v;
         return;
     }
-    unsigned off = a & PlaneAddressMask, mask = seq[SequencerRegister::MapMaskRegister] & AllPlanes;
+    unsigned off;
+    if (!decode_legacy_address(a, off)) return;
+    unsigned mask = seq[SequencerRegister::MapMaskRegister] & AllPlanes;
     if (seq[SequencerRegister::MemoryModeRegister] & Chain4) {
         mask &= 1 << (off & 3);
         off >>= 2;
+    } else if (!(seq[SequencerRegister::MemoryModeRegister] & OddEvenDisable)) {
+        // SR04.OE=0 permits only even or odd planes according to address bit 0.
+        // IBM 42G2193, Memory Mode Register, PDF 78.
+        // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=78
+        mask &= (off & 1) ? 0x0a : 0x05;
+        off >>= 1;
     }
+    off &= PlaneAddressMask;
     unsigned rotate = gfx[GraphicsRegister::DataRotateRegister] & RotateCountMask,
              logic = (gfx[GraphicsRegister::DataRotateRegister] >> LogicalFunctionShift) &
                      LogicalFunctionMask,
@@ -317,18 +365,15 @@ void VGA::write_memory(uint32_t a, uint8_t v) {
                 data = (gfx[GraphicsRegister::SetResetRegister] & (1 << p)) ? 255 : 0;
                 bitmask &= rotated;
             }
-            // COMPATIBILITY: Mode 3 currently bypasses the selected logic function.
-            // FIXME: Apply Data Rotate.Function Select to mode 3 as required by
-            // IBM Write Mode Definitions, printed 2-83, without changing this migration.
+            // All logical functions operate on the source and the destination latch,
+            // including write mode 3. IBM Write Mode Definitions, printed 2-83.
             // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=109
-            if (mode != WriteMode::MaskedSetReset) {
-                if (logic == LogicalFunction::And)
-                    data &= latch[p];
-                else if (logic == LogicalFunction::Or)
-                    data |= latch[p];
-                else if (logic == LogicalFunction::Xor)
-                    data ^= latch[p];
-            }
+            if (logic == LogicalFunction::And)
+                data &= latch[p];
+            else if (logic == LogicalFunction::Or)
+                data |= latch[p];
+            else if (logic == LogicalFunction::Xor)
+                data ^= latch[p];
             planes[p][off] = (data & bitmask) | (latch[p] & ~bitmask);
         }
 }
@@ -338,6 +383,10 @@ void VGA::write_memory(uint32_t a, uint8_t v) {
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=65
 uint8_t VGA::read_register(uint16_t p) {
     switch (p) {
+    case Register::AttributeAddressDataRegister:
+        return attrIndex; // Includes Palette Address Source/display enable, bit 5.
+    case Register::PaletteReadAddressRegister:
+        return dacReadMode ? 3 : 0;
     case Register::MiscellaneousOutputReadRegister:
         return misc;
     case Register::InputStatus0Register:
@@ -361,7 +410,7 @@ uint8_t VGA::read_register(uint16_t p) {
     case Register::PelMaskRegister:
         return dacMask;
     case Register::PaletteWriteAddressRegister:
-        return dacWrite;
+        return dacReadMode ? dacRead : dacWrite;
     case Register::PaletteDataRegister: {
         auto v = dac[dacRead][dacComponent++];
         if (dacComponent == ColorComponents) {
@@ -388,9 +437,9 @@ void VGA::write_register(uint16_t p, uint8_t v) {
         break;
     case Register::AttributeAddressDataRegister:
         if (!attrData)
-            attrIndex = v & AttributeIndexMask;
+            attrIndex = v & PaletteAddressMask;
         else
-            attr[attrIndex] = v;
+            attr[attrIndex & AttributeIndexMask] = v;
         attrData = !attrData;
         break;
     case Register::SequencerAddressRegister:
@@ -417,10 +466,12 @@ void VGA::write_register(uint16_t p, uint8_t v) {
         dacMask = v;
         break;
     case Register::PaletteReadAddressRegister:
+        dacReadMode = true;
         dacRead = v;
         dacComponent = 0;
         break;
     case Register::PaletteWriteAddressRegister:
+        dacReadMode = false;
         dacWrite = v;
         dacComponent = 0;
         break;
@@ -445,7 +496,7 @@ void VGA::write_register(uint16_t p, uint8_t v) {
 // out-of-bounds pixels return black. IBM Video Memory Organization / DAC.
 // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=49
 uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
-    if (x >= width || y >= height)
+    if (x >= width || y >= height || (seq[1] & 0x20) || !(attrIndex & PaletteAddressSource))
         return OpaqueBlack;
     uint8_t color = 0;
     if (dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled) {
@@ -484,7 +535,13 @@ uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
     }
     unsigned start = ((crtc[CrtcRegister::StartAddressHighRegister] << 8) |
                       crtc[CrtcRegister::StartAddressLowRegister]);
-    if (gfx[GraphicsRegister::GraphicsModeRegister] & Color256Mode) {
+    if (cga_addressing()) {
+        bool twoBit = gfx[GraphicsRegister::GraphicsModeRegister] & InterleavedShiftRegister;
+        unsigned at = ((y & 1) * 0x2000 + (y >> 1) * 80 + x / (twoBit ? 4 : 8) + start * 2) & 0x3fff;
+        uint8_t packed = twoBit ? planes[at & 1][at >> 1] : planes[0][at];
+        color = twoBit ? ((packed >> ((3 - (x & 3)) * 2)) & 3) : ((packed >> (7 - (x & 7))) & 1);
+        color = attribute_palette_index(color);
+    } else if (gfx[GraphicsRegister::GraphicsModeRegister] & Color256Mode) {
         unsigned stride =
             crtc[CrtcRegister::OffsetRegister] ? crtc[CrtcRegister::OffsetRegister] * 2 : width / 4;
         color = planes[x & 3][(start + y * stride + x / 4) & PlaneAddressMask];
@@ -495,7 +552,7 @@ uint32_t VGA::pixel_color(unsigned x, unsigned y) const {
         for (unsigned p = 0; p < PlaneCount; p++)
             if (planes[p][a] & (128 >> (x & 7)))
                 color |= 1 << p;
-        color = attr[color] & SixBitColorMask;
+        color = attribute_palette_index(color);
     }
     color &= dacMask;
     auto expand = [](uint8_t v) { return uint32_t((v << 2) | (v >> 4)); };
@@ -511,11 +568,15 @@ void VGA::render_graphics(std::span<uint32_t> pixels, unsigned frameWidth,
                           unsigned frameHeight) const {
     if (frameHeight && frameWidth > pixels.size() / frameHeight)
         throw std::invalid_argument("VGA frame buffer is too small");
+    if ((seq[1] & 0x20) || !(attrIndex & PaletteAddressSource)) {
+        std::fill_n(pixels.begin(), size_t(frameWidth) * frameHeight, OpaqueBlack);
+        return;
+    }
     // Snapshot the palette once per frame, rather than expanding DAC components
     // and decoding display mode for every pixel. Other packed formats retain
     // the reference pixel path.
     const bool packed = dispi[DisplayInterfaceRegister::EnableRegister] & DisplayInterfaceEnabled;
-    if (packed && dispi[DisplayInterfaceRegister::BitsPerPixelRegister] != IndexedBitsPerPixel) {
+    if (cga_addressing() || (packed && dispi[DisplayInterfaceRegister::BitsPerPixelRegister] != IndexedBitsPerPixel)) {
         for (unsigned y = 0; y < frameHeight; ++y)
             for (unsigned x = 0; x < frameWidth; ++x)
                 pixels[size_t(y) * frameWidth + x] = pixel_color(x, y);
@@ -562,7 +623,7 @@ void VGA::render_graphics(std::span<uint32_t> pixels, unsigned frameWidth,
                     unsigned shift = 7 - bit;
                     unsigned color = ((p0 >> shift) & 1) | (((p1 >> shift) & 1) << 1) |
                                      (((p2 >> shift) & 1) << 2) | (((p3 >> shift) & 1) << 3);
-                    row[x + bit] = colors[attr[color] & SixBitColorMask];
+                    row[x + bit] = colors[attribute_palette_index(color)];
                 }
             }
         }

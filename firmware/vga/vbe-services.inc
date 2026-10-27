@@ -328,7 +328,7 @@ vbe_set_mode:
     cmp ax,3
     jbe .legacy_ok
     cmp ax,7
-    je .legacy_ok
+    jbe .legacy_ok
     cmp ax,0x0d
     jb vbe_failure
     cmp ax,0x13

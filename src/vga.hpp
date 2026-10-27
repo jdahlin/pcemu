@@ -70,6 +70,12 @@ struct VGA {
     // https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=106
     static constexpr unsigned RotateCountMask = 7, LogicalFunctionShift = 3,
                               LogicalFunctionMask = 3;
+    // GR05.OE controls read-plane parity; SR04.OE controls write-plane parity.
+    // GR05.SR interleaves two packed color bits for CGA modes 4/5.
+    // IBM 42G2193 Memory Mode / Graphics Mode, PDF 78/108.
+    static constexpr uint8_t OddEvenReadAddressing = 0x10, InterleavedShiftRegister = 0x20;
+    static constexpr unsigned AttributeModeControl = 0x10, AttributeColorSelect = 0x14;
+    static constexpr uint8_t PaletteAddressSource = 0x20, PaletteAddressMask = 0x3f;
     enum LogicalFunction : unsigned { Replace = 0, And = 1, Or = 2, Xor = 3 };
     // Write modes 0..3: rotated CPU/set-reset, copied latch, expanded CPU plane
     // bits, and set/reset with rotated CPU byte as additional mask.
@@ -95,6 +101,7 @@ struct VGA {
         StartAddressLowRegister = 0x0d,
         VerticalDisplayEndRegister = 0x12,
         OffsetRegister = 0x13,
+        ModeControlRegister = 0x17,
     };
     static constexpr uint8_t VerticalDisplayEndBit8 = 2, VerticalDisplayEndBit9 = 0x40,
                              MaximumScanLineMask = 31, DoubleScanning = 0x80;
@@ -169,8 +176,9 @@ struct VGA {
     };
     std::array<std::array<uint8_t, PlaneBytes>, PlaneCount> planes{};
     uint8_t seq[8]{}, gfx[16]{}, crtc[32]{}, attr[32]{}, latch[PlaneCount]{};
-    uint8_t seqIndex = 0, gfxIndex = 0, crtcIndex = 0, attrIndex = 0;
+    uint8_t seqIndex = 0, gfxIndex = 0, crtcIndex = 0, attrIndex = 0x20;
     bool attrData = false, graphics = false;
+    bool dacReadMode = false; // DAC State: true reads (03h), false writes (00h).
     uint8_t dac[PaletteEntries][ColorComponents]{}, dacMask = EightBitColorMask, dacRead = 0,
                                                     dacWrite = 0, dacComponent = 0;
     unsigned width = 640, height = 480;
@@ -196,6 +204,12 @@ struct VGA {
                                    0,
                                    0,
                                    uint16_t(vramSize / PlaneBytes)};
+    // Decode the VGA-selected memory window; byte offsets precede plane addressing.
+    bool decode_legacy_address(uint32_t address, unsigned &offset) const;
+    // Identify CGA two-bank row addressing from the CRTC compatibility control.
+    bool cga_addressing() const;
+    // Translate a 4-bit color through Attribute palette/page selection.
+    uint8_t attribute_palette_index(uint8_t color) const;
     // Read a selected Bochs register, capabilities or computed virtual height.
     uint16_t read_display_interface_register() const;
     // Validate/store a Bochs register and apply enable, geometry or memory effects.

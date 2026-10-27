@@ -15,6 +15,9 @@ class PcDisplay {
     void render(Machine &machine, std::span<uint32_t> pixels, unsigned displayWidth,
                 unsigned displayHeight, uint64_t frameTicks) const;
   private:
+    // Present current text memory/font/attributes in the frontend's logical frame.
+    uint32_t text_pixel(const Machine &machine, unsigned x, unsigned y,
+                        unsigned width, unsigned height, bool animate, uint64_t ticks) const;
     std::array<uint8_t, 2048> font{};
 };
 } // namespace pc

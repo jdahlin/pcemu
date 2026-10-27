@@ -29,7 +29,7 @@ static bool warmSystemWord(CPU &cpu, uint32_t linear, uint32_t &value) {
     }
     if (!cpu.a20) physical &= ~(1u << 20);
     if (uint64_t(physical)+4 > cpu.mem.size() ||
-        (physical < 0xb0000 && uint64_t(physical)+4 > 0xa0000)) return false;
+        (physical < 0xc0000 && uint64_t(physical)+4 > 0xa0000)) return false;
     std::memcpy(&value, cpu.mem.data()+physical, 4);
     return true;
 }
@@ -74,7 +74,7 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     }
     if (!cpu.a20) physical &= ~(1u << 20);
     const uint64_t end = uint64_t(physical) + width;
-    return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
+    return end <= cpu.mem.size() && !(physical < 0xc0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
 uint32_t nativeDescriptorQuery(CPU *cpu,const NativeMemoryMove *source,unsigned selector,unsigned destination,unsigned width,unsigned limitQuery) noexcept {
@@ -518,7 +518,7 @@ uint32_t nativeMemory(CPU *cpu, const NativeMemoryMove *op, uint32_t offset, uin
         const bool rmw = op->delta || op->alu >= 0 || op->exchange || op->bit > 4 || op->invert;
         auto physical = cpu->physical(linear, op->store && !rmw);
         if (uint64_t(physical) + op->width > cpu->mem.size() ||
-            (physical < 0xb0000 && uint64_t(physical) + op->width > 0xa0000)) {
+            (physical < 0xc0000 && uint64_t(physical) + op->width > 0xa0000)) {
             cpu->nativeFallback = true;
             return 0;
         }

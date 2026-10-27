@@ -254,6 +254,14 @@ class SnapshotCodec {
         }
         int64_t rtc = m.rtcTime();
         a(rtc);
+        if (version >= 7) {
+            a(v.dacReadMode);
+        } else if constexpr (A::loading) {
+            // Older snapshots stored only the five-bit Attribute index and
+            // had no DAC direction latch. Their display was always enabled.
+            v.attrIndex |= 0x20;
+            v.dacReadMode = false;
+        }
         if constexpr (A::loading) {
             if (rtc < -2208988800ll || rtc > 32503680000ll)
                 throw std::runtime_error("Invalid snapshot RTC");
@@ -265,8 +273,8 @@ class SnapshotCodec {
             m.cpu.systemAccess || !m.cpu.tlbEpoch || m.ata.position > 512 ||
             m.ata.remaining > 256 || !m.ata.heads || m.ata.heads > 255 || !m.ata.spt ||
             m.ata.spt > 63 || m.vga.width < 160 || m.vga.width > VGA::maxWidth ||
-            m.vga.height < 100 || m.vga.height > VGA::maxHeight || m.vga.attrIndex >= 32 ||
-            m.vga.dacComponent >= 3 || !m.columns || m.columns > 160 || !m.rows || m.rows > 100 ||
+            m.vga.height < 100 || m.vga.height > VGA::maxHeight || m.vga.attrIndex >= 64 ||
+            m.vga.dacComponent >= 3 || !m.columns || m.columns > 160 || !m.rows || m.rows > 256 ||
             m.activePage > 7)
             throw std::runtime_error("Invalid snapshot device state");
         if (m.vga.dispi[5] >= VGA::vramSize / 65536 || m.vga.vram.size() != VGA::vramSize ||
@@ -308,7 +316,7 @@ class SnapshotCodec {
             Writer writer;
             writer.data.reserve(m.cpu.mem.size() + 1024 * 1024);
             writer.bytes(magic, sizeof(magic));
-            uint32_t version = 6, ram = m.cpu.mem.size();
+            uint32_t version = 7, ram = m.cpu.mem.size();
             writer(version, ram);
             for (auto &d : disks)
                 d.state(writer);
@@ -375,7 +383,7 @@ class SnapshotCodec {
         reader.bytes(signature, sizeof(signature));
         uint32_t version, ram;
         reader(version, ram);
-        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 6) ||
+        if (std::memcmp(signature, magic, sizeof(magic)) || (version < 1 || version > 7) ||
             ram < 2 * 1024 * 1024 || ram > 64 * 1024 * 1024)
             throw std::runtime_error("Unsupported snapshot format or RAM size");
         DiskInfo disks[2];
