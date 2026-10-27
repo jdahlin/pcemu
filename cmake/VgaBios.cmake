@@ -1,17 +1,21 @@
-# Standalone guest firmware; NASM and Python are needed only for these targets.
-find_program(PCEMU_VGA_NASM nasm)
-find_package(Python3 QUIET COMPONENTS Interpreter)
+# Build original guest firmware and embed it in every x86 session frontend.
+find_program(PCEMU_VGA_NASM nasm REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 if(PCEMU_VGA_NASM AND Python3_Interpreter_FOUND)
   file(GLOB VGA_FONT_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/firmware/vga/vendor/font8x8/*")
   file(GLOB VGA_SERVICE_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/firmware/vga/*.inc")
   set(VGA_ROM "${CMAKE_BINARY_DIR}/firmware/pcemu-vga.bin")
-  add_custom_command(OUTPUT "${VGA_ROM}"
+  set(VGA_EMBED "${CMAKE_BINARY_DIR}/firmware/pcemu-vga-bytes.inc")
+  add_custom_command(OUTPUT "${VGA_ROM}" "${VGA_EMBED}"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/build_vga_bios.py"
       --output "${VGA_ROM}"
     DEPENDS firmware/vga/vga.asm tools/build_vga_bios.py tools/vga_modes.py ${VGA_FONT_SOURCES} ${VGA_SERVICE_SOURCES}
     VERBATIM)
-  add_custom_target(vga-bios DEPENDS "${VGA_ROM}")
+  add_custom_target(vga-bios DEPENDS "${VGA_ROM}" "${VGA_EMBED}")
+  set_source_files_properties(src/pc_vga_rom.cpp PROPERTIES
+    OBJECT_DEPENDS "${VGA_EMBED}"
+    COMPILE_DEFINITIONS "PCEMU_BUILTIN_VGA_ROM=\"${VGA_EMBED}\"")
   pcemu_program(vga-bios-tests ZSTD SOURCES ${CORE} src/pc_display.cpp tests/vga_bios_test.cpp)
   add_dependencies(vga-bios-tests vga-bios)
   target_compile_definitions(obj_tests_vga_bios_test_cpp_FALSE_FALSE PRIVATE

@@ -1,3 +1,4 @@
+#include "pc_vga_rom.hpp"
 #include "pc_session.hpp"
 #include "ps2_guest_input.hpp"
 #include "jit.hpp"
@@ -44,7 +45,7 @@ static std::vector<uint8_t> readFile(const std::string &p) {
 }
 
 int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendFactory, SessionControl *sessionControl) {
-    std::string hd, fd, rom = "roms/vgabios.bin", type, waitText, watchRange, controlPath;
+    std::string hd, fd, rom, type, waitText, watchRange, controlPath;
     size_t ramMB = 16;
     bool ramExplicit = false, noJit = false, listMachines = false, followJumps = true, traceJit = false;
     std::string machineId = "pc-legacy", backendId = "auto";
@@ -52,7 +53,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
     unsigned linkWarmup = 256;
     bool initiallyPaused = false;
     bool headless = false, fromFloppy = false, enableJit = true, verbose = false, benchmark = false,
-         executeVga = false, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
+         executeVga = true, memoryBenchmark = false, byteMemoryBenchmark = false, enableNetwork = true, enableHostInput = true;
     uint64_t limit = 100000000, benchmarkSteps = 10000000;
     std::string tracePath, dumpPath, framePath, untilText, traceTailPath;
     std::string snapshotPath, jitDebugMapPath;
@@ -77,6 +78,8 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                 enableHostInput = false;
             else if (arg == "--no-network")
                 enableNetwork = false;
+            else if (arg == "--no-execute-vgabios")
+                executeVga = false;
             else if (arg == "--execute-vgabios")
                 executeVga = true;
             else if (arg == "--jit-link-warmup")
@@ -178,6 +181,7 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
                              "  --no-network (disconnect host socket gateway)\n"
                              "  --no-host-input (automated GUI runs; control input remains active)\n"
                              "  --state-json FILE (capture metadata without a RAM dump)\n"
+                             "  --vgabios FILE (override embedded ROM) | --no-execute-vgabios\n"
                              "Click to capture mouse; Cmd+G releases/captures it. Cmd+Q: quit.\n";
                 return 0;
             } else
@@ -251,10 +255,11 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         }
 
         auto &c = m.cpu;
-        // VGA ROM is an allowed external asset; use its IBM-compatible text font.
+        // Use the built-in guest firmware unless an explicit comparison ROM is supplied.
         PcDisplay display;
-        if (snapshotPath.empty() && !rom.empty()) {
-            auto bytes = readFile(rom);
+        if (snapshotPath.empty()) {
+            const auto builtin = builtinVgaRom();
+            auto bytes = rom.empty() ? std::vector<uint8_t>(builtin.begin(),builtin.end()) : readFile(rom);
             for (size_t i = 0; i < bytes.size() && 0xc0000 + i < c.mem.size(); i++)
                 c.mem[0xc0000 + i] = bytes[i];
             m.vgaRom = std::move(bytes);
@@ -262,6 +267,9 @@ int pc::runPcSessionCommandLine(int argc, char **argv, FrontendFactory frontendF
         display.loadFont(m.vgaRom);
         if (snapshotPath.empty() && executeVga) {
             m.initializeVga();
+            // Match snapshot restores: the requested budget starts at guest
+            // boot, after firmware initialization has consumed instructions.
+            if (limit) limit += c.instructions;
             std::cerr << "VGA ROM initialized: INT10=" << std::hex << c.read(0x40, 4) << std::dec
                       << " instructions=" << c.instructions << '\n';
         }
@@ -737,7 +745,7 @@ int pc::runPcSession(const PcSessionOptions &options, FrontendFactory factory, S
     if (!options.snapshot.empty()) arguments.insert(arguments.end(), {"--load-snapshot", options.snapshot});
     else if (!options.disk.empty()) arguments.insert(arguments.end(), {"--disk", options.disk});
     if (!options.controlFile.empty()) arguments.insert(arguments.end(), {"--control-file", options.controlFile});
-    if (options.initializeVga) arguments.push_back("--execute-vgabios");
+    arguments.push_back(options.initializeVga ? "--execute-vgabios" : "--no-execute-vgabios");
     if (!options.bootText.empty()) arguments.insert(arguments.end(), {"--type", options.bootText});
     if (options.startPaused) arguments.push_back("--paused");
     if (options.headless) arguments.insert(arguments.end(), {"--headless", "--steps", std::to_string(options.instructionLimit)});

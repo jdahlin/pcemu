@@ -1,42 +1,39 @@
 # Standalone VGA BIOS
 
-PCEmu now has an original, optional 32-KiB x86 VGA option ROM in
-`firmware/vga/vga.asm`. Its entry point installs INT 10h and initializes VGA
-through guest port I/O. It includes color/monochrome text, standard VGA graphics, font services,
-strings, palettes, state save/restore and VBE 2.0 for our DISPI board. BIOS calls execute guest instructions; no private BIOS
-trap, host video service or SDL call implements these services. The existing
-host-backed system BIOS remains in use. This is the text implementation,
-not a complete VGA BIOS replacement and not yet the default for installed guests.
+PCEmu builds and embeds an original 32-KiB x86 VGA/VBE 2.0 option ROM.
+Normal x86 sessions execute it by default, without an external VGA firmware file.
+Its INT 10h services execute guest instructions using VGA ports and display
+memory. The host-backed system BIOS remains responsible for other services;
+ARM UEFI is a separate firmware dependency.
+
+`firmware/vga/vga.asm` contains initialization, interrupt dispatch and core text
+services. Separate assembly modules implement fonts, palettes, graphics, CGA,
+queries, state and VBE. Together these contain approximately 4,500 source lines,
+plus generated font/mode tables, the builder and tests.
 
 ## Build and run
 
-Only NASM and Python 3 are required to build the firmware. No Watcom compiler,
-external VGA ROM, network access, QEMU installation or DOS image is required.
+NASM and Python 3 are build dependencies. All font sources are vendored and
+hash-checked: firmware builds require no network, Watcom, DOS image or QEMU.
 
 ```sh
 cmake -S . -B build -G Ninja
-cmake --build build --target vga-bios-tests
-./build/vga-bios-tests build/firmware/pcemu-vga.bin
-python3 -m unittest discover -s tests -p test_vga_bios_build.py
-cmake --build build --target vga-bios-smoke
+cmake --build build --target pcemu vga-bios-tests
+ctest --test-dir build -R '^vga-bios' --output-on-failure
+python3 tools/smoke_vga_bios.py --qemu
 ```
 
-The ROM can also be built directly:
+`build/firmware/pcemu-vga.bin` is also usable as an ordinary option ROM.
+`--vgabios FILE` selects an explicit comparison ROM. `--no-execute-vgabios`
+selects the host video BIOS path for diagnostics; `--execute-vgabios` explicitly
+selects guest execution. Snapshots retain their own ROM and reset policy.
+The native macOS frontend also uses the embedded ROM for new sessions.
+Generated binaries and includes remain under ignored `build/`.
 
-```sh
-python3 tools/build_vga_bios.py
-```
-
-Select it explicitly for an existing guest with
-`--vgabios build/firmware/pcemu-vga.bin --execute-vgabios`. Keep automated runs
-headless. Do not use this milestone for a Windows installation: installed-guest compatibility is still being validated.
-The existing external ROM stays available for those workloads.
-
-The output and generated font include live under ignored `build/firmware/`.
-The builder validates pinned font-source hashes, assembles a fixed-origin ROM,
-and fixes the expansion-ROM checksum. NASM 3's absolute-word relocation warning
-is disabled specifically because absolute 16-bit offsets into this flat ROM are
-intentional; other warnings remain errors.
+The builder checks the option-ROM and PCI headers and fixes the checksum.
+NASM 3's absolute-word relocation warning is disabled for intentional 16-bit
+flat-ROM offsets; other warnings remain errors. The executable embeds the same
+checksummed bytes as the standalone file.
 
 ## Specification contract
 
@@ -69,11 +66,12 @@ scaling. References distinguish BIOS contracts from register programming:
 | Interface | Implemented behavior |
 |---|---|
 | ROM entry | Install INT 10h, INT 1Fh and INT 43h font pointers; set mode 3; preserve caller registers/FLAGS; far return |
-| AH=00h | Modes 00h..03h and 07h; 40/80-column color/monochrome; scan-line/font geometry; bit 7 preserves text memory |
+| AH=00h | Modes 00h..07h and 0Dh..13h; color/monochrome text, CGA, planar VGA and chain-4; bit 7 preserves display memory |
 | AH=01h/02h/03h | Cursor shape, page-specific position, query; update hardware only for active page |
 | AH=05h | Page selection, BDA byte start, CRTC word start and cursor |
 | AH=06h/07h | Overlap-safe window scrolling, zero/oversized counts clear, blank attribute, active-page isolation |
 | AH=08h/09h/0Ah | Read at requested page's cursor; repeated character/attribute writes; cursor unchanged |
+| AH=0Bh/0Ch/0Dh | CGA background/palette selection; graphics pixel write/read, XOR and pages |
 | AH=0Eh | Active-page teletype, CR/LF/BS/BEL, wrapping and scrolling; bell is silent |
 | AH=0Fh | Current mode, no-clear bit, columns and active page |
 | AX=1010h/1015h | Individual RGB DAC colors; AH=10h also implements EGA palette blocks, blinking, color paging, PEL masks, DAC blocks and grayscale |
@@ -82,9 +80,13 @@ scaling. References distinguish BIOS contracts from register programming:
 | AH=12h | EGA information, text scan-line selection, palette/grayscale/cursor controls, screen/address enable |
 | AH=13h | Counted strings, optional attributes/cursor movement, control characters and page isolation |
 | AH=1Bh | Standard 64-byte functionality/state block |
-| AX=1A00h | Analog color VGA identification |
+| AH=1Ah | Display combination read/write, primary/alternate ordering |
 | AH=1Ch | Selective hardware/BIOS/DAC save and restore |
 | AH=4Fh | VBE 2.0 mode discovery/set/query, save/restore, banking, stride, panning, 6/8-bit DAC, BGRA palettes and relocatable 32-bit interface |
+
+The VBE baseline is [VESA VBE Core Functions 3.0](https://read.seas.harvard.edu/~kohler/class/04f-aos/ref/hardware/vbe3.pdf),
+using its retained 2.0 contracts (functions 00h..0Ah). VBE 3.0 extensions are
+not advertised.
 
 Unknown legacy operations are no-ops; unsupported mode sets leave the existing
 mode intact. Defensive policy ignores invalid page numbers, cursor coordinates
@@ -100,91 +102,6 @@ attribution and SHA-256 hashes are in `firmware/vga/vendor/font8x8/`. The builde
 maps Unicode glyphs into CP437 and reverses the source's bit order. CP437 control pictures and twelve supplementary mathematical glyphs are original. The 8x14/8x16 fonts resample the 8x8 rows: it is usable but does not claim IBM ROM glyph identity. Control pictures, the 7Fh house, printable Latin, Greek, box-drawing and
 mathematical characters have glyphs. Font data is not taken
 from the external VGA ROM.
-
-## Validation and its limits
-
-`tests/vga_bios_test.cpp` executes the assembled ROM in the interpreter with
-host BIOS callbacks removed. It verifies literal expected BDA values, CRTC
-addresses, every text page, character repeats, attributes, cursor behavior,
-no-clear mode setting, teletype controls, DAC read/write, ROM font pointers and
-all 4096 font scan-line bytes loaded into plane 2. A cell-array oracle checks
-scrolling in both directions with zero, small and oversized counts. Boundary
-cases include clipped/empty rectangles, invalid pages, unsupported functions and
-maximal repeats at the last page. Interrupt calls enter with DF and CF set;
-stack balance, segment state and documented register outputs are checked. ROM
-bytes must remain unchanged. These checks do not depend on the external ROM.
-
-A differential run applies the same supported text/cursor/scroll contracts to
-our ROM and the existing external ROM:
-
-```sh
-./build/vga-bios-tests build/firmware/pcemu-vga.bin roms/vgabios.bin
-```
-
-The reference ROM is optional and remains an ignored local input. Differences
-outside the contract, such as font design and CGA cursor-shape emulation, are
-not treated as universal correctness rules.
-
-`tests/vga-bios-boot.asm` is a small RAM-only boot probe that checks the installed BIOS
-vector, INT 10h calls and B8000 memory. `tools/smoke_vga_bios.py` boots it under
-PCEmu's interpreter and JIT with the new ROM, no network and no GUI. Temporary
-small media are removed on completion. For independent execution under
-QEMU's VGA device and SeaBIOS option-ROM discovery:
-
-```sh
-python3 tools/smoke_vga_bios.py --qemu
-```
-
-This uses QEMU TCG, a read-only temporary RAM payload, no installed OS and no
-large guest image. QEMU is a validation dependency only. The probe exits using
-the debug-exit device and reports through port E9h. Passing QEMU establishes a
-real option-ROM discovery/boot path; it does not establish full VGA compliance.
-
-Validation on 2026-10-27: the standalone ROM tests and optional reference-ROM
-contract passed; Python font/packaging/reproducibility tests passed; the boot
-probe passed in PCEmu interpreter, PCEmu JIT and QEMU 11.1.2 TCG. Existing hardware
-device and input/video integration tests passed. No Windows installation or GUI
-run was performed.
-
-## Existing external diagnostics
-
-These are useful independent diagnostics, not an official comprehensive VGA
-BIOS certification suite. They have been inspected, but **have not yet been run
-against this text-only milestone**. Their missing prerequisites must not be
-reported as passes.
-
-| Diagnostic | Coverage and requirements | How we should use it |
-|---|---|---|
-| [VGATEST, Marco Bortolin](https://github.com/barotto/VGATEST/tree/905460440c23cf033eaf078b779236fcb70182aa) | GPL-3.0-or-later; text/font maps, graphics modes, palettes, panning/split screen and memory access. Upstream documents `VGATEST0.EXE` (16-bit DOS) and `VGATEST.EXE` (DOS/4GW); source builds with Open Watcom. | Start with the 16-bit binary on an existing DOS guest once font-loading/mode services are implemented; run selected demos with scripted keyboard input and captured frames. Distinguish BIOS failures from unsupported VGA raster features. |
-| [Bochs VGABIOS testbios.c](https://github.com/bochs-emu/VGABIOS/blob/12d978bd86fe88ee6b8620b0f1e91c7fb81bc2e6/vgabios/tests/testbios.c) | Existing Turbo C program issuing INT 10h calls and displaying BIOS data; cursor, pages, scrolling and character operations. It uses DOS stdio/conio and human inspection, not machine-readable assertions. | Build with a compatible DOS compiler and convert its observed BIOS-data results into scripted comparisons on a small overlay of an existing DOS image. Our native oracle already covers these operation families independently. |
-| [X-VESA, Marco Pistella](https://github.com/Marco-Pistella/X-VESA/tree/96ff78f92f7b6832046f42486641bf9dafbc29b6) | GPL-3.0; mode enumeration, banked/linear framebuffer reliability patterns, display start/virtual geometry, DAC switching and EDID. Includes a release COM binary; source build requires ASMC/TLINK and additional tools. | Use after VBE implementation. Commands 1, 3, 5, 6, 7 and 8 exercise discovery, VRAM patterns, display, page flips, virtual geometry and DAC respectively. Exclude physical timing and throughput claims: upstream explicitly discourages interpreting emulator timing measurements. |
-
-Keep downloaded diagnostic binaries under ignored `build/` and run them with
-small temporary compressed overlays of existing DOS media. Do not create a new
-large fixture. Initial headless automation should capture frames and memory,
-not depend on a person approving an interactive screen.
-
-## Next milestones
-
-1. Validate the expanded text services with the external legacy diagnostics.
-   Add state save/restore and complete parameter tables alongside graphics modes.
-2. Add standard mono/40-column/CGA/EGA/VGA graphics modes with mode-specific
-   register and palette tables. Verify pixels, planar memory effects, transitions,
-   font drawing, no-clear behavior and page limits, then VGATEST captures.
-3. Add a deliberately bounded VBE implementation from the VESA Core Functions
-   specification. Enumerate only implemented modes and capabilities. Test info
-   buffer lengths, ABI preservation, invalid requests, banked/linear access,
-   stride/panning, palette operations and protected-mode entry points before
-   advertising the corresponding VBE version. Run X-VESA functional tests.
-4. Validate DOS applications and Windows 3.11/95 startup, display transitions,
-   application use, snapshot restore and firmware restart on existing guest
-   images before changing the default ROM. Migrate the system BIOS separately.
-
-Text expansion validation: the same mode-3 differential contracts still pass;
-new tests exercise 40-column/monochrome addressing, 80x50 font resizing/page
-bounds, user font block 5, cursor emulation, counted strings on an inactive
-page, palette blocks, color paging, masks, grayscale, palette-loading policy and
-functionality buffers. Interrupt wrappers preserve full 32-bit registers.
 
 ## Standard VGA graphics expansion
 
@@ -234,7 +151,7 @@ graphics reads/writes no longer bypass CGA memory as ordinary RAM. Legacy
 VGA memory-map selection is decoded before plane addressing. Headless boot
 probes independently check direct B8000 writes and BIOS pixels in QEMU.
 
-Text presentation uses the loaded plane-2 font maps, selected glyph height,
+Text presentation uses the loaded plane-2 font maps, CRTC glyph height and visible grid,
 40/80-column geometry, monochrome B0000 memory, page allocation, DAC colors,
 background intensity, blinking and screen blanking. The host-backed system
 BIOS retains its existing RAM-shadow/ROM-font fallback. CRTC split-screen,
@@ -254,12 +171,78 @@ legacy INT 1Dh parameter sets are present. DCC reads/writes preserve primary and
 alternate display ordering. Functionality reports use mode-specific color/page
 counts and scan-line codes rather than assuming text mode.
 
-VGATEST CGA test cards exposed an ARM64 inline-memory guard that covered only
-A0000..AFFFF. The guard now also rejects B0000..BFFFF, preserving video-device
-callbacks for native loads, stores and read-modify-write operations. Regression
-checks cover both aperture halves and boundary-crossing accesses. The same
-unmodified VGATEST cards now agree with QEMU in interpreter and JIT runs.
+Native text follows direct CRTC geometry changes even when BIOS data is stale,
+as exercised by X-VESA. The native memory guard covers the full A0000..BFFFF
+aperture, including CGA loads, stores and read-modify-write operations.
 
-X-VESA directly selects 80x50 text without updating BIOS data. Native text
-scanout now derives character height and the visible grid from CRTC registers;
-a regression check deliberately leaves stale BIOS geometry in place.
+## Validation and its limits
+
+`tests/vga_bios_test.cpp` executes the assembled ROM with host BIOS callbacks
+removed. Independent cell, byte and pixel oracles check text pages, clipping,
+scroll overlap, font planes/maps, CGA banks, planar/chain-4 addressing, palettes,
+VBE mode information and bounds, stride/panning, invalid-request atomicity and
+selective state restoration. ABI checks cover full 32-bit register preservation,
+segments, stack balance, DF/CF, guarded buffers and immutable ROM bytes.
+Protected-mode tests relocate the VBE entry points into RAM and execute them
+in flat 32-bit mode. Display tests include direct CRTC text geometry changes.
+The roughly 2.3 million assertions include per-byte/per-pixel checks; that number
+is not a count of independently covered features.
+
+The optional reference-ROM run compares only shared supported contracts:
+
+```sh
+./build/vga-bios-tests build/firmware/pcemu-vga.bin roms/vgabios.bin
+```
+
+`tests/vga-bios-boot.asm` is a small two-stage RAM-only probe. It verifies option
+ROM initialization, text, standard/CGA graphics, direct B8000 access, VBE mode
+information/stride/panning/DAC/state, and copied protected-mode interfaces.
+`tools/smoke_vga_bios.py --qemu` runs it headlessly in PCEmu interpreter and JIT,
+using both embedded and explicit ROM selection, then under QEMU TCG/SeaBIOS.
+It requires no installed OS and removes its tiny temporary boot image.
+
+Third-party diagnostics are supplementary evidence, not an official VGA
+certification suite. The fetch tool pins release/source revisions and SHA-256
+hashes, retains licenses and stores binaries only under ignored `build/`.
+
+```sh
+python3 tools/smoke_vga_diagnostics.py --disk /absolute/path/existing-dos.qcow2 --qemu
+# Add --no-jit for the interpreter comparison.
+```
+
+The tool stages unmodified diagnostics on a small compressed overlay, creates
+independent PCEmu/QEMU children, retains captures and JSON evidence, and removes
+owned disks after success. The existing DOS parent is unchanged. Diagnostic
+execution requires Pillow, Tesseract and, for comparison, QEMU.
+
+| External diagnostic | Verified scope |
+|---|---|
+| [VGATEST 1.5, Marco Bortolin](https://github.com/barotto/VGATEST/tree/905460440c23cf033eaf078b779236fcb70182aa) | Unmodified 16-bit DOS binary: font maps 0/2, 80x50 text, static test cards in modes 04h, 06h, 0Dh, 12h, 13h and Mode X 320x240. Interpreter and JIT captures compared with QEMU. |
+| [X-VESA 2.0, Marco Pistella](https://github.com/Marco-Pistella/X-VESA/tree/96ff78f92f7b6832046f42486641bf9dafbc29b6) | Unmodified COM binary enumerates all 28 VBE modes; 80x50 enumeration agrees with QEMU. Additional interactive tests are recorded separately when run. |
+| [Bochs testbios.c](https://github.com/bochs-emu/VGABIOS/blob/12d978bd86fe88ee6b8620b0f1e91c7fb81bc2e6/vgabios/tests/testbios.c) | Inspected, not compiled or run. Requires a compatible DOS C toolchain; its interactive reports are not automated assertions. |
+
+Pixel comparisons reduce captured RGB channels to their six-bit DAC values,
+remove the ninth text column and exclude only the text cursor footprint.
+They retry for a visible text blink phase and completed drawing. For the dual
+font-map case alone, QEMU's clone-style foreground intensity is mapped to IBM's
+low palette: IBM reassigns that intensity bit to font selection. Independent
+native tests verify PCEmu's palette behavior. These adjustments are recorded in
+the report; font shapes and remaining pixels must match exactly.
+
+Headless installed-guest checks on existing Windows images passed with the ROM:
+Windows 3.11 Notepad save/DOS readback, and Windows 95 cold boot, Calculator
+arithmetic, clipboard transfer, exact Notepad file persistence and guest-requested
+firmware restart. Successful runs remove their private compressed overlays.
+`tools/smoke_win311.py` and `tools/smoke_win95.py` accept `--vgabios FILE` for
+explicit comparison; omission exercises the embedded default.
+
+The focused suite also covers snapshots (including version-6 compatibility),
+hardware devices, input/video integration and native memory access boundaries.
+Remaining device limits include split screen, pel panning, complete text-address
+generation, protected CRTC registers and accurate raster timing. Not every
+interactive VGATEST/X-VESA demo has been validated. Optional LCD, dual-adapter,
+DDC/EDID and VBE 3.0 functions are not advertised. Published BIOS save/parameter
+tables do not imply support for arbitrary guest replacement mode tables.
+Fonts are usable CP437 designs, not pixel-identical IBM ROM fonts. This is a
+useful standalone implementation for the verified guests, not full physical VGA
+conformance or an independently rewritten system BIOS.

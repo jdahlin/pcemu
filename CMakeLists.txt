@@ -49,6 +49,7 @@ set(CORE
   src/ne2000.cpp
 )
 set(SESSION
+  src/pc_vga_rom.cpp
   src/pc_session.cpp
   src/pc_display.cpp
   src/session_diagnostics.cpp

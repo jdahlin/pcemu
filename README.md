@@ -85,18 +85,19 @@ available. Program Manager's Alt+F, R opens Run; try `notepad.exe` or `calc.exe`
 Mouse support is not implemented yet.
 
 Dependencies are Xcode command-line tools, CMake, Ninja, SDL2, zstd and QEMU
-(`brew install cmake ninja sdl2 zstd pkg-config qemu`). Build with `./tools/build.sh`
+(`brew install cmake ninja sdl2 zstd pkg-config nasm python qemu`). Build with `./tools/build.sh`
 or `cmake -S . -B build -G Ninja && cmake --build build --target pcemu`.
 Ninja caches individual objects, tracks included headers, and shares core objects
 between executables. Development builds default to `-O1 -g`; opt into `-O3` with
 `cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release` (switch back with
 `-DCMAKE_BUILD_TYPE=Debug`). Existing `make` build and test aliases delegate
-compilation to Ninja. Dependencies are located through pkg-config. A compatible
-VGA BIOS ROM is read from `roms/vgabios.bin` for its text font; this local copy
-came from the already-installed Homebrew QEMU package. See `roms/README.md`.
-An optional original standalone VGA ROM builds with
-`cmake --build build --target vga-bios-tests`; see [VGA BIOS](docs/vga-bios.md)
-for its specification contract, headless tests and current compatibility limits.
+compilation to Ninja. Dependencies are located through pkg-config. The original 32-KiB VGA/VBE 2.0 option ROM is assembled with NASM/Python and
+embedded in the executable. Normal sessions execute it without external VGA
+firmware files. `--vgabios FILE` selects a comparison ROM;
+`--no-execute-vgabios` retains the host video BIOS path for diagnostics.
+See [VGA BIOS](docs/vga-bios.md) for specifications, headless tests,
+third-party diagnostics and compatibility limits. The system BIOS remains
+host-backed; ARM UEFI remains a separate firmware dependency.
 
 ## Validate
 

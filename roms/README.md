@@ -1,9 +1,9 @@
-The local `vgabios.bin` was copied from the existing Homebrew QEMU installation:
-`/opt/homebrew/share/qemu/vgabios.bin`. This project uses its 8×8 character font;
-it does not execute QEMU, link QEMU, or use QEMU's emulation code.
+Normal x86 sessions use PCEmu's original embedded VGA/VBE option ROM. Building
+it requires NASM and Python; see [VGA BIOS](../docs/vga-bios.md).
 
-The VGA BIOS is the Bochs VGA BIOS distributed by QEMU. Obtain its matching
-source and license through the installed QEMU package or the upstream project:
+An optional local `vgabios.bin` can be retained for comparison with
+`--vgabios roms/vgabios.bin`. The existing local copy came from Homebrew QEMU's
+`/opt/homebrew/share/qemu/vgabios.bin` (Bochs VGABIOS). Matching source and license:
 https://www.nongnu.org/vgabios/
 
 ROMs and operating-system images are local inputs, excluded from source control.

@@ -16,15 +16,16 @@ def run_probe(runner, rom, qemu=None):
         disk = Path(folder) / 'probe.img'
         subprocess.run(['nasm', '-Wall', '-Werror', '-w-reloc-abs-word', '-w-reloc-abs-dword', '-f', 'bin',
                         str(ROOT / 'tests/vga-bios-boot.asm'), '-o', str(disk)], check=True)
-        for backend in ('interpreter', 'jit'):
+        for backend, source in ((b,s) for b in ('interpreter','jit') for s in ('embedded','file')):
             result = subprocess.run([
                 str(runner), '--headless', '--backend', backend, '--no-network',
-                '--vgabios', str(rom), '--execute-vgabios', '--floppy', str(disk),
+                *(['--vgabios', str(rom), '--execute-vgabios'] if source == 'file' else []),
+                '--floppy', str(disk),
                 '--boot-floppy', '--steps', '2000000', '--until-text', 'PCEMU-VGA-PASS',
             ], capture_output=True, text=True, timeout=30)
             if result.returncode or 'PCEMU-VGA-PASS' not in result.stdout or 'PCEMU-VGA-FAIL' in result.stdout:
                 raise RuntimeError(f'{backend} boot failed:\n{result.stdout}\n{result.stderr}')
-            print(f'PCEmu {backend}: guest boot probe passed')
+            print(f'PCEmu {backend}, {source} ROM: guest boot probe passed')
         if qemu:
             result = subprocess.run([
                 qemu, '-machine', 'pc', '-accel', 'tcg', '-m', '16', '-vga', 'none',

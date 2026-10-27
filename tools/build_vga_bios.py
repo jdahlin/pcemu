@@ -102,6 +102,11 @@ def build(output):
         raise ValueError('Invalid VGA option ROM header/length')
     data[-1] = (-sum(data[:-1])) & 255
     output.write_bytes(data)
+    # The executable embeds the exact checksummed ROM, so installed sessions
+    # need no external firmware path. This generated source stays in build/.
+    (output.parent / 'pcemu-vga-bytes.inc').write_text('\n'.join(
+        ','.join(f'0x{value:02x}' for value in data[n:n+16]) + ','
+        for n in range(0,len(data),16)) + '\n')
     print(f'{output}: {len(data)} bytes, SHA256 {hashlib.sha256(data).hexdigest()}')
 
 

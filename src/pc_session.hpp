@@ -19,12 +19,12 @@ public:
 struct PcSessionOptions {
     std::string machine = "pc-legacy";
     std::string disk, snapshot;
-    std::string rom = "roms/vgabios.bin";
+    std::string rom; // Empty selects the embedded standalone option ROM.
     std::string controlFile;
     std::string bootText;
     unsigned memoryMiB = 16;
     bool network = true;
-    bool initializeVga = false;
+    bool initializeVga = true;
     bool headless = false;
     bool startPaused = false;
     uint64_t instructionLimit = 0;

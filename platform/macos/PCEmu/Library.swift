@@ -83,7 +83,7 @@ import SwiftUI
             let snapshot = (!cold && vm.restoreOnOpen) ? vm.snapshot : ""
             let checkout = root
             let run = directory.appendingPathComponent("Runs/\(UUID().uuidString)")
-            let rom = root.appendingPathComponent("roms/vgabios.bin").path
+            let rom = "" // Use the embedded standalone VGA option ROM.
             timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
                 Task { @MainActor in self?.refreshFrame() }
             }
@@ -94,7 +94,7 @@ import SwiftUI
                         if snapshot.isEmpty { try Self.prepareARM(root: checkout, memory: vm.memory, cpus: vm.cpuCount) }
                         result = pcemu_native_run_arm(checkout.path, vm.disk, snapshot, UInt32(vm.memory), UInt32(vm.cpuCount), run.path)
                     } else {
-                        result = pcemu_native_run(vm.machine, vm.disk, snapshot, rom, UInt32(vm.memory), vm.bootText ?? "", vm.machine == "win95" ? 1 : 0)
+                        result = pcemu_native_run(vm.machine, vm.disk, snapshot, rom, UInt32(vm.memory), vm.bootText ?? "", 1)
                     }
                     Task { @MainActor in self.finished(result) }
                 } catch {

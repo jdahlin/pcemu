@@ -17,6 +17,7 @@ from cow_file import CowFile
 root = Path(__file__).resolve().parent.parent
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--disk', type=Path, default=root / 'media/win311.raw')
+p.add_argument('--vgabios', type=Path, help='execute this VGA option ROM instead of host video initialization')
 p.add_argument('--verbose', action='store_true')
 p.add_argument('--keep-artifacts', action='store_true', help='retain the successful compressed private disk and RAM dump')
 jump_mode = p.add_mutually_exclusive_group()
@@ -40,7 +41,7 @@ proc = subprocess.Popen([
     str(root / 'build/pcemu'), '--headless', '--disk', str(disk), '--steps', '0',
     '--type', 'cd windows\nwin /s\n', '--control-file', str(control),
     '--capture-every', '100000000', '--frame', str(frame),
-] + (['--jit-traces'] if a.jit_traces else ['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
+] + (['--execute-vgabios', '--vgabios', str(a.vgabios.resolve())] if a.vgabios else []) + (['--jit-traces'] if a.jit_traces else ['--jit-follow-jumps'] if a.jit_follow_jumps else []) + (['--dump-memory', str(ram)] if a.keep_artifacts else ['--state-json', str(ram)+'.json']) + (['--verbose'] if a.verbose else []), cwd=root, stdout=log, stderr=log)
 
 def send(*commands, settle=0.35):
     subprocess.run([

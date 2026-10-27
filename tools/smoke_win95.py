@@ -19,6 +19,7 @@ from prepare_media import FAT
 root = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--disk', type=Path, default=root / 'media/rtts-win95.img')
+parser.add_argument('--vgabios', type=Path, help='VGA option ROM override')
 parser.add_argument('--timeout', type=float, default=240,
                     help='seconds per desktop/reset wait')
 parser.add_argument('--applications', action='store_true',
@@ -60,6 +61,7 @@ if args.sample:
     sampler_log = (profile_dir / 'sampler.log').open('w')
 command = [str(runner), '--headless', '--machine', 'win95',
            '--disk', str(disk), '--ram-mb', '64', '--execute-vgabios', '--steps', '0',
+           *(['--vgabios', str(args.vgabios.resolve())] if args.vgabios else []),
            '--control-file', str(control), '--frame', str(frame), '--state-json', str(state)+'.json']
 if args.jit_traces:
     command.append('--jit-traces')
