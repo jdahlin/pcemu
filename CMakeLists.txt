@@ -265,6 +265,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-bit-scan-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_bit_scan_test.cpp
+)
+
 pcemu_program(jit-enter-tests ZSTD
   SOURCES
     ${CORE}

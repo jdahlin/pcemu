@@ -522,8 +522,11 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
         (ir[0].memoryAlu || ir[0].kind == Kind::Test || ir[0].kind == Kind::Alu);
     const bool doubleShiftPair = ir.size() == 2 &&
         ir[0].kind == Kind::DoubleShift && ir[1].kind == Kind::DoubleShift;
+    const bool bitScanFragment = std::any_of(ir.begin(), ir.end(), [](const auto &i) {
+        return i.kind == Kind::BitScan || i.memoryBitScan;
+    });
     if (ir.empty()) return block;
-    if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair &&
+    if (warmup && !hotShort && !decoded.fetchTail.present && ir.size() < 3 && !flagBranchPair && !doubleShiftPair && !bitScanFragment &&
                       ir.back().kind != Kind::CounterBranch && !ir.back().nearCall &&
                       !ir.back().nearReturn && !ir.back().indirectJump &&
                       !ir.front().stringMove && ir.front().kind != Kind::EnterFrame && ir.back().kind != Kind::EnterFrame && ir.back().kind != Kind::FarPointer && ir.back().kind != Kind::PortIO && ir.back().kind != Kind::FarTransfer && ir.back().kind != Kind::FarReturn && ir.back().kind != Kind::String) {

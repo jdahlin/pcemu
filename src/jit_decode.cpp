@@ -627,7 +627,18 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if(extended==0xb2 || extended==0xb4 || extended==0xb5) {
+                if (extended == 0xbc || extended == 0xbd) {
+                    const auto m = byte();
+                    i.kind = (m >> 6) == 3 ? Kind::BitScan : Kind::Memory;
+                    i.dst = (m >> 3) & 7;
+                    i.src = m & 7;
+                    i.op = extended & 1; // BSR versus BSF.
+                    if (i.kind == Kind::Memory) {
+                        i.immediate = true;
+                        i.memoryBitScan = true;
+                        i.memory = memoryOperand(m, address32, overrideSegment);
+                    }
+                } else if(extended==0xb2 || extended==0xb4 || extended==0xb5) {
                     const auto m=byte();
                     if((m>>6)==3){pos=begin;break;}
                     i.kind=Kind::FarPointer;i.immediate=true;i.segmentLoad=true;

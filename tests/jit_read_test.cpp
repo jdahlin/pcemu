@@ -384,13 +384,13 @@ int main() {
             }
         {
             CPU c(65536);
-            c.mem[0] = 0xfa; // CLI remains interpreted; CLD now has native coverage.
+            c.mem[0] = 0x0f; c.mem[1] = 0x01; c.mem[2] = 0xe0; // SMSW AX remains interpreted.
             Jit hot(c, true, 0);
             for (unsigned n = 0; n < 12; ++n) {
                 c.ip = 0;
-                c.flags |= IF;
+                c.r[AX] = (n << 16) | 0xffff;
                 hot.run();
-                check(!(c.flags & IF) && c.ip == 1,
+                check(c.r[AX] == ((n << 16) | c.cr[0]) && c.ip == 3,
                       "negative cache executes current interpreter state");
             }
             // A formerly unsupported address must become native immediately
@@ -400,7 +400,7 @@ int main() {
                 c.write(n, replacement[n], 1);
             c.ip = 0;
             hot.run();
-            check(hot.nativeInstructions > 0 && c.r[AX] == 8 && c.ip == 0,
+            check(hot.nativeInstructions > 0 && c.r[AX] == ((11u << 16) | 8) && c.ip == 0,
                   "negative cache immediately translates changed instruction bytes");
         }
         // Hoisted TLB bases must coexist with every live-GPR combination,

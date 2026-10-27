@@ -109,7 +109,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             usedRegisters |= 1u << CX;
         if (i.kind == Kind::Nop || i.kind == Kind::Branch || i.kind == Kind::Direction || i.kind == Kind::CarryControl || i.kind == Kind::InterruptControl || i.kind == Kind::String || i.kind == Kind::FarTransfer || i.kind == Kind::FarReturn || i.kind == Kind::PortIO)
             continue;
-        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
+        if (!(i.kind == Kind::Memory && ((i.immediate && !i.memoryMultiply && !i.memoryBitScan) || i.nearReturn || i.segmentRegister >= 0 || i.pushFlags || i.popFlags || i.memoryPop || i.memoryDoubleShift)))
             usedRegisters |= 1u << i.dst;
         if (i.kind == Kind::Memory || i.kind == Kind::Lea) {
             if (i.memory.base >= 0)
@@ -342,6 +342,24 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         imm(5, condition);
         imm(6, target);
         call(reinterpret_cast<uintptr_t>(&nativeFinish));
+    };
+    // w10 is the zero-extended source. Capture it before an aliased destination
+    // changes. The reference retains the destination on zero and all flags but ZF.
+    auto bitScanResult = [&](const jit_detail::Instruction &i) {
+        emit(0x7100015fu); // cmp w10,#0
+        emit(0x1a9f17edu); // cset w13,eq
+        load(12,19,offsetof(CPU,flags));
+        flagBit(13,6);
+        store(12,19,offsetof(CPU,flags));
+        const auto zero = code.size(); emit(0x3400000au); // cbz w10,done
+        if (!i.op) emit(0x5ac0014bu); // rbit w11,w10
+        emit(0x5ac01000u | ((i.op ? 10 : 11) << 5) | 11); // clz w11,source
+        if (i.op) {
+            imm(13,31);
+            emit(0x4b0b01abu); // sub w11,w13,w11
+        }
+        insert(20+i.dst,11,i.w,0);
+        code[zero] |= uint32_t(code.size()-zero) << 5;
     };
     auto neededFlags = jit_detail::analyzeFlagLiveness(ir);
     if (memoryMoves) block.native->memory.reserve(memoryMoves);
@@ -713,7 +731,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -935,6 +953,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             shiftResult(i, neededFlags[n]);
             continue;
         }
+        if (i.kind == Kind::BitScan) {
+            finishFlags(last,-1,0);
+            last=-1;
+            extract(10,20+i.src,i.w,0);
+            bitScanResult(i);
+            dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
         if (i.kind == Kind::BitTest) {
             if (neededFlags[n]) {
                 finishFlags(last, -1, 0);
@@ -1113,7 +1139,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
             }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
-            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiplyFull || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift) {
+            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiplyFull || i.memoryMultiply || i.memoryBitScan || i.memoryShift || i.memoryDoubleShift) {
                 // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
                 // all other flags; IMUL preserves its undefined flags too.
                 // Publish the exact restart state before
@@ -1203,6 +1229,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 if(i.memoryMultiplyFull) {
                     mov(12,10);
                     multiplyFullResult(i,true);
+                    return;
+                }
+                if (i.memoryBitScan) {
+                    bitScanResult(i);
+                    dirtyRegisters |= 1u << i.dst;
                     return;
                 }
                 if (i.memoryMultiply) {
@@ -1553,7 +1584,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryMultiplyFull || i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
+            if (i.memoryMultiplyFull || i.memoryDivide || i.memoryBitScan || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.

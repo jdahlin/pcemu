@@ -62,6 +62,8 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             written = CF | PF | AF | ZF | SF;
         else if (i.kind == Kind::CarryControl)
             written = CF;
+        else if (i.kind == Kind::BitScan)
+            written = ZF;
         else if (i.kind == Kind::BitTest)
             written = CF;
         else if (i.kind == Kind::Multiply || i.kind == Kind::MultiplyFull)
