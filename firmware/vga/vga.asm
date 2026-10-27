@@ -172,11 +172,13 @@ video_interrupt:
     je write_string
     cmp ah,0x1b
     je functionality_information
+    cmp ah,0x1c
+    je vga_state_service
     cmp ah,0x1a
     je display_information
     cmp ah,0x4f
-    jne return_interrupt
-    mov word [in_ax],0x014f ; VBE standard status: function unsupported.
+    je vbe_service
+    jmp return_interrupt
 return_interrupt:
     popad
     pop es
@@ -814,6 +816,8 @@ read_mode:
 
 %include "pcemu-vga-modes.inc"
 %include "graphics-services.inc"
+%include "vbe-services.inc"
+%include "state-services.inc"
 %include "text-services.inc"
 %include "font-services.inc"
 %include "palette-services.inc"

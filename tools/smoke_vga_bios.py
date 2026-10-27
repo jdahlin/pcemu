@@ -10,11 +10,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def run_probe(runner, rom, qemu=None):
-    """Boot the same 512-byte read-only probe without creating an OS fixture."""
+    """Boot the same small read-only RAM payload without creating an OS fixture."""
     (ROOT / 'build').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='vga-bios-smoke-', dir=ROOT / 'build') as folder:
         disk = Path(folder) / 'probe.img'
-        subprocess.run(['nasm', '-Wall', '-Werror', '-w-reloc-abs-word', '-f', 'bin',
+        subprocess.run(['nasm', '-Wall', '-Werror', '-w-reloc-abs-word', '-w-reloc-abs-dword', '-f', 'bin',
                         str(ROOT / 'tests/vga-bios-boot.asm'), '-o', str(disk)], check=True)
         for backend in ('interpreter', 'jit'):
             result = subprocess.run([

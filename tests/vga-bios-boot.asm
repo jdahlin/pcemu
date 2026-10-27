@@ -2,7 +2,33 @@
 ; it checks the installed vector, real INT 10h calls and VGA text memory.
 bits 16
 org 0x7c00
-start:
+; The first sector loads a small RAM-only validation payload. No DOS or guest
+; installation is needed, and all media are temporary and read-only.
+bootstrap:
+    cli
+    xor ax,ax
+    mov ss,ax
+    mov sp,0x7c00
+    mov ds,ax
+    mov es,ax
+    mov bx,stage2
+    mov ax,0x0200+stage2_sectors
+    mov cx,2
+    xor dh,dh
+    int 0x13
+    jc .failed
+    jmp stage2
+.failed:
+    mov al,'L'
+    out 0xe9,al
+    mov al,0x11
+    out 0xf4,al
+    hlt
+    jmp $
+times 510-($-$$) db 0
+dw 0xaa55
+stage2:
+probe_start:
     cli
     xor ax,ax
     mov ss,ax
@@ -65,6 +91,174 @@ start:
     int 0x10
     cmp al,0xfe
     jne fail
+    mov bp,7
+    mov ax,0x1000
+    mov es,ax
+    xor di,di
+    mov dword [es:di],'VBE2'
+    mov ax,0x4f00
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    cmp dword [es:di],'VESA'
+    jne fail
+    cmp word [es:di+4],0x0200
+    jne fail
+    mov ax,0x4f01
+    mov cx,0x142
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    cmp word [es:di+18],640
+    jne fail
+    cmp word [es:di+20],480
+    jne fail
+    cmp dword [es:di+40],0
+    je fail
+    mov ax,0x4f02
+    mov bx,0x4142
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    mov ax,0x4f06
+    xor bx,bx
+    mov cx,800
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    cmp bx,3200
+    jne fail
+    mov ax,0x4f07
+    xor bx,bx
+    mov cx,8
+    mov dx,16
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    mov ax,0x4f08
+    mov bx,0x0800
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    mov bp,8
+    mov ax,0x4f04
+    mov bx,0x0800
+    mov cx,15
+    mov dx,1
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    mov ax,3
+    int 0x10
+    mov ax,0x4f04
+    mov bx,0x0800
+    mov cx,15
+    mov dx,2
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    mov ax,0x4f03
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    cmp bx,0x4142
+    jne fail
+    mov bp,9
+    mov ax,0x4f0a
+    xor bx,bx
+    int 0x10
+    cmp ax,0x004f
+    jne fail
+    push ds
+    mov ax,es
+    mov ds,ax
+    mov si,di
+    mov ax,0x2000
+    mov es,ax
+    xor di,di
+    cld
+    rep movsb
+    pop ds
+    lgdt [gdtr]
+    mov eax,cr0
+    or eax,1
+    mov cr0,eax
+    jmp dword 8:protected_entry
+bits 32
+protected_entry:
+    mov ax,16
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+    mov esp,0x70000
+    mov ebp,9
+    movzx eax,word [0x20000]
+    add eax,0x20000
+    xor ebx,ebx
+    mov edx,2
+    call eax
+    cmp ax,0x004f
+    jne protected_fail
+    mov dx,0x1ce
+    mov ax,5
+    out dx,ax
+    mov dx,0x1cf
+    in ax,dx
+    cmp ax,2
+    jne protected_fail
+    movzx eax,word [0x20002]
+    add eax,0x20000
+    xor ebx,ebx
+    mov ecx,(32*3200+16*4)/4
+    xor edx,edx
+    call eax
+    cmp ax,0x004f
+    jne protected_fail
+    mov dx,0x1ce
+    mov ax,8
+    out dx,ax
+    mov dx,0x1cf
+    in ax,dx
+    cmp ax,16
+    jne protected_fail
+    movzx eax,word [0x20004]
+    add eax,0x20000
+    xor ebx,ebx
+    mov ecx,1
+    mov edx,200
+    mov edi,pm_palette_data
+    call eax
+    cmp ax,0x004f
+    jne protected_fail
+    mov dx,0x3c7
+    mov al,200
+    out dx,al
+    mov dx,0x3c9
+    in al,dx
+    cmp al,50
+    jne protected_fail
+    jmp word 0x18:protected_exit
+protected_fail:
+    mov byte [probe_failed],1
+    jmp word 0x18:protected_exit
+bits 16
+protected_exit:
+    mov ax,0x20
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+    mov eax,cr0
+    and eax,0xfffffffe
+    mov cr0,eax
+    jmp 0:real_exit
+real_exit:
+    xor ax,ax
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+    mov sp,0x7c00
+    cmp byte [probe_failed],0
+    jne fail
     mov ax,3
     int 0x10
     mov si,pass_text
@@ -97,5 +291,18 @@ print:
     ret
 pass_text db 'PCEMU-VGA-PASS',0
 fail_text db 'PCEMU-VGA-FAIL',0
-times 510-($-$$) db 0
-dw 0xaa55
+align 8
+gdt:
+    dq 0
+    dq 0x00cf9a000000ffff
+    dq 0x00cf92000000ffff
+    dq 0x00009a000000ffff
+    dq 0x000092000000ffff
+gdtr:
+    dw $-gdt-1
+    dd gdt
+probe_failed db 0
+pm_palette_data db 10,30,50,0
+probe_end:
+stage2_sectors equ (probe_end-stage2+511)/512
+times ((-($-$$)) & 511) db 0

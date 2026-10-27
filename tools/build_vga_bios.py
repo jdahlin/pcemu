@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from vga_modes import assembly_tables
+from vga_modes import assembly_tables, vbe_assembly
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -84,7 +84,7 @@ def build(output):
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     font = font_bytes()
-    (output.parent / 'pcemu-vga-modes.inc').write_text(assembly_tables())
+    (output.parent / 'pcemu-vga-modes.inc').write_text(assembly_tables() + vbe_assembly())
     include = output.parent / 'pcemu-vga-fonts.inc'
     lines = ['; Generated from pinned font8x8 sources; see UPSTREAM.json.']
     for height in (8, 14, 16):

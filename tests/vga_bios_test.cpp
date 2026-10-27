@@ -50,19 +50,19 @@ struct Guest {
         check(c.halted && c.ip == 0x703, "INT 10h returned within instruction budget");
         check(c.r[SP] == 0x8000 && c.s[SS].selector == 0, "balanced interrupt stack");
         check(c.s[DS].selector == 0x1234, "DS preserved");
-        check(c.get(SI,2) == 0x4567 && c.get(DI,2) == di, "SI/DI preserved");
+        check(c.get(SI,2) == 0x4567 && (ax == 0x4f0a || c.get(DI,2) == di), "SI/DI preserved");
         check((c.flags & (DF | CF)) == (DF | CF), "FLAGS/DF restored");
-        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 13 && (ax >> 8) != 15 && (ax >> 8) != 0x1a && (ax >> 8) != 0x12 && (ax >> 8) != 0x1b && (ax >> 8) != 0x4f)
+        if ((ax >> 8) != 0 && (ax >> 8) != 8 && (ax >> 8) != 13 && (ax >> 8) != 15 && (ax >> 8) != 0x1a && (ax >> 8) != 0x12 && (ax >> 8) != 0x1b && (ax >> 8) != 0x1c && (ax >> 8) != 0x4f)
             check(c.get(AX, 2) == ax, "AX preserved for call " + std::to_string(ax) + " got " + std::to_string(c.get(AX, 2)));
-        if ((ax >> 8) != 15 && (ax >> 8) != 0x1a && ax != 0x1007 && ax != 0x1008 && ax != 0x1019 && ax != 0x101a && (ax >> 8) != 0x12) check(c.get(BX, 2) == bx, "BX preserved");
-        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12)
+        if ((ax >> 8) != 15 && (ax >> 8) != 0x1a && ax != 0x1007 && ax != 0x1008 && ax != 0x1019 && ax != 0x101a && (ax >> 8) != 0x12 && ax != 0x4f03 && ax != 0x4f04 && ax != 0x4f06 && ax != 0x4f07 && ax != 0x4f08 && (ax >> 8) != 0x1c) check(c.get(BX, 2) == bx, "BX preserved");
+        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12 && ax != 0x4f06 && ax != 0x4f07 && ax != 0x4f0a)
             check(c.get(CX, 2) == cx, "CX preserved");
-        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12)
+        if ((ax >> 8) != 3 && ax != 0x1130 && ax != 0x1015 && (ax >> 8) != 0x12 && ax != 0x4f05 && ax != 0x4f06 && ax != 0x4f07)
             check(c.get(DX, 2) == dx, "DX preserved");
         for (unsigned r=0;r<8;++r) if (r != SP)
             check((c.r[r] >> 16) == 0xa5a5, "upper register halves preserved");
         bool font = ax == 0x1130 && (bx >> 8) < 8;
-        if (!font) {
+        if (!font && ax != 0x4f0a) {
             check(c.s[ES].selector == es, "ES preserved");
             check(c.get(BP,2) == bp, "BP preserved");
         }
@@ -369,6 +369,136 @@ void graphics_text_and_scroll(Guest &g) {
     g.call(3);
 }
 
+
+void vbe_contract(Guest &g) {
+    auto &c=g.m->cpu;auto &v=g.m->vga;
+    for(unsigned a=0;a<514;++a)c.write(0x20100+a,0xa5,1);
+    c.write(0x20100,0x32454256,4); // caller signature VBE2.
+    g.call(0x4f00,0,0,0,0x2000,0x6789,0x0100);
+    check(c.get(AX,2)==0x004f && c.read(0x20100,4)==0x41534556 &&
+          g.word(0x20104)==0x0200 && g.word(0x20112)==256,"VBE2 controller info and 16-MiB memory");
+    check(c.read(0x20300,1)==0xa5 && c.read(0x20301,1)==0xa5,"512-byte info boundary");
+    unsigned list=c.read(0x2010e,2)+(c.read(0x20110,2)<<4);
+    std::vector<unsigned> modes;
+    for(unsigned n=0;n<128;++n) {
+        unsigned mode=g.word(list+n*2);if(mode==0xffff)break;
+        check(std::find(modes.begin(),modes.end(),mode)==modes.end(),"unique VBE mode list");
+        modes.push_back(mode);
+    }
+    check(modes.size()==28 && std::find(modes.begin(),modes.end(),0x142)!=modes.end(),"bounded terminated VBE mode list");
+    for(unsigned a=0;a<512;++a)c.write(0x20500+a,0xcc,1);
+    g.call(0x4f00,0,0,0,0x2000,0x6789,0x0500);
+    check(c.read(0x20600,1)==0xcc && c.read(0x206ff,1)==0xcc,"legacy 256-byte info boundary");
+    for(unsigned mode:modes) {
+        c.write(0x21100,0xa55a,2);
+        g.call(0x4f01,0,mode,0,0x2000,0x6789,0x1000);
+        check(c.get(AX,2)==0x004f && g.word(0x21100)==0xa55a,"mode info success and 256-byte bounds");
+        unsigned w=g.word(0x21012),h=g.word(0x21014),bpp=c.read(0x21019,1),stride=g.word(0x21010);
+        check(stride==w*((bpp+7)/8) && g.word(0x21000)==0x009b && c.read(0x21002,1)==7,
+              "mode memory layout and available interfaces");
+        check(c.read(0x21028,4)==0xe0000000,"mode LFB address comes from PCI BAR");
+        if(mode==0x101)check(w==640 && h==480 && bpp==8,"standard 101h geometry");
+        if(mode==0x111)check(w==640 && h==480 && bpp==16 && g.word(0x21021)==0x0506,"RGB565 mask layout");
+        if(mode==0x142)check(w==640 && h==480 && bpp==32,"Bochs OEM 32-bit geometry");
+        v.vram[42]=0xa5;
+        g.call(0x4f02,mode|0x4000);
+        check(c.get(AX,2)==0x004f && v.dispi[1]==w && v.dispi[2]==h && v.dispi[3]==bpp &&
+              v.dispi[4]==0x41 && v.vram[42]==0,"VBE mode set matches advertised mode and clears VRAM");
+        g.call(0x4f03);check(c.get(BX,2)==(mode|0x4000),"current VBE mode and LFB flag");
+        v.vram[42]=0x7b;g.call(0x4f02,mode|0xc000);
+        check(v.vram[42]==0x7b,"VBE no-clear framebuffer preservation");
+    }
+    g.call(0x4f02,0x4142);
+    g.call(0x4f05,0,0,255);check(c.get(AX,2)==0x004f && v.dispi[5]==255,"last bank accepted");
+    c.write(0xa0000,0x5a,1);check(v.vram[255*65536]==0x5a,"banked aperture reaches selected VRAM");
+    g.call(0x4f05,0x0100);check(c.get(DX,2)==255,"bank readback");
+    auto before=v.dispi;
+    for(auto request:{std::array<uint16_t,4>{0x4f02,0x4102,0,0}, {0x4f02,0x4942,0,0},
+                      {0x4f05,1,0,0},{0x4f05,0,0,256},{0x4f06,0,100,0}}) {
+        g.call(request[0],request[1],request[2],request[3]);
+        check(c.get(AX,2)==0x014f && v.dispi==before,"invalid VBE request is atomic");
+    }
+    g.call(0x4f06,0,1024);
+    check(c.get(BX,2)==4096 && c.get(CX,2)==1024 && c.get(DX,2)==4096 && v.dispi[6]==1024,"VBE pixel stride and max rows");
+    g.call(0x4f07,0,30,100);check(v.dispi[8]==30 && v.dispi[9]==100,"VBE display start");
+    g.call(0x4f07,1);check(c.get(CX,2)==30 && c.get(DX,2)==100,"VBE display-start query");
+    before=v.dispi;
+    g.call(0x4f07,0,400,4000);check(c.get(AX,2)==0x014f && v.dispi==before,"panning visible-rectangle bounds");
+    g.call(0x4f06,2,4097);check(c.get(BX,2)==4100 && c.get(CX,2)==1025 && v.dispi[8]==0 && v.dispi[9]==0,"byte stride rounds up to complete pixels");
+    g.call(0x4f08,0x0800);check(c.get(BX,2)==0x0800 && (v.dispi[4]&0x20),"8-bit DAC precision");
+    c.write(0x22000,0x00fa7b40,4);
+    g.call(0x4f09,0,1,10,0x2000,0x6789,0x2000);
+    check(v.dac[10][0]==250 && v.dac[10][1]==123 && v.dac[10][2]==64,"VBE BGRA palette format");
+    g.call(0x4f09,1,1,10,0x2000,0x6789,0x2100);
+    check(c.read(0x22100,4)==0x00fa7b40,"VBE palette readback and reserved byte");
+    g.call(0x4f08,0x0700);check(c.get(AX,2)==0x014f && (v.dispi[4]&0x20),"invalid DAC width rejected");
+    g.call(0x4f09,0,257,0,0x2000,0x6789,0x2000);check(c.get(AX,2)==0x014f,"invalid palette range rejected");
+    g.call(0x4f0a);
+    check(c.get(AX,2)==0x004f && c.s[ES].selector==0xc000 && c.get(CX,2)>32,"protected-mode interface points into ROM");
+    // Save/restore all four state groups without changing framebuffer bytes.
+    v.vram[42]=0x6c;
+    g.call(0x4f04,0,15,0);
+    check(c.get(BX,2)==16,"state size in 64-byte blocks");
+    auto seq=v.seq;auto gfx=v.gfx;auto crtc=v.crtc;auto attr=v.attr;auto dac=v.dac;before=v.dispi;
+    c.write(0x23400,0xa55a,2);
+    g.call(0x4f04,0x3000,15,1,0x2000);
+    check(c.get(AX,2)==0x004f && g.word(0x23400)==0xa55a,"state buffer size and guard");
+    g.call(3);g.call(0x1010,10,0,0);
+    g.call(0x4f04,0x3000,15,2,0x2000);
+    check(c.get(AX,2)==0x004f && v.seq==seq && v.gfx==gfx && v.crtc==crtc && v.attr==attr &&
+          v.dac==dac && v.dispi==before,"hardware/BIOS/DAC/DISPI state roundtrip");
+    check(v.vram[42]==0x6c && c.read(0x449,1)==0xff,"state restore preserves display bytes and restores BIOS mode");
+    c.write(0x23000,0,4);before=v.dispi;
+    g.call(0x4f04,0x3000,15,2,0x2000);
+    check(c.get(AX,2)==0x014f && v.dispi==before,"invalid state image rejected before writes");
+    g.call(0x1c00,0,7);check(c.get(AX,1)==0x1c && c.get(BX,2)==16,"legacy VGA state size query");
+    g.call(3);
+}
+
+
+void protected_mode_contract(Guest &g) {
+    auto &c=g.m->cpu;auto &v=g.m->vga;
+    g.call(0x4f02,0x4142);g.call(0x4f06,0,800);
+    g.call(0x4f0a);
+    unsigned source=c.s[ES].base+c.get(DI,2),length=c.get(CX,2);
+    std::vector<uint8_t> code(c.mem.begin()+source,c.mem.begin()+source+length);
+    auto pm_call=[&](unsigned entry,uint32_t bx,uint32_t cx,uint32_t dx,uint32_t di) {
+        // Copy the table and all code away from the ROM and execute near calls
+        // in a flat 32-bit protected-mode code segment, without BIOS callbacks.
+        unsigned base=0x10000;
+        std::copy(code.begin(),code.end(),c.mem.begin()+base);
+        std::array<Segment,6> segments;
+        std::copy(std::begin(c.s),std::end(c.s),segments.begin());
+        uint32_t cr0=c.cr[0];
+        c.cr[0]=0x11;
+        for(unsigned n=0;n<6;++n)c.s[n]={0,0xffffffff,16,true,false};
+        c.s[CS]={base,0xffffffff,8,true,false};
+        c.r[AX]=0x4f00;c.r[BX]=bx;c.r[CX]=cx;c.r[DX]=dx;c.r[DI]=di;
+        c.r[SI]=0x12345678;c.r[BP]=0x87654321;c.r[SP]=0x70000;
+        unsigned offset=code[entry*2]|(code[entry*2+1]<<8);
+        c.write(base+0x2000,0xe8,1);c.write(base+0x2001,offset-0x2005,4);c.write(base+0x2005,0xf4,1);
+        c.ip=0x2000;c.halted=false;c.flags=2|DF;
+        auto limit=c.instructions+2000000;
+        while(!c.halted && c.instructions<limit)c.step();
+        check(c.halted && c.ip==0x2006 && c.r[SP]==0x70000,"copied PM code near-return/stack ABI");
+        check(c.r[SI]==0x12345678 && c.r[BP]==0x87654321 && c.s[DS].selector==16 &&
+              c.s[SS].selector==16,"PM ESI/EBP/DS/SS preservation");
+        unsigned result=c.get(AX,2);
+        c.cr[0]=cr0;std::copy(segments.begin(),segments.end(),std::begin(c.s));c.flushTLB();
+        return result;
+    };
+    check(pm_call(0,0,0,3,0)==0x004f && v.dispi[5]==3,"PM bank entry");
+    check(pm_call(0,0,0,256,0)==0x014f && v.dispi[5]==3,"PM invalid bank");
+    check(pm_call(1,0,(16*3200+8*4)/4,0,0)==0x004f && v.dispi[8]==8 && v.dispi[9]==16,
+          "PM display start uses four-byte address units");
+    auto before=v.dispi;
+    check(pm_call(1,0,0xffff,0xffff,0)==0x014f && v.dispi==before,"PM pan overflow rejected");
+    c.write(0x30000,0x00321e0a,4);c.write(0x30004,0x00281405,4);
+    check(pm_call(2,0,2,250,0x30000)==0x004f && v.dac[250][0]==50 &&
+          v.dac[250][1]==30 && v.dac[250][2]==10 && v.dac[251][0]==40,"PM BGRA palette transfer");
+    g.call(3);
+}
+
 void fonts_and_palette(Guest &g) {
     auto &m = *g.m; auto &c = m.cpu;
     g.call(3);
@@ -393,7 +523,7 @@ void fonts_and_palette(Guest &g) {
     g.call(0x1a00);
     check(c.get(AX, 1) == 0x1a && c.get(BX, 2) == 8, "analog color VGA identification");
     g.call(0x4f00);
-    check(c.get(AX, 2) == 0x014f, "VBE honestly unsupported");
+    check(c.get(AX, 2) == 0x004f, "VBE controller service supported");
     check(std::equal(g.rom.begin(), g.rom.end(), c.mem.begin() + 0xc0000), "ROM never modified");
 }
 }
@@ -413,7 +543,7 @@ int main(int argc, char **argv) {
               rom[pcir+7] == 0x11 && rom[pcir+16] == 64 && rom[pcir+20] == 0 && rom[pcir+21] == 0x80,
               "PCI vendor/device, image length, x86 code and last-image indicator");
         check((guest.word(0x42) << 4) == 0xc0000, "INT 10h points into standalone ROM");
-        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); fonts_and_palette(guest);
+        initialization_contract(guest); text_contract(guest); scrolling(guest); boundaries(guest); extended_text_contract(guest); graphics_contract(guest); graphics_text_and_scroll(guest); vbe_contract(guest); protected_mode_contract(guest); fonts_and_palette(guest);
         if (argc > 2) {
             Guest reference(argv[2], false);
             text_contract(reference); scrolling(reference);

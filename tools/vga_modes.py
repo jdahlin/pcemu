@@ -87,3 +87,25 @@ def assembly_tables():
     lines += ['graphics_dac:']
     lines += ['db '+','.join(map(str,palette[i:i+24])) for i in range(0,768,24)]
     return '\n'.join(lines)+'\n'
+
+
+def vbe_modes():
+    """VESA standard mode identifiers and Bochs-compatible 32-bit OEM modes."""
+    result=[(0x100,640,400,8),(0x101,640,480,8),(0x103,800,600,8),
+            (0x105,1024,768,8),(0x107,1280,1024,8)]
+    for first,w,h in [(0x110,640,480),(0x113,800,600),(0x116,1024,768),(0x119,1280,1024)]:
+        result += [(first+i,w,h,bpp) for i,bpp in enumerate((15,16,24))]
+    result += [(0x140+i,w,h,32) for i,(w,h) in enumerate(((320,200),(640,400),(640,480),(800,600),(1024,768),(1280,1024)))]
+    result += [(0x120,1600,1200,8),(0x121,1600,1200,15),(0x122,1600,1200,16),(0x123,1600,1200,24),(0x147,1600,1200,32)]
+    return sorted(result)
+
+
+def vbe_assembly():
+    """Publish only modes supported by PCEmu's 16-MiB, 1920x1200 DISPI board."""
+    lines=['; Generated VBE mode list/descriptors; see tools/vga_modes.py.',
+           'vbe_mode_list:', 'dw '+','.join(str(m[0]) for m in vbe_modes())+',0xffff',
+           'vbe_modes:']
+    for mode,w,h,bpp in vbe_modes():
+        lines += [f'dw {mode},{w},{h}',f'db {bpp},0']
+    lines += ['vbe_modes_end:']
+    return '\n'.join(lines)+'\n'

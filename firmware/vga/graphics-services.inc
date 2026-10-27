@@ -159,6 +159,8 @@ validate_graphics_page:
 ; IBM 42G2193 graphics memory organization, PDF 49 onward.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/42G2193_PS2_Hardware_Interface_Technical_Reference_Video_Subsystems_Sep92.pdf#page=49
 pixel_address:
+    cmp byte [MODE],0xff
+    je .bad
     call validate_graphics_page
     jc .bad
     push ax
@@ -599,6 +601,8 @@ graphics_teletype:
 ; IBM BIOS Interface 06h/07h, PDF 31; H VGA write mode 1, PDF 109.
 ; https://bitsavers.trailing-edge.com/pdf/ibm/pc/ps2/PS2_and_PC_BIOS_Interface_Technical_Reference_Apr87.pdf#page=31
 scroll_graphics_window:
+    cmp byte [MODE],0xff
+    je return_interrupt
     cmp ch,[ROWS_MINUS_ONE]
     ja return_interrupt
     cmp cl,[COLUMNS]
@@ -626,7 +630,6 @@ scroll_graphics_window:
     movzx ax,ch
     mul word [CHARACTER_HEIGHT]
     mov [ss:bp-42],ax
-    movzx ax,dh
     ; DX was changed by MUL; obtain bottom from the saved interrupt input.
     movzx ax,byte [in_dx+1]
     cmp al,[ROWS_MINUS_ONE]

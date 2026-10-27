@@ -2,8 +2,8 @@
 
 PCEmu now has an original, optional 32-KiB x86 VGA option ROM in
 `firmware/vga/vga.asm`. Its entry point installs INT 10h and initializes VGA
-through guest port I/O. The text implementation now includes color 40/80-column
-and monochrome modes, font loading/resizing, strings and full palette controls. BIOS calls execute guest instructions; no private BIOS
+through guest port I/O. It includes color/monochrome text, standard VGA graphics, font services,
+strings, palettes, state save/restore and VBE 2.0 for our DISPI board. BIOS calls execute guest instructions; no private BIOS
 trap, host video service or SDL call implements these services. The existing
 host-backed system BIOS remains in use. This is the text implementation,
 not a complete VGA BIOS replacement and not yet the default for installed guests.
@@ -29,8 +29,7 @@ python3 tools/build_vga_bios.py
 
 Select it explicitly for an existing guest with
 `--vgabios build/firmware/pcemu-vga.bin --execute-vgabios`. Keep automated runs
-headless. Do not use this milestone for a Windows installation: its graphics
-modes, font-loading services and other required interfaces are not implemented.
+headless. Do not use this milestone for a Windows installation: installed-guest compatibility is still being validated.
 The existing external ROM stays available for those workloads.
 
 The output and generated font include live under ignored `build/firmware/`.
@@ -84,7 +83,8 @@ scaling. References distinguish BIOS contracts from register programming:
 | AH=13h | Counted strings, optional attributes/cursor movement, control characters and page isolation |
 | AH=1Bh | Standard 64-byte functionality/state block |
 | AX=1A00h | Analog color VGA identification |
-| AH=4Fh | Return AX=014Fh (unsupported); do not advertise a VBE version |
+| AH=1Ch | Selective hardware/BIOS/DAC save and restore |
+| AH=4Fh | VBE 2.0 mode discovery/set/query, save/restore, banking, stride, panning, 6/8-bit DAC, BGRA palettes and relocatable 32-bit interface |
 
 Unknown legacy operations are no-ops; unsupported mode sets leave the existing
 mode intact. Defensive policy ignores invalid page numbers, cursor coordinates
@@ -125,17 +125,17 @@ The reference ROM is optional and remains an ignored local input. Differences
 outside the contract, such as font design and CGA cursor-shape emulation, are
 not treated as universal correctness rules.
 
-`tests/vga-bios-boot.asm` is a 512-byte boot probe that checks the installed BIOS
+`tests/vga-bios-boot.asm` is a small RAM-only boot probe that checks the installed BIOS
 vector, INT 10h calls and B8000 memory. `tools/smoke_vga_bios.py` boots it under
 PCEmu's interpreter and JIT with the new ROM, no network and no GUI. Temporary
-512-byte media are removed on completion. For independent execution under
+small media are removed on completion. For independent execution under
 QEMU's VGA device and SeaBIOS option-ROM discovery:
 
 ```sh
 python3 tools/smoke_vga_bios.py --qemu
 ```
 
-This uses QEMU TCG, a read-only temporary boot sector, no installed OS and no
+This uses QEMU TCG, a read-only temporary RAM payload, no installed OS and no
 large guest image. QEMU is a validation dependency only. The probe exits using
 the debug-exit device and reports through port E9h. Passing QEMU establishes a
 real option-ROM discovery/boot path; it does not establish full VGA compliance.
@@ -196,4 +196,30 @@ planar scrolling uses the hardware latches/write mode 1 and preserves register
 programming. The graphics tests compare literal plane offsets and use independent
 byte/pixel oracles for overlapping scrolling in both directions. The boot-sector
 probe also checks modes 12h and 13h under PCEmu interpreter/JIT and QEMU TCG.
-CGA-compatible modes and VBE remain separate next steps at this commit.
+CGA-compatible modes remain a separate device/firmware integration step.
+
+## VBE 2.0 and state management
+
+The ROM publishes 28 implemented 8/15/16/24/32-bit modes through 1600x1200,
+including Bochs OEM 32-bit modes. Mode information reports the actual PCI BAR,
+64-KiB bank granularity, packed stride, RGB masks and available image pages.
+The 4F00h interface respects the caller's 256/512-byte buffer contract. Reserved
+flags, unsupported modes/windows, out-of-range banks, impossible strides,
+panning rectangles and palette ranges are rejected before writes. Mode sets
+reset stride, bank, pan and DAC precision; no-clear preserves display bytes.
+VBE 3.0 scheduling/refresh/pixel-clock/stereo interfaces are not advertised.
+
+4F0Ah returns a relocatable 32-bit interface for bank, display start and palette
+writes. Protected-mode display start uses DX:CX in four-byte units, while the
+real-mode entry uses pixel coordinates. Tests copy this code out of ROM and
+execute it in a flat protected-mode segment with host BIOS callbacks disabled.
+The RAM boot probe also copies and executes it under PCEmu interpreter/JIT and
+QEMU, switches back to real mode, and checks its device effects.
+
+AH=1Ch and VBE 4F04h use a private 1024-byte state image (16 blocks of 64 bytes).
+Selectors independently cover VGA hardware, BIOS data/font pointers, DAC state
+and DISPI state (VBE only). Framebuffer bytes are not part of the image and
+restoration never erases them. Signature/version/selector validation occurs
+before restoration. Tests verify an all-group state roundtrip across a legacy
+mode change, buffer guards, display-byte preservation and corrupt-image rejection.
+The QEMU boot probe independently verifies save/restore and mode reconstruction.
