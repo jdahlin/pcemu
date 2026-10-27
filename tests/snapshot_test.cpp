@@ -197,10 +197,10 @@ int main() {
         for (unsigned n = 0; n < 4; ++n) legacyTlb[4+n] = m.cpu.tlbEpoch >> (n*8);
         check(std::search(first.begin(), first.end(), legacyTlb.begin(), legacyTlb.end()) != first.end(),
               "TLB snapshot retains its legacy 18-byte record");
-        for(unsigned legacyVersion : {6u,7u}) {
+        for(unsigned legacyVersion : {6u,7u,8u}) {
             auto legacy = first;
             legacy.erase(legacy.end() - 8 - 84, legacy.end() - 8); // Remove v9 x87 state.
-            legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
+            if(legacyVersion<8)legacy.erase(legacy.end() - 9); // Remove v8 PE-entry state.
             if(legacyVersion==6)legacy.erase(legacy.end()-9); // Remove v7 DAC direction.
             legacy[8] = legacyVersion;
             // v6 did not preserve the Attribute source bit: locate the index
@@ -222,6 +222,8 @@ int main() {
             compatibility.loadSnapshot(directory.string());
             check(compatibility.vga.attrIndex==0x3f && compatibility.vga.dacReadMode==(legacyVersion>=7) && !compatibility.cpu.protectedEntry,
                   "old snapshot preserves DAC compatibility and defaults PE-entry state");
+            check(compatibility.cpu.fpControl == 0x37f && compatibility.cpu.fpTag == 0xffff && compatibility.cpu.fpStatus == 0,
+                  "pre-v9 snapshots default the absent floating-point state to FINIT");
         }
         m.cpu.r[AX] = 0;
         m.cpu.mem[0x5000] = 0;
@@ -249,12 +251,12 @@ int main() {
               "legacy snapshot fields restore frame/permission/dirty state");
         m.saveSnapshot((root / "roundtrip").string());
         auto second = unpack(root / "roundtrip/state.bin");
-        // The tail is RTC(8), DAC direction(1), PE-entry state(1), checksum(8).
+        // Tail: RTC(8), DAC direction(1), PE-entry(1), x87(84), checksum(8).
         // Exclude only the advancing RTC and derived checksum, retaining both
-        // Boolean latches in the exact round-trip comparison.
+        // Boolean latches and floating-point state in the exact comparison.
         check(first.size() == second.size() &&
-                  std::equal(first.begin(), first.end() - 18, second.begin()) &&
-                  std::equal(first.end()-10,first.end()-8,second.end()-10),
+                  std::equal(first.begin(), first.end() - 102, second.begin()) &&
+                  std::equal(first.end()-94,first.end()-8,second.end()-94),
               "every serialized CPU/device/queue field round-trips exactly (RTC excluded)");
         check(m.systemPortB.read_register(false, false) == 3 && m.debugConsole.read_data_register() == 'A',
               "system/debug device latches restore from the existing port-state encoding");

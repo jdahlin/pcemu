@@ -56,6 +56,11 @@ dispatch and device polling as the main remaining costs. Those timings use the
 original VGA fixtures (`./run-office97.sh --vga`), which remain unchanged.
 See [Office installation and benchmarks](docs/office97.md).
 
+Quake 1.06 shareware now renders and accepts keyboard movement under MS-DOS 6.22
+with the x86 interpreter. Run `./run-quake.sh` after preparing its private disk;
+see [DOS Quake](docs/quake.md) for headless validation, setup and remaining x87/JIT
+limits. Sound is disabled.
+
 ## Run this checkout
 
 ```sh
@@ -260,8 +265,8 @@ keyboard read, and form feed (`\f`) waits until graphics mode has been active fo
 These controls make early boot tests reproducible without host UI automation.
 
 This is an early compatibility implementation, not a complete PC. It supports
-Windows standard mode; 386 enhanced mode, full CPU protection checks, hardware
-FPU, audio and full ROM POST remain unfinished. Original NE2000 networking supplies
+Windows standard mode; 386 enhanced mode, full CPU protection checks, complete x87
+fidelity, audio and full ROM POST remain unfinished. Original NE2000 networking supplies
 DHCP, DNS, TCP and UDP through macOS sockets; see [networking](docs/networking.md). PS/2 input and VBE
 display integration are described in [docs/input-video.md](docs/input-video.md).
 The original firmware reset entry and 8042/port-92 reset paths reboot through

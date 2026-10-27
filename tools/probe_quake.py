@@ -36,6 +36,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dos', type=Path, required=True, help='stopped, local DOS base disk')
     parser.add_argument('--source', type=Path, required=True, help='extracted directory containing QUAKE.EXE and ID1/PAK0.PAK')
+    parser.add_argument('--output', type=Path, help='new private child path; defaults to the capture directory')
+    parser.add_argument('--prepare-only', action='store_true', help='stage a persistent game disk without booting')
+    parser.add_argument('--demo', action='store_true', help='play the bundled demo1 instead of loading the start map')
     parser.add_argument('--steps', type=int, default=100_000_000)
     parser.add_argument('--timeout', type=int, default=60)
     parser.add_argument('--no-jit', action='store_true')
@@ -52,18 +55,27 @@ def main():
         parser.error('Expected the original Quake 1.06 shareware PAK0.PAK')
     subprocess.run(['make', '-s', 'build/pcemu', 'build/disk-tool'], cwd=ROOT, check=True)
     work = Path(tempfile.mkdtemp(prefix='quake-probe-', dir=ROOT / 'build'))
-    disk = work / 'guest.qcow2'
+    disk = args.output.resolve() if args.output else work / 'guest.qcow2'
+    if disk.exists() or disk.is_symlink():
+        parser.error('Preserving existing destination: ' + str(disk))
+    disk.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run([str(ROOT / 'build/disk-tool'), 'overlay', str(disk), str(parent)], check=True)
     with CowFile(disk) as handle:
         fat = Writer(handle)
         fat.put_directory('QUAKE', files)
-        # -basedir C:\ selects C:\ID1, avoiding any change to the FAT writer's
-        # root-directory-only contract.
+        # Run from C:\ so Quake's default ./id1 path names the staged assets.
         fat.put_directory('ID1', {'PAK0.PAK': pak})
         verify_directory(fat, 'QUAKE', files)
         verify_directory(fat, 'ID1', {'PAK0.PAK': pak})
         fat.replace_existing('CONFIG  SYS', b'DEVICE=C:\\DOS\\HIMEM.SYS /TESTMEM:OFF\r\nFILES=80\r\nBUFFERS=30\r\n')
-        fat.replace_existing('AUTOEXECBAT', b'@ECHO OFF\r\nPATH C:\\DOS\r\nCD \\QUAKE\r\nQUAKE -basedir C:\\ -nosound -nocdaudio\r\n')
+        game_command = '+playdemo demo1' if args.demo else '+map start'
+        startup = ('@ECHO OFF\r\nPATH C:\\DOS;C:\\QUAKE\r\nCD \\\r\n'
+                   'C:\\QUAKE\\QUAKE -nosound -nocdaudio -nojoy -nomouse -noipx -noudp '
+                   + game_command + '\r\n')
+        fat.replace_existing('AUTOEXECBAT', startup.encode('ascii'))
+    if args.prepare_only:
+        print(f'Prepared shareware Quake disk: {disk}')
+        return 0
     command = [str(ROOT / 'build/pcemu'), '--headless', '--disk', str(disk),
                '--ram-mb', '32', '--steps', str(args.steps), '--frame', str(work / 'frame.ppm'),
                '--state-json', str(work / 'state.json')]
@@ -80,7 +92,7 @@ def main():
               'files': {name: hashlib.sha256(data).hexdigest() for name, data in
                         {**files, 'ID1/PAK0.PAK': pak}.items()},
               'stderr': (work / 'stderr.txt').read_text(),
-              'diskRetained': args.keep_disk or status != 0}
+              'diskRetained': args.keep_disk or args.output is not None or status != 0}
     if not report['diskRetained']:
         disk.unlink()
         Path(str(disk) + '.idx').unlink(missing_ok=True)

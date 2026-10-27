@@ -83,6 +83,8 @@ constexpr uint8_t DriveCExtendedType = 0xf0;
 constexpr uint8_t ColorDisplay80Columns = 0x20;
 // Equipment bit 0 reports that a diskette drive is installed.
 constexpr uint8_t DiskettePresent = 0x01;
+// Equipment bit 1 reports the installed math coprocessor.
+constexpr uint8_t MathCoprocessorPresent = 0x02;
 // COMPATIBILITY: Conventional memory is always advertised as 640 KiB.
 constexpr uint32_t BaseMemoryKiB = 640;
 // BIOS memory-size configuration fields count kibibytes, not bytes.
@@ -149,7 +151,7 @@ uint32_t CmosRtc::read_data_register() const {
         // FIXME: Supply the extended type byte (0x19) when advertising type 15.
         return config.disk ? DriveCExtendedType : 0;
     case Register::EquipmentByte:
-        return ColorDisplay80Columns | 2 | (config.floppy ? DiskettePresent : 0);
+        return ColorDisplay80Columns | MathCoprocessorPresent | (config.floppy ? DiskettePresent : 0);
     // BIOS memory sizes use low-byte/high-byte words, in KiB.
     // https://minuszerodegrees.net/manuals/IBM_5170_Technical_Reference_6280070_SEP85.pdf#page=80
     // https://minuszerodegrees.net/manuals/IBM_5170_Technical_Reference_6280070_SEP85.pdf#page=81

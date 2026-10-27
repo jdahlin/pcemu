@@ -109,7 +109,7 @@ int main() {
     rtc.configure({16 * 1024 * 1024, false, true});
     rtc.select_register(0x12); check(rtc.read_data_register() == 0);
     rtc.select_register(0x10); check(rtc.read_data_register() == 0x40);
-    rtc.select_register(0x14); check(rtc.read_data_register() == 0x21);
+    rtc.select_register(0x14); check(rtc.read_data_register() == 0x23);
     rtc.set_time(1000); host += 7;
     check(rtc.time_seconds() == 1007);
     auto now = std::time_t(rtc.time_seconds());

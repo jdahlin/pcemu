@@ -2026,6 +2026,24 @@ int main() {
             instruction({0xde, 0xf9}); instruction({0xd9, 0x1e, 0x08, 0x02});
             check(std::bit_cast<float>(fp.read(0x208, 4)) == .25f, "x87 FDIVP register operand order");
         }
+        {
+            CPU readonly(2 * 1024 * 1024);
+            readonly.s[CS].big = true; readonly.s[CS].selector = 3;
+            readonly.cr[0] = 0x80000011; readonly.cr[3] = 0x80000;
+            uint32_t pde = 0x81007, code = 7, data = 0x9005, one = 0x3f800000;
+            std::memcpy(&readonly.mem[0x80000], &pde, 4);
+            std::memcpy(&readonly.mem[0x81000], &code, 4);
+            std::memcpy(&readonly.mem[0x81008], &data, 4);
+            std::memcpy(&readonly.mem[0x9000], &one, 4);
+            readonly.fp[0] = std::bit_cast<uint64_t>(1.); readonly.fpTag = 0xfffc;
+            unsigned fault = 0; readonly.bios = [&](uint8_t n) { fault = n; return true; };
+            program(readonly, {0xd8, 0x15, 0x00, 0x20, 0x00, 0x00}); readonly.step();
+            check(!fault && (readonly.fpStatus & 0x4500) == 0x4000,
+                  "x87 memory comparisons permit read-only guest pages");
+            program(readonly, {0xdd, 0x3d, 0xfe, 0x0f, 0, 0}); readonly.step();
+            check(!fault && readonly.read(0xffe, 2) == readonly.fpStatus,
+                  "FNSTSW validates only its two-byte operand at a page boundary");
+        }
         CPU nofpu;
         nofpu.r[SP] = 0x1000;
         nofpu.write(0, 0xe3db, 2);

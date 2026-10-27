@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-27",
+  "scope": "Original DOS Quake 1.06 shareware on MS-DOS 6.22; silent interpreter gameplay and original demo1 rendering. No JIT or performance claim.",
+  "ramMiB": 32,
+  "backend": "interpreter",
+  "archiveSha256": "ec6c9d34b1ae0252ac0066045b6611a7919c2a0d78a3a66d9387a8f597553239",
+  "pak0Sha256": "35a9c55e5e5a284a159ad2a62e0e8def23d829561fe2f54eb402dbc0a9a946af",
+  "movementCheck": {
+    "success": true,
+    "input": "IRQ1 Up-arrow make/break",
+    "captures": [
+      {
+        "frame": "frame-1.ppm",
+        "instructions": 350777405,
+        "sceneSha256": "65964cd3e61c7a0ace18054b7b3d3adad47c6a12caffedeccfc087be0b30ed1d",
+        "cr0": 2147483667
+      },
+      {
+        "frame": "frame-2.ppm",
+        "instructions": 452437405,
+        "sceneSha256": "fadd4ca79c31c189227a76e3acbe5aa94c423b45f0b61c6ea9ccdae6e85f86fa",
+        "cr0": 2147483667
+      }
+    ]
+  },
+  "demo1": {
+    "instructions": 700077405,
+    "cr0": 2147483667,
+    "frameSha256": "d9fc2b8593a82b31b49e2a21a85eb785f599095fabdf2364d6db2b8539d7ef57",
+    "visuallyVerified": true
+  },
+  "checks": [
+    "make test passed",
+    "Python syntax and launcher shell syntax passed",
+    "headless start-map HUD and movement passed",
+    "headless original demo1 rendered"
+  ],
+  "knownLimits": [
+    "JIT segment-state divergence during CWSDPMI lock-memory service",
+    "Binary64 x87 arithmetic; incomplete extended precision and exception/stack-fault semantics",
+    "No audio"
+  ],
+  "sources": {
+    "src/cpu.cpp": "9368dd79c7cba194a324b5dce09b22c30758bbaa407539f5246251ea30fd0530",
+    "src/cpu.hpp": "e48de57789c9231d71cb759860f78a1642efb6a29e646b8a60080d1131cb0ed5",
+    "src/cpu_x87.cpp": "e543c430e3bcfaf8e4ebab394a05f9d6b15aa990a4935f7da0883a53bfab9fc8",
+    "src/snapshot.cpp": "9b0c223439f7bc3a45778c3348d7c90815bf37390349c59dd3d28649fda87b12"
+  }
+}

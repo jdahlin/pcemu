@@ -98,10 +98,10 @@ void CPU::stepX87(uint8_t op, bool a32, int over, bool o32) {
         if (op == 0xde || op == 0xdf) size = 2;
         if (op == 0xdb && (g == 5 || g == 7)) size = 10;
         if (op == 0xdf && (g == 5 || g == 7)) size = 8;
-        if (op == 0xd9 && (g == 5 || g == 7)) size = 2;
+        if ((op == 0xd9 && (g == 5 || g == 7)) || (op == 0xdd && g == 7)) size = 2;
         bool env = (op == 0xd9 && (g == 4 || g == 6)) || (op == 0xdd && (g == 4 || g == 6));
         if (env) size = (o32 ? 28 : 14) + (op == 0xdd ? 80 : 0);
-        bool writing = g == 2 || g == 3 || g == 7 || (env && g == 6);
+        bool writing = (op & 1) && (g == 2 || g == 3 || g == 7 || (env && g == 6));
         for (unsigned n = 0; n < size; ++n) physical(at + n, writing);
         if (env) {
             unsigned stride = o32 ? 4 : 2, bytes = o32 ? 28 : 14;
