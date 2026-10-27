@@ -266,6 +266,12 @@ pcemu_program(guest-profile-tests PROFILE
     tests/guest_profile_test.cpp
 )
 
+pcemu_program(jit-cached-context-tests ZSTD
+  SOURCES
+    ${CORE}
+    tests/jit_cached_context_test.cpp
+)
+
 pcemu_program(jit-invalid-opcode-tests ZSTD
   SOURCES
     ${CORE}

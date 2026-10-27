@@ -97,18 +97,21 @@ void Jit::flushDebugMap() {
 // The dispatcher asks for this on every cached paged block entry. Reuse a
 // current permitted read translation without the address()/physical() call
 // pair; misses and segment faults retain the reference CPU's slow path.
+template<class User> [[gnu::always_inline]] static inline bool warmInstructionTranslation(
+    CPU &cpu,uint32_t linear,uint32_t cr3,uint32_t a20Mask,User user,uint32_t &result) {
+    const uint32_t page=linear>>12;
+    const auto &entry=cpu.tlb[(page^(page>>10))&(cpu.tlb.size()-1)];
+    if(cpu.tlbCR3==cr3 && entry.epoch==cpu.tlbEpoch && entry.tag==page &&
+       ((entry.permissions&4)||!user())){
+        result=(entry.base&a20Mask)>>12;return true;
+    }
+    return false;
+}
 bool Jit::warmInstructionPage(CPU &cpu,uint32_t ip,uint32_t &result) {
     const auto &cs = cpu.s[CS];
     if (!(cpu.cr[0] & 1) || (cpu.flags & 0x20000) || !cs.unusable) {
-        const uint32_t linear = cs.base + ip;
-        const uint32_t page = linear >> 12;
-        const auto &entry = cpu.tlb[(page ^ (page >> 10)) & (cpu.tlb.size() - 1)];
-        if (cpu.tlbCR3 == cpu.cr[3] && entry.epoch == cpu.tlbEpoch && entry.tag == page &&
-            ((entry.permissions & 4) || cpu.cpl() != 3 || cpu.systemAccess)) {
-            uint32_t physical = entry.base | (linear & 4095);
-            if (!cpu.a20) physical &= ~(1u << 20);
-            result=physical>>12;return true;
-        }
+        return warmInstructionTranslation(cpu,cs.base+ip,cpu.cr[3],cpu.a20?UINT32_MAX:~(1u<<20),
+            [&]{return cpu.cpl()==3&&!cpu.systemAccess;},result);
     }
     return false;
 }
@@ -152,6 +155,22 @@ void Jit::clear() {
     fast = {};
     used = stubUsed = 0;
     nativeInstructions = compiledBlocks = cacheHits = cacheRecycles = 0;
+    cachedContexts.clear();
+    nextCachedContext = validatedCachedContext = 0;
+}
+size_t Jit::CachedContextHash::operator()(const CachedContext &c) const noexcept {
+    size_t h=std::hash<uint64_t>{}(c.executionEpoch);
+    auto mix=[&](size_t value){h^=value+0x9e3779b9u+(h<<6)+(h>>2);};
+    mix(std::hash<const uint8_t *>{}(c.ram));mix(std::hash<const uint64_t *>{}(c.codeBits));
+    mix(c.ramSize);mix(c.cr0);mix(c.cr3);mix(c.csBase);mix(c.a20|(c.vm<<1)|(c.watched<<2));return h;
+}
+uint32_t Jit::contextFor(const Block &b) {
+    const CachedContext key{b.executionEpoch,b.ram,b.codeBits,b.ramSize,b.cr0,b.cr3,b.csBase,b.a20,b.vm,b.watched};
+    if(auto it=cachedContexts.find(key);it!=cachedContexts.end())return it->second;
+    // Zero disables the shortcut; identities are never reused while blocks live.
+    if(nextCachedContext==UINT32_MAX)return 0;
+    const auto id=++nextCachedContext;
+    cachedContexts.emplace(key,id);profile::event(profile::CachedContextChange);return id;
 }
 void Jit::setDirectLinks(bool enabled, unsigned hotEntries) {
     // Stub/body edges use ARM64 B immediates in both directions. Keep the
@@ -249,6 +268,7 @@ Jit::Block *Jit::installBlock(uint64_t key, Block block) {
 uint32_t Jit::run() {
     profile::InterpretationScope interpretation(profile::InterpretationReason::Forced);
     stopBatch = false;
+    validatedCachedContext = 0;
     profile::event(profile::Dispatch);
     if (cpu.halted)
         return 0;
@@ -380,6 +400,12 @@ uint32_t Jit::run() {
     profile::event(profile::NativeCall);
     cpu.nativeFallback = false;
     stopBatch = b.pollBoundary;
+    // Only ordinary callback-free blocks enter cached tails. Context-changing
+    // operations and deferred callbacks return to run() for full validation.
+    if(b.fn && !b.pollBoundary && !b.changesShadow){
+        validatedCachedContext=b.cachedContext;
+        profile::event(profile::CachedContextValidation);
+    }
     auto n = uint32_t(function(&cpu, 0));
     const bool portExit=n&nativePortIOExit;
     const bool invalidOpcodeExit=n&nativeInvalidOpcodeExit;
@@ -413,32 +439,50 @@ Jit::CachedBatch Jit::runCached(unsigned budget) noexcept {
     return directLinks ? runCachedImpl<true>(budget) : runCachedImpl<false>(budget);
 }
 template <bool Linking> Jit::CachedBatch Jit::runCachedImpl(unsigned budget) noexcept {
-    // Only already-native fast-cache hits run here. Keep these context guards
-    // synchronized with run(); misses, compilation and replay stay outside.
+    // Equal compile-time identities imply the same common guards as the root
+    // already validated by run(). Cacheable native blocks
+    // cannot change CS/CR0/CR3/A20, stack mode, host buffers or watch callbacks.
+    // Helpers that can do so must end the batch through a poll/shadow boundary.
+    // Fetch permissions/mappings and code writes remain checked on every edge.
     CachedBatch result;
+    const auto context=validatedCachedContext;
+    if(!context)return result;
+    const auto prefix=uint64_t(cpu.s[CS].selector)<<48 | uint64_t(cpu.s[CS].big)<<47;
+    const auto selectorHash=cpu.s[CS].selector*31u;
+    const auto generations=cpu.generation.data();
+    const auto generationSize=cpu.generation.size();
+    const auto stack32=cpu.s[SS].big;
+    const auto cr0=cpu.cr[0],cr3=cpu.cr[3],csBase=cpu.s[CS].base;
+    const bool fetchUsable=!(cr0&1)||(cpu.flags&0x20000)||!cpu.s[CS].unusable;
+    const bool userFetch=cpu.cpl()==3&&!cpu.systemAccess;
+    const auto a20Mask=cpu.a20?UINT32_MAX:~(1u<<20);
     while (result.count.instructions < budget) {
         if (cpu.nativeFallback || cpu.halted || (cpu.flags & TF) ||
             (cpu.interruptBlockedThrough && cpu.instructions <= cpu.interruptBlockedThrough))
             return result;
-        uint64_t key = uint64_t(cpu.s[CS].selector) << 48 | uint64_t(cpu.s[CS].big) << 47 | cpu.ip;
-        auto &entry = fast[(cpu.ip ^ (cpu.ip >> 12) ^ (cpu.s[CS].selector * 31u)) & 4095];
+        uint64_t key = prefix | cpu.ip;
+        auto &entry = fast[(cpu.ip ^ (cpu.ip >> 12) ^ selectorHash) & 4095];
         Block *b = entry.key == key ? entry.block : nullptr;
-        if (!b || !b->fn || b->executionEpoch != cpu.executionEpoch ||
-            b->page >= cpu.generation.size() || b->generation != cpu.generation[b->page] ||
-            b->cr0 != cpu.cr[0] || b->cr3 != cpu.cr[3] || b->csBase != cpu.s[CS].base ||
-            b->a20 != cpu.a20 || b->vm != bool(cpu.flags & 0x20000) ||
-            b->watched != bool(cpu.watchWrite) || (b->usesStack && b->stack32 != cpu.s[SS].big) ||
-            b->ram != cpu.mem.data() || b->ramSize != cpu.mem.size() ||
-            b->codeBits != cpu.codeUsed.data() ||
-            (Linking && b->link() && b->link()->generationData != cpu.generation.data()))
+        if (!b || !b->fn ||
+            b->page >= generationSize || b->generation != generations[b->page])
             return result;
+        if(b->cachedContext != context){profile::event(profile::CachedContextMiss);return result;}
+        // These assumptions are conditional on the target, so cannot be
+        // inferred from a root that uses no stack or link stub.
+        if((b->usesStack && b->stack32!=stack32) ||
+           (Linking && b->link() && b->link()->generationData!=generations))return result;
+        profile::event(profile::CachedContextHit);
         if (Linking && b->link() && !b->linkRequested && ++b->visits >= linkWarmup)
             return result; // Promotion/patching is only allowed outside native frames.
         auto oldCR2 = cpu.cr[2];
         try {
-            if ((cpu.cr[0] & 0x80000000u) && instructionPage(cpu,cpu.ip) != b->page)
-                return result;
-            if (b->generation != cpu.generation[b->page])
+            if(cr0&0x80000000u){
+                uint32_t page;
+                if(!fetchUsable || !warmInstructionTranslation(cpu,csBase+cpu.ip,cr3,a20Mask,[&]{return userFetch;},page))
+                    page=cpu.physical(cpu.address(CS,cpu.ip))>>12;
+                if(page!=b->page)return result;
+            }
+            if (b->generation != generations[b->page])
                 return result;
         } catch (...) {
             cpu.cr[2] = oldCR2;
@@ -542,6 +586,7 @@ Jit::Block Jit::compile(bool translate, bool hotShort) {
         }) ? 2 : 1;
         return block;
     }
+    if(!block.pollBoundary && !block.changesShadow)block.cachedContext=contextFor(block);
     return emitArm64(std::move(block), decoded);
 #else
     (void)hotShort;

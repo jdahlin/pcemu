@@ -36,6 +36,10 @@ enum Event {
     ShortMemoryFragmentHit,
     ShortPromote,
     NativeInvalidOpcode,
+    CachedContextValidation,
+    CachedContextChange,
+    CachedContextHit,
+    CachedContextMiss,
     Count
 };
 enum class InterpretationReason { OutsideJit, Forced, Warming, ShortFragment, Declined, Replay, Count };
@@ -217,7 +221,8 @@ inline void stop(const std::string &path, uint64_t instructions) {
                            "cowCacheHit",
                            "shortFragmentHit",
                            "shortMemoryFragmentHit",
-                           "shortPromote", "nativeInvalidOpcode"};
+                           "shortPromote", "nativeInvalidOpcode", "cachedContextValidation",
+                           "cachedContextChange", "cachedContextHit", "cachedContextMiss"};
     out << "{\"startInstructions\":" << data.startInstructions
         << ",\"stopInstructions\":" << instructions << ",\"interpretedAttempts\":" << data.attempts
         << ",\"events\":{";

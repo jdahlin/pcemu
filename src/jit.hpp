@@ -87,6 +87,7 @@ class Jit {
         bool vm = false, watched = false, usesStack = false, stack32 = false;
         bool pollBoundary = false; // Completed control instructions must return to the device poll.
         bool changesShadow = false; // STI and segment loads into SS need an accounted instruction boundary.
+        uint32_t cachedContext = 0; // Identity of common compiled execution assumptions.
         const uint8_t *ram = nullptr;
         const uint64_t *codeBits = nullptr;
         size_t ramSize = 0;
@@ -129,6 +130,19 @@ class Jit {
         BatchResult count;
         bool stoppedZero = false;
     };
+    struct CachedContext {
+        uint64_t executionEpoch = 0;
+        const uint8_t *ram = nullptr;
+        const uint64_t *codeBits = nullptr;
+        size_t ramSize = 0;
+        uint32_t cr0 = 0, cr3 = 0, csBase = 0;
+        bool a20 = false, vm = false, watched = false;
+        bool operator==(const CachedContext &) const = default;
+    };
+    struct CachedContextHash { size_t operator()(const CachedContext &) const noexcept; };
+    std::unordered_map<CachedContext,uint32_t,CachedContextHash> cachedContexts;
+    uint32_t nextCachedContext = 0, validatedCachedContext = 0;
+    uint32_t contextFor(const Block &);
     CachedBatch runCached(unsigned budget) noexcept;
     template <bool Linking> CachedBatch runCachedImpl(unsigned budget) noexcept;
     static bool warmInstructionPage(CPU&,uint32_t ip,uint32_t &page);
