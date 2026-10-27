@@ -84,7 +84,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         if (i.memoryPop) usedRegisters |= 1u << SP;
         if (i.stackMany) usedRegisters |= 255;
         if (i.leaveFrame) usedRegisters |= 1u << SP;
-        if (i.kind == Kind::Divide || i.memoryDivide)
+        if (i.kind == Kind::Divide || i.memoryDivide || i.kind == Kind::MultiplyFull || i.memoryMultiplyFull)
             usedRegisters |= (1u << AX) | (i.w == 1 ? 0 : 1u << DX);
         if (i.indirectCall && !i.memoryCall) usedRegisters |= 1u << i.src;
         if (i.memoryCall || i.memoryPush) {
@@ -370,6 +370,37 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         } else if (flags) multiplyFlags(i.w);
         insert(20 + i.dst, 13, i.w, 0);
         dirtyRegisters |= 1u << i.dst;
+    };
+    // The right operand is captured in w12 before either implicit result GPR
+    // changes. Full 64-bit products cover every byte/word/dword input pair.
+    auto multiplyFullResult = [&](const jit_detail::Instruction &i,bool flags) {
+        extract(11,20+AX,i.w,0);
+        if(i.op==5) {
+            emit(0x13000000u | ((i.w*8-1)<<10) | (11<<5) | 11);
+            emit(0x13000000u | ((i.w*8-1)<<10) | (12<<5) | 12);
+        }
+        emit((i.op==5?0x9b207c00u:0x9ba07c00u) | (12<<16) | (11<<5) | 13); // smull/umull
+        if(flags) {
+            if(i.op==5)multiplyFlags(i.w);
+            else {
+                emit(0xd3400000u | ((i.w*8)<<16) | (63<<10) | (13<<5) | 14); // lsr x14,x13,#bits
+                emit(0xf100001fu | (14<<5)); // cmp x14,#0
+                emit(0x1a9f07ebu); // cset w11,ne
+                load(12,19,offsetof(CPU,flags));
+                imm(14,~(CF|OF));
+                emit(0x0a000000u | (14<<16) | (12<<5) | 12);
+                for(unsigned bit:{0u,11u})
+                    emit(0x33000000u | (((32-bit)&31)<<16) | (11<<5) | 12);
+                store(12,19,offsetof(CPU,flags));
+            }
+        }
+        insert(20+AX,13,i.w==1?2:i.w,0);
+        dirtyRegisters |= 1u<<AX;
+        if(i.w!=1) {
+            emit(0xd3400000u | ((i.w*8)<<16) | (63<<10) | (13<<5) | 14);
+            insert(20+DX,14,i.w,0);
+            dirtyRegisters |= 1u<<DX;
+        }
     };
     auto replay = [&](uint32_t start, unsigned completed, unsigned dirty) {
         flushRegisters(dirty);
@@ -668,7 +699,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyByte", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -828,27 +859,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             doubleShiftResult(i,false);
             continue;
         }
-        if (i.kind == Kind::MultiplyByte) {
-            // MUL r8 reads AL and its byte source before replacing AX. This
-            // matters when the source aliases AL or AH. Preserve every flag
-            // except the architecturally defined CF/OF, matching the reference.
-            finishFlags(last, -1, 0);
-            last = -1;
-            extract(11, 20 + AX, 1, 0);
-            extract(12, 20 + i.src, 1, i.srcShift);
-            emit(0x1b007c00u | (12 << 16) | (11 << 5) | 13); // mul w13,w11,w12
-            if (neededFlags[n]) {
-                emit(0x7100001fu | (255 << 10) | (13 << 5)); // cmp w13,#255
-                emit(0x1a9f97ebu); // cset w11,hi: high product byte nonzero
-                load(12, 19, offsetof(CPU, flags));
-                imm(14, ~(CF | OF));
-                emit(0x0a000000u | (14 << 16) | (12 << 5) | 12);
-                for (unsigned bit : {0u, 11u})
-                    emit(0x33000000u | (((32 - bit) & 31) << 16) | (11 << 5) | 12);
-                store(12, 19, offsetof(CPU, flags));
-            }
-            insert(20 + AX, 13, 2, 0);
-            dirtyRegisters |= 1u << AX;
+        if (i.kind == Kind::MultiplyFull) {
+            finishFlags(last,-1,0);
+            last=-1;
+            extract(12,20+i.src,i.w,i.srcShift);
+            multiplyFullResult(i,neededFlags[n]);
             continue;
         }
         if (i.kind == Kind::Multiply) {
@@ -991,7 +1006,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
             }
             const bool memoryCarry = i.memoryAlu && (i.op == 2 || i.op == 3);
-            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift) {
+            if (i.memory.delta || memoryCarry || i.memory.bit >= 4 || i.memoryMultiplyFull || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift) {
                 // INC/DEC preserve CF; ADC/SBB consume it; bit tests preserve
                 // all other flags; IMUL preserves its undefined flags too.
                 // Publish the exact restart state before
@@ -1076,6 +1091,11 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 }
                 if (i.memoryDivide) {
                     divideResult(i, divisionErrors);
+                    return;
+                }
+                if(i.memoryMultiplyFull) {
+                    mov(12,10);
+                    multiplyFullResult(i,true);
                     return;
                 }
                 if (i.memoryMultiply) {
@@ -1423,7 +1443,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
+            if (i.memoryMultiplyFull || i.memoryDivide || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.

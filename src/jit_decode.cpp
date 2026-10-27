@@ -511,11 +511,18 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                         i.memory = memoryOperand(m, address32, overrideSegment);
                         i.memory.invert = i.memory.store = true;
                     } else i.dst = m & 7;
-                } else if (op == 0xf6 && (m & 0x38) == 0x20 && (m >> 6) == 3) {
-                    i.kind = Kind::MultiplyByte;
+                } else if ((m & 0x38) == 0x20 || (m & 0x38) == 0x28) {
+                    i.kind = (m >> 6) == 3 ? Kind::MultiplyFull : Kind::Memory;
+                    i.op = (m >> 3) & 7; // MUL versus signed one-operand IMUL.
                     i.dst = AX;
-                    i.src = m & 3;
-                    i.srcShift = (m & 4) ? 8 : 0;
+                    if (i.kind == Kind::Memory) {
+                        i.memoryMultiplyFull = true;
+                        i.immediate = true; // No GPR source; memory supplies it.
+                        i.memory = memoryOperand(m,address32,overrideSegment);
+                    } else {
+                        i.src = i.w == 1 ? m & 3 : m & 7;
+                        i.srcShift = i.w == 1 && (m & 4) ? 8 : 0;
+                    }
                 } else if ((m & 0x38) == 0x18 && (m >> 6) == 3) {
                     i.kind = Kind::Alu;
                     i.op = 5;

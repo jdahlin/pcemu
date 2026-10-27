@@ -16,7 +16,7 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             // A memory operation may replay before access or exit after a
             // successful access changes code. Keep both restart states exact,
             // including comparison flags even if a later ALU overwrites them.
-            neededFlags[n] = i.memoryAlu || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift;
+            neededFlags[n] = i.memoryAlu || i.memoryMultiplyFull || i.memoryMultiply || i.memoryShift || i.memoryDoubleShift;
             liveFlags = arithmeticFlags;
             continue;
         }
@@ -55,7 +55,7 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             written = i.kind == Kind::Alu && i.op >= 8 ? arithmeticFlags & ~CF : arithmeticFlags;
         else if (i.kind == Kind::BitTest)
             written = CF;
-        else if (i.kind == Kind::Multiply || i.kind == Kind::MultiplyByte)
+        else if (i.kind == Kind::Multiply || i.kind == Kind::MultiplyFull)
             written = CF | OF;
         else if (i.kind == Kind::Shift)
             written = CF | SF | ZF | PF | (i.imm == 1 ? OF : 0);

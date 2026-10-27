@@ -5,7 +5,7 @@ namespace pc::jit_detail {
 // Shared decoded operations; no ARM instruction encoding belongs here.
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
-    CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyByte, DoubleShift, BitTest,
+    CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
     LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String
 };
 struct Instruction {
@@ -21,6 +21,7 @@ struct Instruction {
     bool memoryDoubleShift = false; // SHLD/SHRD, including address-only zero counts.
     bool memoryShift = false; // RAM-hit shift/rotate RMW; unsafe writes replay before access.
     bool memoryDivide = false; // Native RAM-hit division with guarded interpreter replay.
+    bool memoryMultiplyFull = false; // Implicit AX/DX product after a guarded read.
     bool memoryMultiply = false; // Two/three-operand signed multiply after a successful read.
     bool memoryResult = false; // Read-only memory ALU with a register destination.
     bool memoryAlu = false, reverse = false, nearCall = false, nearReturn = false;

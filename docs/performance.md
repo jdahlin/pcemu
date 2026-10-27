@@ -2087,3 +2087,15 @@ pass. Word CPU is 28.00% below the original baseline and 1.10% below the prior
 build. Excel remains 12.16% below original but regresses 0.83% versus prior in
 all four pairs. Coverage rises to 96.090%/99.719%; this is not a universal
 performance win. See [semantics, measurements and limits](measurements/office-string-2026-10-27.md).
+
+### Word and Excel: full implicit MUL/IMUL coverage (2026-10-27)
+
+Unsigned MUL and signed implicit IMUL now lower at byte/word/dword widths for
+register and guarded memory sources, preserving complete products, aliases and
+all flags except CF/OF. Validation passes 129,810 new checks, 102,230,994
+flag-liveness checks and core/batch suites. Interpreted word/dword multiply
+attempts fall 96.9% in Word and 96.3% in Excel. All 48 release restores pass;
+CPU is 27.67%/12.52% below the original baselines and 0.67%/0.52% below prior.
+A separate mapped Word Instruments trace puts dispatch at 22.9%, compilation
+at 21.1% and string helper descendants at 1.3% of 1,400 main-thread samples.
+See [semantics, measurements and limits](measurements/office-multiply-full-2026-10-27.md).
