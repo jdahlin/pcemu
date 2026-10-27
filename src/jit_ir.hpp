@@ -6,7 +6,7 @@ namespace pc::jit_detail {
 enum class Kind {
     Unsupported = -1, Move, Alu, Test, Nop, Branch, Memory, Lea,
     CounterBranch, Exchange, Multiply, Shift, IndirectJump, MultiplyFull, DoubleShift, BitTest,
-    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery, InvalidOpcode, X87, SoftwareInterrupt
+    LoadFlags, Direction, Rotate, SignExtend, Invert, Divide, SegmentRead, SegmentLoad, InterruptControl, String, StoreFlags, CarryControl, SetCondition, PortIO, FarReturn, FarTransfer, FarPointer, EnterFrame, BitScan, DescriptorQuery, InvalidOpcode, X87, SoftwareInterrupt, NativeX87
 };
 struct Instruction {
     Kind kind = Kind::Unsupported;
@@ -17,6 +17,7 @@ struct Instruction {
     int setCondition = -1; // SETcc byte result; memory stores save it across access guards.
     int segmentRegister = -1;
     bool segmentLoad = false; // Register/guarded memory selector -> hidden segment state.
+    bool inlineX87 = false; // ESC arithmetic stays inside a native block; memory uses ordinary RAM guards.
     bool xlat = false; // BX/EBX + zero-extended AL, with guarded pre-access replay.
     bool memoryPop = false; // Guard stack read and post-increment destination before access.
     bool memoryDoubleShift = false; // SHLD/SHRD, including address-only zero counts.

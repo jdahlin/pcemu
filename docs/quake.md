@@ -93,6 +93,23 @@ an optimized build and collects separate baseline timings, native host stacks
 and guest opcode/x87 diagnostics. See [Quake profiling](quake-profiling.md) for
 measurement boundaries, reproducibility and interpretation.
 
+## Native x87 blocks
+
+Common real/integer loads, stores, arithmetic, comparisons, stack operations,
+FIST/FISTP, FRNDINT, FSQRT and control/status-word transfers now stay in ARM64
+blocks. The emitter keeps the used stack slots in host FP registers and merges
+TOP/tags at observable exits. Guarded slow accesses retain decoded x87 helpers;
+environment, extended-memory and transcendental operations also retain helpers.
+This uses the existing binary64 model, with the accuracy and exception-handling
+limits documented in `src/cpu_x87.cpp`; it does not add 80-bit arithmetic.
+
+`jit-x87-tests` compares long mixed blocks, cached batches and every native
+register encoding against the interpreter. It covers all TOP/RC values, signed
+zero, NaN payloads, infinities, denormals, invalid integer conversions, full
+stack wrapping, host FP register preservation, and precise mid-block faults and
+MMIO. The broader decoded-form matrix checks 16/32-bit operand/address sizes,
+EM/TS precedence, segment faults and cross-page accesses.
+
 ## Prepare the local disk
 
 Downloaded game files, DOS images and private working disks remain ignored.

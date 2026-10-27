@@ -10,7 +10,7 @@ struct DecodedBlock;
 }
 // ARM64 baseline recompiler. Register arithmetic, direct/counter branches and guarded
 // 8/16/32-bit RAM moves, MOVZX/MOVSX, stack operations and near CALL/RET
-// run in native blocks;
+// and common binary64-backed x87 operations run in native blocks;
 // instructions outside the supported lowering set use the reference interpreter.
 class Jit {
   public:
@@ -115,6 +115,7 @@ class Jit {
             std::vector<NativeMemoryMove> memory;
             std::vector<CPU::DecodedSegment> segments;
             std::vector<CPU::DecodedMemoryArithmetic> arithmetic;
+            std::vector<CPU::DecodedX87> x87;
             std::vector<NativeString> strings;
             std::unique_ptr<LinkState> link;
             std::unique_ptr<BoundaryEntry> boundary;

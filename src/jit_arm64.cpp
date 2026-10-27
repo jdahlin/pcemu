@@ -3,6 +3,7 @@
 #include "jit_flags.hpp"
 #include "jit_runtime.hpp"
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstring>
@@ -22,7 +23,37 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // A short decoder fallthrough ends at an interpreted instruction, so it
     // cannot acquire a native successor without invalidation. Spend link code
     // only on actual control-flow exits or a full-length decoded fragment.
-    const bool linkCandidate = directLinks && !block.changesShadow && !block.pollBoundary && !terminal.nearReturn &&
+    const bool nativeFP=std::any_of(ir.begin(),ir.end(),[](const auto&i){return i.inlineX87;});
+    unsigned fpUsed=0,fpWritten=0;
+    int analyzedTop=0;
+    auto fpReadSlot=[&](int i){fpUsed|=1u<<((analyzedTop+i)&7);};
+    auto fpWriteSlot=[&](int i){fpReadSlot(i);fpWritten|=1u<<((analyzedTop+i)&7);};
+    auto fpAnalyzePush=[&](){analyzedTop=(analyzedTop+7)&7;fpWriteSlot(0);};
+    for(const auto&i:ir)if(i.inlineX87) {
+        unsigned op=i.x87.opcode,m=i.x87.modrm,g=(m>>3)&7,index=m&7;
+        if(m<0xc0 && (op&1)) {
+            if(g==0)fpAnalyzePush();
+            else if(g==2||g==3) {fpReadSlot(0);if(g==3)analyzedTop=(analyzedTop+1)&7;}
+        } else if(m<0xc0||op==0xd8||op==0xdc||op==0xde) {
+            fpReadSlot(0);
+            if(m>=0xc0)fpReadSlot(op==0xde&&m==0xd9?1:index);
+            if(g!=2&&g!=3)fpWriteSlot(m>=0xc0&&op!=0xd8?index:0);
+            if(op==0xde&&m==0xd9)analyzedTop=(analyzedTop+2)&7;
+            else if(g==3||(m>=0xc0&&op==0xde&&g!=2))analyzedTop=(analyzedTop+1)&7;
+        } else if(op==0xd9) {
+            if(g==0){fpReadSlot(index);fpAnalyzePush();}
+            else if(g==1){fpWriteSlot(0);fpWriteSlot(index);}
+            else if(m==0xe0||m==0xe1||m==0xfa||m==0xfc)fpWriteSlot(0);
+            else if(m==0xe4)fpReadSlot(0);
+            else if(m>=0xe8&&m<=0xee)fpAnalyzePush();
+            else if(m==0xf6||m==0xf7)analyzedTop=(analyzedTop+(m==0xf6?7:1))&7;
+        } else if(op==0xdd) {
+            if(g==2||g==3){fpReadSlot(0);fpWriteSlot(index);}
+            else if(g==4||g==5){fpReadSlot(0);fpReadSlot(index);}
+            if(g==3||g==5)analyzedTop=(analyzedTop+1)&7;
+        } else if(op==0xda){fpReadSlot(0);fpReadSlot(1);analyzedTop=(analyzedTop+2)&7;}
+    }
+    const bool linkCandidate = !nativeFP && directLinks && !block.changesShadow && !block.pollBoundary && !terminal.nearReturn &&
         !terminal.indirectJump && !terminal.indirectCall && terminal.kind != Kind::IndirectJump &&
         (terminal.kind == Kind::Branch || terminal.kind == Kind::CounterBranch ||
          terminal.nearCall || ir.size() == 64);
@@ -97,6 +128,13 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if(i.inlineX87) {
+            if(i.kind==Kind::Memory) {
+                if(i.memory.base>=0)usedRegisters|=1u<<i.memory.base;
+                if(i.memory.index>=0)usedRegisters|=1u<<i.memory.index;
+            } else if(i.x87.opcode==0xdf)usedRegisters|=1u<<AX;
+            continue;
+        }
         if(i.kind==Kind::DescriptorQuery){
             usedRegisters|=1u<<i.dst;
             if(i.immediate){
@@ -162,7 +200,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     break;
                 }
             }
-    emit(0xa9b97bfdu); // stp x29,x30,[sp,#-128/-112]!
+    emit(nativeFP?0xa9b37bfdu:0xa9b97bfdu); // stp x29,x30,[sp,#-208/-112]! (FP/ordinary frame)
     emit(0x910003fdu); // mov x29,sp: keep a valid host frame chain for diagnostics.
     for (int k = 0; k < 5; k++)
         if (savePair(k))
@@ -208,6 +246,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         // MMIO, faults and state-changing instructions leave this block.
         cpuAddress(9, offsetof(CPU, tlbEpoch) & ~4095u);
         load(epochRegister, 9, offsetof(CPU, tlbEpoch) & 4095u);
+    }
+    if(nativeFP) {
+        for(unsigned n=0;n<8;++n)if(fpUsed&(1u<<n))emit(0xfd000000u|(((128+n*8)/8)<<10)|(31<<5)|(8+n));
+        emit(0x79400000u|((offsetof(CPU,fpStatus)/2)<<10)|(19<<5)|9);
+        emit(0x530b3529u); // ubfx w9,w9,#11,#3
+        store(9,31,192);
+        cpuAddress(16,offsetof(CPU,fp));
+        for(unsigned n=0;n<8;++n)if(fpUsed&(1u<<n)) {
+            emit(0x11000000u|(n<<10)|(9<<5)|10);
+            emit(0x1200094au); // and w10,w10,#7
+            emit(0xfc605800u|(10<<16)|(16<<5)|(8+n));
+        }
     }
     auto call = [&](uintptr_t address) {
         pointer(16, address);
@@ -381,6 +431,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             block.native->memory.push_back(i.memory);
         }
     for(const auto&i:ir) {
+        if(i.inlineX87 && i.kind==Kind::Memory)block.native->x87.push_back(i.x87);
         if(i.segmentLoad) {
             const auto&m=i.memory;
             block.native->segments.push_back({i.start,i.end,unsigned(i.segmentRegister),unsigned(i.stackDelta?i.w:0),block.stack32,
@@ -404,6 +455,79 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         for (int reg = 0; reg < 8; reg++)
             if (dirty & (1u << reg))
                 store(20 + reg, 19, offsetof(CPU, r) + reg * 4);
+    };
+    // d8..d15 cache physical registers relative to entry TOP. Stack motion is
+    // a compile-time rotation; every side exit shares the writeback below.
+    // AAPCS64 preserves the low 64 bits of these registers across RAM helpers.
+    // Tags remain physical; TOP/tags publish at every exit and status read.
+    // This deliberately preserves the interpreter's binary64 limitations; see
+    // cpu_x87.cpp and Intel SDM Vol. 1 8.1.2, 8.1.3 and 8.1.7.
+    int fpTop=0;
+    // -1 preserves the incoming tag; -2 classifies the final register value.
+    // Stack pops/free use constant Empty tags. Intermediate classifications
+    // cannot be observed by another instruction in this native subset.
+    std::array<int,8> fpTags;fpTags.fill(-1);
+    auto fpReg = [&](int i) {return 8+((fpTop+i)&7);};
+    auto fpMove = [&](int d,int s) {emit(0x1e604000u|(s<<5)|d);};
+    auto halfLoad = [&](int r,unsigned off) {emit(0x79400000u|((off/2)<<10)|(19<<5)|r);};
+    auto halfStore = [&](int r,unsigned off) {emit(0x79000000u|((off/2)<<10)|(19<<5)|r);};
+    auto fpTag = [&](int slot,int value,int) {fpTags[slot]=value<0?-2:value;};
+    auto fpSet = [&](int i,int source) {
+        const int reg=fpReg(i);
+        fpMove(reg,source);
+        fpTag((fpTop+i)&7,-1,reg);
+    };
+    auto fpSaveStatus = [&]() {
+        load(9,31,192);
+        if(fpTop)emit(0x11000000u|(fpTop<<10)|(9<<5)|9);
+        bits(9,9,0,3);
+        halfLoad(10,offsetof(CPU,fpStatus));
+        emit(0x3315092au); // bfi w10,w9,#11,#3
+        halfStore(10,offsetof(CPU,fpStatus));
+    };
+    auto fpRotate = [&](int delta) {fpTop=(fpTop+delta)&7;};
+    struct FPExitState {
+        int top;
+        std::array<int,8> tags;
+        bool operator==(const FPExitState&) const = default;
+    };
+    std::vector<FPExitState> fpExitStates;
+    auto saveFPExit = [&]() {
+        if(nativeFP)fpExitStates.push_back({fpTop,fpTags});
+    };
+    auto fpPop = [&]() {fpTag(fpTop,3,0);fpRotate(1);};
+    auto fpPush = [&](int source) {fpRotate(-1);fpSet(0,source);};
+    auto fpCompare = [&](int a,int b) {
+        emit(0x1e602000u|(b<<16)|(a<<5));
+        emit(0x1a9f77e9u); // cset w9,vs (unordered)
+        emit(0x1a9f57eau); // cset w10,mi (less)
+        emit(0x1a9f17ecu); // cset w12,eq
+        imm(13,0x4500);
+        emit(0x1b0d7d29u); // mul w9,w9,w13
+        emit(0x2a0a2129u); // orr w9,w9,w10,lsl #8
+        emit(0x2a0c3929u); // orr w9,w9,w12,lsl #14
+        halfLoad(10,offsetof(CPU,fpStatus));
+        emit(0x0a2d014au); // bic w10,w10,w13
+        emit(0x2a09014au);
+        halfStore(10,offsetof(CPU,fpStatus));
+    };
+    auto fpRound = [&](int source) {
+        halfLoad(9,offsetof(CPU,fpControl));bits(9,9,10,2);
+        std::vector<size_t> ends;
+        const uint32_t rounds[]={0x1e644000u,0x1e654000u,0x1e64c000u,0x1e65c000u};
+        for(unsigned rc=0;rc<3;++rc) {
+            emit(0x7100001fu|(rc<<10)|(9<<5));
+            const auto next=code.size();emit(0x54000001u);
+            emit(rounds[rc]|(source<<5));
+            ends.push_back(code.size());emit(0x14000000u);
+            code[next]|=uint32_t(code.size()-next)<<5;
+        }
+        emit(rounds[3]|(source<<5));
+        for(auto at:ends)code[at]|=uint32_t(code.size()-at);
+    };
+    auto fpConstant = [&](int reg,double v) {
+        pointer(15,std::bit_cast<uint64_t>(v));
+        emit(0x9e670000u|(15<<5)|reg);
     };
     std::vector<size_t> exits;
     int last = -1;
@@ -467,12 +591,15 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         emit(0x39000000u | (offsetof(CPU, nativeFallback) << 10) | (19 << 5) | 9);
         imm(9, start); store(9, 19, offsetof(CPU, ip));
         imm(0, completed);
-        exits.push_back(code.size()); emit(0x14000000u);
+        saveFPExit();exits.push_back(code.size()); emit(0x14000000u);
     };
     auto deferred = [&](const jit_detail::Instruction &i,unsigned n,unsigned dirty,unsigned kind) {
         flushRegisters(dirty);finishFlags(last,-1,0);
         const void *metadata=nullptr;
-        if(kind&nativeSegmentExit) {
+        if(kind&nativeX87Exit) {
+            auto it=std::find_if(block.native->x87.begin(),block.native->x87.end(),[&](const auto&op){return op.end==i.end;});
+            metadata=&*it;
+        } else if(kind&nativeSegmentExit) {
             auto it=std::find_if(block.native->segments.begin(),block.native->segments.end(),[&](const auto&op){return op.start==i.start;});
             metadata=&*it;
         } else {
@@ -484,7 +611,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         emit(0xf9000000u|((offsetof(CPU,nativeDecodedOperation)/8)<<10)|(19<<5)|9);
         imm(9,kind);store(9,19,offsetof(CPU,nativeDecodedExit));
         imm(9,i.start);store(9,19,offsetof(CPU,ip));
-        imm(0,n);exits.push_back(code.size());emit(0x14000000u);
+        imm(0,n);saveFPExit();exits.push_back(code.size());emit(0x14000000u);
     };
     // w10 holds the selector. Failure is side-effect-free and replays only
     // after returning from the generated frame with its prior state committed.
@@ -778,14 +905,101 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         code[zero] |= uint32_t(code.size() - zero) << 5;
         if (!memory) dirtyRegisters |= 1u << i.dst;
     };
+    auto emitX87 = [&](const jit_detail::Instruction &i) {
+        unsigned op=i.x87.opcode,m=i.x87.modrm,g=(m>>3)&7,index=m&7;
+        const bool memory=m<0xc0;
+        if(memory && (op&1)) {
+            if(op==0xd9 && g==5) { // FLDCW
+                emit(0x79400169u);halfStore(9,offsetof(CPU,fpControl));return;
+            }
+            if(g==7) { // FNSTCW/FNSTSW
+                if(op==0xdd)fpSaveStatus();
+                halfLoad(9,op==0xd9?offsetof(CPU,fpControl):offsetof(CPU,fpStatus));
+                emit(0x79000169u);return;
+            }
+            if(g==0) {fpPush(0);return;}
+            if(op==0xd9) {
+                emit(0x1e624000u|(fpReg(0)<<5)); // fcvt s0,dST0
+                emit(0xbd000160u);
+            } else if(op==0xdd)emit(0xfd000160u|fpReg(0));
+            else {
+                // FCW.RC applies before the signed range check. ARM saturating
+                // FCVTZS alone would give the wrong masked-invalid indefinite.
+                // Intel Vol. 2 FIST/FISTP: IE is sticky, and pop follows store.
+                fpRound(fpReg(0));
+                const double bound=op==0xdb?2147483648.:32768.;
+                fpConstant(1,bound);fpConstant(2,-bound);
+                emit(0x1e612000u); // fcmp d0,d1
+                const auto invalidHigh=code.size();emit(0x5400000au); // b.ge (NaN also ge)
+                emit(0x1e622000u);
+                const auto invalidLow=code.size();emit(0x54000004u); // b.mi
+                const auto invalidNaN=code.size();emit(0x54000006u); // b.vs
+                emit(0x1e78000au); // fcvtzs w10,d0
+                const auto valid=code.size();emit(0x14000000u);
+                for(auto at:{invalidHigh,invalidLow,invalidNaN})code[at]|=uint32_t(code.size()-at)<<5;
+                imm(10,op==0xdb?0x80000000:0x8000);
+                halfLoad(9,offsetof(CPU,fpStatus));
+                emit(0x32000129u); // orr w9,w9,#1
+                halfStore(9,offsetof(CPU,fpStatus));
+                code[valid]|=uint32_t(code.size()-valid);
+                emit((op==0xdb?0xb9000000u:0x79000000u)|(11<<5)|10);
+            }
+            if(g==3)fpPop();return;
+        }
+        if(memory || op==0xd8 || op==0xdc || op==0xde) {
+            const int a=fpReg(0),b=memory?0:fpReg(index);
+            if(!memory && op==0xde && m==0xd9) {fpCompare(a,fpReg(1));fpPop();fpPop();return;}
+            if(g==2||g==3) {fpCompare(a,b);if(g==3)fpPop();return;}
+            unsigned operation=g;
+            int left=a,right=b,dest=0;
+            if(!memory && op!=0xd8) {left=b;right=a;dest=index;if(g>=4)operation^=1;}
+            if(operation==5||operation==7)std::swap(left,right);
+            const auto encoding=operation==0?0x1e602800u:operation==1?0x1e600800u:
+                operation<6?0x1e603800u:0x1e601800u;
+            emit(encoding|(right<<16)|(left<<5));
+            fpSet(dest,0);if(!memory&&op==0xde)fpPop();return;
+        }
+        if(op==0xd9) {
+            if(g==0) {fpMove(0,fpReg(index));fpPush(0);}
+            else if(g==1) {fpMove(0,fpReg(0));fpMove(1,fpReg(index));fpSet(0,1);fpSet(index,0);}
+            else if(m==0xe0||m==0xe1||m==0xfa) {
+                emit((m==0xe0?0x1e614000u:m==0xe1?0x1e60c000u:0x1e61c000u)|(fpReg(0)<<5));fpSet(0,0);
+            } else if(m==0xe4) {fpConstant(0,0);fpCompare(fpReg(0),0);}
+            else if(m>=0xe8&&m<=0xee) {
+                static constexpr double constants[]={1.,3.32192809488736234787,1.44269504088896340736,
+                    3.14159265358979323846,.30102999566398119521,.69314718055994530942,0.};
+                fpConstant(0,constants[m-0xe8]);fpPush(0);
+            } else if(m==0xf6||m==0xf7)fpRotate(m==0xf6?-1:1);
+            else if(m==0xfc) {
+                fpRound(fpReg(0));
+                // Match the reference's explicit nearest-even tie algorithm:
+                // a negative nonzero input rounding to zero becomes +0 there.
+                halfLoad(9,offsetof(CPU,fpControl));bits(9,9,10,2);
+                const auto otherRC=code.size();emit(0x35000009u);
+                emit(0x1e602008u); // fcmp d0,#0
+                const auto nonzero=code.size();emit(0x54000001u);
+                emit(0x1e602008u|(fpReg(0)<<5));
+                const auto inputZero=code.size();emit(0x54000000u);
+                fpConstant(0,0.);
+                for(auto at:{otherRC,nonzero,inputZero})code[at]|=uint32_t(code.size()-at)<<5;
+                fpSet(0,0);
+            }
+        } else if(op==0xdd) {
+            if(g==0)fpTag((fpTop+index)&7,3,0);
+            else if(g==2||g==3) {fpSet(index,fpReg(0));if(g==3)fpPop();}
+            else {fpCompare(fpReg(0),fpReg(index));if(g==5)fpPop();}
+        } else if(op==0xda) {fpCompare(fpReg(0),fpReg(1));fpPop();fpPop();}
+        else if(op==0xdf) {fpSaveStatus();halfLoad(9,offsetof(CPU,fpStatus));insert(20+AX,9,2,0);dirtyRegisters|=1u<<AX;}
+    };
     for (size_t n = 0; n < ir.size(); n++) {
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery", "InvalidOpcode", "X87", "SoftwareInterrupt"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery", "InvalidOpcode", "X87", "SoftwareInterrupt", "NativeX87"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
+        if(i.kind==Kind::NativeX87) {emitX87(i);continue;}
         if(i.kind==Kind::FarTransfer || i.kind==Kind::FarReturn) {
             flushRegisters(dirtyRegisters);
             finishFlags(last,-1,0);
@@ -826,7 +1040,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             call(reinterpret_cast<uintptr_t>(&jit_detail::nativeString));
             const auto success=code.size();emit(0x35000000u);
             imm(0,nativeStringExit|unsigned(n));
-            exits.push_back(code.size());emit(0x14000000u);
+            saveFPExit();exits.push_back(code.size());emit(0x14000000u);
             code[success] |= uint32_t(code.size()-success) << 5;
             continue;
         }
@@ -927,7 +1141,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 imm(9, i.predictedTaken ? i.end : i.imm);
                 store(9, 19, offsetof(CPU, ip));
                 imm(0, n + 1);
-                exits.push_back(code.size());
+                saveFPExit();exits.push_back(code.size());
                 emit(0x14000000u);
                 code[expected] |= uint32_t(code.size() - expected) << 5;
             }
@@ -1250,9 +1464,12 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             }
             const auto accessWidth = i.memory.width;
             auto beforeLoad = dirtyRegisters;
+            const int beforeFPTop=fpTop;
+            const auto beforeFPTags=fpTags;
             auto metadata = &block.native->memory[memoryIndex++];
             std::vector<size_t> divisionErrors;
             auto finishMove = [&]() {
+                if(i.inlineX87) {emitX87(i);return;}
                 if (i.nearReturn) {
                     load(9,19,offsetof(CPU,s)+CS*sizeof(Segment)+offsetof(Segment,limit));
                     emit(0x6b09015fu); // cmp w10,w9: reject destination before SP commits
@@ -1614,7 +1831,18 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                     }
                 }
                 emit(0x8b29438bu); // add x11,x28,w9,uxtw
-                if (i.stackMany) {
+                if(i.inlineX87) {
+                    if(!i.memory.store) {
+                        unsigned op=i.x87.opcode,g=(i.x87.modrm>>3)&7;
+                        if(op==0xd9 && g==5) {} // FLDCW reads directly in emitX87.
+                        else if(op==0xd8||op==0xd9) {emit(0xbd400160u);emit(0x1e22c000u);}
+                        else if(op==0xdc||op==0xdd)emit(0xfd400160u);
+                        else {
+                            emit((accessWidth==4?0xb9800000u:0x79800000u)|(11<<5)|10);
+                            emit(0x9e620140u); // scvtf d0,x10 (signed load)
+                        }
+                    }
+                } else if (i.stackMany) {
                     // finishMove performs all accesses after the whole-span guard.
                 } else if (i.memoryShift || i.memoryDoubleShift) {
                     emit((accessWidth == 4 ? 0xb9400000u : accessWidth == 2 ? 0x79400000u : 0x39400000u) |
@@ -1690,17 +1918,27 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 for (auto at : guards)
                     code[at] |= uint32_t(code.size() - at) << 5;
             }
-            if (i.memoryMultiplyFull || i.memoryDivide || i.memoryBitScan || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
+            const int afterFPTop=fpTop;
+            const auto afterFPTags=fpTags;
+            if(i.inlineX87) {fpTop=beforeFPTop;fpTags=beforeFPTags;}
+            if (i.inlineX87 || i.memoryMultiplyFull || i.memoryDivide || i.memoryBitScan || i.memoryShift || i.memoryDoubleShift || i.stackMany || i.segmentLoad || i.popFlags || i.xlat) {
                 // Cold/unsafe accesses replay BEFORE translation or device access.
                 // Reading first and then replaying could repeat MMIO or
                 // observe data/code changed by page-table accessed/dirty bits.
                 for (auto at : divisionErrors) code[at] |= uint32_t(code.size() - at) << 5;
-                if(i.memoryShift || i.memoryDivide || i.memoryMultiplyFull || i.memoryAlu) {
+                // ESC memory forms share the full-span RAM/TLB proof above.
+                // A miss, device, watched/code write or cross-page span commits
+                // only the prefix, then executes the typed ESC outside this
+                // host frame. Thus stores/pop never precede a fault. EM/TS
+                // selects the boundary helper at decode time, before operands.
+                if(i.inlineX87)deferred(i,unsigned(n),beforeLoad,nativeX87Exit);
+                else if(i.memoryShift || i.memoryDivide || i.memoryMultiplyFull || i.memoryAlu) {
                     deferred(i,unsigned(n),beforeLoad,nativeArithmeticExit);
                 } else if(i.segmentLoad)deferred(i,unsigned(n),beforeLoad,nativeSegmentExit|1);
                 else replay(i.memory.begin, unsigned(n), beforeLoad);
                 if (fastSuccess != size_t(-1)) code[fastSuccess] |= uint32_t(code.size() - fastSuccess);
                 if (zeroDoubleEnd!=size_t(-1))code[zeroDoubleEnd] |= uint32_t(code.size()-zeroDoubleEnd);
+                fpTop=afterFPTop;fpTags=afterFPTags;
                 continue;
             }
             emit(0xaa1303e0u);
@@ -1743,7 +1981,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
                 store(9, 19, offsetof(CPU, ip));
             }
             imm(0, n + 1);
-            exits.push_back(code.size());
+            saveFPExit();exits.push_back(code.size());
             emit(0x14000000u);
             code[fallback] |= uint32_t(code.size() - fallback) << 5;
             if (!invalidCalls.empty()) {
@@ -1761,7 +1999,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             imm(9, i.memory.begin);
             store(9, 19, offsetof(CPU, ip));
             imm(0, n);
-            exits.push_back(code.size());
+            saveFPExit();exits.push_back(code.size());
             emit(0x14000000u);
             code[continuation] |= uint32_t(code.size() - continuation) << 5;
             if (fastSuccess != size_t(-1))
@@ -1830,6 +2068,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     mark("Flags and branch", ir.back().start);
     finishFlags(last, branch ? ir.back().dst : -1, branch ? ir.back().imm : 0);
     mark("Instruction count", ir.back().start);
+    saveFPExit();
     imm(0, terminal.kind==Kind::SoftwareInterrupt ? nativeInterruptExit|uint32_t(ir.size()-1) : terminal.kind==Kind::X87 ? nativeX87Exit|uint32_t(ir.size()-1) : terminal.kind==Kind::PortIO ? nativePortIOExit|uint32_t(ir.size()-1) :
            terminal.kind==Kind::InvalidOpcode ? nativeInvalidOpcodeExit|uint32_t(ir.size()-1) : uint32_t(ir.size()));
     if (linkCandidate) {
@@ -1854,15 +2093,76 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         emit(0xd503201fu); // A hot promotion redirects this to a small link stub.
         block.link()->earlyExitOffset = code.size()*4;
     }
-    for (auto at : exits)
+    if(nativeFP) {
+        // Share cold prefix-commit stubs by stack/tag state. Duplicating this
+        // bookkeeping at every guarded load bloats the executable arena and
+        // causes recompilation of hot blocks. w0 already holds the exit count.
+        exits.push_back(code.size());emit(0x14000000u);
+        std::vector<size_t> commits;
+        std::vector<bool> patched(exits.size());
+        for(size_t n=0;n<exits.size();++n) {
+            if(patched[n])continue;
+            for(size_t k=n;k<exits.size();++k)if(fpExitStates[k]==fpExitStates[n]) {
+                code[exits[k]]|=uint32_t(code.size()-exits[k])&0x03ffffffu;
+                patched[k]=true;
+            }
+            fpTop=fpExitStates[n].top;fpTags=fpExitStates[n].tags;
+            fpSaveStatus();
+            unsigned tagMask=0,tagConstant=0;
+            for(unsigned slot=0;slot<8;++slot)if(fpTags[slot]!=-1) {
+                tagMask|=3u<<(2*slot);
+                if(fpTags[slot]>=0)tagConstant|=unsigned(fpTags[slot])<<(2*slot);
+            }
+            if(tagMask) {
+                // Build one entry-relative tag word, rotate it by entry TOP,
+                // then merge once. No per-slot dynamic mask/load/store chain.
+                imm(12,tagConstant);
+                for(unsigned slot=0;slot<8;++slot)if(fpTags[slot]==-2) {
+                    const int source=8+slot;
+                    emit(0x9e660000u|(source<<5)|13);
+                    emit(0xd374f9aeu); // ubfx x14,x13,#52,#11
+                    emit(0x711ffddfu); // cmp w14,#2047
+                    emit(0x1a9f17edu); // cset w13,eq
+                    emit(0x531f79adu); // lsl w13,w13,#1 (special)
+                    emit(0x1e602008u|(source<<5));
+                    emit(0x1a9f17eeu); // cset w14,eq (zero)
+                    emit(0x2a0e01adu);
+                    emit(0x2a000000u|(13<<16)|((2*slot)<<10)|(12<<5)|12);
+                }
+                imm(10,tagMask);load(9,31,192);
+                emit(0x4b0907e9u); // neg w9,w9,lsl #1
+                emit(0x2a0c418cu); // orr w12,w12,w12,lsl #16
+                emit(0x2a0a414au); // orr w10,w10,w10,lsl #16
+                emit(0x1ac92d8cu); // ror w12,w12,w9
+                emit(0x1ac92d4au); // ror w10,w10,w9
+                halfLoad(14,offsetof(CPU,fpTag));
+                emit(0x0a2a01ceu); // bic w14,w14,w10
+                emit(0x2a0c01ceu);
+                halfStore(14,offsetof(CPU,fpTag));
+            }
+            commits.push_back(code.size());emit(0x14000000u);
+        }
+        for(auto at:commits)code[at]|=uint32_t(code.size()-at)&0x03ffffffu;
+    } else for (auto at : exits)
         code[at] |= uint32_t(code.size() - at) & 0x03ffffffu;
     mark("Host epilogue", ir.back().start);
+    if(nativeFP) {
+        // All paths, including a faulting memory operation in the middle of a
+        // block, publish exactly the completed prefix before C++ can run.
+        load(9,31,192);cpuAddress(16,offsetof(CPU,fp));
+        for(unsigned n=0;n<8;++n)if(fpWritten&(1u<<n)) {
+            emit(0x11000000u|(n<<10)|(9<<5)|10);
+            bits(10,10,0,3);
+            emit(0xfc205800u|(10<<16)|(16<<5)|(8+n));
+        }
+        for(unsigned n=0;n<8;++n)if(fpUsed&(1u<<n))emit(0xfd400000u|(((128+n*8)/8)<<10)|(31<<5)|(8+n));
+    }
     for (int k = 0; k < 5; k++)
         if (savePair(k))
             emit(0xa9400000u | (((16 + k * 16) / 8) << 15) | ((20 + k * 2) << 10) | (31 << 5) |
                  (19 + k * 2));
-    emit(0xa8c77bfdu);
-    emit(0xd65f03c0u); // ldp x29,x30,[sp],#128/#112; ret
+    emit(nativeFP?0xa8cd7bfdu:0xa8c77bfdu);
+    emit(0xd65f03c0u); // ldp x29,x30,[sp],#208/#112; ret
     size_t bytes = code.size() * 4;
     if (bytes > capacity)
         return block; // Never copy an oversized block beyond the executable arena.

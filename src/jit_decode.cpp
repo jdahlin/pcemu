@@ -1,3 +1,4 @@
+#include "jit_x87.hpp"
 #include "jit.hpp"
 #include "jit_ir.hpp"
 #include "jit_runtime.hpp"
@@ -176,10 +177,20 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.x87.opcode=op;i.x87.modrm=m;i.x87.address32=address32;i.x87.operand32=w==4;
                 if(m<0xc0) {
                     auto memory=memoryOperand(m,address32,overrideSegment);
+                    i.memory=memory;
                     i.x87.base=memory.base;i.x87.index=memory.index;i.x87.scale=memory.scale;
                     i.x87.segment=memory.segment;i.x87.displacement=memory.displacement;
                 }
-                block.pollBoundary=true;
+                if(!(cpu.cr[0]&12) && jit_detail::nativeX87Form(i.x87)) {
+                    i.inlineX87=true;
+                    i.kind=m<0xc0?Kind::Memory:Kind::NativeX87;
+                    if(m<0xc0) {
+                        i.w=jit_detail::nativeX87Width(i.x87);
+                        unsigned g=(m>>3)&7;
+                        i.memory.store=(op&1)&&(g==2||g==3||g==7);
+                        i.immediate=true; // No guest GPR data operand.
+                    }
+                } else block.pollBoundary=true;
             } else if (op == 0x06 || op == 0x0e || op == 0x16 || op == 0x1e ||
                 op == 0x07 || op == 0x17 || op == 0x1f) {
                 segmentStack(op >> 3, !(op & 1));
@@ -791,7 +802,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 break;
             }
             i.end = pos;
-            if(i.kind==Kind::X87)i.x87.end=pos;
+            if(i.kind==Kind::X87 || i.inlineX87)i.x87.end=pos;
             if (i.w == 1 && (i.kind <= Kind::Test || i.kind == Kind::Memory || i.kind == Kind::Exchange || i.kind == Kind::Shift || i.kind == Kind::Rotate || i.kind == Kind::Invert || i.kind == Kind::Divide || i.kind == Kind::SetCondition)) {
                 i.dstShift = (i.dst & 4) ? 8 : 0;
                 i.dst &= 3;

@@ -277,7 +277,11 @@ void Jit::finishDecodedExit() {
     const auto pointer=cpu.nativeDecodedOperation;
     cpu.nativeDecodedExit=0;cpu.nativeFallback=false;
     ++nativeInstructions;
-    if(kind&nativeSegmentExit) {
+    if(kind&nativeX87Exit) {
+        const auto op=*static_cast<const CPU::DecodedX87*>(pointer);
+        ++nativeHelperInstructions;
+        cpu.stepX87(op);
+    } else if(kind&nativeSegmentExit) {
         const auto op=*static_cast<const CPU::DecodedSegment*>(pointer);
         cpu.stepSegment(op,uint16_t(cpu.nativeValue),kind&1);
     } else {
