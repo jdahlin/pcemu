@@ -32,7 +32,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         });
     size_t memoryMoves = 0;
     for (const auto &i : ir)
-        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer)
+        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer || (i.kind==Kind::DescriptorQuery && i.immediate))
             memoryMoves += 1 + bool(i.memoryCall || i.memoryPush);
     const size_t stringMoves=std::count_if(ir.begin(),ir.end(),[](const auto &i){return i.kind==Kind::String;});
     if (decoded.fetchTail.present || linkCandidate || memoryMoves || stringMoves || terminal.kind==Kind::FarTransfer || terminal.kind==Kind::FarReturn || terminal.kind==Kind::PortIO)
@@ -93,6 +93,14 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     // loading, spilling, or host callee-save traffic on every block entry.
     unsigned usedRegisters = 0;
     for (auto i : ir) {
+        if(i.kind==Kind::DescriptorQuery){
+            usedRegisters|=1u<<i.dst;
+            if(i.immediate){
+                if(i.memory.base>=0)usedRegisters|=1u<<i.memory.base;
+                if(i.memory.index>=0)usedRegisters|=1u<<i.memory.index;
+            }else usedRegisters|=1u<<i.src;
+            continue;
+        }
         if(i.kind==Kind::EnterFrame){usedRegisters|=(1u<<BP)|(1u<<SP);continue;}
         if (i.memoryDoubleShift) usedRegisters |= 1u << i.src;
         if (i.memoryPop) usedRegisters |= 1u << SP;
@@ -364,7 +372,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
     auto neededFlags = jit_detail::analyzeFlagLiveness(ir);
     if (memoryMoves) block.native->memory.reserve(memoryMoves);
     for (auto i : ir)
-        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer) {
+        if (i.kind == Kind::Memory || i.kind==Kind::FarPointer || (i.kind==Kind::DescriptorQuery && i.immediate)) {
             if (i.memoryCall || i.memoryPush) block.native->memory.push_back(i.callPointer);
             block.native->memory.push_back(i.memory);
         }
@@ -731,7 +739,7 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
         auto i = ir[n];
         static constexpr const char *names[] = {"Move", "Alu", "Test", "Nop", "Branch",
             "Memory", "Lea", "CounterBranch", "Exchange", "Multiply", "Shift", "IndirectJump",
-            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan"};
+            "MultiplyFull", "DoubleShift", "BitTest", "LoadFlags", "Direction", "Rotate", "SignExtend", "Invert", "Divide", "SegmentRead", "SegmentLoad", "InterruptControl", "String", "StoreFlags", "CarryControl", "SetCondition", "PortIO", "FarReturn", "FarTransfer", "FarPointer", "EnterFrame", "BitScan", "DescriptorQuery"};
         mark(names[static_cast<unsigned>(i.kind)], i.start);
         if (i.kind == Kind::Nop)
             continue;
@@ -806,6 +814,21 @@ Jit::Block Jit::emitArm64(Block block, const jit_detail::DecodedBlock &decoded) 
             selector(10,i.segmentRegister);
             insert(20+i.dst,10,i.w,0);
             dirtyRegisters |= 1u << i.dst;
+            continue;
+        }
+        if(i.kind==Kind::DescriptorQuery){
+            flushRegisters(dirtyRegisters);finishFlags(last,-1,0);
+            dirtyRegisters=0;last=-1;
+            imm(9,i.start);store(9,19,offsetof(CPU,ip));
+            emit(0xaa1303e0u);
+            pointer(1,i.immediate?reinterpret_cast<uintptr_t>(&block.native->memory[memoryIndex++]):0);
+            if(i.immediate)imm(2,0);else extract(2,20+i.src,2,0);
+            imm(3,i.dst);imm(4,i.w);imm(5,i.op);
+            call(reinterpret_cast<uintptr_t>(&jit_detail::nativeDescriptorQuery));
+            const auto success=code.size();emit(0x35000000u);
+            replay(i.start,unsigned(n),0);
+            code[success] |= uint32_t(code.size()-success)<<5;
+            load(20+i.dst,19,offsetof(CPU,r)+i.dst*4);
             continue;
         }
         if(i.kind==Kind::EnterFrame) {

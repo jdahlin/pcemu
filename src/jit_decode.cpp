@@ -627,7 +627,12 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                 i.kind = Kind::Nop;
             } else if (op == 0x0f) {
                 auto extended = byte();
-                if (extended == 0xbc || extended == 0xbd) {
+                if (extended == 2 || extended == 3) {
+                    const auto m=byte();
+                    i.kind=Kind::DescriptorQuery;i.op=extended&1;
+                    i.dst=(m>>3)&7;i.src=m&7;i.immediate=(m>>6)!=3;
+                    if(i.immediate){i.sourceWidth=2;i.memory=memoryOperand(m,address32,overrideSegment);}
+                } else if (extended == 0xbc || extended == 0xbd) {
                     const auto m = byte();
                     i.kind = (m >> 6) == 3 ? Kind::BitScan : Kind::Memory;
                     i.dst = (m >> 3) & 7;
@@ -750,7 +755,7 @@ jit_detail::DecodedBlock Jit::decode(Block &block) {
                     i.src &= 3;
                 }
             }
-            if (i.kind == Kind::Memory || i.kind==Kind::FarPointer) {
+            if (i.kind == Kind::Memory || i.kind==Kind::FarPointer || (i.kind==Kind::DescriptorQuery && i.immediate)) {
                 i.memory.width = i.stackMany ? 8 * i.w : i.sourceWidth ? i.sourceWidth : i.w;
                 i.memory.begin = begin;
                 i.memory.end = i.nearCall ? i.target : pos;

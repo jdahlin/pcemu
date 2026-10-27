@@ -1616,7 +1616,7 @@ void CPU::stepImpl() {
                 hi = systemRead(base + off + 4, 4);
                 unsigned type = (hi >> 8) & 15;
                 bool systemType =
-                    op2 == 2 ? (type != 0 && type != 8 && type != 10 && type != 13)
+                    op2 == 2 ? (type == 1 || type == 2 || type == 3 || type == 4 || type == 5 || type == 9 || type == 11 || type == 12)
                              : (type == 1 || type == 2 || type == 3 || type == 9 || type == 11);
                 valid = descriptorVisible(sel, hi) && ((hi & 0x1000) || systemType);
             }

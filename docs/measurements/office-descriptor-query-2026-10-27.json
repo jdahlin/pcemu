@@ -1,0 +1,5975 @@
+{
+  "method": "Four rotated-order single-run rounds per engine/workload, immutable headless snapshots, Library VM paused, no tests/builds/profiles during scored runs",
+  "scoredRuns": 36,
+  "summary": {
+    "word": {
+      "original": {
+        "elapsedMs": 2266.3513123989105,
+        "cpuMs": 2185.9779790000002,
+        "samples": 4
+      },
+      "prior": {
+        "elapsedMs": 1642.6296452991664,
+        "cpuMs": 1580.884979,
+        "samples": 4
+      },
+      "candidate": {
+        "elapsedMs": 1593.7986250501126,
+        "cpuMs": 1538.7160415,
+        "samples": 4
+      },
+      "candidateBelowOriginalPercent": {
+        "elapsedMs": 29.6755707585735,
+        "cpuMs": 29.60971902361511
+      },
+      "candidateChangeFromPriorPercent": {
+        "elapsedMs": -2.9727346263838106,
+        "cpuMs": -2.667426034161835
+      }
+    },
+    "excel-load": {
+      "original": {
+        "elapsedMs": 1678.849937627092,
+        "cpuMs": 1626.051979,
+        "samples": 4
+      },
+      "prior": {
+        "elapsedMs": 1310.0579583551735,
+        "cpuMs": 1267.9625205,
+        "samples": 4
+      },
+      "candidate": {
+        "elapsedMs": 1271.9357912428677,
+        "cpuMs": 1231.463,
+        "samples": 4
+      },
+      "candidateBelowOriginalPercent": {
+        "elapsedMs": 24.23767230556425,
+        "cpuMs": 24.266689140077002
+      },
+      "candidateChangeFromPriorPercent": {
+        "elapsedMs": -2.9099603471108737,
+        "cpuMs": -2.878596165887226
+      }
+    },
+    "excel-recalc": {
+      "original": {
+        "elapsedMs": 7952.188353985548,
+        "cpuMs": 7899.394646000001,
+        "samples": 4
+      },
+      "prior": {
+        "elapsedMs": 6809.675104450434,
+        "cpuMs": 6786.421833,
+        "samples": 4
+      },
+      "candidate": {
+        "elapsedMs": 7002.6338750030845,
+        "cpuMs": 6972.0251665,
+        "samples": 4
+      },
+      "candidateBelowOriginalPercent": {
+        "elapsedMs": 11.940794617956419,
+        "cpuMs": 11.73975375403723
+      },
+      "candidateChangeFromPriorPercent": {
+        "elapsedMs": 2.8335973096064837,
+        "cpuMs": 2.734921849353289
+      }
+    }
+  },
+  "measurements": [
+    {
+      "task": "word",
+      "round": 0,
+      "engine": "original",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 213.11187464743853,
+            "taskResponseMs": 2290.5328748747706,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1977.306042,
+              "systemMs": 218.613291,
+              "totalMs": 2195.919333
+            },
+            "instructions": 96753891,
+            "nativeInstructions": 82904222,
+            "compiledBlocks": 58144,
+            "nativeMemoryCalls": 1733503,
+            "executionWallMs": 2021.151959,
+            "shutdownWaitMs": 36.870917305350304,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 213.11187464743853,
+        "medianTaskResponseMs": 2290.5328748747706,
+        "medianProcessCpuMs": 2195.919333
+      }
+    },
+    {
+      "task": "word",
+      "round": 0,
+      "engine": "prior",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 196.46912533789873,
+            "taskResponseMs": 1639.2468749545515,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1408.4595,
+              "systemMs": 169.691875,
+              "totalMs": 1578.151375
+            },
+            "instructions": 96916122,
+            "nativeInstructions": 93596288,
+            "compiledBlocks": 64419,
+            "nativeMemoryCalls": 1982466,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1435.640597,
+            "shutdownWaitMs": 39.10166723653674,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 196.46912533789873,
+        "medianTaskResponseMs": 1639.2468749545515,
+        "medianProcessCpuMs": 1578.151375
+      }
+    },
+    {
+      "task": "word",
+      "round": 0,
+      "engine": "candidate",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 474.94395775720477,
+            "taskResponseMs": 1585.7615829445422,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1369.387667,
+              "systemMs": 161.71475,
+              "totalMs": 1531.102417
+            },
+            "instructions": 96382435,
+            "nativeInstructions": 93092165,
+            "compiledBlocks": 64250,
+            "nativeMemoryCalls": 1966901,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1388.087754,
+            "shutdownWaitMs": 39.04341673478484,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 474.94395775720477,
+        "medianTaskResponseMs": 1585.7615829445422,
+        "medianProcessCpuMs": 1531.102417
+      }
+    },
+    {
+      "task": "word",
+      "round": 1,
+      "engine": "original",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 176.61120789125562,
+            "taskResponseMs": 2350.4185420461,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 2043.100292,
+              "systemMs": 230.918834,
+              "totalMs": 2274.019126
+            },
+            "instructions": 96595562,
+            "nativeInstructions": 82715089,
+            "compiledBlocks": 59366,
+            "nativeMemoryCalls": 1731257,
+            "executionWallMs": 2057.551703,
+            "shutdownWaitMs": 37.97937463968992,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 176.61120789125562,
+        "medianTaskResponseMs": 2350.4185420461,
+        "medianProcessCpuMs": 2274.019126
+      }
+    },
+    {
+      "task": "word",
+      "round": 1,
+      "engine": "candidate",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 181.58650025725365,
+            "taskResponseMs": 1577.8091247193515,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1363.557792,
+              "systemMs": 159.631417,
+              "totalMs": 1523.189209
+            },
+            "instructions": 96429256,
+            "nativeInstructions": 93150114,
+            "compiledBlocks": 64096,
+            "nativeMemoryCalls": 1970493,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1383.017532,
+            "shutdownWaitMs": 39.048208855092525,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 181.58650025725365,
+        "medianTaskResponseMs": 1577.8091247193515,
+        "medianProcessCpuMs": 1523.189209
+      }
+    },
+    {
+      "task": "word",
+      "round": 1,
+      "engine": "prior",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 176.09108285978436,
+            "taskResponseMs": 1674.1521670483053,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1439.387083,
+              "systemMs": 172.808208,
+              "totalMs": 1612.195291
+            },
+            "instructions": 96783739,
+            "nativeInstructions": 93474564,
+            "compiledBlocks": 64319,
+            "nativeMemoryCalls": 1979915,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1457.772071,
+            "shutdownWaitMs": 37.50120894983411,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 176.09108285978436,
+        "medianTaskResponseMs": 1674.1521670483053,
+        "medianProcessCpuMs": 1612.195291
+      }
+    },
+    {
+      "task": "word",
+      "round": 2,
+      "engine": "candidate",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 194.2732920870185,
+            "taskResponseMs": 1648.8483753055334,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1418.076125,
+              "systemMs": 167.650584,
+              "totalMs": 1585.726709
+            },
+            "instructions": 96414922,
+            "nativeInstructions": 93120984,
+            "compiledBlocks": 64272,
+            "nativeMemoryCalls": 1968407,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1447.383162,
+            "shutdownWaitMs": 36.822582595050335,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 194.2732920870185,
+        "medianTaskResponseMs": 1648.8483753055334,
+        "medianProcessCpuMs": 1585.726709
+      }
+    },
+    {
+      "task": "word",
+      "round": 2,
+      "engine": "original",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 177.1688750013709,
+            "taskResponseMs": 2242.1697499230504,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1967.042541,
+              "systemMs": 208.994084,
+              "totalMs": 2176.036625
+            },
+            "instructions": 96755148,
+            "nativeInstructions": 82889770,
+            "compiledBlocks": 58751,
+            "nativeMemoryCalls": 1734947,
+            "executionWallMs": 1972.892275,
+            "shutdownWaitMs": 36.35983308777213,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 177.1688750013709,
+        "medianTaskResponseMs": 2242.1697499230504,
+        "medianProcessCpuMs": 2176.036625
+      }
+    },
+    {
+      "task": "word",
+      "round": 2,
+      "engine": "prior",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.4258751310408,
+            "taskResponseMs": 1646.0124156437814,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1408.364708,
+              "systemMs": 175.253875,
+              "totalMs": 1583.618583
+            },
+            "instructions": 96302794,
+            "nativeInstructions": 93008641,
+            "compiledBlocks": 64122,
+            "nativeMemoryCalls": 1964831,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1427.524282,
+            "shutdownWaitMs": 36.34391678497195,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.4258751310408,
+        "medianTaskResponseMs": 1646.0124156437814,
+        "medianProcessCpuMs": 1583.618583
+      }
+    },
+    {
+      "task": "word",
+      "round": 3,
+      "engine": "candidate",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 182.72050004452467,
+            "taskResponseMs": 1601.835667155683,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1386.730666,
+              "systemMs": 159.599,
+              "totalMs": 1546.329666
+            },
+            "instructions": 96909757,
+            "nativeInstructions": 93603774,
+            "compiledBlocks": 64437,
+            "nativeMemoryCalls": 1982241,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1409.770047,
+            "shutdownWaitMs": 33.270834013819695,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 182.72050004452467,
+        "medianTaskResponseMs": 1601.835667155683,
+        "medianProcessCpuMs": 1546.329666
+      }
+    },
+    {
+      "task": "word",
+      "round": 3,
+      "engine": "prior",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 177.20208363607526,
+            "taskResponseMs": 1589.0414998866618,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1372.02075,
+              "systemMs": 162.226625,
+              "totalMs": 1534.247375
+            },
+            "instructions": 96670112,
+            "nativeInstructions": 93361606,
+            "compiledBlocks": 64310,
+            "nativeMemoryCalls": 1977927,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1389.073596,
+            "shutdownWaitMs": 19.01279203593731,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 177.20208363607526,
+        "medianTaskResponseMs": 1589.0414998866618,
+        "medianProcessCpuMs": 1534.247375
+      }
+    },
+    {
+      "task": "word",
+      "round": 3,
+      "engine": "original",
+      "result": {
+        "task": "Word 97 launch and open 4.8 MB legacy DOC to rendered cover title",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/word5m-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "cc26ec3198530459644810d8e509faae7ba5318f3089ca6b2bbea58b37071acf",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 177.05183383077383,
+            "taskResponseMs": 2141.5086248889565,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1891.731458,
+              "systemMs": 194.865083,
+              "totalMs": 2086.596541
+            },
+            "instructions": 96345560,
+            "nativeInstructions": 82491316,
+            "compiledBlocks": 59715,
+            "nativeMemoryCalls": 1722907,
+            "executionWallMs": 1894.601582,
+            "shutdownWaitMs": 38.43979211524129,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 177.05183383077383,
+        "medianTaskResponseMs": 2141.5086248889565,
+        "medianProcessCpuMs": 2086.596541
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 0,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 183.32141684368253,
+            "taskResponseMs": 1699.4365840218961,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1463.065542,
+              "systemMs": 171.972708,
+              "totalMs": 1635.03825
+            },
+            "instructions": 49281271,
+            "nativeInstructions": 39180290,
+            "compiledBlocks": 58381,
+            "nativeMemoryCalls": 1396884,
+            "executionWallMs": 1492.782219,
+            "shutdownWaitMs": 37.903833668679,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 183.32141684368253,
+        "medianTaskResponseMs": 1699.4365840218961,
+        "medianProcessCpuMs": 1635.03825
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 0,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 180.91799970716238,
+            "taskResponseMs": 1315.7021249644458,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1132.95725,
+              "systemMs": 141.221417,
+              "totalMs": 1274.178667
+            },
+            "instructions": 50200006,
+            "nativeInstructions": 46738633,
+            "compiledBlocks": 68014,
+            "nativeMemoryCalls": 1729557,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1151.181047,
+            "shutdownWaitMs": 19.001582637429237,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 180.91799970716238,
+        "medianTaskResponseMs": 1315.7021249644458,
+        "medianProcessCpuMs": 1274.178667
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 0,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 168.95912494510412,
+            "taskResponseMs": 1264.7993746213615,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1090.897125,
+              "systemMs": 134.086583,
+              "totalMs": 1224.983708
+            },
+            "instructions": 47761025,
+            "nativeInstructions": 44461636,
+            "compiledBlocks": 66170,
+            "nativeMemoryCalls": 1614466,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1101.270166,
+            "shutdownWaitMs": 37.91537508368492,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 168.95912494510412,
+        "medianTaskResponseMs": 1264.7993746213615,
+        "medianProcessCpuMs": 1224.983708
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 1,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 171.3877501897514,
+            "taskResponseMs": 1535.5188334360719,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1352.190834,
+              "systemMs": 146.714541,
+              "totalMs": 1498.905375
+            },
+            "instructions": 48239918,
+            "nativeInstructions": 38269511,
+            "compiledBlocks": 59069,
+            "nativeMemoryCalls": 1354818,
+            "executionWallMs": 1352.080463,
+            "shutdownWaitMs": 39.07629242166877,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 171.3877501897514,
+        "medianTaskResponseMs": 1535.5188334360719,
+        "medianProcessCpuMs": 1498.905375
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 1,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 171.5980409644544,
+            "taskResponseMs": 1279.072207864374,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1101.004083,
+              "systemMs": 136.938209,
+              "totalMs": 1237.942292
+            },
+            "instructions": 48225942,
+            "nativeInstructions": 44899806,
+            "compiledBlocks": 66423,
+            "nativeMemoryCalls": 1644828,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1115.380795,
+            "shutdownWaitMs": 35.794582683593035,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 171.5980409644544,
+        "medianTaskResponseMs": 1279.072207864374,
+        "medianProcessCpuMs": 1237.942292
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 1,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 174.77270774543285,
+            "taskResponseMs": 1201.4345419593155,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1038.754042,
+              "systemMs": 126.9355,
+              "totalMs": 1165.689542
+            },
+            "instructions": 47816617,
+            "nativeInstructions": 44496399,
+            "compiledBlocks": 66259,
+            "nativeMemoryCalls": 1617441,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1050.697532,
+            "shutdownWaitMs": 37.54791617393494,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 174.77270774543285,
+        "medianTaskResponseMs": 1201.4345419593155,
+        "medianProcessCpuMs": 1165.689542
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 2,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 170.5057076178491,
+            "taskResponseMs": 1262.6360412687063,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1090.618167,
+              "systemMs": 132.519958,
+              "totalMs": 1223.138125
+            },
+            "instructions": 49047646,
+            "nativeInstructions": 45676994,
+            "compiledBlocks": 67250,
+            "nativeMemoryCalls": 1690923,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1098.684528,
+            "shutdownWaitMs": 37.30508405715227,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 170.5057076178491,
+        "medianTaskResponseMs": 1262.6360412687063,
+        "medianProcessCpuMs": 1223.138125
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 2,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 178.2588749192655,
+            "taskResponseMs": 1774.465125054121,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1555.321917,
+              "systemMs": 175.9025,
+              "totalMs": 1731.224417
+            },
+            "instructions": 52031014,
+            "nativeInstructions": 41787552,
+            "compiledBlocks": 62978,
+            "nativeMemoryCalls": 1394935,
+            "executionWallMs": 1560.373078,
+            "shutdownWaitMs": 38.39779086410999,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 178.2588749192655,
+        "medianTaskResponseMs": 1774.465125054121,
+        "medianProcessCpuMs": 1731.224417
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 2,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 182.1912918239832,
+            "taskResponseMs": 1345.2708749100566,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1153.747166,
+              "systemMs": 143.750042,
+              "totalMs": 1297.497208
+            },
+            "instructions": 47708740,
+            "nativeInstructions": 44346705,
+            "compiledBlocks": 66728,
+            "nativeMemoryCalls": 1619219,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1173.812842,
+            "shutdownWaitMs": 34.28566688671708,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 182.1912918239832,
+        "medianTaskResponseMs": 1345.2708749100566,
+        "medianProcessCpuMs": 1297.497208
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 3,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 184.0350842103362,
+            "taskResponseMs": 1370.2398748137057,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1178.769417,
+              "systemMs": 148.67575,
+              "totalMs": 1327.445167
+            },
+            "instructions": 48162131,
+            "nativeInstructions": 44841292,
+            "compiledBlocks": 66357,
+            "nativeMemoryCalls": 1641522,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1192.615846,
+            "shutdownWaitMs": 37.24020905792713,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 184.0350842103362,
+        "medianTaskResponseMs": 1370.2398748137057,
+        "medianProcessCpuMs": 1327.445167
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 3,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 189.16045874357224,
+            "taskResponseMs": 1304.413791745901,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1120.220458,
+              "systemMs": 141.525916,
+              "totalMs": 1261.746374
+            },
+            "instructions": 47816617,
+            "nativeInstructions": 44496399,
+            "compiledBlocks": 66259,
+            "nativeMemoryCalls": 1617441,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 1134.364472,
+            "shutdownWaitMs": 38.501125294715166,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 189.16045874357224,
+        "medianTaskResponseMs": 1304.413791745901,
+        "medianProcessCpuMs": 1261.746374
+      }
+    },
+    {
+      "task": "excel-load",
+      "round": 3,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 launch and load 64 rows, 650 live formulas; ten calculated summary results",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-formula-load-ready",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "5f12ac9a9248ca44f96146b47985916407a634205b85301921479c0fd38478dc",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 174.9107502400875,
+            "taskResponseMs": 1658.2632912322879,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 1448.699666,
+              "systemMs": 168.366042,
+              "totalMs": 1617.065708
+            },
+            "instructions": 48206844,
+            "nativeInstructions": 38705005,
+            "compiledBlocks": 59030,
+            "nativeMemoryCalls": 1300807,
+            "executionWallMs": 1453.807325,
+            "shutdownWaitMs": 37.83575026318431,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 174.9107502400875,
+        "medianTaskResponseMs": 1658.2632912322879,
+        "medianProcessCpuMs": 1617.065708
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 0,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.0515410862863,
+            "taskResponseMs": 8078.620207961649,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7398.39325,
+              "systemMs": 621.7735,
+              "totalMs": 8020.16675
+            },
+            "instructions": 1403275681,
+            "nativeInstructions": 1383191804,
+            "compiledBlocks": 31854,
+            "nativeMemoryCalls": 12172705,
+            "executionWallMs": 7186.386262,
+            "shutdownWaitMs": 38.56204217299819,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.0515410862863,
+        "medianTaskResponseMs": 8078.620207961649,
+        "medianProcessCpuMs": 8020.16675
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 0,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 188.81258321925998,
+            "taskResponseMs": 6989.022916182876,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6423.134084,
+              "systemMs": 536.783875,
+              "totalMs": 6959.917959
+            },
+            "instructions": 1403301692,
+            "nativeInstructions": 1400732871,
+            "compiledBlocks": 37361,
+            "nativeMemoryCalls": 12779341,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6231.559828,
+            "shutdownWaitMs": 37.36125025898218,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 188.81258321925998,
+        "medianTaskResponseMs": 6989.022916182876,
+        "medianProcessCpuMs": 6959.917959
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 0,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 194.83058294281363,
+            "taskResponseMs": 6982.525708153844,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6407.164959,
+              "systemMs": 539.077041,
+              "totalMs": 6946.242
+            },
+            "instructions": 1403171098,
+            "nativeInstructions": 1400632568,
+            "compiledBlocks": 36957,
+            "nativeMemoryCalls": 12754205,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6216.278043,
+            "shutdownWaitMs": 39.07174989581108,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 194.83058294281363,
+        "medianTaskResponseMs": 6982.525708153844,
+        "medianProcessCpuMs": 6946.242
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 1,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 202.97245914116502,
+            "taskResponseMs": 8087.285208050162,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7401.616583,
+              "systemMs": 620.030875,
+              "totalMs": 8021.647458
+            },
+            "instructions": 1402691954,
+            "nativeInstructions": 1382702065,
+            "compiledBlocks": 31817,
+            "nativeMemoryCalls": 12156532,
+            "executionWallMs": 7183.041942,
+            "shutdownWaitMs": 39.077000226825476,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 202.97245914116502,
+        "medianTaskResponseMs": 8087.285208050162,
+        "medianProcessCpuMs": 8021.647458
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 1,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 212.17420790344477,
+            "taskResponseMs": 7022.742041852325,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6448.131083,
+              "systemMs": 549.67725,
+              "totalMs": 6997.808333
+            },
+            "instructions": 1403301984,
+            "nativeInstructions": 1400744451,
+            "compiledBlocks": 37364,
+            "nativeMemoryCalls": 12779350,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6250.571725,
+            "shutdownWaitMs": 35.03466583788395,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 212.17420790344477,
+        "medianTaskResponseMs": 7022.742041852325,
+        "medianProcessCpuMs": 6997.808333
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 1,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 195.26324979960918,
+            "taskResponseMs": 6981.439167167991,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6409.652083,
+              "systemMs": 541.972125,
+              "totalMs": 6951.624208
+            },
+            "instructions": 1403113566,
+            "nativeInstructions": 1400573870,
+            "compiledBlocks": 36733,
+            "nativeMemoryCalls": 12752020,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6214.89931,
+            "shutdownWaitMs": 19.09883413463831,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 195.26324979960918,
+        "medianTaskResponseMs": 6981.439167167991,
+        "medianProcessCpuMs": 6951.624208
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 2,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 190.99520798772573,
+            "taskResponseMs": 7082.130500115454,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6492.702125,
+              "systemMs": 552.641292,
+              "totalMs": 7045.343417
+            },
+            "instructions": 1403218027,
+            "nativeInstructions": 1400679937,
+            "compiledBlocks": 37240,
+            "nativeMemoryCalls": 12776009,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 6301.621716,
+            "shutdownWaitMs": 38.202458061277866,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 190.99520798772573,
+        "medianTaskResponseMs": 7082.130500115454,
+        "medianProcessCpuMs": 7045.343417
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 2,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 206.04979060590267,
+            "taskResponseMs": 7825.756500009447,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7212.425167,
+              "systemMs": 566.197375,
+              "totalMs": 7778.622542
+            },
+            "instructions": 1403439162,
+            "nativeInstructions": 1383330458,
+            "compiledBlocks": 31881,
+            "nativeMemoryCalls": 12175032,
+            "executionWallMs": 6994.299144,
+            "shutdownWaitMs": 39.02737516909838,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 206.04979060590267,
+        "medianTaskResponseMs": 7825.756500009447,
+        "medianProcessCpuMs": 7778.622542
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 2,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 189.33545798063278,
+            "taskResponseMs": 6637.9110417328775,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6146.415291,
+              "systemMs": 474.804167,
+              "totalMs": 6621.219458
+            },
+            "instructions": 1403455225,
+            "nativeInstructions": 1400897617,
+            "compiledBlocks": 37003,
+            "nativeMemoryCalls": 12761255,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 5959.432536,
+            "shutdownWaitMs": 35.69549974054098,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 189.33545798063278,
+        "medianTaskResponseMs": 6637.9110417328775,
+        "medianProcessCpuMs": 6621.219458
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 3,
+      "engine": "candidate",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "51356fe0a9e6c6a430c9c3db34e2306b93d9caf7e366840e2cd7be9c9bd81fe6",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-descriptor-query/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 187.96041700989008,
+            "taskResponseMs": 6586.469917092472,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6113.171083,
+              "systemMs": 456.418083,
+              "totalMs": 6569.589166
+            },
+            "instructions": 1403398883,
+            "nativeInstructions": 1400856229,
+            "compiledBlocks": 36994,
+            "nativeMemoryCalls": 12756202,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 5930.113851,
+            "shutdownWaitMs": 35.40504164993763,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 187.96041700989008,
+        "medianTaskResponseMs": 6586.469917092472,
+        "medianProcessCpuMs": 6569.589166
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 3,
+      "engine": "prior",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "be7158d1f675de7eada7328dd9c8818cfc6e9e08c8b1bfc03e9927f04247ecf0",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/office-bit-scan/candidate/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 182.71512491628528,
+            "taskResponseMs": 6624.34049975127,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 6128.824709,
+              "systemMs": 472.04375,
+              "totalMs": 6600.868459
+            },
+            "instructions": 1403001156,
+            "nativeInstructions": 1400452047,
+            "compiledBlocks": 37265,
+            "nativeMemoryCalls": 12763554,
+            "directLinkTransitions": 0,
+            "directLinkPromotions": 0,
+            "directLinkBlocks": 0,
+            "executionWallMs": 5935.857798,
+            "shutdownWaitMs": 38.186749909073114,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 182.71512491628528,
+        "medianTaskResponseMs": 6624.34049975127,
+        "medianProcessCpuMs": 6600.868459
+      }
+    },
+    {
+      "task": "excel-recalc",
+      "round": 3,
+      "engine": "original",
+      "result": {
+        "task": "Excel 97 dependent 4096-row recalculation: D1 3 to 4, SUM 25200640 to 33591296",
+        "snapshot": "/Users/johandahlin/dev/pcemu/build/snapshots/excel-local",
+        "jit": true,
+        "profiled": false,
+        "instrumentsProfiled": false,
+        "jitDebugMapped": false,
+        "directLinks": false,
+        "followJumps": true,
+        "traces": false,
+        "emulatorSha256": "1f2f4938d94f82cc9dc2852d00cd13b58d307a3fc1e69ef85c31d74772b57562",
+        "taskSha256": "e2dad7207c436cf470f93a11d413eb59e6d50142a15c654d61710dea2cba888a",
+        "restoreTimeoutSeconds": 30.0,
+        "shutdownTimeoutSeconds": 30,
+        "guestProfiled": false,
+        "frontend": "headless",
+        "hostInputSuppressed": false,
+        "emulator": "/Users/johandahlin/dev/pcemu/build/word-optimize/original/pcemu",
+        "scope": "end-to-end process/control/capture/poll latency; not isolated CPU time",
+        "processCpuTimeScope": "emulator process user+system CPU during task response; includes guest/control/video and all process threads, excludes restore, blocked IO and descheduled time; not isolated guest execution time",
+        "samples": [
+          {
+            "restoreReadyMs": 183.7364169768989,
+            "taskResponseMs": 7789.787833113223,
+            "processCpuTime": {
+              "status": "available",
+              "source": "macOS proc_pid_rusage RUSAGE_INFO_V0; mach_timebase_info conversion",
+              "userMs": 7162.052417,
+              "systemMs": 548.694083,
+              "totalMs": 7710.7465
+            },
+            "instructions": 1403322451,
+            "nativeInstructions": 1383228608,
+            "compiledBlocks": 31876,
+            "nativeMemoryCalls": 12173857,
+            "executionWallMs": 6961.334854,
+            "shutdownWaitMs": 39.03579106554389,
+            "exitStatus": 0
+          }
+        ],
+        "medianRestoreReadyMs": 183.7364169768989,
+        "medianTaskResponseMs": 7789.787833113223,
+        "medianProcessCpuMs": 7710.7465
+      }
+    }
+  ],
+  "coverage": {
+    "word": {
+      "prior": {
+        "0f 02": {
+          "attempts": 8942,
+          "registerOperands": 2894,
+          "memoryOperands": 6048,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 510,
+            "shortFragment": 0,
+            "declined": 8432,
+            "replay": 0
+          }
+        },
+        "0f 03": {
+          "attempts": 3536,
+          "registerOperands": 3491,
+          "memoryOperands": 45,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 270,
+            "shortFragment": 0,
+            "declined": 3266,
+            "replay": 0
+          }
+        }
+      },
+      "candidate": {
+        "0f 02": {
+          "attempts": 600,
+          "registerOperands": 420,
+          "memoryOperands": 180,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 514,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 86
+          }
+        },
+        "0f 03": {
+          "attempts": 270,
+          "registerOperands": 234,
+          "memoryOperands": 36,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 270,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 0
+          }
+        }
+      }
+    },
+    "excel-load": {
+      "prior": {
+        "0f 02": {
+          "attempts": 10769,
+          "registerOperands": 4630,
+          "memoryOperands": 6139,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 535,
+            "shortFragment": 0,
+            "declined": 10234,
+            "replay": 0
+          }
+        },
+        "0f 03": {
+          "attempts": 2747,
+          "registerOperands": 2745,
+          "memoryOperands": 2,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 183,
+            "shortFragment": 0,
+            "declined": 2564,
+            "replay": 0
+          }
+        }
+      },
+      "candidate": {
+        "0f 02": {
+          "attempts": 701,
+          "registerOperands": 523,
+          "memoryOperands": 178,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 575,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 126
+          }
+        },
+        "0f 03": {
+          "attempts": 192,
+          "registerOperands": 190,
+          "memoryOperands": 2,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 192,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 0
+          }
+        }
+      }
+    },
+    "excel-recalc": {
+      "prior": {
+        "0f 02": {
+          "attempts": 10240,
+          "registerOperands": 6242,
+          "memoryOperands": 3998,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 255,
+            "shortFragment": 0,
+            "declined": 9985,
+            "replay": 0
+          }
+        },
+        "0f 03": {
+          "attempts": 1348,
+          "registerOperands": 1347,
+          "memoryOperands": 1,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 127,
+            "shortFragment": 0,
+            "declined": 1221,
+            "replay": 0
+          }
+        }
+      },
+      "candidate": {
+        "0f 02": {
+          "attempts": 2265,
+          "registerOperands": 2164,
+          "memoryOperands": 101,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 256,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 2009
+          }
+        },
+        "0f 03": {
+          "attempts": 127,
+          "registerOperands": 126,
+          "memoryOperands": 1,
+          "interpretationReasons": {
+            "outsideJit": 0,
+            "forced": 0,
+            "warming": 127,
+            "shortFragment": 0,
+            "declined": 0,
+            "replay": 0
+          }
+        }
+      }
+    }
+  },
+  "instruments": {
+    "scope": "Instruments Time Profiler CPU samples on the main thread, filtered to host task-command through verified-pixel response UTC timestamps; capture and control work inside this window remain included. Sample shares are not exact function CPU durations.",
+    "samples": 1177,
+    "outsideTaskSamples": 481,
+    "workerSamples": {},
+    "runs": [
+      {
+        "trace": "build/office-descriptor-query/excel-load-instruments/run-0/instruments.trace",
+        "windowStartNs": 3696185000,
+        "windowEndNs": 4905719000,
+        "mainThreadSamples": 1177,
+        "categories": {
+          "JIT dispatch/cache/validation": 263,
+          "Capture/video/control output": 97,
+          "Interpreter (including MMU and guest faults)": 185,
+          "Generated code and native helpers": 287,
+          "Main loop/other host work": 17,
+          "JIT compilation (including decode exceptions)": 282,
+          "Device polling and interrupt delivery": 44,
+          "Disk and compression": 1,
+          "Compiled port I/O and devices": 1
+        }
+      }
+    ],
+    "categories": [
+      {
+        "name": "Generated code and native helpers",
+        "samples": 287,
+        "percent": 24.384027187765504
+      },
+      {
+        "name": "JIT compilation (including decode exceptions)",
+        "samples": 282,
+        "percent": 23.959218351741715
+      },
+      {
+        "name": "JIT dispatch/cache/validation",
+        "samples": 263,
+        "percent": 22.344944774851317
+      },
+      {
+        "name": "Interpreter (including MMU and guest faults)",
+        "samples": 185,
+        "percent": 15.717926932880204
+      },
+      {
+        "name": "Capture/video/control output",
+        "samples": 97,
+        "percent": 8.241291418861513
+      },
+      {
+        "name": "Device polling and interrupt delivery",
+        "samples": 44,
+        "percent": 3.7383177570093458
+      },
+      {
+        "name": "Main loop/other host work",
+        "samples": 17,
+        "percent": 1.4443500424808835
+      },
+      {
+        "name": "Disk and compression",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "Compiled port I/O and devices",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      }
+    ],
+    "jitRegions": [
+      {
+        "region": "Memory",
+        "scope": "generated self",
+        "samples": 97,
+        "percentOfMain": 8.241291418861513
+      },
+      {
+        "region": "Prologue",
+        "scope": "generated self",
+        "samples": 59,
+        "percentOfMain": 5.0127442650807135
+      },
+      {
+        "region": "Memory",
+        "scope": "helper descendants",
+        "samples": 25,
+        "percentOfMain": 2.1240441801189465
+      },
+      {
+        "region": "Flags and branch",
+        "scope": "generated self",
+        "samples": 24,
+        "percentOfMain": 2.0390824129141887
+      },
+      {
+        "region": "String",
+        "scope": "helper descendants",
+        "samples": 10,
+        "percentOfMain": 0.8496176720475785
+      },
+      {
+        "region": "Alu",
+        "scope": "generated self",
+        "samples": 10,
+        "percentOfMain": 0.8496176720475785
+      },
+      {
+        "region": "Host epilogue",
+        "scope": "generated self",
+        "samples": 7,
+        "percentOfMain": 0.594732370433305
+      },
+      {
+        "region": "FarReturn",
+        "scope": "helper descendants",
+        "samples": 6,
+        "percentOfMain": 0.5097706032285472
+      },
+      {
+        "region": "GPR commit",
+        "scope": "generated self",
+        "samples": 5,
+        "percentOfMain": 0.42480883602378927
+      },
+      {
+        "region": "Instruction count",
+        "scope": "generated self",
+        "samples": 5,
+        "percentOfMain": 0.42480883602378927
+      },
+      {
+        "region": "IP commit",
+        "scope": "generated self",
+        "samples": 4,
+        "percentOfMain": 0.33984706881903143
+      },
+      {
+        "region": "Move",
+        "scope": "generated self",
+        "samples": 2,
+        "percentOfMain": 0.16992353440951571
+      },
+      {
+        "region": "DescriptorQuery",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "EnterFrame",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "Test",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "Lea",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "SegmentLoad",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "MultiplyFull",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "Rotate",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "FarPointer",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "Shift",
+        "scope": "generated self",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      },
+      {
+        "region": "FarTransfer",
+        "scope": "helper descendants",
+        "samples": 1,
+        "percentOfMain": 0.08496176720475786
+      }
+    ],
+    "jitBlocks": [
+      {
+        "cr3": 5201920,
+        "cs": 9495,
+        "ip": 890,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 807,
+        "ip": 4583,
+        "samples": 3
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220662479,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221239795,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3223844857,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221248312,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221230336,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 812679218,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220652604,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220662236,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 1047,
+        "ip": 2985,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221232415,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221404296,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220674197,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 807,
+        "ip": 4597,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 812667630,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221394545,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221254939,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221356955,
+        "samples": 2
+      },
+      {
+        "cr3": 5201920,
+        "cs": 6167,
+        "ip": 2427,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220652684,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 1047,
+        "ip": 37718,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220775992,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220642484,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 6167,
+        "ip": 4832,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357268,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221357260,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 311,
+        "ip": 3220641128,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221260183,
+        "samples": 1
+      },
+      {
+        "cr3": 5201920,
+        "cs": 40,
+        "ip": 3221264603,
+        "samples": 1
+      }
+    ],
+    "unmappedJitSelfSamples": 18,
+    "timeQuartiles": [
+      {
+        "index": 1,
+        "samples": 292,
+        "categories": {
+          "JIT dispatch/cache/validation": 75,
+          "Capture/video/control output": 26,
+          "Interpreter (including MMU and guest faults)": 40,
+          "Generated code and native helpers": 71,
+          "Main loop/other host work": 6,
+          "JIT compilation (including decode exceptions)": 62,
+          "Device polling and interrupt delivery": 12
+        }
+      },
+      {
+        "index": 2,
+        "samples": 296,
+        "categories": {
+          "Interpreter (including MMU and guest faults)": 51,
+          "JIT compilation (including decode exceptions)": 82,
+          "Generated code and native helpers": 73,
+          "Capture/video/control output": 24,
+          "JIT dispatch/cache/validation": 53,
+          "Device polling and interrupt delivery": 10,
+          "Main loop/other host work": 3
+        }
+      },
+      {
+        "index": 3,
+        "samples": 297,
+        "categories": {
+          "Generated code and native helpers": 84,
+          "Capture/video/control output": 25,
+          "JIT dispatch/cache/validation": 68,
+          "Interpreter (including MMU and guest faults)": 48,
+          "JIT compilation (including decode exceptions)": 54,
+          "Device polling and interrupt delivery": 11,
+          "Main loop/other host work": 5,
+          "Disk and compression": 1,
+          "Compiled port I/O and devices": 1
+        }
+      },
+      {
+        "index": 4,
+        "samples": 292,
+        "categories": {
+          "Generated code and native helpers": 59,
+          "JIT dispatch/cache/validation": 67,
+          "Device polling and interrupt delivery": 11,
+          "JIT compilation (including decode exceptions)": 84,
+          "Capture/video/control output": 22,
+          "Interpreter (including MMU and guest faults)": 46,
+          "Main loop/other host work": 3
+        }
+      }
+    ],
+    "selfSites": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 147,
+        "percent": 12.489379779099405
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 62,
+        "percent": 5.267629566694987
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 62,
+        "percent": 5.267629566694987
+      },
+      {
+        "name": "pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)",
+        "samples": 61,
+        "percent": 5.182667799490229
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 44,
+        "percent": 3.7383177570093458
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 41,
+        "percent": 3.4834324553950724
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 41,
+        "percent": 3.4834324553950724
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 27,
+        "percent": 2.293967714528462
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 25,
+        "percent": 2.1240441801189465
+      },
+      {
+        "name": "pc::Jit::instructionPage(pc::CPU&, unsigned int)",
+        "samples": 25,
+        "percent": 2.1240441801189465
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 22,
+        "percent": 1.8691588785046729
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 22,
+        "percent": 1.8691588785046729
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 19,
+        "percent": 1.6142735768903993
+      },
+      {
+        "name": "pc::VGA::render_graphics(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 18,
+        "percent": 1.5293118096856415
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 17,
+        "percent": 1.4443500424808835
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 16,
+        "percent": 1.3593882752761257
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 15,
+        "percent": 1.274426508071368
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 15,
+        "percent": 1.274426508071368
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 12,
+        "percent": 1.0195412064570943
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_18::operator()(int, int, unsigned int) const",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.8496176720475785
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 9,
+        "percent": 0.7646559048428208
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 9,
+        "percent": 0.7646559048428208
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "_free",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_20::operator()(unsigned int) const",
+        "samples": 7,
+        "percent": 0.594732370433305
+      },
+      {
+        "name": "pc::runPcSessionCommandLine(int, char**, std::__1::function<std::__1::unique_ptr<pc::Frontend, std::__1::default_delete<pc::Frontend>> (unsigned int, unsigned int, pc::DisplayShape)>, pc::SessionControl*)",
+        "samples": 6,
+        "percent": 0.5097706032285472
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting_trap",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::jit_detail::nativeString(pc::CPU*, pc::NativeString const*)",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_30::operator()() const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "__bzero",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DYLD-STUB$$memcpy",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "std::__1::vector<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>>::__swap_out_circular_buffer(std::__1::__split_buffer<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>&>&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "_xzm_xzone_malloc_from_freelist_chunk",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_13::operator()(unsigned long) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::jit_detail::nativeSegment(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::jit_detail::(anonymous namespace)::stringSpans(pc::CPU const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, bool, bool, pc::jit_detail::(anonymous namespace)::StringSpans&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "std::__1::vector<unsigned long, std::__1::allocator<unsigned long>>::push_back[abi:nqe210106](unsigned long&&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "0x10604f181",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106143b59",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060ffff9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062ff485",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)::$_1::operator()(unsigned int&) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061395d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106507cd9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106507701",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f3e285",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062e0201",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064f6439",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106151441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10667bbe9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa67c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064ef3cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065c1099",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106579dd5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106555b2d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106266c91",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106779abd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10658b661",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061501b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064d9441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10602cb79",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7622d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f03081",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066d68bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1341",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106579bb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_28::operator()(pc::jit_detail::Instruction const&, bool, bool) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()(int, bool) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10601affd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064e90a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106657535",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064c605d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f11d3d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f008a9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105eea035",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_pthread_mutex_firstfit_lock_slow",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d0dbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062cf2f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b99601",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f4ee11",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10694b9cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f3779",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068b38b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062f92d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106969831",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064ea671",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062e8ab5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeDescriptorQuery(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106ddd3b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeEnter(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f0129",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f3a8d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600c0f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e7e5d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061771c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10620dd39",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10632b8e1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106333b99",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062abef1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f49c81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105efdd69",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615caf9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d1ad1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f689c9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106465dcd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10631f39d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fe7225",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060facc1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067fd375",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067b8211",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067c8481",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067da8f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106107b15",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068033f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "gettimeofday",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061e60c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10677ca15",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$_Unwind_SetGR",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063fadbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10690a0d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f67ac1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106192511",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106982b9d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106469725",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106cb7061",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f136c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e3c89",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_fseeko",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1201",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::compile(bool, bool)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060936a9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106419f21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106394501",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106079415",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::markCode(unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c993a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615b429",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f54799",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f94831",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106065611",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_24::operator()(unsigned int, unsigned int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060a393d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106125acd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106282ff9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063ddbf1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063cff71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10625215d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "___chkstk_darwin",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065680f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062094f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065d2949",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::VGA::read_memory(unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10661c4b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065d35c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063950bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106707969",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10672c3b5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f95ee1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060d6bc9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f1231",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106836851",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064478c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106252435",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeFarPointer(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10693b8c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106415621",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106087541",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064464c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa8741",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a53971",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069295a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066141f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10635100d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106253c35",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10645339d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061cbc31",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106080581",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fb532d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106889389",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10694e599",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106458ff1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106533ba9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106516af9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106af89d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f83575",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b0b891",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10691f3cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f0941",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f31d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b02d65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106457c71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064883d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ffd0d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10669c631",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106278381",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060726b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106209271",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10618342d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062fa5b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061a210d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106293845",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106dfebe5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10605ef65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062cbabd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060fada5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e8585",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061270e9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Network::pump(pc::NE2000&, unsigned long long, unsigned long long)::$_0, void (unsigned char const*, unsigned long)>::destroy()",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ef17f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f70b4d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106090da9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__sendto",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10612bba1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106290a39",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::VGA::write_memory(unsigned int, unsigned char)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7d879",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10632c6d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064fbf51",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10606ff31",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ff7641",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f5adc1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062879",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062495",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061bce49",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10605b471",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062f45",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f49fd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060feb61",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fc0079",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066d5961",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067d2c7d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d31d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10677da01",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068501b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106969749",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f4df1d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_10::operator()(std::__1::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10647e3f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105efdaf1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ff20d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f6927d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7f189",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10685efa1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c6f771",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10616c7a1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106170b3d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10613cfd1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106ad5819",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065042d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106d08481",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ffec71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060484c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1d01",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106e7dff1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f0a321",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060d3989",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::basic_ostream<char, std::__1::char_traits<char>>& std::__1::basic_ostream<char, std::__1::char_traits<char>>::__put_num_integer_promote[abi:ne200100]<unsigned short>(unsigned short)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106286d7d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ef93e1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f8f621",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105eecc21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061112bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063c947d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10610c441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f85b81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615d94d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10655b3d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10623ac65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10610cc81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10663667d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106444cb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064a4b21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061821c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069dfbb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069f7aed",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061300b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b9df79",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa1869",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106099649",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060cb851",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600b159",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c9437d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066e5161",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a64cf5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f65651",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060862cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060c9c09",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::get(int, int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fb3bbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a345fd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106e37d99",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106044f21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600c2f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f73f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_xzm_xzone_free_freelist",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      }
+    ],
+    "selfFunctions": [
+      {
+        "name": "pc::Jit::run()",
+        "samples": 147,
+        "percent": 12.489379779099405
+      },
+      {
+        "name": "__write_nocancel",
+        "samples": 62,
+        "percent": 5.267629566694987
+      },
+      {
+        "name": "pc::CPU::stepImpl()",
+        "samples": 62,
+        "percent": 5.267629566694987
+      },
+      {
+        "name": "pc::Jit::CachedBatch pc::Jit::runCachedImpl<false>(unsigned int)",
+        "samples": 61,
+        "percent": 5.182667799490229
+      },
+      {
+        "name": "pc::Machine::poll()",
+        "samples": 44,
+        "percent": 3.7383177570093458
+      },
+      {
+        "name": "pc::CPU::physical(unsigned int, bool)",
+        "samples": 41,
+        "percent": 3.4834324553950724
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)",
+        "samples": 41,
+        "percent": 3.4834324553950724
+      },
+      {
+        "name": "pc::CPU::step()",
+        "samples": 27,
+        "percent": 2.293967714528462
+      },
+      {
+        "name": "sys_icache_invalidate",
+        "samples": 25,
+        "percent": 2.1240441801189465
+      },
+      {
+        "name": "pc::Jit::instructionPage(pc::CPU&, unsigned int)",
+        "samples": 25,
+        "percent": 2.1240441801189465
+      },
+      {
+        "name": "_xzm_free",
+        "samples": 22,
+        "percent": 1.8691588785046729
+      },
+      {
+        "name": "_platform_memmove",
+        "samples": 22,
+        "percent": 1.8691588785046729
+      },
+      {
+        "name": "pc::CPU::read(unsigned int, int)",
+        "samples": 19,
+        "percent": 1.6142735768903993
+      },
+      {
+        "name": "pc::VGA::render_graphics(std::__1::span<unsigned int, 18446744073709551615ul>, unsigned int, unsigned int) const",
+        "samples": 18,
+        "percent": 1.5293118096856415
+      },
+      {
+        "name": "mach_absolute_time",
+        "samples": 17,
+        "percent": 1.4443500424808835
+      },
+      {
+        "name": "_xzm_xzone_malloc_tiny",
+        "samples": 16,
+        "percent": 1.3593882752761257
+      },
+      {
+        "name": "pc::jit_detail::nativeMemory(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 15,
+        "percent": 1.274426508071368
+      },
+      {
+        "name": "_xzm_xzone_malloc_freelist_outlined",
+        "samples": 15,
+        "percent": 1.274426508071368
+      },
+      {
+        "name": "pc::CPU::decode(unsigned char, bool, int)",
+        "samples": 12,
+        "percent": 1.0195412064570943
+      },
+      {
+        "name": "pthread_jit_write_protect_np",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "<deduplicated_symbol>",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_18::operator()(int, int, unsigned int) const",
+        "samples": 11,
+        "percent": 0.9345794392523364
+      },
+      {
+        "name": "pc::CPU::write(unsigned int, unsigned int, int)",
+        "samples": 10,
+        "percent": 0.8496176720475785
+      },
+      {
+        "name": "_platform_memset",
+        "samples": 9,
+        "percent": 0.7646559048428208
+      },
+      {
+        "name": "pc::jit_detail::analyzeFlagLiveness(std::__1::vector<pc::jit_detail::Instruction, std::__1::allocator<pc::jit_detail::Instruction>> const&)",
+        "samples": 9,
+        "percent": 0.7646559048428208
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "pc::Jit::runBatch(unsigned int)",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "__open_nocancel",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "_free",
+        "samples": 8,
+        "percent": 0.6796941376380629
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_20::operator()(unsigned int) const",
+        "samples": 7,
+        "percent": 0.594732370433305
+      },
+      {
+        "name": "pc::runPcSessionCommandLine(int, char**, std::__1::function<std::__1::unique_ptr<pc::Frontend, std::__1::default_delete<pc::Frontend>> (unsigned int, unsigned int, pc::DisplayShape)>, pc::SessionControl*)",
+        "samples": 6,
+        "percent": 0.5097706032285472
+      },
+      {
+        "name": "__close_nocancel",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_11::operator()(int, unsigned long) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::CPU::alu(int, unsigned int, unsigned int, int)",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_7::operator()(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::CPU::address(int, unsigned int) const",
+        "samples": 5,
+        "percent": 0.42480883602378927
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_3::operator()(unsigned int) const",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "_xzm_xzone_malloc",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "mach_vm_reclaim_update_kernel_accounting_trap",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::Jit::decode(pc::Jit::Block&)::$_0::operator()() const",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::jit_detail::nativeString(pc::CPU*, pc::NativeString const*)",
+        "samples": 4,
+        "percent": 0.33984706881903143
+      },
+      {
+        "name": "pc::CPU::set(int, unsigned int, int)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::PcDisplay::save(pc::Machine&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char>> const&, bool) const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_30::operator()() const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "__bzero",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "std::__1::pair<std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, void*>*>, bool> std::__1::__hash_table<std::__1::__hash_value_type<unsigned long long, pc::Jit::Block>, std::__1::__unordered_map_hasher<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::hash<unsigned long long>, std::__1::equal_to<unsigned long long>, true>, std::__1::__unordered_map_equal<unsigned long long, std::__1::pair<unsigned long long const, pc::Jit::Block>, std::__1::equal_to<unsigned long long>, std::__1::hash<unsigned long long>, true>, std::__1::allocator<std::__1::pair<unsigned long long const, pc::Jit::Block>>>::__emplace_unique_key_args<unsigned long long, unsigned long long const&, pc::Jit::Block>(unsigned long long const&, unsigned long long const&, pc::Jit::Block&&)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DyldSharedCache::forEachImageTextSegment(void (unsigned long long, unsigned long long, unsigned char const*, char const*, bool&) block_pointer) const",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DYLD-STUB$$free",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "pc::CPU::fetch(int)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "operator new(unsigned long)",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "DYLD-STUB$$memcpy",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "malloc_type_malloc",
+        "samples": 3,
+        "percent": 0.2548853016142736
+      },
+      {
+        "name": "invocation function for block in mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "std::__1::vector<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>>::__swap_out_circular_buffer(std::__1::__split_buffer<pc::Jit::DebugRecord, std::__1::allocator<pc::Jit::DebugRecord>&>&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_6::operator()(int, int, int, int) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "_xzm_xzone_malloc_from_freelist_chunk",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "__cxxabiv1::readEncodedPointer(unsigned char const**, unsigned char, unsigned long)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::CPU::physicalSlow(unsigned int, bool)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "libunwind::UnwindCursor<libunwind::LocalAddressSpace, libunwind::Registers_arm64>::setInfoBasedOnIPRegister(bool)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_13::operator()(unsigned long) const",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::jit_detail::nativeSegment(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "pc::jit_detail::(anonymous namespace)::stringSpans(pc::CPU const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, bool, bool, pc::jit_detail::(anonymous namespace)::StringSpans&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "std::__1::vector<unsigned long, std::__1::allocator<unsigned long>>::push_back[abi:nqe210106](unsigned long&&)",
+        "samples": 2,
+        "percent": 0.16992353440951571
+      },
+      {
+        "name": "0x10604f181",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106143b59",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060ffff9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062ff485",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeFarReturn(pc::CPU*, pc::NativeFarReturn const*)::$_1::operator()(unsigned int&) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061395d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106507cd9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106507701",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f3e285",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062e0201",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064f6439",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106151441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10667bbe9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa67c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064ef3cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::findSectionContent(char const*, char const*, unsigned long long&) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065c1099",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106579dd5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106555b2d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106266c91",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106779abd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10658b661",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061501b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064d9441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10602cb79",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7622d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f03081",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066d68bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1341",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106579bb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_28::operator()(pc::jit_detail::Instruction const&, bool, bool) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_16::operator()(int, bool) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10601affd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064e90a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "mach_o::Header::forEachSection(void (mach_o::Header::SectionInfo const&, bool&) block_pointer) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106657535",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064c605d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f11d3d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f008a9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105eea035",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_pthread_mutex_firstfit_lock_slow",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d0dbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062cf2f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b99601",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f4ee11",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10694b9cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f3779",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068b38b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__sfvwrite",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062f92d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106969831",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064ea671",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062e8ab5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeDescriptorQuery(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106ddd3b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeEnter(pc::CPU*, unsigned int, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f0129",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "mach_msg2_trap",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$malloc_type_malloc",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f3a8d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600c0f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e7e5d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061771c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10620dd39",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10632b8e1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106333b99",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062abef1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f49c81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105efdd69",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615caf9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d1ad1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f689c9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106465dcd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_Unwind_RaiseException",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10631f39d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fe7225",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060facc1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067fd375",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067b8211",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067c8481",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067da8f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106107b15",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068033f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "gettimeofday",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061e60c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__vfprintf",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10677ca15",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$_Unwind_SetGR",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063fadbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10690a0d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f67ac1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106192511",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106982b9d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106469725",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106cb7061",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f136c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e3c89",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_fseeko",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1201",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::compile(bool, bool)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060936a9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106419f21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106394501",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106079415",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::markCode(unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c993a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615b429",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f54799",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f94831",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106065611",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_24::operator()(unsigned int, unsigned int, unsigned int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060a393d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106125acd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106282ff9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063ddbf1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063cff71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::emitArm64(pc::Jit::Block, pc::jit_detail::DecodedBlock const&)::$_5::operator()(int, int, int, int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10625215d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "___chkstk_darwin",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065680f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062094f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065d2949",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::VGA::read_memory(unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10661c4b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065d35c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063950bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106707969",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10672c3b5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f95ee1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "invocation function for block in dyld3::MachOLoaded::getSlide() const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060d6bc9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f1231",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106836851",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064478c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106252435",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::jit_detail::nativeFarPointer(pc::CPU*, pc::NativeMemoryMove const*, unsigned int, unsigned int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10693b8c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106415621",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106087541",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064464c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa8741",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a53971",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069295a5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066141f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10635100d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106253c35",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10645339d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061cbc31",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106080581",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::farReturn(int, unsigned short, bool)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fb532d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106889389",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10694e599",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106458ff1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106533ba9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_dyld_find_unwind_sections",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106516af9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106af89d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f83575",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b0b891",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10691f3cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f0941",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f31d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b02d65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106457c71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064883d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ffd0d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10669c631",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__gxx_personality_v0",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106278381",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060726b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106209271",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10618342d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062fa5b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061a210d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106293845",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106dfebe5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10605ef65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062cbabd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060fada5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060e8585",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061270e9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Network::pump(pc::NE2000&, unsigned long long, unsigned long long)::$_0, void (unsigned char const*, unsigned long)>::destroy()",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ef17f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f70b4d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106090da9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__sendto",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10612bba1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106290a39",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::VGA::write_memory(unsigned int, unsigned char)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7d879",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10632c6d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064fbf51",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10606ff31",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ff7641",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f5adc1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062879",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062495",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061bce49",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10605b471",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106062f45",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061f49fd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060feb61",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fc0079",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$operator new(unsigned long)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066d5961",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1067d2c7d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1062d31d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10677da01",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1068501b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106969749",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f4df1d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::__function::__func<pc::Machine::bindIoPorts()::$_10::operator()(std::__1::function<void (unsigned short, unsigned int, int)>) const::'lambda'(unsigned short, unsigned int, int), void (unsigned short, unsigned int, int)>::operator()(unsigned short&&, unsigned int&&, int&&)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10647e3f5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105efdaf1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ff20d5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f6927d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f7f189",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10685efa1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c6f771",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10616c7a1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106170b3d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10613cfd1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106ad5819",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1065042d9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106d08481",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ffec71",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060484c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060b1d01",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106e7dff1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "DYLD-STUB$$operator delete(void*)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f0a321",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::shift(int, unsigned int, unsigned int, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060d3989",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::farTransfer(unsigned short, unsigned int, bool, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "std::__1::basic_ostream<char, std::__1::char_traits<char>>& std::__1::basic_ostream<char, std::__1::char_traits<char>>::__put_num_integer_promote[abi:ne200100]<unsigned short>(unsigned short)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "__error",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::load(pc::CPU::Operand, int)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106286d7d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105ef93e1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f8f621",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105eecc21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061112bd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1063c947d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10610c441",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f85b81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10615d94d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10655b3d1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10623ac65",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10610cc81",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10663667d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106444cb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1064a4b21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061821c1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069dfbb1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1069f7aed",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1061300b1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106b9df79",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fa1869",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106099649",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060cb851",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600b159",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106c9437d",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1066e5161",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a64cf5",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105f65651",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060862cd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060c9c09",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::CPU::get(int, int) const",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x105fb3bbd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106a345fd",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106e37d99",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x106044f21",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "pc::Jit::installBlock(unsigned long long, pc::Jit::Block)",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x10600c2f9",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "0x1060f73f1",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      },
+      {
+        "name": "_xzm_xzone_free_freelist",
+        "samples": 1,
+        "percent": 0.08496176720475786
+      }
+    ]
+  },
+  "testLogs": {
+    "descriptor-query-batch-tests.log": "{\"batched\":0,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":1,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":58}\n{\"batched\":1,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":59}\n{\"batched\":1,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":0,\"phase\":0,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40061,\"interrupts\":10,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40062,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":31,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40092,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":63,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40124,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":127,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40188,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":1,\"phase\":0,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40061,\"interrupts\":10,\"worstLatencyInstructions\":60}\n{\"batched\":1,\"phase\":1,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40062,\"interrupts\":10,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":31,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40092,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":1,\"phase\":63,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40124,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":1,\"phase\":127,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40188,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":0,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":1,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":58}\n{\"batched\":1,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":59}\n{\"batched\":1,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":0,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":1,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":58}\n{\"batched\":1,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":59}\n{\"batched\":1,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":0,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":0,\"phase\":0,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40061,\"interrupts\":10,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40062,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":31,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40092,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":63,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40124,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":0,\"phase\":127,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40188,\"interrupts\":10,\"worstLatencyInstructions\":3}\n{\"batched\":1,\"phase\":0,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40061,\"interrupts\":10,\"worstLatencyInstructions\":60}\n{\"batched\":1,\"phase\":1,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40062,\"interrupts\":10,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":31,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40092,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":1,\"phase\":63,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40124,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":1,\"phase\":127,\"shortLoop\":1,\"memoryLoop\":0,\"instructions\":40188,\"interrupts\":10,\"worstLatencyInstructions\":63}\n{\"batched\":0,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":0,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":2}\n{\"batched\":1,\"phase\":0,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30043,\"interrupts\":7,\"worstLatencyInstructions\":58}\n{\"batched\":1,\"phase\":1,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30044,\"interrupts\":7,\"worstLatencyInstructions\":59}\n{\"batched\":1,\"phase\":31,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30074,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":63,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30106,\"interrupts\":7,\"worstLatencyInstructions\":61}\n{\"batched\":1,\"phase\":127,\"shortLoop\":0,\"memoryLoop\":1,\"instructions\":30170,\"interrupts\":7,\"worstLatencyInstructions\":61}\nPassed 18525 native batch checks\n",
+    "descriptor-query-flags-tests.log": "Passed 102230994 flag-liveness checks\n",
+    "descriptor-query-read-tests.log": "Passed 255535 read JIT checks\n",
+    "descriptor-query-release-tests.log": "PASS 114774 descriptor query checks\n",
+    "descriptor-query-cached-tests.log": "Passed 20456574 cached batch checks; multi-dispatch batches=8880; linked transitions=103944\n",
+    "descriptor-query-segment-tests.log": "Passed 23162 segment JIT checks\n",
+    "descriptor-query-profile-tests.log": "Passed 33 guest profile timing checks\n",
+    "descriptor-query-core-tests.log": "Passed 354964 checks\n"
+  },
+  "pauseResume": [
+    {
+      "event": "pause",
+      "time": 1793094131.25106
+    },
+    {
+      "event": "resume",
+      "time": 1793094269.5112069
+    }
+  ],
+  "interpretation": "Coverage improvement established. Small prior-relative timing changes are provisional: four samples, variable host/guest work, no new A/A cohort. Original-relative improvements are cumulative."
+}

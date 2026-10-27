@@ -77,6 +77,47 @@ static bool warmDataAddress(const CPU &cpu, uint32_t linear, unsigned width, boo
     return end <= cpu.mem.size() && !(physical < 0xb0000 && end > 0xa0000) &&
            !(physical < 0xe1000000 && end > 0xe0000000);
 }
+uint32_t nativeDescriptorQuery(CPU *cpu,const NativeMemoryMove *source,unsigned selector,unsigned destination,unsigned width,unsigned limitQuery) noexcept {
+    if(destination>=8 || (width!=2 && width!=4) || !(cpu->cr[0]&1) || (cpu->flags&0x20000))return 0;
+    try {
+        if(source){
+            uint32_t offset=source->displacement,physical;
+            if(source->base>=0)offset+=cpu->r[source->base];
+            if(source->index>=0)offset+=cpu->r[source->index]<<source->scale;
+            if(!source->address32)offset&=65535;
+            if(!warmDataAddress(*cpu,cpu->address(source->segment,offset),2,false,physical))return 0;
+            selector=0;std::memcpy(&selector,cpu->mem.data()+physical,2);
+        }
+        const auto sel=uint16_t(selector),offset=uint16_t(sel&~7u);
+        const auto base=(sel&4)?cpu->ldtBase:cpu->gdtBase;
+        const auto bound=(sel&4)?cpu->ldtLimit:cpu->gdtLimit;
+        bool valid=(sel&~3u) && unsigned(offset)+7<=bound;
+        uint32_t low=0,high=0;
+        if(valid){
+            // Descriptor reads ignore caller U/S permissions but must already
+            // be warm RAM. Probe both words before any architectural mutation.
+            auto read=[&](uint32_t linear,uint32_t &value){
+                uint32_t physical;
+                if(!warmDataAddress(*cpu,linear,4,false,physical,true))return false;
+                std::memcpy(&value,cpu->mem.data()+physical,4);return true;
+            };
+            if(!read(base+offset,low)||!read(base+offset+4,high))return 0;
+            const auto type=(high>>8)&15;
+            const bool systemType=type==1 || type==2 || type==3 || type==9 || type==11 ||
+                (!limitQuery && (type==4 || type==5 || type==12));
+            const auto dpl=(high>>13)&3;
+            const bool visible=(high&0x1c00)==0x1c00 || (dpl>=cpu->cpl() && dpl>=(sel&3));
+            valid=visible && ((high&0x1000)||systemType);
+        }
+        if(valid){
+            uint32_t value=limitQuery?((low&65535)|(high&0xf0000)):(high&0x00f0ff00u);
+            if(limitQuery && (high&0x800000))value=(value<<12)|4095;
+            cpu->set(destination,value,width);
+        }
+        cpu->flags=(cpu->flags&~ZF)|(valid?ZF:0);
+        return 1;
+    }catch(const Fault &){return 0;}
+}
 uint32_t nativeEnter(CPU *cpu,unsigned width,unsigned size,unsigned level) noexcept {
     if((width!=2 && width!=4) || cpu->watchWrite)return 0;
     struct Write {uint32_t physical,value;};

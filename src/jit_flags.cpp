@@ -26,6 +26,11 @@ std::vector<bool> analyzeFlagLiveness(const std::vector<Instruction> &ir) {
             liveFlags = arithmeticFlags;
             continue;
         }
+        if (i.kind == Kind::DescriptorQuery) {
+            // A selector/descriptor fault exposes the exact pre-query image.
+            liveFlags = arithmeticFlags;
+            continue;
+        }
         if (i.kind == Kind::SetCondition) {
             // SETcc observes prior flags even if a later full writer kills them.
             liveFlags = arithmeticFlags;
